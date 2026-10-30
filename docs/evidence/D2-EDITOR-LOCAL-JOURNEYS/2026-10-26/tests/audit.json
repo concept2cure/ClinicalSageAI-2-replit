@@ -1,0 +1,81 @@
+{
+  "utc": "2026-10-26T15:34:43.599310+00:00",
+  "declaredCurrentInputs": 25,
+  "currentInputsMatch": true,
+  "finalSourceSnapshotsMatch": true,
+  "rawReceipts": {
+    "red": {
+      "exitCode": 1,
+      "testSummary": [
+        "Test Files  1 failed (1)",
+        "Tests  24 failed | 6 passed (30)",
+        "Duration  12.64s (transform 363ms, setup 200ms, import 473ms, tests 11.13s, environment 673ms)"
+      ],
+      "rawGzipSha256": "037684c0eb711e7c3426c393eff16dbaa2f982ab2a9c3692a9f9a2aefa32159d"
+    },
+    "fixture-lint-before": {
+      "exitCode": 0,
+      "testSummary": [],
+      "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    "receiver-red": {
+      "exitCode": 1,
+      "testSummary": [
+        "Test Files  1 failed (1)",
+        "Tests  5 failed | 1 passed (6)",
+        "Duration  1.00s (transform 266ms, setup 128ms, import 269ms, tests 20ms, environment 428ms)"
+      ],
+      "rawGzipSha256": "f650da80a312f81143bc620f1058acb28baeea58dacf1c8d06c772558f45c7bd"
+    },
+    "green": {
+      "exitCode": 1,
+      "testSummary": [
+        "Test Files  2 failed | 5 passed (7)",
+        "Tests  2 failed | 151 passed (153)",
+        "Duration  48.28s (transform 3.07s, setup 558ms, import 5.56s, tests 37.93s, environment 3.14s)"
+      ],
+      "rawGzipSha256": "46f7fe04e3cd5549e94ff6edf55659eeade4650aa73e114c63d48d69430b59cf"
+    },
+    "green-v2": {
+      "exitCode": 0,
+      "testSummary": [
+        "Test Files  7 passed (7)",
+        "Tests  153 passed (153)",
+        "Duration  57.66s (transform 6.30s, setup 697ms, import 10.13s, tests 40.50s, environment 4.36s)"
+      ],
+      "rawGzipSha256": "30a4055a3e3757e0e44e382e128498a1a05a05f4931a4152a0a7d0740095856a"
+    },
+    "strict-test-lint": {
+      "exitCode": 0,
+      "testSummary": [],
+      "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    "receiver-retirement-red": {
+      "exitCode": 1,
+      "testSummary": [
+        "Test Files  1 failed (1)",
+        "Tests  8 failed | 6 passed (14)",
+        "Duration  961ms (transform 253ms, setup 126ms, import 242ms, tests 38ms, environment 410ms)"
+      ],
+      "rawGzipSha256": "d821448b010b862054d1c62657bde2b7c6da40a9dfc6af29bc5d17107982b56a"
+    },
+    "final-green": {
+      "exitCode": 0,
+      "testSummary": [
+        "Test Files  7 passed (7)",
+        "Tests  161 passed (161)",
+        "Duration  52.88s (transform 4.71s, setup 779ms, import 7.34s, tests 40.17s, environment 3.48s)"
+      ],
+      "rawGzipSha256": "bffca7a0e73d4ea9d77b94267f6b4eb4d316585c8ecd11b9dcc08309ff19a620"
+    },
+    "final-strict-lint": {
+      "exitCode": 0,
+      "testSummary": [],
+      "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    }
+  },
+  "historicalEpochsRetained": true,
+  "finalCases": 161,
+  "finalSuites": 7,
+  "humanCasesRun": 0
+}

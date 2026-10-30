@@ -37,6 +37,27 @@ describe('the exact authorized saved document is the complete deterministic inpu
     expect(statements.some(sql => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(sql))).toBe(false);
   });
 
+  it('does not let a saved CSR evade evidence review through a protocol override', async () => {
+    await pg.query("UPDATE authoring_documents SET title='Clinical Study Report (CSR)' WHERE id=$1", [DOCUMENT]);
+    const result = await review({ documentType: 'protocol' }) as unknown as {
+      csrEvidence?: { status: string; checkedClaims: number };
+      verdict: string;
+    };
+    expect(result.csrEvidence).toMatchObject({ status: 'not_assessed', checkedClaims: 0 });
+    expect(result.verdict).toBe('revise');
+  });
+
+  it('exposes CSR evidence as unassessed rather than silently passing saved prose', async () => {
+    const result = await review({ documentType: 'csr' }) as unknown as {
+      verdict: string;
+      csrEvidence: { status: string; checkedClaims: number };
+      complete: boolean;
+    };
+    expect(result.complete).toBe(true);
+    expect(result.csrEvidence).toMatchObject({ status: 'not_assessed', checkedClaims: 0 });
+    expect(result.verdict).toBe('revise');
+  });
+
   it('keeps frozen saved documents readable for oversight without edit permission or writes', async () => {
     await pg.query("UPDATE authoring_documents SET status='FROZEN' WHERE id=$1", [DOCUMENT]);
     expect((await review()).complete).toBe(true);

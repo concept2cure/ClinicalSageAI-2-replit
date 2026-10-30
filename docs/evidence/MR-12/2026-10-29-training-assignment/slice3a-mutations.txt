@@ -1,0 +1,33 @@
+# Mutations of slice 3a: each rule broken, its suite run, the file restored (cmp clean after each).
+== S1: a document assigned to nobody reads 0 of N (server/services/qms/training-compliance.ts)
+ × training-compliance.pglite.test.ts > current-version controlled-procedure training > says a document is assigned but has nobody active when no assigned member remains, retaining training history 53ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > (f) a document assigned to nobody, or to a role nobody active holds, has no figure: never 0 of N 60ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > a removed assignment, a removed holder and a deleted role assign nobody 59ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 12 passed (15)
+== S2: every valid receipt counts, assigned or not (the roster again) (server/services/qms/training-compliance.ts)
+ × training-compliance.pglite.test.ts > current-version controlled-procedure training > uses the active organization roster for both counts, excluding departed and foreign users 77ms
+ × training-compliance.pglite.test.ts > current-version controlled-procedure training > says a document is assigned but has nobody active when no assigned member remains, retaining training history 61ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > (e) the denominator is the distinct active people assigned by role and by name, not the roster 53ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > (f) a document assigned to nobody, or to a role nobody active holds, has no figure: never 0 of N 52ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > the viewer's own line: whether they are assigned, and whether their receipt counts now 69ms
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > expiry lists the people assigned only 39ms
+ × training-compliance.pglite.test.ts > per-person training expiry (G10) > lists each active member whose current training lapses within the window, and by when 52ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 8 passed (15)
+== S3: nothing assessed is reported as 0% (server/services/qms/training-compliance.ts)
+ × training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > (f) a document assigned to nobody, or to a role nobody active holds, has no figure: never 0 of N 51ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 passed (15)
+== S4: every member's training records go to every member (server/routes/mdx-qms-training.ts)
+ × qms-training-compliance-assigned.dbtest.ts > training person by person is for administrators and QMS approvers (P-50 Q3) > the training records: an administrator and the Approver-role stand-in see every member's; anyone else only their own 151ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)
+== S5: expiry lists people nobody assigned (server/services/qms/training-compliance.ts)
+ × training-compliance.pglite.test.ts > per-person training expiry (G10) > names a member whose training on the release in force lapsed, and never one who renewed it 60ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 passed (15)
+== C1: a document assigned to nobody is drawn as a figure (client/src/concept2cure/quality/TrainingCoverage.tsx)
+ × SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > a document assigned to nobody says so, with no bar and no fraction; the KPI says nothing is assigned 26ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)

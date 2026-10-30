@@ -32,6 +32,7 @@
  * does not exist (the registry test enforces the join).
  */
 
+import { REGULATORY_PATHWAYS } from '../constants/mdx';
 import {
   findNavigationTarget,
   type NavigationParamSpec,
@@ -111,13 +112,88 @@ export function assertUngovernedActionId(id: string): void {
 // a fabricated ability.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * AnA's three actions on the ISO 14971 risk matrix. Engineering mounts the
+ * register that performs them (client/src/concept2cure/v2/surfaces/
+ * RiskRegister.tsx, D2, fold F1 slice B) for its project, and registers its
+ * handlers under device-engineering. The Risk screen's `risk.*` copies went
+ * when it folded into Engineering (fold F1c, 2026-10-29).
+ */
+function riskMatrixActions(surfaceId: 'device-engineering', where: string): SurfaceActionTarget[] {
+  return [
+    {
+      id: `${surfaceId}.set-matrix-view`,
+      surfaceId,
+      label: 'Switch the risk matrix view',
+      description:
+        `${where}, switch the severity × probability matrix between the initial and residual assessments. Refused while a new-hazard or add-control form is open.`,
+      params: [
+        {
+          name: 'view',
+          required: true,
+          description: 'Which assessment to show.',
+          enum: ['initial', 'residual'],
+        },
+      ],
+    },
+    {
+      id: `${surfaceId}.select-hazard`,
+      surfaceId,
+      label: 'Open a hazard',
+      description:
+        `${where}, open a hazard by its reference (e.g. "HZ-01") or hazard text so its severity, probability, and controls show. Resolved against the real risk file with honest misses. Accepting residual risk stays a governed human act. Refused while a form is open.`,
+      params: [
+        {
+          name: 'hazard',
+          required: true,
+          description: 'The hazard reference or text as listed in the register (case-insensitive; partial text resolves when unambiguous).',
+        },
+      ],
+    },
+    {
+      id: `${surfaceId}.focus-cell`,
+      surfaceId,
+      label: 'Focus a matrix cell',
+      description:
+        `${where}, focus a severity × probability cell of the matrix and open the hazard sitting there (the first, when several share the cell — the count is reported). An empty cell is an honest miss. Refused while a form is open.`,
+      params: [
+        {
+          name: 'severity',
+          required: true,
+          description: 'The severity band, exactly as labelled on the matrix axis.',
+          enum: ['Negligible', 'Minor', 'Serious', 'Critical', 'Catastrophic'],
+        },
+        {
+          name: 'probability',
+          required: true,
+          description: 'The probability band, exactly as labelled on the matrix axis.',
+          enum: ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'],
+        },
+        {
+          name: 'view',
+          required: false,
+          description: 'Which assessment to read the cell from (defaults to the one on screen).',
+          enum: ['initial', 'residual'],
+        },
+      ],
+    },
+  ];
+}
+
 export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
+  {
+    id: 'projects.new-project',
+    surfaceId: 'projects',
+    label: 'Open New project',
+    description:
+      'Open the existing New project wizard. The person chooses a filing type and client workspace, reviews the project and presses Create. This action opens intake only; it creates no record. If already open, preserve the current wizard and its inputs.',
+  },
   {
     id: 'projects.open-program',
     surfaceId: 'projects',
-    label: 'Open a program',
+    label: 'Open a project',
     description:
-      'On the Projects portfolio, open a named regulatory program — sets it as the active project (so project-scoped screens work) and enters its project home. Pass the program title or code as shown on screen; the surface resolves it against the real portfolio and reports an honest miss for an unknown name.',
+      'On the Projects portfolio, open a named project — sets it as the active project (so project-scoped screens work) and enters its project home. Pass the project title or code as shown on screen; the surface resolves it against the real portfolio and reports an honest miss for an unknown name.',
     params: [
       {
         name: 'program',
@@ -131,7 +207,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'projects',
     label: 'Filter the portfolio',
     description:
-      'On the Projects portfolio, filter the program list by workstream and/or status. Omit a param to leave that axis unchanged; pass "all" to clear it.',
+      'On the Projects portfolio, filter the project list by workstream, pathway or client, or the loaded page by status. Omit a param to leave that axis unchanged; pass "all" to clear it.',
     params: [
       {
         name: 'workstream',
@@ -140,10 +216,21 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
         enum: ['all', 'MDX', 'Biotech', 'Pharma'],
       },
       {
+        name: 'pathway',
+        required: false,
+        description: 'A pathway key from the portfolio pathway choices, or "all" to clear it.',
+        enum: ['all', ...REGULATORY_PATHWAYS],
+      },
+      {
         name: 'status',
         required: false,
         description: 'Status filter: "all", "active", "blocked", or "complete".',
         enum: ['all', 'active', 'blocked', 'complete'],
+      },
+      {
+        name: 'clientWorkspaceId',
+        required: false,
+        description: 'An accessible client id from the portfolio client choices, or "all" to clear the client filter.',
       },
     ],
   },
@@ -151,7 +238,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     id: 'projects.set-view',
     surfaceId: 'projects',
     label: 'Switch portfolio view',
-    description: 'On the Projects portfolio, switch between the grid and list presentation of the programs.',
+    description: 'On the Projects portfolio, switch between the grid and list presentation of the projects.',
     params: [
       {
         name: 'view',
@@ -189,6 +276,32 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
       },
     ],
   },
+  {
+    /* Fold F3 slice B (D2, 2026-10-29): the Vault's counterpart of the
+       Artifacts center's focus-artifact, for every document of the tree. Slice
+       C: it also takes a governed artifact's id, which is how the Live Drive
+       hand-off (V2App followWork) opens what AnA just saved, and with no
+       project open it focuses the Vault's organization view, where the
+       Artifacts center's gallery folded. One of the two params is needed; the
+       screen refuses neither ("No document named."). */
+    id: 'vault.focus-document',
+    surfaceId: 'vault',
+    label: 'Select a vault document',
+    description:
+      'On the Vault, select a document so its detail is shown. With a project open: a document of its tree (an authored section, an uploaded file or a governed artifact), opening its folder. With no project open: a governed artifact in the list of the projects the user can open. Resolved by title, by section code when given exactly, or by a governed artifact\'s id; an unknown or ambiguous name is an honest miss, never a guess. Give a document or an artifactId. It only selects: downloading, filing and signing stay a person\'s acts.',
+    params: [
+      {
+        name: 'document',
+        required: false,
+        description: 'The document title as shown in the vault (case-insensitive; partial titles resolve when unambiguous), or its exact section code.',
+      },
+      {
+        name: 'artifactId',
+        required: false,
+        description: 'A governed artifact\'s registry id (artifact_…), exactly. Takes precedence over the title.',
+      },
+    ],
+  },
 
   // ── Task board (nav target 'tasking' → the tasks surface) ──
   {
@@ -211,7 +324,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'tasking',
     label: 'Filter the task board',
     description:
-      'On the task board, filter by programme and/or module (both resolved against the live options on screen — pass the name as shown; "all" clears an axis), and/or toggle the My-tasks view. At least one param must be given. There is no status/priority/assignee filter on this board — status shows as the kanban columns.',
+      'On the task board, filter by project and/or module (both resolved against the live options on screen — pass the name as shown; "all" clears an axis), and/or toggle the My-tasks view. At least one param must be given. There is no status/priority/assignee filter on this board — status shows as the kanban columns.',
     params: [
       {
         name: 'project',
@@ -275,7 +388,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'cmc',
     label: 'Open a CMC tab',
     description:
-      'On the CMC workstream, open one of its tabs: overview, substance & product (materials), specifications (specs), stability, batch records (batch), change control (change), quality by design (quality), Module 3 build (build), or program records (pathway). Refused while a governed form is open in the current pane (spec edits, batch e-sign releases, stability registrations report themselves through the ceremony channel) — a switch would discard the person’s half-completed ceremony.',
+      'On the CMC workstream, open one of its tabs: overview, substance & product (materials), specifications (specs), stability, batch records (batch), change control (change), quality by design (quality), Module 3 build (build), or project records (pathway). Refused while a governed form is open in the current pane (spec edits, batch e-sign releases, stability registrations report themselves through the ceremony channel) — a switch would discard the person’s half-completed ceremony.',
     params: [
       {
         name: 'tab',
@@ -483,76 +596,22 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'project-home',
     label: 'Open a lifecycle stage',
     description:
-      'On the project home, open one of the filing\'s five tabs: evidence, author, review, submit or respond. The start box sits above the tabs, so switching does not lose a half-typed message. "plan" and "lifecycle" are kept as aliases for tabs that were removed; both open submit, which holds market choice and follow-up sequences.',
+      'On the project home, open one of the filing\'s six steps: plan, evidence, author, review, submit or respond. Plan holds what the filing needs, the team and the tasks. AnA\'s start box and the project\'s conversations sit beside the open step, outside it, so switching does not lose a half-typed message. "lifecycle" is kept as an alias for a step that was removed; it opens submit, which holds follow-up sequences.',
     params: [
       {
         name: 'stage',
         required: true,
-        description: 'The tab to open. "plan" and "lifecycle" open submit.',
-        // 'plan' and 'lifecycle' stay as aliases (FILING_SPINE.md F2), so an
-        // AnA call that names them resolves instead of failing validation.
-        enum: ['evidence', 'author', 'review', 'submit', 'respond', 'plan', 'lifecycle'],
+        description: 'The step to open. "lifecycle" opens submit.',
+        // 'lifecycle' stays an alias (FILING_SPINE.md F2), so an AnA call that
+        // names it resolves instead of failing validation. 'plan' is a step
+        // again (CLIENT_JOURNEY_2026-10-25.md, pass 3).
+        enum: ['plan', 'evidence', 'author', 'review', 'submit', 'respond', 'lifecycle'],
       },
     ],
   },
 
-  // ── Risk management (ISO 14971 file) ──
-  {
-    id: 'risk.set-matrix-view',
-    surfaceId: 'risk',
-    label: 'Switch the risk matrix view',
-    description:
-      'On the risk file, switch the severity × probability matrix between the initial and residual assessments. Refused while a new-hazard or add-control form is open.',
-    params: [
-      {
-        name: 'view',
-        required: true,
-        description: 'Which assessment to show.',
-        enum: ['initial', 'residual'],
-      },
-    ],
-  },
-  {
-    id: 'risk.select-hazard',
-    surfaceId: 'risk',
-    label: 'Open a hazard',
-    description:
-      'On the risk file, open a hazard by its reference (e.g. "HZ-01") or hazard text so its severity, probability, and controls show. Resolved against the real risk file with honest misses. Accepting residual risk stays a governed human act. Refused while a form is open.',
-    params: [
-      {
-        name: 'hazard',
-        required: true,
-        description: 'The hazard reference or text as listed in the register (case-insensitive; partial text resolves when unambiguous).',
-      },
-    ],
-  },
-  {
-    id: 'risk.focus-cell',
-    surfaceId: 'risk',
-    label: 'Focus a matrix cell',
-    description:
-      'On the risk file, focus a severity × probability cell of the matrix and open the hazard sitting there (the first, when several share the cell — the count is reported). An empty cell is an honest miss. Refused while a form is open.',
-    params: [
-      {
-        name: 'severity',
-        required: true,
-        description: 'The severity band, exactly as labelled on the matrix axis.',
-        enum: ['Negligible', 'Minor', 'Serious', 'Critical', 'Catastrophic'],
-      },
-      {
-        name: 'probability',
-        required: true,
-        description: 'The probability band, exactly as labelled on the matrix axis.',
-        enum: ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'],
-      },
-      {
-        name: 'view',
-        required: false,
-        description: 'Which assessment to read the cell from (defaults to the one on screen).',
-        enum: ['initial', 'residual'],
-      },
-    ],
-  },
+  // ── Risk management (ISO 14971 file), on Engineering ──
+  ...riskMatrixActions('device-engineering', "On Engineering's risk file"),
 
   // ── Template library ──
   {
@@ -585,21 +644,9 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Artifacts center ──
-  {
-    id: 'artifacts-center.focus-artifact',
-    surfaceId: 'artifacts-center',
-    label: 'Focus an artifact',
-    description:
-      'In the artifacts center, bring a named artifact into view and highlight it — the same focus the follow-the-work hand-off applies when a driven turn saves a draft. Resolved against the real gallery with honest misses.',
-    params: [
-      {
-        name: 'artifact',
-        required: true,
-        description: 'The artifact name as shown in the gallery (case-insensitive; partial names resolve when unambiguous).',
-      },
-    ],
-  },
+  // ── Artifacts center: none. It folded into the Vault (D2, fold F3 slice C,
+  //    2026-10-29), where vault.focus-document focuses a governed artifact by
+  //    name or id, in a project's tree or across the projects the user can open.
 
   // ── Quality (SOP register / change control) ──
   {
@@ -607,13 +654,13 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'quality',
     label: 'Open a quality tab',
     description:
-      'On the quality surface, switch between the SOP register and change control tabs. Approving, revising, or retiring a controlled document, raising or advancing a change, and recording training are governed acts that stay in conversation — never driven from here.',
+      'On the quality surface, switch between its tabs: the SOP register, change control, CAPA, deviations, nonconformances, suppliers, internal audits and management reviews. Approving, revising, or retiring a controlled document, raising or advancing a change, recording a quality record or its disposition, and recording training are governed acts a person does on the screen — never driven from here.',
     params: [
       {
         name: 'tab',
         required: true,
         description: 'The tab to open.',
-        enum: ['sop', 'change'],
+        enum: ['sop', 'change', 'capa', 'deviations', 'nonconforming', 'suppliers', 'audits', 'reviews'],
       },
     ],
   },
@@ -673,34 +720,9 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── eCTD publishing reference (read-only surface; these switch views) ──
-  {
-    id: 'ectd-publishing.set-version',
-    surfaceId: 'ectd-publishing',
-    label: 'Switch the eCTD version',
-    description:
-      'On the eCTD publishing reference, switch between the v4.0 (HL7 RPS) and v3.2.2 views. View-only — nothing on this surface publishes, transmits, or freezes a sequence.',
-    params: [
-      { name: 'version', required: true, description: 'The spec version to show.', enum: ['v4.0', 'v3.2.2'] },
-    ],
-  },
-  {
-    id: 'ectd-publishing.open-list',
-    surfaceId: 'ectd-publishing',
-    label: 'Open a controlled-vocabulary list',
-    description:
-      'Open one of the v4.0 controlled-vocabulary code lists by its id (e.g. "contextOfUse", "submissionType"). Resolved against the live listing with honest misses; v3.2.2 has no per-list browser and the refusal says so.',
-    params: [
-      { name: 'list', required: true, description: 'The vocabulary list id as shown in the picker.' },
-    ],
-  },
-  {
-    id: 'ectd-publishing.filter-codes',
-    surfaceId: 'ectd-publishing',
-    label: 'Filter the code list',
-    description: 'Filter the open vocabulary list’s codes by text — zero matches is a truthful result.',
-    params: [{ name: 'query', required: true, description: 'Text to filter codes and descriptions by.' }],
-  },
+  /* The eCTD publishing reference's three actions are eCTD Compile's since the
+     reference folded into it (D2, 2026-10-29): see ectd-compile.set-reference-
+     version, .open-code-list and .filter-codes below. */
 
   // ── Submission pyramid ──
   {
@@ -952,13 +974,13 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Master licensing (platform owner) ──
+  // ── Platform licensing (platform owner; id master-licensing) ──
   {
     id: 'master-licensing.open-tab',
     surfaceId: 'master-licensing',
     label: 'Open a licensing tab',
     description:
-      'On master licensing, switch between the console tabs. Every change on this console — packaging, entitlements, flags, enforcement — stays a governed platform-owner act; workspace selection is not driven (it fires a cross-tenant read).',
+      'On Platform licensing, switch between the console tabs. Every change on this console — packaging, entitlements, flags, enforcement — stays a governed platform-owner act; workspace selection is not driven (it fires a cross-tenant read).',
     params: [
       {
         name: 'tab',
@@ -985,13 +1007,13 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     params: [{ name: 'query', required: true, description: 'Text to search module names for.' }],
   },
 
-  // ── Plans & licensing ──
+  // ── Compare subscriptions (id licensing) ──
   {
     id: 'licensing.set-pricing-model',
     surfaceId: 'licensing',
     label: 'Switch the pricing catalog',
     description:
-      'Switch between the self-service and enterprise per-user catalogs — a view switch over public pricing config. Choosing a plan (Stripe checkout) and the seat count stay human acts.',
+      'Switch between the self-service and enterprise per-user catalogs — a view switch over public pricing config. Choosing a subscription (Stripe checkout) and the seat count stay human acts.',
     params: [
       { name: 'model', required: true, description: 'The catalog to show.', enum: ['dtc', 'b2b'] },
     ],
@@ -1243,18 +1265,6 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Agency meetings ──
-  {
-    id: 'agency-meetings.select-meeting',
-    surfaceId: 'agency-meetings',
-    label: 'Open an agency meeting',
-    description:
-      'On the agency-meetings workspace, open a meeting by its id or a distinctive phrase (agency, type, or program) so its briefing book and minutes show — the same row click a person makes. Requesting or scheduling a meeting stays a governed human act. Honest misses; held while the list loads.',
-    params: [
-      { name: 'meeting', required: true, description: 'The meeting id, or a distinctive phrase from its agency / type / program (case-insensitive).' },
-    ],
-  },
-
   // ── Source tracer ──
   {
     id: 'source-tracer.select-section',
@@ -1317,37 +1327,24 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Usage & billing ──
-  // UsageBilling is ONE component mounted under TWO registry ids ('usage' /
-  // 'billing') depending on which nav target brought the person here — only
-  // one publishes at a time (usePublishSurfaceContext('usage', activeId===
-  // 'usage' ? ctx : null), symmetrically for 'billing'). Independently, the
-  // SAME rendered screen has three internal on-screen tabs (usage / billing /
-  // limits — the `tab` state, already reported as `facts.openTab` regardless
-  // of activeId). The act channel mirrors the publish gating: whichever
-  // registry id is currently mounted owns the switch between all three tabs.
+  // ── Usage & limits ──
+  // The usage screen (UsageBilling.tsx) has two tabs: usage (the session window
+  // and weekly caps) and limits (the rate limits the platform enforces, P-68).
+  // Its billing tab and the `billing` id it opened under are gone: the invoices
+  // folded into Licensing (D2, 2026-10-29; fold-billing), so there is no
+  // `billing.open-tab` and no billing tab to open.
   {
     id: 'usage.open-tab',
     surfaceId: 'usage',
-    label: 'Open a usage/billing tab',
+    label: 'Open a usage tab',
     description:
-      'Switch between the usage-metering, billing/invoices, and plan-limits tabs. Read-only: it never changes a plan, adds a payment method, or triggers a charge — those stay deliberate human acts elsewhere on the screen.',
+      'Switch between the usage-metering tab and the rate-limits tab. Read-only: it never changes a plan, a cap or a limit — those stay deliberate human acts. Invoices are not on this screen; they are on Licensing, for billing administrators.',
     params: [
-      { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'billing', 'limits'] },
-    ],
-  },
-  {
-    id: 'billing.open-tab',
-    surfaceId: 'billing',
-    label: 'Open a usage/billing tab',
-    description:
-      'Switch between the billing/invoices, usage-metering, and plan-limits tabs. Read-only: it never changes a plan, adds a payment method, or triggers a charge — those stay deliberate human acts elsewhere on the screen.',
-    params: [
-      { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'billing', 'limits'] },
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'limits'] },
     ],
   },
 
-  // ── Protocol development ──
+  // ── The protocol workspace (id protocol-dev) ──
   {
     id: 'protocol-dev.open-section',
     surfaceId: 'protocol-dev',
@@ -1494,11 +1491,11 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'apps',
     label: 'Show or hide the admin controls',
     description:
-      'In Workflows, show or hide the administrator controls — the per-module enable/disable ' +
+      'In Subscription & features, show or hide the administrator controls — the per-feature enable/disable ' +
       'switches on the feature cards. This only changes what is displayed: switching a module on or off ' +
       'for the organisation stays an administrator\'s own click on the switch this reveals (a ' +
       'persisted, admin-only write). Refuses honestly when the catalog has not loaded, failed, is ' +
-      'empty, or when no module on screen has a switch at all (plan or industry-mode locks have no ' +
+      'empty, or when no module on screen has a switch at all (subscription or industry-mode locks have no ' +
       'switch), naming the modules and the reason in that case.',
     params: [
       {
@@ -1593,6 +1590,46 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
           'board or from the run that built the package.',
       },
     ],
+  },
+  /* The eCTD reference on eCTD Compile (folded from ectd-publishing, D2,
+     2026-10-29; EctdCompileReference.tsx). All three move the reference panel
+     only; none changes what the compile assembles, which is eCTD v3.2.2. */
+  {
+    id: 'ectd-compile.set-reference-version',
+    surfaceId: 'ectd-compile',
+    label: 'Switch the eCTD reference version',
+    description:
+      'On eCTD Compile & Export, switch the eCTD reference panel between v3.2.2 and v4.0 (HL7 RPS): the ' +
+      'specifications it is qualified against, the FDA Regional IG OID and the controlled vocabularies. ' +
+      'View-only. It changes nothing the compile assembles, which is v3.2.2, and the detail says so when ' +
+      'v4.0 is shown.',
+    params: [
+      { name: 'version', required: true, description: 'The eCTD version the reference panel shows.', enum: ['v3.2.2', 'v4.0'] },
+    ],
+  },
+  {
+    id: 'ectd-compile.open-code-list',
+    surfaceId: 'ectd-compile',
+    label: 'Open a controlled-vocabulary list',
+    description:
+      'In the eCTD reference panel on eCTD Compile & Export, open one of the v4.0 controlled-vocabulary ' +
+      'code lists by its id (e.g. "contextOfUse", "submissionType"). Resolved against the live listing ' +
+      'with honest misses; held while the listing loads; v3.2.2 has no per-list browser and a listing ' +
+      'that could not be read has no lists, and each refusal says so.',
+    params: [
+      { name: 'list', required: true, description: 'The vocabulary list id as the panel\'s picker lists it.' },
+    ],
+  },
+  {
+    id: 'ectd-compile.filter-codes',
+    surfaceId: 'ectd-compile',
+    label: 'Filter the code list',
+    description:
+      'In the eCTD reference panel on eCTD Compile & Export, filter the open v4.0 code list by text over ' +
+      'codes and descriptions. Zero matches is a truthful result. Without a query it clears the filter.',
+    /* Optional: the resolver refuses an empty required param, so the retired
+       ectd-publishing.filter-codes, which required it, could never be cleared. */
+    params: [{ name: 'query', required: false, description: 'Text to filter codes and descriptions by; omit it to clear the filter.' }],
   },
 ] as const;
 

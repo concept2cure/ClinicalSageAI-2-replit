@@ -1,5 +1,6 @@
 /** Shared wire contract for the existing Quality register's personal attestation. */
 import { z } from 'zod';
+import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '../constants/governed-reason';
 
 const id = z.number().int().positive().max(2_147_483_647);
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
@@ -57,8 +58,8 @@ export const qmsTrainingSectionSchema = z.object({
   body: z.string().min(1).refine(value => value.trim().length > 0, 'Controlled text must not be blank.'),
 });
 
-/** Added to meta.training on GET /api/mdx/qms/documents/:id; data stays intact. */
-export const qmsTrainingContextSchema = z.object({
+/** One version's training context. */
+const qmsTrainingVersionContextBase = z.object({
   documentId: id,
   docNumber: z.string().min(1),
   title: z.string().min(1),
@@ -70,7 +71,13 @@ export const qmsTrainingContextSchema = z.object({
   unavailableReason: z.string().min(1).nullable(),
   sections: z.array(qmsTrainingSectionSchema),
   acknowledgement: qmsTrainingAcknowledgementSchema.nullable(),
-}).superRefine((value, ctx) => {
+  /** Whether this version is in force today (false: approved for a later day, and acknowledgeable ahead of it; P-49). */
+  inForce: z.boolean().optional(),
+  /** The day this version takes or took effect (UTC), when it has one. */
+  effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+});
+type VersionContext = z.infer<typeof qmsTrainingVersionContextBase>;
+function versionContextRules(value: VersionContext, ctx: z.RefinementCtx) {
   if (value.eligible && (value.status !== 'effective' || !value.contentDigest || !value.sections.length || value.unavailableReason !== null)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Eligible training requires verified readable release content.' });
   }
@@ -78,7 +85,16 @@ export const qmsTrainingContextSchema = z.object({
   if (ack && (ack.documentId !== value.documentId || ack.documentVersion !== value.documentVersion || ack.contentDigest !== value.contentDigest)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'The acknowledgement must cover this document revision.' });
   }
-});
+}
+
+/**
+ * Added to meta.training on GET /api/mdx/qms/documents/:id; data stays intact.
+ * The version in force, and (`successor`) the version approved for a later day
+ * while it waits, which the people assigned read and acknowledge ahead of it.
+ */
+export const qmsTrainingContextSchema = qmsTrainingVersionContextBase.extend({
+  successor: qmsTrainingVersionContextBase.superRefine(versionContextRules).nullable().optional(),
+}).superRefine(versionContextRules);
 
 export const qmsTrainingAcknowledgementResponseSchema = z.object({
   data: qmsTrainingAcknowledgementSchema,
@@ -91,6 +107,27 @@ export const qmsTrainingAcknowledgementResponseSchema = z.object({
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'A new acknowledgement must confirm its chained audit record.' });
   }
 });
+
+/* Job roles and who holds them (P-49; docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md
+   §3.8). A job role is a job function the organization manages, not a permission
+   role. Every write names its reason; an unknown field is refused, never dropped. */
+const governedReason = z.string().trim().min(GOVERNED_REASON_MIN).max(GOVERNED_REASON_MAX);
+const jobRoleName = z.string().trim().min(1).max(80);
+const jobRoleDescription = z.string().trim().max(500);
+
+export const qmsJobRoleCreateSchema = z.object({ name: jobRoleName, description: jobRoleDescription.optional(), reason: governedReason }).strict();
+export const qmsJobRoleUpdateSchema = z.object({ name: jobRoleName.optional(), description: jobRoleDescription.nullable().optional(), reason: governedReason })
+  .strict().refine(b => b.name !== undefined || b.description !== undefined, { message: 'Change the name or the description.' });
+export const qmsJobRoleMemberSchema = z.object({ userId: id, reason: governedReason }).strict();
+/** A DELETE body: the reason only (DELETE requests carry a JSON body here, as TaskBoard's do). */
+export const qmsGovernedRemovalSchema = z.object({ reason: governedReason }).strict();
+/** One requirement on a controlled document: exactly one job role or one person (the table's num_nonnulls CHECK). */
+export const qmsTrainingAssignmentSchema = z.object({ jobRoleId: id.optional(), userId: id.optional(), reason: governedReason })
+  .strict().refine(b => (b.jobRoleId === undefined) !== (b.userId === undefined), { message: 'Name exactly one job role or one person.' });
+
+export type QmsJobRoleCreate = z.infer<typeof qmsJobRoleCreateSchema>;
+export type QmsJobRoleUpdate = z.infer<typeof qmsJobRoleUpdateSchema>;
+export type QmsTrainingAssignmentInput = z.infer<typeof qmsTrainingAssignmentSchema>;
 
 export type QmsTrainingAcknowledgementInput = z.infer<typeof qmsTrainingAcknowledgementInputSchema>;
 export type QmsTrainingAcknowledgement = z.infer<typeof qmsTrainingAcknowledgementSchema>;

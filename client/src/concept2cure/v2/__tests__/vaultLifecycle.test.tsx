@@ -8,6 +8,10 @@
  * shared Part 11 dialog and forwards meaning, reason and password to the one
  * lifecycle route. The page says before anyone signs that the uploader and the
  * reviewer may not approve. A confirmed filing no longer counts as settled.
+ *
+ * Since RR1b, Send for review is the route form (vaultReviewRoute.test.tsx
+ * pins the form itself); the signing tests here run on a version that entered
+ * review with no route (the legacy reading, REVIEW_ROUTING §2.13).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -52,6 +56,25 @@ const refuse = (status: number, payload: Record<string, unknown>) => () => {
   throw new ApiRequestError(message, status, payload, code);
 };
 
+/** Who may be named (GET …/route-candidates, RR1b): one reviewer and one approver the server admits. */
+const CANDIDATES = { ok: true, timeZone: 'UTC', canonicalId: null, candidates: [
+  { id: 5, name: 'Rae Reviewer', reviewer: null, approver: null },
+  { id: 6, name: 'Abe Approver', reviewer: null, approver: null },
+] };
+
+/** Send for review now opens the route form (RR1b): name a reviewer, an approver, the due dates and the reason, then Send. */
+async function sendThroughRouteForm() {
+  fireEvent.click(await screen.findByRole('button', { name: /^Send for review:/ }));
+  const form = await screen.findByTestId('vault-route-form');
+  fireEvent.click(await within(form).findByTestId('vr-reviewer-5'));
+  fireEvent.click(within(form).getByTestId('vr-approver-6'));
+  fireEvent.change(within(form).getByTestId('vr-review-due'), { target: { value: '2099-11-02' } });
+  fireEvent.change(within(form).getByTestId('vr-approval-due'), { target: { value: '2099-11-03' } });
+  fireEvent.change(within(form).getByTestId('vr-reason'), { target: { value: REASON } });
+  fireEvent.click(within(form).getByTestId('vr-send'));
+  return form;
+}
+
 function mockApi() {
   calls.length = 0;
   apiRequest.mockReset();
@@ -60,6 +83,7 @@ function mockApi() {
     if (answers[`${method} ${url}`]) return answers[`${method} ${url}`]();
     if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload({ tree: cabinetTree([head]) }));
     if (url === VERSIONS_URL) return ok({ success: true, data: { versions } });
+    if (url === `/api/regulatory/documents/route-candidates/${DOC_ID}`) return ok(CANDIDATES);
     return ok({ success: true, data: { entries: [], chain: { ok: true } } });
   });
 }
@@ -106,7 +130,7 @@ describe('a Vault version\'s review and approval (VR-13)', () => {
     expect(screen.getByLabelText('Review and approval: Not sent for review')).toBeTruthy();
   });
 
-  it('sends a version nobody started for review, after saying what that means: starts its record, then moves it to In review', async () => {
+  it('sends a version nobody started for review on a named route, after saying what that means: starts its record, then moves it to In review', async () => {
     versions = [version(), earlier];
     mockApi();
     answers[`POST /api/regulatory/documents`] = () => ({ ok: true, status: 201, json: async () => ({ ok: true, canonicalId: 'C-9', created: true }) }) as Response;
@@ -116,17 +140,20 @@ describe('a Vault version\'s review and approval (VR-13)', () => {
     await waitFor(() => expect(list.textContent).toContain('Not sent for review'));
     const treeReads = () => calls.filter((c) => c.url === `/api/c2c/project-vault/${PID}`).length;
     const before = treeReads();
+    // Nothing is sent until the route form is sent; the form names the file and the consequence (RR1b).
     fireEvent.click(screen.getByRole('button', { name: /^Send for review:/ }));
-    // Nothing is sent until confirmed; the confirmation names the file and the consequence.
-    const confirm = screen.getByRole('group', { name: 'Confirm sending for review' });
-    expect(confirm.textContent).toContain('SHA-256 bbbbbbbbbbbb');
-    expect(confirm.textContent).toContain('a different person reviews and approves it');
+    const header = (await screen.findByTestId('vault-route-form')).textContent ?? '';
+    expect(header).toContain('SHA-256 bbbbbbbbbbbb');
+    expect(header).toContain('a different person reviews and approves it');
     expect(calls.some((c) => c.url === '/api/regulatory/documents')).toBe(false);
-    fireEvent.click(within(confirm).getByRole('button', { name: 'Send for review' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await sendThroughRouteForm();
     await waitFor(() => expect(calls.some((c) => c.url === '/api/regulatory/documents/C-9/advance')).toBe(true));
     const startCall = calls.find((c) => c.url === '/api/regulatory/documents')!;
     expect(startCall.body).toEqual({ sources: { vault_documents: { nativeId: DOC_ID, role: 'artifact' } } });
-    expect(calls.find((c) => c.url === '/api/regulatory/documents/C-9/advance')!.body).toMatchObject({ to: 'in_review' });
+    expect(calls.find((c) => c.url === '/api/regulatory/documents/C-9/advance')!.body).toMatchObject({
+      to: 'in_review', reason: REASON, route: { reviewers: [5], approvers: [6] },
+    });
     await waitFor(() => expect(treeReads()).toBeGreaterThan(before));
   });
 
@@ -226,8 +253,7 @@ describe('who may take the next step, and what each step says (VR-13)', () => {
     mockApi();
     answers[`POST /api/regulatory/documents`] = () => { throw new TypeError('Failed to fetch'); };
     mount();
-    fireEvent.click(await screen.findByRole('button', { name: /^Send for review:/ }));
-    fireEvent.click(within(screen.getByRole('group', { name: 'Confirm sending for review' })).getByRole('button', { name: 'Send for review' }));
+    await sendThroughRouteForm();
     expect(await screen.findByText(/it is not known whether this was recorded/)).toBeTruthy();
   });
 
@@ -244,8 +270,7 @@ describe('who may take the next step, and what each step says (VR-13)', () => {
       correlationId: '884e43a1-258e-45a6-8d55-8bcb519f7258',
     });
     mount();
-    fireEvent.click(await screen.findByRole('button', { name: /^Send for review:/ }));
-    fireEvent.click(within(screen.getByRole('group', { name: 'Confirm sending for review' })).getByRole('button', { name: 'Send for review' }));
+    await sendThroughRouteForm();
     expect(await screen.findByText(/Reference: 884e43a1-258e-45a6-8d55-8bcb519f7258/)).toBeTruthy();
   });
 
@@ -286,5 +311,36 @@ describe('a sign-off carried from Authoring (FD5 (c))', () => {
     const shown = screen.getByTestId('vault-version-stage').textContent ?? '';
     expect(shown).toContain('Review signed in Authoring by Rae Reviewer · meaning: reviewed · 2026-10-01 10:00:00 UTC');
     expect(shown).toContain('Approval signed in Authoring by Abe Approver · meaning: approved · 2026-10-01 10:00:00 UTC');
+  });
+});
+
+/* RR2 records (2026-10-29): the review sign-off (review_signature) is written
+   once per round, by the signature that completes the review, so on a route
+   with several reviewers the line named one of them. A routed version's lines
+   come from the round: every reviewer and approver who signed. */
+describe('a routed version names every signer on its sign-off lines (RR2 records)', () => {
+  it('one line per reviewer and per approver who signed, each with printed name, meaning and UTC time', async () => {
+    const { LifecycleSummary } = await import('../surfaces/VaultLifecycle');
+    const at = (h: number) => `2026-10-01T${String(h).padStart(2, '0')}:00:00.000Z`;
+    const so = (name: string, meaning: string, h: number, id: number) => ({ printedName: name, meaning, signedAt: at(h), signatureRef: `esig:${id}`, signerId: id });
+    render(
+      <LifecycleSummary
+        lifecycle={{
+          canonicalId: 'c1',
+          stage: 'approved',
+          review: so('Ria Reviewer', 'REVIEWED', 11, 2),
+          approval: so('Ava Approver', 'APPROVED', 13, 4),
+          reviewSignOffs: [so('Rae Reviewer', 'REVIEWED', 10, 1), so('Ria Reviewer', 'REVIEWED', 11, 2)],
+          approvalSignOffs: [so('Ann Approver', 'APPROVED', 12, 3), so('Ava Approver', 'APPROVED', 13, 4)],
+        }}
+      />,
+    );
+    const shown = screen.getByTestId('vault-version-stage').textContent ?? '';
+    expect(shown).toContain('Review signed by Rae Reviewer · meaning: reviewed · 2026-10-01 10:00:00 UTC');
+    expect(shown).toContain('Review signed by Ria Reviewer · meaning: reviewed · 2026-10-01 11:00:00 UTC');
+    expect(shown).toContain('Approval signed by Ann Approver · meaning: approved · 2026-10-01 12:00:00 UTC');
+    expect(shown).toContain('Approval signed by Ava Approver · meaning: approved · 2026-10-01 13:00:00 UTC');
+    expect(shown.match(/Review signed by/g)).toHaveLength(2);
+    expect(shown.match(/Approval signed by/g)).toHaveLength(2);
   });
 });

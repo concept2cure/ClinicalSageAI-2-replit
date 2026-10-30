@@ -116,6 +116,7 @@ function vaultSearchPayload(q: string) {
       folderId: 'cab-module-3',
       ctdSection: d.ctdSection,
       placementStatus: 'confirmed',
+      current: true,
       snippet: null,
     }));
   return { success: true, data: { query: q, total: results.length, limit: 100, offset: 0, results } };
@@ -201,7 +202,8 @@ describe('Vault — AnA operates the real surface', () => {
     await waitFor(() =>
       expect(screen.queryAllByText('specifications-drug-substance')).toHaveLength(0),
     );
-    expect(screen.getByText('stability-summary-24m')).toBeTruthy();
+    expect(await screen.findByText('stability-summary-24m')).toBeTruthy();
+    expect(screen.queryAllByText('specifications-drug-substance')).toHaveLength(0);
   });
 
   it('vault.search on an empty vault is refused, not reported as a search nobody can see', async () => {
@@ -242,9 +244,9 @@ describe('Vault — AnA operates the real surface', () => {
       folder = applySurfaceAction(directive('vault.open-folder', { folder: 'Module 3' }), vi.fn());
     });
     expect(search.status).toBe('failed');
-    expect(search.reason).toMatch(/^No program is open/);
+    expect(search.reason).toMatch(/^No project is open/);
     expect(folder.status).toBe('failed');
-    expect(folder.reason).toMatch(/^No program is open/);
+    expect(folder.reason).toMatch(/^No project is open/);
   });
 
   it('vault.open-folder refuses an unknown folder honestly', async () => {
@@ -354,9 +356,9 @@ describe('Projects — AnA opens a real program', () => {
       unknown = applySurfaceAction(directive('projects.open-program', { program: 'ZZ-999' }), vi.fn());
     });
     expect(unknown.status).toBe('failed');
-    expect(unknown.reason).toContain('No program named');
+    expect(unknown.reason).toContain('No project named');
     // The refusal names what the portfolio lists, so AnA's next try is a real program.
-    expect(unknown.reason).toMatch(/Programs listed: "BX-204 — /);
+    expect(unknown.reason).toMatch(/Projects listed: "BX-204 — /);
     expect((window as any).C2C_PROJECT?.id).toBe(PID);
   });
 
@@ -407,7 +409,7 @@ describe('Projects — the program the server found', () => {
         <AnaActionChip
           onNav={vi.fn()}
           action={{
-            label: 'Open a program',
+            label: 'Open a project',
             actionType: 'surface_action',
             actionId: 'projects.open-program',
             surfaceId: 'projects',
@@ -421,7 +423,7 @@ describe('Projects — the program the server found', () => {
     await screen.findAllByText(/BX-204/);
 
     act(() => {
-      screen.getByRole('button', { name: /Open a program/ }).click();
+      screen.getByRole('button', { name: /Open a project/ }).click();
     });
     expect((window as any).C2C_PROJECT?.id).toBe('p-legacy-7');
     expect(onNav).toHaveBeenCalledWith('project-home');

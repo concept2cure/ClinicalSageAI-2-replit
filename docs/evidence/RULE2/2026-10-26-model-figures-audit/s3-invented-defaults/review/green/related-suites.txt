@@ -1,0 +1,1154 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ tests/biostat/group-sequential-reference.test.ts > O'Brien–Fleming-type spending (Lan–DeMets) matches the published tables > K=2 65ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > O'Brien–Fleming-type spending (Lan–DeMets) matches the published tables > K=3 71ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > O'Brien–Fleming-type spending (Lan–DeMets) matches the published tables > K=4 83ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > O'Brien–Fleming-type spending (Lan–DeMets) matches the published tables > K=5 105ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > Pocock-type spending (Lan–DeMets) matches the published tables > K=2 29ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > Pocock-type spending (Lan–DeMets) matches the published tables > K=4 80ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > Pocock-type spending (Lan–DeMets) matches the published tables > is NOT flat across looks — the spending approximation drifts, and should 73ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > obrien-fleming spends EXACTLY alpha by the final look 80ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > pocock spends EXACTLY alpha by the final look 76ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > linear spends EXACTLY alpha by the final look 75ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > obrien-fleming spends alpha monotonically 105ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > pocock spends alpha monotonically 106ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > linear spends alpha monotonically 103ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > obrien-fleming never lets an interim look be easier than the final one 78ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > pocock never lets an interim look be easier than the final one 74ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > linear never lets an interim look be easier than the final one 73ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > a tighter alpha produces uniformly higher boundaries 158ms
+ ✓ tests/biostat/group-sequential-reference.test.ts > invariants that hold for every spending function > rejects an alpha outside (0, 0.5) rather than returning a boundary 1ms
+stderr | tests/biostat/adaptive-and-spending-reference.test.ts
+{
+  "timestamp": "2026-10-26T15:23:02.946Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../server/db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | tests/biostat/adaptive-and-spending-reference.test.ts
+{
+  "timestamp": "2026-10-26T15:23:03.314Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:03.314Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/biostat/adaptive-and-spending-reference.test.ts
+{
+  "timestamp": "2026-10-26T15:23:03.314Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: spending boundaries are the canonical, correlation-aware ones > LD-O'Brien–Fleming, 2 looks, one-sided α = 0.025 → 2.963 / 1.969, α*(0.5) = 0.0015253 63ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: spending boundaries are the canonical, correlation-aware ones > LD-Pocock, 2 looks, one-sided α = 0.025 → 2.157 / 2.201 47ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: spending boundaries are the canonical, correlation-aware ones > interim-only fractions (final look not yet listed) give the same interim boundaries 64ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: spending boundaries are the canonical, correlation-aware ones > refuses an unknown spending function rather than defaulting 1ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: conditional power (B-value form) with explicit assumptions > Z = 2.0 at t = 0.5, c = 1.96: current trend 0.890, H0 0.220 0ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: conditional power (B-value form) with explicit assumptions > labels each assumption and computes each with its own drift 1ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: conditional power (B-value form) with explicit assumptions > with no design effect on record, the H1 figure is null with a reason — never a default 0ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: predictive power on the Z / B-value scale > flat prior: Z = 2.0, t = 0.5, c = 1.96 → Φ((Z − c√t)/√(1−t)) = 0.8074 5ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: predictive power on the Z / B-value scale > normal prior on the drift: matches direct integration of CP over the posterior 3ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: interim boundaries are sequentially consistent > look 2 at t = 0.75 uses the boundary conditional on look 1 at t = 0.5 137ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: interim boundaries are sequentially consistent > a strongly negative Z does not cross a one-sided efficacy boundary 57ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > adaptive service: simulated operating characteristics hold α > createPlan: simulated type I error is within Monte Carlo error of the exact 0.025 206ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > designAdaptiveDesign (AnA design_adaptive_design): canonical boundaries > two-sided α = 0.05, 1 interim → per-side LD-OBF at 0.025: 2.963 / 1.969 31ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > designAdaptiveDesign (AnA design_adaptive_design): canonical boundaries > two-sided α = 0.05, 2 interims → 3.710 / 2.511 / 1.993 67ms
+ ✓ tests/biostat/adaptive-and-spending-reference.test.ts > designAdaptiveDesign (AnA design_adaptive_design): canonical boundaries > the final look is not the fixed-design nominal value plus a correlation-blind remainder 39ms
+stderr | tests/biostat-design-stats-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/biostat-design-stats-routes.test.ts
+{
+  "timestamp": "2026-10-26T15:23:05.526Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/biostat-design-stats-routes.test.ts
+{
+  "timestamp": "2026-10-26T15:23:05.654Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:05.655Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/biostat-design-stats-routes.test.ts
+{
+  "timestamp": "2026-10-26T15:23:05.655Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /adaptive/oc-exact 261ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /assurance 5ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /multiplicity/test 3ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /diagnostic/sizing (single + co-primary) 16ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /diagnostic/mrmc 4ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /diagnostic/bayesian-device 7ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /external-control/sensitivity 4ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /region-rules/evaluate and GET /region-rules/catalog 6ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /enrollment/forecast 6ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /adaptive/event-projection 11ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /win-ratio 3ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /dose-finding/boin 5ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — success (200) and shape > POST /survival/rmst (single + difference) 4ms
+ ✓ tests/biostat-design-stats-routes.test.ts > biostat design-stats routes — validation (400) > rejects missing required fields 7ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'winRatioAnalysis — zero losses (undef…' 3ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'winRatioAnalysis — every pair a tie (…' 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'computeDiagnosticAccuracy — perfect s…' 1ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'computeDiagnosticAccuracy — perfect s…' 1ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'computeDiagnosticAccuracy — with a pr…' 1ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'restrictedMeanSurvival — no events at…' 1ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'solveSpendingBoundaries — a very tigh…' 145ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'mmrmSampleSize — degenerate single vi…' 1ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'assuranceTwoSampleMeans — a near-poin…' 1ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'expectedEventsByTime — at t = 0' 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'clopperPearsonInterval — zero success…' 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'clopperPearsonInterval — all successes' 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'estimateImprecision — zero grand mean…' 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'assessRealTimeStability — flat series…' 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'assessAcceleratedStability — extrapol…' 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'covariateBalance — a covariate consta…' 1ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'covariateBalance — a covariate that p…' 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'computeGammaPoissonEbgm — product wit…' 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'mrmcReadersForPower — target unreacha…' 9ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'winRatioAnalysis — zero losses (undef…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'winRatioAnalysis — every pair a tie (…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'computeDiagnosticAccuracy — perfect s…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'computeDiagnosticAccuracy — perfect s…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'computeDiagnosticAccuracy — with a pr…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'restrictedMeanSurvival — no events at…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'solveSpendingBoundaries — a very tigh…' round-trips through JSON without losing a field 88ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'mmrmSampleSize — degenerate single vi…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'assuranceTwoSampleMeans — a near-poin…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'expectedEventsByTime — at t = 0' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'clopperPearsonInterval — zero success…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'clopperPearsonInterval — all successes' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'estimateImprecision — zero grand mean…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'assessRealTimeStability — flat series…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'assessAcceleratedStability — extrapol…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'covariateBalance — a covariate consta…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'covariateBalance — a covariate that p…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'computeGammaPoissonEbgm — product wit…' round-trips through JSON without losing a field 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > no statistical result carries a value JSON cannot represent > 'mrmcReadersForPower — target unreacha…' round-trips through JSON without losing a field 5ms
+ ✓ tests/biostat/json-wire-contract.test.ts > the detector itself works > finds Infinity and NaN at any depth 0ms
+ ✓ tests/biostat/json-wire-contract.test.ts > the detector itself works > passes clean objects, including nulls and strings 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > already-correct cases stay correct > binary 0.5 vs 0.7 → 93 per group (Fleiss, pooled-variance z; 92.999 → 93) 2ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > already-correct cases stay correct > time-to-event HR 0.7 → 247 events (Schoenfeld 1983: 4(z.975+z.80)²/ln(0.7)² = 246.79 → 247) 1ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > already-correct cases stay correct > continuous non-inferiority M=0.5, diff 0, one-sided 0.025, power 0.9 → 85 (Chow, Shao & Wang §3.2: 84.06 → 85) 1ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > already-correct cases stay correct > study-design advisor: binary 0.5 vs 0.7 → 93, HR 0.7 → 247 events, NI → 85 1ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 1: TOST equivalence > engine: margin ±0.5, σ=1, diff 0, α=0.05, power 0.80 → 69 per group (was 63) 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 1: TOST equivalence > engine: reported power is the TOST power, 2Φ(Δ/SE − z₁₋α) − 1 = 0.8036 at n=69 (was one-sided 0.836) 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 1: TOST equivalence > engine, binary: p1 = p2 = 0.80, margin ±0.10 → (z.95 + z.90)²·(0.16+0.16)/0.1² = 274.04 → 275 (was sized as superiority on p2 − p1 = 0) 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 1: TOST equivalence > study-design advisor: same question → 69 per arm (was 50) 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 2: 2×2 crossover total N > d=0.5, σ=1, ρ=0.5, α .05 two-sided, power .8 → 32 subjects in total (was 64) 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 2: 2×2 crossover total N > refuses a correlation it was not given rather than assuming one 1ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 2: 2×2 crossover total N > refuses a period count it has no formula for rather than multiplying N 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 3: AUC sample size (Hanley–McNeil) > AUC 0.85 vs 0.50, α .05, power .8 → 10 per group (variance no longer divided by 100) 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 3: AUC sample size (Hanley–McNeil) > refuses when no target AUC is given rather than assuming 0.85 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 4: diagnostic sensitivity sizing > Se 0.90 vs performance goal 0.85 → 363 diseased subjects (was 139 from a hard-coded 5% half-width) 35ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 4: diagnostic sensitivity sizing > the margin is an input: a 0.10 margin (goal 0.80) → [1.96·0.4 + 0.8416·0.3]²/0.1² = 107.4 → 108 3ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 4: diagnostic sensitivity sizing > refuses when no margin / performance goal is given rather than assuming 5% 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 5: Dunnett is Dunnett > 3 vs control, α .05 → per-comparison α 0.01883 (was Šidák 0.01695) 24ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 5: Dunnett is Dunnett > sample-size impact scales with (z₁₋α* + z₁₋β)², not z₁₋α*² — Bonferroni ×3 → +33% 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 6: kappa sizing refuses rather than fudging > computeAgreementKappa throws an explicit not-supported refusal 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 7: no silent substitution, power per endpoint type > time-to-event with effectSize ≥ 1 (HR ≤ 0) refuses instead of sizing HR = 0.5 1ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 7: no silent substitution, power per endpoint type > binary missing-data impact uses the two-proportion power (0.7035 at 74/group), not the continuous formula 1ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 7: no silent substitution, power per endpoint type > time-to-event missing-data impact uses the Schoenfeld power at the events the smaller N yields 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 7: no silent substitution, power per endpoint type > time-to-event reports the Schoenfeld power at its events (0.8003 at 247), not the target echoed 0ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 8: two-sample t-test sized with the t distribution > d = 0.5 → 64 per group (was 63), power 0.8015 at 64 4ms
+ ✓ tests/biostat/ana-sizing-reference.test.ts > defect 8: two-sample t-test sized with the t distribution > d = 0.3 → 176 per group (was 175) 1ms
+stdout | server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts
+{
+  "timestamp": "2026-10-26T15:23:09.212Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:09.214Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts
+{
+  "timestamp": "2026-10-26T15:23:09.215Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts
+{
+  "timestamp": "2026-10-26T15:23:09.284Z",
+  "level": "info",
+  "message": "[cybersecurity-524b] Cybersecurity §524B routes initialised",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts
+{
+  "timestamp": "2026-10-26T15:23:10.065Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts > POST /api/cybersecurity-524b/readiness > states no §524B figure when cyber-device status is not stated 34ms
+ ✓ server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts > POST /api/cybersecurity-524b/readiness > for a cyber device, reports the CYBER_ITEMS artifacts present and missing 6ms
+ ✓ server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts > POST /api/cybersecurity-524b/readiness > refuses the retired per-artifact booleans instead of scoring them 5ms
+ ✓ server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts > POST /api/cybersecurity-524b/readiness > refuses an artifact id that is not a §524B artifact, naming it 3ms
+ ✓ server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts > POST /api/ivd-lifecycle/software/cybersecurity > states no §524B figure when cyber-device status is not stated 6ms
+ ✓ server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts > POST /api/ivd-lifecycle/software/cybersecurity > for a cyber device, reports the CYBER_ITEMS artifacts present and missing 5ms
+ ✓ server/routes/__tests__/cybersecurity-routes-apply-524b-only-to-a-cyber-device.test.ts > POST /api/ivd-lifecycle/software/cybersecurity > refuses a cyber-device answer that is not true or false 3ms
+stderr | tests/biostat-multiplicity-design-route.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/biostat-multiplicity-design-route.test.ts
+{
+  "timestamp": "2026-10-26T15:23:11.106Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/biostat-multiplicity-design-route.test.ts
+{
+  "timestamp": "2026-10-26T15:23:11.288Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:11.289Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/biostat-multiplicity-design-route.test.ts
+{
+  "timestamp": "2026-10-26T15:23:11.289Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/biostat-multiplicity-design-route.test.ts > POST /api/biostat/multiplicity/design > hochberg: 200 with the thresholds by rank and alpha/m by hypothesis 24ms
+ ✓ tests/biostat-multiplicity-design-route.test.ts > POST /api/biostat/multiplicity/design > the route default alpha is visible in the response 4ms
+ ✓ tests/biostat-multiplicity-design-route.test.ts > POST /api/biostat/multiplicity/design > no hypotheses is a 400 naming the input, not a 500 4ms
+ ✓ tests/biostat-multiplicity-design-route.test.ts > POST /api/biostat/multiplicity/design > an empty family is a 400 naming the input, not a 500 3ms
+ ✓ tests/biostat-multiplicity-design-route.test.ts > POST /api/biostat/multiplicity/design > an unknown method is a 400 naming the input, not a 500 3ms
+ ✓ tests/biostat-multiplicity-design-route.test.ts > POST /api/biostat/multiplicity/design > alpha out of range is a 400 naming the input, not a 500 2ms
+ ✓ tests/biostat-multiplicity-design-route.test.ts > POST /api/biostat/multiplicity/design > a repeated id is a 400 naming the input, not a 500 2ms
+ ✓ tests/biostat-multiplicity-design-route.test.ts > POST /api/biostat/multiplicity/design > a top-level weights, which the designer does not read, is refused 2ms
+ ✓ tests/biostat-multiplicity-design-route.test.ts > POST /api/biostat/multiplicity/design > a top-level familyStructure, which the designer does not read, is refused 4ms
+stdout | server/routes/__tests__/capa-mdr-complaint-intake.test.ts
+{
+  "timestamp": "2026-10-26T15:23:12.465Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:12.466Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/capa-mdr-complaint-intake.test.ts
+{
+  "timestamp": "2026-10-26T15:23:12.466Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/capa-mdr-complaint-intake.test.ts
+[database] Database connection successful
+
+ ✓ server/routes/__tests__/capa-mdr-complaint-intake.test.ts > complaint intake requires the assessments the classification is computed from > refuses a complaint with no patientHarm, and records nothing 23ms
+ ✓ server/routes/__tests__/capa-mdr-complaint-intake.test.ts > complaint intake requires the assessments the classification is computed from > refuses a harm outside the vocabulary rather than reading it as none 3ms
+ ✓ server/routes/__tests__/capa-mdr-complaint-intake.test.ts > complaint intake requires the assessments the classification is computed from > refuses a complaint with no severityAssessment 3ms
+ ✓ server/routes/__tests__/capa-mdr-complaint-intake.test.ts > complaint intake requires the assessments the classification is computed from > records the assessments it was given, as given 6ms
+ ✓ server/routes/__tests__/capa-mdr-complaint-intake.test.ts > complaint intake requires the assessments the classification is computed from > passes an unstated event fact on unread for the service to refuse, not as false 4ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP05 imprecision reproduces the ANOVA exactly > two identical runs: all variability is within-run 3ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP05 imprecision reproduces the ANOVA exactly > clamps a negative between-run variance component to zero, not to NaN 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP05 imprecision reproduces the ANOVA exactly > separated runs: the between-run component is recovered exactly 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP05 imprecision reproduces the ANOVA exactly > the within-run SD is identical in both fixtures — only the run means moved 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP05 imprecision reproduces the ANOVA exactly > CV is null, not NaN, when the grand mean is zero 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP05 imprecision reproduces the ANOVA exactly > refuses an unbalanced or too-small design rather than estimating from it 1ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP17 detection capability is the stated closed form > LoB = mean_blank + cp·SD_blank, with default α = 0.05 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP17 detection capability is the stated closed form > LoD = LoB + cβ·pooled SD_low — the increment is exactly cβ·SD 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP17 detection capability is the stated closed form > the EP17-A2 bias correction K scales only the LoD increment 1ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP17 detection capability is the stated closed form > a tighter false-positive rate raises LoB 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP17 detection capability is the stated closed form > pools across low samples by degrees of freedom, not by simple averaging 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP09 method comparison separates mean bias from bias at the decision level > a pure constant offset: slope 1, bias 1 everywhere 1ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP09 method comparison separates mean bias from bias at the decision level > proportional bias: mean bias UNDERSTATES bias at a decision level above the range 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP09 method comparison separates mean bias from bias at the decision level > omitting the decision level yields null, not a bias at zero 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > EP09 method comparison separates mean bias from bias at the decision level > limits of agreement widen with scatter and stay centred on the mean bias 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > stability shelf-life reports null, never Infinity, when the limit is never reached > a degrading series gives the arithmetic answer 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > stability shelf-life reports null, never Infinity, when the limit is never reached > a flat series gives null with slope 0 — "no measurable degradation", not a failure 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > stability shelf-life reports null, never Infinity, when the limit is never reached > an Arrhenius fit extrapolated far outside its measured range returns null 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > stability shelf-life reports null, never Infinity, when the limit is never reached > an ordinary accelerated study still returns a finite prediction 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > J=2 matches the variance expression 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > J=5 matches the variance expression 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > J=10 matches the variance expression 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > J=37 matches the variance expression 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > J=100 matches the variance expression 0ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > J=5 is 0.00112 and λ = Δ²/Var = 2.2321, with ddf = J − 1 2ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > reader covariance puts a FLOOR under the variance that more readers cannot beat 1ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > so power rises with readers but saturates well short of 80% 3ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > removing the reader covariance removes the ceiling 1ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > mrmcReadersForPower returns an explicit null when the target is unreachable 6ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > and the smallest sufficient J when it is reachable 1ms
+ ✓ tests/biostat/analytical-and-reader-reference.test.ts > MRMC reader sizing follows Obuchowski–Rockette > rejects covariances that violate the OR ordering rather than producing a variance 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Power Adequacy Judgment > classifies adequate power correctly 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Power Adequacy Judgment > classifies marginal/underpowered correctly 2ms
+ ✓ tests/biostatistics-judgment.test.ts > Power Adequacy Judgment > classifies indeterminate when power is zero/invalid 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Power Adequacy Judgment > downgrades adequate to marginal with high attrition 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Power Adequacy Judgment > flags Phase III underpowered as high risk 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Assumption Fragility Judgment > scores low-to-moderate fragility for well-designed study 2ms
+ ✓ tests/biostatistics-judgment.test.ts > Assumption Fragility Judgment > scores high fragility for fragile study 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Assumption Fragility Judgment > flags missing effect size 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Assumption Fragility Judgment > flags zero attrition assumption 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Assumption Fragility Judgment > provides sensitivity factors with impact levels 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Endpoint-Method Defensibility > rates appropriate pairing as appropriate 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Endpoint-Method Defensibility > rates inappropriate pairing (cox for binary) as poorly matched 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Endpoint-Method Defensibility > applies pairing rules for non-inferiority without margin 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Endpoint-Method Defensibility > flags interim analyses without multiplicity adjustment 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Endpoint-Method Defensibility > adds Phase III regulatory consideration 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Risk Classifier > classifies low risk for adequate design 2ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Risk Classifier > classifies higher risk for fragile design 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Risk Classifier > identifies critical risk for inappropriate method 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Risk Classifier > detects missing data risk 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Risk Classifier > provides summary for all risk levels 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Tradeoff Interpreter > produces tradeoffs for adequate design 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Tradeoff Interpreter > identifies favorable tradeoffs for fragile design 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Tradeoff Interpreter > each tradeoff has complete structure 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Role-Aware Interpreter > produces different interpretations for each role 2ms
+ ✓ tests/biostatistics-judgment.test.ts > Role-Aware Interpreter > CEO interpretation focuses on business impact 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Role-Aware Interpreter > RA interpretation focuses on regulatory defensibility 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Role-Aware Interpreter > biostatistician interpretation is technical 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Role-Aware Interpreter > medical writer gets documentation guidance 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Artifact Generator > generates a statistical risk memo 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Artifact Generator > generates a sample size rationale 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Artifact Generator > generates a design assumption note 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Artifact Generator > generates a SAP section draft 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Artifact Generator > generates a scenario comparison brief 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Statistical Artifact Generator > artifact has structured metadata 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Full Judgment Pipeline > runs complete pipeline for adequate design 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Full Judgment Pipeline > runs complete pipeline for fragile design 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Full Judgment Pipeline > runs complete pipeline for invalid input 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Full Judgment Pipeline > pipeline + artifact generation works end-to-end 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Invalid Input Handling > handles zero effect size gracefully 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Invalid Input Handling > handles zero attrition 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Invalid Input Handling > handles inappropriate method pairing 0ms
+ ✓ tests/biostatistics-judgment.test.ts > Invalid Input Handling > full pipeline handles invalid input without throwing 1ms
+ ✓ tests/biostatistics-judgment.test.ts > Invalid Input Handling > artifact generation handles invalid input scenario 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > covariate balance distinguishes agreement from no overlap > a binary covariate in 100% of treated and 0% of controls is NOT balanced 3ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > covariate balance distinguishes agreement from no overlap > the same holds for a continuous covariate constant in each arm 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > covariate balance distinguishes agreement from no overlap > but a covariate constant at the SAME value in both arms IS balanced 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > covariate balance distinguishes agreement from no overlap > computes the ordinary SMD exactly: (x̄_t − x̄_c) / √((s²_t + s²_c)/2) 1ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > covariate balance distinguishes agreement from no overlap > varianceRatio is null, not NaN, when the control variance is zero 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > covariate balance distinguishes agreement from no overlap > a separating covariate does not hide the SMDs of the others 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > covariate balance distinguishes agreement from no overlap > the memo names the separating covariates instead of burying them in a maximum 1ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > borrowing posteriors are precision-weighted averages, exactly > a0 = 0 borrows nothing: the posterior IS the concurrent control 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > borrowing posteriors are precision-weighted averages, exactly > a0 = 1 with equal precision gives the midpoint and se/√2 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > borrowing posteriors are precision-weighted averages, exactly > a partial discount lands on the closed form 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > borrowing posteriors are precision-weighted averages, exactly > the posterior mean is monotone in a0 and always between the two sources 1ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > borrowing posteriors are precision-weighted averages, exactly > commensurate τ² = 0 reproduces the power prior at a0 = 1, exactly 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > borrowing posteriors are precision-weighted averages, exactly > commensurability variance attenuates borrowing without a manual a0 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > borrowing posteriors are precision-weighted averages, exactly > more commensurability variance always borrows less 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > borrowing posteriors are precision-weighted averages, exactly > rejects out-of-range borrowing parameters rather than extrapolating 1ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the bias tipping point is the SMALLEST bias that overturns the conclusion > reports 7.8, not the −15 range endpoint 1ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the bias tipping point is the SMALLEST bias that overturns the conclusion > no grid point closer to zero overturns the conclusion 2ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the bias tipping point is the SMALLEST bias that overturns the conclusion > is unchanged where the old rule already agreed with it 1ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the bias tipping point is the SMALLEST bias that overturns the conclusion > stays null when the conclusion holds across the whole range 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the bias tipping point is the SMALLEST bias that overturns the conclusion > is deterministic and carries reproducible provenance 1ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the bias tipping point is the SMALLEST bias that overturns the conclusion > the borrowing sweep scans down from full borrowing and was already right 2ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > disproportionality reproduces the 2×2 measures by hand > PRR = [a/(a+b)] / [c/(c+d)] = 18 exactly 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > disproportionality reproduces the 2×2 measures by hand > ROR = ad/bc = 22.25 exactly 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > disproportionality reproduces the 2×2 measures by hand > the Yates-corrected χ² matches its definition, derived here 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > disproportionality reproduces the 2×2 measures by hand > the CIs bracket the point estimate and exclude 1 for a real signal 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > disproportionality reproduces the 2×2 measures by hand > the EMA criterion needs all three conditions, and the count gate bites 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > disproportionality reproduces the 2×2 measures by hand > rejects non-integer or negative cells rather than computing on them 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the Bayesian methods shrink small counts — which is the point of them > BCPNN IC = log₂[(a+α)/(E+α)], derived not quoted 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the Bayesian methods shrink small counts — which is the point of them > EBGM sits below the raw report ratio, and the interval brackets it 1ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the Bayesian methods shrink small counts — which is the point of them > EBGM is below the posterior MEAN as well — a geometric mean must be 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the Bayesian methods shrink small counts — which is the point of them > a PRR of 9 on three reports clears the frequentist bar but not the MGPS one 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the Bayesian methods shrink small counts — which is the point of them > the panel reports the divergence rather than a single verdict 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the Bayesian methods shrink small counts — which is the point of them > relativeReportRatio is null, not Infinity, when the product has no reports 0ms
+ ✓ tests/biostat/external-control-and-signal-reference.test.ts > the Bayesian methods shrink small counts — which is the point of them > rejects an empty table and non-positive prior parameters 0ms
+stderr | tests/biostat-sap-sign-route-removed.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/biostat-sap-sign-route-removed.test.ts
+{
+  "timestamp": "2026-10-26T15:23:14.047Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/biostat-sap-sign-route-removed.test.ts
+{
+  "timestamp": "2026-10-26T15:23:14.176Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:14.177Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/biostat-sap-sign-route-removed.test.ts
+{
+  "timestamp": "2026-10-26T15:23:14.177Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/biostat-sap-sign-route-removed.test.ts > a SAP version is not signed by a route that verifies no signer > POST /api/biostat/sap/:sapVersionId/sign is not a route: 404 22ms
+ ✓ tests/biostat-sap-sign-route-removed.test.ts > a SAP version is not signed by a route that verifies no signer > the SAP service has no signVersion to call 0ms
+stdout | server/services/ana/__tests__/capa-mdr-tools.test.ts
+{
+  "timestamp": "2026-10-26T15:23:16.315Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:16.317Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/capa-mdr-tools.test.ts
+{
+  "timestamp": "2026-10-26T15:23:16.317Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/capa-mdr-tools.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/capa-mdr-tools.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/capa-mdr-tools.test.ts
+{
+  "timestamp": "2026-10-26T15:23:16.597Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > CAPA_MDR_TOOLS contract > exposes the five post-market safety tools with object schemas 4ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > CAPA_MDR_TOOLS contract > only assess_mdr_reportability is context-free; the DB tools require a programId 2ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > a death is FDA MDR reportable 24ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > a plain malfunction with recurrence potential is FDA reportable 1ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > a non-serious event is computed as not FDA reportable 1ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > refuses {} rather than determining "no MDR" for a harm nobody assessed 1ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > refuses {"patientHarm":"unknown"} rather than determining "no MDR" for a harm nobody assessed 1ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > create_complaint requires the harm and severity assessments, and asks for them 8ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > the DB reads refuse to run without organization context 1ms
+stderr | server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > uses the verified caller/current role rather than a stale or supplied role
+{
+  "timestamp": "2026-10-26T15:23:25.115Z",
+  "level": "warn",
+  "message": "[governed-capa] Governed CAPA transaction did not return confirmed success",
+  "context": {
+    "organizationId": 1,
+    "phase": "before-commit",
+    "code": "CAPA_ACTOR_REQUIRED"
+  }
+}
+
+stderr | server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a caller from another active tenant scope and does not run the action
+{
+  "timestamp": "2026-10-26T15:23:25.117Z",
+  "level": "warn",
+  "message": "[governed-capa] Governed CAPA transaction did not return confirmed success",
+  "context": {
+    "organizationId": 1,
+    "phase": "before-commit",
+    "code": "CAPA_ACTOR_REQUIRED"
+  }
+}
+
+stderr | server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > cannot commit a mutation that omitted its critical audit write
+{
+  "timestamp": "2026-10-26T15:23:25.118Z",
+  "level": "warn",
+  "message": "[governed-capa] Governed CAPA transaction did not return confirmed success",
+  "context": {
+    "organizationId": 1,
+    "phase": "before-commit",
+    "code": "CAPA_AUDIT_UNAVAILABLE"
+  }
+}
+
+stderr | server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > does not claim rollback after a lost commit completion and supplies record readback
+{
+  "timestamp": "2026-10-26T15:23:25.121Z",
+  "level": "warn",
+  "message": "[governed-capa] Governed CAPA transaction did not return confirmed success",
+  "context": {
+    "organizationId": 1,
+    "phase": "commit",
+    "code": "ECONNRESET"
+  }
+}
+
+stderr | server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > rolls back a known critical-audit refusal before any commit attempt
+{
+  "timestamp": "2026-10-26T15:23:25.122Z",
+  "level": "warn",
+  "message": "[governed-capa] Governed CAPA transaction did not return confirmed success",
+  "context": {
+    "organizationId": 1,
+    "phase": "before-commit",
+    "code": "CAPA_AUDIT_UNAVAILABLE"
+  }
+}
+
+stderr | server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > propagates canonical unresolved-anchor refusal and does not substitute a programme policy
+{
+  "timestamp": "2026-10-26T15:23:25.126Z",
+  "level": "warn",
+  "message": "[governed-capa] Governed CAPA transaction did not return confirmed success",
+  "context": {
+    "organizationId": 1,
+    "phase": "before-commit",
+    "code": "PROJECT_ANCHOR_UNRESOLVED"
+  }
+}
+
+stderr | server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > does not disguise a lost actor during list admission as an empty queue
+{
+  "timestamp": "2026-10-26T15:23:25.127Z",
+  "level": "warn",
+  "message": "[governed-capa] Governed CAPA transaction did not return confirmed success",
+  "context": {
+    "organizationId": 1,
+    "phase": "before-commit",
+    "code": "IMPORT_WRITE_PERMISSION_DENIED"
+  }
+}
+
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a missing or malformed trusted actor before connecting: undefined 2ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a missing or malformed trusted actor before connecting: {"userId":null} 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a missing or malformed trusted actor before connecting: {"userId":0} 0ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a missing or malformed trusted actor before connecting: {"userId":1.1} 0ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > uses the verified caller/current role rather than a stale or supplied role 2ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a caller from another active tenant scope and does not run the action 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > cannot commit a mutation that omitted its critical audit write 2ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > returns the truthful success receipt only after confirmed commit 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > does not claim rollback after a lost commit completion and supplies record readback 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > rolls back a known critical-audit refusal before any commit attempt 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > contains a failed connection without running business code or leaking store details 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > allows a current viewer to read but never adds a mutation audit receipt 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > uses canonical private-program authority on the same transaction before locking the programme 2ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > propagates canonical unresolved-anchor refusal and does not substitute a programme policy 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > does not disguise a lost actor during list admission as an empty queue 1ms
+stdout | server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts
+{
+  "timestamp": "2026-10-26T15:23:25.910Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:25.912Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts
+{
+  "timestamp": "2026-10-26T15:23:25.912Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts
+{
+  "timestamp": "2026-10-26T15:23:26.004Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > build_postmarket_report: a fault in the engine > is reported as the tool failing, not as "more details are needed" 4ms
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > build_postmarket_report: a fault in the engine > still asks for parameters when the engine names the parameter problem 1ms
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > determine_assay_cutoff asks for missing schema inputs even when its engine throws a TypeError 2ms
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > determine_assay_cutoff asks for missing schema inputs even when its engine throws a TypeError 0ms
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > assess_scientific_validity asks for missing schema inputs even when its engine throws a TypeError 1ms
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > assess_shelf_life_stability asks for missing schema inputs even when its engine throws a TypeError 1ms
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > assess_accelerated_stability asks for missing schema inputs even when its engine throws a TypeError 0ms
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > a TypeError with all schema inputs stated remains an engine fault 0ms
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > determine_assay_cutoff with one class of case still asks for both 1ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ(0) = 0.5 1ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ(1) = 0.8413447461 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ(1.644853627) = 0.95 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ(1.959963985) = 0.975 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ(2.326347874) = 0.99 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ(-1.959963985) = 0.025 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ⁻¹(0.5) = 0 1ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ⁻¹(0.9) = 1.2815515655 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ⁻¹(0.95) = 1.644853627 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ⁻¹(0.975) = 1.9599639845 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ⁻¹(0.99) = 2.326347874 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ⁻¹(0.995) = 2.5758293035 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > Φ and Φ⁻¹ invert each other 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > normal.ts — the functions everything else is built on > is symmetric: Φ(−z) = 1 − Φ(z) 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > special.ts — exact binomial results, which a regulator recomputes > Clopper–Pearson 2/10 95% 0.0252 = [0.5561, undefined] 1ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > special.ts — exact binomial results, which a regulator recomputes > Clopper–Pearson 0/10 95% 0 = [0.3085, undefined] 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > special.ts — exact binomial results, which a regulator recomputes > Clopper–Pearson 10/10 95% 0.6915 = [1, undefined] 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > special.ts — exact binomial results, which a regulator recomputes > Clopper–Pearson 5/20 95% 0.0866 = [0.491, undefined] 2ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > special.ts — exact binomial results, which a regulator recomputes > Clopper–Pearson 27/30 95% 0.7347 = [0.9789, undefined] 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > special.ts — exact binomial results, which a regulator recomputes > brackets the point estimate and never leaves [0, 1] 6ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > special.ts — exact binomial results, which a regulator recomputes > exact binomial tails match hand-computed values 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > special.ts — exact binomial results, which a regulator recomputes > rejects impossible inputs rather than returning an interval 1ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > multiplicity.ts — decisions, not approximations > Bonferroni rejects only p ≤ α/m 1ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > multiplicity.ts — decisions, not approximations > Holm stops at the first non-rejection 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > multiplicity.ts — decisions, not approximations > Hochberg rejects everything when the LARGEST p passes its own threshold 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > multiplicity.ts — decisions, not approximations > Hochberg is never less powerful than Holm on the same input 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > multiplicity.ts — decisions, not approximations > rejects nothing when every p is above α 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > rmst.ts — Kaplan–Meier and restricted mean survival > the KM survival curve steps 0.8 → 0.6 → 0.4 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > rmst.ts — Kaplan–Meier and restricted mean survival > censored observations reduce the risk set without dropping survival 1ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > rmst.ts — Kaplan–Meier and restricted mean survival > RMST(τ=5) = 3.2, the area under that step function 1ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > rmst.ts — Kaplan–Meier and restricted mean survival > RMST is monotone in τ and never exceeds τ 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > rmst.ts — Kaplan–Meier and restricted mean survival > removes censored subjects from the risk set — INTERLEAVED censoring 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > rmst.ts — Kaplan–Meier and restricted mean survival > with no events at all, RMST equals τ exactly 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > dose-finding-boin.ts — the boundaries that pick the next patient’s dose > target DLT rate 0.25 → λE=0.197, λD=0.298 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > dose-finding-boin.ts — the boundaries that pick the next patient’s dose > target DLT rate 0.3 → λE=0.236, λD=0.359 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > dose-finding-boin.ts — the boundaries that pick the next patient’s dose > always brackets the target: λE < target < λD 0ms
+ ✓ tests/biostat/statistical-core-reference.test.ts > dose-finding-boin.ts — the boundaries that pick the next patient’s dose > boundaries rise with the target 0ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > solveSampleSize — binary endpoint (pooled-variance normal approximation) > sizes 0.5 vs 0.7 at 93 per arm, and states the method and the continuity-corrected 103 6ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > solveSampleSize — binary endpoint (pooled-variance normal approximation) > power at 93 per arm is the pooled-z power 0.800005 1ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > solveSampleSize — binary endpoint (pooled-variance normal approximation) > refuses to size a binary risk difference without a control rate rather than standardizing it 1ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > solveSampleSize — time-to-event endpoint (Schoenfeld events) > returns 247 EVENTS for HR 0.7 and leaves subjects unknown without an event probability 3ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > solveSampleSize — time-to-event endpoint (Schoenfeld events) > is sign-symmetric in the effect (ln 0.7 sizes the same 247 events) 0ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > solveSampleSize — time-to-event endpoint (Schoenfeld events) > converts events to subjects only through a supplied event probability 1ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > sampleSizeForPower — continuous, labelled as the normal approximation it is > gives the z-approximation 62.79 → 63 per arm for d = 0.5 (the t-based answer would be 64) 1ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > assumption fragility — exact z-test power under each shift > power at 80% of the planned effect is 61.1% for an 80%-powered design, not 51% 4ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > assumption fragility — exact z-test power under each shift > a 90%-powered design keeps 73.7% at 80% of the effect: marginal, not broken (the shortcut said 58%) 2ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > assumption fragility — exact z-test power under each shift > a 50% variance increase scales the noncentrality by 1/√1.5 (62.8% from 80%, the shortcut said 65%) 3ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > assumption fragility — exact z-test power under each shift > variance: an 86%-powered design falls below 70% (exact 69.9%; the shortcut said 70.2% and passed it) 1ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > assumption fragility — exact z-test power under each shift > doubling attrition is reported as the exact power at the reduced evaluable n 0ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > assumption fragility — exact z-test power under each shift > time-to-event: a 20% weaker effect is a 20% smaller log hazard ratio (HR 0.7 → 0.7^0.8) 0ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > assumption fragility — exact z-test power under each shift > does not invent a number for an equivalence (TOST) design 0ms
+ ✓ tests/biostat/study-design-and-fragility-reference.test.ts > design adapter — the variance default it reports is the one the engine applies > says SD = 1, not SD = effect 2ms
+stdout | server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+{
+  "timestamp": "2026-10-26T15:23:29.094Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:29.095Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+{
+  "timestamp": "2026-10-26T15:23:29.096Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+[database] Database connection successful
+
+stderr | server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+{
+  "timestamp": "2026-10-26T15:23:29.125Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > none does not suppress an FDA-reportable malfunction 5ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > injury does not suppress an FDA-reportable malfunction 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > none leaves FDA reportability unknown when malfunction risk was not stated 2ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > injury leaves FDA reportability unknown when malfunction risk was not stated 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > no actual harm does not settle an EU malfunction serious-incident determination 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a serious injury with nothing else stated is FDA reportable, and the rest is not determined 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a malfunction whose recurrence risk is not stated is not "not reportable" 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a malfunction in the EU leaves EU vigilance not assessed, not "not reportable" 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a country stated as unknown leaves EU vigilance undetermined, not "outside the EU" 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > records the facts it used, and is complete when every one it turns on is stated 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the normalized country for "       de       ", within the varchar(8) limit 2ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the normalized country for "  UnKnOwN  ", within the varchar(8) limit 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without anticipatesCorrection, and stores nothing 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without isMalfunction 2ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without eventLocationCountry 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without trendThresholdCrossed 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a country it cannot read rather than read it as outside the EU 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the facts as stated; a country stated as unknown leaves EU vigilance undetermined 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > assess_mdr_reportability asks for each omitted fact > { patientHarm: "serious_injury" } is not a 30-day report: it names each fact it was not given 3ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > assess_mdr_reportability asks for each omitted fact > computes from stated facts, and says what a country stated as unknown leaves undetermined 1ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeDiagnosticAccuracy > sensitivity, specificity, accuracy, Youden J 4ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeDiagnosticAccuracy > likelihood ratios and sample predictive values 3ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeDiagnosticAccuracy > Cohen's kappa 1ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeDiagnosticAccuracy > prevalence-adjusted predictive values 1ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeDiagnosticAccuracy > returns null adjusted PVs when no prevalence supplied 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeDiagnosticAccuracy > Clopper–Pearson CIs bracket the point estimates 1ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeDiagnosticAccuracy > LR+ is UNDEFINED (null) at perfect specificity, not Infinity 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeDiagnosticAccuracy > rejects degenerate or invalid tables 1ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > shared IVDR 2×2 point estimates > represents undefined denominators explicitly for persistence/UI consumers 1ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > shared IVDR 2×2 point estimates > rejects unsafe cell -1 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > shared IVDR 2×2 point estimates > rejects unsafe cell 1.5 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > shared IVDR 2×2 point estimates > rejects unsafe cell NaN 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > shared IVDR 2×2 point estimates > rejects unsafe cell Infinity 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeRoc > AUC = 1 for perfectly separable scores 1ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeRoc > AUC matches the Mann–Whitney hand calculation (0.75) 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeRoc > handles ties with average ranks (AUC = 0.5 for identical scores) 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeRoc > requires both classes present 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeRoc > DeLong SE is zero for perfect separation and positive with overlap 2ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeWeightedKappa > perfect agreement → κ = 1 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeWeightedKappa > 2×2 linear-weighted κ equals unweighted Cohen κ (0.7) 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeWeightedKappa > quadratic-weighted κ matches a hand calculation (0.6667) 0ms
+ ✓ server/services/stats/__tests__/clinical-performance.test.ts > computeWeightedKappa > rejects non-square or empty matrices 0ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > a 2×2 crossover is sized as a crossover, on the headline figure > reports the crossover total (32), not the parallel-group total (128) 4ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > a 2×2 crossover is sized as a crossover, on the headline figure > names the crossover design in the method, so the number is readable 1ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > a 2×2 crossover is sized as a crossover, on the headline figure > splits the total over the two sequences, not over two parallel arms 1ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > a 2×2 crossover is sized as a crossover, on the headline figure > keeps the parallel-group comparator available, so the saving is auditable 1ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > a 2×2 crossover is sized as a crossover, on the headline figure > still refuses a crossover whose correlation it was not given 8ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > a 2×2 crossover is sized as a crossover, on the headline figure > applies attrition to the crossover total 1ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > an AUC/ROC endpoint is sized by the AUC method, on any track > computes rather than refusing on the biotech_pharma track 2ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > an AUC/ROC endpoint is sized by the AUC method, on any track > computes rather than refusing on the medical_device track 1ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > an AUC/ROC endpoint is sized by the AUC method, on any track > computes rather than refusing on the diagnostics_ivd track 1ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > an AUC/ROC endpoint is sized by the AUC method, on any track > does not ask for sensitivity, a field an ROC design does not carry 0ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > an AUC/ROC endpoint is sized by the AUC method, on any track > carries the expected AUC and its interval through to the result 1ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > an AUC/ROC endpoint is sized by the AUC method, on any track > still refuses an AUC design with no target AUC, naming that field 1ms
+ ✓ tests/biostat/design-dispatch-reaches-its-method.test.ts > an AUC/ROC endpoint is sized by the AUC method, on any track > records the null AUC it used when none was given 0ms
+stdout | server/services/ana/__tests__/ivd-lifecycle-tools.test.ts
+{
+  "timestamp": "2026-10-26T15:23:32.321Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:32.322Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ivd-lifecycle-tools.test.ts
+{
+  "timestamp": "2026-10-26T15:23:32.323Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ivd-lifecycle-tools.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/ivd-lifecycle-tools.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ivd-lifecycle-tools.test.ts
+{
+  "timestamp": "2026-10-26T15:23:32.412Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ivd-lifecycle-tools.test.ts > IVD_LIFECYCLE_TOOLS contract > exposes the eight lifecycle tools with object schemas 3ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-tools.test.ts > IVD lifecycle handlers (live engine calls) > screen_signal_panel computes disproportionality metrics from a 2x2 table 4ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-tools.test.ts > IVD lifecycle handlers (live engine calls) > assess_iso17511_traceability returns a validity assessment 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-tools.test.ts > IVD lifecycle handlers (live engine calls) > determine_assay_cutoff computes a cutoff from labelled observations 2ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-tools.test.ts > IVD lifecycle handlers (live engine calls) > build_postmarket_report refuses a PSUR and names the canonical post-market document path 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-tools.test.ts > IVD lifecycle handlers (live engine calls) > build_postmarket_report drafts an EU MIR and reports validity 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-tools.test.ts > IVD lifecycle handlers (live engine calls) > build_postmarket_report rejects an unknown report type as needs_parameters 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-tools.test.ts > IVD lifecycle handlers (live engine calls) > screen_signal_panel relays a parameter error for a malformed cell 1ms
+stdout | server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts
+{
+  "timestamp": "2026-10-26T15:23:35.061Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:35.062Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts
+{
+  "timestamp": "2026-10-26T15:23:35.062Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts
+{
+  "timestamp": "2026-10-26T15:23:35.156Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > does not establish validity or presume a cutoff when prespecification is unstated 3ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > refuses a table with no diseased subjects instead of returning sensitivity 0 1ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > refuses a table with no non-diseased subjects instead of returning specificity 0 0ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > refuses an empty table instead of reporting every metric as 0 1ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > reports the sensitivity, specificity and exact intervals computeDiagnosticAccuracy gives 2ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > reports PPV as undefined (null), not 0, when no subject tested positive 0ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > a null intended-use prevalence is not stated, not 0: no re-projection and no low-prevalence caution 0ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > no diseased subjects: needs_parameters, never a computed 0% sensitivity 2ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > no non-diseased subjects: needs_parameters, never a computed 0% specificity 1ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > an all-zero table: no computed metrics, and the reply names the empty table 1ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > a negative count: needs_parameters, not clamped to 0 0ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > an intended-use prevalence outside [0, 1]: needs_parameters, not clamped 0ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > a complete table is computed, with exact intervals on both metrics 1ms
+stdout | server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts
+{
+  "timestamp": "2026-10-26T15:23:37.882Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:37.883Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts
+{
+  "timestamp": "2026-10-26T15:23:37.883Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts
+[database] Database connection successful
+
+stderr | server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts
+{
+  "timestamp": "2026-10-26T15:23:37.970Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no net margin stated > does not assess robustness and prints no margin when netBalanceEstimate is omitted 2ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no net margin stated > reads a null margin as not stated, not as 0 0ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no net margin stated > control: a stated margin still gives a verdict and prints the margin 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — a source with no level > reports the level as not stated instead of grading it moderate 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — a source with no level > keeps a fragile verdict that the stated levels already reach 0ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no source stated > grades nothing and claims no insensitivity or labeling conclusion 0ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no source stated > control: fully stated inputs keep the existing verdict and wording 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > S3 review: an unstated affected side > does not invent both benefit and risk or side-specific conclusions 0ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > S3 review: an unstated affected side > keeps explicitly stated directions 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > S3 review: an unstated affected side > does not advertise a default affected side 0ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assess_br_uncertainty handler > returns not_assessed through the tool envelope when no margin is stated 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assess_br_uncertainty definition > says an omitted net margin leaves robustness not assessed 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assess_br_uncertainty definition > no longer tells the model an omitted level defaults to moderate 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > powerTwoSampleMeans matches the closed form it implements > δ=0.5, n=64 per arm 2ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > powerTwoSampleMeans matches the closed form it implements > δ=0.5, n=63 per arm 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > powerTwoSampleMeans matches the closed form it implements > δ=1, n=17 per arm 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > powerTwoSampleMeans matches the closed form it implements > δ=0.2, n=400 per arm 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > powerTwoSampleMeans matches the closed form it implements > δ=0.8, n=30 per arm 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > powerTwoSampleMeans matches the closed form it implements > the canonical design point: δ=0.5, n=64/arm, α=0.025 one-sided → 0.8074 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > powerTwoSampleMeans matches the closed form it implements > power at ZERO effect equals alpha exactly 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > powerTwoSampleMeans matches the closed form it implements > rises with n and with effect size, and never leaves (0, 1] 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > powerTwoSampleMeans matches the closed form it implements > returns 0 for a non-positive sample size instead of NaN 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > assurance is the prior-average of power > collapses to frequentist power when the prior is a point mass 2ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > assurance is the prior-average of power > falls as the prior widens, and stays below power at the mean 3ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > assurance is the prior-average of power > rejects a non-positive sample size rather than returning an assurance 1ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > MMRM sizing reduces to the classic formula when the design degenerates > one visit, ρ=0, full retention → the textbook two-sample n 1ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > MMRM sizing reduces to the classic formula when the design degenerates > σ=1 δ=0.5 α=0.05 power=0.9 reduces correctly 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > MMRM sizing reduces to the classic formula when the design degenerates > σ=2 δ=0.5 α=0.05 power=0.9 reduces correctly 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > MMRM sizing reduces to the classic formula when the design degenerates > σ=1 δ=0.25 α=0.05 power=0.8 reduces correctly 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > MMRM sizing reduces to the classic formula when the design degenerates > σ=1.5 δ=0.6 α=0.01 power=0.9 reduces correctly 0ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > MMRM sizing reduces to the classic formula when the design degenerates > complete follow-up gives MMRM no advantage over completers 1ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > MMRM sizing reduces to the classic formula when the design degenerates > achieves at least the requested power, always 1ms
+ ✓ tests/biostat/power-and-sizing-reference.test.ts > MMRM sizing reduces to the classic formula when the design degenerates > rejects an out-of-range correlation rather than inverting a bad matrix 1ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalQuantile — full precision > Φ⁻¹(0.975) = 1.959963984540054 to 1e-12 1ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalQuantile — full precision > Φ⁻¹(0.95) = 1.6448536269514722 to 1e-12 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalQuantile — full precision > Φ⁻¹(0.995) = 2.5758293035489004 to 1e-12 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalQuantile — full precision > Φ⁻¹(0.9) = 1.2815515655446004 to 1e-12 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalQuantile — full precision > Φ⁻¹(0.8) = 0.8416212335729143 to 1e-12 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalQuantile — full precision > Φ⁻¹(0.5) = 0 to 1e-12 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalQuantile — full precision > Φ⁻¹(0.001) = -3.090232306167813 to 1e-12 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalQuantile — full precision > Φ⁻¹(0.025) = -1.959963984540054 to 1e-12 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalQuantile — full precision > Φ⁻¹(1e-10) = -6.361340902404056 to 1e-12 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalQuantile — full precision > is the inverse of normalCdf to 1e-14 across the central range 1ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalCdf — full precision, including the tails > Φ(1.96) = 0.9750021048517795 to a relative 1e-14 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalCdf — full precision, including the tails > Φ(0.5) = 0.6914624612740131 to a relative 1e-14 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalCdf — full precision, including the tails > Φ(-1) = 0.15865525393145707 to a relative 1e-14 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalCdf — full precision, including the tails > Φ(-3) = 0.0013498980316300946 to a relative 1e-14 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalCdf — full precision, including the tails > Φ(3) = 0.9986501019683699 to a relative 1e-14 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalCdf — full precision, including the tails > Φ(-5) = 2.866515718791939e-7 to a relative 1e-14 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalCdf — full precision, including the tails > Φ(-10) = 7.619853024160527e-24 to a relative 1e-14 0ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalCdf — full precision, including the tails > is symmetric: Φ(−x) + Φ(x) = 1 1ms
+ ✓ tests/biostat/normal-precision-reference.test.ts > normalCdf — full precision, including the tails > is exactly 0 and 1 beyond ±38 and NaN for NaN 1ms
+stdout | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+{
+  "timestamp": "2026-10-26T15:23:41.196Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:41.197Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+{
+  "timestamp": "2026-10-26T15:23:41.197Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+{
+  "timestamp": "2026-10-26T15:23:41.289Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with nothing stated > does not pass, and reads no artifact as provided 3ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with nothing stated > leaves the cyber-device status undetermined instead of applying 524B 1ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with stated inputs > reads true as present and false as missing 1ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with stated inputs > passes only when every criterion and artifact is stated 1ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with stated inputs > decides "not a cyber device" from one criterion stated false 0ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with stated inputs > keeps a missing SBOM critical while 524B is undetermined 0ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assess_device_cybersecurity tool > relays the not-stated reading 2ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assess_device_cybersecurity tool > refuses a yes/no answer that is not a boolean instead of reading it 1ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assess_device_cybersecurity tool > does not tell AnA that an omitted input is true or provided 1ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > S3 review: 524B inputs and critical artifacts fail closed > does not assume the submission date even when the cyber-device criteria are true 1ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > S3 review: 524B inputs and critical artifacts fail closed > rules out 524B when the submission explicitly predates it, even if device criteria are unstated 0ms
+ ✓ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > S3 review: 524B inputs and critical artifacts fail closed > grades absent and unstated mandatory artifacts critical unless 524B is explicitly ruled out 1ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > win ratio counts pairs exactly > every pair a win: 4 wins, 0 losses, ratio UNDEFINED not Infinity 4ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > win ratio counts pairs exactly > an even split gives a win ratio of exactly 1 1ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > win ratio counts pairs exactly > all ties: no wins, no losses, ratio undefined 1ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > win ratio counts pairs exactly > survives JSON serialization — the wire value is intentional 1ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > win ratio counts pairs exactly > wins + losses + ties always equals n₁ × n₂ 1ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > win ratio counts pairs exactly > direction is honoured: the same data reverses under lower-better 1ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > win ratio counts pairs exactly > the hierarchy falls through: level 1 ties, level 2 decides 0ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > win ratio counts pairs exactly > level 1 decides when it can — level 2 must not override it 0ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > win ratio counts pairs exactly > censoring makes a pair indeterminate rather than a win 1ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > win ratio counts pairs exactly > refuses an arm too small to compare, rather than returning a ratio 1ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > event projection matches the closed form > t=2 (within accrual) matches the integral 1ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > event projection matches the closed form > t=5 (within accrual) matches the integral 0ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > event projection matches the closed form > t=10 (within accrual) matches the integral 0ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > event projection matches the closed form > t=10 evaluates to 27.865 — the worked example in the header 0ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > event projection matches the closed form > no events before the trial starts 0ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > event projection matches the closed form > approaches N as t → ∞ when nobody drops out 0ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > event projection matches the closed form > dropout strictly reduces the events at every horizon 0ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > event projection matches the closed form > inverts consistently: project to D events, then evaluate at that time 1ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > event projection matches the closed form > returns 0 time for a non-positive target 0ms
+ ✓ tests/biostat/win-ratio-and-projection-reference.test.ts > event projection matches the closed form > rejects a negative horizon rather than extrapolating backwards 1ms
+ ✓ tests/biostat/hazard-ratio-convention-is-stated.test.ts > the engine reads effectSize as the hazard-ratio reduction > sizes 0.3 as HR 0.700 — 550 subjects, the figure an HR of 0.7 needs 2ms
+ ✓ tests/biostat/hazard-ratio-convention-is-stated.test.ts > the engine reads effectSize as the hazard-ratio reduction > sizes 0.7 as HR 0.300 — 50 subjects, which is what the old label invited 1ms
+ ✓ tests/biostat/hazard-ratio-convention-is-stated.test.ts > the engine reads effectSize as the hazard-ratio reduction > states the convention in its refusal rather than guessing 1ms
+ ✓ tests/biostat/hazard-ratio-convention-is-stated.test.ts > the defensibility assessment carries what the engine said it computed > reports the method, the formula and the assumptions, not only the N 4ms
+ ✓ tests/biostat/hazard-ratio-convention-is-stated.test.ts > the defensibility assessment carries what the engine said it computed > discloses the event rate it defaulted, which drives subjects from events 0ms
+ ✓ tests/biostat/hazard-ratio-convention-is-stated.test.ts > the defensibility assessment carries what the engine said it computed > still refuses, with the engine’s own sentence, when the design cannot be sized 0ms
+ ✓ tests/biostat/hazard-ratio-convention-is-stated.test.ts > the tool schema a model reads states the convention > says what effectSize means for a time-to-event endpoint 0ms
+stdout | server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts
+{
+  "timestamp": "2026-10-26T15:23:44.797Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:23:44.798Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts
+{
+  "timestamp": "2026-10-26T15:23:44.798Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts
+[database] Database connection successful
+
+stderr | server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts
+{
+  "timestamp": "2026-10-26T15:23:44.898Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > refuses an unstated verdict rather than planning a favourable one 3ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > refuses a verdict outside the vocabulary rather than carrying it through 0ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > names absent key messages as not stated instead of inventing a benefit and a risk profile 1ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > treats a blank message as not stated, not as the word "benefit" 1ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > still plans from a stated verdict and stated messages, unchanged 1ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > plan_br_communication: AnA asks for the conclusion > returns needs_parameters naming verdict, with no plan and no core message 2ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > plan_br_communication: AnA asks for the conclusion > still computes once the verdict is stated 1ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > plan_br_communication: AnA asks for the conclusion > its verdict property names no default and tells the model not to choose one 1ms
+ ✓ tests/biostat/mmrm-power-uses-the-canonical-cdf.test.ts > mmrmPower against an independent computation > equals Φ(|δ|/SE − z) exactly at every n, which a 7e-8 CDF cannot 3ms
+ ✓ tests/biostat/mmrm-power-uses-the-canonical-cdf.test.ts > mmrmPower against an independent computation > agrees with the achieved power the sizing itself reports 1ms
+ ✓ tests/biostat/mmrm-power-uses-the-canonical-cdf.test.ts > mmrmPower against an independent computation > crosses the target at exactly the n the sizing returned 1ms
+ ✓ tests/biostat/mmrm-power-uses-the-canonical-cdf.test.ts > mmrmPower against an independent computation > increases with n and with the effect, and falls with the variance 1ms
+ ✓ tests/biostat/mmrm-power-uses-the-canonical-cdf.test.ts > mmrmPower against an independent computation > honours an unequal allocation through n2 1ms
+ ✓ tests/biostat/mmrm-power-uses-the-canonical-cdf.test.ts > the module carries no second normal CDF > declares no private standard-normal CDF 1ms
+ ✓ tests/biostat/survival-curve-reaches-the-caller.test.ts > the Kaplan–Meier table > is the hand-computed one 2ms
+ ✓ tests/biostat/survival-curve-reaches-the-caller.test.ts > the Kaplan–Meier table > travels with the RMST result, instead of being discarded 1ms
+ ✓ tests/biostat/survival-curve-reaches-the-caller.test.ts > the Kaplan–Meier table > carries every step, not only the ones inside τ 1ms
+ ✓ tests/biostat/survival-curve-reaches-the-caller.test.ts > the Kaplan–Meier table > comes with both arms when two arms were compared 2ms
+ ✓ tests/biostat/survival-curve-reaches-the-caller.test.ts > the Kaplan–Meier table > is a step function that only ever decreases 0ms
+stderr | server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts
+{
+  "timestamp": "2026-10-26T15:23:48.083Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > classify refuses a harm nobody assessed > patientHarm undefined is refused, not read as "no harm" 4ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > classify refuses a harm nobody assessed > patientHarm "unknown" is refused, not read as "no harm" 1ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > classify refuses a harm nobody assessed > patientHarm "None" is refused, not read as "no harm" 1ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > classify refuses a harm nobody assessed > patientHarm "" is refused, not read as "no harm" 1ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > classify refuses a harm nobody assessed > an explicit "none" is still classified as not reportable 1ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > createComplaint requires both assessments > refuses a complaint with no patient harm, before touching the database 2ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > createComplaint requires both assessments > refuses a complaint with no severity assessment 1ms
+ ✓ server/services/benefit-risk/__tests__/cer-empty-evidence-honesty.test.ts > structureBenefitRiskFramework — an uncharacterized dimension is not favourable > does NOT call unsupplied risks "readily manageable"; states no risk determination can be made 3ms
+ ✓ server/services/benefit-risk/__tests__/cer-empty-evidence-honesty.test.ts > structureBenefitRiskFramework — an uncharacterized dimension is not favourable > does NOT say "benefit modestly exceeds risk" when a dimension was not characterized 1ms
+ ✓ server/services/benefit-risk/__tests__/cer-empty-evidence-honesty.test.ts > structureBenefitRiskFramework — an uncharacterized dimension is not favourable > still produces the ordinary directional narrative when BOTH sides are characterized 1ms
+ ✓ server/services/benefit-risk/__tests__/cer-empty-evidence-honesty.test.ts > assessBenefitRiskBalance — empty EITHER side is indeterminate, not favourable > returns indeterminate when strong benefits are set against zero characterized risks 1ms
+ ✓ server/services/benefit-risk/__tests__/cer-empty-evidence-honesty.test.ts > assessBenefitRiskBalance — empty EITHER side is indeterminate, not favourable > still reaches a favourable verdict when both sides are characterized and benefit dominates 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves a known biomarker by alias 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves HER2 via the erbb2 alias 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves KRAS G12C to the KRAS entry 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > does not recognize an unknown marker 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > a recognized biomarker satisfies the biomarkerDefined element and surfaces citations 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > an unknown biomarker yields a scientific-validity recommendation and no linkage 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > flags missing clinical validation and contemporaneous review 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > every knowledge ref resolves to a real corpus entry 0ms
+
+ Test Files  34 passed (34)
+      Tests  534 passed (534)
+   Start at  15:22:59
+   Duration  49.49s (transform 10.13s, setup 514ms, import 40.70s, tests 3.52s, environment 3ms)
+

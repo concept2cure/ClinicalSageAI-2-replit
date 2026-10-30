@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "5163d200756e75157337ab41bb74a801d87d9ad8",
+  "sourceCommits": [
+    "5163d200756e75157337ab41bb74a801d87d9ad8",
+    "61aea0a80a241794bdd8c5b363a0753969b07fab"
+  ],
+  "head": "61aea0a80a241794bdd8c5b363a0753969b07fab",
+  "qualifiedInputs": "final-qualified-inputs.json",
+  "branch": "concept2cure-v2"
+}

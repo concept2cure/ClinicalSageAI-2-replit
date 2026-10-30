@@ -137,7 +137,7 @@ router.get('/profile', async (req, res) => {
 
   try {
     const program = await findProgram(req, orgId, parsed.data.ident);
-    if (!program) return res.status(404).json({ error: 'Program not found in your organization' });
+    if (!program) return res.status(404).json({ error: 'Project not found in your organization' });
     return res.status(200).json({ profile: program });
   } catch (error: any) {
     logger.error('device profile read failure', { err: error?.message });
@@ -177,7 +177,7 @@ router.put('/profile', requireEditorAccess, requireEntitlement('device_assembly_
 
   try {
     const program = await findProgram(req, orgId, identParsed.data.ident);
-    if (!program) return res.status(404).json({ error: 'Program not found in your organization' });
+    if (!program) return res.status(404).json({ error: 'Project not found in your organization' });
 
     // The write, the governed-column discipline (only the fields the body
     // NAMED reach the UPDATE) and the field-named audit row are the service's,
@@ -285,7 +285,7 @@ router.get('/standards', async (req, res) => {
     let productCode = parsed.data.productCode?.trim() || null;
     if (parsed.data.ident) {
       const program = await findProgram(req, orgId, parsed.data.ident);
-      if (!program) return res.status(404).json({ error: 'Program not found in your organization' });
+      if (!program) return res.status(404).json({ error: 'Project not found in your organization' });
       if (!productCode) productCode = program.productCode ?? null;
     }
     const result = await lookupRecognizedStandards(productCode);

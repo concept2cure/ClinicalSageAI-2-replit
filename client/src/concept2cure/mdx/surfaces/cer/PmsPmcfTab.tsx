@@ -69,7 +69,7 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
   const deviceName = (profile?.productName ?? profile?.name ?? '').trim();
 
   const summary = !programId
-    ? 'Post-market documentation is held per program'
+    ? 'Post-market documentation is held per project'
     : loading
       ? 'Loading post-market documentation status…'
       : error
@@ -83,7 +83,7 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
             `${report.requiredApprovedCount} approved · ${report.regulation}` +
             (report.deviceClass
               ? ` · class ${report.deviceClass}`
-              : ` · no ${report.regulation} class on the program record`)
+              : ` · no ${report.regulation} class on the project record`)
           : 'No status yet';
 
   const generateStatus = busy
@@ -108,7 +108,7 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
           className="section-more"
           onClick={() =>
             onAskAna(
-              'Review the post-market documentation set for this program — which required documents ' +
+              'Review the post-market documentation set for this project — which required documents ' +
                 'are missing or unapproved, and what should the next PSUR draw on?',
             )
           }
@@ -229,7 +229,7 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
             <EmptyState
               icon={I.folder}
               title="No post-market documentation status yet"
-              hint="The status is computed once post-market documents exist for this program."
+              hint="The status is computed once post-market documents exist for this project."
               action={{ label: 'Check again', onAct: refresh }}
               regulation="Serves the post-market surveillance record"
               testId="pms-status-empty"
@@ -368,7 +368,7 @@ function LivePmsPanels({ programId }: { programId: string | null }) {
                 <div className="s">
                   {complaints.state.status === 'ready'
                     ? `${complaints.figures?.open ?? 0} open of ${complaints.figures?.total ?? 0} received, newest first`
-                    : 'The program’s complaints, newest first'}
+                    : 'The project’s complaints, newest first'}
                 </div>
               </div>
             </div>
@@ -389,7 +389,7 @@ function LivePmsPanels({ programId }: { programId: string | null }) {
             {complaints.state.status === 'empty' && (
               <EmptyState
                 icon={I.folder}
-                title="No complaints recorded for this program"
+                title="No complaints recorded for this project"
                 hint="Complaints logged through the vigilance triage appear here as they are received."
                 action={{ label: 'Check again', onAct: complaints.refresh }}
                 regulation="Serves MDR Article 83 post-market surveillance"
@@ -474,7 +474,7 @@ function LivePmsPanels({ programId }: { programId: string | null }) {
             {pmcf.state.status === 'empty' && (
               <EmptyState
                 icon={I.folder}
-                title="No PMCF activity recorded for this program"
+                title="No PMCF activity recorded for this project"
                 hint="Record each PMCF study, registry or survey with its planned sample size; enrolment reports accrue against it."
                 action={{ label: 'Check again', onAct: pmcf.refresh }}
                 regulation="Serves MDR Annex XIV Part B"

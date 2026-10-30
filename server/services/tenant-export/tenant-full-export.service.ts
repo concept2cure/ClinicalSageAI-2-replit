@@ -41,7 +41,7 @@
  * @module server/services/tenant-export/tenant-full-export
  */
 
-import { VAULT_DOCUMENT_TENANCY } from '../tenant/vault-tenancy';
+import { PURGE_PARENT_SCOPED, EXPORT_DERIVED_TABLES } from '../tenant/purge-parent-scope';
 import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 import { readCompanyExportOrganization, readCompanyDocumentsExportEnvelope, companyDocumentsExportDescriptor,
@@ -117,6 +117,8 @@ export const EXPORT_EXCLUDED_TABLES: readonly string[] = Object.freeze([
 export const EXPORT_WITHHELD_COLUMNS: Readonly<Record<string, Readonly<Record<string, string>>>> = Object.freeze({
   c2c_mailbox_connections: { token_reference: 'a mailbox token or credential-store reference' },
   connector_credentials: { credentials: 'connector credentials' },
+  // Exported through its document since 2026-10-29 (purge-parent-scope.ts).
+  document_locks: { lock_token: "a document lock's token, which lets its holder act on the lock" },
   document_sessions: { session_token: 'a session token' },
   gate_approvals: { verification_token: 'a one-time verification token' },
   integration_tokens: { access_token: 'an OAuth access token', refresh_token: 'an OAuth refresh token' },
@@ -183,18 +185,30 @@ const MAX_ROWS_PER_TABLE = 50_000;
 /**
  * Tables whose tenant rows are NOT "the tenant column equals the org id", with
  * the predicate that selects them instead — the SAME predicate the purge
- * deletes by, so an export never contains less than the erasure it authorizes
- * destroys. `$1` is the organization id as an integer.
+ * deletes by (../tenant/purge-parent-scope, one map read by both), so an export
+ * never contains less than the erasure it authorizes destroys. `$1` is the
+ * organization id as an integer.
  *
- * vault.document_chunks is deliberately absent: it has no tenant column, so it
- * is not discovered, and it is derived — the passages are cut from the
- * documents' extracted_text, which IS exported with each document. The purge
- * removes chunks with their parent; the data return carries the text they were
- * cut from.
+ * Most have no tenant column at all: legacy children scoped by their parent
+ * (2026-10-29). Until then the export did not discover them, so a customer's
+ * legacy document versions, CER sections and the like never came back; the
+ * purge now erases them, so it must return them. A wrong predicate here hands
+ * one customer another's rows, so each is the parent and key of the table's
+ * row-level-security policy, and tests/db/tenant-purge-blocking-keys.dbtest.ts
+ * checks, table by table, that a tenant's export holds its own row and not
+ * another tenant's.
+ *
+ * vault.document_chunks is deliberately absent (EXPORT_DERIVED_TABLES): it is
+ * derived — the passages are cut from the documents' extracted_text, which IS
+ * exported with each document. The purge removes chunks with their parent; the
+ * data return carries the text they were cut from.
  */
-const EXPORT_SCOPED_PREDICATES: Readonly<Record<string, string>> = Object.freeze({
-  'vault.documents': VAULT_DOCUMENT_TENANCY,
-});
+const EXPORT_SCOPED_PREDICATES: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(Object.entries(PURGE_PARENT_SCOPED).filter(([table]) => !EXPORT_DERIVED_TABLES.includes(table))),
+);
+
+/** The tenant column a parent-scoped table is reported with: its rows are selected through their parent. */
+export const PARENT_SCOPED_TENANT_COLUMN = 'parent';
 
 export interface ExportedTable {
   table: string;
@@ -220,8 +234,57 @@ export interface TenantFullExport {
     totalRows: number;
     truncatedTables: string[];
     companyDocuments?: CompanyDocumentsExportDescriptor;
+    /** The scope the read ran in, as its database session stated it (readExportScope). */
+    scope?: ExportScope;
   };
   tables: ExportedTable[];
+}
+
+/**
+ * The scope an export's read ran in, read from its own database session
+ * (P-58's data return, 2026-10-29; docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/).
+ *
+ *   organization  RLS enforced, in the exported organization's own scope: its
+ *                 tenant id and its organization uuid. Every tenant policy
+ *                 admits the organization's own rows, so the export's
+ *                 predicate alone decides (routes/tenant-export.ts).
+ *   unrestricted  nothing filtered the read: RLS not enforced on the session,
+ *                 or a role that bypasses it (the owner, a test fixture).
+ *   restricted    any other scope. The platform scope (tenant '0', no uuid)
+ *                 is one: under it vault.* and the knowledge graph returned
+ *                 none of the organization's rows, and nothing failed.
+ */
+export interface ExportScope {
+  kind: 'organization' | 'unrestricted' | 'restricted';
+  rlsEnforced: boolean;
+  tenantId: string;
+  organizationUuid: string;
+}
+
+/** The scopes whose read returns every row the export selects: the only ones whose export records a receipt, and so the only ones a purge accepts. */
+export const COMPLETE_EXPORT_SCOPES: readonly string[] = Object.freeze(['organization', 'unrestricted']);
+
+/** The export's scope, from its session. A scope that cannot be read is `restricted`: it records no receipt. */
+export async function readExportScope(client: Pool | PoolClient, organizationId: number): Promise<ExportScope> {
+  try {
+    const { rows } = await client.query(
+      `SELECT current_setting('app.rls_enforce', true) AS enforce,
+              current_setting('app.current_tenant_id', true) AS tenant,
+              current_setting('app.current_org_id', true) AS org_uuid,
+              (SELECT r.rolsuper OR r.rolbypassrls FROM pg_roles r WHERE r.rolname = current_user) AS bypass,
+              (SELECT to_jsonb(o)->>'uuid' FROM organizations o WHERE o.id = $1) AS own_uuid`,
+      [organizationId],
+    );
+    const r = rows[0] ?? {};
+    const rlsEnforced = r.enforce === 'on';
+    const tenantId = String(r.tenant ?? '');
+    const organizationUuid = String(r.org_uuid ?? '');
+    const own = rlsEnforced && tenantId === String(organizationId) && !!r.own_uuid && organizationUuid === String(r.own_uuid);
+    const kind: ExportScope['kind'] = !rlsEnforced || r.bypass === true ? 'unrestricted' : own ? 'organization' : 'restricted';
+    return { kind, rlsEnforced, tenantId, organizationUuid };
+  } catch {
+    return { kind: 'restricted', rlsEnforced: false, tenantId: '', organizationUuid: '' };
+  }
 }
 
 export class TenantNotFoundError extends Error {
@@ -277,6 +340,27 @@ export async function discoverTenantTables(
      exclude a same-named table in another schema nobody considered. */
   for (const excluded of EXPORT_EXCLUDED_TABLES) seen.delete(`public.${excluded}`);
 
+  /* The parent-scoped tables with no tenant column of their own, when this
+     database has them: read through EXPORT_SCOPED_PREDICATES, never by a column. */
+  const scoped = Object.keys(EXPORT_SCOPED_PREDICATES)
+    .map((label) => (label.includes('.') ? label : `public.${label}`))
+    .filter((key) => !seen.has(key));
+  if (scoped.length) {
+    const { rows: present } = await client.query<{ table_schema: string; table_name: string }>(
+      `SELECT table_schema, table_name FROM information_schema.tables
+        WHERE table_type = 'BASE TABLE' AND table_schema || '.' || table_name = ANY($1::text[])
+        ORDER BY 1, 2`,
+      [scoped]
+    );
+    for (const row of present) {
+      seen.set(`${row.table_schema}.${row.table_name}`, {
+        schema: row.table_schema,
+        table: row.table_name,
+        tenantColumn: PARENT_SCOPED_TENANT_COLUMN,
+      });
+    }
+  }
+
   return [...seen.values()];
 }
 
@@ -303,6 +387,7 @@ export async function exportTenantFull(
     throw new TenantNotFoundError(`Organization ${organizationId} not found`);
   }
   const org = orgResult.rows[0];
+  const scope = await readExportScope(client, organizationId);
   const companyDocuments = await readCompanyDocumentsExportEnvelope(client, organizationId, org);
 
   const discovered = await discoverTenantTables(client);
@@ -372,6 +457,7 @@ export async function exportTenantFull(
       totalRows,
       truncatedTables,
       companyDocuments: companyDocumentsExportDescriptor(companyDocuments),
+      scope,
     },
     tables,
   };
@@ -386,6 +472,8 @@ export interface ExportReceipt {
   createdBy: number | null;
   companyDocumentsVersion?: number | null;
   companyDocumentsSha256?: string | null;
+  /** The scope its export ran in (COMPLETE_EXPORT_SCOPES); null for a receipt recorded before 2026-10-29. */
+  exportScope?: string | null;
 }
 
 /**
@@ -422,7 +510,7 @@ export interface ExportReceiptOutcome {
    * purge, and an incomplete return of a tenant's data must never authorize its
    * destruction. Names the tables, so the operator knows what to fix.
    */
-  incomplete?: { tablesFailed: string[]; truncatedTables: string[] };
+  incomplete?: { tablesFailed: string[]; truncatedTables: string[]; scope?: string };
 }
 
 export async function recordExportReceipt(
@@ -438,6 +526,7 @@ export async function recordExportReceipt(
       tablesFailed: ReadonlyArray<{ table: string } | string>;
       truncatedTables: ReadonlyArray<string>;
       companyDocuments?: CompanyDocumentsExportDescriptor;
+      scope?: Pick<ExportScope, 'kind'>;
     };
   }
 ): Promise<ExportReceiptOutcome> {
@@ -445,6 +534,17 @@ export async function recordExportReceipt(
   const truncatedTables = [...params.coverage.truncatedTables];
   const companyDocuments = params.coverage.companyDocuments;
   if (companyDocuments !== undefined && !validCompanyDocumentsExportDescriptor(companyDocuments)) tablesFailed.push('organizations.companyDocuments');
+  // An export read in a scope that returns less than exists is incomplete although no table failed:
+  // under the platform scope, vault.* and the knowledge graph returned nothing (P-58's data return).
+  const scope = params.coverage.scope?.kind ?? 'unstated';
+  if (!COMPLETE_EXPORT_SCOPES.includes(scope)) {
+    logger.warn('Tenant export read outside the organization\'s own scope — no receipt recorded; this digest cannot authorize a purge', {
+      organizationId: params.organizationId,
+      digest: params.digest,
+      scope,
+    });
+    return { recorded: false, inserted: false, incomplete: { tablesFailed, truncatedTables, scope } };
+  }
   if (tablesFailed.length > 0 || truncatedTables.length > 0) {
     // No receipt: this digest must not open a purge (tenant-purge.dbtest.ts).
     logger.warn('Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge', {
@@ -458,8 +558,8 @@ export async function recordExportReceipt(
   try {
     const res = await client.query(
       `INSERT INTO tenant_export_receipts
-         (organization_id, digest, table_count, row_count, created_by, company_documents_version, company_documents_sha256)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+         (organization_id, digest, table_count, row_count, created_by, company_documents_version, company_documents_sha256, export_scope)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (organization_id, digest) DO NOTHING`,
       [
         params.organizationId,
@@ -469,6 +569,7 @@ export async function recordExportReceipt(
         params.createdBy,
         companyDocuments?.schemaVersion ?? null,
         companyDocuments?.sha256 ?? null,
+        scope,
       ]
     );
     // A conflict wrote nothing and is still a receipt-backed digest.
@@ -497,7 +598,8 @@ export async function findExportReceipt(
   const { rows } = await client.query(
     `SELECT organization_id, digest, table_count, row_count, created_at, created_by,
             to_jsonb(r)->'company_documents_version' AS company_documents_version,
-            to_jsonb(r)->>'company_documents_sha256' AS company_documents_sha256
+            to_jsonb(r)->>'company_documents_sha256' AS company_documents_sha256,
+            to_jsonb(r)->>'export_scope' AS export_scope
        FROM tenant_export_receipts r
       WHERE organization_id = $1 AND digest = $2
       LIMIT 1${opts.hold ? ' FOR SHARE' : ''}`,
@@ -514,5 +616,6 @@ export async function findExportReceipt(
     createdBy: r.created_by,
     companyDocumentsVersion: r.company_documents_version ?? null,
     companyDocumentsSha256: r.company_documents_sha256 ?? null,
+    exportScope: r.export_scope ?? null,
   };
 }

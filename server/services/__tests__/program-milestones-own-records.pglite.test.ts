@@ -77,7 +77,7 @@ const byId = (ms: Awaited<ReturnType<typeof getMilestones>>) => Object.fromEntri
 describe("a program's milestones", () => {
   it("do not take the organization's eSTAR sections as this program's, or invent a QC", async () => {
     const m = byId(await getMilestones(ORG, PLANNED));
-    expect(m['m-estar']).toMatchObject({ state: 'not_recorded', date: 'Not recorded for this program' });
+    expect(m['m-estar']).toMatchObject({ state: 'not_recorded', date: 'Not recorded for this project' });
     expect(m['m-internal-qc']).toMatchObject({ state: 'not_recorded' });
   });
 

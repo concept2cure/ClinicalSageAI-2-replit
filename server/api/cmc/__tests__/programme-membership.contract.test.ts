@@ -116,7 +116,7 @@ describe('no CMC route acts on a programme it has not checked', () => {
     const helper = read(ROUTES_FILE);
     expect(helper).toContain('async function answeredUnknownProgram');
     expect(helper).toMatch(/answeredUnknownProgram[\s\S]{0,900}res\.status\(404\)/);
-    expect(helper).toMatch(/No such program in this organization — nothing was assessed\./);
+    expect(helper).toMatch(/No such project in this organization — nothing was assessed\./);
   });
 });
 

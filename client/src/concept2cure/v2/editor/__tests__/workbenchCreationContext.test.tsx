@@ -102,6 +102,29 @@ describe('creation stays in the existing editor host context', () => {
     expect(creation.current?.programSwitchHeld).toBe(true);
   });
 
+  it('reopens with the exact saved template filing context ahead of the project default', async () => {
+    const initial = apiRequest.getMockImplementation()!;
+    const templateId = 'cccccccc-0000-4000-8000-000000000001';
+    apiRequest.mockImplementation((method, url, ...args) => {
+      if (url === `/api/c2c/projects/${PID}`) return Promise.resolve(ok({ id: PID, registry_id: 'US_BLA' }));
+      if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return Promise.resolve(ok({ document: { ...doc,
+        template_id: templateId, provenance: { templateSource: { id: templateId, entryId: 'registry:US_NDA', version: 1,
+          sha256: 'a'.repeat(64), kind: 'preparation', aiDraftable: false, authoringMode: 'manual', originalFormat: 'mixed',
+          limitations: ['Retain original records'], filingContext: { registryId: 'US_NDA', region: 'US', agency: 'FDA' } } } } }));
+      return initial(method, url, ...args);
+    });
+    await mounted();
+    await waitFor(() => expect(creation.current?.filingContext).toEqual({ projectId: PID, registryId: 'US_NDA', filingDocumentId: null }));
+  });
+
+  it.each([PID, OTHER])('uses the public filing identity only for the current admitted project %s', async returnedId => {
+    const initial = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method, url, ...args) => url === `/api/c2c/projects/${PID}`
+      ? Promise.resolve(ok({ id: returnedId, registry_id: 'US_BLA' })) : initial(method, url, ...args));
+    await mounted();
+    await waitFor(() => expect(creation.current?.filingContext?.registryId).toBe(returnedId === PID ? 'US_BLA' : null));
+  });
+
   it.each(['filtered', 'pinned'])('opens the exact created ID from a %s host through the existing editor handoff', async host => {
     const { props } = await mounted(host === 'filtered' ? { status: 'APPROVED' } : { pinnedDocId: DOC });
     await createdDocument();

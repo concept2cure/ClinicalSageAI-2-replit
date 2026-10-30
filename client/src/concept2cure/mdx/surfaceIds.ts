@@ -4,7 +4,7 @@
  * Split out from `MdxSurfaceHost` on purpose. The v2 registry needs this list at
  * module scope to build its entries, and `V2App` imports the registry at module
  * scope; importing it from the host would drag the host — and with it four
- * stylesheets and sixteen surface components — into the entry chunk of every
+ * stylesheets and fourteen surface components — into the entry chunk of every
  * session, including a pharma user's who never opens a device surface. That is
  * the regression `tests/ui/shell-kit-lazy.test.ts` exists to catch, and it
  * caught this.
@@ -32,12 +32,25 @@ export const MDX_SURFACE_IDS = [
   // same data is the double-rail problem one level down, so the kit's is deleted
   // and `precedent-intelligence` is the one precedent surface. Same reasoning
   // retired the kit's Templates tab (v2 `template-library`), its AnA Memory
-  // surface (v2 `ana-memory`, identical endpoint) and its project home
-  // (v2 `project-home`).
-  'device-vault',
-  'device-tasks',
-  'device-validation',
-  'device-submission',
+  // surface (v2 `ana-memory`, identical endpoint, itself folded into the
+  // conversation on 2026-10-29) and its project home (v2 `project-home`).
+  // No `device-vault`. The kit's document vault folded into the Vault (D2,
+  // 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/): each
+  // project's Governed artifacts branch lists every artifact of the project with
+  // its versions and audit, and the old id is a DEEP_LINK_ALIASES entry.
+  // No `device-tasks`. The kit's task workbench folded into Tasks (D2,
+  // 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/): Tasks
+  // reads the same work item by item, and the old id is a DEEP_LINK_ALIASES
+  // entry that lands there.
+  // No `device-validation`. The organization-wide blocker list retired (D2, fold
+  // F5 item 2, 2026-10-29; decision P-61 item 2): a blocker belongs to a filing,
+  // from that filing's deterministic readiness (EstarFilingPanel), and the old id
+  // is a DEEP_LINK_ALIASES entry for Submission Center.
+  // No `device-submission`. The device submission-packages screen folded into
+  // Submission Center (D2, fold F5 item 1, 2026-10-30; decision P-61 item 1: one
+  // device-filing store, estar_submissions), whose device filings carry a status
+  // filter, each draft's gate and each filing's history; the old id is a
+  // DEEP_LINK_ALIASES entry that lands there.
   'device-analytics',
 ] as const;
 

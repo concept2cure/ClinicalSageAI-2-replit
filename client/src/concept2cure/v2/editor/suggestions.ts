@@ -74,6 +74,8 @@ import { Fragment, Slice } from '@tiptap/pm/model';
 import type { Node as PMNode, Mark as PMMark, MarkType, ResolvedPos, Schema } from '@tiptap/pm/model';
 
 import type { FindMatch } from './findReplace';
+import { validRemedyEdit, type AuthoringRemedyEdit, type AuthoringRemedyOperation } from '@shared/authoring/remedies';
+import { canCarry, locateProposal } from './proposalAnchor';
 import { ANA_SUGGESTION_AUTHOR_ID } from './anaInsertGate';
 
 /* ── Attribution ──────────────────────────────────────────────── */
@@ -370,13 +372,6 @@ function strikeRanges(
   return t.mapping.slice(firstStep).map(end, -1);
 }
 
-/** Whether `node`, inside `parent`, can take a mark of `type` — what addMark
- *  would silently skip otherwise. */
-function canCarry(parent: PMNode | null, node: PMNode, type: MarkType): boolean {
-  if (parent && !parent.type.allowsMarkType(type)) return false;
-  const mark = type.create();
-  return Boolean(mark.isInSet(mark.addToSet(node.marks)));
-}
 
 /**
  * Remove the text of a decided suggestion — a rejected insertion, an accepted
@@ -899,7 +894,26 @@ function replacementDraft(schema: Schema, text: string, attrs: SuggestionMarkAtt
  * draft, so it goes after the paragraph; AnA's quote is refused (`structural`)
  * rather than redlined somewhere it did not name.
  */
-type Placing = 'caret' | 'selection' | 'quote';
+type Placing = 'caret' | 'selection' | 'quote' | 'anchor' | 'empty';
+
+const isCaretPlacement = (placing: Placing) => placing === 'caret' || placing === 'empty';
+const isVersionedAddition = (placing: Placing) => placing === 'anchor' || placing === 'empty';
+const isReplacementPlacement = (placing: Placing) => placing === 'quote' || placing === 'selection';
+const isAdditionPlacement = (placing: Placing) => isCaretPlacement(placing) || placing === 'anchor';
+const continuesParagraph = (placing: Placing, empty: boolean, atEnd: boolean) =>
+  isCaretPlacement(placing) ? empty : isReplacementPlacement(placing) && atEnd;
+const draftBoundaryAllowed = (placing: Placing, atStart: boolean, atEnd: boolean) =>
+  placing === 'quote' ? atEnd : placing !== 'anchor' || atStart || atEnd;
+
+/** Each added block needs text marks that can take its structure back out. */
+function hasUntrackedAdditionBlock(draft: Exclude<Draft, { kind: 'none' }>, placing: Placing): boolean {
+  return isVersionedAddition(placing) && draft.kind === 'blocks' && draft.nodes.some(node => !node.textContent.trim());
+}
+
+function withLegacyPlacementFallback(placing: Placing, placed: number | null, fallback: () => number | null): number | null {
+  return isVersionedAddition(placing) ? placed : placed ?? fallback();
+}
+
 
 /**
  * Put `text` into `t` at `at` as a pending insertion under `attrs`, by the
@@ -915,8 +929,9 @@ function placeDraft(
 ): number | null {
   const schema = t.doc.type.schema;
   const insertion = schema.marks.insertion;
-  const draft = placing === 'caret' ? draftBlocks(schema, text, attrs) : replacementDraft(schema, text, attrs);
+  const draft = isCaretPlacement(placing) ? draftBlocks(schema, text, attrs) : replacementDraft(schema, text, attrs);
   if (draft.kind === 'none') return at;
+  if (hasUntrackedAdditionBlock(draft, placing)) return null;
   const $at = t.doc.resolve(at);
 
   // Between blocks (the end of a table-cell selection, a gap cursor): only
@@ -945,7 +960,7 @@ function placeDraft(
   // Replacing the whole of a list item: its own rule (wholeListItem), and no
   // falling back to flat paragraphs — '## Heading' kept as literal text in the
   // item is not what was proposed either.
-  if (placing !== 'caret' && wholeListItem($at)) {
+  if (isReplacementPlacement(placing) && wholeListItem($at)) {
     const nodes = draft.nodes;
     if (nodes.every((n) => LISTS.has(n.type.name))) {
       const items: PMNode[] = [];
@@ -958,24 +973,24 @@ function placeDraft(
   const attempt = (nodes: PMNode[]): number | null => {
     if (!nodes.length) return at;
     // A quote ending mid-sentence has no block boundary to put blocks at.
-    if (placing === 'quote' && !atEnd) return null;
+    if (!draftBoundaryAllowed(placing, atStart, atEnd)) return null;
     // Whether the first paragraph continues the textblock `at` is in: the
     // text after a struck quote or selection that ends its paragraph, or a
     // caret's empty paragraph.
     const continues =
-      nodes[0].type === schema.nodes.paragraph && (placing === 'caret' ? empty : atEnd);
+      nodes[0].type === schema.nodes.paragraph && continuesParagraph(placing, empty, atEnd);
     // New paragraphs before the caret's paragraph when the caret is at its
     // start (or it is empty and the draft does not open with a paragraph,
     // keeping that empty paragraph after the draft, where the caret was);
     // after it otherwise.
-    const before = placing === 'caret' && !continues && (empty || atStart);
+    const before = isAdditionPlacement(placing) && !continues && (empty || atStart);
     const boundary = before ? $at.before() : $at.after();
     const rest = continues ? nodes.slice(1) : nodes;
     const lead = continues ? leadOf(nodes[0], insertion, $at) : null;
     if (!lead && !rest.length) return at;
     return insertBetween(t, boundary, lead, at, rest);
   };
-  return attempt(draft.nodes) ?? attempt(plainOwned(schema, text, attrs));
+  return withLegacyPlacementFallback(placing, attempt(draft.nodes), () => attempt(plainOwned(schema, text, attrs)));
 }
 
 /** A draft's first paragraph continuing the textblock at `$at`: inline
@@ -1902,16 +1917,14 @@ export const TrackChanges = Extension.create<
  *     The reader's block markers (`#` headings, `-` and `1.` list items, the
  *     ` | ` between table cells) are not in the editor's text and are read
  *     past; a paragraph break is whitespace.
- * An empty `replacement` proposes a deletion and nothing else. A replacement
+ * `operation` defaults to replace. Insert-before/after keep their anchor;
+ * insert-empty requires a single empty paragraph. All use this same tracked
+ * placement/receipt door. An empty `replacement` proposes a deletion only for
+ * replace. A replacement
  * that is one paragraph is an inline edit and keeps its whitespace; one that
  * is several blocks goes in as blocks (see placeDraft).
  */
-export interface ReplacementProposal {
-  quote: string;
-  replacement: string;
-  prefix?: string;
-  suffix?: string;
-}
+export type ReplacementProposal = AuthoringRemedyEdit;
 
 /**
  * Why a proposal was not applied. Shown to the person, so each one says what
@@ -1948,148 +1961,13 @@ export type ProposeRefusal =
 
 export type ProposeResult = { ok: true; applicationId?: string } | { ok: false; reason: ProposeRefusal };
 
-/** Whitespace as the reader writes it: any run, NBSP included, is one space.
- *  A pipe is whitespace too, on both sides: the reader joins table cells with
- *  ` | `, and a literal pipe in the text compares equal either way. */
-const comparable = (s: string): string => s.replace(/\|/g, ' ').replace(/\s+/g, ' ');
-
-/** A line start's reader marker: a heading's hashes, a list item's bullet or
- *  number (indented when nested), a table caption's label. */
-const READER_MARKER = /^\s*(?:#{1,6}\s+|[-*+]\s+|\d{1,9}[.)]\s+|Table:\s+)/;
 
 /**
- * Context as the editor's text would read it: the reader's line-start
- * markers dropped. In a suffix the first line continues the quote's own
- * line — its start is content, not a marker — so it is kept as written. (In a
- * prefix the first line may be partial too; dropping what looks like a marker
- * there only shortens what has to match, never adds to it.)
- */
-function withoutReaderMarkers(text: string, firstLineIsContent: boolean): string {
-  return text
-    .split(/\r?\n/)
-    .map((line, i) => (i === 0 && firstLineIsContent ? line : line.replace(READER_MARKER, '')))
-    .join('\n');
-}
-
-/** Whether the text around `m` carries the given prefix and suffix. Text
- *  inside pending suggestions is compared as plain text, where the reader
- *  labels it; context running through one does not fit, and is refused. */
-function contextFits(doc: PMNode, m: FindMatch, prefix?: string, suffix?: string): boolean {
-  // Each read both ways — markers read past, and as written — because a
-  // paragraph's REAL text can start with what looks like one ('- 5 mg daily.',
-  // '1. high'), and stripping it then made context that is literally there
-  // fail to fit (2026-10-01, 2-fixes-round2.txt D5). Either reading fitting is
-  // the text being there; neither fitting is still a refusal.
-  if (prefix && prefix.trim()) {
-    // Block boundaries and inline atoms read as whitespace, as they do in the
-    // section text a reader is given.
-    const before = comparable(doc.textBetween(0, m.from, ' ', ' ')).trimEnd();
-    const fits = (p: string) => before.endsWith(comparable(p).trimEnd());
-    if (!fits(withoutReaderMarkers(prefix, false)) && !fits(prefix)) return false;
-  }
-  if (suffix && suffix.trim()) {
-    const after = comparable(doc.textBetween(m.to, doc.content.size, ' ', ' ')).trimStart();
-    const fits = (s: string) => after.startsWith(comparable(s).trimStart());
-    if (!fits(withoutReaderMarkers(suffix, true)) && !fits(suffix)) return false;
-  }
-  return true;
-}
-
-/** Whether any inline content in `m` is already a pending suggestion. */
-function touchesSuggestion(doc: PMNode, m: FindMatch): boolean {
-  const { insertion, deletion } = doc.type.schema.marks;
-  let hit = false;
-  doc.nodesBetween(m.from, m.to, (node) => {
-    if (hit) return false;
-    if (!node.isInline) return true;
-    if (insertion.isInSet(node.marks) || deletion.isInSet(node.marks)) hit = true;
-    return false;
-  });
-  return hit;
-}
-
-/** Stands in for a non-text inline node (a hard break, an inline atom): no
- *  quote contains it, so no match crosses one. */
-const INLINE_ATOM = '\u0000';
-
-/**
- * Every occurrence of `quote` in `doc`, overlapping ones included (for
- * counting, "aa" is in "aaa" twice). Matching is per textblock, over its text
- * with each whitespace run read as one space; each character keeps the
- * document range it stands for, so a match strikes exactly the characters —
- * the whole run of spaces — it read.
- */
-function quoteMatches(doc: PMNode, quote: string): FindMatch[] {
-  // Pipes stay pipes here: a quote is the words of one textblock, where a
-  // pipe is content, never the reader's cell separator.
-  const needle = quote.replace(/\s+/g, ' ');
-  const out: FindMatch[] = [];
-  doc.descendants((node, pos) => {
-    if (!node.isTextblock) return true;
-    let text = '';
-    const from: number[] = [];
-    const to: number[] = [];
-    let inSpace = false;
-    node.forEach((child, offset) => {
-      const start = pos + 1 + offset;
-      if (!child.isText) {
-        text += INLINE_ATOM;
-        from.push(start);
-        to.push(start + child.nodeSize);
-        inSpace = false;
-        return;
-      }
-      const chars = child.text ?? '';
-      for (let i = 0; i < chars.length; i++) {
-        const space = /\s/.test(chars[i]);
-        if (space && inSpace) {
-          to[to.length - 1] = start + i + 1;
-          continue;
-        }
-        text += space ? ' ' : chars[i];
-        from.push(start + i);
-        to.push(start + i + 1);
-        inSpace = space;
-      }
-    });
-    for (let at = text.indexOf(needle); at !== -1; at = text.indexOf(needle, at + 1)) {
-      out.push({ from: from[at], to: to[at + needle.length - 1] });
-    }
-    return false;
-  });
-  return out;
-}
-
-/**
- * The one place `proposal` names, or why there is not exactly one.
- *
- * Occurrences that run into a pending suggestion are not counted: they cannot
- * be redlined (see overlaps-suggestion), so they cannot make a live occurrence
- * ambiguous either; when they are the only ones, that is the refusal. Given
- * context must fit: the one occurrence a contradicting prefix or suffix
- * "describes" is not the passage AnA read.
- */
-function locateProposal(
-  doc: PMNode,
-  proposal: ReplacementProposal,
-): FindMatch | 'not-found' | 'ambiguous' | 'overlaps-suggestion' {
-  const quote = proposal.quote ?? '';
-  if (!quote.trim()) return 'not-found';
-  const matches = quoteMatches(doc, quote);
-  if (matches.length === 0) return 'not-found';
-  const live = matches.filter((m) => !touchesSuggestion(doc, m));
-  if (live.length === 0) return 'overlaps-suggestion';
-  const anchored = Boolean(proposal.prefix?.trim() || proposal.suffix?.trim());
-  const fitting = anchored ? live.filter((m) => contextFits(doc, m, proposal.prefix, proposal.suffix)) : live;
-  if (fitting.length === 0) return 'not-found';
-  return fitting.length === 1 ? fitting[0] : 'ambiguous';
-}
-
-/**
- * Redline the one passage `proposal.quote` names: strike it as a pending
+ * Amend the one passage `proposal.quote` names. For replace, strike it as a pending
  * deletion by `author` and insert `replacement` (the markdown subset, as
  * insertSuggestedContent reads it) as a pending insertion by `author` right
- * after it. Both carry the same author, minute, turn record and application UUID.
+ * after it. Additions retain the quote and use its exact edge; insert-empty
+ * requires one empty paragraph. All carry author, minute, turn and application UUID.
  *
  * Nothing changes unless the result is `{ ok: true }`. The transaction is the
  * editor's own suggestion machinery (SUGGESTION_ACTION_META, so the tracking
@@ -2104,6 +1982,12 @@ function locateProposal(
  * change instead — the same words stay selected — and nothing scrolls (see
  * keptSelection for the one position that needed more than mapping).
  */
+const PROPOSAL_PLACING: Record<AuthoringRemedyOperation, Placing> = {
+  replace: 'quote', 'insert-before': 'anchor', 'insert-after': 'anchor', 'insert-empty': 'empty',
+};
+const additionPosition = (operation: AuthoringRemedyOperation, target: FindMatch) =>
+  operation === 'insert-before' ? target.from : target.to;
+
 export function proposeReplacement(
   editor: Editor,
   proposal: ReplacementProposal & { author: SuggestionAuthor },
@@ -2115,20 +1999,21 @@ export function proposeReplacement(
 
   const target = locateProposal(state.doc, proposal);
   if (typeof target === 'string') return { ok: false, reason: target };
+  if (!validRemedyEdit(proposal)) return { ok: false, reason: 'unsupported-content' };
 
   const applicationId = globalThis.crypto.randomUUID();
   const attrs = suggestionMarkAttrs(proposal.author, minuteBucket(), applicationId);
   const t = new Transform(state.doc);
-  // The range holds no suggestion (locateProposal), so this is a plain strike
-  // — of text that can take one, or of nothing.
-  const at = strikeRanges(t, [target], deletion, attrs);
+  const operation = proposal.operation ?? 'replace';
+  const at = operation === 'replace' ? strikeRanges(t, [target], deletion, attrs)
+    : additionPosition(operation, target);
   if (at == null) return { ok: false, reason: 'unsupported-content' };
-  if (placeDraft(t, at, proposal.replacement ?? '', attrs, 'quote') == null) {
-    // A textblock that takes no marks takes no insertion either; anything
-    // else that cannot go there is a question of structure.
+  const placing = PROPOSAL_PLACING[operation];
+  if (placeDraft(t, at, proposal.replacement, attrs, placing) == null) {
     const placeable = t.doc.resolve(at).parent.type.allowsMarkType(insertion);
     return { ok: false, reason: placeable ? 'structural' : 'unsupported-content' };
   }
+  if (t.steps.length === 0) return { ok: false, reason: 'unsupported-content' };
   const tr = state.tr;
   for (const step of t.steps) tr.step(step);
   const kept = keptSelection(state.selection, tr);

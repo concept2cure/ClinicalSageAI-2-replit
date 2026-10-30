@@ -1,0 +1,30 @@
+Builtin authoring template snapshots before and after slice A.1 renamed the IND catalogue's phase 1 "Program Planning" -> "Planning" (services/regulatory/pyramids/ind-pyramid.ts:45), 2026-10-26. Before: HEAD 7d1f7f316 plus the uncommitted tree, whose golden hash equals the one pinned at HEAD.
+Golden hash over the 392 prior builtin templates (server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts): 705cbf73adf5025152e7d85343c9bee4267daeb6ed0b58bc06189a86c9193e74 -> dcebcbec4173a7f89df51626cb22a7613c118bb4216543f9f8fb6b9965aacf3c
+392 templates before, 392 after; 0 added, 0 removed. Template ids are unchanged (UUIDv5 of the entryId, which holds no phase name).
+12 snapshots changed, every one a phase-1 preparation template (server/services/authoring/ind-authoring-templates.ts:51, preparationRow reads d.phaseName). Every other snapshot is byte-identical.
+Proof per row: the after template's stable JSON with "in Planning." put back as "in Program Planning." hashes to the before snapshot (reverts=true), so the replacement below is the only change.
+
+entryId	name	snapshot before -> after	occurrences	reverts
+phase1.clinical_outline:deliverable:0	Clinical development plan outline	0b52403de9d207f4… -> 1ef07dfe611c97ab…	1	true
+phase1.clinical_outline:deliverable:1	Phase 1 study synopsis	eb96c0634b218f1e… -> 0dfcd3f55a9e7c81…	1	true
+phase1.ind_strategy:deliverable:0	IND strategy document	9ee6fd674aa6727c… -> fff8d03a956158d2…	1	true
+phase1.ind_strategy:deliverable:1	Module content matrix	66ce8300d2f16807… -> 1eb8f3673bb23359…	1	true
+phase1.nonclinical_gap:deliverable:0	Nonclinical gap analysis report	ba28055a82440e35… -> 85726cef47d3ce50…	1	true
+phase1.nonclinical_gap:deliverable:1	Study requirement matrix	0572547f4c749901… -> 285b5659805506bd…	1	true
+phase1.pre_ind_plan:deliverable:0	Meeting request letter	5c9c5f33651e681b… -> 88c98a696220b8db…	1	true
+phase1.pre_ind_plan:deliverable:1	FDA questions list draft	944743984010644a… -> c5a8cb752f2c35bb…	1	true
+phase1.product_profile:deliverable:0	Target Product Profile	c5ebb36632ce8a5d… -> 6c839492a163d97b…	1	true
+phase1.product_profile:deliverable:1	Regulatory pathway assessment	8ea230bbd8521811… -> d117733d4dfe5db9…	1	true
+phase1.timeline:deliverable:0	Master project timeline	0a055f8a5508cc36… -> 023d2c945e5a5cf6…	1	true
+phase1.timeline:deliverable:1	Resource allocation plan	1901ac9c155757d0… -> 33117f56ee736bec…	1	true
+
+The replacement, in the guidance_text of the template's one "preparation" section:
+  before: "Preparation for {task} in Program Planning. This deliverable has no recorded CTD placement."
+  after:  "Preparation for {task} in Planning. This deliverable has no recorded CTD placement."
+Every changed row is exactly that one replacement: true
+Templates whose JSON still contains "Program Planning": 0
+
+Documents already started from these 12 templates keep "Program Planning" in their recorded guidance
+(authoring_audit_trail CREATE metadata.templateGuidance, authoring_documents.provenance.templateSource.sha256).
+That is the record of what was shown when each was created. Nothing compares a recorded snapshot with today's IND
+template (authoring-template-guidance.ts compares two stored values), and no migration rewrites it.

@@ -1,0 +1,32 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "http://localhost:5211/api/mdx/qms/documents/8",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "status": "in_review",
+      "reason": "OQ-006 step 06c: self-routing must be refused",
+      "route": {
+        "reviewers": [],
+        "approvers": [
+          2
+        ],
+        "order": "parallel",
+        "approvalDueDate": "2026-11-03"
+      }
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 65,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Sid Signer is an author of this document (Authoring document creator, Authoring revision ledger, Authoring visible mutation audit, QMS document author), so cannot review or approve it. Nothing was sent.",
+      "details": {
+        "code": "MEMBER_IS_AUTHOR"
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+RED (audit2 engineering-human-factors #2, Human factors): with no HFE/UE file in the organisation and the read not keyed to the project, the empty state promises a recorded file's completeness and risk analysis "appear here" (they would be hidden behind the not-keyed note), and AnA is offered "Create the HFE/UE file for this device", which no AnA tool and no control on the screen performs (keyed or not).
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·····xxx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not promise that a recorded file appears here while the read is not keyed
+AssertionError: expected 'No HFE/UE file yetOnce an IEC 62366-1…' not to match /appear here/
+
+- Expected:
+/appear here/
+
++ Received:
+"No HFE/UE file yetOnce an IEC 62366-1 HFE/UE file is recorded, its element completeness and use-related risk analysis — the gate before summative usability testing — appear here."
+
+ ❯ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx:164:28
+    162|     await screen.findByText('No HFE/UE file yet');
+    163|
+    164|     expect(bodyText()).not.toMatch(/appear here/);
+       |                            ^
+    165|     expect(bodyText()).toMatch(/No IEC 62366-1 HFE\/UE file is recorde…
+    166|     expect(bodyText()).toMatch(/A file is shown here once this screen …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not offer AnA a file-creation action nothing performs
+AssertionError: expected '{"surfaceId":"human-factors","summary…' not to match /Create the HFE\/UE file/UE file
+
+- Expected:
+/Create the HFE\/UE file/
+
++ Received:
+"{\"surfaceId\":\"human-factors\",\"summary\":\"Human factors (IEC 62366-1): this organisation has no HFE/UE file yet, so there is no completeness score or use-related risk analysis on screen.\",\"availableActions\":[\"Create the HFE/UE file for this device\"]}"
+
+ ❯ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx:174:38
+    172|     await waitFor(() => expect(seen?.summary ?? '').toMatch(/no HFE\/U…
+    173|
+    174|     expect(JSON.stringify(seen)).not.toMatch(/Create the HFE\/UE file/…
+       |                                      ^
+    175|     expect(seen?.summary ?? '').not.toMatch(/appear/);
+    176|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > keeps the original empty hint once the route reports the read keyed to the project
+AssertionError: expected '{"surfaceId":"human-factors","summary…' not to match /Create the HFE\/UE file/UE file
+
+- Expected:
+/Create the HFE\/UE file/
+
++ Received:
+"{\"surfaceId\":\"human-factors\",\"summary\":\"Human factors (IEC 62366-1): this organisation has no HFE/UE file yet, so there is no completeness score or use-related risk analysis on screen.\",\"availableActions\":[\"Create the HFE/UE file for this device\"]}"
+
+ ❯ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx:186:38
+    184|     expect(bodyText()).toMatch(/use-related risk analysis — the gate b…
+    185|     expect(bodyText()).not.toMatch(/recorded for the organization/);
+    186|     expect(JSON.stringify(seen)).not.toMatch(/Create the HFE\/UE file/…
+       |                                      ^
+    187|   });
+    188|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+   Start at  07:54:37
+   Duration  2.11s (transform 410ms, setup 192ms, import 520ms, tests 714ms, environment 529ms)
+

@@ -1,0 +1,31 @@
+{
+  "integratedFreeze": "integrated-source-freeze.json",
+  "finalFreeze": "final-source-freeze.json",
+  "productionSourceDriftBetweenRuns": [],
+  "changedCommonInputs": [
+    "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts"
+  ],
+  "explanation": "Removed legacy brace extractor; the same six report verdict assertions now JSON.parse the entire stdout value. No implementation changed between these two test runs.",
+  "additionalInputs": [
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx",
+    "server/services/ana/__tests__/shared-planning-template-preparation.test.ts",
+    "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+    "server/services/authoring/authoring-assembly-plan.ts",
+    "server/services/authoring/authoring-assembly-source.ts"
+  ],
+  "removedInputs": [],
+  "integratedRun": {
+    "suites": 119,
+    "testsPassed": 2061,
+    "receipt": "integrated-regression.json"
+  },
+  "supplementalRun": {
+    "suites": 4,
+    "testsPassed": 97,
+    "repeatedReportCases": 6,
+    "receipt": "supplemental-regression.json"
+  },
+  "uniqueSuites": 122,
+  "uniquePassedTests": 2152,
+  "arithmetic": "2061 + 97 - 6 = 2152; the six report assertions are counted once. Worker scoped runs overlap and are not summed."
+}

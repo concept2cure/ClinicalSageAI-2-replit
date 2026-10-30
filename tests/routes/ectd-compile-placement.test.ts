@@ -98,7 +98,7 @@ describe('GET /:projectIdent/status with no sequence', () => {
       (/FROM submissions/i.test(sql) ? { rows: [] } : base(sql, params)));
     const payload = await readStatus();
     expect(payload).toMatchObject({ readinessBasis: 'no-sequence', overallReadiness: null, submissionReady: false });
-    expect(payload.readinessNote).toBe('No sequence exists for this program yet, so nothing is counted as placed. Approved sections are on the project’s Author tab.');
+    expect(payload.readinessNote).toBe('No sequence exists for this project yet, so nothing is counted as placed. Approved sections are on the project’s Author tab.');
     expect(payload.modules).toEqual([]);
     // The first blocker says why nothing is counted, and the program's missing
     // section store is still named.

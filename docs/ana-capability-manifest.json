@@ -20,11 +20,11 @@
     "none": "No dedicated rendering (discovery/utility)."
   },
   "totals": {
-    "tools": 791,
+    "tools": 792,
     "byCategory": {
       "Authoring & rendering": 28,
       "Biostatistics": 12,
-      "Clinical (M5 / M2)": 30,
+      "Clinical (M5 / M2)": 31,
       "Clinical pharmacology": 8,
       "CMC / Quality (M3)": 30,
       "Device / IVD": 24,
@@ -509,7 +509,7 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Draft an ICH E3 §16-style patient safety narrative from structured case facts (death/SAE/discontinuation): subject → relevant history & concomitant meds → study-drug exposure → event (severity, seriousness, onset) → action taken & treatment → dechallenge/rechallenge → outcome → investigator causality. Drafts ONLY from the supplied facts and reports any missing required fields for QC — never invents clinical detail.",
+      "description": "Draft an ICH E3 §16-style patient safety narrative from structured case facts (death/SAE/discontinuation): subject → relevant history & concomitant meds → study-drug exposure → event (severity, seriousness, onset) → action taken & treatment → dechallenge/rechallenge → outcome → investigator causality. Drafts ONLY from the supplied facts and reports any missing required fields for QC — never invents clinical detail. The facts are as given in the call: none is read from the study's ADaM data. A CSR's patient narratives are composed from the ADaM data by the CSR build's narrative job, which sources every fact.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -758,7 +758,7 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Paged authoring outlines; not drafted prose, verified evidence or readiness. Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. `offset`/`limit` page results. Editor UUIDs retain exact outline, scope and source checks. `market`+`prepare` adds a regional route and at most 3 focused questions. `discussed_topics` only prevents re-asking. Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. Record-derived: smpc (QRD SmPC); clinical_study_report (ICH E3); dsur (corrected ICH E2F). Blueprint scaffolds: statistical_analysis_plan; informed_consent; drug_substance; drug_product. Kept by hand: quality_overall_summary; nonclinical_overview; clinical_overview; clinical_summary; cover_letter (platform headings); k510_summary; gspr_checklist; ivdr_gspr_checklist; performance_evaluation_report; impd; investigators_brochure; risk_management_plan; pbrer (interim E2C(R2)); protocol.",
+      "description": "Paged authoring outlines; not drafted prose, verified evidence or readiness. Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. `offset`/`limit` page results. UUIDs keep exact outline, scope and source checks. `market`+`prepare` adds a regional route and at most 3 focused questions. `discussed_topics` only prevents re-asking. Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. Record-derived: quality_overall_summary, nonclinical_overview, clinical_overview, clinical_summary, drug_substance, drug_product (M4); smpc (QRD SmPC); clinical_study_report (ICH E3); dsur (corrected ICH E2F). Blueprint scaffolds: statistical_analysis_plan; informed_consent. Kept by hand: cover_letter (platform headings); k510_summary; gspr_checklist; ivdr_gspr_checklist; performance_evaluation_report; impd; investigators_brochure; risk_management_plan; pbrer (interim E2C(R2)); blank_crf; crf_annotation_worksheet; protocol; us_lifecycle_pre_ind_meeting; us_lifecycle_end_of_phase_2_meeting; us_lifecycle_pre_nda_meeting; us_lifecycle_pre_bla_meeting; us_lifecycle_ind_protocol_amendment; us_lifecycle_ind_information_amendment; us_lifecycle_ind_cmc_amendment; us_lifecycle_ind_response_to_clinical_hold; us_lifecycle_cbe_30; us_lifecycle_cbe_0; us_lifecycle_iss; us_lifecycle_ise; us_lifecycle_us_type_d_meeting; us_lifecycle_us_interact_meeting; us_lifecycle_expanded_access_individual; us_lifecycle_expanded_access_intermediate; us_lifecycle_expanded_access_treatment; us_lifecycle_us_bla_annual_report; us_lifecycle_us_bla_pediatric_annual_report; us_lifecycle_us_bla_pmr_status_report; us_lifecycle_us_bla_distribution_report; us_lifecycle_us_bpdr; us_lifecycle_us_bla_periodic_adverse_experience_report; us_lifecycle_us_bla_pas; us_lifecycle_us_bla_cbe_30; us_lifecycle_us_bla_cbe_0; us_lifecycle_us_cber_master_file; us_lifecycle_us_cber_lot_release; us_lifecycle_us_eua_therapeutic; us_prescribing_information; nonclinical_study_report.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -2363,7 +2363,7 @@
         "id": "biostatistics",
         "label": "Biostatistics"
       },
-      "description": "Turn a structured analysis result (effect measure + estimate + CI + p-value, plus per-arm values) into correctly-hedged ICH-E3-style prose — determines significance from the confidence interval (preferred) or p-value, distinguishes statistical from clinical significance, and flags exploratory/post-hoc and multiplicity-uncontrolled analyses. Use when writing efficacy/safety results so the language never overstates beyond the data.",
+      "description": "Turn a structured analysis result (effect measure + estimate + CI + p-value, plus per-arm values) into correctly-hedged ICH-E3-style prose — determines significance from the confidence interval (preferred) or p-value, distinguishes statistical from clinical significance, and flags exploratory/post-hoc and multiplicity-uncontrolled analyses. Use when writing efficacy/safety results so the language never overstates beyond the data. It narrates the figures you pass, as given: it reads none from a retained analysis run and computes none. For a CSR, read each figure first from the retained run with get_csr_section_evidence.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -3390,7 +3390,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Lay out a phased vaccine clinical development program (Phase 1-3). Returns the efficacy-vs-immunobridging decision based on whether a validated correlate exists and whether a field-efficacy trial is feasible, the reference efficacy success criterion (FDA COVID-19 paradigm: point estimate >= 50% with the CI lower bound > 30%), per-phase objectives and sample sizes, immunogenicity endpoint definitions (seroconversion, seroresponse, seroprotection, GMT/GMC, GMR), the safety database size and follow-up duration, the >=3 consecutive-lot consistency requirement, and accelerated-approval eligibility (21 CFR 601 Subpart E). Use when the user needs to plan a vaccine clinical program, define immunogenicity endpoints, decide between an efficacy trial and immunobridging, or size the safety database. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Lay out a phased vaccine clinical development program (Phase 1-3). Returns the efficacy-vs-immunobridging decision based on whether a validated correlate exists and whether a field-efficacy trial is feasible, the reference efficacy success criterion (FDA COVID-19 paradigm: point estimate >= 50% with the CI lower bound > 30%), per-phase objectives and sample sizes, immunogenicity endpoint definitions (seroconversion, seroresponse, seroprotection, GMT/GMC, GMR), the safety database size and follow-up duration, the >=3 consecutive-lot consistency reference expectation, and unassessed accelerated-approval eligibility with conditional guidance. Use when the user needs to plan a vaccine clinical program, define immunogenicity endpoints, decide between an efficacy trial and immunobridging, or size the safety database. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -3412,13 +3412,13 @@
           "name": "hasEstablishedCorrelate",
           "type": "boolean",
           "required": false,
-          "description": "Whether a validated immune correlate of protection exists (enables immunobridging). Default false."
+          "description": "Stated validated-correlate availability. Omitted/null remains not_stated; it cannot select a pathway or endpoint."
         },
         {
           "name": "efficacyFeasible",
           "type": "boolean",
           "required": false,
-          "description": "Whether a field-efficacy trial is feasible (adequate disease incidence, ethics, logistics). Default true."
+          "description": "Stated field-efficacy feasibility (incidence, ethics, logistics). Omitted/null remains not_stated. Explicit false must not select an efficacy Phase 3."
         },
         {
           "name": "targetPopulation",
@@ -3436,7 +3436,7 @@
           "name": "diseaseSeriousness",
           "type": "string",
           "required": false,
-          "description": "Seriousness of the target disease (default \"serious\"). \"pandemic\" scales the safety database and Phase 3 size upward."
+          "description": "Stated disease seriousness. If omitted, seriousness-dependent safety sizing remains unassessed. Reference ranges do not establish a project sample size."
         },
         {
           "name": "framework",
@@ -3456,7 +3456,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Draft the ICH M4E(R2) Clinical Overview (Module 2.5) — the critical benefit-risk assessment. When the program has completed clinical study reports, it composes the data-driven overview from those records through the platform's deterministic buildM25ClinicalOverview — the 2.5.1–2.5.6 narrative, the pivotal-efficacy and benefit-risk tables, completeness and gaps — the engine the submission package uses. Otherwise it returns the six-subsection outline with drafting guidance and the program's artifacts for citation. Its figures come from the program's records only: do not pass results, counts or rates, and do not add any to the draft. Report completeness and gaps honestly.",
+      "description": "Draft the ICH M4E(R2) Clinical Overview (Module 2.5) — the critical benefit-risk assessment. When the program has completed clinical study reports, it composes the data-driven overview from those records through the platform's deterministic buildM25ClinicalOverview — the 2.5.1–2.5.7 narrative, the pivotal-efficacy and benefit-risk tables, completeness and gaps — the engine the submission package uses. Otherwise it returns the Clinical Overview outline the template library serves (2.5.1–2.5.7, with the 2.5.6 benefit-risk subdivisions), each section's guidance, the outline's limits and the program's artifacts for citation. Its figures come from the program's records only: do not pass results, counts or rates, and do not add any to the draft. Report completeness and gaps honestly.",
       "scope": "project",
       "governed": false,
       "renderer": "document-canvas",
@@ -3558,6 +3558,68 @@
       "requiredInputs": [
         "nature",
         "duration"
+      ],
+      "derived": true
+    },
+    {
+      "name": "get_csr_section_evidence",
+      "category": {
+        "id": "clinical",
+        "label": "Clinical (M5 / M2)"
+      },
+      "description": "The engine tables for one ICH E3 section of a clinical study report, read from a retained Submission Center run (its sealed CSR source, re-verified now), bound to an evidence digest, with their limitations. Call it before drafting or reviewing any CSR results section (E3 2 synopsis, 10 study patients, 11 efficacy, 12 safety, 13 discussion and overall conclusions) and write every figure from these cells, citing the table key and digest; never supply a figure yourself. Pass run_id, study_id and section (\"12.2\"). A large table is listed without rows: pass table=<key> and row_offset to read its rows page by page. To check a draft, pass claims (each figure you wrote as {table, row, column, value}, value exactly as written) with the evidence_digest you drafted from: it reports every figure that does not match its cell. An error means the evidence is unavailable: say so, never \"no data\".",
+      "scope": "global",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "run_id",
+          "type": "string",
+          "required": true,
+          "description": "The retained Submission Center run id (uuid)."
+        },
+        {
+          "name": "study_id",
+          "type": "string",
+          "required": true,
+          "description": "The study id as recorded in the run's CSR source."
+        },
+        {
+          "name": "section",
+          "type": "string",
+          "required": true,
+          "description": "ICH E3 heading number, e.g. \"10.1\", \"11.4\", \"12.2\"."
+        },
+        {
+          "name": "table",
+          "type": "string",
+          "required": false,
+          "description": "A table key from a previous result, to read its rows."
+        },
+        {
+          "name": "row_offset",
+          "type": "number",
+          "required": false,
+          "description": "First row (0-based) of the table page. Default 0."
+        },
+        {
+          "name": "evidence_digest",
+          "type": "string",
+          "required": false,
+          "description": "With claims: the evidence_digest the draft was written from."
+        },
+        {
+          "name": "claims",
+          "type": "array",
+          "required": false,
+          "description": "Figures in the draft to reconcile, at most 40 per call."
+        }
+      ],
+      "requiredInputs": [
+        "run_id",
+        "study_id",
+        "section"
       ],
       "derived": true
     },
@@ -3775,7 +3837,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Recommend where a COA-based endpoint should sit in a trial's endpoint hierarchy (primary, key secondary, secondary, exploratory, or not recommended) and whether a label claim is feasible. Integrates whether the concept is core to how the patient feels, functions, or survives; whether the COA is fully validated and fit-for-purpose; whether a meaningful change / responder definition is pre-specified; whether the trial is blinded (open-label designs weaken subjective endpoints); the number of other endpoints already in the hierarchy (multiplicity); and whether a label claim is sought. Returns a recommended position with rationale and the conditions required to elevate it. Cites the FDA PRO Guidance and multiple-endpoint guidance. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Recommend where a COA-based endpoint should sit in a trial's endpoint hierarchy (primary, key secondary, secondary, exploratory, or not recommended) and whether a label claim is feasible. Integrates whether the concept is core to how the patient feels, functions, or survives; whether the COA is fully validated and fit-for-purpose; whether a meaningful change / responder definition is pre-specified; whether the trial is blinded (open-label designs weaken subjective endpoints); the number of other endpoints already in the hierarchy (multiplicity); and whether a label claim is sought. Returns a recommended position with rationale and the conditions required to elevate it. Cites the FDA PRO Guidance and multiple-endpoint guidance. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. Unanswered boolean evidence remains not_stated; a conclusion depending on it is not_assessed. Ask for those facts without inferring true or false. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -4269,10 +4331,10 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Search the shared clinical-regulatory evidence spine — comparable study designs, structured result observations, FDA regulatory findings (CRL deficiencies), regulatory outcomes, and governed design lessons — for an indication/phase. Returns provenance-carrying records, honest about coverage. Use when asked what comparable studies did, what FDA objected to, or what evidence exists.",
+      "description": "Search the shared clinical-regulatory evidence spine — comparable studies, FDA findings, outcomes, design lessons, and explicitly public reference documents. The sources catalog identifies full/redacted CSRs, synopses, protocols and regulatory reviews separately. Query filters public source title/product/study metadata. Give source_id to read one to four retained pages after checksum and permitted-use verification. External examples are never the client's study results; extracted text remains unreviewed and training is not approved.",
       "scope": "global",
-      "governed": true,
-      "renderer": "findings-list",
+      "governed": false,
+      "renderer": "result-card",
       "example": "",
       "inputs": [
         {
@@ -4291,19 +4353,43 @@
           "name": "query",
           "type": "string",
           "required": false,
-          "description": "Free-text keywords (endpoint, deficiency, design term)."
+          "description": "Public source title, sponsor, product, study identifier, document class or recorded applicability (for example LMN-201 or NCT05330182; maximum 300 characters)."
         },
         {
           "name": "entity_types",
           "type": "array",
           "required": false,
-          "description": "Which entities to search; default all."
+          "description": "Which entities to search; default all. sources returns catalog metadata; source_id reads retained pages."
         },
         {
           "name": "limit",
           "type": "number",
           "required": false,
-          "description": ""
+          "description": "Whole number from 1 to 100; default 25."
+        },
+        {
+          "name": "source_offset",
+          "type": "number",
+          "required": false,
+          "description": "Public source catalog pagination offset, 0–100000; default 0."
+        },
+        {
+          "name": "source_id",
+          "type": "number",
+          "required": false,
+          "description": "Source id returned by the public source catalog. Reads verified pages instead of running a catalog search."
+        },
+        {
+          "name": "page_start",
+          "type": "number",
+          "required": false,
+          "description": "First PDF page (1-based); default 1. Requires source_id."
+        },
+        {
+          "name": "page_end",
+          "type": "number",
+          "required": false,
+          "description": "Last PDF page inclusive; default page_start, at most four pages. Response is capped at 16000 characters with explicit truncation."
         }
       ],
       "requiredInputs": [],
@@ -5950,7 +6036,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Build a platform-tailored vaccine CMC development plan. Given the technology platform (mRNA, viral vector, protein subunit, live-attenuated, inactivated, conjugate, VLP, or DNA) and product attributes, returns the drug-substance and drug-product definitions, adjuvant strategy and constituent-material controls (21 CFR 610.15), the potency-assay paradigm and release tests (21 CFR 610.10/.12/.13/.14), the ICH Q5C stability program, reference-standard strategy, cell-substrate (ICH Q5D) and viral-safety (ICH Q5A(R2)) expectations, key CMC risks, and ICH Q5E comparability guidance. Use when the user needs to plan vaccine chemistry, manufacturing, and controls, choose a potency assay, design a stability program, or understand platform-specific CMC risks. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build a platform-tailored vaccine CMC development plan. Given the technology platform (mRNA, viral vector, protein subunit, live-attenuated, inactivated, conjugate, VLP, or DNA) and product attributes, returns the drug-substance and drug-product definitions, adjuvant strategy and constituent-material controls (21 CFR 610.15), the potency-assay paradigm and release tests (21 CFR 610.10/.12/.13/.14), the ICH Q5C stability program, reference-standard strategy, cell-substrate (ICH Q5D) and viral-safety (ICH Q5A(R2)) expectations, key CMC risks, and ICH Q5E comparability guidance. Use when the user needs to plan vaccine chemistry, manufacturing, and controls, choose a potency assay, design a stability program, or understand platform-specific CMC risks. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -5978,31 +6064,31 @@
           "name": "multivalent",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product contains multiple valences/serotypes (default inferred false)."
+          "description": "Stated multivalent status. Omitted/null remains not_stated; no monovalent product is assumed."
         },
         {
           "name": "numberOfValences",
           "type": "number",
           "required": false,
-          "description": "Number of valences/serotypes if multivalent (default 2 when multivalent is true)."
+          "description": "Stated positive integer valence count. No count is invented when multivalent is true; a count above 1 contradicts multivalent:false."
         },
         {
           "name": "adjuvanted",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product is adjuvanted. If omitted, defaults to true for protein subunit, inactivated, and VLP platforms and false otherwise."
+          "description": "Stated added-adjuvant status. Omitted/null remains not_stated regardless of platform; no self-adjuvancy is inferred."
         },
         {
           "name": "adjuvantName",
           "type": "string",
           "required": false,
-          "description": "Specific adjuvant if known (e.g. \"aluminium hydroxide\", \"AS01\", \"MF59\", \"CpG 1018\"). If omitted, a platform-typical adjuvant is suggested."
+          "description": "Specific adjuvant if known (e.g. \"aluminium hydroxide\", \"AS01\", \"MF59\", \"CpG 1018\"). If omitted, the actual adjuvant name stays unknown; platform examples remain references. A name contradicts adjuvanted:false."
         },
         {
           "name": "lyophilized",
           "type": "boolean",
           "required": false,
-          "description": "Whether the drug product is lyophilized (affects residual-moisture control and in-use stability). If omitted, inferred from the platform cold-chain profile."
+          "description": "Whether the drug product is lyophilized (affects residual-moisture control and in-use stability). If omitted, presentation-dependent controls remain unassessed; cold-chain references do not fill the fact."
         },
         {
           "name": "framework",
@@ -6636,56 +6722,13 @@
         "id": "device_ivd",
         "label": "Device / IVD"
       },
-      "description": "Assess Pregnancy and Lactation Labeling Rule (PLLR) requirements and generate structured labeling content recommendations per 21 CFR 201.56(d)(1) and the FDA final rule effective June 30, 2015. Returns recommended content for all three PLLR subsections: 8.1 Pregnancy (risk summary, clinical considerations, data from human and animal studies), 8.2 Lactation (risk summary, clinical considerations, data), and 8.3 Females and Males of Reproductive Potential (pregnancy testing, contraception, infertility). Evaluates available evidence (animal reproductive toxicology data, human pregnancy registries, placental transfer studies, breast milk excretion data) against PLLR content standards and identifies data gaps requiring additional studies or post-marketing commitments. Eliminates legacy pregnancy categories (A/B/C/D/X) per the final rule. Cites 21 CFR 201.56(d)(1), 201.57(c)(9), FDA PLLR guidance (2014), and relevant FDA draft guidance on lactation studies. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Return the PLLR structure for 8.1 Pregnancy, 8.2 Lactation and 8.3 Females and Males of Reproductive Potential, with generic reference guidance. Product-specific requiredStatements are null because no recorded pregnancy, lactation or reproductive-potential evidence is read here. Do not pass animal findings, pregnancy data, milk or placental-transfer facts, mechanism-based risks or registry facts; conversation inputs are not used to infer product label statements. Report what was not assessed and use the structure in the governed authoring flow with cited source records. Cites 21 CFR 201.57(c)(9) and the PLLR Final Rule. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
-      "governed": false,
-      "renderer": "document-canvas",
+      "governed": true,
+      "renderer": "result-card",
       "example": "",
-      "inputs": [
-        {
-          "name": "animalReproToxData",
-          "type": "array",
-          "required": true,
-          "description": "Animal reproductive toxicology study results — used to populate the Data subsection of Section 8.1 Pregnancy."
-        },
-        {
-          "name": "humanPregnancyData",
-          "type": "boolean",
-          "required": true,
-          "description": "Whether human pregnancy outcome data are available (from clinical trials, pregnancy registries, or epidemiological studies). Presence of human data significantly strengthens the Risk Summary."
-        },
-        {
-          "name": "placentalTransfer",
-          "type": "string",
-          "required": true,
-          "description": "Placental transfer status — \"known\" if demonstrated in studies, \"likely\" if expected based on molecular characteristics (e.g., IgG antibodies), \"unknown\" if not studied, \"none\" if demonstrated not to cross."
-        },
-        {
-          "name": "breastMilkExcretion",
-          "type": "string",
-          "required": true,
-          "description": "Breast milk excretion status — \"known\" if demonstrated in lactation studies, \"likely\" if expected based on molecular characteristics, \"unknown\" if not studied, \"none\" if demonstrated not to be excreted."
-        },
-        {
-          "name": "mechanismBasedRisk",
-          "type": "boolean",
-          "required": true,
-          "description": "Whether the drug's mechanism of action suggests developmental or reproductive risk (e.g., anti-angiogenic agents, cytotoxic agents, hormonal modulators). Triggers enhanced risk language in Section 8.1."
-        },
-        {
-          "name": "pregnancyRegistryData",
-          "type": "boolean",
-          "required": false,
-          "description": "Whether a pregnancy exposure registry exists or is planned — affects Clinical Considerations content and whether registry enrollment language is included in Section 8.1."
-        }
-      ],
-      "requiredInputs": [
-        "animalReproToxData",
-        "humanPregnancyData",
-        "placentalTransfer",
-        "breastMilkExcretion",
-        "mechanismBasedRisk"
-      ],
+      "inputs": [],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -8175,7 +8218,7 @@
         "id": "evidence",
         "label": "Evidence & intelligence"
       },
-      "description": "Determine the meaningful within-patient change threshold (responder definition) for a COA score using the FDA-preferred anchor-based method as primary, with distribution-based estimates as supportive only. Computes a recommended threshold from anchor-group mean change (requiring an anchor correlation of roughly ≥ 0.30–0.37 to be usable) and contextualizes it with distribution-based heuristics (0.5 SD, 1 SEM). Flags when evidence is insufficient and a single distribution-based value is being over-relied on. Cites FDA PFDD Guidance 3 and ISPOR responder-definition practice. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Determine the meaningful within-patient change threshold (responder definition) for a COA score using the FDA-preferred anchor-based method as primary, with distribution-based estimates as supportive only. Computes a recommended threshold from anchor-group mean change (requiring a stated anchor correlation of roughly ≥ 0.30–0.37 to be usable; unstated correlation does not contribute to a threshold) and contextualizes it with distribution-based heuristics (0.5 SD, 1 SEM). Flags when evidence is insufficient and a single distribution-based value is being over-relied on. Cites FDA PFDD Guidance 3 and ISPOR responder-definition practice. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. Unanswered boolean evidence remains not_stated; a conclusion depending on it is not_assessed. Ask for those facts without inferring true or false. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -8756,6 +8799,12 @@
           "type": "string",
           "required": false,
           "description": "Optional: pharma, biotech, device, ivd, or cro (informational)."
+        },
+        {
+          "name": "section",
+          "type": "string",
+          "required": false,
+          "description": "For document_type csr: the ICH E3 heading (e.g. 11.4.1, 12.2.2) whose writing rules — tense, voice, standard sentences, display model — to return with the CSR writing standard."
         }
       ],
       "requiredInputs": [
@@ -9952,7 +10001,7 @@
         "id": "governance",
         "label": "Governance & data"
       },
-      "description": "Design a manufacturing lot-to-lot consistency (equivalence) study. Returns the equivalence design across the (default 3) consecutive lots, the equivalence margin on the GMT ratio (default 0.5-2.0, i.e. two-fold), the full set of pairwise two-one-sided-test (TOST) comparisons, a closed-form per-group and total sample-size estimate (from the assumed log-titer SD, target power, and margin), the potency-consistency expectation (21 CFR 610.10), the immunogenicity readout, the acceptance logic (every pairwise CI within the margin), and the stated assumptions. Use when the user needs to plan a 3-lot consistency study, choose equivalence margins, or estimate the sample size for demonstrating lot consistency. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Design a manufacturing lot-to-lot consistency (equivalence) study. Returns the equivalence design across the (default 3) consecutive lots, the equivalence margin on the GMT ratio (default 0.5-2.0, i.e. two-fold), the full set of pairwise two-one-sided-test (TOST) comparisons, a closed-form per-group and total sample-size estimate (from the assumed log-titer SD, target power, and margin), the potency-consistency expectation (21 CFR 610.10), the immunogenicity readout, the acceptance logic (every pairwise CI within the margin), and the stated assumptions. Use when the user needs to plan a 3-lot consistency study, choose equivalence margins, or estimate the sample size for demonstrating lot consistency. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -9962,7 +10011,7 @@
           "name": "numberOfLots",
           "type": "number",
           "required": false,
-          "description": "Number of consecutive manufacturing lots to compare (default 3; clamped to 2-5). The conventional pre-licensure expectation is >= 3."
+          "description": "Planned number of consecutive lots (integer 2–5; illustrative default 3, disclosed in defaultsApplied). Invalid values are refused. The conventional pre-licensure expectation is >= 3."
         },
         {
           "name": "immunogenicityMarker",
@@ -9992,13 +10041,13 @@
           "name": "equivalenceMarginUpper",
           "type": "number",
           "required": false,
-          "description": "Upper equivalence margin on the GMT ratio (default 2.0). Symmetric to the lower bound in log space."
+          "description": "Upper ratio margin above 1 (illustrative default 2). This approximation supports reciprocal log-symmetric bounds only; lower must equal 1 / upper."
         },
         {
           "name": "targetPower",
           "type": "number",
           "required": false,
-          "description": "Target power per pairwise comparison, 0-1 (default 0.90; clamped 0.5-0.99)."
+          "description": "Target planning power per comparison (supported 0.5–0.99; illustrative default 0.90). Invalid values are refused, not clamped."
         },
         {
           "name": "framework",
@@ -10016,7 +10065,7 @@
         "id": "governance",
         "label": "Governance & data"
       },
-      "description": "Compare the labelled figures in a claim (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other parts of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context; the call is audited.",
+      "description": "Compare the labelled figures in a saved section (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other saved sections of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. Name each part by its authoring section_id; the engine reads its saved text. Text in the call is never compared. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context, and every section must be in the submission's project; the call is audited.",
       "scope": "project",
       "governed": false,
       "renderer": "findings-list",
@@ -10038,13 +10087,13 @@
           "name": "left",
           "type": "object",
           "required": true,
-          "description": "The claim under review."
+          "description": "The saved section that makes the claim under review."
         },
         {
           "name": "right",
           "type": "array",
           "required": true,
-          "description": "The sources to check against."
+          "description": "The saved sections to check against."
         }
       ],
       "requiredInputs": [
@@ -10448,7 +10497,7 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Determine which nonclinical studies are required to support a clinical trial of a given duration and phase, and which are missing, using the platform's deterministic ICH M3(R2)/S-series staging engine. Encodes the repeat-dose tox duration vs clinical duration table (two species), the genotox battery timing (S2(R1)), safety pharmacology before FIH (S7A), reproductive tox staging (S5(R3)), carcinogenicity at marketing for chronic use (S1), and the ICH S9 oncology relaxations. ALWAYS call this for 'what nonclinical studies do I need for Phase X' / nonclinical gap-analysis / study-program planning. Report the required battery and the gaps verbatim; only studies due at or before the target phase are gated.",
+      "description": "List required nonclinical studies for a stated clinical duration and phase, and compare only the studies you listed, using the platform's deterministic ICH M3(R2)/S-series staging engine. Encodes the repeat-dose tox duration vs clinical duration table (two species), the genotox battery timing (S2(R1)), safety pharmacology before FIH (S7A), reproductive tox staging (S5(R3)), carcinogenicity at marketing for chronic use (S1), and the ICH S9 oncology relaxations. ALWAYS call this for 'what nonclinical studies do I need for Phase X' / nonclinical gap-analysis / study-program planning. Report the requirements and comparison against the stated list; it does not establish program adequacy. No listed studies means requirements only, with gaps null.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -10500,7 +10549,7 @@
           "name": "present",
           "type": "array",
           "required": false,
-          "description": "Studies the program already holds."
+          "description": "Studies stated in the conversation for a worksheet comparison; not read from the program records."
         }
       ],
       "requiredInputs": [
@@ -10514,12 +10563,18 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Produce the integrated nonclinical safety assessment for an IND in one call — the roll-up a toxicology lead writes. Composes the first-in-human starting dose (NOAEL→HED→MRSD vs MABEL), the target-organ adversity profile, the ICH M3(R2)/S-series program gaps, and the M2.4 overview into a single readiness verdict (ready_for_fih / gaps_block_fih / insufficient_input) with the blocker list. Each input block is optional; supply what the program has. Prefer this for 'what is the nonclinical safety story / are we ready for first-in-human?' questions; report the verdict, dose, adverse findings, and blockers verbatim.",
-      "scope": "global",
+      "description": "Assess nonclinical safety readiness from the open project's recorded studies only. Do not pass studies, presentStudies, findings, NOAELs, doses or FIH inputs, or restate them from the conversation. Until nonclinical studies are recorded against a project, returns readiness not_assessed and, when the clinical duration is stated, the ICH M3(R2)/S-series required battery. No studies were read: this is a requirement list, not a gap analysis or a starting-dose determination. Report the refusal and requirements as returned; never infer that the program holds or lacks a study or is ready for first-in-human.",
+      "scope": "project",
       "governed": false,
-      "renderer": "document-canvas",
+      "renderer": "findings-list",
       "example": "",
       "inputs": [
+        {
+          "name": "project_id",
+          "type": "number",
+          "required": false,
+          "description": "Project to resolve when none is open. Another project while one is open is refused."
+        },
         {
           "name": "drugSubstanceName",
           "type": "string",
@@ -10533,32 +10588,8 @@
           "description": ""
         },
         {
-          "name": "fih",
-          "type": "object",
-          "required": false,
-          "description": "First-in-human dose inputs (same shape as compute_fih_dose)."
-        },
-        {
-          "name": "findings",
-          "type": "array",
-          "required": false,
-          "description": ""
-        },
-        {
           "name": "program",
           "type": "object",
-          "required": false,
-          "description": ""
-        },
-        {
-          "name": "presentStudies",
-          "type": "array",
-          "required": false,
-          "description": ""
-        },
-        {
-          "name": "studies",
-          "type": "array",
           "required": false,
           "description": ""
         }
@@ -10572,9 +10603,9 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Classify nonclinical target-organ findings as adverse / adaptive-non-adverse / monitor / indeterminate using the platform's DETERMINISTIC toxicologic-pathology classifier (STP adversity framework, INHAND nomenclature). Returns a reversibility and human-relevance call and an overview-ready framing sentence per finding, plus the assembled M2.4 target-organ paragraph. Use this when framing tox findings for a Module 2.4 Nonclinical Overview or deciding which findings define the NOAEL. The classifier conservatively escalates normally-adaptive findings (e.g. hepatocellular hypertrophy) to adverse when adverse correlates or moderate+ severity are present, and never assumes an unrecognised finding is benign. Report the classifications and rationale; a pathologist adjudicates the final adversity call.",
+      "description": "Classify nonclinical target-organ findings as adverse / adaptive-non-adverse / monitor / indeterminate using the platform's DETERMINISTIC toxicologic-pathology classifier (STP adversity framework, INHAND nomenclature). Returns a reversibility and human-relevance call and an overview-ready framing sentence per finding, plus the assembled M2.4 target-organ paragraph. Use this only as a worksheet over findings stated in the conversation; no study records are read and it is not governed Module 2.4 content or the program's NOAEL determination. The classifier conservatively escalates normally-adaptive findings (e.g. hepatocellular hypertrophy) to adverse when adverse correlates or moderate+ severity are present, and never assumes an unrecognised finding is benign. Report the classifications and rationale; a pathologist adjudicates the final adversity call.",
       "scope": "global",
-      "governed": false,
+      "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -10596,9 +10627,9 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Compute a defensible first-in-human (FIH) starting dose using the platform's DETERMINISTIC dose engine. Shows BOTH standard derivations: (1) NOAEL → HED (FDA 2005 body-surface Km scaling) → safety factor → MRSD from the most sensitive species, and (2) MABEL from the minimum anticipated effective exposure (EMA FIH guidance), then selects the more conservative and flags which is limiting. ALWAYS call this tool for FIH/MRSD/MABEL/starting-dose questions (e.g. /fih, /dose, Module 2.4 dose-justification). NEVER hand-calculate an HED, MRSD, or MABEL — a fabricated starting dose is a critical safety defect. Gather the per-species NOAELs (mg/kg/day) and, for high-risk molecules, the MABEL inputs, then report the returned numbers verbatim.",
+      "description": "Calculate a first-in-human dose worksheet from NOAELs explicitly stated by the person: NOAEL to HED to safety factor to MRSD, and optional MABEL, using the canonical deterministic engine. Shows both derivations and which limits. No study records are read; this is not the program's starting dose or governed Module 2.4 content. Do not pass invented or inferred NOAELs or treat the result as a readiness determination. Report the stated basis, numbers, limiting derivation and warnings verbatim.",
       "scope": "global",
-      "governed": false,
+      "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -10944,23 +10975,17 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Draft the Module 2.4 Nonclinical Overview (ICH M4S) from the program's nonclinical study set using the platform's deterministic composer. Maps ingest-shaped studies (single/repeat-dose tox, genotox, DART, carcinogenicity, safety pharm, PK/ADME) into the ICH M4S structure, flags the gaps against ICH M3(R2)/S2(R1)/S7A, and — when target-organ findings are supplied — appends the adversity profile (adverse vs adaptive vs monitor) from the toxicologic-pathology classifier. Returns a draft M2.4 (a starting point the author promotes through the governed authoring flow), its completeness score, and the gap list. Use this for Module 2.4 / nonclinical-overview authoring requests. Report the gaps and completeness honestly; do not assert a study exists that was not supplied.",
-      "scope": "global",
-      "governed": true,
+      "description": "Draft the Module 2.4 Nonclinical Overview (ICH M4S) for the open project. Its studies, NOAELs and findings come from the project's recorded nonclinical studies only: do not pass studies, doses, NOAELs or findings, and do not restate them from the conversation. Until nonclinical studies are recorded against a project it returns the record's ICH M4S outline (2.4.1 to 2.4.6: overview of the nonclinical testing strategy, pharmacology, pharmacokinetics, toxicology, integrated overview and conclusions, list of literature references; each heading with its key content) and says that no study is recorded; figures given in the call are refused and named as not used. Use this for Module 2.4 / nonclinical-overview requests. Report what it returns as it is: never fill a heading with a study, NOAEL or finding it did not return.",
+      "scope": "project",
+      "governed": false,
       "renderer": "document-canvas",
       "example": "",
       "inputs": [
         {
-          "name": "studies",
-          "type": "array",
-          "required": true,
-          "description": "Nonclinical studies feeding the overview."
-        },
-        {
-          "name": "findings",
-          "type": "array",
+          "name": "project_id",
+          "type": "number",
           "required": false,
-          "description": "Target-organ findings to classify for the overview (optional)."
+          "description": "The project whose recorded studies to read, when none is open. A project open in the workspace is used as it is; another project is refused."
         },
         {
           "name": "drugSubstanceName",
@@ -10975,9 +11000,7 @@
           "description": ""
         }
       ],
-      "requiredInputs": [
-        "studies"
-      ],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -10986,23 +11009,17 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) from the program's nonclinical study set using the platform's deterministic composer — the 2.6.1 introduction, 2.6.2/2.6.4/2.6.6 written summaries (pharmacology, PK, toxicology) and the 2.6.3/2.6.5/2.6.7 tabulated summaries — weaving in the target-organ adversity profile when findings are supplied. Returns a draft, per-discipline tables, the gap list, and a completeness score. Use this for Module 2.6 authoring; report gaps and completeness honestly.",
-      "scope": "global",
+      "description": "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) for the open project. Its studies, NOAELs and findings come from the project's recorded nonclinical studies only: do not pass studies, doses, NOAELs or findings, and do not restate them from the conversation. Until nonclinical studies are recorded against a project it returns the record's ICH M4S outline (the 2.6.1 introduction, the 2.6.2/2.6.4/2.6.6 written summaries and the 2.6.3/2.6.5/2.6.7 tabulated summaries for pharmacology, pharmacokinetics and toxicology, each heading with its key content) and says that no study is recorded; figures given in the call are refused and named as not used. Use this for Module 2.6 requests. Report what it returns as it is: never fill a heading or a table with a figure it did not return.",
+      "scope": "project",
       "governed": false,
       "renderer": "document-canvas",
       "example": "",
       "inputs": [
         {
-          "name": "studies",
-          "type": "array",
-          "required": true,
-          "description": "Nonclinical studies feeding the summaries."
-        },
-        {
-          "name": "findings",
-          "type": "array",
+          "name": "project_id",
+          "type": "number",
           "required": false,
-          "description": "Target-organ findings for the 2.6.6 adversity profile (optional)."
+          "description": "The project whose recorded studies to read, when none is open. A project open in the workspace is used as it is; another project is refused."
         },
         {
           "name": "drugSubstanceName",
@@ -11017,9 +11034,7 @@
           "description": ""
         }
       ],
-      "requiredInputs": [
-        "studies"
-      ],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -11028,7 +11043,7 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. When the program already has ingested studies, prefer the draft_* composer tools, which fill the content from data.",
+      "description": "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. For Module 2.4 and 2.6, the draft_nonclinical_* tools take no studies and return the ICH M4S outline until nonclinical studies are recorded against a project.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -11050,7 +11065,7 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: study inputs for draft_nonclinical_overview_m2_4 / draft_nonclinical_summaries_m2_6, present-studies for assess_nonclinical_program, and species-NOAELs for compute_fih_dose. Call this FIRST when the user references a program/IND by id and wants the overview drafted, the gap analysis run, or the FIH dose computed from the program's real data — then pass the returned arrays into the relevant tool. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
+      "description": "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. These are model-extracted rows, not an approved starting-dose or readiness basis. Do not pass them on as a program determination; worksheet tools label any relayed values as stated inputs, not records they read. The Module 2.4 and 2.6 drafts do not take these studies: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -14082,7 +14097,7 @@
           "name": "netBalanceEstimate",
           "type": "number",
           "required": false,
-          "description": "Net benefit-risk margin from the balance assessment (e.g., from assess_benefit_risk_balance). A smaller absolute margin makes the conclusion more sensitive/fragile."
+          "description": "Net benefit-risk margin from the balance assessment (e.g., from assess_benefit_risk_balance). A smaller absolute margin makes the conclusion more sensitive/fragile. Without it, robustness is not assessed; no margin is assumed."
         },
         {
           "name": "sources",
@@ -14104,9 +14119,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Evaluate whether carcinogenicity studies are required per ICH S1A triggers and, if so, recommend a study design per ICH S1B(R1) and S1C(R2). Evaluates all ICH S1A triggers: clinical duration ≥6 months, positive genotoxicity, structural alerts, preneoplastic lesions in repeat-dose studies, endocrine activity, immunosuppression. Returns trigger-by-trigger assessment, recommended design (2-year rat bioassay, 6-month Tg.rasH2 transgenic mouse model, or weight-of-evidence waiver per ICH S1B(R1) 2022 revision), dose selection per ICH S1C(R2), and statistical approaches. Handles biologics (ICH S6(R1) — standard bioassays generally inappropriate) and oncology (ICH S9 — typically not required). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own species/dose/study-design recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Worksheet over explicitly stated clinical duration, modality, genotoxicity and other risk inputs, using ICH S1A triggers and S1B(R1)/S1C(R2) study-design guidance. No study records are read: do not present stated genotoxicity findings as the program's recorded results or this worksheet as governed content. Covers duration, structural alerts, preneoplastic lesions, endocrine activity and immunosuppression, with S6(R1) biologic and S9 oncology considerations. Report its stated basis and trigger-by-trigger comparison verbatim. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own species/dose/study-design recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
-      "governed": false,
+      "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -14477,7 +14492,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess whether a COA is fit-for-purpose for a specific context of use — the combination of population, concept, endpoint position, and intended labeling claim. Evaluates whether content validity was established in this context of use, whether the measured concept matches the concept of interest for the claim, whether a meaningful within-patient change threshold is defined, whether the recall period suits the concept and treatment timing, and whether the data-collection mode (paper vs ePRO) has been validated/equated. Returns a fit-for-purpose determination with the specific deficiencies that would block a label claim. Cites the FDA COA / PFDD Guidance 3 roadmap. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Assess whether a COA is fit-for-purpose for a specific context of use — the combination of population, concept, endpoint position, and intended labeling claim. Evaluates whether content validity was established in this context of use, whether the measured concept matches the concept of interest for the claim, whether a meaningful within-patient change threshold is defined, whether the recall period suits the concept and treatment timing, and whether the data-collection mode (paper vs ePRO) has been validated/equated. Returns a fit-for-purpose determination with the specific deficiencies that would block a label claim. Cites the FDA COA / PFDD Guidance 3 roadmap. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. Unanswered boolean evidence remains not_stated; a conclusion depending on it is not_assessed. Ask for those facts without inferring true or false. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -14557,7 +14572,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Evaluate the measurement properties of a COA against FDA / ISPOR / ISOQOL standards and return an overall validation adequacy grade with gaps. Assesses content validity (the most important property per FDA — established in the target population/context of use), construct validity, reliability (test-retest ICC, internal consistency via Cronbach's alpha for multi-item scales, inter-rater ICC for ClinRO/administered PerfO), and ability to detect change. Applies conventional acceptance benchmarks (e.g., ICC ≥ 0.70, Cronbach's alpha 0.70–0.95) and returns a per-property grade plus prioritized recommendations to close gaps. Cites the FDA PRO Guidance and PFDD Guidance 3. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Evaluate the measurement properties of a COA against FDA / ISPOR / ISOQOL standards and return an overall validation adequacy grade with gaps. Assesses content validity (the most important property per FDA — established in the target population/context of use), construct validity, reliability (test-retest ICC, internal consistency via Cronbach's alpha for multi-item scales, inter-rater ICC for ClinRO/administered PerfO), and ability to detect change. Applies conventional acceptance benchmarks (e.g., ICC ≥ 0.70, Cronbach's alpha 0.70–0.95) and returns a per-property grade plus prioritized recommendations to close gaps. Cites the FDA PRO Guidance and PFDD Guidance 3. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. Unanswered boolean evidence remains not_stated; a conclusion depending on it is not_assessed. Ask for those facts without inferring true or false. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -14726,10 +14741,10 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Classify and assess a proposed immune correlate of protection (CoP). Returns the CoP type using the Plotkin & Gilbert (2012) nomenclature — mechanistic vs non-mechanistic, absolute vs relative — matches the pathogen against known correlates (influenza HAI 1:40, hepatitis B anti-HBs 10 mIU/mL, measles/meningococcal/diphtheria/tetanus/rabies neutralizing thresholds, pneumococcal IgG/OPA), assesses threshold and surrogate-endpoint usability against the Prentice/Qin (2007) framework, lists bridging applications (lot consistency, comparability, population extrapolation, strain change), and flags validation gaps. Use when the user asks whether an immune marker can serve as a correlate/surrogate endpoint, what threshold applies, or whether immunobridging or accelerated approval is supportable. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Classify the stated mechanism/protection flags for an immune correlate and show separate known-correlate references. Missing flags leave classification unassessed; reference entries do not supply the actual marker, threshold or efficacy linkage. Returns the stated marker/threshold, Prentice validation requirements and conditional bridging-use guidance. Surrogate validation, product eligibility and agency acceptance are not determined. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
-      "renderer": "findings-list",
+      "renderer": "result-card",
       "example": "",
       "inputs": [
         {
@@ -14742,7 +14757,7 @@
           "name": "immuneMarker",
           "type": "string",
           "required": false,
-          "description": "Proposed immune marker (e.g. \"HAI titer\", \"neutralizing antibody\", \"SBA\", \"OPA\", \"anti-HBs\"). If omitted, a known marker for the pathogen is used when available."
+          "description": "Proposed immune marker (e.g. \"HAI titer\", \"neutralizing antibody\", \"SBA\", \"OPA\", \"anti-HBs\"). If omitted, the actual marker remains unknown; a pathogen reference does not supply it."
         },
         {
           "name": "proposedThreshold",
@@ -14754,7 +14769,7 @@
           "name": "protectionMechanismKnown",
           "type": "boolean",
           "required": false,
-          "description": "Whether the marker is the causal protective effector (mechanistic). Combined with markerDirectlyProtective to classify the CoP. If both are omitted, the known-correlate registry classification is used."
+          "description": "Whether the marker is the causal protective effector (mechanistic). Combined with markerDirectlyProtective to classify the stated CoP. If either flag is omitted, classification stays not_assessed."
         },
         {
           "name": "markerDirectlyProtective",
@@ -14766,13 +14781,13 @@
           "name": "hasEfficacyDataLinkingMarker",
           "type": "boolean",
           "required": false,
-          "description": "Whether an efficacy dataset links the marker to clinical protection (supports Prentice criteria). If omitted, inferred true when a known correlate matches the pathogen."
+          "description": "Whether an efficacy dataset links the marker to clinical protection (supports Prentice criteria). If omitted, stays not_stated; a known-correlate match is reference information, not product efficacy evidence."
         },
         {
           "name": "intendedUse",
           "type": "string",
           "required": false,
-          "description": "Intended regulatory use of the correlate (default \"immunobridging\")."
+          "description": "Stated intended use; if omitted, no intended-use assessment is selected. Returned guidance is conditional reference information."
         },
         {
           "name": "framework",
@@ -14921,49 +14936,49 @@
           "name": "networkConnected",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device can connect to the internet / a network / other devices or cloud. One of the \"cyber device\" criteria under Section 524B. Default true."
+          "description": "Whether the device can connect to the internet / a network / other devices or cloud. One of the \"cyber device\" criteria under Section 524B. Leave it out if it is not known: it is not assumed, and the cyber-device status is undetermined unle"
         },
         {
           "name": "includesSoftware",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device includes or relies on validated software. One of the \"cyber device\" criteria under Section 524B. Default true."
+          "description": "Whether the device includes or relies on validated software. One of the \"cyber device\" criteria under Section 524B. Leave it out if it is not known: it is not assumed, and the cyber-device status is undetermined unless networkConnected is f"
         },
         {
           "name": "submissionUnder524B",
           "type": "boolean",
           "required": false,
-          "description": "Whether the submission is on/after the Section 524B effective date (March 29, 2023; FDA refuse-to-accept from October 1, 2023). Default true."
+          "description": "Whether the submission is on/after the Section 524B effective date (March 29, 2023; FDA refuse-to-accept from October 1, 2023). If omitted, it is not assumed: applicability is undetermined unless the device is explicitly ruled out as a cybe"
         },
         {
           "name": "threatModelProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether a threat model (e.g., STRIDE-based) covering the system, interfaces, trust boundaries, update path, and connected systems is provided. Set false to flag a gap."
+          "description": "Whether a threat model (e.g., STRIDE-based) covering the system, interfaces, trust boundaries, update path, and connected systems is provided. Set false to flag a gap. Leave it out if it is not known: an omitted value is reported as not sta"
         },
         {
           "name": "sbomProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether a Software Bill of Materials (SBOM) including commercial, open-source, and off-the-shelf components is provided [524B(b)(3)]. Set false to flag a (critical when 524B applies) gap."
+          "description": "Whether a Software Bill of Materials (SBOM) including commercial, open-source, and off-the-shelf components is provided [524B(b)(3)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Leave it out if it is not known"
         },
         {
           "name": "securityRiskManagementProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether security risk management per AAMI TIR57 / SW96 (distinct from ISO 14971 safety risk) is provided. Set false to flag a gap."
+          "description": "Whether security risk management per AAMI TIR57 / SW96 (distinct from ISO 14971 safety risk) is provided. Set false to flag a gap. Leave it out if it is not known: an omitted value is reported as not stated and counts as a gap, never as pro"
         },
         {
           "name": "vulnerabilityHandlingProcess",
           "type": "boolean",
           "required": false,
-          "description": "Whether coordinated vulnerability disclosure (CVD) / vulnerability handling processes are in place [524B(b)(1)]. Set false to flag a (critical when 524B applies) gap."
+          "description": "Whether coordinated vulnerability disclosure (CVD) / vulnerability handling processes are in place [524B(b)(1)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Leave it out if it is not known: an omitted value is"
         },
         {
           "name": "postMarketUpdatePlan",
           "type": "boolean",
           "required": false,
-          "description": "Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Set false to flag a (critical when 524B applies) gap."
+          "description": "Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Leave it out if it is not known: an omitted value is reported as not stated and counts as "
         },
         {
           "name": "handlesSensitiveData",
@@ -15854,7 +15869,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess whether a device adverse event is reportable — the deterministic MDR/vigilance triage. Given the patient harm and event facts, returns whether it is FDA MDR reportable (21 CFR 803) and/or EU MDR vigilance reportable (Art 87), whether a 21 CFR 806 correction/removal notice applies, the suggested jurisdiction, FDA report type, and EU severity/clock, with a rationale. DETERMINISTIC — report the classification verbatim; it does not decide FOR the manufacturer, it computes the regulatory trigger.",
+      "description": "Assess whether a device adverse event is reportable — the deterministic MDR/vigilance triage. Given the patient harm and event facts, returns whether it is FDA MDR reportable (21 CFR 803) and/or EU MDR vigilance reportable (Art 87), whether a 21 CFR 806 correction/removal notice applies, the suggested jurisdiction, FDA report type, and EU severity/clock, with a rationale. All four event facts are required; an omitted one returns needs_parameters naming it: ask the user, never assume false. A country nobody knows is stated as \"unknown\": then determinationComplete is false, what it decides is null and missingFacts names it; say that part is not determined, never that it is not reportable. DETERMINISTIC — report the classification verbatim; it does not decide FOR the manufacturer, it computes the regulatory trigger.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -15869,26 +15884,26 @@
         {
           "name": "isMalfunction",
           "type": "boolean",
-          "required": false,
-          "description": "Was this a device malfunction (that could recur and cause harm)?"
+          "required": true,
+          "description": "Was this a device malfunction (that could recur and cause harm)? Required: ask the user; never assume false."
         },
         {
           "name": "eventLocationCountry",
           "type": "string",
-          "required": false,
-          "description": "ISO country code where the event occurred (drives EU applicability)."
+          "required": true,
+          "description": "ISO 3166-1 alpha-2 code of the country where the event occurred (drives EU applicability), or \"unknown\". Required."
         },
         {
           "name": "anticipatesCorrection",
           "type": "boolean",
-          "required": false,
-          "description": "Does the manufacturer anticipate a correction/removal (806)?"
+          "required": true,
+          "description": "Does the manufacturer anticipate a correction/removal (806)? Required: ask the user; never assume false."
         },
         {
           "name": "trendThresholdCrossed",
           "type": "boolean",
-          "required": false,
-          "description": "Has a trend reporting threshold been crossed?"
+          "required": true,
+          "description": "Has a trend reporting threshold been crossed? Required: ask the user; never assume false."
         },
         {
           "name": "eventNarrative",
@@ -15898,7 +15913,11 @@
         }
       ],
       "requiredInputs": [
-        "patientHarm"
+        "patientHarm",
+        "isMalfunction",
+        "eventLocationCountry",
+        "anticipatesCorrection",
+        "trendThresholdCrossed"
       ],
       "derived": true
     },
@@ -16142,7 +16161,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess the feasibility of extrapolating adult efficacy data to a pediatric population using the FDA/EMA extrapolation decision framework (FDA Guidance 2016, EMA Reflection Paper EMA/199678/2016). Evaluates two axes: (1) disease progression similarity between adults and children, and (2) drug response (exposure-response) similarity. Returns: extrapolation level (full extrapolation, partial with PK+PD, partial with PK+efficacy, or no extrapolation/full program), detailed rationale citing regulatory precedents, specific study requirements, Bayesian borrowing feasibility and approach (informative prior, commensurate prior, power prior per Gamalo-Siebers et al. 2017), evidence package needed, and precedent examples from FDA/EMA approvals. Use when planning a pediatric clinical program to determine the minimum necessary studies. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Assess the feasibility of extrapolating adult efficacy data to a pediatric population using the FDA/EMA extrapolation decision framework (FDA Guidance 2016, EMA Reflection Paper EMA/199678/2016). Evaluates two axes: (1) disease progression similarity between adults and children, and (2) drug response (exposure-response) similarity. Returns: extrapolation level (full extrapolation, partial with PK+PD, partial with PK+efficacy, or no extrapolation/full program), detailed rationale citing regulatory precedents, specific study requirements, Bayesian borrowing feasibility and approach (informative prior, commensurate prior, power prior per Gamalo-Siebers et al. 2017), evidence package needed, and precedent examples from FDA/EMA approvals. Use when planning a pediatric clinical program to determine the minimum necessary studies. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -16173,7 +16192,7 @@
             "null"
           ],
           "required": false,
-          "description": "Whether disease progression is similar between adults and the target pediatric population. true = similar, false = different, null = uncertain/unknown. The engine has built-in knowledge for common conditions; set null to use the internal as"
+          "description": "Stated product-specific disease-progression similarity between adults and the target pediatric population: true = similar, false = different, null or omitted = not_stated. Condition references do not fill this fact."
         },
         {
           "name": "drugResponseSimilar",
@@ -16182,7 +16201,7 @@
             "null"
           ],
           "required": false,
-          "description": "Whether the exposure-response relationship is similar. true = similar, false = different, null = uncertain/unknown. Set null to use the engine's internal assessment based on the condition and therapeutic area."
+          "description": "Stated product-specific exposure-response similarity: true = similar, false = different, null or omitted = not_stated. A missing assessment cannot select a PK/PD bridge or a full program."
         },
         {
           "name": "mechanismOfAction",
@@ -16206,7 +16225,7 @@
           "name": "condition",
           "type": "string",
           "required": false,
-          "description": "Specific condition name for matching against the internal extrapolation knowledge base (e.g., \"hypertension\", \"asthma\", \"crohn_disease\", \"hiv\")."
+          "description": "Condition name for reference context only (e.g., hypertension, asthma, crohn_disease, hiv). A reference profile cannot establish product similarity or adult efficacy."
         }
       ],
       "requiredInputs": [
@@ -16223,7 +16242,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess comprehensive regulatory obligations, ethical requirements, and development timelines for a pediatric drug program. Returns: FDA PREA obligations (21 USC §355c — mandatory pediatric studies for NMEs/new indications) with Written Request and Pediatric Exclusivity details (6-month patent extension per 21 USC §355a), EMA PDCO obligations (EC No 1901/2006 — PIP requirement, PUMA rewards, SPC extension, orphan +2 years market exclusivity), ethical requirements (informed consent model by age per 21 CFR 50 Subpart D and EU CTR Article 32, assent age thresholds, minimal risk definitions, IRB/EC pediatric expertise requirements, blood volume limits, additional safeguards), orphan drug incentive calculations (FDA 7+0.5 years, EMA 10+2 years), and detailed timelines for PIP/PSP submission, study completion, and data submission. Use when planning regulatory strategy, preparing ethics submissions, or assessing incentive value for pediatric development. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Assess comprehensive regulatory obligations, ethical requirements, and development timelines for a pediatric drug program. Returns: FDA PREA obligations (21 USC §355c — mandatory pediatric studies for NMEs/new indications) with Written Request and Pediatric Exclusivity details (6-month patent extension per 21 USC §355a), EMA PDCO obligations (EC No 1901/2006 — PIP requirement, PUMA rewards, SPC extension, orphan +2 years market exclusivity), ethical requirements (informed consent model by age per 21 CFR 50 Subpart D and EU CTR Article 32, assent age thresholds, minimal risk definitions, IRB/EC pediatric expertise requirements, blood volume limits, additional safeguards), orphan drug incentive calculations (FDA 7+0.5 years, EMA 10+2 years), and detailed timelines for PIP/PSP submission, study completion, and data submission. Use when planning regulatory strategy, preparing ethics submissions, or assessing incentive value for pediatric development. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -17384,7 +17403,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess a vaccine technology platform and how to leverage prior platform knowledge. Returns the platform development implications, the strength of platform prior knowledge (high/moderate/emerging), specific prior-knowledge leverage points (licensed-product reference, same-backbone/new-antigen abbreviated package, Vaccine/Platform Master File eligibility), nonclinical and CMC leverage (WHO TRS 927, ICH Q5E), population suitability with replicating-platform cautions, and the key platform risks. Covers mRNA, viral vector, protein subunit, live-attenuated, inactivated, conjugate, VLP, and DNA. Use when the user is choosing a platform, asking how much prior knowledge transfers to a new antigen, or whether a platform master file applies. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess a vaccine technology platform and how to leverage prior platform knowledge. Returns the platform development implications, the strength of platform prior knowledge (high/moderate/emerging), specific prior-knowledge leverage points (licensed-product reference, same-backbone/new-antigen abbreviated package, Vaccine/Platform Master File eligibility), nonclinical and CMC leverage (WHO TRS 927, ICH Q5E), population suitability with replicating-platform cautions, and the key platform risks. Covers mRNA, viral vector, protein subunit, live-attenuated, inactivated, conjugate, VLP, and DNA. Use when the user is choosing a platform, asking how much prior knowledge transfers to a new antigen, or whether a platform master file applies. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -17400,19 +17419,19 @@
           "name": "priorLicensedProductOnPlatform",
           "type": "boolean",
           "required": false,
-          "description": "Whether a product on this platform is already licensed (anchors referenceable safety/CMC knowledge). Default false."
+          "description": "Stated prior licensing status; omitted/null stays not_stated. The existence and reuse of accessible supporting evidence still need assessment."
         },
         {
           "name": "sameBackboneDifferentAntigen",
           "type": "boolean",
           "required": false,
-          "description": "Whether this product uses the same platform backbone with a new antigen/transgene/sequence (supports an abbreviated antigen-specific nonclinical package). Default false."
+          "description": "Whether this product uses the same platform backbone with a new antigen/transgene/sequence (may support evidence-based reuse). Omitted/null stays not_stated and cannot select a full or abbreviated product package."
         },
         {
           "name": "intendedPopulation",
           "type": "string",
           "required": false,
-          "description": "Intended population (default \"general\"). Drives replicating-platform safety cautions for immunocompromised/pregnant populations."
+          "description": "Stated intended population. If omitted, suitability remains unassessed. Viral-vector replication properties are not determined by this broad platform category."
         },
         {
           "name": "framework",
@@ -17775,9 +17794,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Calculate the Human Equivalent Dose (HED) and Maximum Recommended Starting Dose (MRSD) from a nonclinical NOAEL using the FDA body surface area (Km factor) method (FDA 2005 Guidance). Returns step-by-step calculations: HED = NOAEL × (animal Km / human Km), MRSD = HED / safety factor. Optionally computes AUC-based and Cmax-based safety margins when exposure data are provided. Includes regulatory interpretation, warnings for low margins, and ICH S9 oncology-specific dose-selection considerations (STD10, HNSTD). Supported species: mouse, rat, hamster, guinea pig, rabbit, dog, NHP, minipig. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own species/dose/study-design recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Calculate a safety-margin worksheet from explicitly stated NOAEL and exposure inputs. Uses the canonical FIH engine for HED and MRSD via FDA 2005 Km scaling and the stated safety factor, and returns separate AUC/Cmax ratios when exposures are supplied. No study records are read; it is not the program's starting dose, readiness verdict or governed content. Do not pass invented or inferred study figures. Unknown species are refused. Report the stated basis, calculations and warnings verbatim.",
       "scope": "global",
-      "governed": false,
+      "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -18817,7 +18836,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Classify a patient into the correct ICH E11(R1) pediatric age band (preterm neonate, term neonate 0-27 days, infant 28 days-23 months, child 2-11 years, adolescent 12-17 years) and return comprehensive developmental pharmacology considerations for that age band. Returns: age band classification, developmental considerations (organ maturation, CNS development), pharmacokinetic implications (renal GFR maturation per Rhodin et al., hepatic CYP ontogeny — CYP3A4/CYP3A7/CYP1A2/CYP2D6/CYP2C9/CYP2C19/CYP2E1/UGT per Hines 2008, body composition water-to-fat ratios per Friis-Hansen), age-appropriate formulation preferences, and consent/assent requirements. Use this tool whenever a user asks about pediatric age classification, developmental pharmacology, or PK considerations for a specific pediatric age. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Classify a patient into the correct ICH E11(R1) pediatric age band (preterm neonate, term neonate 0-27 days, infant 28 days-23 months, child 2-11 years, adolescent 12-17 years) and return comprehensive developmental pharmacology considerations for that age band. Returns: age band classification, developmental considerations (organ maturation, CNS development), pharmacokinetic implications (renal GFR maturation per Rhodin et al., hepatic CYP ontogeny — CYP3A4/CYP3A7/CYP1A2/CYP2D6/CYP2C9/CYP2C19/CYP2E1/UGT per Hines 2008, body composition water-to-fat ratios per Friis-Hansen), age-appropriate formulation preferences, and consent/assent requirements. Use this tool whenever a user asks about pediatric age classification, developmental pharmacology, or PK considerations for a specific pediatric age. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -18839,7 +18858,7 @@
           "name": "gestationalAge",
           "type": "number",
           "required": false,
-          "description": "Gestational age in weeks at birth. Required for neonates (ageUnit = days) to distinguish preterm (<37 weeks) from term (≥37 weeks) neonates. Optional for other age units."
+          "description": "Stated gestational weeks at birth. Required whenever postnatal age converts to 0–27 days, including fractional months/years; no term birth is assumed. Optional for older children."
         }
       ],
       "requiredInputs": [
@@ -19930,7 +19949,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Log a device complaint into the post-market system. Creates the governed complaint record (with a preliminary reportability classification stamped automatically) and records the vigilance-timeline event. Use when the user wants to intake a complaint. Confirm the source, channel, and event narrative with the user before calling.",
+      "description": "Log a device complaint into the post-market system. Creates the governed complaint record (with a preliminary reportability classification stamped automatically) and records the vigilance-timeline event. Use when the user wants to intake a complaint. Confirm the source, channel, and event narrative with the user before calling. The event facts isMalfunction, anticipatesCorrection, trendThresholdCrossed and eventLocationCountry are required too: ask the user, never assume false; a country nobody knows is \"unknown\".",
       "scope": "global",
       "governed": true,
       "renderer": "document-canvas",
@@ -19981,26 +20000,26 @@
         {
           "name": "isMalfunction",
           "type": "boolean",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "Was this a device malfunction (that could recur and cause harm)? Required: ask the user."
         },
         {
           "name": "anticipatesCorrection",
           "type": "boolean",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "Is a correction/removal (806) anticipated? Required: ask the user."
         },
         {
           "name": "trendThresholdCrossed",
           "type": "boolean",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "Has a trend reporting threshold been crossed? Required: ask the user."
         },
         {
           "name": "eventLocationCountry",
           "type": "string",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "ISO 3166-1 alpha-2 code of the country of the event, or \"unknown\". Required."
         },
         {
           "name": "deviceModel",
@@ -20028,7 +20047,11 @@
         "receivedAt",
         "eventNarrative",
         "patientHarm",
-        "severityAssessment"
+        "severityAssessment",
+        "isMalfunction",
+        "anticipatesCorrection",
+        "trendThresholdCrossed",
+        "eventLocationCountry"
       ],
       "derived": true
     },
@@ -23221,7 +23244,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a Pediatric Investigation Plan (PIP, EMA/PDCO) or Pediatric Study Plan (PSP, FDA) for a drug in development. Returns: complete regulatory framework (FDA PREA requirements per 21 USC §355c, EMA Paediatric Regulation EC No 1901/2006), PIP/PSP structure (quality/formulation, nonclinical/juvenile animal studies per ICH S11, clinical studies), list of required studies per age band with design recommendations (population PK, efficacy, safety), deferral/waiver assessment (full waiver, partial waiver, class waiver per EMA Commission Decision C(2015) 6600, deferral), and submission timing relative to adult development milestones. Use when planning pediatric development strategy, preparing a PIP/PSP submission, or assessing deferral/waiver eligibility. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Design a Pediatric Investigation Plan (PIP, EMA/PDCO) or Pediatric Study Plan (PSP, FDA) for a drug in development. Returns: complete regulatory framework (FDA PREA requirements per 21 USC §355c, EMA Paediatric Regulation EC No 1901/2006), PIP/PSP structure (quality/formulation, nonclinical/juvenile animal studies per ICH S11, clinical studies), list of required studies per age band with design recommendations (population PK, efficacy, safety), deferral/waiver assessment (full waiver, partial waiver, class waiver per EMA Commission Decision C(2015) 6600, deferral), and submission timing relative to adult development milestones. Use when planning pediatric development strategy, preparing a PIP/PSP submission, or assessing deferral/waiver eligibility. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -24151,35 +24174,17 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Run a final adversarial pre-transmit QC pass and decide whether dispatch may proceed. Hard rule: never cleared when there are open error-severity validation findings or unacknowledged Shadow Review criticals. This does NOT transmit — it gates. Tenant comes from the active context; the call is audited.",
+      "description": "Run the final pre-transmit QC on a stored sequence and say whether dispatch may proceed. The verdict is the platform's dispatch-readiness assessment of that sequence (the gate freeze, dispatch and transmit enforce: validation findings, Shadow Review, the agency-grade validation gate, the release signature); it is never computed from counts you supply, and a model narrative, when one is configured, only explains it. This does NOT transmit. Tenant comes from the active context; the call is audited.",
       "scope": "project",
       "governed": false,
       "renderer": "result-card",
       "example": "",
       "inputs": [
         {
-          "name": "region",
-          "type": "string",
-          "required": true,
-          "description": ""
-        },
-        {
-          "name": "validation_errors",
+          "name": "sequence_id",
           "type": "number",
           "required": true,
-          "description": "Count of open error-severity validation findings."
-        },
-        {
-          "name": "unresolved_shadow_criticals",
-          "type": "number",
-          "required": true,
-          "description": "Count of unacknowledged Shadow Review criticals."
-        },
-        {
-          "name": "leaves",
-          "type": "array",
-          "required": true,
-          "description": ""
+          "description": "The stored sequence to assess."
         },
         {
           "name": "submission_id",
@@ -24189,10 +24194,7 @@
         }
       ],
       "requiredInputs": [
-        "region",
-        "validation_errors",
-        "unresolved_shadow_criticals",
-        "leaves"
+        "sequence_id"
       ],
       "derived": true
     },
@@ -25732,11 +25734,12 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Find out where this client is on their journey from starting a license all the way to a full regulatory submission, and what the next milestone is. Returns a stage (just_licensed, onboarding, project_started, authoring, in_review, submission_ready, submitted), a plain-language read of where they are, the next milestone, and the concrete thing you should offer to do right now. Use this to ORIENT a client — especially a brand-new one who just started and doesn't know where to begin, or any time the user asks 'where do I start', 'what should I do next', or 'where does my program stand'. For a brand-new licensee it will tell you to welcome them and offer to set up their first project via the onboarding questionnaire (start_intelligence_flow with project_setup). Reads live project/artifact/submission state — deterministic, no guessing; when the tenant has no data yet it lands on the earliest welcome stage.",
+      "description": "Find out where this client is on their journey from starting a license all the way to a full regulatory submission, and what the next milestone is. Returns a stage (just_licensed, onboarding, project_started, authoring, in_review, submission_ready, submitted), a plain-language read of where they are, the next milestone, and the concrete thing you should offer to do right now. Use this to ORIENT a client — especially a brand-new one who just started and doesn't know where to begin, or any time the user asks 'where do I start', 'what should I do next', or 'where does my program stand'. For a brand-new licensee it will tell you to welcome them and offer to open the New project wizard using navigate_to (projects) then act_on_screen (projects.new-project), where the person reviews and presses Create project. The project_setup intelligence flow configures an existing project; it does not create the first project. Reads live project/artifact/submission state — deterministic, no guessing; when the tenant has no data yet it lands on the earliest welcome stage.",
       "scope": "project",
       "governed": false,
       "renderer": "result-card",
-      "example": "",
+      "example": "Where do I start?",
+      "outputs": "journey stage, next milestone and supported next action",
       "inputs": [
         {
           "name": "segment",
@@ -25746,7 +25749,7 @@
         }
       ],
       "requiredInputs": [],
-      "derived": true
+      "derived": false
     },
     {
       "name": "get_ctd_module_home",
@@ -27532,8 +27535,8 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Review a draft (or pre-draft) against an indexed document type's heading outline (ICH E3/M4E, EU MDR/IVDR, ICMJE, …). Returns detected-heading evidence, a human/evidence review checklist and up to three focused client clarification prompts. Read project sources and prior answers first; ask only unresolved material questions outside the formal document. Heading coverage never establishes scientific completeness, compliance, approval or filing readiness; this deterministic tool does not read or verify source evidence.",
-      "scope": "global",
+      "description": "Review a draft (or pre-draft) against an indexed document type's heading outline (ICH E3/M4E, EU MDR/IVDR, ICMJE, …). Returns detected-heading evidence, a human/evidence review checklist and up to three focused client clarification prompts. Read project sources and prior answers first; ask only unresolved material questions outside the formal document. Heading coverage never establishes scientific completeness, compliance, approval or filing readiness; with draft_text this deterministic tool does not read or verify source evidence. For a saved CSR in Authoring, pass document_id and section instead of draft_text: the saved section is reviewed and its figures are checked against the retained-run cells its import receipts name (csrSectionEvidence: the exact cell, claim or figure that failed). That is transcription agreement only, never scientific review or approval.",
+      "scope": "project",
       "governed": false,
       "renderer": "document-canvas",
       "example": "",
@@ -27549,6 +27552,18 @@
           "type": "string",
           "required": false,
           "description": "Optional draft text — checks actual headings against the indexed outline, not narrative keyword mentions or substantive evidence completeness."
+        },
+        {
+          "name": "document_id",
+          "type": "string",
+          "required": false,
+          "description": "Optional saved Authoring document id (UUID) of a CSR in the open project. Use with section and without draft_text."
+        },
+        {
+          "name": "section",
+          "type": "string",
+          "required": false,
+          "description": "With document_id: the saved section's E3 number (e.g. 11.4) or its section id."
         }
       ],
       "requiredInputs": [
@@ -27876,7 +27891,7 @@
           "name": "target",
           "type": "string",
           "required": true,
-          "description": "Target screen id from list_app_screens, e.g. \"cmc\", \"dossier-map\", \"intelligence\"."
+          "description": "Target screen id from list_app_screens, e.g. \"cmc\", \"project-home\", \"intelligence\"."
         },
         {
           "name": "params",
@@ -28299,7 +28314,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Plan the CMC content of an annual report and, optionally, the ICH Q12 Product Lifecycle Management (PLCM) document. Classifies a set of implemented changes to determine which are annual-reportable (vs requiring a supplement), lays out the required annual-report sections (including stability protocol/commitment updates), and structures the PLCM document (established conditions, reporting categories, PACMPs, post-approval CMC commitments). Cites 21 CFR 314.70(d) and ICH Q12 (PLCM). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Plan the CMC content of an annual report and, optionally, the ICH Q12 Product Lifecycle Management (PLCM) document. Classifies a set of implemented changes to determine which are annual-reportable (vs requiring a supplement), lays out the required annual-report sections (including stability protocol/commitment updates), and structures the PLCM document (established conditions, reporting categories, PACMPs, post-approval CMC commitments). Cites 21 CFR 314.70(d) (NDA) or 601.12(d) (BLA) and ICH Q12 (PLCM). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -28322,6 +28337,12 @@
           "type": "string",
           "required": false,
           "description": "Product modality."
+        },
+        {
+          "name": "biologicLicense",
+          "type": "boolean",
+          "required": false,
+          "description": "True when the product is licensed under a BLA (21 CFR 601.12(d) annual report); false for an NDA. Absent, a biologic, vaccine or cell/gene therapy modality is taken as licensed."
         },
         {
           "name": "changes",
@@ -28543,7 +28564,7 @@
           "name": "verdict",
           "type": "string",
           "required": false,
-          "description": "The benefit-risk verdict to communicate (default \"favourable_with_conditions\")."
+          "description": "The benefit-risk conclusion to communicate. It is the sponsor's: pass only the conclusion the user has stated; do not choose or infer one. Without it the tool returns needs_parameters."
         },
         {
           "name": "keyBenefitMessages",
@@ -28588,7 +28609,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Generate a COA development or selection roadmap for a concept of interest and context of use. Routes between selecting/adapting an existing validated instrument and de novo development, and lays out the required steps — concept elicitation and qualitative content-validity work, item generation, cognitive interviews/debriefing, psychometric validation, meaningful-change estimation, usability/mode equivalence, and FDA engagement (COA qualification or pre-submission) — scaled to the intended endpoint position and whether a label claim or formal COA qualification is sought. Flags when a planned instrument modification invalidates prior validation. Cites the FDA PFDD Guidance series and COA qualification program. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Generate a COA development or selection roadmap for a concept of interest and context of use. Routes between selecting/adapting an existing validated instrument and de novo development, and lays out the required steps — concept elicitation and qualitative content-validity work, item generation, cognitive interviews/debriefing, psychometric validation, meaningful-change estimation, usability/mode equivalence, and FDA engagement (COA qualification or pre-submission) — scaled to the intended endpoint position and whether a label claim or formal COA qualification is sought. Flags when a planned instrument modification invalidates prior validation. Cites the FDA PFDD Guidance series and COA qualification program. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. Unanswered boolean evidence remains not_stated; a conclusion depending on it is not_assessed. Ask for those facts without inferring true or false. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -29169,7 +29190,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Build a special-population vaccine development strategy. For pediatric, pregnancy/maternal, elderly, or immunocompromised populations (or all), returns the per-population strategy, dosing approach, endpoint, and safety considerations, plus the age de-escalation approach (PREA / 21 CFR 601.27 — start in older children and step down to infants), the maternal-immunization approach (DART first, gestational-age window, transplacental transfer endpoint), the bridging approach, and platform/population safety cautions (e.g. live-attenuated contraindicated in immunocompromised/pregnant populations). Use when the user needs a pediatric, maternal, elderly, or immunocompromised vaccine strategy, age de-escalation plan, or dosing approach for a special population. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build a special-population vaccine development strategy. For pediatric, pregnancy/maternal, elderly, or immunocompromised populations (or all), returns the per-population strategy, dosing approach, endpoint, and safety considerations, plus the age de-escalation approach (PREA / 21 CFR 601.27 — start in older children and step down to infants), the maternal-immunization approach (DART first, gestational-age window, transplacental transfer endpoint), the bridging approach, and platform/population safety cautions (e.g. live-attenuated contraindicated in immunocompromised/pregnant populations). Use when the user needs a pediatric, maternal, elderly, or immunocompromised vaccine strategy, age de-escalation plan, or dosing approach for a special population. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -29185,19 +29206,19 @@
           "name": "platform",
           "type": "string",
           "required": false,
-          "description": "Vaccine technology platform (mrna, viral_vector, protein_subunit, live_attenuated, inactivated, conjugate, vlp, dna; free text accepted). Drives replicating-platform cautions. Defaults to protein_subunit if omitted."
+          "description": "Vaccine technology platform (mrna, viral_vector, protein_subunit, live_attenuated, inactivated, conjugate, vlp, dna; free text accepted). Drives replicating-platform cautions. If omitted, platform-specific safety/dosing remains unassessed; "
         },
         {
           "name": "adultDataAvailable",
           "type": "boolean",
           "required": false,
-          "description": "Whether adult/adolescent immunogenicity data exist to bridge from (relevant to pediatric strategy). Default false."
+          "description": "Stated adult/adolescent source-data availability. Omitted/null stays not_stated; pediatric bridging requires actual adequate source evidence."
         },
         {
           "name": "hasCorrelate",
           "type": "boolean",
           "required": false,
-          "description": "Whether a validated correlate of protection exists (enables immunobridging across populations). Default false."
+          "description": "Stated validated-correlate availability. Omitted/null stays not_stated; no population bridge or correlate-based endpoint is selected from an unanswered flag."
         },
         {
           "name": "diseaseSeriousness",
@@ -29564,7 +29585,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Read the full extracted text of a vault document by document id (from list_project_documents), one window at a time from offset. Scanned PDFs were OCRed at ingest — the text here IS the document's content, so read it, do not treat the file as an opaque image. Each window is sized so the whole response fits 5000 characters. Coverage is aggregate legacy byte-bound span history; a deferred window is prospective until host-budget admission and the guarded receipt write succeed. It is not current-actor/extraction-specific or provider-served proof. Historical versions are disclosed and earn no new current-source receipt. If a round returned more than can be read at once, a read comes back as {\"delivered\": false, \"readAgainFrom\": N} instead: nothing of it was recorded, so read it again from offset N. To truly review a document, page through ALL of it (continue from the offset each response gives until coverage is complete) — catalog_project_document will refuse a partial read. If extraction failed, this tool says so with the recorded reason instead of returning empty text; report that honestly rather than guessing at the content.",
+      "description": "Read the full extracted text of a vault document by document id (from list_project_documents), one window at a time from offset. Scanned PDFs were OCRed at ingest — the text here IS the document's content, so read it, do not treat the file as an opaque image. Windows shrink toward a 5000-character response budget; minimal metadata-heavy results still face host-budget admission. Coverage is aggregate legacy byte-bound span history; a deferred window is prospective until host-budget admission and the guarded receipt write succeed. It is not current-actor/extraction-specific or provider-served proof. Historical versions are disclosed and earn no new current-source receipt. If a round returned more than can be read at once, a read comes back as {\"delivered\": false, \"readAgainFrom\": N} instead: nothing of it was recorded, so read it again from offset N. To truly review a document, page through ALL of it (continue from the offset each response gives until coverage is complete) — catalog_project_document will refuse a partial read. If extraction failed, this tool says so with the recorded reason instead of returning empty text; report that honestly rather than guessing at the content.",
       "scope": "project",
       "governed": false,
       "renderer": "result-card",
@@ -29580,13 +29601,13 @@
           "name": "max_chars",
           "type": "number",
           "required": false,
-          "description": "Maximum characters of text in this window (default and max 5000; the window is shrunk further so the whole response fits)."
+          "description": "Maximum UTF-16 code units of text in this window (default and max 5000; shrunk further for the response budget). One complete supplementary character may require 2 units when max_chars is 1. Returned window.start/end are the actual intact b"
         },
         {
           "name": "offset",
           "type": "number",
           "required": false,
-          "description": "Character offset to start from (default 0; advance it to page through the whole document)."
+          "description": "UTF-16 code-unit offset to start from (default 0). A start inside a supplementary character moves back to its beginning. Use returned window bounds and coverage continuation to page through the document."
         }
       ],
       "requiredInputs": [
@@ -32935,7 +32956,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select the appropriate clinical outcome assessment (COA) type — PRO, ClinRO, ObsRO, or PerfO — for a given concept of interest, based on who can validly report the concept and the trial population. Drives the central FDA principle that the data source must match the concept: patient-experienced symptoms (pain, fatigue, nausea) call for a PRO when self-report is feasible; concepts in populations who cannot self-report (young children, cognitively impaired, unconscious) route to ObsRO/ClinRO; concepts requiring clinical interpretation route to ClinRO; capacities demonstrable through a standardized task route to PerfO. Returns a ranked set of COA-type recommendations with suitability, a primary recommendation, reporter guidance, and cautions. Cites the FDA PRO Guidance (2009) and PFDD Guidance 1–3. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Select the appropriate clinical outcome assessment (COA) type — PRO, ClinRO, ObsRO, or PerfO — for a given concept of interest, based on who can validly report the concept and the trial population. Drives the central FDA principle that the data source must match the concept: patient-experienced symptoms (pain, fatigue, nausea) call for a PRO when self-report is feasible; concepts in populations who cannot self-report (young children, cognitively impaired, unconscious) route to ObsRO/ClinRO; concepts requiring clinical interpretation route to ClinRO; capacities demonstrable through a standardized task route to PerfO. Returns a ranked set of COA-type recommendations with suitability, a primary recommendation, reporter guidance, and cautions. Cites the FDA PRO Guidance (2009) and PFDD Guidance 1–3. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. Unanswered boolean evidence remains not_stated; a conclusion depending on it is not_assessed. Ask for those facts without inferring true or false. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -33216,7 +33237,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select an appropriate pediatric dose scaling method and provide dosing recommendations based on the drug characteristics, target age band, and elimination pathway. Evaluates: linear weight-based scaling, allometric scaling (exponent 0.75, West et al. 1997), maturation-adjusted allometric scaling (Anderson & Holford 2008 — MF from CYP ontogeny or GFR maturation), BSA-based scaling, PBPK-predicted dosing (FDA PBPK Guidance 2018), age-based dosing, and therapeutic drug monitoring (TDM). Returns: recommended scaling method with rationale, dose formula with adjustment factors (CYP maturation status, GFR percentage of adult, body composition effects), dose banding recommendations for practical administration, safety considerations (maximum dose caps, neonatal extended intervals, growth monitoring), and TDM guidance. Use when determining starting doses for pediatric PK studies, designing dose-finding studies, or preparing dosing sections of pediatric labeling. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Select an appropriate pediatric dose scaling method and provide dosing recommendations based on the drug characteristics, target age band, and elimination pathway. Evaluates: linear weight-based scaling, allometric scaling (exponent 0.75, West et al. 1997), maturation-adjusted allometric scaling (Anderson & Holford 2008 — MF from CYP ontogeny or GFR maturation), BSA-based scaling, PBPK-predicted dosing (FDA PBPK Guidance 2018), age-based dosing, and therapeutic drug monitoring (TDM). Returns: recommended scaling method with rationale, dose formula with adjustment factors (CYP maturation status, GFR percentage of adult, body composition effects), dose banding recommendations for practical administration, safety considerations (maximum dose caps, neonatal extended intervals, growth monitoring), and TDM guidance. Use when determining starting doses for pediatric PK studies, designing dose-finding studies, or preparing dosing sections of pediatric labeling. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -33232,7 +33253,7 @@
           "name": "adultDose",
           "type": "number",
           "required": true,
-          "description": "Approved or anticipated adult dose (numeric value)."
+          "description": "Stated adult dose for context. This tool supplies method/formula guidance and does not calculate a numeric pediatric dose from it."
         },
         {
           "name": "adultDoseUnit",
@@ -33250,19 +33271,19 @@
           "name": "childWeight",
           "type": "number",
           "required": false,
-          "description": "Target child weight in kg. Used for weight-based and allometric calculations."
+          "description": "Optional stated child weight in kg for context; current output is a reference formula, not a numerical dose calculation."
         },
         {
           "name": "childAge",
           "type": "number",
           "required": false,
-          "description": "Child age in years (or fraction of years). Used for maturation factor estimation."
+          "description": "Optional stated pediatric age in years, below 18. The current tool does not calculate an individual maturation factor from this value."
         },
         {
           "name": "childBSA",
           "type": "number",
           "required": false,
-          "description": "Child body surface area in m². Used for BSA-based scaling. Standard adult BSA = 1.73 m²."
+          "description": "Optional stated child BSA in m². The current tool returns BSA formula guidance without numerically evaluating it; the reference adult BSA is 1.73 m²."
         },
         {
           "name": "primaryEliminationRoute",
@@ -33311,7 +33332,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select age-appropriate formulations for a pediatric drug product per EMA Reflection Paper (EMA/CHMP/QWP/805880/2012 Rev. 2) and assess excipient safety. Returns: ranked formulation recommendations by age band (oral solution, oral suspension, mini-tablet, orodispersible tablet/film, granules/sprinkle, chewable tablet, conventional tablet, capsule, injectable, inhaled, etc.) with suitability rating and acceptability evidence (e.g., Klingmann 2015 mini-tablet swallowability data), excipient safety assessment against EMA/STEP database limits (ethanol, benzyl alcohol, propylene glycol, parabens, polysorbate 80, cyclodextrins, sorbitol, aspartame, saccharin), palatability requirements, and dosing device specifications. Use when developing a pediatric formulation strategy, assessing excipient safety, or preparing the quality/pharmaceutical section of a PIP. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Select age-appropriate formulations for a pediatric drug product per EMA Reflection Paper (EMA/CHMP/QWP/805880/2012 Rev. 2) and assess excipient safety. Returns: ranked formulation recommendations by age band (oral solution, oral suspension, mini-tablet, orodispersible tablet/film, granules/sprinkle, chewable tablet, conventional tablet, capsule, injectable, inhaled, etc.) with suitability rating and acceptability evidence (e.g., Klingmann 2015 mini-tablet swallowability data), excipient safety assessment against EMA/STEP database limits (ethanol, benzyl alcohol, propylene glycol, parabens, polysorbate 80, cyclodextrins, sorbitol, aspartame, saccharin), palatability requirements, and dosing device specifications. Use when developing a pediatric formulation strategy, assessing excipient safety, or preparing the quality/pharmaceutical section of a PIP. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -35723,6 +35744,12 @@
           "description": "Optional key from the Quality SOP template library; seeds editable canonical sections."
         },
         {
+          "name": "next_review_date",
+          "type": "string",
+          "required": false,
+          "description": "Optional YYYY-MM-DD the user named for the periodic review. Once effective, the document is listed for review from this date. Never choose one yourself."
+        },
+        {
           "name": "reason",
           "type": "string",
           "required": true,
@@ -35865,6 +35892,12 @@
           "type": "string",
           "required": true,
           "description": ""
+        },
+        {
+          "name": "program_id",
+          "type": "string",
+          "required": false,
+          "description": "The project (regulatory_programs UUID) the nonconformance belongs to, when it concerns one. It is then shown on that project's Engineering screen. Omit for an organization-level record."
         }
       ],
       "requiredInputs": [
@@ -35950,6 +35983,12 @@
           "type": "number",
           "required": false,
           "description": "Optional QMS document this change controls."
+        },
+        {
+          "name": "program_id",
+          "type": "string",
+          "required": false,
+          "description": "The project (regulatory_programs UUID) the change belongs to, when it changes one product. It is then shown on that project's Engineering screen. Omit for an organization-wide change."
         }
       ],
       "requiredInputs": [

@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Apply each mutation to the product code, run the guarding suite, expect red, restore, hash-check.
+
+Usage: python3 -I mutate.py <spec.json> <out.txt>
+Each spec entry: {"id", "what", "file", "old", "new", "suite"}.
+"""
+import hashlib
+import json
+import pathlib
+import re
+import subprocess
+import sys
+
+ROOT = pathlib.Path('/home/user/ClinicalSageAI-2-replit')
+spec = json.loads(pathlib.Path(sys.argv[1]).read_text())
+out = open(sys.argv[2], 'w')
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+files = sorted({m['file'] for m in spec})
+before = {f: sha(ROOT / f) for f in files}
+red = 0
+for m in spec:
+    p = ROOT / m['file']
+    src = p.read_text()
+    n = src.count(m['old'])
+    if n != 1:
+        out.write(f"{m['id']}  NOT APPLIED: old text occurs {n} times\n"); out.flush()
+        continue
+    p.write_text(src.replace(m['old'], m['new']))
+    try:
+        if 'cmd' in m:
+            r = subprocess.run(m['cmd'], cwd=ROOT, capture_output=True, text=True, timeout=900)
+        else:
+            suites = m['suite'] if isinstance(m['suite'], list) else [m['suite']]
+            r = subprocess.run(['npx', 'vitest', 'run', *suites, '--bail=1'], cwd=ROOT, capture_output=True, text=True, timeout=900)
+        text = re.sub(r'\x1b\[[0-9;]*m', '', r.stdout + r.stderr)
+        failed = [l.strip() for l in text.splitlines() if l.strip().startswith('FAIL ') and '>' in l]
+        summary = [l.strip() for l in text.splitlines() if l.strip().startswith('Tests ')]
+        if 'cmd' in m:
+            summary = [f"{' '.join(m['cmd'])} exit {r.returncode}"] + [l.strip() for l in text.splitlines() if l.strip()][-2:]
+            failed = []
+        verdict = 'RED' if r.returncode != 0 else 'SURVIVED'
+        if verdict == 'RED':
+            red += 1
+        shown = summary if 'cmd' in m else summary[-1:]
+        out.write(f"{m['id']}  {verdict}  {m['what']}\n    {m['file']}\n" + ''.join(f"    {l[:220]}\n" for l in (shown or ['(no summary)'])))
+        for l in failed[:2]:
+            out.write(f"    caught by: {l}\n")
+        out.flush()
+    finally:
+        p.write_text(src)
+    if sha(p) != before[m['file']]:
+        out.write(f"    RESTORE MISMATCH on {m['file']}\n"); out.flush()
+        sys.exit(2)
+
+after = {f: sha(ROOT / f) for f in files}
+out.write(f"\n{red} of {len(spec)} red. Restored files hash-identical: {after == before}\n")
+for f in files:
+    out.write(f"  {before[f][:16]}  {f}\n")
+out.close()

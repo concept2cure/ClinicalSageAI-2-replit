@@ -23,6 +23,7 @@ import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 import { purgeTenant } from '../../server/services/tenant/tenant-offboarding';
 import { TurnRecorder, writeTurnRecord } from '../../server/services/ana/turn-record';
+import { forgetOffboardingCertificate } from './offboarding-custody-signature';
 
 const ORG = 90631;
 const TAG = `artpurge_${process.pid}_${Date.now().toString(36)}`;
@@ -128,7 +129,7 @@ beforeEach(async () => {
   await owner.query('DELETE FROM vault.legal_holds WHERE organization_id = $1', [ORG]);
   await owner.query('DELETE FROM tenant_export_receipts WHERE organization_id = $1', [ORG]);
   await owner.query(
-    `INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by) VALUES ($1, $2, 4, 6, NULL)`,
+    `INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by, export_scope) VALUES ($1, $2, 4, 6, NULL, 'organization')`,
     [ORG, DIGEST],
   );
 });
@@ -156,6 +157,8 @@ afterAll(async () => {
   await owner.query('DELETE FROM audit_logs WHERE tenant_id = $1', [ORG]);
   await owner.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
   await owner.query('DELETE FROM users WHERE id = $1', [signer]);
+  // The purge left the tenant's offboarding certificate (P-58), which names the organization.
+  await forgetOffboardingCertificate(owner, ORG);
   await owner.query('DELETE FROM organizations WHERE id = $1', [ORG]);
   await owner.end();
 });

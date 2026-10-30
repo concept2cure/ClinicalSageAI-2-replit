@@ -1,0 +1,11 @@
+# Red: the four source files at HEAD (f2756897d), the new tests and the four suites that failed in the related run
+# npx vitest run <5 files> --reporter=verbose
+ × client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > one list of table keys, the server’s and the review’s 9ms
+ × client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > the tables hash covers them, and is unchanged for a run with neither 3ms
+ × client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > the screen offers their cells, and the server accepts a map onto them 1ms
+ Test Files  5 failed (5)
+      Tests  10 failed | 31 passed (41)
+
+# The hash, computed with each list over the same run (an isolated copy of the verifier and the shared file, at HEAD and with this change):
+# HEAD:   {"without":"4bfc20788f66120b676766de5ada1ce25a9b056dcfe7ea364a047b9ffedff278","withVitals":"4bfc20788f66120b676766de5ada1ce25a9b056dcfe7ea364a047b9ffedff278"}
+# change: {"without":"4bfc20788f66120b676766de5ada1ce25a9b056dcfe7ea364a047b9ffedff278","withVitals":"5a9c9bb06a684e4526c21a500bd5647a6e7288848488b47435f5760b7ea0ffe7"}

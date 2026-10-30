@@ -8,10 +8,19 @@ export interface QmsEditingCopy {
   programId: string;
   qmsDocument: { id: number; status: string; doc_number?: string; version?: string };
 }
+/** Where a version stands today, as the server's in-force reader decides it (in-force-release.ts). */
+export type QmsVersionStanding =
+  | { state: 'in-force'; effectiveFrom: string | null }
+  | { state: 'pending-effective'; effectiveFrom: string | null }
+  | { state: 'superseded'; by: string; from: string | null }
+  | { state: 'retired'; at: string | null }
+  | { state: 'not-in-force' };
+
 export interface QmsSignedVersion {
   version: string;
   approved_at: string | null;
   record_kind?: 'signed' | 'legacy-registry';
+  standing?: QmsVersionStanding;
   sections: { id: string; code: string; title: string; content: string; orderIndex: number }[];
 }
 interface MutationRow { id: number; authoring_document_id: string }
@@ -63,4 +72,22 @@ export async function readQmsSignedVersions(id: number): Promise<QmsSignedVersio
     throw new Error('The signed version history could not be read. Try again.');
   }
   return data as QmsSignedVersion[];
+}
+
+/**
+ * The controlled copy of a document's version in force (MR-12 Stage 8): the
+ * server renders it with its approval signature and CONTROLLED COPY marking on
+ * every page, and records its issue before delivering it. Throws the server's
+ * reason when no copy is issued (nothing in force, an approval that does not
+ * stand, no permission to read it).
+ */
+export async function fetchQmsControlledCopy(id: number, format: 'pdf' | 'docx' = 'pdf'): Promise<{ blob: Blob; filename: string }> {
+  const res = await apiRequest('GET', `/api/mdx/qms/documents/${id}/controlled-copy?format=${format}`);
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    throw new Error(serverMessage(payload) ?? 'The controlled copy could not be issued. Nothing was downloaded.');
+  }
+  const disposition = res.headers.get('Content-Disposition') ?? '';
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? `controlled_copy.${format}`;
+  return { blob: await res.blob(), filename };
 }

@@ -1,10 +1,20 @@
 /**
  * The program twin and the project-context reads for Concept2Cure — the
- * program twin, artifact verification, change impact, the CMC data kept in
- * project metadata, and the full project context and transform context AnA
- * is given. The ninth domain carved out of routes/concept2cure.ts (ledger
- * L53, slice 11), mounted at the same prefix ahead of it with the same
- * middleware chain; the handlers moved verbatim.
+ * program twin, artifact verification, change impact, and the full project
+ * context and transform context AnA is given. The ninth domain carved out of
+ * routes/concept2cure.ts (ledger L53, slice 11), mounted at the same prefix
+ * ahead of it with the same middleware chain; the handlers moved verbatim.
+ *
+ * GET and PUT /projects/:projectId/cmc and their body schema are retired
+ * (decision P-62, 2026-10-29). They kept a second copy of a project's CMC data
+ * in projects.metadata, and no screen, AnA tool or script called them. A
+ * project's CMC data has one home, the CMC / Module 3 register: the CMC
+ * surface's register cards (client/src/concept2cure/v2/surfaces/cmcRegisters.tsx)
+ * over /api/cmc/drug-substances and /api/cmc/drug-products
+ * (server/api/cmc/routes.ts). The project context reads CMC readiness from the
+ * register (services/cmc/project-cmc-readiness.ts). The metadata keys already
+ * written are left in place and read by nothing
+ * (docs/evidence/CMC-M3-GA/2026-10-29/p62-one-cmc-home/).
  *
  * @module server/routes/c2c/program-twin
  */
@@ -13,7 +23,6 @@ import { Router, type Request, type Response } from 'express';
 import { concept2cureArtifacts, concept2cureProvenanceEvents, concept2cureReviewComments, concept2cureSignatures, projectTasks, projects } from '../../../shared/schema';
 import { db } from '../../db';
 import { and, desc, eq, inArray } from 'drizzle-orm';
-import { z } from 'zod';
 import { createScopedLogger } from '../../utils/logger';
 import { authMiddleware } from '../../auth';
 import { requireOrganizationContext, tenantContextMiddleware } from '../../middleware/tenantContext';
@@ -25,7 +34,8 @@ import {
   sendError,
   sendSuccess,
 } from './shared';
-import { verifyProjectAccess } from './project-access';
+import { projectAdmissionMiddleware, verifyProjectAccess } from './project-access';
+import { readProjectCmcReadiness } from '../../services/cmc/project-cmc-readiness';
 
 const logger = createScopedLogger('concept2cure-program-twin');
 const router = Router();
@@ -35,6 +45,16 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+// Every route here names a project, and none runs before it is admitted
+// (project-access.ts, the check the sibling routers use): 404 for a missing
+// project or another organization's, 403 when the caller's current role or
+// project permission cannot change it, 409 for a write to an archived project,
+// 503 when the check could not run. The CMC (retired since, P-62) and context routes had no check
+// and no organization predicate, so RLS alone stood between tenants and
+// nothing at all between a private project and the rest of its organization
+// (docs/evidence/D6-CMC-TWIN-TENANT/2026-10-29/). Each handler's queries still
+// carry the organization predicate, so neither layer rests on the other.
+router.param('projectId', projectAdmissionMiddleware());
 
 
 /**
@@ -85,7 +105,12 @@ router.get('/projects/:projectId/program-twin', async (req: Request, res: Respon
       signatures = await db
         .select()
         .from(concept2cureSignatures)
-        .where(inArray(concept2cureSignatures.artifactId, artifactIds));
+        .where(
+          and(
+            inArray(concept2cureSignatures.artifactId, artifactIds),
+            eq(concept2cureSignatures.organizationId, organizationId)
+          )
+        );
     }
 
     // Fetch review comments
@@ -94,7 +119,12 @@ router.get('/projects/:projectId/program-twin', async (req: Request, res: Respon
       reviewComments = await db
         .select()
         .from(concept2cureReviewComments)
-        .where(inArray(concept2cureReviewComments.artifactId, artifactIds));
+        .where(
+          and(
+            inArray(concept2cureReviewComments.artifactId, artifactIds),
+            eq(concept2cureReviewComments.organizationId, organizationId)
+          )
+        );
     }
 
     // ── Dossier state ──
@@ -282,12 +312,22 @@ router.get(
       const sigs = await db
         .select()
         .from(concept2cureSignatures)
-        .where(eq(concept2cureSignatures.artifactId, artifact.id));
+        .where(
+          and(
+            eq(concept2cureSignatures.artifactId, artifact.id),
+            eq(concept2cureSignatures.organizationId, organizationId)
+          )
+        );
 
       const comments = await db
         .select()
         .from(concept2cureReviewComments)
-        .where(eq(concept2cureReviewComments.artifactId, artifact.id));
+        .where(
+          and(
+            eq(concept2cureReviewComments.artifactId, artifact.id),
+            eq(concept2cureReviewComments.organizationId, organizationId)
+          )
+        );
 
       // ── Placement verification ──
       const placementFindings: {
@@ -600,121 +640,35 @@ router.get('/projects/:projectId/change-impact', async (req: Request, res: Respo
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// CMC DATA ENDPOINTS — Unified with concept2cure projects
-// Stores CMC data (Drug Substance, Drug Product) in project.metadata
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const cmcDataSchema = z.object({
-  drugSubstance: z
-    .object({
-      substanceName: z.string().optional(),
-      inn: z.string().optional(),
-      cas: z.string().optional(),
-      molecularFormula: z.string().optional(),
-      molecularWeight: z.string().optional(),
-      manufacturingRoute: z.string().optional(),
-      structureDescription: z.string().optional(),
-      polymorph: z.string().optional(),
-      solubility: z.string().optional(),
-      meltingPoint: z.string().optional(),
-      hygroscopicity: z.string().optional(),
-    })
-    .optional(),
-  drugProduct: z
-    .object({
-      productName: z.string().optional(),
-      dosageForm: z.string().optional(),
-      routeOfAdmin: z.string().optional(),
-      strength: z.string().optional(),
-      containerClosure: z.string().optional(),
-      composition: z.string().optional(),
-      excipients: z.string().optional(),
-      overages: z.string().optional(),
-      shelfLife: z.string().optional(),
-      storageConditions: z.string().optional(),
-    })
-    .optional(),
-  specifications: z.array(z.any()).optional(),
-  stabilityStudies: z.array(z.any()).optional(),
-  impurities: z.array(z.any()).optional(),
-});
-
-// GET CMC data for a project
-router.get('/projects/:projectId/cmc', async (req: Request, res: Response) => {
-  try {
-    const projectId = parseInt(paramStr(req.params.projectId), 10);
-    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
-
-    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
-    if (!project) return sendError(res, 404, 'Project not found');
-
-    const metadata = (project.metadata as Record<string, any>) || {};
-    return sendSuccess(res, {
-      drugSubstance: metadata.cmcDrugSubstance || null,
-      drugProduct: metadata.cmcDrugProduct || null,
-      specifications: metadata.cmcSpecifications || [],
-      stabilityStudies: metadata.cmcStabilityStudies || [],
-      impurities: metadata.cmcImpurities || [],
-      lastUpdated: metadata.cmcLastUpdated || null,
-    });
-  } catch (error) {
-    logger.error('Failed to get CMC data', { error });
-    return sendError(res, 500, 'Failed to get CMC data');
-  }
-});
-
-// SAVE CMC data for a project
-router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
-  try {
-    const projectId = parseInt(paramStr(req.params.projectId), 10);
-    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
-
-    const parsed = cmcDataSchema.safeParse(req.body);
-    if (!parsed.success) return sendError(res, 400, `Invalid CMC data: ${parsed.error.message}`);
-
-    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
-    if (!project) return sendError(res, 404, 'Project not found');
-
-    const existingMetadata = (project.metadata as Record<string, any>) || {};
-    const updatedMetadata = {
-      ...existingMetadata,
-      cmcDrugSubstance: parsed.data.drugSubstance || existingMetadata.cmcDrugSubstance,
-      cmcDrugProduct: parsed.data.drugProduct || existingMetadata.cmcDrugProduct,
-      cmcSpecifications: parsed.data.specifications || existingMetadata.cmcSpecifications || [],
-      cmcStabilityStudies:
-        parsed.data.stabilityStudies || existingMetadata.cmcStabilityStudies || [],
-      cmcImpurities: parsed.data.impurities || existingMetadata.cmcImpurities || [],
-      cmcLastUpdated: new Date().toISOString(),
-    };
-
-    await db.update(projects).set({ metadata: updatedMetadata }).where(eq(projects.id, projectId));
-
-    return sendSuccess(res, { saved: true, lastUpdated: updatedMetadata.cmcLastUpdated });
-  } catch (error) {
-    logger.error('Failed to save CMC data', { error });
-    return sendError(res, 500, 'Failed to save CMC data');
-  }
-});
+/** This organization's project row, or none: the route's own predicate, beside admission. */
+async function organizationProject(projectId: number, organizationId: number) {
+  const [project] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)))
+    .limit(1);
+  return project;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PROJECT CONTEXT ENDPOINT — Full context for AnA/Cortex AI
-// Returns project details + tasks + CMC data + knowledge for AI context injection
+// Returns project details + tasks + CMC readiness + knowledge for AI context injection
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get('/projects/:projectId/context', async (req: Request, res: Response) => {
   try {
+    const organizationId = getOrganizationId(req);
     const projectId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
-    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    const project = await organizationProject(projectId, organizationId);
     if (!project) return sendError(res, 404, 'Project not found');
 
     // Fetch tasks (limit to recent 50 — only 10 are returned to client)
     const tasks = await db
       .select()
       .from(projectTasks)
-      .where(eq(projectTasks.projectId, projectId))
+      .where(and(eq(projectTasks.projectId, projectId), eq(projectTasks.organizationId, organizationId)))
       .orderBy(desc(projectTasks.createdAt))
       .limit(50);
 
@@ -730,8 +684,6 @@ router.get('/projects/:projectId/context', async (req: Request, res: Response) =
       }).length,
     };
 
-    // Extract CMC data from metadata
-    const metadata = (project.metadata as Record<string, any>) || {};
     const settings = (project.settings as Record<string, any>) || {};
 
     // Extract knowledge/custom instructions
@@ -761,13 +713,11 @@ router.get('/projects/:projectId/context', async (req: Request, res: Response) =
           dueDate: (t as any).dueDate,
         })),
       },
-      cmc: {
-        drugSubstance: metadata.cmcDrugSubstance || null,
-        drugProduct: metadata.cmcDrugProduct || null,
-        hasSpecifications: (metadata.cmcSpecifications || []).length > 0,
-        hasStabilityStudies: (metadata.cmcStabilityStudies || []).length > 0,
-        hasImpurities: (metadata.cmcImpurities || []).length > 0,
-      },
+      /* From the CMC / Module 3 register, as the task assessment reads it
+         (decision P-62): what it holds, the composition boundary's refusal,
+         or that it could not be read. It used to be projects.metadata, which
+         nothing writes, and so null for every project. */
+      cmc: await readProjectCmcReadiness(organizationId, project),
       knowledge: {
         customInstructions: knowledge.customInstructions || null,
         documentCount: (knowledge.documents || []).length,

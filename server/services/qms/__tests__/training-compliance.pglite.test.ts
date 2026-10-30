@@ -3,7 +3,14 @@
  * Executes the production query against real in-process PostgreSQL and canonical
  * table DDL. A revision must require new training while retaining old records.
  * This tests the read contract; it does not exercise signing, HTTP auth or RLS.
+ *
+ * Since MR-12 Stage 4 slice 3 (P-49) the denominator is the people assigned to
+ * each document (by job role and by name), not the organization's roster. The
+ * roster-era cases keep their meaning: `document()` assigns a job role every
+ * member of its organization holds, so "assigned" there is the active roster.
+ * A document assigned to nobody is `not_assigned`, never 0 of N.
  */
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   assertNoSchemaGaps,
@@ -11,9 +18,9 @@ import {
   extractTableDdl,
   type JourneyDb,
 } from '../../../../tests/golden-journeys/harness';
-import { readQmsTrainingCompliance } from '../training-compliance';
+import { readQmsTrainingCompliance, readQmsTrainingExpiring, summarizeQmsTrainingCompliance } from '../training-compliance';
 import { computeQmsDocumentContentDigest, type QmsDocumentRow } from '../document-approval-signature';
-import { QMS_APPROVAL_FIXTURE_DDL, seedQmsApprovalFixture } from './_release-approval-fixture';
+import { QMS_APPROVAL_FIXTURE_DDL, assignToEveryone, seedQmsApprovalFixture } from './_release-approval-fixture';
 import { QMS_TRAINING_DECLARATION } from '../../../../shared/qms/training';
 const NOW = new Date('2026-10-14T12:00:00Z');
 
@@ -29,10 +36,16 @@ beforeAll(async () => {
     ${QMS_APPROVAL_FIXTURE_DDL}
     INSERT INTO organizations (id, name, slug) VALUES (1, 'Sponsor', 'sponsor'), (2, 'Other', 'other');
   `);
+  // The assignment store (P-49): qms_documents' same-organization key, then the one migration that creates it.
+  const key = readFileSync('migrations/20261013b_qms_inspection_same_org_keys.sql', 'utf8')
+    .match(/CREATE UNIQUE INDEX IF NOT EXISTS qms_documents_id_org_uq\s+ON public\.qms_documents \(id, organization_id\);/);
+  if (!key) throw new Error('20261013b no longer creates qms_documents_id_org_uq as this test expects');
+  await jdb.pglite.exec(key[0]);
+  await jdb.pglite.exec(readFileSync('migrations/20261029g_qms_job_roles_and_training_assignments.sql', 'utf8'));
 }, 60_000);
 beforeEach(async () => {
   await jdb.pglite.exec(`
-    TRUNCATE electronic_signatures, qms_training_records, qms_documents, organization_users, users RESTART IDENTITY CASCADE;
+    TRUNCATE qms_training_assignments, qms_job_role_members, qms_job_roles, electronic_signatures, qms_training_records, qms_documents, organization_users, users RESTART IDENTITY CASCADE;
     INSERT INTO users (id, email, name, password_hash, status) VALUES
       (10, 'member1@example.test', 'Member 1', 'fixture', 'active'),
       (11, 'member2@example.test', 'Member 2', 'fixture', 'active'),
@@ -50,8 +63,24 @@ afterAll(async () => {
   try { assertNoSchemaGaps(jdb); } finally { await jdb?.close(); }
 });
 
+/** A job role in `org` held by `members` (soft-removed holders are not written here). */
+async function jobRole(org: number, name: string, members: number[]): Promise<number> {
+  const id = (await jdb.pglite.query<{ id: number }>(
+    'INSERT INTO qms_job_roles (organization_id, name, created_by) VALUES ($1, $2, 10) RETURNING id', [org, name])).rows[0].id;
+  for (const user of members) {
+    await jdb.pglite.query('INSERT INTO qms_job_role_members (organization_id, job_role_id, user_id, added_by) VALUES ($1, $2, $3, 10)', [org, id, user]);
+  }
+  return id;
+}
+async function assign(org: number, doc: number, subject: { role?: number; user?: number }): Promise<void> {
+  await jdb.pglite.query('INSERT INTO qms_training_assignments (organization_id, document_id, job_role_id, user_id, assigned_by) VALUES ($1, $2, $3, $4, 10)',
+    [org, doc, subject.role ?? null, subject.user ?? null]);
+}
+
 async function document(options: {
   version?: string; org?: number; number?: string; type?: string; status?: string; deleted?: boolean;
+  /** false: leave it assigned to nobody. */
+  assign?: false;
 } = {}): Promise<number> {
   const result = await jdb.pglite.query<{ id: number }>(`
     INSERT INTO qms_documents (organization_id, doc_number, title, doc_type, version, status, deleted_at)
@@ -59,6 +88,8 @@ async function document(options: {
   [options.org ?? 1, options.number ?? 'SOP-001', options.type ?? 'sop', options.version ?? '1.0',
     options.status ?? 'effective', options.deleted ? new Date() : null]);
   await release(result.rows[0].id);
+  // The roster-era cases: a job role every member of the organization holds (_release-approval-fixture.ts).
+  if (options.assign !== false) await assignToEveryone(jdb.pglite, options.org ?? 1, result.rows[0].id, 10);
   return result.rows[0].id;
 }
 async function release(id: number): Promise<void> {
@@ -72,7 +103,7 @@ async function release(id: number): Promise<void> {
   await seedQmsApprovalFixture(jdb.pglite, signed);
 }
 async function acknowledge(doc: number, user: number, version: string, options: {
-  org?: number; expires?: 'future' | 'past' | 'never'; acknowledgedAt?: string;
+  org?: number; expires?: 'future' | 'past' | 'never'; expiresInDays?: number; acknowledgedAt?: string;
 } = {}): Promise<void> {
   const row = (await jdb.pglite.query<QmsDocumentRow>('SELECT * FROM qms_documents WHERE id=$1',[doc])).rows[0];
   const snapshot = { ...row, version };
@@ -82,12 +113,16 @@ async function acknowledge(doc: number, user: number, version: string, options: 
     INSERT INTO qms_training_records (organization_id, user_id, document_id, document_version, expires_at, acknowledged_at, metadata, acknowledgment_method)
     VALUES ($1, $2, $3, $4, $5, $6, $7, 'attestation')`,
   [options.org ?? 1, user, doc, version,
-    options.expires === 'never' ? null : new Date(NOW.getTime() + (options.expires === 'past' ? -1 : 1) * 86400000),
+    options.expires === 'never' ? null
+      : new Date(NOW.getTime() + (options.expiresInDays ?? (options.expires === 'past' ? -1 : 1)) * 86400000),
     options.acknowledgedAt ?? '2026-10-02T00:00:00Z',
     JSON.stringify({ declaration: QMS_TRAINING_DECLARATION, bindingBasis: 'qms-document-version-content-sha256', contentDigest: digest, documentSnapshot: snapshot })]);
 }
-async function compliance(org = 1) {
-  return readQmsTrainingCompliance({ query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, org, NOW);
+async function expiring(withinDays: number, org = 1) {
+  return readQmsTrainingExpiring({ query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, org, withinDays, NOW);
+}
+async function compliance(org = 1, viewer: number | null = null) {
+  return readQmsTrainingCompliance({ query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, org, NOW, viewer);
 }
 
 describe('current-version controlled-procedure training', () => {
@@ -150,11 +185,12 @@ describe('current-version controlled-procedure training', () => {
     expect(await compliance(2)).toEqual([expect.objectContaining({ id: foreign, current: 1, of: 2 })]);
   });
 
-  it('reports an honest zero denominator when no active members remain, retaining training history', async () => {
+  // Contract change (slice 3): "assigned, but nobody active" is said, with no figure; it was 0 of 0.
+  it('says a document is assigned but has nobody active when no assigned member remains, retaining training history', async () => {
     const doc = await document();
     await acknowledge(doc, 10, '1.0');
     await jdb.pglite.query('DELETE FROM organization_users WHERE organization_id = 1');
-    expect(await compliance()).toEqual([expect.objectContaining({ id: doc, current: 0, of: 0, last_cycle: null })]);
+    expect(await compliance()).toEqual([expect.objectContaining({ id: doc, assignment: 'no_active_assignees', current: null, of: null, last_cycle: null })]);
     expect((await jdb.pglite.query('SELECT COUNT(*)::int AS n FROM qms_training_records')).rows).toEqual([{ n: 1 }]);
   });
 
@@ -171,5 +207,125 @@ describe('current-version controlled-procedure training', () => {
     const rows = await compliance();
     expect(rows.map(row => row.doc_number)).toEqual(['A-curriculum', 'A-manual', 'A-policy', 'A-protocol', 'A-sop', 'A-wi']);
     expect(rows.every(row => row.current === 0 && row.of === 3 && row.last_cycle === null)).toBe(true);
+  });
+});
+
+describe('compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3)', () => {
+  it('(e) the denominator is the distinct active people assigned by role and by name, not the roster', async () => {
+    const doc = await document({ assign: false });
+    await jdb.pglite.query("INSERT INTO organization_users (organization_id, user_id) VALUES (1, 15)");
+    const qa = await jobRole(1, 'QA', [10, 11, 13, 15, 16]);
+    await assign(1, doc, { role: qa });
+    await assign(1, doc, { user: 11 });
+    await assign(1, doc, { user: 12 });
+    await jdb.pglite.query('DELETE FROM organization_users WHERE organization_id = 1 AND user_id = 15');
+    await acknowledge(doc, 11, '1.0');
+    await acknowledge(doc, 14, '1.0');
+    // 10 and 11 by the role (11 also by name), 12 by name; 13 is suspended, 15 has left, 16 is another organization's.
+    expect(await compliance()).toEqual([expect.objectContaining({ id: doc, assignment: 'assigned', current: 1, of: 3 })]);
+  });
+
+  it('(f) a document assigned to nobody, or to a role nobody active holds, has no figure: never 0 of N', async () => {
+    const nobody = await document({ number: 'SOP-001', assign: false });
+    const empty = await document({ number: 'SOP-002', assign: false });
+    await assign(1, empty, { role: await jobRole(1, 'Lapsed', [13, 14]) });
+    await acknowledge(nobody, 10, '1.0');
+    const rows = await compliance();
+    expect(rows).toEqual([
+      expect.objectContaining({ id: nobody, assignment: 'not_assigned', current: null, of: null, last_cycle: null }),
+      expect.objectContaining({ id: empty, assignment: 'no_active_assignees', current: null, of: null }),
+    ]);
+    expect(summarizeQmsTrainingCompliance(rows)).toEqual({
+      documents: 2, assigned: 0, notAssigned: 1, noActiveAssignees: 1, unavailable: 0, averageCurrentPct: null,
+    });
+  });
+
+  it('a removed assignment, a removed holder and a deleted role assign nobody', async () => {
+    const doc = await document({ assign: false });
+    const qa = await jobRole(1, 'QA', [10, 11]);
+    await assign(1, doc, { role: qa });
+    await assign(1, doc, { user: 12 });
+    await jdb.pglite.query('UPDATE qms_training_assignments SET removed_at = now(), removed_by = 10 WHERE user_id = 12');
+    await jdb.pglite.query('UPDATE qms_job_role_members SET removed_at = now(), removed_by = 10 WHERE user_id = 11');
+    expect(await compliance()).toEqual([expect.objectContaining({ assignment: 'assigned', of: 1 })]);
+    await jdb.pglite.query('UPDATE qms_job_roles SET deleted_at = now(), deleted_by = 10 WHERE id = $1', [qa]);
+    expect(await compliance()).toEqual([expect.objectContaining({ assignment: 'no_active_assignees', of: null })]);
+  });
+
+  it('the viewer\'s own line: whether they are assigned, and whether their receipt counts now', async () => {
+    const doc = await document({ assign: false });
+    await assign(1, doc, { role: await jobRole(1, 'QA', [10, 11]) });
+    await acknowledge(doc, 10, '1.0');
+    await acknowledge(doc, 12, '1.0');
+    expect((await compliance(1, 10))[0].me).toEqual({ assigned: true, countsNow: true });
+    expect((await compliance(1, 11))[0].me).toEqual({ assigned: true, countsNow: false });
+    expect((await compliance(1, 12))[0].me, 'not assigned, though their receipt of this version is valid').toEqual({ assigned: false, countsNow: true });
+    expect((await compliance(1))[0].me, 'no viewer, no line').toBeNull();
+    expect((await compliance(1))[0]).toMatchObject({ current: 1, of: 2 });
+  });
+
+  it('the summary averages the assigned, readable documents only', async () => {
+    const half = await document({ number: 'SOP-001', assign: false });
+    const full = await document({ number: 'SOP-002', assign: false });
+    await document({ number: 'SOP-003', assign: false });
+    const qa = await jobRole(1, 'QA', [10, 11]);
+    await assign(1, half, { role: qa });
+    await assign(1, full, { role: qa });
+    await acknowledge(half, 10, '1.0');
+    await acknowledge(full, 10, '1.0');
+    await acknowledge(full, 11, '1.0');
+    expect(summarizeQmsTrainingCompliance(await compliance())).toEqual({
+      documents: 3, assigned: 2, notAssigned: 1, noActiveAssignees: 0, unavailable: 0, averageCurrentPct: 75,
+    });
+  });
+
+  it('expiry lists the people assigned only', async () => {
+    const doc = await document({ assign: false });
+    await assign(1, doc, { user: 10 });
+    await acknowledge(doc, 10, '1.0', { expiresInDays: 10 });
+    await acknowledge(doc, 11, '1.0', { expiresInDays: 10 });
+    expect((await expiring(60)).map(r => r.userId), 'member 11 is current but not assigned').toEqual([10]);
+  });
+});
+
+describe('per-person training expiry (G10)', () => {
+  it('lists each active member whose current training lapses within the window, and by when', async () => {
+    const doc = await document();
+    await acknowledge(doc, 10, '1.0', { expiresInDays: 10 });
+    // Renewed: the later receipt runs past the window, so the earlier one's expiry is not a lapse.
+    await acknowledge(doc, 11, '1.0', { expiresInDays: 10, acknowledgedAt: '2026-10-01T00:00:00Z' });
+    await acknowledge(doc, 11, '1.0', { expiresInDays: 300, acknowledgedAt: '2026-10-05T00:00:00Z' });
+    // A superseded version, a suspended member and a foreign organization never count.
+    await acknowledge(doc, 12, '0.9', { expiresInDays: 3 });
+    await acknowledge(doc, 13, '1.0', { expiresInDays: 3 });
+    await acknowledge(doc, 16, '1.0', { org: 2, expiresInDays: 3 });
+
+    expect(await expiring(60)).toEqual([expect.objectContaining({
+      userId: 10, userName: 'Member 1', documentId: doc, docNumber: 'SOP-001', documentVersion: '1.0', daysLeft: 10, lapsed: false,
+    })]);
+    expect(await expiring(5)).toEqual([]);
+  });
+
+  it('names a member whose training on the release in force lapsed, and never one who renewed it', async () => {
+    const doc = await document();
+    await acknowledge(doc, 10, '1.0', { expiresInDays: -5 });
+    // Renewed after the lapse: current again, not lapsed.
+    await acknowledge(doc, 11, '1.0', { expiresInDays: -5 });
+    await acknowledge(doc, 11, '1.0', { expiresInDays: 200, acknowledgedAt: '2026-10-05T00:00:00Z' });
+    // A superseded version is training not yet done on this one, which coverage counts; a suspended member is off the roster.
+    await acknowledge(doc, 12, '0.9', { expiresInDays: -5 });
+    await acknowledge(doc, 13, '1.0', { expiresInDays: -5 });
+
+    expect(await expiring(60)).toEqual([expect.objectContaining({
+      userId: 10, userName: 'Member 1', documentId: doc, docNumber: 'SOP-001', lapsed: true, daysLeft: -5,
+    })]);
+    expect(await compliance()).toEqual([expect.objectContaining({ id: doc, current: 1, of: 3 })]);
+  });
+
+  it('never lists a member whose current receipt has no expiry', async () => {
+    const doc = await document();
+    await acknowledge(doc, 10, '1.0', { expiresInDays: 10, acknowledgedAt: '2026-10-01T00:00:00Z' });
+    await acknowledge(doc, 10, '1.0', { expires: 'never', acknowledgedAt: '2026-10-03T00:00:00Z' });
+    expect(await expiring(60)).toEqual([]);
   });
 });

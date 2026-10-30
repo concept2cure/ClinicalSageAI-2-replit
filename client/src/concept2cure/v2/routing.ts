@@ -3,22 +3,55 @@
  * /concept2cure, resolved by the shell (replaces ZenRouter's four-surface
  * switch). Pure module so routing stays unit-testable without the shell.
  */
-import { DEEP_LINK_ALIASES } from './registryModel';
+import { ALIAS_APPLIES, DEEP_LINK_ALIASES, type SurfaceApplies } from './registryModel';
+import { findNavigationTarget, NAVIGATION_TARGETS } from '@shared/navigation';
+import { OPEN_PROGRAM_SURFACE } from './programAction';
 
 export const UI_V2_BASE = '/concept2cure';
 
 /** /concept2cure[/:surfaceId[/…]] → surface id ('home' for the bare base). */
-export function surfaceIdFromLocation(location: string): string {
-  if (!location.startsWith(UI_V2_BASE)) return 'home';
+export function surfaceSegmentFromLocation(location: string): string {
+  if (location !== UI_V2_BASE && !location.startsWith(`${UI_V2_BASE}/`) && !location.startsWith(`${UI_V2_BASE}?`)) return 'home';
   const rest = location.slice(UI_V2_BASE.length).replace(/^\//, '');
   if (!rest) return 'home';
-  const seg = rest.split('/')[0].split('?')[0];
-  return DEEP_LINK_ALIASES[seg] ?? seg;
+  return rest.split('/')[0].split(/[?#]/)[0] || 'home';
 }
+
+const aliasTarget = (id: string) => Object.hasOwn(DEEP_LINK_ALIASES, id) ? DEEP_LINK_ALIASES[id] : id;
+
+export function surfaceIdFromLocation(location: string): string {
+  return aliasTarget(surfaceSegmentFromLocation(location));
+}
+
+export interface SurfaceDestination { surfaceId: string; applies?: SurfaceApplies }
+
+/** URL visits and in-app navigation use the same alias, scope and action. */
+export function destinationFor(id: string, projectOpen: boolean): SurfaceDestination {
+  const surfaceId = aliasTarget(id);
+  const target = findNavigationTarget(id) ?? findNavigationTarget(surfaceId);
+  const projectRequired = target ? target.scope === 'project' : NAVIGATION_TARGETS.some(
+    (t) => t.scope === 'project' && aliasTarget(t.path ?? t.id) === surfaceId,
+  );
+  if (projectRequired && !projectOpen) return { surfaceId: OPEN_PROGRAM_SURFACE };
+  const applies = Object.hasOwn(ALIAS_APPLIES, id) ? ALIAS_APPLIES[id] : undefined;
+  return { surfaceId, ...(applies ? { applies: { actionId: applies.actionId, params: { ...applies.params } } } : {}) };
+}
+
+/**
+ * The address a person sees for a surface whose id is not a word they read
+ * (section 12 of .design/client-journey/INFORMATION_ARCHITECTURE.md: no id with
+ * "app" in the address bar). The id stays the registry key everywhere else;
+ * only the path the shell writes changes. Each address is also a
+ * DEEP_LINK_ALIASES key that resolves back to its id, so a copied link opens
+ * the same surface, and the id's own path (`/concept2cure/apps`) still does.
+ */
+export const SURFACE_ADDRESSES: Readonly<Record<string, string>> = {
+  apps: 'features',
+};
 
 /** surface id → its canonical URL. */
 export function locationForSurface(id: string): string {
-  return id === 'home' ? UI_V2_BASE : `${UI_V2_BASE}/${id}`;
+  return id === 'home' ? UI_V2_BASE : `${UI_V2_BASE}/${SURFACE_ADDRESSES[id] ?? id}`;
 }
 
 /* ── The conversation on screen, in the URL ──────────────────────────────────

@@ -57,7 +57,7 @@ describe('the compliance engine cites current ICH revisions', () => {
 
 const SUITABLE_METHOD = { methodName: 'HPLC assay', purpose: 'assay', validationStatus: 'qualified' };
 const stage = (application: ProgramStage['application'], phase: ProgramStage['phase']): ProgramStage => ({
-  application, phase, basis: `program type "${application === 'marketing' ? 'nda' : 'ind'}"; phase ${phase ?? 'not recorded'}`,
+  application, phase, basis: `filing type "${application === 'marketing' ? 'nda' : 'ind'}"; phase ${phase ?? 'not recorded'}`,
 });
 
 describe('analytical validation is judged at the program’s stage', () => {
@@ -90,7 +90,7 @@ describe('analytical validation is judged at the program’s stage', () => {
     const short = f.find((x) => x.ruleId === 'Q2_UNVALIDATED_METHODS');
     expect(short?.status).toBe('warning');
     expect(short?.message).toMatch(/records no clinical phase/);
-    expect(short?.evidence).toContain('stage: program type "ind"; phase not recorded');
+    expect(short?.evidence).toContain('stage: filing type "ind"; phase not recorded');
   });
 
   it('a phase 1 method that is neither validated nor shown suitable is a warning, not a pass', () => {

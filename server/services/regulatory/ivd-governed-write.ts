@@ -15,7 +15,7 @@ export async function governedIvdWrite(req: Request, input: { programId: unknown
   run: (client: Client, organizationId: number, actorId: number) => Promise<Record<string, unknown>>) {
   const organizationId = resolveOrgId(req); const actorId = resolveUserId(req);
   if (!organizationId || !actorId) throw new IvdWriteRefusal(401, 'AUTH_REQUIRED', 'An identified organization member is required.');
-  if (typeof input.programId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.programId)) throw new IvdWriteRefusal(400, 'PROGRAM_REQUIRED', 'Open a program before saving an IVD record.');
+  if (typeof input.programId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.programId)) throw new IvdWriteRefusal(400, 'PROGRAM_REQUIRED', 'Open a project before saving an IVD record.');
   const reason = requireGovernedReason(input.reason);
   if (!reason.ok) throw new IvdWriteRefusal(400, 'REASON_REQUIRED', reason.error);
   const client = requestPgClient(req);

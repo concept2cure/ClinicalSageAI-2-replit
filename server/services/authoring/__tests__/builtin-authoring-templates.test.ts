@@ -6,13 +6,14 @@ import {
 } from '../../market-specs/document-template-library';
 import { documentComponentContext, documentComponentRegion, resolveDocumentPreparationScope } from '../../market-specs/document-preparation';
 import { searchTemplates } from '../../regulatory/templateCatalog';
+import { isCanonicalCtdModuleTemplate } from '../../market-specs/medicinal-working-templates';
 import { getIndAuthoringTemplates, indTemplateSnapshot } from '../ind-authoring-templates';
 import {
   builtinAuthoringTemplateId, builtinTemplateReference, builtinTemplateSnapshot,
   getBuiltinAuthoringTemplate, getBuiltinAuthoringTemplates, type BuiltinAuthoringTemplate,
 } from '../builtin-authoring-templates';
 
-const targets = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry) || isSharedPlanningRegistryEntry(entry))
+const targets = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry) || isSharedPlanningRegistryEntry(entry) || isCanonicalCtdModuleTemplate(entry.id))
   && ['US', 'CA', 'EU', 'JP', 'GLOBAL'].includes(entry.region));
 const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
 let all: BuiltinAuthoringTemplate[];

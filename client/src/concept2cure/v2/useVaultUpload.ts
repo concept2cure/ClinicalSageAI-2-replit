@@ -34,6 +34,7 @@ import { redactInternals } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { VaultClassification, VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
 import { vaultDocumentCodeForFile } from '@shared/constants/domain/vault-document-code';
+import { sendIngest, type IngestProgress, type IngestReply } from './vaultIngestTransport';
 export { VAULT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 
 export interface VaultUploadOutcome {
@@ -51,8 +52,10 @@ export interface VaultUploadOutcome {
   filings: Array<{ name: string; folderLabel: string | null; needsReview: boolean; placement: VaultPlacement }>;
   /** Files whose exact bytes the Vault already recorded at that code and
    *  version: nothing was changed, and `differs` says the upload asked for a
-   *  title, type or classification other than the recorded one (VR-05). */
-  alreadyRecorded: Array<{ name: string; title: string; differs: boolean }>;
+   *  title, type or classification other than the recorded one (VR-05);
+   *  `filingDiffers`, present only when true, a folder, kind or CTD section
+   *  (Part 11 review F3). */
+  alreadyRecorded: Array<{ name: string; title: string; differs: boolean; filingDiffers?: true }>;
   /** Files refused because a different file is already recorded at that name
    *  (409 VERSION_CONTENT_CONFLICT). The surface can offer to add each as the
    *  next version of the recorded document (VR-09), so the File is kept. */
@@ -90,8 +93,11 @@ export type VaultPlacement = 'confirmed' | 'suggested' | 'unfiled';
 
 /** Where one file of a batch stands, reported as each settles. */
 export type VaultUploadFileStatus =
-  | { state: 'uploading' }
-  | { state: 'stored'; version: string | null; folderLabel: string | null; placement: VaultPlacement; already: boolean }
+  /** `sent` of `total` bytes of its request have gone out; once they all have, the server is scanning and storing it. */
+  | { state: 'uploading'; sent?: number; total?: number }
+  | { state: 'stored'; version: string | null; folderLabel: string | null; placement: VaultPlacement; already: boolean;
+      /** Its text is still being read by the server (a scanned PDF's OCR is off the upload, MR-08 Stage 3). */
+      readingText?: true }
   | { state: 'refused'; reason: string };
 
 export interface VaultUploadOptions {
@@ -127,15 +133,27 @@ export interface VaultUploadState {
 /** The default document type. See the note in `uploadOne`. */
 const DEFAULT_DOCUMENT_TYPE: VaultIngestDocumentType = 'OTHER';
 
+/** The ingest's filing fields; any other field a re-upload reports is a detail. */
+const FILING_FIELDS = new Set(['folder_id', 'evidence_kind', 'ctd_section']);
+
+/** A re-upload the Vault already held: which of its asks were not applied, details or filing. */
+function alreadyRecordedOf(differs: Array<{ field?: unknown }>, title: string): { title: string; differs: boolean; filingDiffers?: true } {
+  const filing = differs.some((d) => FILING_FIELDS.has(String(d.field)));
+  return { title, differs: differs.some((d) => !FILING_FIELDS.has(String(d.field))), ...(filing ? { filingDiffers: true as const } : {}) };
+}
+
 /** What the user is told about files the Vault already held: nothing changed,
- *  and where a title, type or classification differs, how to change it. */
+ *  and where a title, type, classification or filing differs, how to change it. */
 function alreadyRecordedText(list: VaultUploadOutcome['alreadyRecorded']): string {
   if (list.length === 0) return '';
   const named = list.map((a) => `${a.name} (as "${a.title}")`).join('; ');
-  const hint = list.some((a) => a.differs)
+  const details = list.some((a) => a.differs)
     ? ' Its title, type or classification is changed with Edit details, not by uploading it again.'
     : '';
-  return `Already in the Vault, nothing changed: ${named}.${hint}`;
+  const filing = list.some((a) => a.filingDiffers)
+    ? ' Its folder, kind or CTD section is changed with Move in its filing, not by uploading it again.'
+    : '';
+  return `Already in the Vault, nothing changed: ${named}.${details}${filing}`;
 }
 
 /** The person's fields, as form entries: only what was given, and the filing details only with a folder. */
@@ -155,20 +173,21 @@ async function uploadOne(
   programId: string,
   file: File,
   documentType: VaultIngestDocumentType,
-  newVersionOf?: VaultUploadOptions['newVersionOf'],
-  fields?: VaultUploadFileFields,
+  how: { newVersionOf?: VaultUploadOptions['newVersionOf']; fields?: VaultUploadFileFields; onProgress?: IngestProgress },
 ): Promise<
   | {
       ok: true;
       folderLabel: string | null;
       needsReview: boolean;
       placement: VaultPlacement;
-      already: { title: string; differs: boolean } | null;
+      already: { title: string; differs: boolean; filingDiffers?: true } | null;
       version: string | null;
       documentId: string | null;
+      readingText: boolean;
     }
   | { ok: false; reason: string; code: string | null }
 > {
+  const { newVersionOf, fields, onProgress } = how;
   const form = new FormData();
   form.append('file', file);
   form.append('programId', programId);
@@ -189,32 +208,27 @@ async function uploadOne(
   }
   form.append('documentType', fields?.documentType ?? documentType);
 
-  let res: Response;
+  let res: IngestReply;
   try {
-    res = await fetch('/api/vault/ingest', {
-      method: 'POST',
-      body: form,
-      credentials: 'include',
-      /* THE UPLOAD COULD NOT AUTHENTICATE WITHOUT THIS.
-         `/api/vault/ingest` is mounted behind `authMiddleware`
-         (server/bootstrap/register-inline-routes.ts), whose header reads
-         "Validates Bearer JWT tokens only" and which answers a request with no
-         Authorization header `401 { error: 'Bearer token required' }`. It reads
-         `req.headers.authorization` and has no cookie fallback, so
-         `credentials: 'include'` alone never authenticated this request — every
-         upload through this hook was refused, on all three of its callers (the
-         v2 Vault, the MDX Document vault, the MDX pathway attach).
+    /* THE UPLOAD COULD NOT AUTHENTICATE WITHOUT THIS.
+       `/api/vault/ingest` is mounted behind `authMiddleware`
+       (server/bootstrap/register-inline-routes.ts), whose header reads
+       "Validates Bearer JWT tokens only" and which answers a request with no
+       Authorization header `401 { error: 'Bearer token required' }`. It reads
+       `req.headers.authorization` and has no cookie fallback, so
+       `credentials: 'include'` alone never authenticated this request — every
+       upload through this hook was refused, on all three of its callers (the
+       v2 Vault, the MDX Document vault, the MDX pathway attach).
 
-         The irony worth recording: Etmf.tsx's hand-rolled copy of this request
-         — the one the assessment recommended deleting in favour of this hook —
-         sent these headers and was the only upload path that worked.
+       The irony worth recording: Etmf.tsx's hand-rolled copy of this request
+       — the one the assessment recommended deleting in favour of this hook —
+       sent these headers and was the only upload path that worked.
 
-         NO Content-Type here, deliberately: the browser must set it so the
-         multipart boundary is generated, and naming it produces a body the
-         server cannot parse. `getAuthHeaders()` sets only Authorization and
-         x-organization-id. */
-      headers: { ...getAuthHeaders() },
-    });
+       NO Content-Type here, deliberately: the browser must set it so the
+       multipart boundary is generated, and naming it produces a body the
+       server cannot parse. `getAuthHeaders()` sets only Authorization and
+       x-organization-id. */
+    res = await sendIngest(form, { ...getAuthHeaders() }, onProgress);
   } catch {
     /* A transport failure, not a server refusal. The distinction matters: the
        user can retry this one, and nothing was filed. */
@@ -228,8 +242,8 @@ async function uploadOne(
     const body = (await res.json().catch(() => null)) as
       | {
           filing?: { folderLabel?: string; folderId?: string | null; needsReview?: boolean; placementStatus?: string };
-          document?: { id?: unknown; documentTitle?: string; version?: string };
-          reupload?: { differs?: unknown[] };
+          document?: { id?: unknown; documentTitle?: string; version?: string; extraction?: unknown };
+          reupload?: { differs?: Array<{ field?: unknown }> };
         }
       | null;
     const filing = body?.filing;
@@ -240,11 +254,10 @@ async function uploadOne(
       /* The server's own word for the placement. A body that predates it reads
          as the classifier's: a suggestion when a folder is named, else unfiled. */
       placement: filing?.placementStatus === 'confirmed' ? 'confirmed' : filing?.folderId ? 'suggested' : 'unfiled',
-      already: body?.reupload
-        ? { title: body.document?.documentTitle || file.name, differs: (body.reupload.differs?.length ?? 0) > 0 }
-        : null,
+      already: body?.reupload ? alreadyRecordedOf(body.reupload.differs ?? [], body.document?.documentTitle || file.name) : null,
       version: body?.document?.version ?? null,
       documentId: typeof body?.document?.id === 'string' && body.document.id ? body.document.id : null,
+      readingText: body?.document?.extraction === 'pending',
     };
   }
 
@@ -315,6 +328,17 @@ function outcomeNote(outcome: VaultUploadOutcome): NonNullable<VaultUploadState[
   };
 }
 
+/** Tell `onFileStatus` how far file `index` has been sent, once per whole percent. */
+function progressOf(index: number, onFileStatus: NonNullable<VaultUploadOptions['onFileStatus']>): IngestProgress {
+  let told = -1;
+  return (sent, total) => {
+    const percent = total > 0 ? Math.floor((sent * 100) / total) : 0;
+    if (percent === told) return;
+    told = percent;
+    onFileStatus(index, { state: 'uploading', sent, total });
+  };
+}
+
 /**
  * @param programId The regulatory program to file under. Uploading is disabled
  *   while this is null — every vault document is program-scoped, and the server
@@ -332,7 +356,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
       if (!programId) {
         setNote({
           tone: 'error',
-          text: 'Open a program first — every vault document is filed against one.',
+          text: 'Open a project first — every vault document is filed against one.',
         });
         return empty;
       }
@@ -343,15 +367,22 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
       try {
         /* Sequential, deliberately. These are 50 MB-capped uploads that each
            run a virus scan and a text extraction server-side; firing a whole
-           drop-zone's worth in parallel is how one user stalls the pool. */
+           drop-zone's worth in parallel is how one user stalls the pool.
+           MR-08 Stage 6 step 2 proposed two at a time; it stays one. A
+           second file in flight shares the same person's upload bandwidth, so
+           the batch finishes no sooner, and one at a time keeps each outcome
+           in the order the list shows. What the step needed was each row
+           saying how far its file has got, which it now does. */
         for (const [index, file] of list.entries()) {
           opts?.onFileStatus?.(index, { state: 'uploading' });
-          const r = await uploadOne(
-            programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE, opts?.newVersionOf,
-            opts?.newVersionOf ? undefined : opts?.fields?.[index],
-          );
+          const r = await uploadOne(programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE, {
+            newVersionOf: opts?.newVersionOf,
+            fields: opts?.newVersionOf ? undefined : opts?.fields?.[index],
+            onProgress: opts?.onFileStatus ? progressOf(index, opts.onFileStatus) : undefined,
+          });
           opts?.onFileStatus?.(index, r.ok
-            ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, placement: r.placement, already: Boolean(r.already) }
+            ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, placement: r.placement, already: Boolean(r.already),
+              ...(r.readingText ? { readingText: true as const } : {}) }
             : { state: 'refused', reason: r.reason });
           if (r.ok && r.documentId) outcome.recorded.push(r.documentId);
           if (r.ok && r.already) {

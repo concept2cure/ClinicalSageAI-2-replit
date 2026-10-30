@@ -156,13 +156,13 @@ describe('catalog state stays truthful in the picker', () => {
     expect(screen.getByText(/No templates are available/)).toBeTruthy(); expect(screen.queryByText(/Loading templates/)).toBeNull();
   });
 
-  it('explains an empty catalog and creates a blank document with the unchanged payload', async () => {
+  it('explains an empty catalog and leaves a blank document unplaced until a module is chosen', async () => {
     wire({ templates: [] }); render(<AuthoringCreateExport {...props()} />); await open();
     expect(await screen.findByText(/No templates are available/)).toBeTruthy(); expect(screen.queryByText(/No templates match/)).toBeNull();
     fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'Blank draft' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/docs', {
-      title: 'Blank draft', module: 'M2', client_program_id: PROJECT,
+      title: 'Blank draft', module: null, client_program_id: PROJECT,
     }, ACTOR_HEADERS));
   });
 
@@ -182,5 +182,87 @@ describe('catalog state stays truthful in the picker', () => {
     await screen.findByText('3 of 3 loaded templates'); search('animal');
     expect(screen.getByText('1 of 3 loaded templates')).toBeTruthy();
     expect(screen.getByText(/The shared reference store did not load/)).toBeTruthy();
+  });
+});
+
+
+describe('filing guidance without hiding the global template library', () => {
+  const context = { projectId: PROJECT, registryId: 'US_BLA' };
+  const catalog = [
+    { id: 'bla-start', name: 'BLA preparation', module: null, filingContext: { registryId: 'US_BLA', region: 'US', agency: 'FDA' } },
+    { id: 'nda-start', name: 'NDA preparation', module: null, filingContext: { registryId: 'US_NDA', region: 'US', agency: 'FDA' } },
+    { id: 'csr-start', name: 'Shared CSR', module: null, filingContext: { registryId: null, region: 'GLOBAL', agency: 'ICH' } },
+  ];
+  it('promotes the exact filing and shared components without choosing the whole filing automatically', async () => {
+    wire({ templates: catalog, globalCatalog: 'ok' });
+    render(<AuthoringCreateExport {...props()} filingContext={context} />); await open(); await screen.findByText('3 of 3 templates');
+    const recommended = within(picker()).getByRole('group', { name: 'For this filing and shared documents' });
+    expect(within(recommended).getAllByRole('option').map(option => option.textContent)).toEqual(['BLA preparation', 'Shared CSR']);
+    expect(within(picker()).getByRole('option', { name: 'NDA preparation' })).toBeTruthy();
+    expect(picker().value).toBe('(blank document)');
+  });
+  it('rejects a template choice retained from an earlier filing context before sending creation', async () => {
+    wire({ templates: catalog, globalCatalog: 'ok' }); const p = props();
+    const view = render(<AuthoringCreateExport {...p} filingContext={context} />); await open(); await screen.findByText('3 of 3 templates');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'My report' } });
+    fireEvent.change(picker(), { target: { value: 'bla-start' } });
+    view.rerender(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: 'US_NDA' }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    expect(apiRequest.mock.calls.filter(call => call[0] === 'POST')).toHaveLength(0);
+    expect(screen.getByText(/project or filing changed/i)).toBeTruthy();
+  });
+  it('does not infer a CTD placement for a new blank document', async () => {
+    wire({ templates: [], globalCatalog: 'ok' }); render(<AuthoringCreateExport {...props()} filingContext={context} />); await open();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'Working response' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/docs',
+      { title: 'Working response', module: null, client_program_id: PROJECT }, ACTOR_HEADERS));
+  });
+
+  it.each(['filing round trip', 'project round trip', 'batched project round trip', 'account replacement', 'same-account session replacement'])('requires explicit reopen after %s', async change => {
+    wire({ templates: catalog, globalCatalog: 'ok' }); const p = props();
+    const view = render(<AuthoringCreateExport {...p} filingContext={context} />); await open(); await screen.findByText('3 of 3 templates');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'Earlier form values' } });
+    fireEvent.change(picker(), { target: { value: 'bla-start' } });
+    if (change === 'filing round trip') {
+      view.rerender(<AuthoringCreateExport {...p} filingContext={{ ...context, registryId: 'US_NDA' }} />);
+      view.rerender(<AuthoringCreateExport {...p} filingContext={context} />);
+    } else if (change === 'batched project round trip') {
+      act(() => { publishShellProject({ id: '22222222-2222-4222-8222-222222222222' }); publishShellProject({ id: PROJECT }); });
+    } else if (change === 'project round trip') {
+      act(() => publishShellProject({ id: '22222222-2222-4222-8222-222222222222' }));
+      act(() => publishShellProject({ id: PROJECT }));
+    } else {
+      const id = change === 'account replacement' ? '8' : '7';
+      act(() => authService.setToken(`fixture.${btoa(JSON.stringify({ userId: Number(id), organizationId: 12, visit: 'replacement' }))}.synthetic`,
+        { ...ACTOR, id }, 'fixture-new-session', 3600));
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    expect(apiRequest.mock.calls.filter(call => call[0] === 'POST')).toHaveLength(0);
+    expect(screen.getByText(/Close this form and open New document again/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await open();
+    expect((screen.getByRole('textbox', { name: 'Document title' }) as HTMLInputElement).value).toBe('');
+  });
+
+  it('reopens with a fresh account catalog before creating a document under that account', async () => {
+    let finish!: (value: Response) => void;
+    const pending = new Promise<Response>(resolve => { finish = resolve; });
+    const initial = apiRequest.getMockImplementation()!; let replacement = false;
+    apiRequest.mockImplementation((method, url, body, headers) => replacement && method === 'GET' ? pending : initial(method, url, body, headers));
+    const p = props(); render(<AuthoringCreateExport {...p} filingContext={context} />); await open(); await screen.findByText('3 of 3 templates');
+    replacement = true;
+    const token = `fixture.${btoa(JSON.stringify({ userId: 8, organizationId: 12 }))}.synthetic`;
+    act(() => authService.setToken(token, { ...ACTOR, id: '8' }, 'fixture-new-account', 3600));
+    expect(screen.queryByRole('option', { name: 'Protocol scaffold' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' })); await open();
+    expect(screen.getByText(/Loading templates/)).toBeTruthy();
+    await act(async () => finish(response({ templates: [{ id: 'current-template', name: 'Current account outline', module: null }] })));
+    fireEvent.change(picker(), { target: { value: 'current-template' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'Current account draft' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/docs',
+      { title: 'Current account draft', module: null, template_id: 'current-template', client_program_id: PROJECT },
+      { Authorization: `Bearer ${token}`, 'x-organization-id': '12' }));
   });
 });

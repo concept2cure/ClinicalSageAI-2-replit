@@ -84,7 +84,7 @@ export async function listRegisterLinks(client: RequestSqlClient, organizationId
 
 export class RegisterLinkRefusal extends Error {
   readonly status = 404;
-  constructor() { super('The saved record is not filed under this program, so its Module 3 link was not retried.'); }
+  constructor() { super('The saved record is not filed under this project, so its Module 3 link was not retried.'); }
 }
 
 export async function retryRegisterLink(client: RequestSqlClient, args: { organizationId: number; projectId: string; register: string; recordId: string; userId: number }): Promise<Module3Linkage> {

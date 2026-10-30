@@ -65,7 +65,7 @@ describe('readVaultCoverage', () => {
     expect(c.state).toBe('available');
     if (c.state !== 'available') return;
     expect(c.provenance.source).toBe('fallback');
-    expect(c.provenance.reason).toMatch(/program type is unknown/);
+    expect(c.provenance.reason).toMatch(/filing type is unknown/);
   });
 
   it('a rule-pack store that cannot be read is unavailable with the reason, never "0 of m"', async () => {

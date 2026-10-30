@@ -1,0 +1,18 @@
+{
+  "requirements": 117,
+  "parent_refs": [
+    "37f2ed240",
+    "c7f320403"
+  ],
+  "both_parent_requirement_sets_preserved": true,
+  "new_007a": "single,uncovered",
+  "historical_run": "2026-09-27",
+  "summary": {
+    "requirements": 117,
+    "pass": 69,
+    "partial": 2,
+    "fail": 0,
+    "open": 0,
+    "uncovered": 46
+  }
+}

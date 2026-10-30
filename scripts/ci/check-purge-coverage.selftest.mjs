@@ -60,13 +60,30 @@
  * residue although the purge would reach it — the residue query is public-only
  * in both halves. Pinning that here would make the limitation a requirement.
  *
- * Also outside this gate's reach: the ORDER of PURGE_CHILD_TABLES. The gate asks
- * which tables the purge reaches, a set question; it never reads the list as a
- * sequence. So a foreign-key ORDER failure — such as the 23503 from deleting
- * client_workspaces before projects, which reference their workspace with no
- * cascade (2ab30c93, fixed 2026-10-01) — passes this gate and this selftest.
- * That regression is guarded by tests/db/tenant-purge-artifact-records.dbtest.ts,
- * which runs the real list against a tenant with a workspace and a project.
+ * The ORDER of PURGE_CHILD_TABLES (2026-10-29). Until then the gate asked only
+ * which tables the purge reaches, a set question, so a foreign-key ORDER failure
+ * passed it: the 23503 from deleting client_workspaces before projects
+ * (2ab30c93, fixed 2026-10-01), risk_items under a project (07d0116f9), and the
+ * 105 keys the install-fresh schema then had into projects, client_workspaces,
+ * documents and regulatory_programs. It now walks the list as a sequence, and
+ * these cases pin each way a key stops it: NO ACTION from a table deleted later,
+ * RESTRICT into a table a listed delete cascades to, SET NULL on a NOT NULL
+ * column, a listed table without organization_id and without a
+ * PURGE_PARENT_SCOPED predicate (the purge skips it), a referrer in another
+ * schema; and the quiet shapes: the referrer listed first, removed by the same
+ * statement's cascade, given a predicate, or named in PURGE_REFERRERS_NOT_ERASED
+ * (which also takes a table out of the residue, by name, with its reason); and
+ * the list split across modules: a `...NAME` entry spread in place from a
+ * sibling module, which fails closed when nothing declares it.
+ *
+ * PURGE_PLATFORM_RECORDS (P-58, 2026-10-29): the records the platform keeps
+ * about a purge, the offboarding certificate. The cases pin that one named
+ * there is reported as a platform record and is not residue, that the same
+ * table unnamed is NEW residue, and that the gate fails when the purge list
+ * names one, when a cascade reaches one, when one is also named as held, and,
+ * closed, when an entry has no reason.
+ * tests/db/tenant-purge-blocking-keys.dbtest.ts runs the real list against a
+ * tenant holding a row in every such table.
  *
  * SELFTEST_GATE_PATH points the selftest at another copy of the gate (a mutant),
  * to show the selftest fails when the gate's detection is weakened:
@@ -267,7 +284,7 @@ const BASE_ENTRIES = [
   "  'projects',",
 ];
 
-function service(entries = BASE_ENTRIES, retained = {}) {
+function service(entries = BASE_ENTRIES, retained = {}, { parentScoped = null, notErased = null } = {}) {
   return [
     "import type { Pool } from 'pg';",
     '',
@@ -292,9 +309,27 @@ function service(entries = BASE_ENTRIES, retained = {}) {
     ...entries,
     ']);',
     `export const PURGE_RETAINED_RECORDS: Readonly<Record<string, string>> = Object.freeze(${JSON.stringify(retained)});`,
+    ...(notErased === null ? [] : [
+      `export const PURGE_REFERRERS_NOT_ERASED: Readonly<Record<string, string>> = Object.freeze(${JSON.stringify(notErased)});`,
+    ]),
+    ...(parentScoped === null ? [] : [
+      'export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.freeze({',
+      ...Object.entries(parentScoped).map(([t, p]) => `  '${t}': ${JSON.stringify(p).replace(/^"|"$/g, "'")},`),
+      '});',
+    ]),
     '',
   ].join('\n');
 }
+
+/**
+ * The platform's own record of a purge (P-58): the offboarding certificate,
+ * org-keyed, kept by design, declared in purge-referrers.ts.
+ */
+const CERTIFICATE_REASON = 'The offboarding certificate: counts, digests and times, no customer content.';
+const CERTIFICATE_DDL =
+  'CREATE TABLE tenant_offboarding_certificates (id serial PRIMARY KEY, organization_id integer NOT NULL REFERENCES organizations(id));';
+const platformRecords = (reason = CERTIFICATE_REASON) =>
+  `export const PURGE_PLATFORM_RECORDS: Readonly<Record<string, string>> = Object.freeze({\n  "tenant_offboarding_certificates": ${JSON.stringify(reason)}\n});\n`;
 
 const baselineJson = (tables) =>
   `${JSON.stringify({ generatedAt: '2026-09-19T00:00:00.000Z', purgeChildTables: [], count: tables.length, tables }, null, 2)}\n`;
@@ -325,7 +360,13 @@ function runGate(args, url) {
 async function arrange(c) {
   fs.rmSync(tree, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(OFFBOARDING), { recursive: true });
-  if (c.source !== null) fs.writeFileSync(OFFBOARDING, c.source ?? service(c.entries, c.retained));
+  if (c.source !== null) {
+    fs.writeFileSync(OFFBOARDING, c.source ?? service(c.entries, c.retained, { parentScoped: c.parentScoped ?? null, notErased: c.notErased ?? null }));
+  }
+  // Sibling modules beside the service (purge-referrers.ts, purge-parent-scope.ts).
+  for (const [name, text] of Object.entries(c.siblings ?? {})) {
+    fs.writeFileSync(path.join(path.dirname(OFFBOARDING), name), text);
+  }
   if (c.baseline !== null) {
     fs.mkdirSync(path.dirname(BASELINE), { recursive: true });
     fs.writeFileSync(BASELINE, baselineJson(c.baseline ?? ['audit_logs']));
@@ -461,6 +502,279 @@ const cases = [
         thread_id integer NOT NULL REFERENCES review_threads(id) ON DELETE CASCADE);`,
     expect: 1,
     newTables: ['review_comments', 'review_threads'],
+  },
+
+  // The order question: a key with no delete action stops the purge part-way.
+  {
+    // risk_items under a project (07d0116f9), and the 105 keys of 2026-10-29.
+    name: 'FAILS on NO ACTION into a listed table from a table the list deletes LATER (23503, the purge rolls back)',
+    ddl: `${BASE_DDL}
+      CREATE TABLE project_tasks (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        project_id integer REFERENCES projects(id));`,
+    entries: [...BASE_ENTRIES, "  'project_tasks',"],
+    expect: 1,
+    newTables: [],
+    mustSay: [
+      '1 foreign key(s) stop a tenant purge part-way',
+      "public.project_tasks (project_id) → public.projects, NO ACTION [project_tasks_project_id_fkey]: the purge deletes it later ('project_tasks', after 'projects')",
+    ],
+  },
+  {
+    name: 'quiet — the same key, its table listed BEFORE the table it names',
+    ddl: `${BASE_DDL}
+      CREATE TABLE project_tasks (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        project_id integer REFERENCES projects(id));`,
+    entries: BASE_ENTRIES.flatMap((e) => (e === "  'projects'," ? ["  'project_tasks',", e] : [e])),
+    expect: 0,
+    mustSay: ['no foreign key stops the purge part-way (0 from tables it does not erase, each named)', okLine(1, 1)],
+    mustNotSay: ['stop a tenant purge part-way'],
+  },
+  {
+    // documents is deleted by the cascade from projects; its referrer must go first.
+    name: 'FAILS on RESTRICT into a table a listed delete CASCADES to',
+    ddl: `${BASE_DDL}
+      CREATE TABLE document_notes (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        document_id integer REFERENCES documents(id) ON DELETE RESTRICT);`,
+    entries: [...BASE_ENTRIES, "  'document_notes',"],
+    expect: 1,
+    newTables: [],
+    mustSay: ["public.document_notes (document_id) → public.documents, RESTRICT [document_notes_document_id_fkey]: the purge deletes it later ('document_notes', after 'projects')"],
+  },
+  {
+    name: 'quiet — a referrer the SAME statement removes (it cascades from the deleted table as well)',
+    ddl: `${BASE_DDL}
+      CREATE TABLE document_links (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        project_id integer NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        document_id integer REFERENCES documents(id));`,
+    expect: 0,
+    mustSay: ['no foreign key stops the purge part-way', okLine(1, 1)],
+  },
+  {
+    // 23502: SET NULL cannot null a NOT NULL column. Baselined residue, so only the order fails.
+    name: 'FAILS on ON DELETE SET NULL on a NOT NULL column, from a table the purge never deletes',
+    ddl: `${BASE_DDL}
+      CREATE TABLE document_reviews (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        document_id integer NOT NULL REFERENCES documents(id) ON DELETE SET NULL);`,
+    baseline: ['audit_logs', 'document_reviews'],
+    expect: 1,
+    newTables: [],
+    mustSay: ['public.document_reviews (document_id) → public.documents, SET NULL on a NOT NULL column [document_reviews_document_id_fkey]: the purge never deletes it'],
+  },
+  {
+    name: 'quiet — ON DELETE SET NULL on a nullable column',
+    ddl: `${BASE_DDL}
+      CREATE TABLE document_reviews (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        document_id integer REFERENCES documents(id) ON DELETE SET NULL);`,
+    baseline: ['audit_logs', 'document_reviews'],
+    expect: 0,
+    mustSay: ['no foreign key stops the purge part-way'],
+  },
+  {
+    // DELETE … WHERE organization_id = $1 raises 42703 there, and the purge skips it.
+    name: 'FAILS on a listed table with no organization_id and no PURGE_PARENT_SCOPED predicate — the purge skips it',
+    ddl: `${BASE_DDL}
+      CREATE TABLE document_comments (id serial PRIMARY KEY,
+        document_id integer NOT NULL REFERENCES documents(id));`,
+    entries: BASE_ENTRIES.flatMap((e) => (e === "  'projects'," ? ["  'document_comments',", e] : [e])),
+    expect: 1,
+    newTables: [],
+    mustSay: ['public.document_comments (document_id) → public.documents, NO ACTION [document_comments_document_id_fkey]: the purge never deletes it'],
+  },
+  {
+    name: 'quiet — that table with its PURGE_PARENT_SCOPED predicate',
+    ddl: `${BASE_DDL}
+      CREATE TABLE document_comments (id serial PRIMARY KEY,
+        document_id integer NOT NULL REFERENCES documents(id));`,
+    entries: BASE_ENTRIES.flatMap((e) => (e === "  'projects'," ? ["  'document_comments',", e] : [e])),
+    parentScoped: { document_comments: 'document_id IN (SELECT id FROM documents WHERE organization_id = $1)' },
+    expect: 0,
+    mustSay: ['no foreign key stops the purge part-way'],
+  },
+  {
+    name: 'FAILS closed when PURGE_PARENT_SCOPED is declared but no key can be read from it',
+    source: `${service()}\nexport const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.freeze({ ...elsewhere });\n`,
+    expect: 1,
+    mustSay: ['could not read the keys of PURGE_PARENT_SCOPED'],
+  },
+  {
+    // The order check reads every schema; the residue check reads public only.
+    name: 'FAILS on a referrer in another schema',
+    ddl: `${BASE_DDL}
+      CREATE TABLE vault.document_annotations (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        document_id integer REFERENCES vault.documents(id));`,
+    expect: 1,
+    newTables: [],
+    mustSay: ['vault.document_annotations (document_id) → vault.documents, NO ACTION [document_annotations_document_id_fkey]: the purge never deletes it'],
+  },
+  {
+    // electronic_signatures under a document (2026-10-29): awaiting the founder's retention decision.
+    name: 'quiet — a referrer named in PURGE_REFERRERS_NOT_ERASED is reported with its key, and is not residue',
+    ddl: `${BASE_DDL}
+      CREATE TABLE electronic_signatures (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        document_id integer REFERENCES documents(id));`,
+    notErased: { electronic_signatures: 'Part 11 signatures; retention awaits a decision.' },
+    expect: 0,
+    mustSay: [
+      'keys from a table the purge does not erase (a held row stops the purge; a platform record is written after it): 1',
+      'public.electronic_signatures (document_id) → public.documents, NO ACTION [electronic_signatures_document_id_fkey]',
+      'tables the purge does not erase until a decision is made (PURGE_REFERRERS_NOT_ERASED): 1',
+      'electronic_signatures: Part 11 signatures; retention awaits a decision.',
+      'no foreign key stops the purge part-way (1 from tables it does not erase, each named)',
+      okLine(1, 1),
+    ],
+  },
+  {
+    name: 'FAILS on that referrer once it is not named (its residue baselined, so only the order fails)',
+    ddl: `${BASE_DDL}
+      CREATE TABLE electronic_signatures (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        document_id integer REFERENCES documents(id));`,
+    baseline: ['audit_logs', 'electronic_signatures'],
+    expect: 1,
+    newTables: [],
+    mustSay: ['public.electronic_signatures (document_id) → public.documents, NO ACTION [electronic_signatures_document_id_fkey]: the purge never deletes it'],
+  },
+  {
+    // review_routes (20261023): org-keyed, nothing reaches it; named, it is not NEW residue.
+    name: 'quiet — an unreached org-keyed table named in PURGE_REFERRERS_NOT_ERASED is not NEW residue',
+    ddl: `${BASE_DDL} CREATE TABLE review_routes (id serial PRIMARY KEY, organization_id integer NOT NULL);`,
+    notErased: { review_routes: 'A signed review workflow; retention undecided.' },
+    expect: 0,
+    mustSay: [okLine(1, 1), 'review_routes: A signed review workflow; retention undecided.'],
+  },
+  {
+    name: 'FAILS on that table when it is not named',
+    ddl: `${BASE_DDL} CREATE TABLE review_routes (id serial PRIMARY KEY, organization_id integer NOT NULL);`,
+    expect: 1,
+    newTables: ['review_routes'],
+  },
+  {
+    name: 'FAILS when PURGE_REFERRERS_NOT_ERASED names a table the list erases',
+    ddl: `${BASE_DDL}
+      CREATE TABLE electronic_signatures (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        document_id integer REFERENCES documents(id));`,
+    entries: BASE_ENTRIES.flatMap((e) => (e === "  'projects'," ? ["  'electronic_signatures',", e] : [e])),
+    notErased: { electronic_signatures: 'Part 11 signatures; retention awaits a decision.' },
+    expect: 1,
+    mustSay: ['PURGE_REFERRERS_NOT_ERASED names table(s) the purge list erases: electronic_signatures'],
+  },
+  {
+    name: 'FAILS when a PURGE_REFERRERS_NOT_ERASED table is reached by a cascade from a purged table',
+    ddl: `${BASE_DDL}
+      CREATE TABLE electronic_signatures (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        document_id integer REFERENCES documents(id) ON DELETE CASCADE);`,
+    notErased: { electronic_signatures: 'Part 11 signatures; retention awaits a decision.' },
+    expect: 1,
+    mustSay: ['retained evidence is reachable by purge: electronic_signatures'],
+  },
+  {
+    name: 'FAILS closed when a PURGE_REFERRERS_NOT_ERASED entry has no meaningful reason',
+    notErased: { electronic_signatures: ' ' },
+    expect: 1,
+    mustSay: ['cannot read PURGE_REFERRERS_NOT_ERASED'],
+  },
+  {
+    name: 'FAILS when one table is named in both PURGE_RETAINED_RECORDS and PURGE_REFERRERS_NOT_ERASED',
+    retained: { electronic_signatures: 'Retained with the audit trail.' },
+    notErased: { electronic_signatures: 'Part 11 signatures; retention awaits a decision.' },
+    expect: 1,
+    mustSay: ['named in more than one of PURGE_RETAINED_RECORDS, PURGE_REFERRERS_NOT_ERASED and PURGE_PLATFORM_RECORDS: electronic_signatures'],
+  },
+
+  // The platform's own records of a purge (P-58, 2026-10-29): the offboarding
+  // certificate is org-keyed, kept by design, and must never be erased.
+  {
+    name: 'quiet — a platform record named in PURGE_PLATFORM_RECORDS is reported as one, and is not residue',
+    ddl: `${BASE_DDL} ${CERTIFICATE_DDL}`,
+    siblings: { 'purge-referrers.ts': platformRecords() },
+    expect: 0,
+    mustSay: [
+      'platform records of a purge, kept by design and not residue (PURGE_PLATFORM_RECORDS): 1',
+      `tenant_offboarding_certificates: ${CERTIFICATE_REASON}`,
+      okLine(1, 1),
+    ],
+  },
+  {
+    name: 'FAILS on that table when it is not named',
+    ddl: `${BASE_DDL} ${CERTIFICATE_DDL}`,
+    expect: 1,
+    newTables: ['tenant_offboarding_certificates'],
+  },
+  {
+    name: 'FAILS when the purge list names a platform record',
+    ddl: `${BASE_DDL} ${CERTIFICATE_DDL}`,
+    entries: [...BASE_ENTRIES, "  'tenant_offboarding_certificates',"],
+    siblings: { 'purge-referrers.ts': platformRecords() },
+    expect: 1,
+    mustSay: ['the purge list names a platform record it must never erase: tenant_offboarding_certificates'],
+  },
+  {
+    name: 'FAILS when a platform record is reached by a cascade from a purged table',
+    ddl: `${BASE_DDL} CREATE TABLE tenant_offboarding_certificates (id serial PRIMARY KEY, organization_id integer NOT NULL,
+      project_id integer REFERENCES projects(id) ON DELETE CASCADE);`,
+    siblings: { 'purge-referrers.ts': platformRecords() },
+    expect: 1,
+    mustSay: ['retained evidence or a platform record is reachable by purge: tenant_offboarding_certificates'],
+  },
+  {
+    name: 'FAILS when a platform record is also named in PURGE_REFERRERS_NOT_ERASED',
+    ddl: `${BASE_DDL} ${CERTIFICATE_DDL}`,
+    notErased: { tenant_offboarding_certificates: 'Held until a decision is made.' },
+    siblings: { 'purge-referrers.ts': platformRecords() },
+    expect: 1,
+    mustSay: ['named in more than one of PURGE_RETAINED_RECORDS, PURGE_REFERRERS_NOT_ERASED and PURGE_PLATFORM_RECORDS: tenant_offboarding_certificates'],
+  },
+  {
+    name: 'FAILS closed when a PURGE_PLATFORM_RECORDS entry has no meaningful reason',
+    ddl: `${BASE_DDL} ${CERTIFICATE_DDL}`,
+    siblings: { 'purge-referrers.ts': platformRecords(' ') },
+    expect: 1,
+    mustSay: ['cannot read PURGE_PLATFORM_RECORDS'],
+  },
+
+  // The list split across modules (2026-10-29): purge-referrers.ts holds a block
+  // PURGE_CHILD_TABLES spreads in place, and the PURGE_REFERRERS_NOT_ERASED map.
+  {
+    name: 'quiet — entries spread from a sibling module are read in place, before the table they name',
+    ddl: `${BASE_DDL}
+      CREATE TABLE project_tasks (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        project_id integer REFERENCES projects(id));`,
+    entries: BASE_ENTRIES.flatMap((e) => (e === "  'projects'," ? ['  ...PURGE_REFERRER_TABLES,', e] : [e])),
+    siblings: { 'purge-referrers.ts': "export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([\n  // A project's tasks.\n  'project_tasks',\n]);\n" },
+    expect: 0,
+    mustSay: ['no foreign key stops the purge part-way', okLine(1, 1)],
+  },
+  {
+    name: 'FAILS on the same spread placed AFTER the table it names — its position is the order',
+    ddl: `${BASE_DDL}
+      CREATE TABLE project_tasks (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        project_id integer REFERENCES projects(id));`,
+    entries: [...BASE_ENTRIES, '  ...PURGE_REFERRER_TABLES,'],
+    siblings: { 'purge-referrers.ts': "export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([\n  'project_tasks',\n]);\n" },
+    expect: 1,
+    newTables: [],
+    mustSay: ["public.project_tasks (project_id) → public.projects, NO ACTION [project_tasks_project_id_fkey]: the purge deletes it later ('project_tasks', after 'projects')"],
+  },
+  {
+    name: 'FAILS closed on a spread no purge source declares',
+    entries: [...BASE_ENTRIES, '  ...NOWHERE_DECLARED,'],
+    expect: 1,
+    mustSay: ['cannot resolve the spread ...NOWHERE_DECLARED in PURGE_CHILD_TABLES'],
+  },
+  {
+    name: 'quiet — PURGE_REFERRERS_NOT_ERASED declared in the sibling module is read there',
+    ddl: `${BASE_DDL}
+      CREATE TABLE electronic_signatures (id serial PRIMARY KEY, organization_id integer NOT NULL,
+        document_id integer REFERENCES documents(id));`,
+    siblings: { 'purge-referrers.ts': 'export const PURGE_REFERRERS_NOT_ERASED: Readonly<Record<string, string>> = Object.freeze({\n  "electronic_signatures": "Part 11 signatures; retention awaits a decision."\n});\n' },
+    expect: 0,
+    mustSay: ['tables the purge does not erase until a decision is made (PURGE_REFERRERS_NOT_ERASED): 1', okLine(1, 1)],
+  },
+  {
+    name: 'FAILS closed when PURGE_REFERRERS_NOT_ERASED is declared in two service files',
+    notErased: { electronic_signatures: 'Part 11 signatures; retention awaits a decision.' },
+    siblings: { 'purge-referrers.ts': 'export const PURGE_REFERRERS_NOT_ERASED: Readonly<Record<string, string>> = Object.freeze({\n  "electronic_signatures": "Part 11 signatures; retention awaits a decision."\n});\n' },
+    expect: 1,
+    mustSay: ['PURGE_REFERRERS_NOT_ERASED is declared in more than one service file'],
   },
 
   // Clean shapes, and the near-misses a sloppy gate would flag or drop.

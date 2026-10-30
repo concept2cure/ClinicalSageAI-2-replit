@@ -1,0 +1,131 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5198/api/mdx/qms/documents/34",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 44,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 34,
+        "organization_id": 6,
+        "doc_number": "SOP-OQ-B-20261029145843",
+        "title": "OQ-006 Second SOP 20261029145843",
+        "doc_type": "sop",
+        "category": "production",
+        "version": "1.0",
+        "status": "retired",
+        "effective_date": "2026-10-29T00:00:00.000Z",
+        "next_review_date": "2026-11-03T00:00:00.000Z",
+        "author_id": 6,
+        "approver_id": 7,
+        "approved_at": "2026-10-29T15:00:30.530Z",
+        "superseded_by_id": null,
+        "artifact_id": null,
+        "metadata": {
+          "retired": {
+            "at": "2026-10-29T15:01:00.528+00:00",
+            "by": 7,
+            "reason": "OQ-006 step 10: superseded by validation (signed)",
+            "meaning": "APPROVED",
+            "fromStatus": "effective",
+            "bindingBasis": "qms-document-version-content-sha256",
+            "contentDigest": "50583959564e0dcb34a50c8abec98e0d5fe73bce291721ca8b9812d1f220d970"
+          },
+          "approval": {
+            "at": "2026-10-29T15:00:30.53+00:00",
+            "by": 7,
+            "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+            "meaning": "APPROVED",
+            "bindingBasis": "qms-document-version-content-sha256",
+            "contentDigest": "50583959564e0dcb34a50c8abec98e0d5fe73bce291721ca8b9812d1f220d970",
+            "twoPersonRule": "enforced"
+          },
+          "sections": [
+            {
+              "key": "purpose",
+              "hint": "Why this document exists and what it governs.",
+              "label": "Purpose",
+              "order": 1
+            },
+            {
+              "key": "scope",
+              "hint": "What and who it applies to, with explicit exclusions.",
+              "label": "Scope",
+              "order": 2
+            },
+            {
+              "key": "responsibilities",
+              "hint": "Roles accountable for each step.",
+              "label": "Responsibilities",
+              "order": 3
+            },
+            {
+              "key": "definitions",
+              "hint": "Terms, abbreviations, and acronyms used.",
+              "label": "Definitions",
+              "order": 4
+            },
+            {
+              "key": "procedure",
+              "hint": "The step-by-step controlled process.",
+              "label": "Procedure",
+              "order": 5
+            },
+            {
+              "key": "references",
+              "hint": "Regulations, standards, and linked documents.",
+              "label": "References",
+              "order": 6
+            },
+            {
+              "key": "attachments",
+              "hint": "Forms, templates, and records this document produces.",
+              "label": "Attachments",
+              "order": 7
+            },
+            {
+              "key": "revision_history",
+              "hint": "Version, date, author, and a summary of each change.",
+              "label": "Revision history",
+              "order": 8
+            },
+            {
+              "key": "approval",
+              "hint": "Author, reviewer, and approver signatures.",
+              "label": "Approval",
+              "order": 9
+            }
+          ],
+          "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+          "templateKey": "sop"
+        },
+        "created_at": "2026-10-29T14:59:31.910Z",
+        "updated_at": "2026-10-29T15:01:00.503Z",
+        "deleted_at": null,
+        "authoring_document_id": "90af32b1-cff7-4eaa-acbd-abf5b3f3c87d"
+      },
+      "meta": {
+        "training": {
+          "documentId": 34,
+          "docNumber": "SOP-OQ-B-20261029145843",
+          "title": "OQ-006 Second SOP 20261029145843",
+          "documentVersion": "1.0",
+          "status": "retired",
+          "contentDigest": "9737dc3ac56e80223770752b11c0c6571a8432d916f4060c3f17c1eedb58d7f3",
+          "eligible": false,
+          "canEditControlledText": false,
+          "unavailableReason": "Only an effective controlled document can be acknowledged.",
+          "sections": [],
+          "acknowledgement": null
+        }
+      }
+    }
+  }
+}

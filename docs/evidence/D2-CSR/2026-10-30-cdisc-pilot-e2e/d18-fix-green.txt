@@ -1,0 +1,34 @@
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > queues, runs off the request, and retains every leaf with its page count and SHA-256 (SYNTHETIC)
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a stored copy that differs from the assembled file as a failure, not an assembly
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a build with no bound run, and a declaration without a reason
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a frozen sequence, a transmitted one and another project’s, before writing any leaf
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses placement while a blocking 16.1.x appendix is missing, naming it
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > places every leaf under 5.3.5.1 with its STF role once each blocking appendix is supplied or declared, and records the declarations
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a writer refusal part-way as a partial placement, naming what was placed
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place an assembly made before the build’s sections changed (its fingerprint is not the job’s now)
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place a body whose drafted text keeps a data placeholder, naming the section; a manual heading not supplied does not block
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > lets a placement claim left by a stopped worker expire: shown as interrupted, and placed again into the same sequence only
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > D18: files a landed §14.3.3 checked against csr_narrative_outputs, places it, and refuses one edited in the table after landing (SYNTHETIC)
+ ✓ server/services/csr/__tests__/csr-assembly-narratives.test.ts > a landed §14.3.3 is filed as its own leaf > files the narratives under 5.3.5.1, and §12.3.2’s “Section 14.3.3” resolves to that leaf
+ ✓ server/services/csr/__tests__/csr-assembly-narratives.test.ts > a landed §14.3.3 is filed as its own leaf > bookmarks and names a destination for every subject, and holds each narrative to its stored text
+ ✓ server/services/csr/__tests__/csr-assembly-narratives.test.ts > fails closed: a §14.3.3 that cannot be verified is a blocking gap, never a leaf > a stored narrative changed after §14.3.3 landed
+ ✓ server/services/csr/__tests__/csr-assembly-narratives.test.ts > fails closed: a §14.3.3 that cannot be verified is a blocking gap, never a leaf > a stored narrative whose text no longer matches its recorded SHA-256
+ ✓ server/services/csr/__tests__/csr-assembly-narratives.test.ts > fails closed: a §14.3.3 that cannot be verified is a blocking gap, never a leaf > a landed §14.3.3 with no stored narratives to check it against
+ ✓ server/services/csr/__tests__/csr-assembly-narratives.test.ts > fails closed: a §14.3.3 that cannot be verified is a blocking gap, never a leaf > narratives not landed: a listed blocking gap that names the narrative job’s state, and no leaf
+ ✓ server/services/csr/__tests__/csr-assembly-narratives.test.ts > fails closed: a §14.3.3 that cannot be verified is a blocking gap, never a leaf > declared not applicable with a reason: listed, no leaf, not blocking; a short reason or a declaration beside landed narratives is refused
+ ✓ server/services/csr/__tests__/csr-assembly-narratives.test.ts > streamed one narrative at a time > reads the stored narratives a page at a time and files hundreds of them, each verified (SYNTHETIC)
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > builds the body, §14, §14.3.3 and §16 leaves; bookmarks reach four levels and every link resolves
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > numbers the engine tables 14.1.x / 14.2.x / 14.3.x and bookmarks them to four levels in the §14 leaf
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > renders identically twice (the leaf digests a later sequence compares)
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > lists the protocol, sample CRF, investigators, signatures and SAP as blocking gaps when they are not supplied
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied document whose bytes are not the version named, or that is not a PDF
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied copy of a listing the source generates, and a not-applicable claim without a reason
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails a link to a §14 table the tables leaf does not define, a file outside the assembly and an undefined internal destination
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails bookmarks that stop at three levels, and a heading drawn without its bookmark
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > marks an assembly incomplete when its drafted body has no fourth-level heading
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > reports a body cross-reference that names nothing in the assembly, and does not link it
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > names the subject and column when the source records something else, and a source record left unlisted
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > holds the adverse-event listing to every source event of the subject, each used once
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > hand-off to Submission Center’s packager > packages the leaves into the study folder with its stf-<study-id>.xml and every cross-reference resolved
+ Test Files  3 passed (3)
+      Tests  32 passed (32)

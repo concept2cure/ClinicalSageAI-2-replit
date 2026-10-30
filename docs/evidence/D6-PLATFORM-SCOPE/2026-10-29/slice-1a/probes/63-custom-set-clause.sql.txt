@@ -1,0 +1,6 @@
+-- P-72 slice 1a: the deploy's gate on function SET clauses. As the superuser (the only role PostgreSQL 15+ lets
+-- create one), a function whose SET clause names a custom setting, owned by the RDS master as any other would be.
+CREATE FUNCTION public.p72_probe_sets_a_setting() RETURNS integer LANGUAGE sql
+  SET search_path = pg_catalog SET app.current_user_role = 'app_super_admin' AS 'SELECT 1';
+ALTER FUNCTION public.p72_probe_sets_a_setting() OWNER TO c2c_rds_master;
+SELECT p.oid::regprocedure, pg_get_userbyid(p.proowner), p.proconfig FROM pg_proc p WHERE p.proname = 'p72_probe_sets_a_setting';

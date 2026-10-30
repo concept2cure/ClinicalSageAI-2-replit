@@ -77,7 +77,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
  * of these had, or sits beside, an adapter that crashed on a bad shape.
  */
 const HOOKS: ReadonlyArray<[name: string, run: () => unknown]> = [
-  ['usePresubList', () => usePresubList()],
+  ['usePresubList', () => usePresubList('p-1')],
   ['usePresubDetail', () => usePresubDetail('qsub-1')],
   ['usePdevProgram', () => usePdevProgram('prog-1')],
   ['usePdevReadiness', () => usePdevReadiness('prog-1')],
@@ -134,7 +134,7 @@ describe('API adapters degrade instead of throwing', () => {
       },
     };
 
-    const { result } = renderHook(() => usePresubList());
+    const { result } = renderHook(() => usePresubList('p-1'));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.list, 'a valid payload adapted to nothing').toHaveLength(1);

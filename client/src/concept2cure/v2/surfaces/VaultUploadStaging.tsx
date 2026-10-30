@@ -19,6 +19,8 @@
  *     or one over the upload cap is listed as not uploaded, with the reason.
  *   - Two files with the same name are flagged: the Vault identifies a
  *     document by its file name, so only one can be recorded as new.
+ *   - Many files are described at once from a manifest, a CSV the list
+ *     downloads and takes back (`vaultUploadManifest.ts`, Veeva gap 7).
  * Accessibility (review 2026-10-22): each row is a group named by its file;
  * one live region says what was added, what is uploading and what became of
  * it; focus goes to the panel when it opens, stays on a control when a row is
@@ -28,6 +30,7 @@
  */
 import React, { useEffect, useId, useRef } from 'react';
 import { I } from '../icons';
+import { formatBytes } from '@/lib/utils';
 import type { PickedFiles } from '../FileDropZone';
 import { VAULT_UPLOAD_EXTENSIONS, VAULT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
 import { extensionOf } from '@shared/constants/upload-name-bindings';
@@ -36,6 +39,7 @@ import {
   type VaultClassification, type VaultIngestDocumentType,
 } from '@shared/constants/domain/vault-taxonomy';
 import type { VaultUploadFileFields, VaultUploadFileStatus } from '../useVaultUpload';
+import { VaultUploadManifestControls } from './VaultUploadManifestControls';
 
 export interface StagedFile {
   key: string;
@@ -123,10 +127,18 @@ const PLACED: Record<'confirmed' | 'suggested', string> = {
   suggested: 'suggested, awaiting confirmation',
 };
 
+/** How far an uploading file has got: its bytes going out, then the server scanning and storing it. */
+function uploadingText(s: { sent?: number; total?: number }): string {
+  if (!s.total) return 'Uploading…';
+  const sent = s.sent ?? 0;
+  if (sent >= s.total) return 'Sent. The server is scanning it and storing it…';
+  return `Uploading… ${Math.floor((sent * 100) / s.total)}% of ${formatBytes(s.total, 1)} sent`;
+}
+
 /** What became of a row's file, in words. */
 export function statusText(s: VaultUploadFileStatus | null): string | null {
   if (!s) return null;
-  if (s.state === 'uploading') return 'Uploading…';
+  if (s.state === 'uploading') return uploadingText(s);
   if (s.state === 'refused') return `Not recorded: ${s.reason}`;
   if (s.already) {
     return 'Already in the Vault with these bytes. Nothing was changed, including the details above; change them with Edit details or Move.';
@@ -134,7 +146,8 @@ export function statusText(s: VaultUploadFileStatus | null): string | null {
   const where = s.placement === 'unfiled' || !s.folderLabel
     ? 'Unfiled, needs a folder'
     : `${s.folderLabel}, ${PLACED[s.placement]}`;
-  return `Recorded${s.version ? ` as v${s.version}` : ''} · ${where}`;
+  const recorded = `Recorded${s.version ? ` as v${s.version}` : ''} · ${where}`;
+  return s.readingText ? `${recorded} · Its text is still being read; search finds it once that is done.` : recorded;
 }
 
 /** The sentence the panel's live region says, for the state it is in. */
@@ -151,6 +164,18 @@ function announcement(staging: Staging, uploading: boolean): string {
   return `${n(added, 'file')} added to the upload list.` + (notStaged.length ? ` ${n(notStaged.length, 'file')} not uploaded.` : '');
 }
 
+/** A row's words: its file's outcome, or, while the batch runs, that it waits for the files before it. */
+function rowStatusText(row: StagedFile, busy: boolean): string | null {
+  return statusText(row.status) ?? (busy ? 'Waiting: files are sent one at a time.' : null);
+}
+
+/** The share of a row's file sent so far, while its bytes are going out. */
+function SendingBar({ row }: { row: StagedFile }) {
+  const s = row.status;
+  if (s?.state !== 'uploading' || !s.total) return null;
+  return <progress className="vd-stage-progress" max={s.total} value={s.sent ?? 0} aria-label={`Sending ${row.path}`} />;
+}
+
 function StagedRow({ row, folders, repeated, busy, onChange, onRemove }: {
   row: StagedFile;
   folders: ReadonlyArray<{ id: string; label: string }>;
@@ -160,7 +185,7 @@ function StagedRow({ row, folders, repeated, busy, onChange, onRemove }: {
   onRemove: () => void;
 }) {
   const id = useId();
-  const status = statusText(row.status);
+  const status = rowStatusText(row, busy);
   const stored = row.status?.state === 'stored';
   const locked = busy || stored;
   const refused = row.status?.state === 'refused';
@@ -177,6 +202,7 @@ function StagedRow({ row, folders, repeated, busy, onChange, onRemove }: {
           )}
         </div>
         {status && <p id={`${id}-status`} className={refused ? 'vd-dr-err' : 'vd-d-idx'}>{status}</p>}
+        <SendingBar row={row} />
         {row.path !== row.file.name && <p className="vd-d-idx">Recorded in the Vault as {row.file.name}; the folder it came from is not kept.</p>}
         {repeated && (
           <p className="vd-d-idx">
@@ -280,6 +306,7 @@ export function VaultUploadStaging({ staging, folders, uploading, onChange, onRe
       <p className="vd-d-idx">
         Say what each file is before it is recorded. A blank field takes the Vault&rsquo;s default. A folder chosen here is recorded as filed by you; without one, the Vault suggests a folder for you to confirm, or leaves the file Unfiled.
       </p>
+      {rows.length > 0 && <VaultUploadManifestControls rows={rows} folders={folders} busy={uploading} onChange={onChange} />}
       {rows.length > 0 && <ul className="vd-stage-list" role="list">
         {rows.map((r) => (
           <StagedRow key={r.key} row={r} folders={folders} repeated={repeated.has(r.key)} busy={uploading}

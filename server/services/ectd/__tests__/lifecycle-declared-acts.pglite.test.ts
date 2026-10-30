@@ -19,6 +19,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import JSZip from 'jszip';
 import { promises as fs } from 'fs';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { applyCompanyLegalReads } from './support/company-legal-reads';
 
 const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
 vi.mock('../../../db', () => ({
@@ -52,6 +53,10 @@ beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
   holder.db = harness.db;
   holder.pglite = harness.pglite;
+  // Assembly reads the tenant's saved legal requirements and its legal
+  // registry before it packages; this tenant has saved none.
+  await applyCompanyLegalReads(harness.pglite);
+  await harness.pglite.exec(`INSERT INTO organizations (id) VALUES (${ORG})`);
   await harness.pglite.exec(`
     CREATE TABLE IF NOT EXISTS ectd_compilations (
       id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT,
@@ -63,12 +68,12 @@ beforeAll(async () => {
       (3, 'no-prior', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (4, 'first', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (5, 'withdraw', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
-    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, dispatch_status) VALUES
-      (1, 1, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (2, 1, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (3, 2, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (5, 3, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (6, 3, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (7, 4, 'fda', '0000', ${ORG}, ${USER}, NULL),
-      (8, 5, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (9, 5, 'fda', '0001', ${ORG}, ${USER}, NULL);
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, dispatch_status) VALUES
+      (1, 1, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (2, 1, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (3, 2, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (5, 3, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (6, 3, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (7, 4, 'fda', '0000', 'original', ${ORG}, ${USER}, NULL),
+      (8, 5, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (9, 5, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL);
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
       (100, ${ORG}, 'Drug Substance General', '<p>v2</p>', '3.2', 'approved'),
       (101, ${ORG}, 'Drug Substance General', '<p>v2</p>', '3.2', 'approved'),

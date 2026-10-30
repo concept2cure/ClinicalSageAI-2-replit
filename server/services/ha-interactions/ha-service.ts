@@ -17,6 +17,7 @@
 import { pool } from '../../db';
 import { linkProvenanceTx } from '../provenance/provenance-service';
 import { fulfilmentEvidenceRefusal, fulfilmentRule } from './ha-logic';
+import { HA_INTERACTION_DATE_FOR, HA_INTERACTION_STATUS_LABEL, haInteractionMoveRefusal, type HaInteractionStatus } from '../../../shared/regulatory/ha-interaction-lifecycle';
 import type {
   CommitmentType,
   HaAgency,
@@ -59,6 +60,12 @@ export interface InteractionInput {
 }
 
 export async function createInteractionTx(client: Queryable, orgId: number, userId: number, input: InteractionInput): Promise<{ id: number }> {
+  // A meeting names a submission of this organisation or none. The foreign key
+  // alone admits any submission's id, another tenant's included.
+  if (input.submissionId != null) {
+    const owned = await client.query(`SELECT 1 FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [input.submissionId, orgId]);
+    if (!owned.rows.length) throw new HaError('NOT_FOUND', 'That submission is not one of this organisation\'s. Nothing was recorded.');
+  }
   const { rows } = await client.query(
     `INSERT INTO ha_interactions
        (organization_id, submission_id, interaction_type, agency, title, objective, status, requested_date, scheduled_date, created_by)
@@ -68,21 +75,60 @@ export async function createInteractionTx(client: Queryable, orgId: number, user
   return { id: Number(rows[0].id) };
 }
 
-const INTERACTION_STATUSES = ['planned', 'requested', 'scheduled', 'held', 'minutes_received', 'closed', 'cancelled'];
-
-export async function updateInteractionStatusTx(client: Queryable, orgId: number, id: number, status: string, dates: Record<string, string | null> = {}): Promise<void> {
-  if (!INTERACTION_STATUSES.includes(status)) throw new HaError('BAD_INPUT', `Invalid status "${status}".`);
-  const r = await client.query(
+/**
+ * Move a meeting along its one-way lifecycle (shared/regulatory/ha-interaction-lifecycle.ts),
+ * read under lock: a move the lifecycle does not allow is refused, and a move
+ * that records a date (scheduled, held, minutes received) needs it.
+ */
+export async function updateInteractionStatusTx(client: Queryable, orgId: number, id: number, status: string, dates: Record<string, string | null | undefined> = {}): Promise<void> {
+  const current = await client.query(
+    `SELECT status, scheduled_date, submission_id FROM ha_interactions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`, [id, orgId]);
+  if (!current.rows.length) throw new HaError('NOT_FOUND', 'Interaction not found for this organization.');
+  const refusal = haInteractionMoveRefusal(String(current.rows[0].status), status);
+  if (refusal) throw new HaError('INVALID_STATE', `${refusal} Nothing was changed.`);
+  const dateKey = HA_INTERACTION_DATE_FOR[status as HaInteractionStatus];
+  const keptSchedule = dateKey === 'scheduledDate' && current.rows[0].scheduled_date != null;
+  if (dateKey && !dates[dateKey] && !keptSchedule) {
+    throw new HaError('BAD_INPUT', `Moving to ${HA_INTERACTION_STATUS_LABEL[status as HaInteractionStatus].toLowerCase()} records its date. Give the date. Nothing was changed.`);
+  }
+  const minutesEventId = dates.minutesEventId ?? null;
+  if (minutesEventId) await refuseMinutesLetter(client, orgId, status, current.rows[0].submission_id, minutesEventId);
+  await client.query(
     `UPDATE ha_interactions SET
         status = $3,
         held_date = COALESCE($4, held_date),
         scheduled_date = COALESCE($5, scheduled_date),
         minutes_received_date = COALESCE($6, minutes_received_date),
+        minutes_event_id = COALESCE($7, minutes_event_id),
         updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [id, orgId, status, dates.heldDate ?? null, dates.scheduledDate ?? null, dates.minutesReceivedDate ?? null],
+    [id, orgId, status, dates.heldDate ?? null, dates.scheduledDate ?? null, dates.minutesReceivedDate ?? null, minutesEventId],
   );
-  if ((r as any).rowCount === 0) throw new HaError('NOT_FOUND', 'Interaction not found for this organization.');
+}
+
+/**
+ * The minutes a meeting names (P-39 step 4c) are an inbox letter of this
+ * organisation, recorded as meeting minutes, in the meeting's own project, and
+ * named only when the minutes are received. Its questions carry the agreements
+ * and its answers the commitments, by the inbox's own governed paths.
+ */
+async function refuseMinutesLetter(client: Queryable, orgId: number, status: string, submissionId: unknown, eventId: string): Promise<void> {
+  if (status !== 'minutes_received') throw new HaError('BAD_INPUT', 'A minutes letter is named when the minutes are received. Nothing was changed.');
+  if (submissionId == null) throw new HaError('BAD_INPUT', 'This meeting names no submission, so it has no project inbox to hold its minutes. Nothing was changed.');
+  const { rows } = await client.query(
+    `SELECT c.source_type,
+            (SELECT CASE WHEN count(*) = 1 THEN min(p.id) END FROM submissions s
+               JOIN projects p ON p.regulatory_program_id = s.program_id AND p.organization_id = s.organization_id AND p.status IS DISTINCT FROM 'deleted'
+              WHERE s.id = $3 AND s.organization_id = $2) AS meeting_project,
+            c.project_id
+       FROM concept2cure_agency_communications c WHERE c.event_id = $1 AND c.organization_id = $2`,
+    [eventId, orgId, submissionId]);
+  const letter = rows[0];
+  if (!letter) throw new HaError('NOT_FOUND', 'That letter is not in this organisation\'s inbox. Nothing was changed.');
+  if (letter.source_type !== 'meeting_minutes') throw new HaError('BAD_INPUT', 'That letter is not recorded as meeting minutes. Nothing was changed.');
+  if (letter.meeting_project == null || Number(letter.project_id) !== Number(letter.meeting_project)) {
+    throw new HaError('BAD_INPUT', "That letter is in another project's inbox, not this meeting's. Nothing was changed.");
+  }
 }
 
 export interface QuestionInput {
@@ -344,13 +390,25 @@ export async function addMilestoneTx(
 
 // ─── Reads ───────────────────────────────────────────────────────────────────
 
-export async function listInteractions(orgId: number, submissionId?: number): Promise<any[]> {
-  const params: unknown[] = [orgId];
-  let sql = `SELECT id, submission_id, interaction_type, agency, title, status, requested_date, scheduled_date, held_date
-               FROM ha_interactions WHERE organization_id = $1 AND deleted_at IS NULL`;
-  if (submissionId != null) { params.push(submissionId); sql += ` AND submission_id = $2`; }
-  sql += ` ORDER BY COALESCE(scheduled_date, requested_date) DESC NULLS LAST, id DESC`;
-  const { rows } = await pool.query(sql, params);
+/**
+ * The organisation's meetings that this reader may see: those that name no
+ * submission, and those whose submission's program is in `programIds`, the
+ * reader's verified program scope (getCurrentAccessibleProgramScope). A
+ * meeting on a program the reader cannot open is not listed.
+ */
+export async function listInteractions(orgId: number, submissionId: number | undefined, programIds: readonly string[], q: Queryable = pool): Promise<any[]> {
+  const params: unknown[] = [orgId, [...programIds]];
+  let sql = `SELECT i.id, i.submission_id, i.interaction_type, i.agency, i.title, i.status, i.requested_date, i.scheduled_date, i.held_date,
+                    i.minutes_received_date, i.minutes_event_id,
+                    (SELECT CASE WHEN count(*) = 1 THEN min(p.id) END FROM projects p
+                      WHERE p.regulatory_program_id = s.program_id AND p.organization_id = i.organization_id AND p.status IS DISTINCT FROM 'deleted') AS project_id
+               FROM ha_interactions i
+               LEFT JOIN submissions s ON s.id = i.submission_id AND s.organization_id = i.organization_id
+              WHERE i.organization_id = $1 AND i.deleted_at IS NULL
+                AND (i.submission_id IS NULL OR s.program_id::text = ANY($2::text[]))`;
+  if (submissionId != null) { params.push(submissionId); sql += ` AND i.submission_id = $3`; }
+  sql += ` ORDER BY COALESCE(i.scheduled_date, i.requested_date) DESC NULLS LAST, i.id DESC`;
+  const { rows } = await q.query(sql, params);
   return rows;
 }
 

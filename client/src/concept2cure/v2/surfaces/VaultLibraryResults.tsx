@@ -68,6 +68,8 @@ export interface VaultFindFilters {
   evidenceKind?: string[];
   lifecycleStage?: string[];
   ctdSection?: string[];
+  /** A folder of this project's cabinet. Only a saved project view sets it; the library refuses it. */
+  folderId?: string[];
 }
 
 /** The filters as query-string parameters ('&k=v…'), '' when none is set. */
@@ -75,6 +77,80 @@ export function vaultFilterParams(f: VaultFindFilters): string {
   return (Object.keys(f) as Array<keyof VaultFindFilters>).sort()
     .flatMap((k) => (f[k] ?? []).map((v) => `&${k}=${encodeURIComponent(v)}`))
     .join('');
+}
+
+/**
+ * A saved view as GET /api/c2c/project-vault/:id/saved-views lists it (D2,
+ * P-46; server/services/vault/vault-saved-views.ts). It holds a search, never
+ * its results: applying one sets the find view's state and the search runs it
+ * under the reader's current access. `applies: false` is a view the search
+ * would now refuse, with the refusal; it is never applied in part.
+ */
+export interface SavedVaultView {
+  id: number;
+  label: string;
+  visibility: 'private' | 'org_public';
+  /** null: a library view, run over the projects the reader can access. */
+  programId: string | null;
+  q: string;
+  filters: VaultFindFilters;
+  includeSuperseded: boolean;
+  createdBy: { userId: number; name: string | null };
+  updatedBy: { userId: number; name: string | null } | null;
+  mine: boolean;
+  canEdit: boolean;
+  canRename: boolean;
+  canShare: boolean;
+  canDelete: boolean;
+  applies: boolean;
+  refusal?: { error: string; message: string; parameter?: string };
+}
+
+export interface SavedViewsShape { programId: string; views: SavedVaultView[] }
+
+const isActor = (v: unknown): v is { userId: number; name: string | null } =>
+  !!v && typeof v === 'object' && Number.isSafeInteger((v as { userId: unknown }).userId) && nullableText((v as { name: unknown }).name);
+const isFilterSet = (v: unknown): v is VaultFindFilters =>
+  !!v && typeof v === 'object' && !Array.isArray(v) &&
+  Object.values(v as Record<string, unknown>).every((vals) => Array.isArray(vals) && vals.every((x) => typeof x === 'string'));
+const VIEW_FLAGS = ['mine', 'canEdit', 'canRename', 'canShare', 'canDelete', 'applies', 'includeSuperseded'] as const;
+const hasViewIdentity = (s: SavedVaultView) =>
+  Number.isSafeInteger(s.id) && s.id > 0 && typeof s.label === 'string' && s.label.length > 0 &&
+  (s.visibility === 'private' || s.visibility === 'org_public');
+const hasViewSearch = (s: SavedVaultView) => nullableText(s.programId) && typeof s.q === 'string' && isFilterSet(s.filters);
+const hasViewActors = (s: SavedVaultView) => isActor(s.createdBy) && (s.updatedBy === null || isActor(s.updatedBy));
+const hasViewFlags = (s: SavedVaultView) =>
+  VIEW_FLAGS.every((k) => typeof s[k] === 'boolean') && (s.applies || typeof s.refusal?.message === 'string');
+
+function isSavedVaultView(v: unknown): v is SavedVaultView {
+  if (!v || typeof v !== 'object') return false;
+  const s = v as SavedVaultView;
+  return hasViewIdentity(s) && hasViewSearch(s) && hasViewActors(s) && hasViewFlags(s);
+}
+
+/** A malformed list is a failed read, never an empty one. */
+export const isSavedViewsShape: ShapeGuard<SavedViewsShape> = (v): v is SavedViewsShape => {
+  if (!v || typeof v !== 'object') return false;
+  const d = v as SavedViewsShape;
+  return typeof d.programId === 'string' && Array.isArray(d.views) && d.views.every(isSavedVaultView);
+};
+
+/** The find view's state as a view holds it. */
+export interface SavedViewState { q: string; filters: VaultFindFilters; includeSuperseded: boolean; library: boolean }
+
+/** A stored view's state, as the find view would hold it once applied. */
+export const savedViewState = (v: SavedVaultView): SavedViewState =>
+  ({ q: v.q, filters: v.filters, includeSuperseded: v.includeSuperseded, library: v.programId === null });
+
+/**
+ * One canonical string for a find state, so "this view has changed" is decided
+ * one way: the text trimmed, and each dimension's values sorted.
+ */
+export function savedViewKey(s: SavedViewState): string {
+  const filters = (Object.keys(s.filters) as Array<keyof VaultFindFilters>).sort()
+    .map((k) => [k, [...(s.filters[k] ?? [])].sort()] as const)
+    .filter(([, vals]) => vals.length > 0);
+  return JSON.stringify([s.library, s.q.trim(), s.includeSuperseded, filters]);
 }
 
 /** How many matched, and how many are shown. */
@@ -239,6 +315,16 @@ export interface VaultSearchShape {
   limit: number;
   offset: number;
   results: VaultSearchHit[];
+  /** Versions in scope whose text is still being read, so no search can find them yet (MR-08 Stage 3). */
+  pendingCount?: number;
+}
+
+/** What a search says about versions it cannot see yet; null when there are none. */
+export function pendingSearchNote(pendingCount: number | undefined): string | null {
+  if (!pendingCount || pendingCount < 1) return null;
+  return pendingCount === 1
+    ? '1 document is still being read and is not searched yet.'
+    : `${pendingCount} documents are still being read and are not searched yet.`;
 }
 
 export const isVaultSearchShape: ShapeGuard<VaultSearchShape> = (value): value is VaultSearchShape => {

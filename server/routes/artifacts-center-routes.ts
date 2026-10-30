@@ -1,22 +1,33 @@
 /**
- * Artifacts Center — cross-project governed artifact gallery read route.
+ * Governed artifacts across the projects the caller can open, and one
+ * artifact's governed export.
  *
- * Backs the ui-v2 "Artifacts Center" surface
- * (client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx → ArtifactsCenter),
- * which today maps the ARTIFACTS fixture directly. It returns one row per
- * governed artifact the org owns, in the surface's ArtifactEntry display shape,
- * sourced from the concept2cure_artifacts / concept2cure_signatures / projects
- * tables. No new SQL objects — a single org-scoped read + a signature EXISTS
- * subquery, mirroring the raw-pool pattern in server/routes/c2c/documents.ts.
+ * GET / backs the Vault's organization view of governed artifacts
+ * (client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx,
+ * OrganizationGovernedArtifacts). It was the Artifacts center's gallery
+ * (AdminSurfaces.tsx ArtifactsCenter), which retired into the Vault (D2, fold
+ * F3 slice C, 2026-10-29). The gallery listed every artifact of the
+ * organization to any member, archived rows included. It now lists the
+ * non-archived artifacts of the projects the sharing policy admits the caller
+ * to (getAccessibleReportProjectIds, the policy the project Vault admits a
+ * project by), and nothing when it admits none. A refused or unverifiable
+ * access check is answered as such, never as an empty listing.
+ *
+ * The read itself is the registry's one read
+ * (server/services/artifact-registry-read.ts), shared with the project Vault's
+ * "Governed artifacts" branch since fold F3 slice A (2026-10-29): one query,
+ * one signature rule (shared/artifact-governance.ts), never a second copy.
  *
  * Style template: server/routes/pharmacovigilance-routes.ts /
  * pharmacovigilance-board.routes.ts (Router factory default export, org id from
  * tenant/user context, scoped logger, honest error shaping, { success, data }
  * envelope, fail-closed on a missing table).
  *
- * Response: { success: true, data: ArtifactCenterRow[], total }
+ * Response: { success: true, data: ArtifactCenterRow[], total, meta: { scope:
+ *   'accessible-projects', total, listed, truncated } }. `total` counts every
+ *   row the scope matches, before the window.
  *
- * ── FIELD SOURCES (ArtifactEntry ← concept2cure_artifacts a) ──────────────────
+ * ── FIELD SOURCES (OrganizationArtifactRow ← concept2cure_artifacts a) ────────
  *   id    ← a.artifact_id                                    (real)
  *   name  ← a.title                                          (real)
  *   ver   ← 'v' || a.version                                 (real int, prefixed)
@@ -55,14 +66,23 @@ import { generateDocxBuffer } from '../services/docxGenerator.js';
 import { shouldEnforceExportReviewGate } from '../services/export/exportReviewGate.js';
 import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence.js';
 import { authedUserId } from '../utils/authedActor.js';
+import {
+  artifactCtdSection,
+  artifactGovernance,
+  artifactRegistryStatus,
+  formatContentBytes,
+  readArtifactRegistry,
+} from '../services/artifact-registry-read.js';
+import type { ArtifactOrigin } from '../../shared/artifact-governance.js';
+import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access.js';
+import { canAccessReportProject, getAccessibleReportProjectIds } from '../services/report-os/project-access.js';
 
 const logger = createScopedLogger('artifacts-center-routes');
 
-/** Hard cap on rendered rows — this is a gallery, mirrors the existing
- *  /api/concept2cure/artifacts read (LIMIT 200). */
+/** The listing's window. The response says when there are more (meta.truncated). */
 const MAX_ROWS = 200;
 
-// ── Display-shape row (mirrors ArtifactEntry in fixtures/admin-data.ts) ──────────
+// ── Display-shape row (OrganizationArtifactRow in client surfaces/VaultOrganizationArtifacts.tsx) ──
 
 interface ArtifactCenterRow {
   id: string;
@@ -82,39 +102,48 @@ interface ArtifactCenterRow {
   reviewed: boolean;
   sourceCount: number;
   prog: string;
+  /* The row facts the converged CSV manifest writes, from the same read the
+     project Vault's leaves are built from (fold F3 slice B, 2026-10-29). Null
+     where the row records none. */
+  ctdSection: string | null;
+  /** The registry status in the Vault's vocabulary (artifactRegistryStatus). */
+  status: string;
+  origin: ArtifactOrigin | null;
+  author: string | null;
+  /** The hash the writer recorded, not a SHA-256 of a rendered file. */
+  contentHash: string | null;
 }
 
-/** Raw projection returned by the org-scoped read below. */
-interface RawArtifactRow {
-  artifact_id: string;
-  title: string;
-  kind_source: string | null;
-  category: string | null;
-  type: string | null;
-  version: number | string;
-  updated_at: Date | string;
-  project_id: number;
-  content_bytes: number | string;
-  model: string | null;
-  program: string | null;
-  is_signed: boolean;
-  is_reviewed: boolean;
-  source_count: number | string;
-  /** Version the newest active signature covers; null when unsigned or when
-   *  the signature's version row is missing. */
-  signed_version: number | string | null;
+/**
+ * The export's project admission: the artifact's project in read mode, by the
+ * policy the listing lists by (canAccessReportProject, for the current
+ * membership). Null admits; otherwise the answer to send. A project the caller
+ * cannot open is the not-found an id of no artifact gets; a check that could
+ * not run is not an answer, so it is its own 503.
+ */
+async function artifactProjectRefusal(
+  req: Request,
+  orgId: number,
+  projectId: unknown,
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
+  try {
+    const actor = await readCurrentProgramActor(pool, { organizationId: orgId, userId: authedUserId(req) ?? undefined });
+    const id = Number(projectId);
+    if (Number.isSafeInteger(id) && id > 0 && (await canAccessReportProject(orgId, actor, id, pool))) return null;
+    return { status: 404, body: { success: false, error: 'That artifact was not found in your organization.' } };
+  } catch (accessError) {
+    const failure = accessError instanceof ProgramReadAccessError
+      ? accessError
+      : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Project access could not be verified, so nothing was exported.');
+    return { status: failure.status, body: { success: false, error: failure.code, message: failure.message } };
+  }
 }
 
 // ── Pure helpers ────────────────────────────────────────────────────────────────
 
-/** Human byte size from the stored content's octet length (real, not a
- *  rendered-file size). Matches the fixture style: '182 KB', '1.4 MB'. */
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+/* The byte size of the stored content is formatContentBytes in the shared read
+   (services/artifact-registry-read.ts), where it moved on 2026-10-29 so the
+   project Vault's leaves state it the same way. */
 
 /** Relative "Updated" label derived from the real updated_at timestamp. Matches
  *  the fixture style: '30 min ago', '2 h ago', 'yesterday', '3 d ago'. */
@@ -132,28 +161,6 @@ function relativeTime(value: Date | string): string {
   if (days === 1) return 'yesterday';
   if (days < 7) return `${days} d ago`;
   return d.toISOString().slice(0, 10);
-}
-
-/** Humanize the artifact's real kind source (metadata.documentType ?? type):
- *  'regulatory_document' → 'Regulatory document'; an explicit documentType such
- *  as 'IND Cover Letter' passes through unchanged. */
-function humanizeKind(raw: string | null): string {
-  const s = (raw ?? '').trim();
-  if (!s) return 'Document';
-  const normalized = s.replace(/[_-]+/g, ' ').trim();
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
-}
-
-/**
- * Derive the surface's format key from the real category. These artifacts are
- * editable TEXT documents (no rendered-file format is stored); the writeback
- * paths produce category='document', which the surface treats as 'docx'
- * (open-to-edit). Documented derivation, not a fabricated per-row format.
- */
-function deriveFmt(category: string | null): string {
-  const c = (category ?? '').toLowerCase().trim();
-  if (!c || c === 'document') return 'docx';
-  return c;
 }
 
 // ── Router factory ──────────────────────────────────────────────────────────────
@@ -181,135 +188,86 @@ export default function createArtifactsCenterRoutes(): Router {
 
   /**
    * GET /api/artifacts-center
-   * Cross-project governed artifact gallery for the ui-v2 Artifacts Center
-   * surface, in ArtifactEntry display shape, newest-updated first.
+   * The governed artifacts of the projects the caller can open, newest-updated
+   * first, for the Vault's organization view.
    */
   router.get('/', async (req: Request, res: Response) => {
     try {
       const orgId = getOrgId(req);
 
-      const result = await pool.query(
-        `SELECT
-           a.artifact_id                                   AS artifact_id,
-           a.title                                         AS title,
-           COALESCE(a.metadata ->> 'documentType', a.type) AS kind_source,
-           a.category                                      AS category,
-           a.type                                          AS type,
-           a.version                                       AS version,
-           a.updated_at                                    AS updated_at,
-           a.project_id                                    AS project_id,
-           octet_length(a.content)                         AS content_bytes,
-           COALESCE(
-             a.metadata ->> 'model',
-             a.metadata ->> 'modelTier',
-             a.metadata ->> 'aiModel'
-           )                                               AS model,
-           COALESCE(p.code, p.name)                        AS program,
-           EXISTS (
-             SELECT 1
-               FROM concept2cure_signatures s
-              WHERE s.artifact_id = a.id
-                AND s.organization_id = a.organization_id
-                AND s.status = 'active'
-           )                                               AS is_signed,
-           EXISTS (
-             SELECT 1 FROM concept2cure_review_decisions d
-              WHERE d.artifact_id = a.id
-                AND d.organization_id = a.organization_id
-                AND d.decision = 'approve'
-                AND d.version_reviewed = a.version
-           )                                               AS is_reviewed,
-           CASE
-             WHEN json_typeof(a.metadata -> 'sourceArtifactIds') = 'array'
-             THEN json_array_length(a.metadata -> 'sourceArtifactIds')
-             ELSE 0
-           END                                             AS source_count,
-           /* Which version the newest active signature actually covers.
-              is_signed above is EXISTS-any: it says a signature exists, not
-              that it covers what you are looking at. An artifact signed at v3
-              and edited to v7 satisfies it exactly as well as one signed a
-              moment ago, so the badge read "signed" for content nobody had
-              approved. Version content is immutable here — an edit mints a new
-              version rather than rewriting one — so the old signature is not
-              invalid, it simply covers earlier bytes. That distinction is the
-              honest one to draw, and it needs the version number to draw it.
+      /* Which projects the caller can open, by the policy the project Vault
+         admits a project by (canAccessReportProject, through
+         installProjectRouteAccess). Bound into the read before the window and
+         the count, so neither says anything about a project the caller cannot
+         open. A refusal, or a check that could not run, is not "none". */
+      let projectIds: number[];
+      try {
+        const userId = authedUserId(req);
+        const actor = await readCurrentProgramActor(pool, { organizationId: orgId, userId: userId ?? undefined });
+        projectIds = await getAccessibleReportProjectIds(orgId, actor, pool);
+      } catch (accessError) {
+        const failure = accessError instanceof ProgramReadAccessError
+          ? accessError
+          : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Project access could not be verified, so no governed artifact was listed.');
+        return res.status(failure.status).json({ success: false, error: failure.code, message: failure.message });
+      }
 
-              Deliberately NOT folded into is_signed: some writers set
-              artifact_version_id to a predecessor snapshot, so requiring
-              equality here would report freshly-signed artifacts as unsigned.
-              Under-reporting a signature is its own falsehood. The number is
-              reported and the caller compares. */
-           (
-             SELECT v.version
-               FROM concept2cure_signatures s
-               JOIN concept2cure_artifact_versions v ON v.id = s.artifact_version_id
-              WHERE s.artifact_id = a.id
-                AND s.organization_id = a.organization_id
-                AND s.status = 'active'
-              ORDER BY s.id DESC
-              LIMIT 1
-           )                                               AS signed_version
-         FROM concept2cure_artifacts a
-         -- The project is read only when it is the artifact's own organization's
-         -- (PF-03): an artifact written under another organization's project id
-         -- showed that organization's project code and name here. Such a row
-         -- falls back to proj_<id>, which names nothing.
-         LEFT JOIN projects p ON p.id = a.project_id AND p.organization_id = a.organization_id
-         WHERE a.organization_id = $1
-         ORDER BY a.updated_at DESC
-         LIMIT ${MAX_ROWS}`,
-        [orgId]
-      );
-
-      const rawRows = result.rows as RawArtifactRow[];
+      // One past the window, so a full window can say it is full.
+      const read = await readArtifactRegistry({ organizationId: orgId, projectIds, limit: MAX_ROWS + 1 });
+      const truncated = read.length > MAX_ROWS;
+      const rawRows = truncated ? read.slice(0, MAX_ROWS) : read;
+      const counted = Number(read[0]?.total_rows);
+      const total = Number.isFinite(counted) && counted >= rawRows.length ? counted : rawRows.length;
 
       const data: ArtifactCenterRow[] = rawRows.map(r => {
         const version = Number(r.version);
-        const rawSignedVersion = r.signed_version == null ? null : Number(r.signed_version);
-        const signedVersion =
-          rawSignedVersion !== null && Number.isFinite(rawSignedVersion) ? rawSignedVersion : null;
+        const g = artifactGovernance(r);
         return {
           id: r.artifact_id,
-          name: r.title,
-          kind: humanizeKind(r.kind_source ?? r.type),
-          fmt: deriveFmt(r.category),
-          size: formatBytes(Number(r.content_bytes)),
-          model: r.model ?? null,
-          when: relativeTime(r.updated_at),
+          name: r.title ?? '',
+          kind: g.kind,
+          fmt: g.fmt,
+          size: formatContentBytes(Number(r.content_bytes)),
+          model: g.model,
+          when: r.updated_at == null ? '' : relativeTime(r.updated_at),
           ver: `v${Number.isFinite(version) ? version : 1}`,
-          sig: r.is_signed === true,
-          reviewed: r.is_reviewed === true,
-          sourceCount: Number(r.source_count) || 0,
+          sig: g.sig,
+          reviewed: g.reviewed,
+          sourceCount: g.sourceCount,
           /* The version the signature covers, and whether that is still the
-             current one. `sigStale` is only asserted when BOTH numbers are
-             known — an unresolvable signed_version reports null rather than
-             guessing, because "we cannot tell whether this approval still
-             applies" and "this approval is out of date" are different things
-             to tell a reviewer. */
-          sigVersion: signedVersion,
-          sigStale:
-            r.is_signed === true && signedVersion !== null && Number.isFinite(version)
-              ? signedVersion !== version
-              : null,
+             current one (shared/artifact-governance.ts). `sigStale` is only
+             asserted when both numbers are known. */
+          sigVersion: g.sigVersion,
+          sigStale: g.sigStale,
           prog: r.program || `proj_${r.project_id}`,
+          ctdSection: artifactCtdSection(r.ctd_section),
+          status: artifactRegistryStatus(r.status),
+          origin: g.origin,
+          author: r.author_name ?? null,
+          contentHash: r.content_hash ?? null,
         };
       });
 
-      return res.json({ success: true, data, total: data.length });
+      return res.json({
+        success: true,
+        data,
+        total,
+        meta: { scope: 'accessible-projects', total, listed: data.length, truncated },
+      });
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('NO_TENANT')) {
         return res.status(400).json({ success: false, error: 'Organization context required' });
       }
       // Fail closed when the governed tables are not provisioned for this
-      // deployment (undefined_table) — the surface keeps its honest fixture.
+      // deployment (undefined_table): the Vault says so, never "none".
       const code = (error as { code?: string } | null)?.code;
       if (code === '42P01') {
         return res.status(503).json({ success: false, error: 'ARTIFACTS_TABLE_MISSING' });
       }
-      logger.error('artifacts center list error', {
+      logger.error('governed artifacts listing error', {
         err: error instanceof Error ? error.message : String(error),
       });
-      return res.status(500).json({ success: false, error: 'Failed to load artifacts center' });
+      return res.status(500).json({ success: false, error: 'Failed to load the governed artifacts' });
     }
   });
 
@@ -327,6 +285,16 @@ export default function createArtifactsCenterRoutes(): Router {
    * This is that endpoint. It re-reads the artifact org-scoped (never trusting
    * an id the client supplies to reach across tenants), renders the stored
    * content, and streams it back.
+   *
+   * ── The artifact's project is admitted first ─────────────────────────────
+   * 2026-10-29 (D6, docs/evidence/D6-PROJECT-WRITE-GATES/2026-10-29/): it read
+   * the artifact by id and organization alone, so any member of the
+   * organization took the DOCX of an artifact in a private project they are not
+   * on. The artifact's project is now admitted in read mode by the policy the
+   * listing above lists by and the project Vault admits a project by
+   * (canAccessReportProject, for the current membership), before anything about
+   * the artifact is answered. A project the caller cannot open is the same 404
+   * as an id of no artifact; a check that could not run is its 503.
    *
    * ── The export-review gate is NOT skipped ──────────────────────────────────
    * Governed regulatory content must not leave the system without a persisted
@@ -358,6 +326,7 @@ export default function createArtifactsCenterRoutes(): Router {
         `SELECT a.title,
                 a.content,
                 a.version,
+                a.project_id,
                 EXISTS (
                   SELECT 1
                     FROM concept2cure_signatures s
@@ -390,9 +359,14 @@ export default function createArtifactsCenterRoutes(): Router {
         title: string | null;
         content: string | null;
         version: number;
+        project_id: number | null;
         is_signed: boolean;
         is_reviewed: boolean;
       };
+
+      // Project access, read mode, before the content, the review gate or the file.
+      const refusal = await artifactProjectRefusal(req, orgId, row.project_id);
+      if (refusal) return res.status(refusal.status).json(refusal.body);
 
       const content = typeof row.content === 'string' ? row.content : '';
       if (!content.trim()) {

@@ -7,6 +7,10 @@
  * back-translation verified" while the translations read was pending or had
  * failed — directly under a headline that said "Reading…" / "Couldn't read".
  * Revert-proven: both cases fail with the ungated copy restored.
+ *
+ * Slice 0 (.design/client-journey/INFORMATION_ARCHITECTURE.md, `labeling`):
+ * the screen reads labeling records only with a project key, so this mounts it
+ * with one and serves the project-keyed read.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,13 +23,16 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Labeling } from '../surfaces/Labeling';
+import { clearShellProject, publishShellProject } from '../shellProject';
 
 const DOC = { id: 4, device_name: 'Aurora CGM', doc_kind: 'ifu', version: '3', organization_id: 7, status: 'draft' };
+const PROGRAM_ID = '0b6f1c1e-4d2a-4c55-9a1e-3f7b2d9c8e10';
+const KEYED = `/api/mdx/labeling?program_id=${PROGRAM_ID}`;
 
 function serve(translations: 'pending' | 'failed') {
   apiRequest.mockImplementation(async (_m: string, rawPath: unknown) => {
     const path = String(rawPath ?? '');
-    if (path === '/api/mdx/labeling') return { ok: true, status: 200, json: async () => ({ data: [DOC] }) } as Response;
+    if (path === KEYED) return { ok: true, status: 200, json: async () => ({ data: [DOC] }) } as Response;
     if (path.endsWith('/translations')) {
       if (translations === 'pending') return new Promise<Response>(() => {});
       return { ok: false, status: 500, json: async () => ({ error: 'boom' }) } as Response;
@@ -34,11 +41,12 @@ function serve(translations: 'pending' | 'failed') {
   });
 }
 
-const mount = () => render(<Labeling {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof Labeling>)} />);
+/* The screen reads the shell's open project (device-features-reach-three, 2026-10-29); it has no programId prop. */
+const mount = () => { publishShellProject({ id: PROGRAM_ID }); return render(<Labeling {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof Labeling>)} />); };
 const text = () => document.body.textContent ?? '';
 
 beforeEach(() => apiRequest.mockReset());
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); clearShellProject(); });
 
 describe('Labeling — coverage honesty', () => {
   it('claims no coverage and offers no "start tracking" CTA while translations are still being read', async () => {

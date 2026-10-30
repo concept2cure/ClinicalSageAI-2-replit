@@ -277,13 +277,13 @@ router.get(
     const supplied = PROFILE_QUERY_FACTS.filter((key) => req.query[key] !== undefined);
     if (supplied.length) {
       return res.status(422).json({
-        error: `${supplied.join(', ')} cannot be supplied: the device facts are read from the program record`,
+        error: `${supplied.join(', ')} cannot be supplied: the device facts are read from the project's record`,
       });
     }
     try {
       const programId = String(req.params.programId);
       const profile = await loadGsprProgramProfile(orgId, programId, regulation);
-      if (!profile) return res.status(404).json({ error: 'Program not found' });
+      if (!profile) return res.status(404).json({ error: 'Project not found' });
       const report = await computeCoverage(orgId, programId, profile);
       res.json(report);
     } catch (err: any) {
@@ -488,7 +488,7 @@ postMarketRouter.post(
     try {
       const programId = String(req.params.programId);
       const euRow = await loadProgrammeEuDeviceRow(orgId, programId);
-      if (!euRow) return res.status(404).json({ error: 'Program not found' });
+      if (!euRow) return res.status(404).json({ error: 'Project not found' });
       // The caller may say which regulation it is drafting under; otherwise the
       // record's product type decides. It used to fall to MDR whenever the
       // class string held no "ivd", so an IVD programme drafted an MDR-shaped
@@ -578,7 +578,7 @@ postMarketRouter.get(
       // requireProgramAccess has already established the programme is in the
       // organization, so a missing row here is the record having gone between
       // the two reads. Refused rather than reported as a device with no class.
-      if (!row) return res.status(404).json({ error: 'Program not found' });
+      if (!row) return res.status(404).json({ error: 'Project not found' });
       const report = await getPostMarketDocStatus(
         orgId,
         programId,

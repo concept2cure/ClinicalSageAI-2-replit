@@ -23,6 +23,15 @@ export interface AuthoringTemplate {
 }
 export type TemplateCatalogState = 'loading' | 'ok' | 'unavailable' | 'failed';
 export const BLANK_DOCUMENT = '(blank document)';
+export interface AuthoringFilingContext { projectId: string; registryId: string | null; filingDocumentId?: string | null }
+
+/** Recommendations use recorded scope; all other templates remain available. */
+export function templatesForFiling(templates: AuthoringTemplate[], registryId: string | null | undefined): AuthoringTemplate[] {
+  if (!registryId) return [];
+  return templates.filter(template => template.filingContext?.registryId === registryId
+    || (template.filingContext?.region === 'GLOBAL' && template.filingContext.registryId === null
+      && (!template.families?.length || template.families.some(family => family === 'ectd' || family === 'ctis'))));
+}
 
 export function templateLabel(template: AuthoringTemplate): string {
   return String(template.name ?? template.title ?? 'Template ' + template.id);
@@ -62,8 +71,18 @@ function TemplateSearchResults({ templates, matches, retained, catalog, query, a
   </>;
 }
 
+function TemplateOptions({ matches, filingContext }: { matches: AuthoringTemplate[]; filingContext?: AuthoringFilingContext | null }) {
+  const recommended = templatesForFiling(matches, filingContext?.registryId);
+  const remaining = matches.filter(template => !recommended.includes(template));
+  const option = (template: AuthoringTemplate) => <option key={String(template.id)} value={String(template.id)}>{templateLabel(template)}</option>;
+  return recommended.length > 0 ? <>
+    <optgroup label="For this filing and shared documents">{recommended.map(option)}</optgroup>
+    {remaining.length > 0 && <optgroup label="All other templates">{remaining.map(option)}</optgroup>}
+  </> : <>{matches.map(option)}</>;
+}
+
 /** Search filters the existing native picker without replacing its selection. */
-export function AuthoringTemplatePicker({ templates, catalog, query, onQueryChange, control, purpose = 'create', disabled = false }: {
+export function AuthoringTemplatePicker({ templates, catalog, query, onQueryChange, control, purpose = 'create', disabled = false, filingContext }: {
   templates: AuthoringTemplate[];
   catalog: TemplateCatalogState;
   query: string;
@@ -71,6 +90,7 @@ export function AuthoringTemplatePicker({ templates, catalog, query, onQueryChan
   control: C2CFormFieldControl;
   purpose?: 'create' | 'assembly';
   disabled?: boolean;
+  filingContext?: AuthoringFilingContext | null;
 }) {
   const searchRef = useRef<HTMLInputElement>(null);
   const normalized = query.trim().toLowerCase();
@@ -107,7 +127,7 @@ export function AuthoringTemplatePicker({ templates, catalog, query, onQueryChan
       <option value="">{assembly ? 'Choose a template' : 'Select…'}</option>
       {!assembly && <option value={BLANK_DOCUMENT}>{BLANK_DOCUMENT}</option>}
       {retained && <optgroup label="Selected template"><option value={String(retained.id)}>{templateLabel(retained)}</option></optgroup>}
-      {matches.map(template => <option key={String(template.id)} value={String(template.id)}>{templateLabel(template)}</option>)}
+      <TemplateOptions matches={matches} filingContext={filingContext} />
     </select>
   </>;
 }

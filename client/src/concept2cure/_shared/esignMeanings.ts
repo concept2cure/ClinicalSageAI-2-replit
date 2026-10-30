@@ -16,7 +16,19 @@ export const ESIGN_MEANINGS: ReadonlyArray<{ id: EsigMeaning; label: string; des
   { id: 'release', label: 'Release', desc: 'You authorize release or submission' },
 ];
 
+/**
+ * Meanings that belong to one act and are offered only where a dialog names
+ * them (`meanings`): retiring a controlled document (P-51). A dialog that names
+ * none offers the five above.
+ */
+export const ACT_ESIGN_MEANINGS: ReadonlyArray<{ id: EsigMeaning; label: string; desc: string }> = [
+  { id: 'retirement', label: 'Retirement', desc: 'You withdraw this document from use' },
+];
+
+/** Every meaning a dialog can name. */
+export const ALL_ESIGN_MEANINGS = [...ESIGN_MEANINGS, ...ACT_ESIGN_MEANINGS];
+
 /** True only for one of the ids above. */
 export function isEsignMeaning(value: unknown): value is EsigMeaning {
-  return typeof value === 'string' && ESIGN_MEANINGS.some((m) => m.id === value);
+  return typeof value === 'string' && ALL_ESIGN_MEANINGS.some((m) => m.id === value);
 }

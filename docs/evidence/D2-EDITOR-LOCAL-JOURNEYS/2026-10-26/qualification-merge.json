@@ -1,0 +1,15 @@
+{
+  "utc": "2026-10-26T15:35:39.932954+00:00",
+  "argv": [
+    "git",
+    "merge",
+    "--no-edit",
+    "origin/concept2cure-v2"
+  ],
+  "headBefore": "4d8cf50d0ab9d0a4902a905ecf712dc9908f1b4e",
+  "incoming": "b3661f72dd2130bf22ceae6c1b428d8a16b93b71",
+  "headAfter": "634be82d7de505eaa153eb871d2f36b863612342",
+  "exitCode": 0,
+  "inputDrift": [],
+  "review": "Incoming b3661f72d changes only launch-walk/auth test fixtures and client-journey handoff/evidence; all33 qualified integration inputs unchanged."
+}

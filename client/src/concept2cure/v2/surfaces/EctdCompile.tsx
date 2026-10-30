@@ -49,6 +49,7 @@ import { OrchestratorRunControls } from './OrchestratorRunControls';
 import { captureShellProjectGuard, useShellProject, type ShellProject } from '../shellProject';
 import { useSubmissionReadSession } from './submissionScopedRead';
 import { PackageDtdValidation, RegionalPackageFact, type PackageDtdStatus } from './EctdCompileDtdEvidence';
+import { COMPILED_ECTD_VERSION, EctdReferenceCards, ectdReferenceActionHandlers, ectdReferenceFacts, ectdReferenceSummary, useEctdReference } from './EctdCompileReference';
 import { EctdModuleReadiness, isStatusView, statusReadinessWords, type StatusView } from './EctdModuleReadiness';
 import { EctdFiledState } from './EctdFiledState';
 
@@ -1034,6 +1035,11 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
   const followUp = status?.sequence != null && status.sequence.sequenceNumber !== '0000';
   const [rehearsal, setRehearsal] = useState(false);
 
+  /* The eCTD reference (folded from ectd-publishing, D2 2026-10-29): read-only,
+     opened at the version this compile assembles, and not project-scoped, so it
+     is on screen with no project open too (EctdCompileReference.tsx). */
+  const reference = useEctdReference(COMPILED_ECTD_VERSION, COMPILED_ECTD_VERSION);
+
   const doValidate = useCallback(async () => {
     if (identPath == null || !current()) return;
     const request = ++actionRevision.current;
@@ -1134,11 +1140,12 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
      handing the conversation the flag without the reasons would relearn it. */
   const anaContext = useMemo(
     () => ({
-      summary: ident == null
-        ? 'eCTD compile, with no program open — nothing can be assembled until one is.'
+      summary: (ident == null
+        ? 'eCTD compile, with no project open — nothing can be assembled until one is.'
         : `eCTD compile for ${region} (${submissionType}). Readiness is ${statusState}` +
           (status ? `: ${statusReadinessWords(status)}` : '') +
-          (findings ? `; ${findings.length} validation finding(s)` : '; not yet validated') + '.',
+          (findings ? `; ${findings.length} validation finding(s)` : '; not yet validated') + '.') +
+        ` ${ectdReferenceSummary(reference)}`,
       facts: {
         programOpen: ident != null,
         region,
@@ -1203,6 +1210,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         orchestratorAuditReadFailed: orchAuditErr,
         // null, not 0 — a count nobody has is not a count of zero.
         orchestratorAuditEventCount: orchAuditErr ? null : orchAudit.length,
+        reference: ectdReferenceFacts(reference),
       },
       /* Two kinds of line live here and the difference matters. The first
          three and the last two are CONVERSATIONAL: things AnA can say about
@@ -1224,11 +1232,13 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         'Propose compiling the eCTD backbone — a person clicks Compile eCTD',
         'Explain which orchestrator steps were skipped and why',
         'Explain whether the signed package still verifies',
+        'Explain the eCTD reference: the specifications a version is qualified against, and what a controlled-vocabulary code means',
+        'Switch the eCTD reference between v3.2.2 and v4.0, open a v4.0 code list, filter its codes (the reference panel only)',
       ],
     }),
     [
       ident, region, submissionType, statusState, status, findings, compileResult, history.length,
-      orchState, orchErrorDetail, orchRun, orchCounts, signed, signedRefusal, orchAuditErr, orchAudit.length,
+      orchState, orchErrorDetail, orchRun, orchCounts, signed, signedRefusal, orchAuditErr, orchAudit.length, reference,
     ],
   );
   usePublishSurfaceContext('ectd-compile', anaContext);
@@ -1245,7 +1255,9 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
      orchestrator run-id box, and each handler below drives the SAME state its
      control drives (setRegion / setSubmissionType / setRunIdInput +
      loadOrchestrator). Nothing here writes: the only request any of them makes
-     is the orchestrator READ the Load run button performs.
+     is the orchestrator READ the Load run button performs. The eCTD reference's
+     three (2026-10-29) drive its version menu, list picker and filter the same
+     way; the only read they cause is a code list the listing supplied.
 
      Placed above the `ident == null` early return for the reason the anaContext
      comment gives — these are hooks — and because "no program is open" is the
@@ -1277,7 +1289,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       // returns early and statusState never leaves 'idle', so holding here
       // would wait out the 20 s TTL instead of answering.
       if (ident == null) {
-        return { ok: false, reason: 'No program is open, so there is no compilation to set a region for — open a program first.' };
+        return { ok: false, reason: 'No project is open, so there is no compilation to set a region for — open a project first.' };
       }
       const blocked = busyRefusal();
       if (blocked) return blocked;
@@ -1320,7 +1332,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         return { ok: false, reason: `Submission type must be one of: ${SUB_TYPES.join(', ')} (got "${params.submissionType}").` };
       }
       if (ident == null) {
-        return { ok: false, reason: 'No program is open, so this screen shows only its empty state and there is no Submission menu — open a program first.' };
+        return { ok: false, reason: 'No project is open, so this screen shows only its empty state and there is no Submission menu — open a project first.' };
       }
       const blocked = busyRefusal();
       if (blocked) return blocked;
@@ -1349,8 +1361,8 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         return {
           ok: false,
           reason:
-            'No program is open, so this screen shows only its empty state and the orchestrator panel is not rendered — a run ' +
-            'loaded now would be invisible. Open a program first.',
+            'No project is open, so this screen shows only its empty state and the orchestrator panel is not rendered — a run ' +
+            'loaded now would be invisible. Open a project first.',
         };
       }
       if (orchState === 'loading') {
@@ -1370,6 +1382,13 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         detail: `Loading orchestrator run ${wanted}; its steps, signature state and audit trail appear when the read lands`,
       };
     },
+    /* The eCTD reference's three (folded from ectd-publishing, D2 2026-10-29):
+       view-only, no project needed, and none changes what the compile assembles. */
+    ...ectdReferenceActionHandlers(reference, {
+      setVersion: 'ectd-compile.set-reference-version',
+      openList: 'ectd-compile.open-code-list',
+      filterCodes: 'ectd-compile.filter-codes',
+    }),
   });
   /* The ready signal for the two holds above. Gated on the reads SETTLING and
      nothing else — never on their succeeding: a failed read must reach a held
@@ -1378,9 +1397,10 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
      is a reason to re-attempt, and whichever the held action was waiting on
      will refuse-and-hold again until its own read lands. 'idle' counts as
      settled, which is what makes the `ident == null` guards above reachable. */
+  // The reference listing is a third read: open-code-list holds on it.
   useEffect(() => {
     if (statusState !== 'loading' || orchState !== 'loading') notifySurfaceActionReady('ectd-compile');
-  }, [statusState, orchState]);
+  }, [statusState, orchState, reference.loadState]);
 
   // ── No program open ── (the server resolves UUID / code / numeric idents, so
   // the only honest dead-end left is having no program at all)
@@ -1389,9 +1409,10 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       <div className="cm-body" style={{ padding: 24 }}>
         <EmptyState
           icon={I.layers}
-          title="Open a program to compile its eCTD"
-          hint="eCTD assembly runs against a program’s authored sections. Open a program, then compile and export its submission here."
+          title="Open a project to compile its eCTD"
+          hint="eCTD assembly runs against a project’s authored sections. Open a project, then compile and export its submission here."
         />
+        <EctdReferenceCards reference={reference} />
       </div>
     );
   }
@@ -1559,6 +1580,9 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         </div>
       )}
 
+      {/* ── The specifications the findings are read against, and the eCTD reference ── */}
+      <EctdReferenceCards reference={reference} />
+
       {/* ── History ── */}
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Compilation history</span><span className="s">{historyState === 'ready' ? history.length : historyState === 'error' ? 'not loaded' : '…'}</span></div>
@@ -1612,7 +1636,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         <div className="pj-card-b" style={{ paddingTop: 0 }}>
           {orchState === 'idle' ? (
             <EmptyState icon={I.workflow} title="No orchestrator run loaded"
-              hint="Build a run from this program’s recorded filing and governed inputs, select a saved run, or load an existing run id. Missing inputs remain visible in the saved step outcomes." />
+              hint="Build a run from this project’s recorded filing and governed inputs, select a saved run, or load an existing run id. Missing inputs remain visible in the saved step outcomes." />
           ) : orchState === 'loading' ? (
             <EmptyState icon={I.zap} title="Loading run…" busy />
           ) : orchState === 'error' ? (

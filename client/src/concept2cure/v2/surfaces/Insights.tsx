@@ -19,12 +19,13 @@ import '../styles/insights-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { BundlesPanel } from './InsightsBundlesPanel';
 import { useLibraryActions } from './insightsLibraryActions';
-import { CatalogPanel } from './InsightsCatalogPanel';
+import { CatalogPanel, COUNTS_NOT_NARROWED, ORGANIZATION_WIDE_RECORDS, OrganizationCountsNote, countsAreOrganizationWide } from './InsightsCatalogPanel';
 import { RunsPanel } from './InsightsRunsPanel';
 import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
 import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
 import type { BundlePdfContent, ReportRunRow } from './insightsLibraryModel';
+import { getSurfaceMeta } from '../registryModel';
 
 /* ── Entitlement tiers (mdx-entitlements) ── */
 
@@ -40,6 +41,13 @@ const RO_TIERS: Tier[] = [
   { id: 'enterprise', label: 'Enterprise', rank: 2 },
 ];
 
+/** A report-os scope (shared/schema/report-os.ts reportScopeEnum) in a reader's
+ *  words. `program` is a report program group, a group of projects, not one
+ *  project; it printed as the raw enum, "program" (decision 12). */
+const SCOPE_WORD: Record<string, string> = {
+  account: 'account', program: 'project group', project: 'project', study: 'study', submission: 'submission', document: 'document',
+};
+const scopeWord = (s: string) => SCOPE_WORD[s] ?? s;
 const REPORT_PLAN_UNVERIFIED = "Your organization's plan could not be verified. Running reports is unavailable until it can be verified.";
 const REPORT_ACCESS_CHANGED = 'Your reporting session or access changed. Reopen the report from Run history before continuing.';
 const REPORT_WRITE_UNCONFIRMED = 'The report request outcome could not be confirmed. It may have completed. Check Run history before starting another request.';
@@ -286,7 +294,7 @@ export function programName(p: { code: string | null; label?: string | null }): 
   if (code) return code;
   const label = p.label?.trim();
   if (label) return label;
-  return 'This program';
+  return 'This project';
 }
 
 /** Map the admitted selected program; recorded labels and nulls stay intact. */
@@ -379,7 +387,7 @@ const RO_PRESETS: Record<string, PresetDef[]> = {
     { id: 'researchadmin', label: 'Research administration pack', types: ['research_admin.scorecard', 'irb.submission_register', 'iacuc.protocol_register', 'effort.certification_register'], purpose: 'For keeping approvals from lapsing across your studies.' },
   ],
   health: [
-    { id: 'oversight', label: 'Portfolio oversight pack', types: ['readiness.executive_digest', 'compliance.audit_assurance_pack', 'inspection.readiness_pack'], purpose: 'For the programs you oversee.' },
+    { id: 'oversight', label: 'Portfolio oversight pack', types: ['readiness.executive_digest', 'compliance.audit_assurance_pack', 'inspection.readiness_pack'], purpose: 'For the projects you oversee.' },
   ],
 };
 
@@ -546,7 +554,7 @@ function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
       ...(preset ? [`Build the ${preset.label}`] : []),
       p.readiness != null ? `How ready is ${p.code} to file?` : `Generate the Executive Readiness Digest for ${p.code}`,
       `What reports can you run for ${p.code}?`,
-      'Compare readiness across all my programs',
+      'Compare readiness across all my projects',
     ],
   };
 }
@@ -588,6 +596,9 @@ interface RenderedReport {
   scopeId: string;
   /** What the report is about, by name (the server's stored scope label, else the program's name). */
   scopeLabel?: string;
+  /** The data boundary its engine computed (server RenderedReport.computedScope): a
+   *  register run at project scope still counts the organization's records. */
+  computedScope?: string;
   generatedAt: string;
   status: string;
   truthfulness: { allowedStatus: string; downgradedFrom?: string; reasons: string[] };
@@ -706,10 +717,10 @@ interface DashboardData {
  * silent cap on the figure an executive reads as their position.
  */
 function portfolioScopeText(dataScope: string | undefined): string {
-  return dataScope === 'accessible_projects' ? 'programs you can access' : 'programs shown on this board';
+  return dataScope === 'accessible_projects' ? 'projects you can access' : 'projects shown on this board';
 }
 function roPortfolioCovers(count: number, truncated: boolean, dataScope?: string): string {
-  const scopeText = count === 1 ? portfolioScopeText(dataScope).replace(/^programs/, 'program') : portfolioScopeText(dataScope);
+  const scopeText = count === 1 ? portfolioScopeText(dataScope).replace(/^projects/, 'project') : portfolioScopeText(dataScope);
   if (truncated) {
     /* NOT "the highest-ranked": fetchOrgPrograms selects `ORG_ROLLUP_CAP + 1`
        rows with no ORDER BY, and attentionRanked sorts only within whatever
@@ -756,7 +767,7 @@ function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCt
     // Live, enterprise-gated rollup — programs is null when the org isn't
     // entitled or has none; show an honest empty, never a fabricated board.
     const rows = ctx.portfolio.programs ? roPortfolioFrom(ctx.portfolio.programs) : [];
-    if (rows.length === 0) return { tool: name, text: `Your plan unlocks the portfolio rollup, but there are no governed programs to roll up yet. Once a program with a readiness run exists in your organization, its board view appears here.`, report: null, dashboard: null };
+    if (rows.length === 0) return { tool: name, text: `Your plan unlocks the portfolio rollup, but there are no governed projects to roll up yet. Once a project with a readiness run exists in your organization, its board view appears here.`, report: null, dashboard: null };
     const truncated = ctx.portfolio.summary?.truncated === true;
     return { tool: name, text: `${roPortfolioCovers(rows.length, truncated, ctx.portfolio.dataScope)} The numbers are the governed readiness scores, ranked — not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: portfolioScopeText(ctx.portfolio.dataScope), rows, truncated, dataScope: ctx.portfolio.dataScope }, report: null };
   }
@@ -1003,9 +1014,12 @@ function ROBlock({ block }: { block: ROBlockData }) {
    was lost by removing it; something would have been invented by keeping it. */
 /** The family a report is filed under, and what it is about by name — never a row id. */
 function reportHeading(report: RenderedReport): { fam: { label?: string; region?: string }; scope: string } {
-  return { fam: RO_FAMILY[report.family ?? ''] || {}, scope: report.scopeLabel ?? 'This program' };
+  return { fam: RO_FAMILY[report.family ?? ''] || {}, scope: report.scopeLabel ?? 'This project' };
 }
 
+/** The run is headed by a project (or program, or submission) while its engine
+ *  counted the organization's records: the run's own carried `computedScope`,
+ *  never the type id. An account run is already headed as the organization. */
 function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
@@ -1044,6 +1058,8 @@ function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false
           <span className={'ro-status st-' + stTone}>{report.status}</span>
           <span className="ro-gen">generated {new Date(report.generatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
         </div>
+        {/* The project's name above the organization's counts says which they are. */}
+        {countsAreOrganizationWide(report) && <div role="note" data-testid="ro-scope-org"><OrganizationCountsNote className="ro-rep-meta" /></div>}
         {report.truthfulness && report.truthfulness.reasons && report.truthfulness.reasons.length ?
           <div className="ro-truth">{I.shieldCheck} Truthfulness gate — held at <b>{report.status}</b>: {report.truthfulness.reasons.join('; ')}.</div> : null}
         {seal ? <ROSealLine seal={seal} /> : null}
@@ -1071,6 +1087,22 @@ function PlanUnavailableCard({ type, family, reason = REPORT_PLAN_UNVERIFIED }: 
   );
 }
 
+/* Tiles no longer pre-generate a report client-side (that was the mock KPI
+   preview). Each tile runs the REAL governed report on click. A type whose
+   engine counts the organization's records says so, as its catalog card does,
+   from the catalog's `computedScope` (D2, 2026-10-29). */
+function RunPackTile({ type, fam, onRun }: { type: ReportType; fam: { label?: string; region?: string }; onRun: (t: ReportType) => void }) {
+  return (
+    <button className="ro-pack-card" onClick={() => onRun && onRun(type)}>
+      <div className="ro-pack-fam">{fam.label}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
+      <div className="ro-pack-title">{type.label}</div>
+      {type.computedScope === 'organization' && <OrganizationCountsNote className="ro-pack-sub" />}
+      <div className="ro-pack-kpi"><span className="v">--</span><span className="l">governed report</span></div>
+      <div className="ro-pack-open">Run report {I.right}</div>
+    </button>
+  );
+}
+
 /* `onAsk` is gone from here too — it was declared, threaded down from the
    canvas and never called once in the whole component. */
 function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun, scope, catalog, onOpenProgram }: { dashboard: DashboardData; tier: string; actualTier: string; tierResolved: boolean; onRun: (t: ReportType) => void; canRun: boolean; scope: string; catalog: ReportType[]; onOpenProgram?: (r: PortfolioRow) => void }) {
@@ -1084,7 +1116,7 @@ function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun,
     const avg = known.length ? Math.round(known.reduce((a, v) => a + v, 0) / known.length) : null;
     return (
       <div className="ro-dash">
-        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta">{/* A capped board says it is capped, here, beside the count it caps. */}<span>{dashboard.truncated ? `first ${rows.length} programs` : `${rows.length} programs`}</span>{avg == null ? <span className="ro-status">readiness not computed</span> : <span className="ro-status">avg readiness {avg}%{known.length < rows.length ? ` · ${rows.length - known.length} not computed` : ''}</span>}</div></div></div>
+        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta">{/* A capped board says it is capped, here, beside the count it caps. */}<span>{dashboard.truncated ? `first ${rows.length} projects` : `${rows.length} projects`}</span>{avg == null ? <span className="ro-status">readiness not computed</span> : <span className="ro-status">avg readiness {avg}%{known.length < rows.length ? ` · ${rows.length - known.length} not computed` : ''}</span>}</div></div></div>
         <div className="ro-port-grid">
           {rows.map((r, i) => {
             const content = <>{r.readiness == null
@@ -1094,13 +1126,13 @@ function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun,
             return r.programId && onOpenProgram ? <button key={r.programId} type="button" className="ro-port-card ro-port-open" aria-label={`Open ${r.code}`} onClick={() => onOpenProgram(r)}>{content}</button> : <div key={r.projectId ?? i} className="ro-port-card">{content}</div>;
           })}
         </div>
-        <div className="ro-dash-note">{I.info} This board covers {portfolioScopeText(dashboard.dataScope)}. Readiness values are the governed scores per program, in the order the server ranked them. The average is taken here, over the programs that have one.</div>
+        <div className="ro-dash-note">{I.info} This board covers {portfolioScopeText(dashboard.dataScope)}. Readiness values are the governed scores per project, in the order the server ranked them. The average is taken here, over the projects that have one.</div>
         {/* The server read one row past its cap to detect this; saying nothing
             would present a hundred-program board as the whole portfolio and an
             average over it as the organisation's. */}
         {dashboard.truncated && (
           <div className="ro-dash-note" role="status" data-testid="ro-port-truncated">
-            {I.alertTriangle} The returned portfolio has more programs than this board shows. The rollup is capped
+            {I.alertTriangle} The returned portfolio has more projects than this board shows. The rollup is capped
             at {rows.length}, and the server selects them without an ordering — so these are not the
             highest-risk or least-ready ones, and the average above is over them only, not over your whole
             returned portfolio.
@@ -1144,11 +1176,11 @@ function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun,
                 outstanding critical gaps, and a reader comparing markets has no
                 other place here to learn that. */}
             Submission readiness <b>{prog.readiness}%</b>
-            {readinessQualifier(prog) ? <> — {readinessQualifier(prog)}</> : null} — a programme-level figure, not assessed per market.
+            {readinessQualifier(prog) ? <> — {readinessQualifier(prog)}</> : null} — a project-level figure, not assessed per market.
           </div>
         )}
         <ROTable columns={['Requirement', ...m]} rows={tRows.map((r) => [r[0], ...m.map(() => r[1] ?? '--')])} />
-        <div className="ro-dash-note">{I.info} No per-market comparison is in the governed record, so every market cell reads "--". A market assessment is of the filing this program is recorded for, and a program records one — so {prog.code} can be assessed for its own market, not against a second one it is not filing in. Open the report catalog for the market assessment of its recorded filing.</div>
+        <div className="ro-dash-note">{I.info} No per-market comparison is in the governed record, so every market cell reads "--". A market assessment is of the filing this project is recorded for, and a project records one — so {prog.code} can be assessed for its own market, not against a second one it is not filing in. Open the report catalog for the market assessment of its recorded filing.</div>
       </div>
     );
   }
@@ -1187,7 +1219,7 @@ function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun,
             <div key={t.typeId} className="ro-pack-card is-locked">
               <div className="ro-pack-fam">{fam.label}</div>
               <div className="ro-pack-title">{t.label}</div>
-              <div className="ro-pack-sub">Runs over {t.scopes.join(' or ')}, not a single {scope}.</div>
+              <div className="ro-pack-sub">Runs over {t.scopes.map(scopeWord).join(' or ')}, not a single {scopeWord(scope)}.</div>
             </div>
           );
           if (!actual.entitled) return <PlanUnavailableCard key={t.typeId} type={t} family={fam.label} reason={actualPlanReason(actual, actualTier)} />;
@@ -1198,16 +1230,7 @@ function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun,
               <div className="ro-pack-sub">View only. Running a report needs an editor role in this organization.</div>
             </div>
           );
-          // Tiles no longer pre-generate a report client-side (that was the mock
-          // KPI preview). Each tile runs the REAL governed report on click.
-          return (
-            <button key={t.typeId} className="ro-pack-card" onClick={() => onRun && onRun(t)}>
-              <div className="ro-pack-fam">{fam.label}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
-              <div className="ro-pack-title">{t.label}</div>
-              <div className="ro-pack-kpi"><span className="v">--</span><span className="l">governed report</span></div>
-              <div className="ro-pack-open">Run report {I.right}</div>
-            </button>
-          );
+          return <RunPackTile key={t.typeId} type={t} fam={fam} onRun={onRun} />;
         })}
       </div>
     </div>
@@ -1281,7 +1304,7 @@ function targetNamesProgram(target: { scope: string; scopeId: string }, program:
 }
 async function requestRun(type: ReportType, program: ProgramCtx | null, programId: string | null): Promise<{ runId: number } | { note: string }> {
   const target = reportTarget(type, program);
-  if (!target) return { note: type.availabilityReason || 'Choose a program or document for this report.' };
+  if (!target) return { note: type.availabilityReason || 'Choose a project or document for this report.' };
   const namesProgram = targetNamesProgram(target, program, programId);
   let res: Response;
   try {
@@ -1302,6 +1325,14 @@ async function requestRun(type: ReportType, program: ProgramCtx | null, programI
   if (!res.ok) return { note: runRefusalNote(type.label, res.status, body) };
   const runId = body?.data?.run?.id;
   return typeof runId === 'number' && Number.isSafeInteger(runId) && runId > 0 ? { runId } : { note: REPORT_WRITE_UNCONFIRMED };
+}
+
+/** The result once a run is shown. It names the run's scope, so an organization-scope
+ *  run under a project's name says so, in the catalog card's words. */
+function ranReportText(label: string, report: RenderedReport): string {
+  const counts = countsAreOrganizationWide(report) ? ` ${ORGANIZATION_WIDE_RECORDS}. ${COUNTS_NOT_NARROWED}` : '';
+  return `The ${label} for ${report.scopeLabel || 'the stored scope'} ran against the governed record and is shown in the report canvas.${counts} ` +
+    'Every value is computed from the governed record; none is originated here.';
 }
 
 /** GET /runs/:id/rendered, adopted as the canvas's report; null when it did not come back. */
@@ -1402,6 +1433,11 @@ function openRunRefusal(label: string, status: number, payload: unknown): string
 function storedScopeLabel(label: unknown, row: ReportRunRow): string {
   return typeof label === 'string' && label ? label : row.scopeLabel || row.scopeId;
 }
+/** The computed data boundary the rendered document carries, else the run row's. */
+function storedComputedScope(scope: unknown, row: ReportRunRow): string | undefined {
+  if (typeof scope === 'string' && scope) return scope;
+  return row.computedScope ?? undefined;
+}
 function storedTypeLabel(label: unknown, row: ReportRunRow, type: ReportType | undefined): string {
   return typeof label === 'string' && label ? label : type?.label ?? row.reportTypeLabel;
 }
@@ -1422,6 +1458,7 @@ function reportFromRenderedRow(
     scopeType: rendered.scopeType ?? row.scopeType,
     scopeId: rendered.scopeId ?? row.scopeId,
     scopeLabel,
+    computedScope: storedComputedScope(rendered.computedScope, row),
     generatedAt: rendered.generatedAt ?? row.completedAt ?? row.createdAt,
     status,
     truthfulness,
@@ -1721,7 +1758,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
      is fabricated, and an unentitled/unknown type is stated, never estimated. */
   const runReport = async (type: ReportType): Promise<void> => {
     if (!reportAccessCurrent()) return;
-    if (!reportTarget(type, program)) { setRunNote(type.availabilityReason || 'Choose a program or document for this report.'); return; }
+    if (!reportTarget(type, program)) { setRunNote(type.availabilityReason || 'Choose a project or document for this report.'); return; }
     const request = ++requestSequence.current;
     const isCurrent = () => reportAccessCurrent() && request === requestSequence.current;
     /* The result said "Running the …" when the run began. Once the run ends it
@@ -1753,7 +1790,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
       setReport(adopted);
       setReportRunId(started.runId);
       setSeal(null);
-      settle({ text: `The ${type.label} for ${adopted.scopeLabel || 'the stored scope'} ran against the governed record and is shown in the report canvas. Every value is computed from the governed record; none is originated here.` });
+      settle({ text: ranReportText(type.label, adopted) });
       pushCanvasTop();
     } finally {
       if (isCurrent()) setBusy(false);
@@ -1801,7 +1838,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   /* Run a report from a pack tile (states it as the result, then generates). */
   const runFromTile = (type: ReportType) => {
     if (!reportAccessCurrent()) return;
-    setFound({ text: `Running the ${type.label} for ${program?.code ?? 'this program'} against the governed record.` });
+    setFound({ text: `Running the ${type.label} for ${program?.code ?? 'this project'} against the governed record.` });
     void runReport(type);
   };
 
@@ -1996,7 +2033,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
           {recoveryNotice}
           <ErrorState
             title="Couldn't load the reporting canvas"
-            message="Your organization's plan, program readiness and portfolio rollup could not be read. Nothing is shown in their place."
+            message="Your organization's plan, project readiness and portfolio rollup could not be read. Nothing is shown in their place."
             retry={() => setOverviewAttempt((n) => n + 1)}
           />
           {/* A failed read of the program canvas says nothing about the audit
@@ -2012,15 +2049,15 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
      to the organisation's flagship is the defect this replaces. */
   const openState = data?.openProgram?.state;
   if (data && !program && (openState === 'unanchored' || openState === 'not-in-portfolio')) {
-    const name = shellProgramName() ?? 'This program';
+    const name = shellProgramName() ?? 'This project';
     return withoutProgram(
           <EmptyState
             icon={I.barChart || I.fileText}
             title={`${name} has no readiness or reports here yet`}
             hint={
               openState === 'unanchored'
-                ? "Readiness and governed reports are computed over a program's project record, and this program has none. Nothing from another program is shown in its place."
-                : "This program's project record is not among the programs whose readiness is computed for your organization (it may be archived or part of another program). Nothing from another program is shown in its place."
+                ? "Readiness and governed reports are computed over a project's tracking record, and this project was created without one. Nothing from another project is shown in its place."
+                : "This project's record is not among the projects whose readiness is computed for your organization (it may be archived or part of another project). Nothing from another project is shown in its place."
             }
             action={{ label: 'Audit & compliance reports', onAct: () => onNav && onNav('compliance-reports') }}
           />
@@ -2035,9 +2072,9 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   if (data && !program && !data.openProgram && choices.length > 0) {
     return withoutProgram(
           <div className="rc-empty" data-testid="rc-program-picker">
-            <h2 className="rc-empty-h">Which program is the report for?</h2>
-            <p className="rc-empty-s">Governed reports and the readiness digest run over one program. Choose it here; it opens across the app, as it does from Projects.</p>
-            <div className="rc-empty-presets" role="group" aria-label="Programs">
+            <h2 className="rc-empty-h">Which project is the report for?</h2>
+            <p className="rc-empty-s">Governed reports and the readiness digest run over one project. Choose it here; it stays open everywhere, as it does from Projects.</p>
+            <div className="rc-empty-presets" role="group" aria-label="Projects">
               {choices.map((pr) => (
                 <button
                   key={pr.programId}
@@ -2060,8 +2097,8 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     return withoutProgram(
           <EmptyState
             icon={I.barChart || I.fileText}
-            title="No program readiness yet"
-            hint="Once a program with a governed readiness run exists in your organization, the reporting canvas opens here — the program's readiness, the portfolio rollup, and every governed report, computed from the governed record. Nothing is estimated."
+            title="No project readiness yet"
+            hint="Once a project with a governed readiness run exists in your organization, the reporting canvas opens here — the project's readiness, the portfolio rollup, and every governed report, computed from the governed record. Nothing is estimated."
             /* Audit and compliance reports read the organisation's own records,
                not a program, so they stay reachable before any program exists. */
             action={{ label: 'Audit & compliance reports', onAct: () => onNav && onNav('compliance-reports') }}
@@ -2141,7 +2178,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
                 <div className="rc-lock-h">{I.lock} {tierLabel(found.locked.requiredTier)} plan unlocks {found.locked.typeLabel}</div>
                 <div className="rc-lock-s">{RO_FEATURE_LABEL[found.locked.feature]} requires the stated plan and an implemented report engine at the requested scope. A plan does not supply a missing engine or qualify a prediction.</div>
                 <div className="rc-lock-acts">
-                  <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>See plans {I.right}</button>
+                  <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>{getSurfaceMeta('licensing').label} {I.right}</button>
                   <button className="rc-chip" onClick={() => setTierOverride(found.locked!.requiredTier)}>Preview on {tierLabel(found.locked.requiredTier)}</button>
                 </div>
               </div>

@@ -1,0 +1,5 @@
+# mutation M7: re-add (device-tasks, standard) to 20260823 packaging; fresh replay in beforeAll
+error: packaging names modules that are not in available_modules: device-tasks
+ Test Files  1 failed (1)
+      Tests  15 skipped (15)
+# restored byte-for-byte (cmp)

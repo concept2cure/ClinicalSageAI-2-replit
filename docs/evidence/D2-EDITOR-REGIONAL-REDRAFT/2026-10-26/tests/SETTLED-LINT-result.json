@@ -1,0 +1,16 @@
+{
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx"
+  ],
+  "environment": {
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "NO_COLOR": "1"
+  },
+  "startedUtc": "2026-10-26T17:14:08.315198+00:00",
+  "elapsedSeconds": 1.049,
+  "exitCode": 0,
+  "pinnedInputsStillMatch": true
+}

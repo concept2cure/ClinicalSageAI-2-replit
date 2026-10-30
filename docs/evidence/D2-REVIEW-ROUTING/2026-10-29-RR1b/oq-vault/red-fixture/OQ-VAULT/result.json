@@ -1,0 +1,504 @@
+{
+  "protocolId": "OQ-002",
+  "protocolTitle": "Operational Qualification — Vault",
+  "app": "VAULT",
+  "appLabel": "Vault",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/vault/run.mjs",
+  "executedAt": "2026-10-29T10:04:24.371Z",
+  "finishedAt": "2026-10-29T10:04:26.601Z",
+  "environment": {
+    "baseUrl": "http://localhost:5200",
+    "node": "v22.22.0",
+    "chromium": "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "22ea55f33178070fbcac012bb32ca0120544f17a"
+    },
+    "testUser": "oq-runner@validation.local",
+    "authentication": "password+totp",
+    "organizationId": "5",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "storage": "ok",
+          "virusScan": "skipped",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / AI_VERTEX_ENABLED) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which only an approvedForHighRisk model may serve."
+      }
+    }
+  },
+  "counts": {
+    "pass": 1,
+    "fail": 1,
+    "deviation": 0,
+    "not-executed": 22
+  },
+  "steps": [
+    {
+      "id": "OQ-VAULT-00",
+      "title": "Prerequisite: a program to file into; baseline ledger length",
+      "urs": [],
+      "kind": "prerequisite",
+      "action": "POST /api/c2c/projects (IND); GET /api/audit-trail/ledger?limit=200",
+      "expected": "Program created (201); ledger readable",
+      "status": "fail",
+      "observed": {
+        "error": "State whether the product is a drug or a biologic: an IND filing covers both, and the class is recorded on the project."
+      },
+      "startedAt": "2026-10-29T10:04:25.712Z",
+      "finishedAt": "2026-10-29T10:04:26.156Z",
+      "evidence": [
+        "steps/OQ-VAULT-00.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-00.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/c2c/projects",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "failure": "program create expected 201, got 400",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-VAULT-001"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/:programId with no Authorization header",
+      "expected": "HTTP 401/403",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-00 did not pass",
+      "startedAt": "2026-10-29T10:04:26.156Z",
+      "finishedAt": "2026-10-29T10:04:26.156Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-02",
+      "title": "Disallowed file type refused at ingest",
+      "urs": [
+        "URS-VAULT-003"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/vault/ingest with a .exe payload",
+      "expected": "Refused with a 4xx and a message; nothing stored",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-00 did not pass",
+      "startedAt": "2026-10-29T10:04:26.156Z",
+      "finishedAt": "2026-10-29T10:04:26.156Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-03",
+      "title": "Ingest a PDF into the program vault",
+      "urs": [
+        "URS-VAULT-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/vault/ingest (multipart: file, programId, documentCode, documentTitle, documentType=PROTOCOL)",
+      "expected": "HTTP 201; document.id returned; document.contentHash equals the SHA-256 of the uploaded bytes",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-00 did not pass",
+      "startedAt": "2026-10-29T10:04:26.157Z",
+      "finishedAt": "2026-10-29T10:04:26.157Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-04",
+      "title": "Vault read model lists the document",
+      "urs": [
+        "URS-VAULT-004"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/:programId",
+      "expected": "success:true; documentCount ≥ 1; the tree names the document",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-03 did not pass",
+      "startedAt": "2026-10-29T10:04:26.157Z",
+      "finishedAt": "2026-10-29T10:04:26.157Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-05",
+      "title": "Search finds the document by title",
+      "urs": [
+        "URS-VAULT-005"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/:programId/search?q=<title fragment>",
+      "expected": "results contain the ingested document id",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-03 did not pass",
+      "startedAt": "2026-10-29T10:04:26.157Z",
+      "finishedAt": "2026-10-29T10:04:26.157Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-06",
+      "title": "Download returns the stored bytes unchanged",
+      "urs": [
+        "URS-VAULT-006"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/:programId/documents/:documentId/download",
+      "expected": "HTTP 200; SHA-256 of the body equals the hash recorded at ingest",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-03 did not pass",
+      "startedAt": "2026-10-29T10:04:26.157Z",
+      "finishedAt": "2026-10-29T10:04:26.157Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-07",
+      "title": "A person confirms the filing decision",
+      "urs": [
+        "URS-VAULT-007"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/c2c/project-vault/:programId/file {documentId, folderId:\"module-5\", note}; then the same with a folder from another modality (\"k510\")",
+      "expected": "Filing into Module 5 answers success:true with the folder recorded; a folder outside the program's vault view is refused (4xx), not stored",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-03 did not pass",
+      "startedAt": "2026-10-29T10:04:26.157Z",
+      "finishedAt": "2026-10-29T10:04:26.157Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-08",
+      "title": "The hash-chained audit log verifies after the governed writes",
+      "urs": [
+        "URS-VAULT-008"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/actions/verify-chain",
+      "expected": "ok:true — the audit_logs chain is intact after ingest and filing",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-07 did not pass",
+      "startedAt": "2026-10-29T10:04:26.157Z",
+      "finishedAt": "2026-10-29T10:04:26.157Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-08b",
+      "title": "Ingest and filing appear on the organisation audit ledger surface",
+      "urs": [
+        "URS-VAULT-008"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/audit-trail/ledger?limit=200 (the read model behind /concept2cure/audit-trail)",
+      "expected": "The ledger window lists the ingest and the filing of this document, each carrying record/previous hashes, and the server's chain verdict says the chain verifies (meta.chain.ok = true)",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-07 did not pass",
+      "startedAt": "2026-10-29T10:04:26.157Z",
+      "finishedAt": "2026-10-29T10:04:26.157Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": "The ledger surface reads audit_logs merged with audit_events (server/routes/audit-trail-ledger.routes.ts) — the chained store vault ingest and filing write through server/services/auditService.ts writeChainedAuditRow. The read is a newest-first WINDOW (limit), so a ledger already longer than the window cannot \"grow\"; the observable claim is that this document's events are in it, hash-chained, and that the server's own verdict (meta.chain) says the chain verifies. A verdict that is present but ok=false is a failure: v0.2 asserted only presence, and the 2026-09-21 record passed this step over \"server chain verdict ok=false over 33 row(s)\". If this step fails, the surface a user is told to inspect does not show the writes the launch apps make."
+    },
+    {
+      "id": "OQ-VAULT-09",
+      "title": "Vault surface renders the data room with the document",
+      "urs": [
+        "URS-VAULT-009"
+      ],
+      "kind": "unscripted",
+      "action": "Open /concept2cure/vault with the program selected",
+      "expected": "The data room renders and the document title is visible",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-03 did not pass",
+      "startedAt": "2026-10-29T10:04:26.157Z",
+      "finishedAt": "2026-10-29T10:04:26.157Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-10",
+      "title": "A program the organisation does not own is not readable",
+      "urs": [
+        "URS-VAULT-010"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/<random uuid>",
+      "expected": "HTTP 404",
+      "status": "pass",
+      "observed": "HTTP 404",
+      "startedAt": "2026-10-29T10:04:26.157Z",
+      "finishedAt": "2026-10-29T10:04:26.460Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-VAULT-10.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/c2c/project-vault/00000000-0000-4000-8000-000000000000",
+          "status": 404
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-VAULT-11",
+      "title": "A new version of a document is checked in, numbered and linked by the server",
+      "urs": [
+        "URS-VAULT-011"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/vault/ingest with supersedesDocumentId = the OQ-VAULT-03 document and new bytes; then the same bytes again against the new version; then new bytes against the OQ-VAULT-03 document again",
+      "expected": "HTTP 201 with version 2.0 and the OQ-VAULT-03 document code; then 409 CONTENT_ALREADY_A_VERSION; then 409 VERSION_NOT_CURRENT naming 2.0",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-03 did not pass",
+      "startedAt": "2026-10-29T10:04:26.460Z",
+      "finishedAt": "2026-10-29T10:04:26.460Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-12",
+      "title": "A document is listed once, and every version of it is listed, downloadable and in its history",
+      "urs": [
+        "URS-VAULT-012"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/:programId; GET …/documents/<OQ-VAULT-03 id>/versions; GET …/documents/<OQ-VAULT-03 id>/download; GET …/documents/<version 2.0 id>/history; GET …/search?q=<title> without and with includeSuperseded=true",
+      "expected": "The tree has one leaf for the document, version 2.0, with versionCount 2, and no leaf for 1.0; the versions list is [2.0 current, 1.0 earlier] with the OQ-VAULT-03 SHA-256 on 1.0; version 1.0 downloads with that SHA-256; the history carries entries for both versions; search returns 2.0 and not 1.0 unless includeSuperseded=true",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-11 did not pass",
+      "startedAt": "2026-10-29T10:04:26.460Z",
+      "finishedAt": "2026-10-29T10:04:26.460Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-13",
+      "title": "CREDENTIALED: a version is sent for review; the uploader may not review it; a second identity signs the review over its bytes; the reviewer may not approve it",
+      "urs": [
+        "URS-VAULT-013"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/regulatory/documents naming the OQ-VAULT-11 version, twice; POST …/:id/advance {to:\"in_review\"}; as the run identity (the uploader) POST …/:id/sign {meaning:\"reviewed\", reason}; as OQ_SIGNER POST …/:id/sign {meaning:\"reviewed\", reason, password, mfaToken?}; as OQ_SIGNER POST …/:id/advance {to:\"approved\", reason, password, mfaToken?}; GET …/documents/:id/versions",
+      "expected": "One lifecycle record (the second start returns it, created:false), in_review; the uploader's review 403 SELF_APPROVAL; the signer's review 200 with boundContentHash equal to the version's SHA-256; the signer's approval 403 SELF_APPROVAL; the versions list shows the version In review with the review's printed name. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded \"not executed — credential not supplied\".",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-11 did not pass",
+      "startedAt": "2026-10-29T10:04:26.460Z",
+      "finishedAt": "2026-10-29T10:04:26.460Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-14",
+      "title": "CREDENTIALED: a third identity approves v1, then v2; approving v2 supersedes v1; the approved version's details cannot be edited",
+      "urs": [
+        "URS-VAULT-013"
+      ],
+      "kind": "scripted",
+      "action": "Ingest a new document (v1.0); send it for review; OQ_SIGNER signs the review; OQ_APPROVER advances it to approved. Check in v2.0 and repeat. GET …/documents/:v2/versions. POST …/documents/:v2/details {documentTitle, reason}",
+      "expected": "Each approval 200, bound to that version's SHA-256; v2's approval answers superseded:[v1's record]; the versions list shows v2.0 Approved (the approver's printed name) and v1.0 Superseded; the edit 409 APPROVED_VERSION_IMMUTABLE. Without OQ_APPROVER_EMAIL / OQ_APPROVER_PASSWORD (a third identity) the step is recorded \"not executed — credential not supplied\".",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-13 did not pass",
+      "startedAt": "2026-10-29T10:04:26.460Z",
+      "finishedAt": "2026-10-29T10:04:26.460Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-15",
+      "title": "A file captured in the project's data room is filed into the Vault from the room, with a result for every source",
+      "urs": [
+        "URS-VAULT-014"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/chat/upload {file, projectId} (a capture into the program's data room); POST /api/c2c/project-vault/:id/data-room/file {sourceIds:[that source, 999999999]}; POST it again with the captured source alone; GET /api/c2c/project-vault/:id",
+      "expected": "The capture answers a sourceId with dataRoom.recorded. The filing answers 200 complete:false with [filed (a new document, suggested or unfiled, never confirmed), refused NOT_FOUND]. The second filing answers complete:true, already_filed with the same document. The data room shows the source as filed, as version 1.0.",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-00 did not pass",
+      "startedAt": "2026-10-29T10:04:26.461Z",
+      "finishedAt": "2026-10-29T10:04:26.461Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-16",
+      "title": "Suggested filings in one folder are confirmed together with one reason, each answered; a second confirmation is refused",
+      "urs": [
+        "URS-VAULT-015"
+      ],
+      "kind": "scripted",
+      "action": "Ingest two PDFs (each suggested a folder by the classifier); GET /api/c2c/project-vault/:id; POST /api/c2c/project-vault/:id/file-batch {folderId, documentIds} without a note, then with a note; POST the same again; GET /api/c2c/project-vault/:id",
+      "expected": "Both ingests answer placementStatus \"suggested\" in the same folder, and awaitingConfirmationCount counts them. Without a note: 422 REASON_REQUIRED. With one: 200 complete:true, both confirmed. The repeat: 200 complete:false, both refused CONFLICT. awaitingConfirmationCount is two lower than before.",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-00 did not pass",
+      "startedAt": "2026-10-29T10:04:26.461Z",
+      "finishedAt": "2026-10-29T10:04:26.461Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-17",
+      "title": "Two versions of a document are compared: bytes, recorded details and text; another document is refused",
+      "urs": [
+        "URS-VAULT-016"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/project-vault/:id/documents/<v2.0>/compare?against=<v1.0> (the OQ-VAULT-11 family); ingest an unrelated PDF; GET …/documents/<v2.0>/compare?against=<that document>",
+      "expected": "The first answers 200 with from v1.0 and to v2.0, sameBytes false (the recorded SHA-256s differ), and either a text comparison with at least one changed line or, when a version has no extracted text, no text comparison and a reason naming that version. The second answers 422 NOT_SAME_DOCUMENT.",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-11 did not pass",
+      "startedAt": "2026-10-29T10:04:26.461Z",
+      "finishedAt": "2026-10-29T10:04:26.461Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-18",
+      "title": "The library search finds a document in another project of the organisation, named with its project",
+      "urs": [
+        "URS-VAULT-017"
+      ],
+      "kind": "scripted",
+      "action": "Create a second program; ingest a PDF into it with a unique word in its title; GET /api/c2c/project-vault/search?q=<that word>; GET /api/c2c/project-vault/<first program>/search?q=<that word>; GET /api/c2c/project-vault/search?q=",
+      "expected": "The library search answers 200 with the document, named with the second program. The first program's search does not list it. The empty query answers no results with reason EMPTY_QUERY.",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-00 did not pass",
+      "startedAt": "2026-10-29T10:04:26.461Z",
+      "finishedAt": "2026-10-29T10:04:26.461Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-19",
+      "title": "Every stored version of the program is re-proven against its recorded SHA-256, each verdict in the document's history",
+      "urs": [
+        "URS-VAULT-018"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/c2c/project-vault/:id/fixity; GET …/documents/<the OQ-VAULT-03 document>/history",
+      "expected": "HTTP 200 with checked equal to the number of stored versions, every one verified (no altered, missing or unreadable version on an installation nobody has tampered with), and the document's history carrying a \"Fixity check: verified\" entry (vault.document.fixity).",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-03 did not pass",
+      "startedAt": "2026-10-29T10:04:26.461Z",
+      "finishedAt": "2026-10-29T10:04:26.461Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-20",
+      "title": "A document names a supporting document, both ends list it, and removing it needs a reason; each change is in both histories",
+      "urs": [
+        "URS-VAULT-019"
+      ],
+      "kind": "scripted",
+      "action": "Ingest a PDF; POST /api/c2c/project-vault/:id/documents/<the OQ-VAULT-03 document>/relationships {toDocumentId: <the new PDF>, type: supporting}; GET …/relationships for both documents; POST …/relationships/<id>/remove without a reason, then with one; GET …/documents/<the OQ-VAULT-03 document>/history",
+      "expected": "The relate answers 201. The OQ-VAULT-03 document lists it as \"Supported by\" the new PDF, and the new PDF lists it as \"Supports\" the document. Removing it without a reason answers 422 REASON_REQUIRED; with a reason, 200, and neither document lists it any more. The history carries \"Related: supported by …\" and \"Relationship removed: supported by …\" (vault.document.relate, vault.document.unrelate).",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-03 did not pass",
+      "startedAt": "2026-10-29T10:04:26.462Z",
+      "finishedAt": "2026-10-29T10:04:26.462Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-VAULT-21",
+      "title": "A version placed in a submission sequence lists that placement; an unplaced version says it is placed nowhere",
+      "urs": [
+        "URS-VAULT-020"
+      ],
+      "kind": "scripted",
+      "action": "Create a program, ingest two PDFs into it, create an IND submission on it with sequence 0000; PUT /api/submissions/sequences/:seq/leaves {sectionCode: \"2.5\", documentTable: \"vault_documents\", documentUuid: <the first PDF>, lifecycleOp: \"new\", reason}; GET /api/c2c/project-vault/:program/documents/<each PDF>/versions",
+      "expected": "The leaf is placed (200). The first PDF's version lists one placement: the submission, sequence 0000, section 2.5, operation new. The second PDF's version lists none.",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-00 did not pass",
+      "startedAt": "2026-10-29T10:04:26.462Z",
+      "finishedAt": "2026-10-29T10:04:26.462Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": "A program of its own, so that the submission it carries does not become the OQ-002 program's newest spine (as OQ-SUBC-03 notes)."
+    },
+    {
+      "id": "OQ-VAULT-22",
+      "title": "A version is annotated on a page and on a passage; a thread is replied to and resolved with a note; one is retracted with a reason; each act is in the history",
+      "urs": [
+        "URS-VAULT-021"
+      ],
+      "kind": "scripted",
+      "action": "Ingest a one-page PDF and a text file. Post a page-1 comment, then a page-2 one. Read the text file's text; post a change request on a passage of it; reply; resolve without a note, then with one. Post a comment; retract it without a reason, then with one. Read the annotations and the text file's history.",
+      "expected": "201 for page 1, 422 PAGE_OUT_OF_RANGE for page 2; 200 for the text read; 201 for the passage and the reply; 422 then 200 to resolve; 422 then 200 to retract. The list shows the passage resolved with its reply and the comment retracted; the history carries \"Extracted text read…\", \"Change request posted on a passage…\", \"Reply to…\", \"Annotation resolved…\" and \"Annotation retracted…\", and says nothing is cut.",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-VAULT-00 did not pass",
+      "startedAt": "2026-10-29T10:04:26.462Z",
+      "finishedAt": "2026-10-29T10:04:26.462Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    }
+  ]
+}

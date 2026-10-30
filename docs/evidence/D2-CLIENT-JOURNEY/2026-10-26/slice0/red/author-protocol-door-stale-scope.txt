@@ -1,0 +1,7 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the protocol workspace as doors
+AssertionError: expected <button type="button" …(2)>…(1)</button> to be null
+- Expected:
++ Received:
+  Protocols (organisation-wide) 
+      Tests  1 failed | 1 passed | 14 skipped (16)

@@ -14,7 +14,6 @@ import {
   qcSpecifications,
   qcOosInvestigations,
   qcBatchReleases,
-  qcDeviations,
   qcMicrobiologicalTests,
   qcReferenceStandards,
 } from '../shared/schema/qc-schemas';
@@ -369,20 +368,6 @@ export interface IStorage {
   getBatchGenealogy(id: number, organizationId: number | string): Promise<any>;
   validateReleaseCriteria(id: number): Promise<any>;
   releaseBatch(id: number, organizationId: number | string, params: any): Promise<any>;
-
-  // QC Deviation methods
-  getQcDeviations(params: {
-    organizationId: number;
-    clientWorkspaceId: number;
-    deviationType?: string;
-    severity?: string;
-  }): Promise<any[]>;
-  getQcDeviation(id: number, organizationId: number | string): Promise<any | undefined>;
-  createQcDeviation(deviation: any): Promise<any>;
-  updateQcDeviation(id: number, organizationId: number | string, deviation: any): Promise<any>;
-  performImpactAssessment(id: number, organizationId: number | string, assessment: any): Promise<any>;
-  linkCapaToDeviation(id: number, organizationId: number | string, capa: any): Promise<any>;
-  getDeviationTrending(params: any): Promise<any>;
 
   // Microbiological Test methods
   getMicrobiologicalTests(params: {
@@ -1489,42 +1474,6 @@ export class MemStorage {
     // Not implemented — must not report a GMP batch as released without a real
     // disposition action (the prior stub returned { released: true }).
     throw new Error('NOT_IMPLEMENTED: releaseBatch');
-  }
-
-  // QC Deviation methods
-  async getQcDeviations(params: {
-    organizationId: number;
-    clientWorkspaceId: number;
-    deviationType?: string;
-    severity?: string;
-  }): Promise<any[]> {
-    return [];
-  }
-
-  async getQcDeviation(id: number, _organizationId: number | string): Promise<any | undefined> {
-    return undefined;
-  }
-
-  async createQcDeviation(_deviation: any): Promise<any> {
-    // Not implemented — a QC deviation is a regulated GMP record; must not echo
-    // the input back as if persisted. Fail closed.
-    throw new Error('NOT_IMPLEMENTED: createQcDeviation');
-  }
-
-  async updateQcDeviation(_id: number, _deviation: any): Promise<any> {
-    throw new Error('NOT_IMPLEMENTED: updateQcDeviation');
-  }
-
-  async performImpactAssessment(_id: number, _assessment: any): Promise<any> {
-    throw new Error('NOT_IMPLEMENTED: performImpactAssessment');
-  }
-
-  async linkCapaToDeviation(_id: number, _capa: any): Promise<any> {
-    throw new Error('NOT_IMPLEMENTED: linkCapaToDeviation');
-  }
-
-  async getDeviationTrending(params: any): Promise<any> {
-    return { trends: [] };
   }
 
   // Microbiological Test methods
@@ -3861,99 +3810,6 @@ export class DatabaseStorage {
       .returning();
     if (!row) throw new Error(`Batch release ${id} not found`);
     return row;
-  }
-
-  // ── QC Deviation methods ──
-  async getQcDeviations(params: {
-    organizationId: number;
-    clientWorkspaceId: number;
-    deviationType?: string;
-    severity?: string;
-  }): Promise<any[]> {
-    return await db
-      .select()
-      .from(qcDeviations)
-      .where(
-        and(
-          eq(qcDeviations.organizationId, params.organizationId),
-          eq(qcDeviations.clientWorkspaceId, params.clientWorkspaceId),
-          params.deviationType ? eq(qcDeviations.deviationType, params.deviationType) : undefined,
-          params.severity ? eq(qcDeviations.classification, params.severity) : undefined
-        )
-      )
-      .orderBy(desc(qcDeviations.createdAt));
-  }
-
-  async getQcDeviation(id: number, organizationId: number | string): Promise<any | undefined> {
-    const [row] = await db
-      .select()
-      .from(qcDeviations)
-      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
-      .limit(1);
-    return row;
-  }
-
-  async createQcDeviation(deviation: any): Promise<any> {
-    const [row] = await db.insert(qcDeviations).values(deviation).returning();
-    return row;
-  }
-
-  async updateQcDeviation(id: number, organizationId: number | string, deviation: any): Promise<any> {
-    const [row] = await db
-      .update(qcDeviations)
-      .set({ ...deviation, updatedAt: new Date() })
-      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
-      .returning();
-    if (!row) throw new Error(`QC deviation ${id} not found`);
-    return row;
-  }
-
-  async performImpactAssessment(id: number, organizationId: number | string, assessment: any): Promise<any> {
-    const [row] = await db
-      .update(qcDeviations)
-      .set({
-        impactAssessment: assessment,
-        impactLevel: assessment?.impactLevel ?? assessment?.riskLevel,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
-      .returning();
-    if (!row) throw new Error(`QC deviation ${id} not found`);
-    return row;
-  }
-
-  async linkCapaToDeviation(id: number, organizationId: number | string, capa: any): Promise<any> {
-    const [row] = await db
-      .update(qcDeviations)
-      .set({
-        capaRequired: true,
-        capaNumber: capa?.capaNumber,
-        correctiveActions: capa?.correctiveActions,
-        preventiveActions: capa?.preventiveActions,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
-      .returning();
-    if (!row) throw new Error(`QC deviation ${id} not found`);
-    return row;
-  }
-
-  async getDeviationTrending(params: any): Promise<any> {
-    const rows = await db
-      .select()
-      .from(qcDeviations)
-      .where(eq(qcDeviations.organizationId, Number(params?.organizationId)))
-      .orderBy(desc(qcDeviations.createdAt));
-    const byCategory: Record<string, number> = {};
-    const byClassification: Record<string, number> = {};
-    for (const r of rows as any[]) {
-      if (params?.category && r.category !== params.category) continue;
-      if (r.category) byCategory[r.category] = (byCategory[r.category] || 0) + 1;
-      if (r.classification)
-        byClassification[r.classification] = (byClassification[r.classification] || 0) + 1;
-    }
-    const trends = Object.entries(byCategory).map(([category, count]) => ({ category, count }));
-    return { total: rows.length, trends, byClassification };
   }
 
   // ── Microbiological Test methods ──

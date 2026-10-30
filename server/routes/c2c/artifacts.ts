@@ -57,7 +57,9 @@ import {
   sendSuccess,
   verifyIntegrityChain,
 } from './shared';
-import { authorizedProjectId, loadProjectArtifact } from './artifact-project-scope';
+import { authorizedProjectId, loadProjectArtifact, urlProjectId } from './artifact-project-scope';
+import { projectAdmissionMiddleware, ProjectAdmissionRefusal, requireCurrentProjectActor } from './project-access';
+import { getAccessibleReportProjectIds } from '../../services/report-os/project-access';
 import { verifyReauth } from './actions';
 import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { isSigningAuthorized } from '../../services/part11/signing-authority';
@@ -71,6 +73,30 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+
+/* Every /projects/:projectId route admits the project before its handler runs
+   (D6, docs/evidence/D6-PROJECT-WRITE-GATES/2026-10-29/). The handlers'
+   authorizedProjectId decided read access only, so a viewer, a member without
+   edit permission and an archived project's caller created, edited, exported,
+   commented on and reminded through these URLs. A read is admitted in read
+   mode and a write in write mode. The review acts below are admitted in review
+   mode, so the reviewer an assignment admits still comments, resolves and
+   decides. The status route is one of them: an approver is often deliberately
+   not an editor of what they approve (separation of duties), so the gate admits
+   whoever may take part in review, and the route's own ceremony (its role
+   table, signing authority, re-authentication) decides who may approve or lock.
+   Rollback and assigning reviewers stay writes. The URL names the project by
+   integer id or program UUID, through the same translation authorizedProjectId
+   uses. */
+router.param('projectId', projectAdmissionMiddleware({
+  projectId: req => urlProjectId(req, getOrganizationId(req)),
+  routes: {
+    'POST /projects/:projectId/artifacts/:artifactId/comments': 'review',
+    'PUT /projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve': 'review',
+    'POST /projects/:projectId/artifacts/:artifactId/reviews/submit': 'review',
+    'PUT /projects/:projectId/artifacts/:artifactId/status': 'review',
+  },
+}));
 
 /* ── Helpers this domain owns ─────────────────────────────────────────────── */
 
@@ -272,16 +298,27 @@ async function getArtifactsFromDb(projectId: number, organizationId: number): Pr
 
 /**
  * GET /api/concept2cure/artifacts
- * Returns all artifacts across all projects for the organization (gallery view).
- * Includes project name for display in the cross-project artifacts gallery.
+ * Returns the artifacts of the projects the caller may use, across the
+ * organization (gallery view), with each one's project name.
+ *
+ * 2026-10-29 (D6, docs/evidence/D6-PROJECT-WRITE-GATES/2026-10-29/): it listed
+ * every artifact in the organization, so a member read the titles of a private
+ * project they are not on, and its projects join was on id alone, so a row
+ * whose project_id named another organization's project showed that project's
+ * name (PF-03). The rows are now those of the caller's accessible projects (the
+ * canonical set reporting and AnA's source scope read), and the join is held to
+ * this organization. Archived projects stay listed: their records can be read.
  */
 router.get(
   '/artifacts',
-  // Organization prefix comes from cacheResponse; see /projects above.
-  cacheResponse({ ttl: 60_000, keyGenerator: () => 'artifacts' }),
+  // Organization prefix comes from cacheResponse; the list is the caller's, so the key is too.
+  cacheResponse({ ttl: 60_000, keyGenerator: req => `artifacts:user:${getUserId(req)}` }),
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
+      const actor = await requireCurrentProjectActor(req);
+      const accessible = await getAccessibleReportProjectIds(organizationId, actor, pool);
+      if (accessible.length === 0) return sendSuccess(res, []);
 
       const allArtifacts = await db
         .select({
@@ -298,8 +335,8 @@ router.get(
           projectName: projects.name,
         })
         .from(concept2cureArtifacts)
-        .leftJoin(projects, eq(concept2cureArtifacts.projectId, projects.id))
-        .where(eq(concept2cureArtifacts.organizationId, organizationId))
+        .leftJoin(projects, and(eq(concept2cureArtifacts.projectId, projects.id), eq(projects.organizationId, organizationId)))
+        .where(and(eq(concept2cureArtifacts.organizationId, organizationId), inArray(concept2cureArtifacts.projectId, accessible)))
         .orderBy(desc(concept2cureArtifacts.updatedAt))
         .limit(200);
 
@@ -319,6 +356,7 @@ router.get(
 
       return sendSuccess(res, result);
     } catch (error: any) {
+      if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
       logger.error('Failed to fetch all artifacts', { error: error.message });
       return sendError(res, 500, 'Failed to fetch artifacts');
     }
@@ -1858,6 +1896,11 @@ router.get(
         .where(eq(concept2cureArtifactVersions.artifactId, artifact.id))
         .orderBy(desc(concept2cureArtifactVersions.version));
 
+      /* Who made each version, as the tenant may name them (fold F3 slice B,
+         2026-10-29: the project Vault's artifact leaf lists these versions).
+         A lookup that fails fails the read rather than return an unnamed list. */
+      const authors = await resolveActorNames(versions.map(v => v.createdById));
+
       return sendSuccess(res, {
         artifactId: artifact.artifactId,
         title: artifact.title,
@@ -1869,6 +1912,7 @@ router.get(
           contentHash: v.contentHash,
           changeDescription: v.changeDescription,
           createdById: v.createdById,
+          createdBy: actorLabel(authors, v.createdById),
           createdAt: v.createdAt,
         })),
       });

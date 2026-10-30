@@ -23,21 +23,6 @@ function m1Section(role: DocumentRole, kind: ApplicationKind = 'ind'): string | 
   return soleModule1Placement(role, 'US', kind)?.code ?? null;
 }
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export interface CreateCTDProjectParams {
-  name: string;
-  regulatoryRegion: string;
-  submissionType: string;
-  productName: string;
-  productType: string;
-  therapeuticArea?: string;
-  indication?: string;
-  createdBy: number;
-}
-
 export interface CTDDocumentUpload {
   fileName: string;
   fileSize: number;
@@ -127,48 +112,6 @@ const REQUIRED_SECTIONS: Record<string, Array<{ module: number; section: string;
 
 // Default for agencies not explicitly listed
 const DEFAULT_REQUIRED = REQUIRED_SECTIONS.FDA;
-
-// ============================================================================
-// PROJECT MANAGEMENT
-// ============================================================================
-
-export async function createCTDProject(
-  organizationId: number,
-  params: CreateCTDProjectParams
-): Promise<{ projectId: number; gaps: ComplianceGap[] }> {
-  const result = await pool.query(
-    `INSERT INTO ctd_onboarding_projects (
-      organization_id, name, regulatory_region, submission_type,
-      product_name, product_type, therapeutic_area, indication,
-      status, created_by, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'setup', $9, NOW(), NOW())
-    RETURNING id`,
-    [
-      organizationId, params.name, params.regulatoryRegion, params.submissionType,
-      params.productName, params.productType, params.therapeuticArea || null,
-      params.indication || null, params.createdBy,
-    ]
-  );
-
-  const projectId = result.rows[0].id;
-
-  // Generate initial compliance gaps based on region
-  const gaps = generateInitialGaps(params.regulatoryRegion);
-  for (const gap of gaps) {
-    await pool.query(
-      `INSERT INTO ctd_compliance_gaps (
-        ctd_project_id, organization_id, ctd_module, ctd_section,
-        requirement_type, severity, description, recommendation, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
-      [
-        projectId, organizationId, gap.ctdModule, gap.ctdSection,
-        gap.requirementType, gap.severity, gap.description, gap.recommendation,
-      ]
-    );
-  }
-
-  return { projectId, gaps };
-}
 
 export async function listCTDProjects(organizationId: number) {
   const result = await pool.query(
@@ -441,22 +384,6 @@ export async function validateCTDCompleteness(ctdProjectId: number, organization
     gaps: newGaps,
     completionPercentage: Math.round(((required.length - newGaps.length) / required.length) * 100),
   };
-}
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-function generateInitialGaps(region: string): ComplianceGap[] {
-  const required = REQUIRED_SECTIONS[region] || DEFAULT_REQUIRED;
-  return required.map((req) => ({
-    ctdModule: req.module,
-    ctdSection: req.section,
-    requirementType: 'missing_section',
-    severity: req.severity,
-    description: `Required section: ${req.section} - ${req.title}`,
-    recommendation: `Upload ${req.title} documentation for ${region} submission.`,
-  }));
 }
 
 async function recalculateCompletion(ctdProjectId: number, organizationId: number) {

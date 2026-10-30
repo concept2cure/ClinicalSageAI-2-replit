@@ -7,7 +7,12 @@
  * region×lang matrix, ISO 15223-1 symbol glossary, and MRI matrix
  * collapse into a "Situational awareness" accordion.
  *
- * Cross-program surface (UDI is per-tenant, not per-program).
+ * The open project's labels and UDI records (D2, 2026-10-29). This said
+ * "Cross-program surface (UDI is per-tenant, not per-program)" and read the
+ * organization's summary with no project, so under a project's title it showed
+ * every project's labels. The route narrows every panel by `program_id`
+ * (server/routes/mdx-udi.ts), so the screen reads the project the host
+ * resolves, and with no project reads nothing.
  *
  * ## Data honesty
  *
@@ -36,10 +41,15 @@ import { DocumentsPanel, averageAssessedCompletion } from '../components/Documen
 import { DataGate } from '../components/DataGate';
 import { UDI_DOC_FRAMEWORKS } from '../data/udi-docs';
 import { useUdi, type LabelRow } from '../hooks/useUdi';
+import { readRefusalOf } from '../hooks/useFetchJson';
 import { readyRows } from '../lib/dataState';
+import { EmptyState } from '../../v2/dataConnect';
+import { ReadRefused } from '../../v2/projectScopedRead';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
 export interface UdiSurfaceProps {
+  /** The open project, from the host's `programForContext`. Null reads nothing. */
+  programId: string | null;
   onAskAna: (text: string, opts?: { tool?: string }) => void;
   onOpenEditor?: (docId: string) => void;
 }
@@ -91,10 +101,10 @@ function toLabelDocuments(rows: readonly LabelRow[]): KitDocument[] {
   });
 }
 
-export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
+export function UdiSurface({ programId, onAskAna, onOpenEditor }: UdiSurfaceProps) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
 
-  const live = useUdi();
+  const live = useUdi(programId);
   const issues = readyRows(live.issues);
   const frameworks = UDI_DOC_FRAMEWORKS as unknown as KitDocFramework[];
 
@@ -152,28 +162,59 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
     .slice(0, 3)
     .join(' · ');
 
-  return (
-    <>
-      <div className="page-header">
-        <div>
-          <div className="page-eyebrow">Workstream</div>
-          <h1 className="page-title">UDI and labeling</h1>
-          <div className="page-sub">
-            21 CFR 801 · ISO 15223-1 · EU MDR Annex I · ASTM F2503.
-          </div>
-        </div>
-        <div className="page-actions">
-          <button
-            className="btn ghost small"
-            onClick={() =>
-              onAskAna('Summarise our UDI registration status and any labeling blockers.')
-            }
-            type="button"
-          >
-            {I.sparkles} Ask AnA
-          </button>
+  /* No project, no read. The host does not mount this without one; this holds
+     when something else does, so no label is ever drawn without its project. */
+  if (!programId) {
+    return (
+      <section data-testid="udi-no-project">
+        <EmptyState title="Open a project to check its labels' UDI"
+          hint="Labels and UDI records belong to one project. Choose the project from Projects." />
+      </section>
+    );
+  }
+
+  const header = (
+    <div className="page-header">
+      <div>
+        <div className="page-eyebrow">Workstream</div>
+        <h1 className="page-title">UDI and labeling</h1>
+        <div className="page-sub">
+          21 CFR 801 · ISO 15223-1 · EU MDR Annex I · ASTM F2503.
         </div>
       </div>
+      <div className="page-actions">
+        <button
+          className="btn ghost small"
+          onClick={() =>
+            onAskAna("Summarise this project's UDI registration status and any labeling blockers.")
+          }
+          type="button"
+        >
+          {I.sparkles} Ask AnA
+        </button>
+      </div>
+    </div>
+  );
+
+  /* A refused read, said once as what it is (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/refusal-not-failed-read/). One read
+     feeds every panel here, so a refusal drew four "Could not load …" panels,
+     the words for an outage, under counts of zero that read as this project's.
+     A refusal is not a count, so nothing is counted beside it. A genuine failure
+     (readRefusalOf null) still reaches each panel's failed read. */
+  const refusal = readRefusalOf(live.failure);
+  if (refusal) {
+    return (
+      <>
+        {header}
+        <ReadRefused refusal={refusal} what="the UDI and labeling record" retry={live.refresh} testId="udi-refused" />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {header}
 
       <div className="metrics-row metrics-compact">
         <div className="metric-card">

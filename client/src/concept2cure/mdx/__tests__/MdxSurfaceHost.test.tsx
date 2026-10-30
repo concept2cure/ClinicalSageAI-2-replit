@@ -15,19 +15,33 @@ vi.mock('../surfaces/IvdSurface', () => ({ IvdSurface: ({ onOpenEditor }: { onOp
 import { MdxSurfaceHost } from '../MdxSurfaceHost';
 import { clearShellProject, publishShellProject } from '../../v2/shellProject';
 import { consumeEditorTarget } from '../../v2/editorTarget';
+import { __resetSurfaceActionBus, registerSurfaceActionHandlers } from '../../v2/surfaceActions';
 
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
 const row = (id: string, over: Partial<Program> = {}) => ({ id, title: `Device ${id.slice(0, 4)}`, pathway: 'k510', productType: 'device', ...over } as Program);
 const props = () => ({ surface: { id: 'device-510k' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'medtech' } as unknown as SurfaceViewProps);
 beforeEach(() => { state.programs = [row(A), row(B)]; state.loading = false; state.error = null; state.refresh.mockClear(); });
-afterEach(() => { cleanup(); clearShellProject(); consumeEditorTarget(); sessionStorage.clear(); });
+afterEach(() => { cleanup(); __resetSurfaceActionBus(); clearShellProject(); consumeEditorTarget(); sessionStorage.clear(); });
 
 describe('MDX project context isolation', () => {
-  it('labels the mixed scope of surveillance without changing the selected project', () => {
+  it.each([/^New (program|project)$/, /^Create your first (program|project)$/])('the %s creation door opens the Projects wizard instead of asking AnA', (name) => {
+    state.programs = [];
+    const p = props();
+    render(<MdxSurfaceHost {...p} nav="device-workstream" />);
+    fireEvent.click(screen.getByRole('button', { name }));
+    expect(p.onAsk).not.toHaveBeenCalled();
+    expect(p.onNav).toHaveBeenCalledWith('projects');
+    const openWizard = vi.fn(() => ({ ok: true as const }));
+    registerSurfaceActionHandlers('projects', { 'projects.new-project': openWizard });
+    expect(openWizard).toHaveBeenCalledOnce();
+  });
+  it('says which postmarket panels are this project\'s, without changing the selected project', () => {
     publishShellProject({ id: A });
     render(<MdxSurfaceHost {...props()} nav="device-postmarket" />);
-    expect(screen.getByText('Mixed scope: organization-wide surveillance feeds; reporting clocks for this project')).toBeTruthy();
+    /* Slice 0: the organisation-wide surveillance panels are no longer shown on a project, so the banner no longer says they are. */
+    expect(screen.getByText('Reporting clocks are for this project; signals, CAPA board, trends and PMS plan execution are not shown until they are read for this project')).toBeTruthy();
+    expect(screen.queryByText(/organization-wide surveillance feeds/)).toBeNull();
     expect(screen.getByTestId('selected-program').textContent).toBe(A);
   });
   it('requires an explicit project selection before mounting a project feature', () => {

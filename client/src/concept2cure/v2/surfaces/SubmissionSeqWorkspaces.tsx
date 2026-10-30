@@ -47,6 +47,10 @@ import { downloadBlob } from '../download';
 import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
 import { useSurfaceAvailable } from '../surfaceAvailable';
+/* The Truth Engine's recorded cross-document checks, which had no screen: the
+   route's own comment said no browser client called it. */
+import { SubmissionConsistency } from './SubmissionConsistency';
+import { SubmissionModule2Qc } from './SubmissionModule2Qc';
 import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
 import { CompanySubmissionDocuments } from './CompanySubmissionDocuments';
@@ -1282,7 +1286,8 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
   };
 
   return (
-    <div className="pj-card">
+    <>
+      <div className="pj-card">
       <div className="pj-card-h">
         <span className="t">Validation · sequence {seq.sequenceNumber}</span>
         <span className="s">dispatch readiness · validation</span>
@@ -1408,7 +1413,15 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
           </>
         )}
       </div>
-    </div>
+      </div>
+      {/* Validation asks whether the package is well formed; this asks whether
+          it agrees with itself. The recorded checks were readable only through
+          AnA until now, so a reviewer could be told in chat that a figure
+          disagrees with its source and find nothing about it on the screen. */}
+      <SubmissionConsistency submissionId={sub.id} />
+      {/* Module 2 checked as a run would build it now, from saved records (slice G5). */}
+      <SubmissionModule2Qc submissionId={sub.id} />
+    </>
   );
 }
 
@@ -1989,7 +2002,7 @@ function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; p
         <div className="sc-verdict tone-warn sc-mt" role="status">Transmit is not available: {clause(blockedBy)}.</div>
       ) : !appNumber ? (
         <div className="scaf-note sc-mt">
-          No agency application number is recorded for this program. Enter the number the agency assigned; a package is never sent without one.
+          No agency application number is recorded for this project. Enter the number the agency assigned; a package is never sent without one.
         </div>
       ) : null}
       {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} sequenceNumber={seq.sequenceNumber} />}

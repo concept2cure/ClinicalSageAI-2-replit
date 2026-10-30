@@ -1,0 +1,63 @@
+{
+  "startedAt": "2026-10-26T20:53:54.165399+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts",
+    "server/services/ana-ri/__tests__/open-document-earlier-outline.test.ts",
+    "server/services/ana-ri/__tests__/open-document-turn.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts",
+    "server/services/ana/__tests__/saved-template-oversight.pglite.test.ts",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+    "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 41.369,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "settled-inputs.json",
+  "sourcesBefore": {
+    "server/services/ana-ri/open-document.ts": "13f45982b2eb4967c5b9846176ba3a80d60b7b81e421a4efa6b67e8d315a65f3",
+    "server/services/ana-ri/saved-open-template.ts": "959c4b12066ab2aa49d980e4e39ae5610fdee1330e49abd3d65000e1459075fb",
+    "server/services/authoring/authoring-draft-template.ts": "897cb654b852f3482f22730043e3e69d579b899f67e20f5d5e72335daef9f991",
+    "server/services/ana/saved-template-review.ts": "c940769329ca1356fa8117f9e75f443dde6d0729855f4e77d4f0681ecfbacc65",
+    "server/services/authoring/authoring-template-guidance.ts": "aa6344e50e0d2cfcf472770a8830b82f2a0a631cf9d42b37582c1a23a9a8095b",
+    "server/services/authoring/authoring-permissions.ts": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+    "server/services/authoring/authoring-program-access.ts": "6920b7d28ab8de450d13555234615cbd8f2efce7a491bc1a2a2c347756ddb7e1",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts": "dc0d42209ee1c05d74d01bd0210da3b02204ee7c5dad58582e08ec3a6fa50d10",
+    "server/services/ana-ri/__tests__/open-document-earlier-outline.test.ts": "d844aff104c55c13a66eca8056cd44b06b891f3587d73ce779bb18e82ed6f5f3",
+    "server/services/ana-ri/__tests__/open-document-turn.test.ts": "593942e79c67faf002c34897d0797f439c8fdc2aac0aef77f590c79e6d45fb2b",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts": "2aee1c95d1ec9338a85c7a58639efabf8319384f8e151e6333fb842f54c61c2c",
+    "server/services/ana/__tests__/saved-template-oversight.pglite.test.ts": "bcd24e7daa2487f5db39c9ead8a22301145b3426c624bbfb165387ef89f2434b",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": "7ceecc9bfd4680c123cb6a45ca0f03b02cacb0e8fa7583377fcd61d8d39fa44e",
+    "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts": "42feb9593b89f5767a16656f7ae028fba6611d46af1c45d1cf636c48e290a4a4"
+  },
+  "sourcesAfter": {
+    "server/services/ana-ri/open-document.ts": "13f45982b2eb4967c5b9846176ba3a80d60b7b81e421a4efa6b67e8d315a65f3",
+    "server/services/ana-ri/saved-open-template.ts": "959c4b12066ab2aa49d980e4e39ae5610fdee1330e49abd3d65000e1459075fb",
+    "server/services/authoring/authoring-draft-template.ts": "897cb654b852f3482f22730043e3e69d579b899f67e20f5d5e72335daef9f991",
+    "server/services/ana/saved-template-review.ts": "c940769329ca1356fa8117f9e75f443dde6d0729855f4e77d4f0681ecfbacc65",
+    "server/services/authoring/authoring-template-guidance.ts": "aa6344e50e0d2cfcf472770a8830b82f2a0a631cf9d42b37582c1a23a9a8095b",
+    "server/services/authoring/authoring-permissions.ts": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+    "server/services/authoring/authoring-program-access.ts": "6920b7d28ab8de450d13555234615cbd8f2efce7a491bc1a2a2c347756ddb7e1",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts": "dc0d42209ee1c05d74d01bd0210da3b02204ee7c5dad58582e08ec3a6fa50d10",
+    "server/services/ana-ri/__tests__/open-document-earlier-outline.test.ts": "d844aff104c55c13a66eca8056cd44b06b891f3587d73ce779bb18e82ed6f5f3",
+    "server/services/ana-ri/__tests__/open-document-turn.test.ts": "593942e79c67faf002c34897d0797f439c8fdc2aac0aef77f590c79e6d45fb2b",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts": "2aee1c95d1ec9338a85c7a58639efabf8319384f8e151e6333fb842f54c61c2c",
+    "server/services/ana/__tests__/saved-template-oversight.pglite.test.ts": "bcd24e7daa2487f5db39c9ead8a22301145b3426c624bbfb165387ef89f2434b",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": "7ceecc9bfd4680c123cb6a45ca0f03b02cacb0e8fa7583377fcd61d8d39fa44e",
+    "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts": "42feb9593b89f5767a16656f7ae028fba6611d46af1c45d1cf636c48e290a4a4"
+  },
+  "sourceDrift": [],
+  "rawOutput": "settled-tests.log.gz",
+  "rawGzipSha256": "7d458959f15aa6a2ffc638ff93dd3f7da3ba5140cddf6852e6996c9c0a13db98",
+  "testSummary": [
+    "Test Files  7 passed (7)",
+    "Tests  131 passed (131)",
+    "Duration  40.44s (transform 9.14s, setup 174ms, import 15.14s, tests 23.93s, environment 1ms)"
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "status": "Automated increment qualified; human, live-provider, native PostgreSQL/RLS/concurrency and agency acceptance not run",
+  "sourceCommit": "3835453cbcfed3827f91851aafd03b092e99f938",
+  "qualifiedInputs": "compiler-corrected-source-freeze.json",
+  "qualifiedInputCount": 3042,
+  "testPhases": [
+    {
+      "receipt": "integrated-regression.json",
+      "suites": 119,
+      "passes": 2061
+    },
+    {
+      "receipt": "supplemental-regression.json",
+      "suites": 4,
+      "passes": 97,
+      "repeatedCases": 6
+    },
+    {
+      "receipt": "merged-regression-corrected.json",
+      "suites": 67,
+      "passes": 1116,
+      "overlapsPrior": true
+    },
+    {
+      "receipt": "compiler-fix-regression.json",
+      "suites": 34,
+      "passes": 669,
+      "overlapsPrior": true,
+      "additionalCase": "Exact canonical saved-template identity reuse with renamed document and matching-title/different-id negative control"
+    }
+  ],
+  "mainDistinctSuiteCount": 122,
+  "mainDistinctPassCount": 2152,
+  "noPhaseSummation": "Later phases overlap the main run and are not summed; input transitions retained in qualification-bridge.json, merge-impact.json and compiler-remediation.json.",
+  "allCatalogueHttpProbe": {
+    "filings": 175,
+    "components": 37,
+    "sections": 3111,
+    "database": "PGlite",
+    "sourceReceipt": "integrated-regression.json",
+    "boundary": "Existing selected definitions; not an exhaustive legal universe or a fresh post-merge probe."
+  },
+  "currentInventory": {
+    "filings": 34,
+    "editorLoadableDefinitions": 34,
+    "reusableDocuments": 30,
+    "scopedConcerns": 4
+  },
+  "sharedRegistryInventory": {
+    "definitions": 24,
+    "exactEditorStarts": 22,
+    "unavailable": [
+      "ICH_CTD_M1",
+      "ICH_ECTD_BACKBONE"
+    ]
+  },
+  "lint": {
+    "targets": 125,
+    "errors": 0,
+    "warnings": 78,
+    "baselineWarnings": 78,
+    "growth": [],
+    "configuredIgnoredScripts": 2
+  },
+  "build": "compiler-fix-build.json",
+  "sevenEditorUiSizeGates": "compiler-fix-editor-ui-size-gates.json",
+  "normalPrepushTypeScriptErrors": 0,
+  "normalHooksPassed": true,
+  "retainedFailures": [
+    "integrated-lint.json",
+    "merged-regression.json",
+    "source-push.json"
+  ],
+  "humanCases": {
+    "notRun": 163,
+    "passed": 0
+  },
+  "limits": "See existing biotech matrix and current public-source benchmark. No full US biotech coverage, regulatory completeness, faithful sponsor Word rendering or Weave parity/superiority verdict."
+}

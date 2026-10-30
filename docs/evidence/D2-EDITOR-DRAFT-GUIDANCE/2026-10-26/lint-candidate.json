@@ -1,0 +1,46 @@
+{
+  "startedAt": "2026-10-26T19:12:33.878350+00:00",
+  "argv": [
+    "npx",
+    "eslint",
+    "server/routes/authoring.router.ts",
+    "server/services/ana/saved-template-review.ts",
+    "server/services/authoring/authoring-draft-template.ts",
+    "-f",
+    "json"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.677,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "candidate-source-freeze.json",
+  "sourcesBefore": {
+    "server/routes/authoring.router.ts": "157ae82d75faa213e4dadb6e20678297dbc2edb2d17e8e4eeea926dbd9a9eb3a",
+    "server/services/ana/saved-template-review.ts": "ab7ad8856a2057805428c723380b4643b3cba18170a215121d99ae29d1ee0a4c",
+    "server/services/authoring/authoring-template-guidance.ts": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172",
+    "shared/authoring/recorded-template-source.ts": "56c8e19a2ca0740232df86ee4e80f5ed89025bb7d4840040fa95440c4a985bb6",
+    "server/services/ana/turn-record-draft.ts": "990163b4d6571639acfbb8155d8abb15b2c856b8df5414892cf7ecbd30c9c398",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "server/services/authoring/authoring-draft-template.ts": "3a1289acbd60aae3058072b549b710dc409147fcf4229a9b537a0d28e51d534c"
+  },
+  "sourcesAfter": {
+    "server/routes/authoring.router.ts": "157ae82d75faa213e4dadb6e20678297dbc2edb2d17e8e4eeea926dbd9a9eb3a",
+    "server/services/ana/saved-template-review.ts": "ab7ad8856a2057805428c723380b4643b3cba18170a215121d99ae29d1ee0a4c",
+    "server/services/authoring/authoring-template-guidance.ts": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172",
+    "shared/authoring/recorded-template-source.ts": "56c8e19a2ca0740232df86ee4e80f5ed89025bb7d4840040fa95440c4a985bb6",
+    "server/services/ana/turn-record-draft.ts": "990163b4d6571639acfbb8155d8abb15b2c856b8df5414892cf7ecbd30c9c398",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "server/services/authoring/authoring-draft-template.ts": "3a1289acbd60aae3058072b549b710dc409147fcf4229a9b537a0d28e51d534c"
+  },
+  "sourceDrift": [],
+  "rawOutput": "lint-candidate.log.gz",
+  "rawGzipSha256": "a2bfb48eff95dd4846166f5db9ea6ec86d79bec81447b1fbb4bc409572922129",
+  "testSummary": []
+}

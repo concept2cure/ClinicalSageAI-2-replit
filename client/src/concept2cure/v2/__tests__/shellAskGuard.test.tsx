@@ -22,6 +22,7 @@ import { AuthProvider } from '@/services/portal/authService';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { V2App } from '../V2App';
 import { locationForSurface } from '../routing';
+import { clearShellProject, publishShellProject } from '../shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
@@ -57,6 +58,10 @@ const storedPrefs = () => {
 };
 
 beforeEach(() => {
+  // These test the open work screen's conversation handoff. A2.7 separately
+  // verifies that a project-scoped visit without a project reaches Projects.
+  clearShellProject();
+  publishShellProject({ id: '6191805f-e83d-4327-af00-aa2c6f4d43b0' });
   localStorage.clear();
   vi.stubGlobal(
     'fetch',
@@ -80,6 +85,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  clearShellProject();
   vi.unstubAllGlobals();
   localStorage.clear();
   delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;

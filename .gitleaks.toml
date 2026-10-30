@@ -66,7 +66,9 @@ id = "generic-api-key"
   [[rules.allowlists]]
   description = "identifiers read as keys"
   regexTarget = "secret"
-  regexes = ['''^[a-z0-9]+(?:[-_.][a-z0-9]+)+$''']
+  # A doubled separator is still an identifier (`…-review--octo…`, where a title's
+  # punctuation was dropped: the CDI CSR reference manifests, 2026-10-27).
+  regexes = ['''^[a-z0-9]+(?:[-_.]+[a-z0-9]+)+$''']
 
   # An evidence manifest maps each file it covers to that file's SHA-256:
   # `"server/routes/x.test.ts": "<64 hex>"`. generic-api-key reads the path
@@ -78,6 +80,19 @@ id = "generic-api-key"
   # files (`gate-x.log.gz`) is the same pair: the 2026-10-20/21 manifests keyed
   # seven of them, and the full-history scan was red on nothing else (MR-02,
   # 2026-10-22). The value must still be exactly a 64-hex digest.
+  [[rules.allowlists]]
+  description = "file digests in evidence manifests"
+  regexTarget = "line"
+  regexes = ['''^\s*"[^"\s]*\.(?:ts|tsx|js|jsx|mjs|cjs|json|md|sql|txt|html|css|yml|yaml|toml|sh|py|csv|xml|pdf|docx|log)(?:\.gz)?"\s*:\s*"[0-9a-f]{64}",?\s*$''']
+
+# gitleaks' default sentry-access-token rule reads "sentry" followed by hex as
+# a Sentry token, so an evidence manifest's `"client/src/utils/sentry.ts":
+# "<64 hex>"` pair was 208 of the 211 full-history findings on 2026-10-27
+# (MR-02). The file-digest allowlist above, verbatim (the contract test holds
+# the two equal); a real `sntrys_` token, or a key named for one, still fails.
+[[rules]]
+id = "sentry-access-token"
+
   [[rules.allowlists]]
   description = "file digests in evidence manifests"
   regexTarget = "line"

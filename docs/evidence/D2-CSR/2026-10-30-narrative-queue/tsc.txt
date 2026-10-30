@@ -1,0 +1,1 @@
+NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p . — exit 0, 0 'error TS' lines (2026-10-30 narrative queue)

@@ -4,7 +4,7 @@ import { buildPhase } from './types.js';
 export function buildPmaPyramid(): SubmissionPyramid {
   const phases: PyramidPhase[] = [];
 
-  const phase1 = buildPhase('phase1', 'Program Planning', 1, [
+  const phase1 = buildPhase('phase1', 'Planning', 1, [
     { id: 'strategy', name: 'Define PMA strategy', estimatedHours: 8, role: 'ra_lead', critical: true },
     { id: 'classification', name: 'Confirm class III classification', estimatedHours: 6, role: 'ra_lead' },
     { id: 'pre_sub', name: 'Plan pre-sub meeting', estimatedHours: 6, role: 'project_manager' },

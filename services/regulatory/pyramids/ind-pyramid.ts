@@ -23,7 +23,7 @@ function m1Binding(role: DocumentRole, rest: Omit<Binding, 'ctdSection' | 'secti
   return p ? [{ ...rest, ctdSection: p.code, sectionTitle: p.title }] : [];
 }
 
-export const IB_BINDINGS: Binding[] = m1Binding('investigators_brochure', {
+const IB_BINDINGS: Binding[] = m1Binding('investigators_brochure', {
   ectdLifecycleOp: 'new',
   artifactTypes: ['investigator_brochure'],
 });
@@ -42,7 +42,7 @@ const GCP = 'ICH E6(R3)';
 export function buildIndPyramid(): SubmissionPyramid {
   const phases: SubmissionPyramid['phases'] = [];
 
-  const phase1 = buildPhase('phase1', 'Program Planning', 1, [
+  const phase1 = buildPhase('phase1', 'Planning', 1, [
     {
       id: 'product_profile',
       name: 'Define product profile',

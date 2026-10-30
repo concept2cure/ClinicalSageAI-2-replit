@@ -82,12 +82,12 @@ async function refuseUnownedProgram(
       success: false,
       action,
       message:
-        'Program ownership could not be verified, so nothing was written. Do not tell the user the program does not exist; retry, and report it if it persists.',
+        'Project ownership could not be verified, so nothing was written. Do not tell the user the project does not exist; retry, and report it if it persists.',
       error: 'OWNERSHIP_UNVERIFIABLE',
     };
   }
   if (!ownsProgram) {
-    return { success: false, action, message: 'Program not found.', error: 'NOT_FOUND' };
+    return { success: false, action, message: 'Project not found.', error: 'NOT_FOUND' };
   }
   return null;
 }
@@ -202,7 +202,7 @@ export async function gsprMappingUpsert(
       success: true,
       action,
       data: { ...(row as Record<string, unknown>), agentAuditTrail },
-      message: `Upserted GSPR mapping (${requirementId} → ${applicability}) on program ${programId}.${auditNote(agentAuditTrail)}`,
+      message: `Upserted GSPR mapping (${requirementId} → ${applicability}) on project ${programId}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -317,7 +317,7 @@ export async function postMarketDocumentCreate(
         agentAuditTrail,
       },
       message:
-        `DRAFT ${document.documentType} ${document.code} v${document.version} created on program ${programId}. ` +
+        `DRAFT ${document.documentType} ${document.code} v${document.version} created on project ${programId}. ` +
         (validation.passesGate
           ? 'Passes the compliance gate; still requires sponsor specialisation before approval.'
           : `Does NOT pass the compliance gate (${validation.criticalCount} critical, ${validation.warningCount} warning) — relay the findings.`) +
@@ -503,7 +503,7 @@ function parseCtdProgramId(raw: unknown): number | undefined | 'invalid' {
 function notUsedClause(params: Record<string, unknown>): string {
   const notUsed = (['packet', 'intel', 'reports'] as const).filter(k => params[k] != null);
   return notUsed.length
-    ? ` Not used: ${notUsed.join(', ')} (packet and nonclinical facts are read from the program's records).`
+    ? ` Not used: ${notUsed.join(', ')} (packet and nonclinical facts are read from the project's records).`
     : '';
 }
 
@@ -592,7 +592,7 @@ export async function reviewerSimulationRun(
       action,
       // Serialization boundary: a typed SimulatorResult is a plain JSON object.
       data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
-      message: `Ran reviewer simulation on program ${programId}.${notUsedClause(params)}${auditNote(agentAuditTrail)}`,
+      message: `Ran reviewer simulation on project ${programId}.${notUsedClause(params)}${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return simulatorRefusal(action, err) ?? mapServiceError(action, err);
@@ -828,7 +828,7 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
   {
     name: 'evidence_sufficiency.assess',
     description:
-      'Run an evidence-sufficiency assessment for a regulatory program. ' +
+      'Run an evidence-sufficiency assessment for the selected project, identified by programId. ' +
       'Persists the assessment row. Requires confirm + reason.',
     parameters: 'programId (UUID), pathway (PMA|DE_NOVO|510K), profile (DeviceProfileFlags), confirm="yes", reason',
     example:
@@ -837,7 +837,7 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
   {
     name: 'reviewer_simulation.run',
     description:
-      'Run a multi-persona reviewer simulation against a program. Persists ' +
+      'Run a multi-persona reviewer simulation for the selected project, identified by programId. Persists ' +
       'the run. Requires confirm + reason.',
     parameters:
       'programId (UUID), program (object), personas?, defensePacketId?, ctdProgramId?, confirm="yes", reason',

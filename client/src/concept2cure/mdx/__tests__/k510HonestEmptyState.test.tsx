@@ -76,7 +76,7 @@ describe('510(k) surface with no program selected (sample mode off)', () => {
     expect(text).not.toContain('BX-204');
     expect(text).not.toMatch(/Stage \d+ of \d+/);
     expect(text).not.toContain('41 days');
-    expect(text).toContain('No program selected');
+    expect(text).toContain('No project selected');
   });
 
   /* This asserted '0 sections · 0 blockers', which was the right fix for the
@@ -113,12 +113,12 @@ describe('510(k) surface with a program whose predicate service is unreachable',
 describe('overview with an empty tenant (sample mode off)', () => {
   it('derives the health strip from the empty list, never from MDX_HEALTH', () => {
     stubFetch(() => 200);
-    const { container } = wrap(<Overview programs={[]} onOpenProgram={() => {}} onAskAna={() => {}} />);
+    const { container } = wrap(<Overview programs={[]} onOpenProgram={() => {}} onAskAna={() => {}} onNewProject={() => {}} />);
     const text = container.textContent ?? '';
     expect(text).not.toContain('Down 3 pts');
     expect(text).not.toContain('9 510(k) · 4 PMA');
     expect(text).not.toContain('Current cohort');
     expect(text).not.toContain('DX-102');
-    expect(text).toContain('Active programs');
+    expect(text).toContain('Active projects');
   });
 });

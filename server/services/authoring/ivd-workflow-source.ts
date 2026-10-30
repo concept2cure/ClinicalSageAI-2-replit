@@ -20,11 +20,11 @@ async function recordedScope(input: WorkflowMaterializationInput, record: Record
   const actor = await readCsrProjectActor(q, input.organizationId, input.userId);
   if (record.program_id === null) return { level: 'organization', programId: null, projectId: null };
   const programId = record.program_id;
-  if (typeof programId !== 'string' || !UUID.test(programId)) return fail(409, 'IVD_SOURCE_SCOPE_INVALID', 'The saved IVD program association is invalid.');
+  if (typeof programId !== 'string' || !UUID.test(programId)) return fail(409, 'IVD_SOURCE_SCOPE_INVALID', 'The saved IVD project association is invalid.');
   if (!await programInOrganization(q, programId, input.organizationId)) return fail(404, 'IVD_SOURCE_NOT_FOUND', 'Saved IVD source not found.');
   const anchor = await readProgramAnchorRow(q, { orgId: input.organizationId, programId, context: 'ivd-workflow-import', requireUnique: true });
-  if (!anchor || !await canAccessReportProject(input.organizationId, actor, anchor.id, q)) return fail(403, 'IVD_SOURCE_ACCESS_DENIED', 'The saved IVD program is not currently accessible to this actor.');
-  if (programId.toLowerCase() !== input.target.programId.toLowerCase() || anchor.id !== input.target.projectId) return fail(409, 'IVD_SOURCE_SCOPE_MISMATCH', 'Open this IVD source’s recorded program before importing it.');
+  if (!anchor || !await canAccessReportProject(input.organizationId, actor, anchor.id, q)) return fail(403, 'IVD_SOURCE_ACCESS_DENIED', 'The saved IVD project is not currently accessible to this actor.');
+  if (programId.toLowerCase() !== input.target.programId.toLowerCase() || anchor.id !== input.target.projectId) return fail(409, 'IVD_SOURCE_SCOPE_MISMATCH', 'Open this IVD source’s recorded project before importing it.');
   return { level: 'program', programId: programId.toLowerCase(), projectId: anchor.id };
 }
 

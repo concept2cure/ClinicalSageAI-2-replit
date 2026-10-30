@@ -388,7 +388,7 @@ function FileToVaultForm({ docTitle, docStatus, programId, programName, onClose,
           {refusal && <div className="de-err" role="status">{refusal}</div>}
           {!programId && (
             <div className="de-err" role="status" data-testid="ftv-no-program">
-              This document is not filed under a program, and the vault is program-scoped, so it cannot be filed. Open it from its project, or create documents from a project.
+              This document is not filed under a project, and the vault is project-scoped, so it cannot be filed. Open it from its project, or create documents from a project.
             </div>
           )}
           {sealed && (

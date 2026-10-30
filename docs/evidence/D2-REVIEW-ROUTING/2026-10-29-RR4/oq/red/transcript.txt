@@ -1,0 +1,25 @@
+
+=== qms ===
+  OQ-QMS-01  pass
+  OQ-QMS-02  FAIL  (expected 422, got 400)
+  OQ-QMS-03  FAIL  (expected 201, got 400)
+  OQ-QMS-04  not-executed  (prerequisite step OQ-QMS-03 did not pass)
+  OQ-QMS-05  not-executed  (prerequisite step OQ-QMS-03 did not pass)
+  OQ-QMS-05b  not-executed  (prerequisite step OQ-QMS-05 did not pass)
+  OQ-QMS-06a  FAIL  (create expected 201, got 400)
+  OQ-QMS-06  not-executed  (prerequisite step OQ-QMS-06a did not pass)
+  OQ-QMS-06b  not-executed  (prerequisite step OQ-QMS-05 did not pass)
+  OQ-QMS-06c  not-executed  (prerequisite step OQ-QMS-05 did not pass)
+  OQ-QMS-06d  not-executed  (prerequisite step OQ-QMS-05 did not pass)
+  OQ-QMS-07  not-executed  (prerequisite step OQ-QMS-05 did not pass)
+  OQ-QMS-08  not-executed  (prerequisite step OQ-QMS-06d did not pass)
+  OQ-QMS-09  not-executed  (prerequisite step OQ-QMS-06d did not pass)
+  OQ-QMS-10b  not-executed  (prerequisite step OQ-QMS-06a did not pass)
+  OQ-QMS-10  not-executed  (prerequisite step OQ-QMS-06d did not pass)
+  OQ-QMS-11  pass
+  OQ-QMS-12  pass
+  OQ-QMS-13  pass
+  OQ-QMS-14  not-executed  (prerequisite step OQ-QMS-03 did not pass)
+  OQ-QMS-15  pass
+
+OQ-006 QMS controlled documents: 5 pass, 3 fail, 0 deviation, 13 not-executed → docs/evidence/D2-REVIEW-ROUTING/2026-10-29-RR4/oq/red/OQ-QMS

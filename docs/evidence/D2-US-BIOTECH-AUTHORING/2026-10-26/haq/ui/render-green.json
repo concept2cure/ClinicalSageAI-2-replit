@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-10-26T23:47:19.393489+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditorState.test.ts",
+    "client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 4.66,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "haq/ui/render-green-pins.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts": "fe1272cb6f42c7cc443050349925b58fb61eaacfc23b17288056cfdbbb1e9ba1",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx": "c12af7ced1bddae9c3bb19a51db76d6f0c444d8961c5264d722311a5c6a078b6"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts": "fe1272cb6f42c7cc443050349925b58fb61eaacfc23b17288056cfdbbb1e9ba1",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx": "c12af7ced1bddae9c3bb19a51db76d6f0c444d8961c5264d722311a5c6a078b6"
+  },
+  "sourceDrift": [],
+  "rawOutput": "render-green.log.gz",
+  "rawGzipSha256": "b64ec422c78f60186c06f4b2b4264a6ba6e3a3d734c124225f79d02442193710",
+  "testSummary": [
+    "Test Files  3 passed (3)",
+    "Tests  51 passed (51)",
+    "Duration  4.18s (transform 671ms, setup 255ms, import 958ms, tests 1.76s, environment 831ms)"
+  ]
+}

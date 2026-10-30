@@ -1,0 +1,55 @@
+# What this shows: Audit 2 [1]: the cards that draw each project's stored progressPercent sit under 'Readiness by program' with an 'errors · warnings · pass' legend, and the empty hint promises counts the cards never show.
+# 2026-10-26T05:04:26Z HEAD a40acd714 (working tree, before the fix)
+# npx vitest run --reporter=dot --maxWorkers=1 client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx -t 'recorded progress, and promise|empty project panel promises'
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+---------------xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation offers no control that can only hide every row (audit 2) > the cards are recorded progress, and promise no error, warning or pass counts
+AssertionError: expected 'WorkbenchValidation centerOpen blocke…' not to match /Readiness by program/
+
+- Expected:
+/Readiness by program/
+
++ Received:
+"WorkbenchValidation centerOpen blockers recorded against your organization’s projects. Export report Ask Claude to triagePrograms blocked—Blockers are recorded per project, not linked to programsOpen errors1High/critical severityOpen warnings1Medium or low severityAvg recorded progress0%Recorded project progress, not an eSTAR assessmentReadiness by programColumn order · errors · warnings · passClassactiveInfusion pump510(k)0%Blockers not linked to this programRulesAllBlockersWarningsSevRuleProgramCategoryMessageSinceBlockerblk_a— · —regulatory_correspondence_issueCorrespondence raised biocompatibility6d agoWarningblk_b— · —regulatory_correspondence_issueCorrespondence raised labeling5d ago"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx:240:39
+    238|     const { container } = render(<ValidationSurface onAskAna={() => {}…
+    239|     await waitFor(() => expect(container.querySelector('.val-prog-card…
+    240|     expect(container.textContent).not.toMatch(/Readiness by program/);
+       |                                       ^
+    241|     expect(container.textContent).not.toMatch(/errors · warnings · pas…
+    242|     expect(container.textContent).toMatch(/Recorded progress by projec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation offers no control that can only hide every row (audit 2) > the empty project panel promises no counts
+AssertionError: expected 'No programs to validateEach program y…' not to match /error, warning and pass counts/
+
+- Expected:
+/error, warning and pass counts/
+
++ Received:
+"No programs to validateEach program you run appears here with its error, warning and pass counts."
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx:250:41
+    248|     render(<ValidationSurface onAskAna={() => {}} />);
+    249|     const empty = await screen.findByTestId('workbench-no-validation-p…
+    250|     expect(empty.textContent ?? '').not.toMatch(/error, warning and pa…
+       |                                         ^
+    251|     expect(empty.textContent ?? '').toMatch(/recorded progress/);
+    252|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 15 skipped (17)
+   Start at  05:04:27
+   Duration  1.54s (transform 412ms, setup 168ms, import 526ms, tests 137ms, environment 519ms)
+

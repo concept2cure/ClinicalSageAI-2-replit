@@ -80,11 +80,25 @@
  *      an unused import or a TODO comment satisfies it. With (2), a service
  *      that never clears the flags passes outright. Fix: require an actual
  *      call, `releaseWithoutBypass(`, on comment-stripped text.
- *   5. Only .ts/.tsx/.js/.mjs are read. scripts/ holds .cjs and .mts code
- *      (scripts/fix-missing-schema.cjs and two other .cjs files use pg), the
- *      same kind of file as the scripts/*.mjs the gate does scan. Fix: add
- *      cjs|cts|mts|jsx to the extension filter. The .md/.json quiet case does
- *      not pin these as out of scope.
+ *   5. NARROWED 2026-10-29 (P-70). Only .ts/.tsx/.js/.mjs were read, and
+ *      scripts/ holds .cjs and .mts code. The P-70 rules read every code
+ *      extension (cjs|cts|mts|jsx too) for a reader of the bypass settings and,
+ *      in scripts/ and shared/, for a write of them, so the former probe (a
+ *      session-scoped bypass SET in a scripts/ .cjs) is now a RED case. What
+ *      remains: the switch-writer rule still reads server/ through the four
+ *      extensions, so app.rls_enforce turned off in a server/ .cjs prints OK.
+ *      Fix: pass CODE_EXT to that walk too.
+ *
+ * ── P-70 (2026-10-29) ───────────────────────────────────────────────────────
+ * The gate also refuses any READER of app.bypass_rls / app.is_admin: in every
+ * .sql under migrations/ and db/ (a deploy-set policy, a SECURITY DEFINER helper
+ * in a dollar-quoted body, a file on no applier) and in server/scripts/shared
+ * code outside tests; and any WRITE of either in scripts/ or shared/ (the
+ * preflight's shape before P-70). The quiet cases are the reader quoted in SQL
+ * comments, the LIKE / ~ / regex shapes migrations/20261029j uses to find a
+ * stored reader, and tests that read the setting to prove nothing honours it.
+ * Since P-70 the baseline on the real tree is empty: the cases that exercise
+ * baseline semantics inject their own.
  *
  * Fixture text is assembled from fragments (BYPASS / ADMIN below): scripts/ is
  * in the gate's scan path, so if this file's own code contained the offending
@@ -230,14 +244,68 @@ export async function guardQuery(text: string, params: unknown[]) {
 }
 `;
 
-/** scripts/db/program-same-org-preflight.mjs — transaction-local set_config. */
+/** scripts/db/program-same-org-preflight.mjs since P-70 — transaction-local set_config of enforcement only. */
 const PREFLIGHT = `export async function preflight(client) {
   await client.query('BEGIN');
-  await client.query(\`SELECT set_config('app.rls_enforce', 'off', true), set_config('${BYPASS}', 'true', true)\`);
+  await client.query(\`SELECT set_config('app.rls_enforce', 'off', true)\`);
   const { rows } = await client.query('SELECT id, organization_id FROM regulatory_programs');
   await client.query('ROLLBACK');
   return rows;
 }
+`;
+
+/** The same preflight before P-70: it also lifted the bypass, transaction-locally. */
+const PREFLIGHT_BEFORE_P70 = PREFLIGHT.replace(
+  "set_config('app.rls_enforce', 'off', true)",
+  `set_config('app.rls_enforce', 'off', true), set_config('${BYPASS}', 'true', true)`,
+);
+
+// ── P-70 fixtures: readers of a bypass setting ───────────────────────────────
+/** A deploy-set migration whose policy honours the bypass (the evidence-fabric shape before P-70). */
+const SQL_POLICY_READER = `-- evidence fabric
+DO $$ BEGIN
+CREATE POLICY claims_program_isolation ON evidence.claims
+    USING (
+        program_id::TEXT = current_setting('app.current_program_id', TRUE)
+        OR current_setting('${BYPASS}', TRUE) = 'true'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+`;
+/** A SECURITY DEFINER helper that returns TRUE on the admin switch (the 069 shape, with is_admin). */
+const SQL_FUNCTION_READER = `CREATE OR REPLACE FUNCTION identity.can_access_org(target_org_id UUID)
+RETURNS BOOLEAN LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = identity AS $$
+BEGIN
+  IF current_setting(  '${ADMIN}', TRUE) = 'true' THEN
+    RETURN TRUE;
+  END IF;
+  RETURN identity.current_org_id() = target_org_id;
+END;
+$$;
+`;
+/** A server query that reads the bypass itself. */
+const CODE_READER = `export async function seesEverything(client) {
+  const { rows } = await client.query("SELECT current_setting('${BYPASS}', true) = 'true' AS on");
+  return rows[0].on;
+}
+`;
+/**
+ * Near-misses a migration may hold: the reader quoted in -- and block comments,
+ * and the shapes migrations/20261029j_no_session_rls_bypass.sql uses to FIND a
+ * stored reader (LIKE, ~, a regex over the definition) without being one.
+ */
+const SQL_NEAR_MISSES = `-- AMENDED: the policy no longer reads current_setting('${BYPASS}', TRUE).
+/* It used to say: OR current_setting('${ADMIN}', true) = 'true' */
+DO $x$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_policy WHERE coalesce(pg_get_expr(polqual, polrelid), '') LIKE '%${BYPASS}%') THEN
+    RAISE NOTICE 'still there';
+  END IF;
+  PERFORM regexp_replace(pg_get_functiondef('identity.can_access_org(uuid)'::regprocedure),
+    'IF\\s+current_setting\\([^)]*bypass_rls[^)]*\\)', '', 'gi');
+  PERFORM 1 FROM pg_proc WHERE prosrc ~ 'app\\.(bypass_rls|is_admin)';
+END
+$x$;
 `;
 
 /**
@@ -484,7 +552,7 @@ const cases = [
     expectIn: ['OK — no new session-scoped RLS bypass. 6 baselined occurrence(s) remain in 1 '],
   },
   {
-    name: 'quiet — SET LOCAL inside an explicit transaction (guardQuery) and transaction-local set_config (preflight)',
+    name: 'quiet — SET LOCAL inside an explicit transaction (guardQuery) and transaction-local set_config of enforcement (preflight)',
     files: {
       'server/routes/innovation-routes.ts': GUARD_QUERY,
       'scripts/db/program-same-org-preflight.mjs': PREFLIGHT,
@@ -586,7 +654,9 @@ const cases = [
     },
   },
   {
-    name: 'KNOWN GAP 5 — a session-scoped SET in a scripts/ .cjs file, which the extension filter never reads',
+    // Was KNOWN GAP 5 (a scripts/ .cjs file was never read). Promoted 2026-10-29:
+    // the P-70 writer rule reads every code extension in scripts/ and shared/.
+    name: 'RED — a session-scoped SET of the bypass in a scripts/ .cjs file (formerly KNOWN GAP 5)',
     files: {
       'scripts/db/repair-cross-tenant.cjs': `const { Pool } = require('pg');
 const pool = new Pool();
@@ -599,10 +669,69 @@ async function main() {
 main();
 `,
     },
+    expectExit: 1,
+    expectIn: ['scripts/db/repair-cross-tenant.cjs: 1 write(s) of app.bypass_rls / app.is_admin'],
+  },
+  {
+    name: 'KNOWN GAP 5 (narrowed) — app.rls_enforce turned off in a server/ .cjs file, which the switch-writer rule never reads',
+    files: {
+      'server/jobs/legacy-sweep.cjs': `module.exports = async function sweep(client) {
+  await client.query("SET app.rls_enforce = 'off'");
+  return client.query('SELECT * FROM projects');
+};
+`,
+    },
     knownGap: {
       today: { exit: 0, in: ['OK — no new session-scoped RLS bypass. 0 baselined occurrence(s)'] },
-      caught: { exit: 1, in: ['scripts/db/repair-cross-tenant.cjs: 1 session-scoped bypass set(s)'] },
+      caught: { exit: 1, in: ['server/jobs/legacy-sweep.cjs: 1 write(s) of an isolation switch'] },
     },
+  },
+
+  // ── P-70 (2026-10-29): nothing may read a bypass setting, nor a script set one ──
+  {
+    name: 'RED — a script that lifts the bypass transaction-locally (the preflight before P-70): no policy reads it, and none may',
+    files: { 'scripts/db/program-same-org-preflight.mjs': PREFLIGHT_BEFORE_P70 },
+    expectExit: 1,
+    expectIn: ['scripts/db/program-same-org-preflight.mjs: 1 write(s) of app.bypass_rls / app.is_admin', '1 problem(s)'],
+  },
+  {
+    name: 'RED — a deploy-set migration whose policy honours the bypass, named by file and line',
+    files: { 'db/migrations/20260206_phase5_evidence_fabric.sql': SQL_POLICY_READER },
+    expectExit: 1,
+    expectIn: ['db/migrations/20260206_phase5_evidence_fabric.sql:6: reads app.bypass_rls / app.is_admin', '1 problem(s)'],
+  },
+  {
+    name: 'RED — a SECURITY DEFINER helper that returns TRUE on app.is_admin, inside a dollar-quoted body, spaces before the quote',
+    files: { 'migrations/20261101_helper.sql': SQL_FUNCTION_READER },
+    expectExit: 1,
+    expectIn: ['migrations/20261101_helper.sql:4: reads app.bypass_rls / app.is_admin'],
+  },
+  {
+    name: 'RED — a reader in a file on no applier (db/migrations/_legacy/) still fails: it is one list entry from a deploy',
+    files: { 'db/migrations/_legacy/042_gcc_old.sql': SQL_POLICY_READER },
+    expectExit: 1,
+    expectIn: ['db/migrations/_legacy/042_gcc_old.sql:6: reads app.bypass_rls / app.is_admin'],
+  },
+  {
+    name: 'RED — server code whose SQL string reads the bypass',
+    files: { 'server/services/reporting/everything.ts': CODE_READER },
+    expectExit: 1,
+    expectIn: ['server/services/reporting/everything.ts:2: reads app.bypass_rls / app.is_admin'],
+  },
+  {
+    name: 'quiet — the reader quoted in SQL comments, and the LIKE / ~ / regex shapes that find a stored reader without being one',
+    files: { 'migrations/20261029j_no_session_rls_bypass.sql': SQL_NEAR_MISSES },
+    expectExit: 0,
+    expectIn: ['OK — no policy, function or code reads app.bypass_rls / app.is_admin (1 migration file(s)'],
+  },
+  {
+    name: 'quiet — a test that reads the setting to prove nothing honours it (tests are not product code)',
+    files: {
+      'server/db/__tests__/no-bypass.test.ts': CODE_READER,
+      'server/db/no-bypass.spec.ts': CODE_READER,
+    },
+    expectExit: 0,
+    expectIn: ['OK — no policy, function or code reads app.bypass_rls / app.is_admin'],
   },
 ];
 

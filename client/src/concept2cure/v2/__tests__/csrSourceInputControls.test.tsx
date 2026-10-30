@@ -34,6 +34,7 @@ beforeEach(() => {
     if (path.includes('/clinical-tables?')) return response(saved('run-1'));
     if (path.endsWith('/csr/source-contract')) return response({ format: list.format, requiredFields: ['studyInfo', 'participants', 'studyData'], sourceSchema: { type: 'object' } });
     if (path.includes('/runs?')) return response({ runs: [] });
+    if (path.startsWith('/api/csr-workflow/pivotal')) return response({ projectId: 11, studies: [] });
     if (path.endsWith('/runs/for-program')) return response({ runId: 'created-run', submissionId: 'submission-1', status: 'awaiting-signature', startedAt: '2026-10-14' });
     return response({});
   });
@@ -58,6 +59,28 @@ it('previews the exact version/hash and requires explicit inclusion before publi
   expect(screen.getByText(/AI narrative generation remains unavailable/)).toBeTruthy();
 });
 
+it('names the study’s ClinicalTrials.gov number from its source, or says the source states none (D5, 2026-10-29)', async () => {
+  render(<CsrSourceInputControls {...props} />);
+  await chooseAndPreview();
+  expect(screen.getByText(/SYN-P1 · no ClinicalTrials\.gov number in the source · data cut 2026-10-01/)).toBeTruthy();
+  cleanup();
+  apiRequest.mockImplementation(async (method, path) => {
+    if (path.includes('/csr/sources?')) return response(list);
+    if (path.endsWith('/csr/source-preview')) return response({ ...preview, source: { ...receipt, studyInfo: { ...receipt.studyInfo, nctNumber: 'NCT05330182' } } });
+    return response({});
+  });
+  render(<CsrSourceInputControls {...props} />);
+  await chooseAndPreview();
+  expect(screen.getByText(/SYN-P1 · NCT05330182 · data cut 2026-10-01/)).toBeTruthy();
+});
+
+it('shows the project’s pivotal declarations on the CSR card, which a launch screen shows (D5, 2026-10-29)', async () => {
+  render(<CsrSourceInputControls {...props} />);
+  expect(await screen.findByText('No CSR build in this project names a study yet.')).toBeTruthy();
+  expect(screen.getByText('Pivotal studies')).toBeTruthy();
+  expect(apiRequest.mock.calls.some(([method, path]) => method === 'GET' && path === `/api/csr-workflow/pivotal?programId=${encodeURIComponent(PROGRAM)}`)).toBe(true);
+});
+
 it('keeps unapproved source previews read-only', async () => {
   apiRequest.mockImplementation(async (_method, path) => response(path.includes('/source-preview')
     ? { ...preview, approved: false, source: { ...receipt, sourceApproval: 'not-approved' } }
@@ -70,12 +93,19 @@ it('keeps unapproved source previews read-only', async () => {
 });
 
 it('separates failed and malformed source lists from a confirmed empty list and supports retry', async () => {
-  apiRequest.mockResolvedValueOnce(response({ ...list, sources: [{ ...SOURCE, sha256: 'missing' }] })).mockResolvedValueOnce(response({ ...list, sources: [], limitReached: true }));
+  // By path: the card also reads its pivotal declarations when it opens.
+  const original = apiRequest.getMockImplementation()!;
+  let listReads = 0;
+  apiRequest.mockImplementation((method, path, body) => {
+    if (!String(path).includes('/csr/sources?')) return original(method, path, body);
+    listReads += 1;
+    return Promise.resolve(response(listReads === 1 ? { ...list, sources: [{ ...SOURCE, sha256: 'missing' }] } : { ...list, sources: [], limitReached: true }));
+  });
   render(<CsrSourceInputControls {...props} />);
   await screen.findByRole('alert');
   expect(screen.queryByText(/No supporting JSON sources/)).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Reload clinical sources' }));
-  await screen.findByText('No supporting JSON sources are listed for this program.');
+  await screen.findByText('No supporting JSON sources are listed for this project.');
   expect(screen.getByText(/source list reached its limit/)).toBeTruthy();
 });
 
@@ -110,7 +140,7 @@ it('discards a late former-program preview and clears busy state on the program 
   fireEvent.click(screen.getByRole('button', { name: 'Preview clinical tables' }));
   await waitFor(() => expect(busy).toHaveBeenCalledWith(true));
   view.rerender(<CsrSourceInputControls {...props} programId={OTHER} />);
-  await screen.findByText('No supporting JSON sources are listed for this program.');
+  await screen.findByText('No supporting JSON sources are listed for this project.');
   await act(async () => { finish(); await pending; });
   expect(screen.queryByLabelText('Clinical table preview')).toBeNull();
   expect(selection.mock.calls.some(([value]) => value !== null)).toBe(false);

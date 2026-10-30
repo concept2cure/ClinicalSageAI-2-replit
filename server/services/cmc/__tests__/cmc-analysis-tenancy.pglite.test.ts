@@ -178,7 +178,7 @@ describe('runIchComplianceCheck — ICH compliance checker', () => {
     expect(await readProgramStage(h.pool, MINE, MY_PROJECT)).toEqual({
       application: 'clinical_trial',
       phase: 1,
-      basis: 'program type "ind"; clinical phase 1, the highest of 1 study design(s)',
+      basis: 'filing type "ind"; clinical phase 1, the highest of 1 study design(s)',
     });
   });
 
@@ -192,7 +192,7 @@ describe('runIchComplianceCheck — ICH compliance checker', () => {
     // And nothing failed to read: a leak fixed by breaking the query is not a fix.
     expect(own.unevaluatedInputs).toEqual([]);
     // The caller's own stage was read: a phase 1 IND, whose validated method passes.
-    expect(blobOf(own)).toContain(JSON.stringify('program type "ind"; clinical phase 1').slice(1, -1));
+    expect(blobOf(own)).toContain(JSON.stringify('filing type "ind"; clinical phase 1').slice(1, -1));
   });
 });
 

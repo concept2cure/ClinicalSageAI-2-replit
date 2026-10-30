@@ -1,0 +1,15 @@
+{
+  "kind": "Read-only assistant code review and runtime selection probe, not human acceptance",
+  "files": {
+    "server/services/authoring/ind-authoring-templates.ts": "9257c2ec3e49546ae80f2acbb31c6c2d96f113d07c12790b43f4b820f118a99c",
+    "server/services/authoring/ind-template-outlines-m4-m5.ts": "d4b59a1805cc46ca13b3fe74cc412f7cef497321f28169892d5554b1db4e7cbc",
+    "server/services/regulatory/registry/usBiotechAuthoringCoverage.ts": "f5c1ef8c7e2d6d5e17ed4f67e0c2929b1abded89d20d0da4b2fc2d743c7891bc"
+  },
+  "observations": [
+    "Only exact early and finalized protocol starts resolve to M11 with88rows; broad study-report start remains the report container.",
+    "SAP resolves the existing10planningheadings with work-local codes and no invented CTD placement.",
+    "US authoring coverage labels itself inventory-only, includes EUA/RFD cross-segment and known scope gaps, and distinguishes static backing from workflow/human evidence."
+  ],
+  "remainingSubstantiveBlockers": [],
+  "pending": "Cross-cutting module exposure must use exact canonically backed USM1/ICHM2\u20135; GLOBALICH_CTD_M1 must stay unexposed because Module1isregional."
+}

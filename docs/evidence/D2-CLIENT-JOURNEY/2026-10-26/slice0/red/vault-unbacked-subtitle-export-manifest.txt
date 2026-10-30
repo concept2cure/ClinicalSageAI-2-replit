@@ -1,0 +1,80 @@
+# red on 928b70996 (working tree, before the fix), 2026-10-26T02:45:38Z
+# npx vitest run --reporter=dot client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx > device-vault claims nothing it does not do (slice 0) > its subtitle claims no hash chain and no retention period
+AssertionError: expected 'Every program artifact, every version…' not to match /SHA-256 chained/i
+
+- Expected:
+/SHA-256 chained/i
+
++ Received:
+"Every program artifact, every version, every signature. 21 CFR Part 11 audit trail · SHA-256 chained · 7-year minimum retention."
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx:57:21
+     55|     await waitFor(() => expect(container.textContent ?? '').toContain(…
+     56|     const sub = container.querySelector('.page-header .page-sub')?.tex…
+     57|     expect(sub).not.toMatch(/SHA-256 chained/i);
+       |                     ^
+     58|     expect(sub).not.toMatch(/7-year/i);
+     59|     expect(sub).not.toMatch(/retention/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx > device-vault claims nothing it does not do (slice 0) > offers no Export manifest button, and keeps the real upload
+AssertionError: expected <button class="btn ghost small">…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="btn ghost small"
+>
+  <svg
+    fill="none"
+    height="16"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="16"
+  >
+    <path
+      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+    />
+    <polyline
+      points="7 10 12 15 17 10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="15"
+      y2="3"
+    />
+  </svg>
+   Export manifest
+</button>
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx:68:72
+     66|     const { container } = mount((t) => { asked.push(t); });
+     67|     await waitFor(() => expect(container.textContent ?? '').toContain(…
+     68|     expect(screen.queryByRole('button', { name: /export manifest/i }))…
+       |                                                                        ^
+     69|     expect(container.textContent ?? '').not.toMatch(/Export manifest/i…
+     70|     expect(screen.getByRole('button', { name: /upload/i })).toBeTruthy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  02:45:30
+   Duration  2.05s (transform 392ms, setup 179ms, import 517ms, tests 648ms, environment 521ms)
+

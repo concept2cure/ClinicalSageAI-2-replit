@@ -23,6 +23,21 @@ export interface VaultIngestArgs {
    * Lineage is never taken from a caller any other way.
    */
   supersedesDocumentId?: string;
+  /**
+   * Server-owned: these bytes are an earlier version's, restored as the next
+   * version (MR-08 Stage 5, `vault-version-restore.ts`). Only with
+   * `supersedesDocumentId`. The check-in admits bytes the document already
+   * holds only because they are this version's, and the audit row names it and
+   * the person's reason. Never taken from a request body.
+   */
+  restoreOf?: { versionId: string; version: string; reason: string };
+  /**
+   * The caller lets the Vault number versions: a typed version is refused for
+   * a document code that already has one (vault-ingest.service.ts
+   * typedVersionRefusal). The upload route sets it; services with their own
+   * numbering do not.
+   */
+  numberedByVault?: boolean;
   folderId?: string;
   evidenceKind?: string;
   ctdSection?: string;
@@ -85,6 +100,8 @@ export type VaultIngestResult =
         contentHash: string;
         processingStatus: string;
         hasExtractedText: boolean;
+        /** Whether the text was read, is still being read (MR-08 Stage 3), or could not be. */
+        extraction: 'extracted' | 'pending' | 'failed';
         wordCount: number | null;
         createdAt: string;
         updatedAt: string;

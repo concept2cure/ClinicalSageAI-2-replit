@@ -1,0 +1,72 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5197/api/c2c/project-vault/4a9fbd71-0d26-4316-a981-33a6e1730f7e/documents/75a84466-7533-4a34-beab-057f8ba72dc9/versions",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 185,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "versions": [
+          {
+            "id": "75a84466-7533-4a34-beab-057f8ba72dc9",
+            "version": "1.0",
+            "contentHash": "e6d77d49428fddf15fdc82985e00719ce018ab92503c9b28b906855e51d4c2f1",
+            "fileSize": 618,
+            "fileName": "OQ-002-placed-overview-20261029121031.pdf",
+            "uploader": "OQ Runner",
+            "uploaderId": 6,
+            "createdAt": "2026-10-29T12:13:51.040Z",
+            "current": true,
+            "link": "none",
+            "lifecycle": null,
+            "placements": [
+              {
+                "leafId": 1,
+                "submissionId": 5,
+                "submissionTitle": "OQ-002 IND 20261029121031",
+                "applicationType": "IND",
+                "sequenceId": 1,
+                "sequenceNumber": "0000",
+                "region": "fda",
+                "sequenceStatus": "draft",
+                "dispatchStatus": null,
+                "sectionCode": "2.5",
+                "leafTitle": "Clinical overview",
+                "operation": "new"
+              }
+            ],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "not reviewed"
+          }
+        ],
+        "signing": {
+          "canSign": true,
+          "signers": [
+            {
+              "id": 8,
+              "name": "OQ Approver"
+            },
+            {
+              "id": 6,
+              "name": "OQ Runner"
+            },
+            {
+              "id": 7,
+              "name": "OQ Signer"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

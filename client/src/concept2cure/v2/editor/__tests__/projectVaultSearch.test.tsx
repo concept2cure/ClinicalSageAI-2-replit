@@ -5,11 +5,16 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 import { ProjectFilesPanel } from '../ProjectFilesPanel';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken } from '@/utils/authToken';
+import { clearShellProject, publishShellProject } from '../../shellProject';
 
 const programId = '11111111-1111-4111-8111-111111111111';
 const workingId = '22222222-2222-4222-8222-222222222222';
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => ({ success: true, data }) });
-const hit = (n: number) => ({ id: `source-${n}`, title: `Protocol source ${n}`, fileName: `protocol-${n}.docx`,
+/** A Vault version id is a uuid; source intake refuses anything else as no saved source (8c86a44a3). */
+const sourceId = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+const hit = (n: number) => ({ id: sourceId(n), title: `Protocol source ${n}`, fileName: `protocol-${n}.docx`,
   documentType: 'Protocol', size: null, folderId: null, ctdSection: null, placementStatus: 'unfiled', snippet: null,
   originalFileAvailable: true, current: true, disposition: 'keep_data' });
 const firstPage = Array.from({ length: 25 }, (_, n) => hit(n + 1));
@@ -19,14 +24,30 @@ function setup(onOpenDocument = vi.fn()) {
   fireEvent.change(screen.getByLabelText('Search the project vault'), { target: { value: 'Protocol' } });
   return onOpenDocument;
 }
-beforeEach(() => { apiRequest.mockReset(); });
-afterEach(() => cleanup());
+/* Source intake is the signed-in member's, in the open project (8c86a44a3,
+   SOURCE_INTAKE_OWNERSHIP_2026-10-23.md): a session, the shell project, and a
+   working copy whose recorded owner, tenant, project and source are the ones
+   asked for. The same fixture as sourceImportDialog.test.tsx. */
+const token = `fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`;
+beforeEach(() => {
+  authService.endSession(null); clearAuthToken(); localStorage.clear(); sessionStorage.clear();
+  authService.setToken(token, { id: '7', organizationId: '12', roles: ['admin'], permissions: ['governed:write'] }, 'fixture-refresh', 3600);
+  publishShellProject({ id: programId }); apiRequest.mockReset();
+});
+afterEach(() => { cleanup(); authService.endSession(null); clearAuthToken(); clearShellProject(); localStorage.clear(); sessionStorage.clear(); });
 
 describe('all matching Vault sources remain reachable in the existing editor', () => {
   it('loads later matches and imports the exact selected source through the existing working-copy dialog', async () => {
     apiRequest.mockImplementation(async (method: string, url: string, body?: { source: { documentId: string } }) => {
-      if (method === 'POST') return ok({ doc: { id: workingId, title: 'Working protocol' }, sections: [], warnings: [], reused: false,
-        origin: { kind: 'vault', id: body!.source.documentId, programId, sha256: 'a'.repeat(64), conversion: 'docx-structure' } });
+      if (method === 'POST') {
+        const origin = { kind: 'vault', id: body!.source.documentId, programId, title: 'Protocol source 26', fileName: 'protocol-26.docx',
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', documentType: 'Protocol', sectionCode: null,
+          sha256: 'a'.repeat(64), conversion: 'docx-structure' };
+        return ok({ doc: { id: workingId, title: 'Working protocol', tenant_id: 12, client_program_id: programId, created_by: 7, status: 'DRAFT',
+          provenance: { source: 'import', importSource: { ...origin, reason: 'Revise protocol criteria', warnings: [] } } },
+        sections: [{ id: '33333333-3333-4333-8333-333333333333', doc_id: workingId, tenant_id: 12, code: 'source.1', title: 'Protocol',
+          content: 'Saved protocol', order_index: 0 }], warnings: [], reused: false, origin });
+      }
       return ok(url.includes('/search?') ? { results: offsetOf(url) === 0 ? firstPage : [hit(26)], total: 26 }
         : { tree: [], documentCount: 0 });
     });
@@ -40,8 +61,8 @@ describe('all matching Vault sources remain reachable in the existing editor', (
     fireEvent.click(screen.getByRole('button', { name: 'Create working copy' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Open working copy' }));
     expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/import/source', {
-      programId, source: { kind: 'vault', documentId: 'source-26' }, reason: 'Revise protocol criteria',
-    });
+      programId, source: { kind: 'vault', documentId: sourceId(26) }, reason: 'Revise protocol criteria',
+    }, { Authorization: `Bearer ${token}`, 'x-organization-id': '12' });
     expect(onOpenDocument).toHaveBeenCalledWith(workingId);
   });
 
@@ -146,8 +167,8 @@ describe('search results stay with their current query and recorded eligibility'
     // The tree keys an upload `up-<uuid>` (server uploadLeaf) and a search hit is
     // the bare uuid. The fixture used to give both the same id, which hid that a
     // hit never met its tree row: no checksum, so a found file could not be cited.
-    const old = { ...hit(1), id: 'up-source-1', num: '', type: 'Protocol', status: 'unfiled', pct: null, owner: '', ver: '', updated: '',
-      preview: '', src: 'upload', docId: 'source-1', hash: 'a'.repeat(64) };
+    const old = { ...hit(1), id: `up-${sourceId(1)}`, num: '', type: 'Protocol', status: 'unfiled', pct: null, owner: '', ver: '', updated: '',
+      preview: '', src: 'upload', docId: sourceId(1), hash: 'a'.repeat(64) };
     apiRequest.mockImplementation(async (_method: string, url: string) => ok(url.includes('/search?')
       ? { results: [{ ...hit(1), originalFileAvailable: false }], total: 1 } : { tree: [old], documentCount: 1 }));
     setup();

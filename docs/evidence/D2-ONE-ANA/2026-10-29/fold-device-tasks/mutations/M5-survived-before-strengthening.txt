@@ -1,0 +1,7 @@
+# mutation M5-client-calls-blocking-blocked: client/src/concept2cure/v2/surfaces/TaskBoard.tsx
+# replaced:       blocked: list.filter(t => t.blocked).length,
+# with:           blocked: list.filter(t => t.blocked || t.blocking).length,
+
+== client/src/concept2cure/v2/__tests__/taskBoardBlocking.test.tsx
+      Tests  4 passed (4)
+# restored byte-for-byte (cmp)

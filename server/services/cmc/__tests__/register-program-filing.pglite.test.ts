@@ -103,7 +103,7 @@ describe('a legacy, unfiled record is filed on its first edit — never forked',
       `INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key) VALUES ($1, $2, 'drug_substance', $3)`,
       [ORG, A, `drug_substance:${id}`],
     );
-    await expect(projectOnEdit(ORG, DS, id, B)).rejects.toThrow(/already part of another program/);
+    await expect(projectOnEdit(ORG, DS, id, B)).rejects.toThrow(/already part of another project’s Module 3/);
     // Filing it under the program that already holds it is not a fork.
     expect(await projectOnEdit(ORG, DS, id, A)).toEqual({ found: true, set: { projectId: A } });
   });

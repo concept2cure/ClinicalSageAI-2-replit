@@ -30,17 +30,21 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
-  useAuthUser: () => ({ id: 9, displayName: 'Dana Reyes', email: 'dana@example.invalid', mfaEnabled: false }),
-}));
+vi.mock('@/services/portal/authService', () => {
+  const user = { id: 9, displayName: 'Dana Reyes', email: 'dana@example.invalid', mfaEnabled: false };
+  return { useAuthUser: () => user, authService: { getUser: () => user,
+    captureSessionReadGuard: () => ({ sameRevision: () => true }), on: () => () => undefined } };
+});
 vi.mock('../../_shared/signingPosture', () => ({ useSigningPosture: () => null }));
 
 import { AgencyResponses } from '../surfaces/AgencyResponses';
 import type { CommRow } from '../surfaces/AgencyInbox';
+import { EDITOR_VERSION, editorRead } from './_agency-response-editor-fixture';
 
 const PID = '42';
 const BASE = `/api/concept2cure/projects/${PID}/agency-communications/ace_1`;
 const ok = (data: unknown, status = 200) => ({ ok: true, status, json: async () => data, headers: new Headers() }) as unknown as Response;
+
 
 const LETTER: CommRow = {
   id: 'ace_1',
@@ -111,6 +115,14 @@ beforeEach(() => {
   fire.mockReset();
 });
 
+it('routes response authoring through the existing document editor instead of a separate response textbox', async () => {
+  apiRequest.mockImplementation(async () => ok(payload([question()])));
+  mount();
+  fireEvent.click(await screen.findByRole('button', { name: /Edit response/ }));
+  expect(screen.queryByRole('textbox', { name: 'Response' })).toBeNull();
+  expect(await screen.findByRole('button', { name: 'Open response in editor' })).toBeTruthy();
+});
+
 describe('a returned session refusal is never a recorded action', () => {
   const reason = 'Record this from the agency letter.';
   const message = 'Your session ended. Sign in again before recording this change.';
@@ -149,24 +161,26 @@ describe('a returned session refusal is never a recorded action', () => {
     expect(fire.mock.calls.every(([, tone]) => tone === 'error')).toBe(true);
   });
 
-  it('keeps the exact response edit and base revision after a returned 401', async () => {
+  it('keeps the exact saved editor preview and base revision after a returned 401', async () => {
     const writes: unknown[] = [];
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
       if (method === 'PUT') {
         writes.push(body);
         return new Response(JSON.stringify({ error: { code: 'SESSION_IDLE', message } }), { status: 401, headers: { 'Content-Type': 'application/json' } });
       }
+      if (url.endsWith('/editor-source')) return ok(editorRead());
       return url === `${BASE}/questions` ? ok(payload([question()])) : ok({});
     });
     mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Edit response' }));
-    fireEvent.change(screen.getByLabelText('Response'), { target: { value: 'Keep this exact response text.' } });
+    await screen.findByLabelText('Saved response preview');
     fireEvent.change(screen.getByLabelText('Reason for this change'), { target: { value: reason } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save response' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Use saved editor response' }));
     await waitFor(() => expect(fire).toHaveBeenCalledWith(expect.stringContaining(message), 'error'));
-    expect(writes).toEqual([{ responseText: 'Keep this exact response text.', expectedRevision: 2, reason }]);
-    expect((screen.getByLabelText('Response') as HTMLTextAreaElement).value).toBe('Keep this exact response text.');
+    expect(writes).toEqual([{ editorSource: EDITOR_VERSION, expectedRevision: 2, reason }]);
+    expect(screen.getByLabelText('Saved response preview').textContent).toBe('Keep this exact response text.');
     expect((screen.getByLabelText('Reason for this change') as HTMLInputElement).value).toBe(reason);
+    expect((screen.getByRole('button', { name: 'Use saved editor response' }) as HTMLButtonElement).disabled).toBe(true);
     expect(fire.mock.calls.every(([, tone]) => tone === 'error')).toBe(true);
   });
 });
@@ -181,7 +195,7 @@ function mount() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <AgencyResponses projectId={PID} letter={LETTER} fire={fire} />
+      <AgencyResponses projectId={PID} letter={LETTER} fire={fire} onNav={() => undefined} />
     </QueryClientProvider>,
   );
 }
@@ -285,27 +299,27 @@ describe('after the review of 0308ee25', () => {
     expect(screen.getByText('You do not hold signing authority in this organization.')).toBeTruthy();
   });
 
-  it('a second Save after a refusal still sends the revision the edit started from', async () => {
-    let revision = 2;
+  it('holds the saved base after a response conflict until another explicit refresh', async () => {
     const sent: unknown[] = [];
     apiRequest.mockImplementation(async (m: string, url: string, body?: Record<string, unknown>) => {
-      if (url === `${BASE}/questions`) return ok(payload([question({ responseRevision: revision, responseText: `Text of revision ${revision}.` })]));
+      if (url === `${BASE}/questions`) return ok(payload([question()]));
+      if (url.endsWith('/editor-source')) return ok(editorRead());
       if (m === 'PUT' && url === `${BASE}/questions/7/response`) {
         sent.push(body?.expectedRevision);
-        revision = 3; // someone else saved meanwhile
         throw refused(409, 'RESPONSE_CHANGED', 'The response was changed by someone else (now revision 3). Reload it before saving.');
       }
       return ok({});
     });
     mount();
     fireEvent.click(await screen.findByRole('button', { name: /Edit response/ }));
-    fireEvent.change(screen.getByLabelText('Response'), { target: { value: 'My text.' } });
+    await screen.findByLabelText('Saved response preview');
     fireEvent.change(screen.getByLabelText('Reason for this change'), { target: { value: 'Answering from the report' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save response' }));
-    expect(await screen.findByText(/Someone saved revision 3 while you were editing revision 2/)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Save response' }));
-    await waitFor(() => expect(sent).toEqual([2, 2]));
-    expect((screen.getByLabelText('Response') as HTMLTextAreaElement).value).toBe('My text.');
+    fireEvent.click(screen.getByRole('button', { name: 'Use saved editor response' }));
+    expect(await screen.findByText(/now revision 3.*Refresh the saved response/)).toBeTruthy();
+    const save = screen.getByRole('button', { name: 'Use saved editor response' }) as HTMLButtonElement;
+    expect(save.disabled).toBe(true); fireEvent.click(save);
+    expect(sent).toEqual([2]);
+    expect(screen.getByLabelText('Saved response preview').textContent).toBe('Keep this exact response text.');
   });
 
   it('a refused signature reloads the record when the dialog closes', async () => {

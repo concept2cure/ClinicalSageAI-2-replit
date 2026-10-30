@@ -51,7 +51,8 @@ describe('a Vault version in review is on the board, with who has it', () => {
     expect(row.textContent).toContain('You can sign the review. Not assigned to one person. Can sign the review: JM Smith, Raj Patel or QA Onboard 3.');
     expect(row.textContent).toContain('Sent for review by Emily Watson');
     expect(screen.queryByText('Nothing is in review')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Open in the Vault' }));
+    // RR1b: "Open the version" (a version with no recognisable project opens the Vault itself).
+    fireEvent.click(screen.getByRole('button', { name: 'Open the version' }));
     expect(p.onNav).toHaveBeenCalledWith('vault');
   });
 

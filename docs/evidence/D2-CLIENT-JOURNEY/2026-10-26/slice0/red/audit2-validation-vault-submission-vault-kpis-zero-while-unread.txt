@@ -1,0 +1,468 @@
+# What this shows: Audit 2 [9]: while the vault list is in flight, after it fails, or when it answers something other than a list, the KPI strip reads 'Artifacts in vault 0 · 0 e-signed' and 'Vault size 0.0 MB', the folder rail and the panel '0 of 0 artifacts shown', and a non-list 200 shows no error.
+# 2026-10-26T05:14:01Z HEAD a40acd714 (working tree, before the fix)
+# npx vitest run --reporter=dot --maxWorkers=1 client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx -t 'vault read in flight states no count|not a list is a failure|FAILED vault read states no count|answered, empty vault read'
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+-----xxx·---
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx > device-vault states no figure it did not read (audit 2) > a vault read in flight states no count
+AssertionError: expected '0' to be '—' // Object.is equality
+
+Expected: "—"
+Received: "0"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx:186:58
+    184|     const { container } = mount();
+    185|     await act(async () => {});
+    186|     expect(tile(container, /Artifacts in vault/).metric).toBe('—');
+       |                                                          ^
+    187|     expect(tile(container, /Vault size/).metric).toBe('—');
+    188|     expect(container.textContent ?? '').not.toMatch(/0 of 0 artifacts/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx > device-vault states no figure it did not read (audit 2) > a vault 200 that is not a list is a failure, never an empty vault
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-error"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-header"
+    >
+      <div>
+        <div
+          class="page-eyebrow"
+        >
+          Workbench
+        </div>
+        <h1
+          class="page-title"
+        >
+          Document vault
+        </h1>
+        <div
+          class="page-sub"
+        >
+          Documents in the vault. Authored documents show their versions and audit trail here.
+        </div>
+      </div>
+      <div
+        class="page-actions"
+      >
+        <input
+          accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.ndjson,.xml,.png,.jpg,.jpeg,.gif,.xpt,.doc,.xls,.rtf"
+          aria-label="Choose documents to upload to the vault"
+          multiple=""
+          style="display: none;"
+          type="file"
+        />
+        <button
+          class="btn primary small"
+          disabled=""
+          title="Uploading is available once a program is open"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+            />
+            <polyline
+              points="17 8 12 3 7 8"
+            />
+            <line
+              x1="12"
+              x2="12"
+              y1="3"
+              y2="15"
+            />
+          </svg>
+           
+          Upload
+        </button>
+      </div>
+    </div>
+    <div
+      class="metrics-row metrics-compact"
+    >
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Artifacts in vault
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+        </div>
+        <div
+          class="metric-meta"
+        >
+          0 e-signed · 0 awaiting review
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Locked or final
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+        </div>
+        <div
+          class="metric-meta"
+        >
+          By recorded status
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Retention review
+        </div>
+        <div
+          class="metric-val"
+        >
+          —
+        </div>
+        <div
+          class="metric-meta"
+        >
+          Not assessed — no retention date is recorded on these artifacts
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Vault size
+        </div>
+        <div
+          class="metric-val"
+        >
+          0.0
+          <span
+            class="unit"
+          >
+            MB
+          </span>
+        </div>
+        <div
+          class="metric-meta"
+        >
+          Across all folders
+        </div>
+      </div>
+    </div>
+    <div
+      class="vault-grid"
+    >
+      <aside
+        class="vault-rail"
+      >
+        <div
+          class="vault-rail-lbl"
+        >
+          Folders
+        </div>
+        <button
+          class="vault-tree-row"
+          data-active="true"
+        >
+          <span
+            class="ico"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+              />
+            </svg>
+          </span>
+          <span
+            class="lbl"
+          >
+            All artifacts
+          </span>
+          <span
+            class="n"
+          >
+            0
+          </span>
+        </button>
+        <button
+          class="vault-tree-row"
+          data-active="false"
+        >
+          <span
+            class="ico"
+          >
+            <svg
+     ...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-header"
+      >
+        <div>
+          <div
+            class="page-eyebrow"
+          >
+            Workbench
+          </div>
+          <h1
+            class="page-title"
+          >
+            Document vault
+          </h1>
+          <div
+            class="page-sub"
+          >
+            Documents in the vault. Authored documents show their versions and audit trail here.
+          </div>
+        </div>
+        <div
+          class="page-actions"
+        >
+          <input
+            accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.ndjson,.xml,.png,.jpg,.jpeg,.gif,.xpt,.doc,.xls,.rtf"
+            aria-label="Choose documents to upload to the vault"
+            multiple=""
+            style="display: none;"
+            type="file"
+          />
+          <button
+            class="btn primary small"
+            disabled=""
+            title="Uploading is available once a program is open"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="17 8 12 3 7 8"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="3"
+                y2="15"
+              />
+            </svg>
+             
+            Upload
+          </button>
+        </div>
+      </div>
+      <div
+        class="metrics-row metrics-compact"
+      >
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Artifacts in vault
+          </div>
+          <div
+            class="metric-val"
+          >
+            0
+          </div>
+          <div
+            class="metric-meta"
+          >
+            0 e-signed · 0 awaiting review
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Locked or final
+          </div>
+          <div
+            class="metric-val"
+          >
+            0
+          </div>
+          <div
+            class="metric-meta"
+          >
+            By recorded status
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Retention review
+          </div>
+          <div
+            class="metric-val"
+          >
+            —
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Not assessed — no retention date is recorded on these artifacts
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Vault size
+          </div>
+          <div
+            class="metric-val"
+          >
+            0.0
+            <span
+              class="unit"
+            >
+              MB
+            </span>
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Across all folders
+          </div>
+        </div>
+      </div>
+      <div
+        class="vault-grid"
+      >
+        <aside
+          class="vault-rail"
+        >
+          <div
+            class="vault-rail-lbl"
+          >
+            Folders
+          </div>
+          <button
+            class="vault-tree-row"
+            data-active="true"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                fill="none"
+                height="16"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="16"
+              >
+                <path
+                  d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+                />
+              </svg>
+            </span>
+            <span
+              class="lbl"
+            >
+              All artifacts
+            </span>
+            <s...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx:201:11
+    199|     ));
+    200|     const { container } = mount();
+    201|     await waitFor(() => expect(screen.getByTestId('vault-error')).toBe…
+       |           ^
+    202|     expect(tile(container, /Artifacts in vault/).metric).toBe('—');
+    203|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx > device-vault states no figure it did not read (audit 2) > a FAILED vault read states no count beside its error
+AssertionError: expected '0' to be '—' // Object.is equality
+
+Expected: "—"
+Received: "0"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx:211:58
+    209|     const { container } = mount();
+    210|     await waitFor(() => expect(screen.getByTestId('vault-error')).toBe…
+    211|     expect(tile(container, /Artifacts in vault/).metric).toBe('—');
+       |                                                          ^
+    212|     expect(tile(container, /Vault size/).metric).toBe('—');
+    213|     expect(container.textContent ?? '').not.toMatch(/0 of 0 artifacts/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed | 8 skipped (12)
+   Start at  05:14:03
+   Duration  7.42s (transform 673ms, setup 260ms, import 898ms, tests 5.19s, environment 814ms)
+

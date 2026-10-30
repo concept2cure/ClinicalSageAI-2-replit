@@ -1,0 +1,5 @@
+Before the corresponding fix. Full lossless log in memory-red.txt.gz. Credentials and records are synthetic.
+
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > clears the canonical in-memory bearer when AuthService ends a session
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)

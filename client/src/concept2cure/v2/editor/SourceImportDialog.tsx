@@ -11,7 +11,7 @@ import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/gove
 
 export type ImportSource = AuthoringImportSource;
 export type SourceImportResult = AuthoringSourceImportData;
-const SOURCE_LABELS: Record<ImportSource['kind'], string> = { vault: 'Vault', 'data-room': 'Data room', protocol: 'Protocol', csr: 'CSR', 'ivd-assessment': 'IVD assessment', 'ivd-document': 'IVD generated document' };
+const SOURCE_LABELS: Record<ImportSource['kind'], string> = { vault: 'Vault', 'data-room': 'Data room', protocol: 'Protocol', csr: 'CSR', 'ivd-assessment': 'IVD assessment', 'ivd-document': 'IVD generated document', 'study-design-crf': 'Blank CRFs', 'agency-response': 'Agency response' };
 
 /** Availability explanations follow the same recorded source state in each host. */
 export function sourceImportUnavailableReason(source: {
@@ -57,6 +57,8 @@ interface SourceImportDialogProps {
   onClose: () => void;
   /** The editor supplies its unsaved-work guard; other surfaces deep-link by id. */
   onOpenDocument?: (docId: string, code?: string) => void;
+  /** Prefer an actual saved section while retaining the user's section choice. */
+  initialSectionCode?: string;
   programName?: string;
   openBlocked?: boolean;
 }
@@ -78,14 +80,14 @@ function WorkflowPreview({ preview }: { preview: AuthoringSourceImportPreviewDat
       {s.model ? ` · Recorded model name: ${s.model}; qualification evidence not recorded` : ' · Model not recorded'}</li>)}</ul>
     {preview.gaps.length > 0 && <div><strong>Recorded gaps</strong><ul>{preview.gaps.map((gap, i) => <li key={i}>{gap}</li>)}</ul></div>}
     {preview.warnings.length > 0 && <ul>{preview.warnings.map((warning, i) => <li key={i}>{warning}</li>)}</ul>}
-    {preview.association.required && <p>This source has no recorded program association. An explicit association reason is required for this target.</p>}
+    {preview.association.required && <p>This source has no recorded project association. An explicit association reason is required for this target.</p>}
   </div>;
 }
 
-function SourceImportReceipt({ result, onOpen, blocked }: { result: SourceImportResult; onOpen?: (code?: string) => void; blocked: boolean }) {
+function SourceImportReceipt({ result, onOpen, blocked, initialSectionCode }: { result: SourceImportResult; onOpen?: (code?: string) => void; blocked: boolean; initialSectionCode?: string }) {
   const workflow = isWorkflowImportOrigin(result.origin);
   const sections = result.sections;
-  const [code, setCode] = useState(String(sections[0]?.code ?? ''));
+  const [code, setCode] = useState(() => String(sections.find(section => section.code === initialSectionCode)?.code ?? sections[0]?.code ?? ''));
   return <div className="de-gov" role="status" data-testid="source-import-result">
     <span className="ico">{I.checkCircle}</span><div className="de-gov-t">
     <div>{result.reused ? 'Existing working copy ready' : 'Draft working copy saved'}: “{result.doc.title}”.</div>
@@ -102,7 +104,7 @@ function SourceImportReceipt({ result, onOpen, blocked }: { result: SourceImport
   </div>;
 }
 
-function ScopedSourceImportDialog({ programId, source, title, onClose, onOpenDocument, programName, openBlocked = false }: SourceImportDialogProps) {
+function ScopedSourceImportDialog({ programId, source, title, onClose, onOpenDocument, initialSectionCode, programName, openBlocked = false }: SourceImportDialogProps) {
   const labelId = useId();
   const reasonId = useId();
   const associationId = useId();
@@ -129,7 +131,7 @@ function ScopedSourceImportDialog({ programId, source, title, onClose, onOpenDoc
         <div className="de-h-s">{intake.retired ? 'Source intake closed to further work' : title}</div>
       </div><button className="de-x" onClick={close} disabled={intake.busy} aria-label="Close">{I.close}</button></div>
       <IntakeBody programId={programId} programName={programName} source={source} intake={intake}
-        reasonId={reasonId} associationId={associationId} openBlocked={openBlocked} onOpen={onOpen} />
+        reasonId={reasonId} associationId={associationId} openBlocked={openBlocked} onOpen={onOpen} initialSectionCode={initialSectionCode} />
       <IntakeFooter intake={intake} workflow={workflow} onClose={close} />
     </div>
   </div>;
@@ -144,9 +146,9 @@ function IntakeFields({ intake, reasonId, associationId }: { intake: SourceIntak
       value={intake.associationReason} onChange={intake.setAssociationReason} busy={intake.busy || intake.held} />}
   </>;
 }
-function IntakeBody({ programId, programName, source, intake, reasonId, associationId, openBlocked, onOpen }: {
+function IntakeBody({ programId, programName, source, intake, reasonId, associationId, openBlocked, onOpen, initialSectionCode }: {
   programId: string; programName?: string; source: ImportSource; intake: SourceIntake; reasonId: string; associationId: string;
-  openBlocked: boolean; onOpen?: (code?: string) => void;
+  openBlocked: boolean; onOpen?: (code?: string) => void; initialSectionCode?: string;
 }) {
   const workflow = isWorkflowSource(source);
   if (intake.retired) return <div className="de-body"><AuthoringRecoveryNotice role="alert" message={intake.retirementMessage} /></div>;
@@ -158,7 +160,7 @@ function IntakeBody({ programId, programName, source, intake, reasonId, associat
     <IntakeFields intake={intake} reasonId={reasonId} associationId={associationId} />
     <IntakeRecovery intake={intake} />
     {intake.error && <div className="de-err" role="alert">{intake.error}</div>}
-    {intake.result && <SourceImportReceipt result={intake.result} blocked={openBlocked} onOpen={onOpen} />}
+    {intake.result && <SourceImportReceipt result={intake.result} blocked={openBlocked} onOpen={onOpen} initialSectionCode={initialSectionCode} />}
   </div>;
 }
 function IntakeRecovery({ intake }: { intake: SourceIntake }) {

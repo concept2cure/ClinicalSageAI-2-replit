@@ -3,6 +3,9 @@ import React from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 const request = vi.hoisted(() => vi.fn());
+/* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
+   no AuthProvider mounted, the real useAuth throws before Project home renders. */
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest: request }));
 import { ProjectHome } from '../surfaces/ProjectHome';
 const A = '11111111-1111-4111-8111-111111111111';
@@ -53,6 +56,9 @@ it('retires local and handoff pins on programme change before the new source rea
   view.rerender(<ProjectHome {...props} onAsk={onAsk} />);
   expect(screen.queryByRole('button', { name: 'Draft with 1 pinned source' })).toBeNull();
   expect(window.C2C_SOURCE_PINS).toEqual([]);
+  // A different project opens at its own step (A2.1), so visit its Evidence
+  // workflow before asking to draft from that project's sources.
+  fireEvent.click(screen.getByRole('button', { name: 'Evidence' }));
   await act(async () => pending.resolve(ok({ sources: [row(2)] })));
   fireEvent.click(await screen.findByRole('button', { name: 'Write from these sources' }));
   expect(window.C2C_SOURCE_PINS).toEqual(['2']);

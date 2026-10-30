@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-10-26T23:05:59.165829+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.049,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "lifecycle/pure-inputs.json",
+  "sourcesBefore": {
+    "server/services/market-specs/us-biotech-lifecycle-templates.ts": "257e3ac0f418b9ecd827e6e4e25b86cf9ad5bd54bac02ddf97780c986d7c0032",
+    "server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts": "f3a99ca8a0bf1328a97f982c23a808c5ffa8e7584af66aa3d4d39c4b21300232",
+    "server/services/ind/ctd/lifecycle-document-types.ts": "ead028d233d4f780c0a3e56cbd053bf58b947a7472ab9a46a8c1286ea41efacb"
+  },
+  "sourcesAfter": {
+    "server/services/market-specs/us-biotech-lifecycle-templates.ts": "257e3ac0f418b9ecd827e6e4e25b86cf9ad5bd54bac02ddf97780c986d7c0032",
+    "server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts": "f3a99ca8a0bf1328a97f982c23a808c5ffa8e7584af66aa3d4d39c4b21300232",
+    "server/services/ind/ctd/lifecycle-document-types.ts": "ead028d233d4f780c0a3e56cbd053bf58b947a7472ab9a46a8c1286ea41efacb"
+  },
+  "sourceDrift": [],
+  "rawOutput": "pure.log.gz",
+  "rawGzipSha256": "dc911ef54f7be5b3f6168436d8257d75634c250013e59c14dbb20000ecb4a0f6",
+  "testSummary": [
+    "Test Files  1 passed (1)",
+    "Tests  14 passed (14)",
+    "Duration  603ms (transform 295ms, setup 74ms, import 268ms, tests 20ms, environment 0ms)"
+  ]
+}

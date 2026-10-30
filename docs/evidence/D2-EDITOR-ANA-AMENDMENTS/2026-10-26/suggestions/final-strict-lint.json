@@ -1,0 +1,32 @@
+{
+  "startedAt": "2026-10-26T18:07:58.701734+00:00",
+  "argv": [
+    "./node_modules/.bin/eslint",
+    "--max-warnings=0",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.326,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "source-freeze-final.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "28f5047c20285c2eb7b5441bf245e429201a6c982d23032d5905aceb5c0947d1",
+    "client/src/concept2cure/v2/editor/proposalAnchor.ts": "2c98891c4edb5b32295f8a8af305fd05fb4d12c2e21f37c40ab764282e4819f6",
+    "shared/authoring/remedies.ts": "cdf39fbd14adec0e643ac5d6c80ac00a0d7ae194285111c4828e69530b22568e",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "2312c33873d67a5001ec4a27b4fb1671e6348ecb99bb8eba0add0214bfb5c4fe",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "28f5047c20285c2eb7b5441bf245e429201a6c982d23032d5905aceb5c0947d1",
+    "client/src/concept2cure/v2/editor/proposalAnchor.ts": "2c98891c4edb5b32295f8a8af305fd05fb4d12c2e21f37c40ab764282e4819f6",
+    "shared/authoring/remedies.ts": "cdf39fbd14adec0e643ac5d6c80ac00a0d7ae194285111c4828e69530b22568e",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "2312c33873d67a5001ec4a27b4fb1671e6348ecb99bb8eba0add0214bfb5c4fe",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  },
+  "sourceDrift": [],
+  "rawOutput": "final-strict-lint.log.gz",
+  "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "testSummary": []
+}

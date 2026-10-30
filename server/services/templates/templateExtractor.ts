@@ -25,6 +25,7 @@
  */
 
 import AdmZip from 'adm-zip';
+import { assertZipWithinLimits } from '../archive/safeZip';
 import { PDFDocument } from 'pdf-lib';
 import {
   DEFAULT_TEMPLATE_SPEC,
@@ -459,6 +460,9 @@ export async function extractTemplateFromFile(
   const lower = fileName.toLowerCase();
   const isPdf = lower.endsWith('.pdf') || mimeType === 'application/pdf';
   if (isPdf) return extractFromPdf(buffer, fileName);
+  // AdmZip inflates each part whole: the archive is bounded first (SEC-17).
+  // An ArchiveLimitError reaches the caller, which answers 422.
+  await assertZipWithinLimits(buffer);
   return extractFromDocx(buffer, fileName);
 }
 

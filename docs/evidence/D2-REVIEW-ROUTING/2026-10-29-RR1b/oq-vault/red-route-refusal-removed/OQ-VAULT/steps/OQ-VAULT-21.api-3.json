@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/vault/ingest",
+    "anonymous": false,
+    "identity": null,
+    "body": "[multipart/form-data]"
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 916,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "document": {
+        "id": "86e0e0fe-9fa0-475d-8ef7-0ff4478ac351",
+        "programId": "6478ef23-84be-4008-ad98-642961e18d56",
+        "documentCode": "OQ-002 unplaced overview 20261029102745.pdf",
+        "documentTitle": "OQ-002 unplaced overview 20261029102745",
+        "documentType": "PROTOCOL",
+        "version": "1.0",
+        "fileName": "OQ-002-unplaced-overview-20261029102745.pdf",
+        "fileSize": 620,
+        "mimeType": "application/pdf",
+        "contentHash": "1268b7f24a254c18037f03bf23e4fdbd04c6087a23ae06082350662d50392e7c",
+        "processingStatus": "PENDING",
+        "hasExtractedText": true,
+        "wordCount": 9,
+        "createdAt": "2026-10-29T10:28:34.401Z",
+        "updatedAt": "2026-10-29T10:28:34.401Z"
+      },
+      "filing": {
+        "view": "pharma",
+        "folderId": "module-5",
+        "evidenceKind": "protocol",
+        "ctdSection": null,
+        "placementStatus": "suggested",
+        "confidence": "medium",
+        "rationale": "Uploaded as Protocol, so Module 5; the name did not identify a section.",
+        "folderLabel": "Module 5 · Clinical",
+        "needsReview": false
+      }
+    }
+  }
+}

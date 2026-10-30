@@ -416,7 +416,7 @@ export async function startProtocolDocument(
 ): Promise<{ id: number | null; sectionsSeeded: number | null }> {
   const reason = requireReason(v.reason);
   if (!v.programId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.programId)) {
-    throw new Error('Open a program before starting a protocol. Nothing was written.');
+    throw new Error('Open a project before starting a protocol. Nothing was written.');
   }
   const json = await send('POST', '/api/protocol-development/documents', compact({
     title: v.title,

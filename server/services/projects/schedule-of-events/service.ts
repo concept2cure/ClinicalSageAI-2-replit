@@ -819,7 +819,7 @@ async function replaceGoals(params: ReplaceGoalsParams, sql: ScheduleQuery): Pro
       projectId,
       scheduleId: params.scheduleId,
       revisionType: 'goal_reset',
-      summary: `Reset program goals (${params.goals.length}). ${params.rationale}`,
+      summary: `Reset project goals (${params.goals.length}). ${params.rationale}`,
       detail: { goals: params.goals, rationale: params.rationale },
       triggeredBy: params.triggeredBy ?? 'ana_user',
       createdByAna: params.createdByAna,
@@ -1128,12 +1128,12 @@ function buildAnaNarrative(health: ScheduleHealth): string {
       : health.overallStatus === 'on_track'
         ? health.undated > 0
           ? 'The milestones with target dates are on track.'
-          : 'Your program is on track.'
+          : 'Your project is on track.'
         : health.overallStatus === 'at_risk'
-          ? 'Your program needs attention.'
+          ? 'Your project needs attention.'
           : health.milestones.some((m) => m.nextStatus === 'slipped' && m.isCritical)
-            ? 'Your program is off track — critical milestones have slipped.'
-            : 'Your program is off track — milestones have slipped.';
+            ? 'Your project is off track — critical milestones have slipped.'
+            : 'Your project is off track — milestones have slipped.';
   return `${verdict} ${health.summary} Last reviewed ${new Date(health.assessedAt).toISOString().slice(0, 16).replace('T', ' ')}Z by AnA.`;
 }
 

@@ -1,0 +1,16 @@
+# Red: POST /narratives with the slice-7 handler body (composition inside the request), run against the new route test.
+# Test 1 times out at 10 s: the POST never answers while the source read is held, i.e. the request blocks on the build.
+# Tests 3-4: the request path has no run to record a refusal on (500 here because the in-request build had no request-scoped client).
+ × server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > returns 202 with a run id at once; the worker composes as the user and lands §14.3.3 and §12.3.2 10016ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a build with no bound run at once, and queues nothing 38ms
+ × server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a hand-built source on the run by name, as the Vault reader states it 35ms
+   → expected 500 to be 202 // Object.is equality
+ × server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records an ADAE row that does not establish seriousness, naming the row 24ms
+   → expected 500 to be 202 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts:76:3
+AssertionError: expected 500 to be 202 // Object.is equality
+ ❯ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts:110:85
+AssertionError: expected 500 to be 202 // Object.is equality
+ ❯ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts:117:85
+      Tests  3 failed | 1 passed (4)

@@ -49,8 +49,9 @@ import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
+import { FiledBaselineSlot, nextAfterFiled, numberingKnown, useFiledBaseline, type FiledBaselineView } from './FiledElsewhereBaseline';
 import { useShellProject, shellProgramId, type ShellProject } from '../shellProject';
-import { notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
+import { isUsInd, notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import {
   // Canonical enum / label / state-machine maps (mirror shared/types/
@@ -60,7 +61,6 @@ import {
   SC_REGIONS,
   SC_SEQ_STATUS,
   SC_TRANSITIONS,
-  type ToneMap,
 } from '../fixtures/submission';
 import {
   BuilderWorkspace,
@@ -87,9 +87,19 @@ import { consumeNavParams, stashNavParamsForTarget, NAV_PARAMS_EVENT } from '../
 import { ceremonyOpen } from '../ceremony';
 import { readSubmissionNavTarget, useOpenOnNavTarget, type SubmissionNavTarget } from './submissionNavTarget';
 import { TrackedFilingDetail } from './TrackedFilingDetail';
+import { TrackedFilingHistory } from './TrackedFilingHistory';
+import {
+  DeviceFilingsCard,
+  plural,
+  readAssemblyVerdict,
+  type AssemblyVerdictPayload,
+  type AssemblyVerdictState,
+  type DeviceFilingRow,
+} from './DeviceFilings';
 import { isTrackedFilingId } from '@shared/types/task-filing-home';
 import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
 import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
+import { getSurfaceMeta } from '../registryModel';
 import { SHADOW_WAIVER_ACTION, SHADOW_WAIVER_MEANINGS, shadowWaiverTargetLine, submitShadowWaiver, type WaiverRequest } from './ShadowReviewWaiver';
 import {
   SHADOW_DISPOSITION_MEANINGS,
@@ -200,116 +210,10 @@ function requiredModule1For(
 // programSequence.ts, shared with Project home's list of the project's submissions.)
 
 /* ── Device filings (eSTAR tracker) ─────────────────────────────────────────
-   eSTAR is NOT eCTD: a tracked device filing never becomes an ectd_sequences
-   row. The device journey is read here from its own canonical tracker,
-   GET /api/510k/estar/submissions (server/routes/510k-estar-routes.ts →
-   estar_submissions), and rendered as its own Portfolio section. Only columns
-   the backend returns are typed; nullable columns render null-safe — never
-   fabricated. ── */
-
-// GET /api/510k/estar/submissions → { submissions: estar_submissions rows }.
-interface DeviceFilingRow {
-  id: string;
-  catalogKey: string;
-  programType: string; // 510k|de_novo|pma|q_sub|ide|513g
-  variant: string; // device|ivd
-  title: string | null;
-  status: string; // draft|filed|under_review|additional_info|decision|withdrawn
-  decision: string | null;
-  fdaTrackingNumber: string | null;
-  filedAt: string | null;
-  decisionDueAt: string | null;
-  projectId: number | null;
-}
-
-// Deterministic display map for the eSTAR filing-status enum (mirrors
-// shared/schema/estar-submission ESTAR_SUBMISSION_STATUSES) — reference
-// config, not sample data. Unknown statuses fall through Chip's honest
-// `{ l: k }` default, so a status is never invented.
-const ESTAR_FILING_STATUS: Record<string, ToneMap> = {
-  draft: { l: 'Draft', t: 'idle' },
-  filed: { l: 'Filed', t: 'ai' },
-  under_review: { l: 'Under review', t: 'ai' },
-  additional_info: { l: 'Additional info', t: 'warn' },
-  decision: { l: 'Decision', t: 'ok' },
-  withdrawn: { l: 'Withdrawn', t: 'idle' },
-};
-
-// POST /api/510k/estar/assemble → assembly verdict (device-assembly contract).
-interface AssemblyVerdictPayload {
-  artifactKind: string; // official-estar | content-package-draft | none
-  blockers?: string[];
-  /** The section readiness the blockers were written from
-   *  (assemble-device-submission.ts: `estar.summary`). */
-  estar?: { summary?: { missingRequired?: unknown; undetermined?: unknown } };
-}
-
-// Honest labels for the assembly verdict's artifactKind enum.
-const ARTIFACT_KIND_LABEL: Record<string, string> = {
-  'official-estar': 'official eSTAR producible',
-  'content-package-draft': 'draft content package only — not submittable',
-  none: 'nothing assemblable yet',
-};
-
-type AssemblyVerdictState =
-  | { state: 'loading' }
-  | { state: 'error' }
-  | { state: 'ready'; artifactKind: string; missingRequired: number; undetermined: number; otherBlockers: number };
-
-/* ── What the blocker list counts ───────────────────────────────────────────
-   `blockers` is a list of SENTENCES, not of blockers: the engine writes every
-   missing required eSTAR section into ONE sentence ("11 required eSTAR
-   section(s) missing: …") and every section of undetermined applicability into
-   another. The caption printed `blockers.length`, so an org with 11 required
-   sections missing and 7 undetermined read "· 2 blockers". The section counts
-   are read from the summary those sentences are written from; each remaining
-   entry (a template or market blocker) is one blocker. */
-function readAssemblyVerdict(p: AssemblyVerdictPayload): AssemblyVerdictState {
-  const blockers = Array.isArray(p.blockers) ? p.blockers : [];
-  const missingList = p.estar?.summary?.missingRequired;
-  const undeterminedList = p.estar?.summary?.undetermined;
-  const missingRequired = Array.isArray(missingList) ? missingList.length : 0;
-  const undetermined = Array.isArray(undeterminedList) ? undeterminedList.length : 0;
-  const sectionSentences = (missingRequired > 0 ? 1 : 0) + (undetermined > 0 ? 1 : 0);
-  return {
-    state: 'ready',
-    artifactKind: p.artifactKind,
-    missingRequired,
-    undetermined,
-    otherBlockers: Math.max(0, blockers.length - sectionSentences),
-  };
-}
-
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
-/** The device-section header line: the org-wide assembly verdict (one call). */
-function assemblyReadinessLine(v: AssemblyVerdictState): string {
-  // The verdict is fetched for ONE pathway/variant (510(k), device) while the
-  // card lists every eSTAR program type, device and IVD. The caption used to
-  // read "Assembly readiness: … · 0 blockers" over all of them; it now names
-  // the scope the call actually covers.
-  if (v.state === 'loading') return 'Checking 510(k) device assembly readiness…';
-  if (v.state === 'error') return '510(k) device assembly readiness unavailable right now';
-  const kind = ARTIFACT_KIND_LABEL[v.artifactKind] ?? v.artifactKind;
-  const parts: string[] = [];
-  if (v.missingRequired > 0) parts.push(`${plural(v.missingRequired, 'required section', 'required sections')} missing`);
-  if (v.undetermined > 0) parts.push(`applicability of ${plural(v.undetermined, 'section', 'sections')} not established`);
-  if (v.otherBlockers > 0 || parts.length === 0) {
-    parts.push(parts.length === 0
-      ? plural(v.otherBlockers, 'blocker', 'blockers')
-      : plural(v.otherBlockers, 'other blocker', 'other blockers'));
-  }
-  return `510(k) device assembly readiness: ${kind} · ${parts.join(' · ')} (other pathways not assessed here)`;
-}
-
-/** Review-clock cell: only states the tracker actually knows. */
-function reviewClock(f: DeviceFilingRow): string {
-  if (f.decisionDueAt) {
-    const d = new Date(f.decisionDueAt);
-    if (!Number.isNaN(d.getTime())) return `Decision due ${d.toLocaleDateString()}`;
-  }
-  return f.filedAt ? 'No review clock' : 'Not filed yet';
-}
+   The card, its row and verdict types and its helpers live in
+   DeviceFilings.tsx (D2, fold F5 item 1, 2026-10-30), with the status filter
+   and each draft filing's gate. This screen reads the list and the one
+   assembly verdict, which its AnA context states. ── */
 
 // (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
 
@@ -360,15 +264,17 @@ function nextSequenceNumber(sub: SubRow, rows: SeqRow[]): string {
 }
 
 /** Start a follow-up sequence: its number is derived, its type is the author's to state. */
-function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
+function NextSequenceControl({ sub, rows, baseline, type, onType, busy, onStart }: {
   sub: SubRow;
   rows: SeqRow[];
+  /** Sequences declared filed outside the platform: the next number follows them too. */
+  baseline: FiledBaselineView | null;
   type: string;
   onType: (t: string) => void;
   busy: boolean;
   onStart: (sequenceNumber: string) => void;
 }) {
-  const next = nextSequenceNumber(sub, rows);
+  const next = nextAfterFiled(nextSequenceNumber(sub, rows), baseline);
   return (
     <div className="cm-pushbar sc-mt">
       <select className="sc-subpick" aria-label={`Type of sequence ${next}`} value={type} disabled={busy}
@@ -489,11 +395,6 @@ function visibleSubmissionNotice(notice: ScopedBuilderNotice | null, generation:
   return notice.builderGeneration === generation && (sequenceId === undefined || sequenceId === notice.builderSequenceId) ? notice : null;
 }
 
-/** A US IND: the filing the IND forms screen (21 CFR 312, FDA forms) serves. */
-export function isUsInd(s: Pick<SubRow, 'applicationType' | 'primaryRegion'>): boolean {
-  return String(s.applicationType ?? '').toLowerCase() === 'ind' && String(s.primaryRegion ?? '').toLowerCase() === 'fda';
-}
-
 export function SubmissionCenter({
   onAsk,
   onNav,
@@ -511,6 +412,7 @@ export function SubmissionCenter({
   // name the platform will print on the signature, not a generic "You".
   const authUser = useAuthUser();
   const signerLabel = authUser?.displayName || authUser?.email || 'the authenticated user';
+  const esignSigner = authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined;
 
   /* ── The open project (ONE_ANA_ONE_CANVAS.md slice 24) ─────────────────────
      With a project open this screen is about that project: it lists the
@@ -558,9 +460,9 @@ export function SubmissionCenter({
      2026-10-08, j1). A program not on the page read is not named, and only a
      recorded null is stated as "no program". */
   const programOf = (s: SubRow): string | null => {
-    if (s.programId === null) return 'No program recorded';
+    if (s.programId === null) return 'No project recorded';
     const p = s.programId ? programmes.rows.find((r) => r.id === s.programId) : undefined;
-    return p?.code ? `Program ${p.code}` : null;
+    return p?.code ? `Project ${p.code}` : null;
   };
 
   /* ── Which of the three things an empty `list` means ────────────────────────
@@ -592,7 +494,6 @@ export function SubmissionCenter({
   );
   const deviceFilingsRaw = deviceRes.data?.submissions;
   const deviceFilings: DeviceFilingRow[] = Array.isArray(deviceFilingsRaw) ? deviceFilingsRaw : [];
-  const deviceEmpty = !deviceRes.loading && !deviceRes.error && deviceFilings.length === 0;
 
   // POST /api/510k/estar/assemble — ONE org-wide device-assembly verdict for
   // the section header (read-only on the server; renders/persists nothing).
@@ -623,6 +524,9 @@ export function SubmissionCenter({
   // re-render loop. `seqBump` refetches after a server-confirmed transition so
   // the rendered status always comes from the server, never an optimistic guess.
   const [seqBump, setSeqBump] = React.useState(0);
+  // Sequences filed outside the platform, declared (D7, 2026-10-29): a declaration
+  // removes empty drafts, so the sequence list is re-read with it.
+  const filedRead = useFiledBaseline(sub, seqBump);
   const seqPath = sub ? `/api/submissions/${sub.id}/sequences` : null;
   const sequenceContext = JSON.stringify([selectorContext, subs.loadedScope, sub?.id, sub?.programId]);
   const seqs = useSubmissionScopedRows<SubmissionCoverageSequence>(seqPath, sequenceContext, seqBump, readSession, isRowsWith<SubmissionCoverageSequence>('id', 'sequenceNumber', 'region'));
@@ -749,7 +653,7 @@ export function SubmissionCenter({
       ? openProgramme(openProgramId, openRow, shell)
       : programmes.rows.find((p) => p.id === (v.projectId ?? '').trim());
     if (!programme) {
-      setNotice({ tone: 'err', text: 'Pick the programme this submission belongs to.' });
+      setNotice({ tone: 'err', text: 'Pick the project this submission belongs to.' });
       return;
     }
     setCreating(true);
@@ -1175,11 +1079,6 @@ export function SubmissionCenter({
   }, [subs.loading, seqs.loading]);
 
   const appL = (v: string) => SC_APPTYPES.find((a) => a.v === v)?.l ?? v;
-  /* eSTAR program types are not eCTD application types: SC_APPTYPES has no
-     q_sub / ide / 513g, so the device table printed the raw DB token. */
-  const DEVICE_PROGRAM_LABEL: Record<string, string> = {
-    '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', q_sub: 'Q-Submission', ide: 'IDE', '513g': '513(g)',
-  };
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
 
   /* What AnA can see of this screen.
@@ -1316,7 +1215,7 @@ export function SubmissionCenter({
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Submission</div>
-          <h1 className="sp-title">Submission center</h1>
+          <h1 className="sp-title">{getSurfaceMeta('submission-center').label}</h1>
           <p className="sp-state">
             Plan, build, validate and dispatch each market&apos;s eCTD v3.2.2 sequences.
           </p>
@@ -1452,6 +1351,8 @@ export function SubmissionCenter({
       <VerdictNote notice={navMiss} />
       {filingLinkError && <p role="alert" className="sp-state">{filingLinkError}</p>}
       {filingTarget && ws === 'portfolio' && <TrackedFilingDetail filingId={filingTarget} onClose={() => setFilingTarget(null)} />}
+      {/* The filing's own history, under its record (fold F5 item 1). */}
+      {filingTarget && ws === 'portfolio' && <TrackedFilingHistory filingId={filingTarget} />}
       {navMiss?.tone === 'err' && <button type="button" className="btn ghost"
         onClick={() => {
           if (ceremonyOpen() || flow || acting !== null) return;
@@ -1486,7 +1387,7 @@ export function SubmissionCenter({
               disabled={creating || (!openProgramId && programmes.rows.length === 0)}
               title={
                 !openProgramId && programmes.rows.length === 0
-                  ? 'A submission belongs to a programme, and this organization has none yet. Create one in Projects first.'
+                  ? 'A submission belongs to a project, and this organization has none yet. Create one in Projects first.'
                   : undefined
               }
             >
@@ -1525,7 +1426,7 @@ export function SubmissionCenter({
               <table className="ub-inv">
                 <thead>
                   <tr>
-                    <th>Program</th>
+                    <th>Project</th>
                     <th>Region</th>
                     <th>Type</th>
                     <th>Client</th>
@@ -1574,104 +1475,24 @@ export function SubmissionCenter({
           </div>
         </div>
 
-        {/* Device filings — the eSTAR tracker's journey, read-only here.
-            eSTAR is not eCTD: these rows live in estar_submissions and never
-            masquerade as sequences. The header line is the org's one-call
-            device-assembly verdict (artifact kind + blocker count). */}
-        <div className="pj-card">
-          <div className="pj-card-h">
-            <span className="t">Device filings · eSTAR</span>
-            <span className="s">{assemblyReadinessLine(assembly)}</span>
-          </div>
-          <div className="pj-card-b pj-card-b-flush">
-            {deviceRes.loading ? (
-              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
-                Loading device filings…
-              </div>
-            ) : deviceRes.error ? (
-              <EmptyState
-                tone="error"
-                icon={I.alertTriangle}
-                title="Couldn't load the device filings"
-                hint="The eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable."
-              />
-            ) : deviceEmpty ? (
-              <EmptyState
-                icon={I.fileText}
-                title="No device filings tracked yet"
-                hint={available('device-510k')
-                  ? "Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
-                  /* The surface it names is not in this release (F16: no dead ends). */
-                  : 'Device filings are tracked from the 510(k) workbench, which is not part of this release.'}
-              />
-            ) : (
-              <table className="ub-inv">
-                <thead>
-                  <tr>
-                    <th>Filing</th>
-                    <th>Program</th>
-                    <th>Status</th>
-                    <th>FDA tracking</th>
-                    <th>Review clock</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deviceFilings.map((f) => (
-                    <tr key={f.id} className="sc-subrow">
-                      <td>
-                        <b>{f.title ?? f.catalogKey}</b>
-                        {f.title ? <span className="sp-row-s"> · {f.catalogKey}</span> : null}
-                      </td>
-                      <td>
-                        {DEVICE_PROGRAM_LABEL[f.programType] ?? f.programType} <span className="sc-cap">· {f.variant}</span>
-                      </td>
-                      <td>
-                        <Chip map={ESTAR_FILING_STATUS} k={f.status} />
-                        {f.decision ? <span className="sp-row-s"> · {f.decision}</span> : null}
-                      </td>
-                      <td>{f.fdaTrackingNumber ?? '—'}</td>
-                      <td>{reviewClock(f)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="sc-trans-b"
-                          aria-label={`Open tracked filing ${f.title ?? f.catalogKey}`}
-                          onClick={() => {
-                            if (entryBusy.current()) {
-                              setNotice({ tone: 'err', text: 'Finish or cancel the open governed form, then open this tracked filing.' });
-                              return;
-                            }
-                            if (!isTrackedFilingId(f.id)) {
-                              setFilingLinkError('This tracked filing has an invalid identifier and could not be opened.');
-                              return;
-                            }
-                            setFilingLinkError(null); setNavTarget(null); setFilingTarget(f.id);
-                          }}
-                        >
-                          Open recorded filing
-                        </button>
-                        {/* Offered only where the 510(k) surface can be opened:
-                            outside this release it led to the locked panel
-                            (FILING_SPINE.md F16). */}
-                        {available('device-510k') && (
-                          <button
-                            type="button"
-                            className="sc-trans-b"
-                            title="Open the 510(k) surface — the device filing workspace"
-                            onClick={() => onNav && onNav('device-510k')}
-                          >
-                            {I.right} Open 510(k) surface
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
+        <DeviceFilingsCard
+          res={deviceRes}
+          filings={deviceFilings}
+          assembly={assembly}
+          pathway={{ available: available('device-510k'), label: getSurfaceMeta('device-510k').label }}
+          onOpenFiling={(f) => {
+            if (entryBusy.current()) {
+              setNotice({ tone: 'err', text: 'Finish or cancel the open governed form, then open this tracked filing.' });
+              return;
+            }
+            if (!isTrackedFilingId(f.id)) {
+              setFilingLinkError('This tracked filing has an invalid identifier and could not be opened.');
+              return;
+            }
+            setFilingLinkError(null); setNavTarget(null); setFilingTarget(f.id);
+          }}
+          onOpenPathway={() => onNav && onNav('device-510k')}
+        />
         </>
       )}
 
@@ -1953,21 +1774,36 @@ export function SubmissionCenter({
               />
             ) : seqs.empty ? (
               <>
-                <EmptyState
-                  icon={I.gitBranch}
-                  title="No sequences yet"
-                  hint="Create the first eCTD sequence (0000) to begin assembling this submission."
-                />
-                <div className="cm-pushbar sc-mt">
-                  <button
-                    type="button"
-                    className="sp-primary sc-btn"
-                    onClick={() => void startSequence(sub, '0000', 'original')}
-                    disabled={creatingSeq}
-                  >
-                    {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
-                  </button>
-                </div>
+                <FiledBaselineSlot read={filedRead} submissionId={sub.id} signer={esignSigner} onDeclared={() => setSeqBump((b) => b + 1)} />
+                {filedRead.baseline ? (
+                  <NextSequenceControl
+                    sub={sub}
+                    rows={seqs.rows}
+                    baseline={filedRead.baseline}
+                    type={nextSeqType}
+                    onType={setNextSeqType}
+                    busy={creatingSeq}
+                    onStart={(n) => void startSequence(sub, n, nextSeqType)}
+                  />
+                ) : numberingKnown(filedRead) ? (
+                  <>
+                    <EmptyState
+                      icon={I.gitBranch}
+                      title="No sequences yet"
+                      hint="Create the first eCTD sequence (0000) to begin assembling this submission."
+                    />
+                    <div className="cm-pushbar sc-mt">
+                      <button
+                        type="button"
+                        className="sp-primary sc-btn"
+                        onClick={() => void startSequence(sub, '0000', 'original')}
+                        disabled={creatingSeq}
+                      >
+                        {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
+                      </button>
+                    </div>
+                  </>
+                ) : null}
               </>
             ) : (
               <>
@@ -1978,6 +1814,7 @@ export function SubmissionCenter({
                   sets the working sequence for the Builder, Validation, Shadow review
                   and Dispatch workspaces.
                 </div>
+                <FiledBaselineSlot read={filedRead} submissionId={sub.id} signer={esignSigner} onDeclared={() => setSeqBump((b) => b + 1)} />
                 <div className="sp-list">
                   {seqs.rows.map((s) => (
                     <div
@@ -2049,14 +1886,17 @@ export function SubmissionCenter({
                     </div>
                   ))}
                 </div>
-                <NextSequenceControl
-                  sub={sub}
-                  rows={seqs.rows}
-                  type={nextSeqType}
-                  onType={setNextSeqType}
-                  busy={creatingSeq}
-                  onStart={(n) => void startSequence(sub, n, nextSeqType)}
-                />
+                {numberingKnown(filedRead) && (
+                  <NextSequenceControl
+                    sub={sub}
+                    rows={seqs.rows}
+                    baseline={filedRead.baseline}
+                    type={nextSeqType}
+                    onType={setNextSeqType}
+                    busy={creatingSeq}
+                    onStart={(n) => void startSequence(sub, n, nextSeqType)}
+                  />
+                )}
               </>
             )}
           </div>
@@ -2113,7 +1953,7 @@ export function SubmissionCenter({
                   ? ['approval', 'responsibility']
                   : ['release', 'approval', 'responsibility']
           }
-          signer={authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined}
+          signer={esignSigner}
           // The server's re-authentication demands the authenticator code
           // whenever the signer has one enrolled; without this the modal never
           // asked for it and an enrolled signer could not freeze or dispatch.

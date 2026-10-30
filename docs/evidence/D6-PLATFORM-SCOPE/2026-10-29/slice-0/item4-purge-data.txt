@@ -1,0 +1,10 @@
+SET
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+SET
+slug | status | active_holds | custody_signed
+p72-a | active | 1 | f
+p72-b | pending_deletion | 0 | t
+(2 rows)

@@ -1,0 +1,122 @@
+# 81 related test files: every client/UI test that reads the changed stylesheets, or renders EsignModal, the Review board, its decision dialog or the Tasks tray, plus the RR5, Send for review and workbench a11y suites.
+$ RLS_ENFORCE=off npx vitest run <the files below>
+      Tests  6 failed | 917 passed (923)
+ FAIL  client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot
+ Test Files  2 failed | 79 passed (81)
+ × client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona 5077ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy 7ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does 5ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference 6ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked 41ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+# The 5 runPolicySwitch failures are the same at HEAD (authService mock; preexisting-at-head below). accountOnboardingSettings failed once under this 81-file load and passes alone on the fixed tree (re-run below).
+
+--- runPolicySwitch + accountOnboardingSettings with the six product files at HEAD ---
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot
+ Test Files  1 failed | 1 passed (2)
+      Tests  5 failed | 38 passed (43)
+
+--- the same two files on the fixed tree ---
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot
+ Test Files  1 failed | 1 passed (2)
+      Tests  5 failed | 38 passed (43)
+
+--- the 81 files ---
+client/src/concept2cure/_shared/components/__tests__/esignModalFocusAndSignedRows.test.tsx
+client/src/concept2cure/_shared/components/__tests__/esignModalOpenReset.test.tsx
+client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx
+client/src/concept2cure/hooks/__tests__/useEsignature.sendsAuth.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/ApprovalCard.meaning.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx
+client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx
+client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx
+client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx
+client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx
+client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx
+client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx
+client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx
+client/src/concept2cure/v2/__tests__/adaptiveDecisionIsSigned.test.tsx
+client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx
+client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx
+client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts
+client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx
+client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx
+client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx
+client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx
+client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx
+client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx
+client/src/concept2cure/v2/__tests__/deferredAssessmentWorkbenches.test.tsx
+client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx
+client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx
+client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx
+client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx
+client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx
+client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx
+client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx
+client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx
+client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx
+client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx
+client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx
+client/src/concept2cure/v2/__tests__/notificationSharedSignature.test.tsx
+client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx
+client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx
+client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx
+client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx
+client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx
+client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx
+client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx
+client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx
+client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts
+client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx
+client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx
+client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx
+client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx
+client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx
+client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx
+client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx
+client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx
+client/src/concept2cure/v2/__tests__/shellNav.test.tsx
+client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx
+client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx
+client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx
+client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx
+client/src/concept2cure/v2/__tests__/taskBoardSignature.test.tsx
+client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx
+client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx
+client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx
+client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx
+client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx
+client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx
+tests/regulatory-honesty.contract.test.ts
+tests/ui/ana-rail-phone-drawer.test.ts
+tests/ui/filing-path-reachability.test.ts
+tests/ui/motion-token.test.ts
+tests/ui/one-shell.test.ts
+tests/ui/pj-title-authority.test.ts
+tests/ui/shell-kit-lazy.test.ts
+tests/ui/surface-honesty.contract.test.ts
+tests/ui/surface-registry-coverage.test.ts
+tests/ui/tailwind-source-scope.test.ts
+tests/ui/token-authority.test.ts
+client/src/concept2cure/v2/__tests__/authoringReviewRouteRR5.test.tsx
+client/src/concept2cure/v2/__tests__/sendForReview.test.tsx
+client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx

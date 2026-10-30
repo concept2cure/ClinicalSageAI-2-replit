@@ -1,0 +1,10 @@
+[
+  "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts",
+  "server/routes/__tests__/csr-draft-source-honesty.test.ts",
+  "server/services/csr-builder.ts",
+  "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts",
+  "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts",
+  "server/services/csr/csr-job-runner.ts",
+  "server/services/study-design/__tests__/crf-shell.test.ts",
+  "server/services/study-design/crf-shell.ts"
+]

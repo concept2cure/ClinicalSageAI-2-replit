@@ -12,7 +12,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('../../vault/document-catalog.service.js', () => ({ isDocumentCatalogEnabled: async () => true }));
 
 import { getAllEnabledTools } from '../AnaToolDefinitions';
-import { COMMAND_REGISTRY } from '../../ana-ri/command-executor';
+import { COMMAND_HANDLERS, COMMAND_REGISTRY } from '../../ana-ri/command-executor';
+import { evidenceSufficiencyAssess, reviewerSimulationRun } from '../../ana-ri/mdx-command-handlers-phase2';
 import { UI_SURFACES } from '../../../../shared/constants/ui-surface-registry';
 import { LAUNCH_SURFACE_IDS } from '../../../../shared/constants/launch-scope';
 import {
@@ -60,12 +61,43 @@ describe('the inventory', () => {
   });
 });
 
+describe('existing project analysis commands after portfolio convergence', () => {
+  const commands = [
+    ['evidence_sufficiency.assess', evidenceSufficiencyAssess],
+    ['reviewer_simulation.run', reviewerSimulationRun],
+  ] as const;
+
+  it.each(commands)('%s keeps the same dispatch and scope without device-workstream', (name, handler) => {
+    const launchWithoutPortfolio = new Set([...LAUNCH_SURFACE_IDS].filter(id => id !== 'device-workstream'));
+    expect(launchWithoutPortfolio.has('project-home')).toBe(true);
+    expect(launchWithoutPortfolio.has('device-workstream')).toBe(false);
+    // These already serve the canonical project. Do not move them into a hidden
+    // portfolio group or replace the handlers when removing that screen later.
+    expect(HIDDEN_APP_COMMANDS.has(name)).toBe(false);
+    expect(CLASSIFIED_COMMANDS.has(name)).toBe(true);
+    expect(anaCapabilityInLaunchScope(name, HIDDEN_APP_COMMANDS, launchWithoutPortfolio)).toBe(true);
+    expect(COMMAND_HANDLERS[name]).toBe(handler);
+  });
+
+  it.each(commands)('%s describes the selected project and its existing confirmation gate', (name) => {
+    const command = COMMAND_REGISTRY.find(candidate => candidate.name === name);
+    expect(command?.description).toMatch(/selected project/);
+    expect(command?.description).toMatch(/Requires confirm \+ reason/);
+  });
+});
+
 describe('governedToolsetFor, the one toolset every chat door composes', () => {
-  const HIDDEN = ['create_iacuc_protocol', 'record_grant_award', 'run_rbm_assessment', 'write_kit_section', 'create_clinical_study', 'build_sae_line_listing'];
+  // write_kit_section and create_clinical_study were hidden examples until the
+  // device surfaces joined the launch catalog (62a8d5e7f); they are kept now.
+  // prepare_meeting_package (agency-meetings) and create_tmf (etmf), still outside
+  // the catalog, take their places.
+  const HIDDEN = ['create_iacuc_protocol', 'record_grant_award', 'run_rbm_assessment', 'prepare_meeting_package', 'create_tmf', 'build_sae_line_listing'];
   const KEPT = [
     'search_literature', // knowledge
     'lookup_fda_guidance', // knowledge
     'create_qms_document', // quality (launch)
+    'write_kit_section', // device-510k (launch since 62a8d5e7f)
+    'create_clinical_study', // device-clinical-studies (launch since 62a8d5e7f)
     'list_vault_documents', // vault (launch)
     'update_protocol_section', // protocol-dev (launch)
     'navigate_to', // AnA's hands

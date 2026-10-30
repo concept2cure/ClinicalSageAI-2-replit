@@ -169,7 +169,9 @@ describe('the real registry, launch scope on', () => {
      note says its routes are /api/mdx/gateways), so every device-kit API
      answered as launch: risk items, clinical studies, IVD, labeling. Found by
      the AnA tool measurement (2026-09-26); the device kit is outside the launch
-     catalog. */
+     catalog. 2026-10-29: its features are Projects features since 62a8d5e7, so
+     what their screens call is served and the rest of the kit is not
+     (launch-scope-device-features.test.ts holds every call). */
   /* Express routes ignore letter case: app.use('/api/chat', …) serves
      /API/Chat/… too. The gate compared case-sensitively, so an upper-case
      /API/ skipped launch scope entirely (the gate judged only paths starting
@@ -178,28 +180,31 @@ describe('the real registry, launch scope on', () => {
      2026-10-22). The gate judges the path as Express routes it. */
   it('judges a path as Express routes it, whatever its letter case', async () => {
     for (const p of [
-      '/API/mdx/risk-items/1', '/Api/Orchestration/execute', '/API/governed-intelligence/contradictions/scan/1',
-      '/api/mdx/qms/Suppliers', '/api/chat/Actions/run', '/api/chat/STREAM', '/api/regulatory/tasks/Sync',
-      '/api/concept2cure/projects/ALL', '/api/mdx/Risk-Items/1',
+      '/API/mdx/imports', '/Api/Orchestration/execute', '/API/governed-intelligence/contradictions/scan/1',
+      '/api/mdx/qms/Readiness', '/api/chat/Actions/run', '/api/chat/STREAM', '/api/regulatory/tasks/Sync',
+      '/api/concept2cure/projects/ALL', '/api/mdx/Gateways/FDA/esg/transmit', '/api/mdx/Rbm-Kris',
     ]) {
       expect(await refused(p), p).toBe(true);
     }
-    // And a launch path is still served in any case.
-    expect(await refused('/API/mdx/qms/Documents'), '/API/mdx/qms/Documents').toBe(false);
+    // And a launch path is still served in any case: suppliers are Quality's (P-48), the risk file a Projects feature (62a8d5e7).
+    for (const p of ['/API/mdx/qms/Documents', '/api/mdx/qms/Suppliers', '/API/mdx/risk-items/1', '/api/mdx/Risk-Items/1']) expect(await refused(p), p).toBe(false);
   });
 
   it('refuses the device kit under /api/mdx, and passes the launch apps that live there', async () => {
     /* /api/mdx/vault is the device kit's vault aggregator. It was passed here
        from 2026-09-26 on a walker misattribution (fixed in f9eee2670) and
        left the launch scope on 2026-10-22: the launch Vault reads
-       /api/c2c/project-vault (docs/evidence/D2-API-SCOPE/2026-10-15-reproof/api-scope/). */
-    for (const p of [
-      '/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/rbm-kris',
-      '/api/mdx/vault', '/api/mdx/vault/7/versions',
-    ]) {
+       /api/c2c/project-vault (docs/evidence/D2-API-SCOPE/2026-10-15-reproof/api-scope/).
+       2026-10-29: the risk file, clinical studies and labeling are Projects
+       features (62a8d5e7) and their screens call these, so they are served. The
+       device vault was one too until it folded into the Vault the same day (fold
+       F3): its router is gone and nothing claims its prefix, so it is refused
+       with the kit's other routes, which no launch screen calls. */
+    for (const p of ['/api/mdx/rbm-kris', '/api/mdx/imports', '/api/mdx/ldt', '/api/mdx/ivd', '/api/mdx/risk-summary', '/api/mdx/work-packages', '/api/mdx/vault', '/api/mdx/vault/7/versions']) {
       expect(await refused(p), p).toBe(true);
     }
     for (const p of [
+      '/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents',
       '/api/mdx/gateways/transmittals',
       '/api/mdx/qms/documents',
       '/api/mdx/admin/users',
@@ -208,9 +213,10 @@ describe('the real registry, launch scope on', () => {
     ]) {
       expect(await refused(p), p).toBe(false);
     }
-    // AnA memory left the launch scope on 2026-10-08: it listed a store nothing
-    // writes. Its routes are refused with it.
-    expect(await refused('/api/mdx/ana/memory'), '/api/mdx/ana/memory').toBe(true);
+    // AnA memory left the launch scope on 2026-10-08 and folded into the conversation on 2026-10-29 (fold-ana-memory/):
+    // the conversation claims the caller's own profile; the screen's other routes are gone, claimed by nothing.
+    for (const p of ['/api/mdx/ana/memory', '/api/mdx/ana/memory/7/verify', '/api/mdx/ana/threads']) expect(await refused(p), p).toBe(true);
+    expect(await refused('/api/mdx/ana/memory/profile'), '/api/mdx/ana/memory/profile').toBe(false);
   });
 
   /* 2026-10-17 (audit, FILING_SPINE F12 + LX-13): transmit runs on the sequence
@@ -239,17 +245,28 @@ describe('the real registry, launch scope on', () => {
      /api/global-ri and /api/rim; project-home and program-journey claimed
      /api/rim; submission-center claimed all of /api/510k/estar. No launch
      screen calls any of them except the two eSTAR sub-paths Submission Center
-     uses. */
-  it('refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call', async () => {
-    for (const p of ['/api/global-ri/catalog', '/api/global-ri/impurities/x', '/api/rim/products', '/api/510k/estar/official', '/api/510k/estar/build']) {
+     uses. 2026-10-29: the 510(k), PMA and IVD features are Projects features
+     (62a8d5e7), and their official eSTAR panel calls official and build. */
+  it('refuses Global RI and RIM, and passes the eSTAR routes launch screens call', async () => {
+    for (const p of ['/api/global-ri/catalog', '/api/global-ri/impurities/x', '/api/rim/products']) {
       expect(await refused(p), p).toBe(true);
     }
-    for (const p of ['/api/510k/estar/submissions', '/api/510k/estar/assemble']) {
+    for (const p of ['/api/510k/estar/submissions', '/api/510k/estar/assemble', '/api/510k/estar/official', '/api/510k/estar/build']) {
       expect(await refused(p), p).toBe(false);
     }
-    // The dossier map left the launch scope on 2026-10-08 (always empty for a
-    // program created in the product); its read is refused with it.
-    expect(await refused('/api/dossier-map'), '/api/dossier-map').toBe(true);
+  });
+
+  it('keeps the retired dossier APIs unclaimed and refused under production enforcement', async () => {
+    const prefixes = buildPrefixMap();
+    const productionGate = moduleEntitlementGate(prefixes, { launchScope: 'on', unattributed: 'enforce' });
+    for (const path of ['/api/dossier-map', '/api/dossier-readiness/42']) {
+      // A2.7 removed the mounts and registry rows. In production these unknown
+      // endpoints stay refused; development's report mode reaches a 404.
+      expect(launchScopeApiVerdict(path, prefixes, NEVER_GATED), path).toBe('unmapped');
+      const { res, passed } = await run(productionGate, path);
+      expect(passed, path).toBe(false);
+      expect(res.statusCode, path).toBe(403);
+    }
   });
 
   /* Found 2026-09-29: Projects and Project home each claimed all of /api/programs.
@@ -429,7 +446,6 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
     '/api/cmc/module3-os/source-lineage/p-1/3.2.P.5',
     '/api/cmc/module3-os/uploaded-sources/p-1',
     '/api/cmc/module3-os/section-labels',
-    '/api/cmc/projects/p-1/process-capability',
     '/api/cmc/stability/studies',
     '/api/cmc/status',
   ];
@@ -453,6 +469,11 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
         '/api/cmc/specifications/7/approve',
         '/api/cmc/batch-records/7/release',
         '/api/cmc/quality/qbd/p-1',
+        /* Withheld until 2026-10-25 with the registry's own note — "deliberately
+           so for /projects/:id/process-capability UNTIL A LAUNCH SCREEN CALLS
+           IT". The Batch records tab calls it now (CmProcessCapability in
+           CmcModule.tsx), so it moved out of NOT_LAUNCH above and is served. */
+        '/api/cmc/projects/p-1/process-capability',
         '/api/cmc/module3-os/compile/p-1',
         '/api/cmc/module3-os/guard/final-export/p-1',
         '/api/cmc/module3-os/place-into-submission/p-1',
@@ -535,12 +556,14 @@ describe('the real registry with the IND tools in Submission Center, agency ques
     '/api/ind-lifecycle/portfolio',
     '/api/ind-lifecycle/readiness',
     '/api/ind-master-data',
+    // 2026-10-29: the briefing book is a project document in the editor since
+    // 5894e1aaa; no launch screen calls the form assembler or its /pdf.
+    '/api/ind-lifecycle/briefing-book', '/api/ind-lifecycle/briefing-book/pdf',
   ];
   const CALLED = [
     '/api/ind-checklist',
     '/api/ind-lifecycle/clock',
     '/api/ind-lifecycle/cover-letter',
-    '/api/ind-lifecycle/briefing-book/pdf',
     '/api/ind-lifecycle/loa',
     '/api/ind-lifecycle/right-of-reference/pdf',
     '/api/ind-lifecycle/annual-report/file',

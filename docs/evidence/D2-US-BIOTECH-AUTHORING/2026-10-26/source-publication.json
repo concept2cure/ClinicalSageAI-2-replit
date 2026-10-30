@@ -1,0 +1,22 @@
+{
+  "sourceCommit": "3835453cbcfed3827f91851aafd03b092e99f938",
+  "sourceCommits": [
+    "14b27100d9006ed3719597630bd93a747b736c89",
+    "1b9c3e89d6d85a5cfe61ee93560d3d279cc7f7e2",
+    "f40871f543e1822ecc4457488068f66ece36503a",
+    "8512be7ac3e401ab1e8387c6cd3ffd96a84c34c6",
+    "9e201e15cdb6762413acf998226c0f9d27032ee2",
+    "3835453cbcfed3827f91851aafd03b092e99f938"
+  ],
+  "acceptedOriginRevision": "3835453cbcfed3827f91851aafd03b092e99f938",
+  "target": "origin/concept2cure-v2",
+  "acceptedAt": "2026-10-27T00:46:10.400804+00:00",
+  "qualifiedInputs": "compiler-corrected-source-freeze.json",
+  "pushReceipt": "source-push-corrected.json",
+  "normalHooks": true,
+  "typescriptErrors": 0,
+  "firstPushRejected": "source-push.json",
+  "firstPushErrors": 48,
+  "compilerRemediation": "compiler-remediation.json",
+  "noDeploymentProviderOrAgencyAction": true
+}

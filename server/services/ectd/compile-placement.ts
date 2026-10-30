@@ -146,7 +146,7 @@ export function placementModuleReadiness(
 export type StatusBasis = 'placed' | 'approved' | 'no-sequence' | 'unavailable';
 
 export const NO_SEQUENCE_NOTE =
-  'No sequence exists for this program yet, so nothing is counted as placed. Approved sections are on the project’s Author tab.';
+  'No sequence exists for this project yet, so nothing is counted as placed. Approved sections are on the project’s Author tab.';
 
 export interface StatusMeasure extends ReturnType<typeof placementModuleReadiness> {
   basis: StatusBasis;

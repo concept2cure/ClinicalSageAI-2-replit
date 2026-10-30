@@ -1,0 +1,25 @@
+# Mutations (2026-10-29T04:15:45Z). Each is applied alone, run, and reverted.
+
+## MUTATION: the upload route does not ask the Vault to number versions
+##   server/routes/vault-ingest.ts
+ × tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > refuses a new version number for a code that has versions, names the document, and stores nothing 65ms
+   → {"success":true,"document":{"id":"510d295c-8517-447e-9c55-ab47618c4054","programId":"0d8476a1-c617-4ddb-a05f-f068bad1ff03","documentCode":"DBTEST-W06-c80d865d-0a8","documentTitle":"A typed second version","documentType":"OTHER","version":"2.0","fileName":"dhf-extract-v2.pdf","fileSize":85,"mimeType":"application/pdf","contentHash":"11d8e85ca66bfcbdc827890b61c6f021b12a9689c593cb264b25746944176a6a","processingStatus":"PENDING","hasExtractedText":false,"wordCount":null,"createdAt":"2026-10-29T04:15:53.441Z","updatedAt":"2026-10-29T04:15:53.441Z"},"filing":{"view":"device","folderId":"eng","evidenceKind":"report","ctdSection":null,"placementStatus":"suggested","confidence":"high","rationale":"Matched engineering / DHF / risk file — filed to eng for the device view.","folderLabel":"Engineering (DHF + RMF)","needsReview":false}}: expected 201 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+
+## MUTATION: the service computes the refusal and records the version anyway
+##   server/services/vault/vault-ingest.service.ts
+ × tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > refuses a new version number for a code that has versions, names the document, and stores nothing 79ms
+   → {"success":true,"document":{"id":"a76a553d-d43d-484d-94b1-a76504c2ba44","programId":"e951983c-1f81-4ea4-aea4-bce92ce3faf0","documentCode":"DBTEST-W06-5671dde6-368","documentTitle":"A typed second version","documentType":"OTHER","version":"2.0","fileName":"dhf-extract-v2.pdf","fileSize":85,"mimeType":"application/pdf","contentHash":"11d8e85ca66bfcbdc827890b61c6f021b12a9689c593cb264b25746944176a6a","processingStatus":"PENDING","hasExtractedText":false,"wordCount":null,"createdAt":"2026-10-29T04:16:01.865Z","updatedAt":"2026-10-29T04:16:01.865Z"},"filing":{"view":"device","folderId":"eng","evidenceKind":"report","ctdSection":null,"placementStatus":"suggested","confidence":"high","rationale":"Matched engineering / DHF / risk file — filed to eng for the device view.","folderLabel":"Engineering (DHF + RMF)","needsReview":false}}: expected 201 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+
+## MUTATION: the refusal also takes the recorded version, so a conflict or retry is never judged
+##   server/services/vault/vault-ingest.service.ts
+ × tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a version is numbered by the Vault once a document has one (Part 11 review F1, 2026-10-22) > still takes the recorded version to the service, whose own conflict rule answers 53ms
+   → expected 'VERSION_FOR_EXISTING_DOCUMENT' to be 'VERSION_CONTENT_CONFLICT' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)

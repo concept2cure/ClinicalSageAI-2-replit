@@ -1,0 +1,20 @@
+# eslint, plain config, on every file this slice touches. Working tree:
+server/middleware/__tests__/launch-scope-api-gate.test.ts
+  525:106  warning  Arrow function has too many lines (108). Maximum allowed is 100  max-lines-per-function
+shared/constants/ui-surface-registry.ts
+  788:1  warning  File has too many lines (897). Maximum allowed is 500  max-lines
+shared/constants/ui-surface-registry.ui-v2.ts
+  595:1  warning  File has too many lines (1238). Maximum allowed is 500  max-lines
+✖ 3 problems (0 errors, 3 warnings)
+
+# The changed files as committed at HEAD 6184439b3 (the two new tests have no HEAD version):
+shared/constants/ui-surface-registry.ts:
+  773:1  warning  File has too many lines (898). Maximum allowed is 500  max-lines
+✖ 1 problem (0 errors, 1 warning)
+shared/constants/ui-surface-registry.ui-v2.ts:
+  587:1  warning  File has too many lines (1238). Maximum allowed is 500  max-lines
+✖ 1 problem (0 errors, 1 warning)
+server/middleware/__tests__/launch-scope-api-gate.test.ts:
+  525:106  warning  Arrow function has too many lines (108). Maximum allowed is 100  max-lines-per-function
+✖ 1 problem (0 errors, 1 warning)
+server/services/entitlements/__tests__/ind-launch-claim.test.ts:

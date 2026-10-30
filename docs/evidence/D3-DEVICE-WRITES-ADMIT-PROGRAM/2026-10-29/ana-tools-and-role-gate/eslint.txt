@@ -1,0 +1,8 @@
+ESLint per changed file, at HEAD and now, with plain npx eslint <file>.
+Head for mdx-labeling.ts: run while the working-tree file equalled HEAD (git diff empty, sha256 c13bbc0a…).
+
+server/routes/mdx-labeling.ts                                            head: 0 problems       now: 0 problems
+server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts       head: (new file)       now: 0 problems
+server/services/ana/__tests__/device-tools-admit-program.test.ts         head: (new file)       now: 0 problems
+
+server/services/ana/AnaToolExecutor.ts: not changed by this slice.

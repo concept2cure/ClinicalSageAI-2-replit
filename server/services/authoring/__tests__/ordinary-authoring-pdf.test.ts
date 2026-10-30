@@ -10,11 +10,12 @@ vi.mock('../../../export/renderers', () => ({ renderHtmlToPdfTracked: mocks.html
 
 import { renderAuthoringExport, sectionsDigest, type RenderExportArgs } from '../authoring-export';
 import { ConversionCapacityError } from '../../conversion-slots';
+import { releaseGovernanceRead } from './release-governance-reads';
 
 const SAFE_MESSAGE = 'The formatted PDF could not be completed. Nothing was delivered or filed. Download Word or contact an administrator.';
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 const input = (): RenderExportArgs => ({
-  executor: { query: async () => ({ rows: [] }) }, tenantId: 7,
+  executor: { query: async (sql: string) => releaseGovernanceRead(sql) ?? { rows: [] } }, tenantId: 7,
   doc: { id: '11111111-1111-4111-8111-111111111111', title: 'Ordinary clinical overview', status: 'APPROVED' },
   sections: [{ id: 's1', code: '2.5', title: 'Overview', content:
     `<p>A <strong>reviewed</strong> ordinary document.</p><table><tr><th>Dose</th><th>Finding</th></tr>` +
@@ -60,6 +61,22 @@ describe('ordinary Authoring PDFs share the rich Word converter', () => {
     expect(banners).toHaveLength(2);
     for (const entry of banners) expect(entry.getData().toString()).toContain('uncontrolled working copy');
     expect(zip.readAsText('word/document.xml')).toContain('No electronic signature applies to this copy');
+  });
+
+  /* MR-12 Stage 8: a QMS controlled copy prints its banner on every page and the
+     QMS approval's manifestation, never the empty Authoring signature store. */
+  it('carries the controlled-copy banner on every page and prints the QMS approval, not "no signatures"', async () => {
+    await renderAuthoringExport({ ...input(), controlledCopy: {
+      banner: 'CONTROLLED COPY · SOP-001 v1.0 · effective 2026-09-01 · uncontrolled when printed',
+      manifest: [['Approved by: Dana Whitfield', 'Meaning: Approval', 'Executed: 2026-09-01 09:00:00 UTC']] } });
+    const zip = word();
+    const banners = zip.getEntries().filter(entry => /^word\/(?:header|footer)\d+\.xml$/.test(entry.entryName));
+    expect(banners).toHaveLength(2);
+    for (const entry of banners) expect(entry.getData().toString()).toContain('CONTROLLED COPY · SOP-001 v1.0');
+    const body = zip.readAsText('word/document.xml');
+    for (const text of ['Approved by: Dana Whitfield', 'Executed: 2026-09-01 09:00:00 UTC']) expect(body).toContain(text);
+    expect(body).not.toContain('No electronic signatures are recorded');
+    await expect(renderAuthoringExport({ ...input(), format: 'xml', controlledCopy: { banner: 'x', manifest: [] } })).rejects.toThrow(/DOCX or PDF only/);
   });
 
   it('retains pending insertions and deletions as genuine Word revisions at the converter boundary', async () => {

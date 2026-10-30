@@ -48,10 +48,13 @@ export function enteredIvdrFacts(values: Record<string, string>) {
   return facts;
 }
 
-export function IvdAssessmentWorkbench({ onNav }: { onNav?: (id: string) => void }) {
-  const programId = shellProgramId(useShellProject());
+/** `programId`: the project the host has open (device-diagnostics passes its
+ *  program). Left out, the shell's open project, as on the ivd-completeness screen. */
+export function IvdAssessmentWorkbench({ onNav, programId: given }: { onNav?: (id: string) => void; programId?: string | null }) {
+  const shell = shellProgramId(useShellProject());
+  const programId = given === undefined ? shell : given;
   return programId ? <ProgramIvdWorkbench key={programId} programId={programId} onNav={onNav} />
-    : <section><h2>Saved IVD evidence</h2><p>Open a program to assess and save IVD evidence.</p></section>;
+    : <section><h2>Saved IVD evidence</h2><p>Open a project to assess and save IVD evidence.</p></section>;
 }
 
 function ProgramIvdWorkbench({ programId, onNav }: { programId: string; onNav?: (id: string) => void }) {
@@ -119,10 +122,10 @@ function IvdSavedRecords({ loading, error, assessments, documents, selected, onS
   return <><label htmlFor="ivd-saved-record">Saved IVD record</label><select id="ivd-saved-record" value={selected} onChange={event => onSelect(event.target.value)}>
     <option value="">Choose saved evidence</option>{assessments.map(row => <option key={row.id} value={`assessment:${row.id}`}>{row.title || row.assessment_type} · {row.verdict || 'no verdict'}</option>)}
     {documents.map(row => <option key={row.id} value={`document:${row.id}`}>{row.title || row.doc_type} · {row.status}</option>)}
-  </select>{!assessments.length && !documents.length && <p>No IVD records are saved for this program.</p>}</>;
+  </select>{!assessments.length && !documents.length && <p>No IVD records are saved for this project.</p>}</>;
 }
 function IvdSavedSnapshot({ assessment, document, title, canOpen, onOpen }: { assessment?: SavedAssessment; document?: SavedDocument; title: string; canOpen: boolean; onOpen: (source: WorkflowImportSource) => void }) {
-  if (!assessment && !document) return <p role="alert">The selected IVD record is unavailable in the open program.</p>;
+  if (!assessment && !document) return <p role="alert">The selected IVD record is unavailable in the open project.</p>;
   const source: WorkflowImportSource = assessment ? { kind: 'ivd-assessment', documentId: assessment.id } : { kind: 'ivd-document', documentId: document!.id };
   return <div><h3>{title}</h3>
     {assessment ? <><RecordedSnapshot title="Recorded device facts" value={assessment.inputs} /><RecordedSnapshot title="Saved assessment result" value={assessment.result} /></>

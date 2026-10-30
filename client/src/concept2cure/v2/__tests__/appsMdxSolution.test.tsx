@@ -11,7 +11,7 @@ vi.mock('@/lib/queryClient', async (original) => ({
 import { Apps } from '../surfaces/AdminSurfaces';
 import { useActiveSurfaceContext } from '../surfaceContext';
 
-const surface = { id: 'apps', label: 'Workflows' } as UiSurface;
+const surface = { id: 'apps', label: 'Subscription & features' } as UiSurface;
 const license = {
   tier: 'professional', industryMode: 'medtech', enabledModules: [],
   usage: { projects: { currentCount: 1, maxAllowed: 10 }, users: { currentCount: 2, maxAllowed: 20 } },
@@ -60,13 +60,13 @@ describe('Apps catalog reaches MDX through Projects', () => {
     mockCatalog([
       row('quality', 'Quality'),
       row('device-510k', '510(k) submission'),
-      row('risk', 'Risk management', { category: 'quality', sortOrder: 20 }),
+      row('device-engineering', 'Engineering evidence', { category: 'quality', sortOrder: 20 }),
       row('device-cer', 'Clinical evaluation', { category: 'clinical', sortOrder: 30 }),
     ]);
     const onNav = mount();
     const solution = await screen.findByTestId('mdx-catalog-solution');
     expect(screen.getAllByTestId('mdx-catalog-solution')).toHaveLength(1);
-    expect(solution.closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects workflow');
+    expect(solution.closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects');
     expect(solution.querySelectorAll('[data-feature-id]')).toHaveLength(3);
     expect(solution.querySelector('.launch-grid')).toBeNull();
     fireEvent.click(within(solution).getByRole('button', { name: 'Open projects' }));
@@ -86,10 +86,10 @@ describe('Apps catalog reaches MDX through Projects', () => {
     ]);
     mount();
     await screen.findByTestId('mdx-catalog-solution');
-    const search = screen.getByRole('searchbox', { name: 'Find a workflow or feature' });
+    const search = screen.getByRole('searchbox', { name: 'Find a feature' });
     fireEvent.change(search, { target: { value: 'Clinical evaluation' } });
     const solution = screen.getByTestId('mdx-catalog-solution');
-    expect(solution.closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects workflow');
+    expect(solution.closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects');
     expect(solution.querySelectorAll('[data-feature-id]')).toHaveLength(1);
     expect(solution.querySelector('details')?.open).toBe(true);
     expect(screen.queryByText('510(k) submission', { selector: '.launch-title' })).toBeNull();
@@ -104,14 +104,14 @@ describe('Apps catalog reaches MDX through Projects', () => {
     mockCatalog([
       row('device-510k', '510(k) submission', { subscriptionState: 'disabled' }),
       row('device-cer', 'Clinical evaluation', { isAvailable: false, requiredTier: 'enterprise' }),
-      row('risk', 'Risk management', { isAvailable: false, requiredTier: 'standard' }),
+      row('device-engineering', 'Engineering evidence', { isAvailable: false, requiredTier: 'standard' }),
     ]);
     mount();
     await screen.findByTestId('mdx-catalog-solution');
     const access = revealAccess();
     expect(access.getByText(/510\(k\) submission is turned off for this workspace/)).toBeTruthy();
-    expect(access.getByText(/Clinical evaluation is not included in your plan/)).toBeTruthy();
-    expect(access.getByText(/Risk management is not offered for this workspace/)).toBeTruthy();
+    expect(access.getByText(/Clinical evaluation is not included in your subscription/)).toBeTruthy();
+    expect(access.getByText(/Engineering evidence is not offered for this workspace/)).toBeTruthy();
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     expect(access.getAllByRole('switch')).toHaveLength(1);
     expect(access.getByRole('switch', { name: 'Enable 510(k) submission' })).toBeTruthy();
@@ -121,22 +121,22 @@ describe('Apps catalog reaches MDX through Projects', () => {
     const put = vi.fn(async () => ok({ auditTrail: { persisted: true } }));
     mockCatalog([
       row('quality', 'Quality'),
-      row('risk', 'Risk management', { category: 'quality', sortOrder: 20, subscriptionState: 'disabled' }),
+      row('device-engineering', 'Engineering evidence', { category: 'quality', sortOrder: 20, subscriptionState: 'disabled' }),
     ], put);
     mount();
     await screen.findByTestId('mdx-catalog-solution');
     const access = revealAccess();
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
-    fireEvent.click(access.getByRole('switch', { name: 'Enable Risk management' }));
+    fireEvent.click(access.getByRole('switch', { name: 'Enable Engineering evidence' }));
     expect(put).not.toHaveBeenCalled();
     const dialog = screen.getByRole('dialog');
-    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'Enable risk work for active device projects' } });
+    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'Enable engineering work for active device projects' } });
     fireEvent.change(dialog.querySelector('input')!, { target: { value: 'yes' } });
     fireEvent.click(screen.getByText('Confirm and log'));
-    await waitFor(() => expect(put).toHaveBeenCalledWith('/api/module-subscriptions/risk/toggle', {
-      enabled: true, reason: 'Enable risk work for active device projects',
+    await waitFor(() => expect(put).toHaveBeenCalledWith('/api/module-subscriptions/device-engineering/toggle', {
+      enabled: true, reason: 'Enable engineering work for active device projects',
     }));
-    await waitFor(() => expect(access.getByRole('switch', { name: 'Disable Risk management' }).getAttribute('aria-checked')).toBe('true'));
+    await waitFor(() => expect(access.getByRole('switch', { name: 'Disable Engineering evidence' }).getAttribute('aria-checked')).toBe('true'));
     expect(screen.getByText('Quality').closest('.launch')?.getAttribute('data-locked')).toBeNull();
   });
 });

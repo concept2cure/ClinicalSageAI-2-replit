@@ -14,6 +14,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+/* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
+   no AuthProvider mounted, the real useAuth throws before Project home renders. */
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
@@ -90,16 +93,17 @@ describe('ProjectHome — conversations', () => {
     expect(screen.queryByText(/You have no conversations on this project yet/)).toBeNull();
   });
 
-  it('the composer leads the main column and the readiness ring sits in the aside', async () => {
+  it('the steps come first; the composer and the readiness ring sit in the aside beside the step', async () => {
     route('ok');
     const { container } = render(<ProjectHome {...props()} />);
     await waitFor(() => expect(container.querySelector('.pj-map-ring')).toBeTruthy());
     expect(container.querySelector('.pj-side .pj-map-ring'), 'ring in the aside').toBeTruthy();
     expect(container.querySelector('.pj-main .pj-map-ring'), 'ring not in the main column').toBeNull();
-    // The conversation composer precedes the workspace grid in document order.
+    // CLIENT_JOURNEY pass 4 (decision 5): the steps, then the open step with AnA beside it.
     const convo = container.querySelector('.pj-convo')!;
-    const grid = container.querySelector('.pj-grid')!;
-    expect(convo.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(convo.closest('.pj-side'), 'composer in the aside').toBeTruthy();
+    const steps = container.querySelector('.pj-lc')!;
+    expect(steps.compareDocumentPosition(convo) & Node.DOCUMENT_POSITION_FOLLOWING, 'steps before the composer').toBeTruthy();
   });
 });
 

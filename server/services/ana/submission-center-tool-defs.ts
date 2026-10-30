@@ -364,20 +364,14 @@ export const EXPLAIN_VALIDATION_FINDINGS: AnaTool = {
 export const DISPATCH_QC_CHECK: AnaTool = {
   name: 'dispatch_qc_check',
   description:
-    'Run a final adversarial pre-transmit QC pass and decide whether dispatch may proceed. Hard rule: never cleared when there are open error-severity validation findings or unacknowledged Shadow Review criticals. This does NOT transmit — it gates. Tenant comes from the active context; the call is audited.',
+    'Run the final pre-transmit QC on a stored sequence and say whether dispatch may proceed. The verdict is the platform\'s dispatch-readiness assessment of that sequence (the gate freeze, dispatch and transmit enforce: validation findings, Shadow Review, the agency-grade validation gate, the release signature); it is never computed from counts you supply, and a model narrative, when one is configured, only explains it. This does NOT transmit. Tenant comes from the active context; the call is audited.',
   input_schema: {
     type: 'object',
     properties: {
-      region: { type: 'string', enum: ['fda', 'eu', 'jp'] },
-      validation_errors: { type: 'number', description: 'Count of open error-severity validation findings.' },
-      unresolved_shadow_criticals: { type: 'number', description: 'Count of unacknowledged Shadow Review criticals.' },
-      leaves: {
-        type: 'array',
-        items: { type: 'object', properties: { section_code: { type: 'string' }, operation: { type: 'string' } }, required: ['section_code', 'operation'] },
-      },
+      sequence_id: { type: 'number', description: 'The stored sequence to assess.' },
       submission_id: { type: 'number', description: 'Optional submission id for the audit entry.' },
     },
-    required: ['region', 'validation_errors', 'unresolved_shadow_criticals', 'leaves'],
+    required: ['sequence_id'],
   },
 };
 
@@ -400,7 +394,7 @@ export const TRACE_PROVENANCE: AnaTool = {
 export const CHECK_CONSISTENCY: AnaTool = {
   name: 'check_consistency',
   description:
-    'Compare the labelled figures in a claim (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other parts of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context; the call is audited.',
+    'Compare the labelled figures in a saved section (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other saved sections of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. Name each part by its authoring section_id; the engine reads its saved text. Text in the call is never compared. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context, and every section must be in the submission\'s project; the call is audited.',
   input_schema: {
     type: 'object',
     properties: {
@@ -408,14 +402,14 @@ export const CHECK_CONSISTENCY: AnaTool = {
       dimension: { type: 'string', description: 'What is being checked, recorded with each finding, e.g. "subject-counts".' },
       left: {
         type: 'object',
-        description: 'The claim under review.',
-        properties: { ref: { type: 'string' }, text: { type: 'string' } },
-        required: ['ref', 'text'],
+        description: 'The saved section that makes the claim under review.',
+        properties: { section_id: { type: 'string', description: 'The authoring section id.' } },
+        required: ['section_id'],
       },
       right: {
         type: 'array',
-        description: 'The sources to check against.',
-        items: { type: 'object', properties: { ref: { type: 'string' }, text: { type: 'string' } }, required: ['ref', 'text'] },
+        description: 'The saved sections to check against.',
+        items: { type: 'object', properties: { section_id: { type: 'string', description: 'The authoring section id.' } }, required: ['section_id'] },
       },
     },
     required: ['submission_id', 'dimension', 'left', 'right'],
@@ -555,6 +549,14 @@ export const TEMPLATE_OUTLINES_FROM_RECORD: Readonly<Record<string, string>> = {
   clinical_study_report: 'ICH E3',
   smpc: 'QRD SmPC',
   dsur: 'corrected ICH E2F',
+  // Read from the one ICH M2–M5 record since 2026-10-20 (market-specs/ctd-component-outlines.ts).
+  nonclinical_overview: 'M4',
+  clinical_overview: 'M4',
+  clinical_summary: 'M4',
+  // And since 2026-10-25 (D2 cleanup C2).
+  quality_overall_summary: 'M4',
+  drug_substance: 'M4',
+  drug_product: 'M4',
 };
 
 /** These are canonical platform scaffolds, not a verified agency document structure. */
@@ -570,9 +572,12 @@ const HAND_KEPT_OUTLINE_NOTES: Readonly<Record<string, string>> = {
   cover_letter: 'platform headings',
 };
 
-const recordDerivedOutlines = DOCUMENT_TEMPLATES
+// Outlines read from the same record are named once with it ("a, b, c (M4)"), so
+// the list stays inside the 1,024-character trim as more outlines join (2026-10-25).
+const recordDerivedOutlines = [...DOCUMENT_TEMPLATES
   .filter((t) => t.id in TEMPLATE_OUTLINES_FROM_RECORD)
-  .map((t) => `${t.id} (${TEMPLATE_OUTLINES_FROM_RECORD[t.id]})`)
+  .reduce((byRecord, t) => byRecord.set(TEMPLATE_OUTLINES_FROM_RECORD[t.id], [...(byRecord.get(TEMPLATE_OUTLINES_FROM_RECORD[t.id]) ?? []), t.id]), new Map<string, string[]>())]
+  .map(([record, ids]) => `${ids.join(', ')} (${record})`)
   .join('; ');
 
 const blueprintOutlines = Object.keys(TEMPLATE_OUTLINES_FROM_BLUEPRINT).join('; ');
@@ -595,7 +600,7 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   description:
     'Paged authoring outlines; not drafted prose, verified evidence or readiness. ' +
     'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. ' +
-    '`offset`/`limit` page results. Editor UUIDs retain exact outline, scope and source checks. ' +
+    '`offset`/`limit` page results. UUIDs keep exact outline, scope and source checks. ' +
     '`market`+`prepare` adds a regional route and at most 3 focused questions. ' +
     '`discussed_topics` only prevents re-asking. ' +
     "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. " +

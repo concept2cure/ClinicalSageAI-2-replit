@@ -94,7 +94,7 @@ const IND: ScheduleTemplate = {
   framework: 'FDA',
   nominalDurationDays: 365,
   milestones: [
-    { key: 'kickoff', title: 'Program kickoff & scope', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Program Lead', description: 'Confirm target indication, route, and development plan.' },
+    { key: 'kickoff', title: 'Project kickoff & scope', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Project Lead', description: 'Confirm target indication, route, and development plan.' },
     { key: 'cmc_dev', title: 'CMC / drug substance & product readiness', category: 'cmc', offsetDays: 90, isCritical: true, regulatoryBasis: '21 CFR 312.23(a)(7)', ownerRole: 'CMC Lead', dependsOn: ['kickoff'] },
     { key: 'nonclinical', title: 'Nonclinical / toxicology package complete', category: 'nonclinical', offsetDays: 150, isCritical: true, regulatoryBasis: '21 CFR 312.23(a)(8)', ownerRole: 'Nonclinical Lead', dependsOn: ['kickoff'] },
     { key: 'pre_ind_meeting', title: 'Pre-IND meeting with FDA', category: 'regulatory', offsetDays: 180, isCritical: true, regulatoryBasis: 'FDA Pre-IND Consultation Program', ownerRole: 'Regulatory Lead', dependsOn: ['cmc_dev', 'nonclinical'] },
@@ -112,7 +112,7 @@ const NDA: ScheduleTemplate = {
   framework: 'FDA',
   nominalDurationDays: 540,
   milestones: [
-    { key: 'kickoff', title: 'NDA program kickoff', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Program Lead' },
+    { key: 'kickoff', title: 'NDA project kickoff', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Project Lead' },
     { key: 'pre_nda_meeting', title: 'Pre-NDA meeting with FDA', category: 'regulatory', offsetDays: 90, isCritical: true, regulatoryBasis: 'PDUFA — Pre-NDA/BLA meeting', ownerRole: 'Regulatory Lead', dependsOn: ['kickoff'] },
     { key: 'm3_quality', title: 'Module 3 — Quality complete', category: 'cmc', offsetDays: 210, isCritical: true, regulatoryBasis: 'ICH CTD M4', ownerRole: 'CMC Lead', dependsOn: ['kickoff'] },
     { key: 'm4_nonclinical', title: 'Module 4 — Nonclinical complete', category: 'nonclinical', offsetDays: 240, isCritical: false, regulatoryBasis: 'ICH CTD M4', ownerRole: 'Nonclinical Lead' },
@@ -142,7 +142,7 @@ const FIVE_TEN_K: ScheduleTemplate = {
   framework: 'FDA',
   nominalDurationDays: 270,
   milestones: [
-    { key: 'kickoff', title: 'Project setup & device definition', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Program Lead' },
+    { key: 'kickoff', title: 'Project setup & device definition', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Project Lead' },
     { key: 'device_description', title: 'Device description & intended use', category: 'regulatory', offsetDays: 30, isCritical: true, regulatoryBasis: '21 CFR 807.92', ownerRole: 'Regulatory Lead', dependsOn: ['kickoff'] },
     { key: 'predicate', title: 'Predicate identification & comparison', category: 'regulatory', offsetDays: 60, isCritical: true, regulatoryBasis: '21 CFR 807.87(f)', ownerRole: 'Regulatory Lead', dependsOn: ['device_description'] },
     { key: 'bench_testing', title: 'Performance / bench testing complete', category: 'quality', offsetDays: 120, isCritical: true, regulatoryBasis: 'FDA recognized consensus standards', ownerRole: 'R&D Lead', dependsOn: ['device_description'] },
@@ -161,7 +161,7 @@ const PMA: ScheduleTemplate = {
   framework: 'FDA',
   nominalDurationDays: 540,
   milestones: [
-    { key: 'kickoff', title: 'PMA program kickoff', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Program Lead' },
+    { key: 'kickoff', title: 'PMA project kickoff', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Project Lead' },
     { key: 'pre_sub', title: 'Pre-Submission (Q-Sub) meeting', category: 'regulatory', offsetDays: 60, isCritical: true, regulatoryBasis: 'FDA Q-Submission Program', ownerRole: 'Regulatory Lead', dependsOn: ['kickoff'] },
     { key: 'nonclinical', title: 'Nonclinical / bench & animal testing', category: 'nonclinical', offsetDays: 180, isCritical: true, regulatoryBasis: '21 CFR 814.20(b)(6)', ownerRole: 'R&D Lead', dependsOn: ['kickoff'] },
     { key: 'pivotal_trial', title: 'Pivotal clinical trial complete', category: 'clinical', offsetDays: 420, isCritical: true, regulatoryBasis: '21 CFR 814.20(b)(6)(ii)', ownerRole: 'Clinical Lead', dependsOn: ['pre_sub'] },
@@ -244,7 +244,7 @@ const SHONIN: ScheduleTemplate = {
   framework: 'PMDA',
   nominalDurationDays: 540,
   milestones: [
-    { key: 'kickoff', title: 'Japan strategy & scope', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Program Lead', description: 'Confirm Japanese indication, partner/MAH structure, and data strategy.' },
+    { key: 'kickoff', title: 'Japan strategy & scope', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Project Lead', description: 'Confirm Japanese indication, partner/MAH structure, and data strategy.' },
     { key: 'bridging_strategy', title: 'Bridging / Japanese data strategy', category: 'clinical', offsetDays: 60, isCritical: true, regulatoryBasis: 'ICH E5 (ethnic factors); PMDA basic principles', ownerRole: 'Clinical Lead', dependsOn: ['kickoff'] },
     { key: 'pmda_consultation', title: 'PMDA face-to-face advice (対面助言)', category: 'regulatory', offsetDays: 150, isCritical: true, regulatoryBasis: 'PMDA consultation services (taimen-jogen)', ownerRole: 'Regulatory Lead', dependsOn: ['bridging_strategy'] },
     { key: 'ctn', title: 'Clinical trial notification (治験届) if Japanese data required', category: 'clinical', offsetDays: 210, isCritical: false, regulatoryBasis: 'PMD Act Article 80-2', ownerRole: 'Clinical Lead', dependsOn: ['pmda_consultation'] },
@@ -267,7 +267,7 @@ const NDS: ScheduleTemplate = {
   framework: 'Health Canada',
   nominalDurationDays: 540,
   milestones: [
-    { key: 'kickoff', title: 'Program kickoff & Canadian scope', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Program Lead' },
+    { key: 'kickoff', title: 'Project kickoff & Canadian scope', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Project Lead' },
     { key: 'presubmission_meeting', title: 'Pre-submission meeting with Health Canada', category: 'regulatory', offsetDays: 120, isCritical: true, regulatoryBasis: 'HC Guidance — Pre-submission meetings', ownerRole: 'Regulatory Lead', dependsOn: ['kickoff'] },
     { key: 'cmc_package', title: 'Quality (CMC) package complete', category: 'cmc', offsetDays: 300, isCritical: true, regulatoryBasis: 'Food and Drug Regulations C.08.002(2)', ownerRole: 'CMC Lead', dependsOn: ['kickoff'] },
     { key: 'clinical_package', title: 'Clinical & nonclinical evidence complete', category: 'clinical', offsetDays: 390, isCritical: true, regulatoryBasis: 'Food and Drug Regulations C.08.002(2)', ownerRole: 'Clinical Lead', dependsOn: ['presubmission_meeting'] },
@@ -296,7 +296,7 @@ const Q_SUB: ScheduleTemplate = {
     { key: 'qsub_submission', title: 'Q-Sub submitted to CDRH', category: 'submission', offsetDays: 60, isCritical: true, regulatoryBasis: 'FDA Q-Submission Program guidance', ownerRole: 'Regulatory Lead', dependsOn: ['questions_drafted', 'background_package'] },
     { key: 'fda_feedback', title: 'FDA written feedback (~70-day goal)', category: 'regulatory', offsetDays: 130, isCritical: true, regulatoryBasis: 'FDA Q-Submission Program — 70-day feedback goal', ownerRole: 'Regulatory Lead', dependsOn: ['qsub_submission'] },
     { key: 'meeting', title: 'Meeting / teleconference with review team', category: 'regulatory', offsetDays: 140, isCritical: false, ownerRole: 'Regulatory Lead', dependsOn: ['fda_feedback'] },
-    { key: 'integrate_feedback', title: 'Feedback integrated into development plan', category: 'internal', offsetDays: 150, isCritical: true, ownerRole: 'Program Lead', dependsOn: ['fda_feedback'] },
+    { key: 'integrate_feedback', title: 'Feedback integrated into development plan', category: 'internal', offsetDays: 150, isCritical: true, ownerRole: 'Project Lead', dependsOn: ['fda_feedback'] },
   ],
 };
 
@@ -306,7 +306,7 @@ const IDE: ScheduleTemplate = {
   framework: 'FDA',
   nominalDurationDays: 270,
   milestones: [
-    { key: 'kickoff', title: 'Study concept & risk determination', category: 'internal', offsetDays: 0, isCritical: true, regulatoryBasis: '21 CFR 812.3(m) significant risk determination', ownerRole: 'Program Lead' },
+    { key: 'kickoff', title: 'Study concept & risk determination', category: 'internal', offsetDays: 0, isCritical: true, regulatoryBasis: '21 CFR 812.3(m) significant risk determination', ownerRole: 'Project Lead' },
     { key: 'presub', title: 'Pre-Sub on study design (recommended)', category: 'regulatory', offsetDays: 60, isCritical: false, regulatoryBasis: 'FDA Q-Submission Program guidance', ownerRole: 'Regulatory Lead', dependsOn: ['kickoff'] },
     { key: 'bench_animal', title: 'Bench & animal testing supporting safety', category: 'nonclinical', offsetDays: 120, isCritical: true, regulatoryBasis: '21 CFR 812.27 (report of prior investigations)', ownerRole: 'R&D Lead', dependsOn: ['kickoff'] },
     { key: 'investigational_plan', title: 'Investigational plan & protocol', category: 'clinical', offsetDays: 165, isCritical: true, regulatoryBasis: '21 CFR 812.25', ownerRole: 'Clinical Lead', dependsOn: ['presub'] },
@@ -328,17 +328,17 @@ const G513: ScheduleTemplate = {
     { key: 'classification_rationale', title: 'Proposed classification & rationale', category: 'regulatory', offsetDays: 35, isCritical: true, regulatoryBasis: '21 CFR Part 860', ownerRole: 'Regulatory Lead', dependsOn: ['device_description'] },
     { key: 'g513_submission', title: '513(g) request submitted to FDA', category: 'submission', offsetDays: 45, isCritical: true, regulatoryBasis: 'FD&C Act Section 513(g)', ownerRole: 'Regulatory Lead', dependsOn: ['classification_rationale'] },
     { key: 'fda_response', title: 'FDA written response (~60-day goal)', category: 'regulatory', offsetDays: 105, isCritical: true, regulatoryBasis: 'FDA 513(g) guidance — 60-day goal', ownerRole: 'Regulatory Lead', dependsOn: ['g513_submission'] },
-    { key: 'pathway_decision', title: 'Pathway decision recorded', category: 'internal', offsetDays: 120, isCritical: true, ownerRole: 'Program Lead', dependsOn: ['fda_response'] },
+    { key: 'pathway_decision', title: 'Pathway decision recorded', category: 'internal', offsetDays: 120, isCritical: true, ownerRole: 'Project Lead', dependsOn: ['fda_response'] },
   ],
 };
 
 const GENERIC: ScheduleTemplate = {
   type: 'GENERIC',
-  label: 'Regulatory program',
+  label: 'Regulatory project',
   framework: 'FDA',
   nominalDurationDays: 270,
   milestones: [
-    { key: 'kickoff', title: 'Program kickoff & scope', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Program Lead' },
+    { key: 'kickoff', title: 'Project kickoff & scope', category: 'internal', offsetDays: 0, isCritical: true, ownerRole: 'Project Lead' },
     { key: 'evidence', title: 'Evidence & data package', category: 'clinical', offsetDays: 90, isCritical: true, ownerRole: 'Clinical Lead', dependsOn: ['kickoff'] },
     { key: 'authoring', title: 'Document authoring', category: 'regulatory', offsetDays: 180, isCritical: true, ownerRole: 'Medical Writing', dependsOn: ['evidence'] },
     { key: 'qc', title: 'QC & cross-reference review', category: 'quality', offsetDays: 240, isCritical: true, ownerRole: 'QA Lead', dependsOn: ['authoring'] },

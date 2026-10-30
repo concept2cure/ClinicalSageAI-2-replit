@@ -42,19 +42,14 @@ import { Overview } from './surfaces/Overview';
 import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
-import { IvdSurface } from './surfaces/IvdSurface';
+import { IvdSurface, type IvdReadinessReport } from './surfaces/IvdSurface';
 import { ClinicalStudiesSurface } from './surfaces/ClinicalStudiesSurface';
 import { SoftwareSurface } from './surfaces/SoftwareSurface';
 import { EngineeringSurface } from './surfaces/EngineeringSurface';
+import type { EngineeringPanelsContext } from './surfaces/engineeringPanelsContext';
 import { UdiSurface } from './surfaces/UdiSurface';
 import { PostmarketSurface } from './surfaces/PostmarketSurface';
 import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
-import { VaultSurface } from './surfaces/VaultSurface';
-import {
-  TasksSurface,
-  ValidationSurface,
-  SubmissionsSurface,
-} from './workbench/Workbench';
 import { PreSubManager } from './presub/PreSubManager';
 import { type Program } from './data/programs';
 import { useMdxPrograms } from './hooks/useMdxPrograms';
@@ -63,7 +58,6 @@ import type { MdxSurfaceId } from './surfaceIds';
 import './app.css';
 import './pathway-tabs.css';
 import './files-tree.css';
-import './drafter.css';
 /* LAST, deliberately. `surface-text-ramp.css` re-bases `--text-400` /
    `--text-300` on every element that establishes a tinted surface, so it has to
    load after the sheets that declare those surfaces — a custom property set
@@ -75,7 +69,9 @@ import './drafter.css';
    ci:surface-text-ramp. See GA ledger L102. */
 import './surface-text-ramp.css';
 import { publishShellProject, useShellProject } from '../v2/shellProject';
-import { usePublishSurfaceContext } from '../v2/surfaceContext';
+import { usePublishSurfaceContext, type SurfaceContext } from '../v2/surfaceContext';
+import { openNewProject } from '../v2/surfaceActions';
+import { openLetterInCommunication } from '../v2/surfaces/cmcAgencyQuestions';
 
 /* The id list lives in `./surfaceIds` with no component or stylesheet imports,
    so the v2 registry can read it at module scope without pulling this file —
@@ -103,7 +99,7 @@ const PATHWAY_ANCHOR: Partial<Record<MdxSurfaceId, Program['pathway'] | null>> =
 const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }> = {
   'device-workstream': {
     title: 'Device portfolio',
-    blurb: 'the device portfolio overview — program cards and portfolio health KPIs.',
+    blurb: 'the device portfolio overview — project cards and portfolio health KPIs.',
   },
   'device-510k': {
     title: '510(k) pathway',
@@ -112,7 +108,7 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
   },
   'device-pma': {
     title: 'PMA pathway',
-    blurb: 'the PMA pathway workspace — premarket-approval modules for the program in context.',
+    blurb: 'the PMA pathway workspace — premarket-approval modules for the project in context.',
   },
   'device-cer': {
     title: 'Clinical Evaluation Report',
@@ -128,7 +124,7 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
   },
   'device-software': {
     title: 'Software lifecycle',
-    blurb: 'software documentation completeness for the program in context.',
+    blurb: 'software documentation completeness for the project in context.',
   },
   'device-engineering': {
     title: 'Device engineering',
@@ -136,7 +132,7 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
   },
   'device-udi': {
     title: 'UDI and labeling',
-    blurb: 'the UDI register.',
+    blurb: "the project's labels and UDI records, with the label symbols and translations still open.",
   },
   'device-postmarket': {
     title: 'Post-market vigilance',
@@ -144,23 +140,7 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
   },
   'device-presub': {
     title: 'Pre-Sub manager',
-    blurb: 'the pre-submission manager.',
-  },
-  'device-vault': {
-    title: 'Document vault',
-    blurb: 'device vault artifacts.',
-  },
-  'device-tasks': {
-    title: 'Tasks and reviews',
-    blurb: 'the device task workbench.',
-  },
-  'device-validation': {
-    title: 'Validation center',
-    blurb: 'the validation workbench.',
-  },
-  'device-submission': {
-    title: 'Submission center',
-    blurb: 'the submission-packages workbench.',
+    blurb: "the project's FDA Q-Submissions, with their questions, FDA's feedback and the commitments.",
   },
   'device-analytics': {
     title: 'Analytics',
@@ -178,12 +158,58 @@ const DEVICE_SCREEN_ACTIONS: string[] = [
   'Signatures, transmissions, uploads and profile changes are governed — AnA proposes them in conversation, never through screen controls',
 ];
 
+/* device-udi and device-presub left this list on 2026-10-29: each reads the
+   open project now (D2, device-features-reach-three). device-tasks left the kit
+   the same day: it folded into Tasks (D2, fold-device-tasks). So did the
+   organization-wide blocker list: a blocker is its filing's readiness (D2, fold
+   F5 item 2, decision P-61 item 2), and the device submission packages: a device
+   filing is Submission Center's (fold F5 item 1, decision P-61 item 1). */
 const ORGANIZATION_VIEWS = new Set<MdxSurfaceId>([
-  'device-udi', 'device-presub', 'device-tasks', 'device-validation', 'device-submission', 'device-analytics',
+  'device-analytics',
 ]);
 
+type ScreenContext = Omit<SurfaceContext, 'surfaceId'>;
+
+/**
+ * device-engineering's context with its two panels': the project's risk
+ * register and design-control trace (fold F1 slice B mounted both;
+ * EngineeringSurface reports them through `onPanelsContext`). The store holds
+ * one context, so they ride this host's one publish rather than a second that
+ * would replace it. Merged only when they were read for the project in context:
+ * on a project switch the previous project's panels are still held here until
+ * the screen reports the next one's, and they are not this project's (D2,
+ * 2026-10-29, device-vault-admits-project fix 2).
+ */
+function withEngineeringPanels(base: ScreenContext, panels: EngineeringPanelsContext | null, program: Program | null): ScreenContext {
+  if (!panels || !program || panels.programId !== String(program.id)) return base;
+  const { risk, designControls } = panels;
+  return {
+    summary: `${base.summary} ${risk.summary} ${designControls.summary}`,
+    facts: { ...base.facts, riskRegister: risk.facts ?? null, designControlsTrace: designControls.facts ?? null },
+    availableActions: [...(base.availableActions ?? []), ...(risk.availableActions ?? []), ...(designControls.availableActions ?? [])],
+  };
+}
+
+/**
+ * device-diagnostics' context with its IVDR readiness board's (fold F2,
+ * 2026-10-29: the board and the IVD assessment workbench were the
+ * ivd-completeness screen's, which published the readiness under its own id).
+ * The store holds one context, so the board's rides this host's one publish, as
+ * Engineering's panels do above. Merged only when it was read for the project in
+ * context.
+ */
+function withIvdReadiness(base: ScreenContext, report: IvdReadinessReport | null, program: Program | null): ScreenContext {
+  if (!report || !program || report.programId !== String(program.id)) return base;
+  const { readiness } = report;
+  return {
+    summary: `${base.summary} ${readiness.summary}`,
+    facts: { ...base.facts, ivdReadiness: readiness.facts ?? null },
+    availableActions: [...(base.availableActions ?? []), ...(readiness.availableActions ?? [])],
+  };
+}
+
 function viewScopeNotice(nav: MdxSurfaceId): string | null {
-  if (nav === 'device-postmarket') return 'Mixed scope: organization-wide surveillance feeds; reporting clocks for this project';
+  if (nav === 'device-postmarket') return 'Reporting clocks are for this project; signals, CAPA board, trends and PMS plan execution are not shown until they are read for this project';
   return ORGANIZATION_VIEWS.has(nav) ? 'Organization-wide view' : null;
 }
 
@@ -256,6 +282,9 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
    * section this collapses to the plain navigation it always was — nothing is
    * claimed that cannot be honoured.
    */
+  /** A device letter is answered where every letter is: on its record in Communication (P-39 step 3, S2). */
+  const openLetter = React.useCallback((letterId: string) => openLetterInCommunication(onNav, letterId), [onNav]);
+
   const openEditor = React.useCallback(
     (section?: EditorSectionRef) => {
       if (typeof window !== 'undefined' && programForContext) {
@@ -288,21 +317,23 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
    * the wrong one makes AnA confidently wrong. The program named in the
    * context comes only from `programForContext`, which already carries the
    * project-selection rule above: no feature may borrow a program. No leaf-level
-   * counts are published — the host does not hold them.
+   * counts are published — the host does not hold them — except on
+   * device-engineering, whose screen hands up its two panels' own context
+   * (withEngineeringPanels, below).
    */
   const programCount = programs.length;
   const anaContext = React.useMemo(() => {
     const meta = DEVICE_SCREEN_META[nav];
     if (liveProgramsResult.loading) {
       return {
-        summary: `${meta.title} — the regulatory-program read is still loading; nothing program-scoped is final yet.`,
+        summary: `${meta.title} — the projects read is still loading; nothing project-scoped is final yet.`,
         facts: { screen: nav },
         availableActions: DEVICE_SCREEN_ACTIONS,
       };
     }
     if (liveProgramsResult.error) {
       return {
-        summary: `${meta.title} — the regulatory programs could not be read — program-scoped content is missing because of a failure, not because none exists.`,
+        summary: `${meta.title} — the projects could not be read — project-scoped content is missing because of a failure, not because none exists.`,
         facts: { screen: nav },
         availableActions: DEVICE_SCREEN_ACTIONS,
       };
@@ -311,8 +342,8 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       summary:
         `${meta.title} — ${meta.blurb}` +
         (programForContext
-          ? ` Program in context: ${programForContext.title}.`
-          : ' No device program is in context; program-scoped registers show their empty states.'),
+          ? ` Project in context: ${programForContext.title}.`
+          : ' No device project is in context; project-scoped registers show their empty states.'),
       facts: {
         screen: nav,
         program: programForContext
@@ -328,42 +359,53 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     };
   }, [nav, liveProgramsResult.loading, liveProgramsResult.error, programForContext, programCount]);
 
+  /* What Engineering's risk register and design-control trace report; null
+     when the screen is not mounted (it clears on unmount). */
+  const [engineeringPanels, setEngineeringPanels] = React.useState<EngineeringPanelsContext | null>(null);
+  const engineeringContext = React.useMemo(
+    () => withEngineeringPanels(anaContext, engineeringPanels, programForContext),
+    [anaContext, engineeringPanels, programForContext],
+  );
+  /* What IVDR evidence's readiness board reports; null when the screen is not mounted. */
+  const [ivdReadiness, setIvdReadiness] = React.useState<IvdReadinessReport | null>(null);
+  const diagnosticsContext = React.useMemo(
+    () => withIvdReadiness(anaContext, ivdReadiness, programForContext),
+    [anaContext, ivdReadiness, programForContext],
+  );
+
   /*
-   * One builder, sixteen literal publish calls. The AnA coverage gate counts
+   * One builder, twelve literal publish calls. The AnA coverage gate counts
    * single-quoted literal surface ids, so a single dynamic
    * `usePublishSurfaceContext(nav, …)` would register as covering nothing —
-   * this is the sanctioned multi-id shape from v2/surfaces/UsageBilling.tsx.
+   * this is the sanctioned multi-id shape (v2/surfaces/UsageBilling.tsx used it
+   * for `usage` and `billing` until billing folded into Licensing, 2026-10-29).
    * Only the call whose id matches `nav` publishes; the store treats the
-   * fifteen null calls as no-ops (each clears only its own id), and hook order
+   * eleven null calls as no-ops (each clears only its own id), and hook order
    * stays fixed because every call runs unconditionally on every render.
    */
   usePublishSurfaceContext('device-workstream', nav === 'device-workstream' ? anaContext : null);
   usePublishSurfaceContext('device-510k', nav === 'device-510k' ? anaContext : null);
   usePublishSurfaceContext('device-pma', nav === 'device-pma' ? anaContext : null);
   usePublishSurfaceContext('device-cer', nav === 'device-cer' ? anaContext : null);
-  usePublishSurfaceContext('device-diagnostics', nav === 'device-diagnostics' ? anaContext : null);
+  usePublishSurfaceContext('device-diagnostics', nav === 'device-diagnostics' ? diagnosticsContext : null);
   usePublishSurfaceContext('device-clinical-studies', nav === 'device-clinical-studies' ? anaContext : null);
   usePublishSurfaceContext('device-software', nav === 'device-software' ? anaContext : null);
-  usePublishSurfaceContext('device-engineering', nav === 'device-engineering' ? anaContext : null);
+  usePublishSurfaceContext('device-engineering', nav === 'device-engineering' ? engineeringContext : null);
   usePublishSurfaceContext('device-udi', nav === 'device-udi' ? anaContext : null);
   usePublishSurfaceContext('device-postmarket', nav === 'device-postmarket' ? anaContext : null);
   usePublishSurfaceContext('device-presub', nav === 'device-presub' ? anaContext : null);
-  usePublishSurfaceContext('device-vault', nav === 'device-vault' ? anaContext : null);
-  usePublishSurfaceContext('device-tasks', nav === 'device-tasks' ? anaContext : null);
-  usePublishSurfaceContext('device-validation', nav === 'device-validation' ? anaContext : null);
-  usePublishSurfaceContext('device-submission', nav === 'device-submission' ? anaContext : null);
   usePublishSurfaceContext('device-analytics', nav === 'device-analytics' ? anaContext : null);
 
   let surface: React.ReactNode;
   switch (nav) {
     case 'device-510k':
-      surface = <K510Surface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
+      surface = <K510Surface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} onOpenLetter={openLetter} />;
       break;
     case 'device-pma':
-      surface = <PmaSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
+      surface = <PmaSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} onOpenLetter={openLetter} />;
       break;
     case 'device-cer':
-      surface = <CerSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
+      surface = <CerSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} onOpenLetter={openLetter} />;
       break;
     case 'device-diagnostics':
       surface = (
@@ -371,6 +413,9 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
           program={programForContext}
           onAskAna={onAsk}
           onOpenEditor={openEditor}
+          onOpenLetter={openLetter}
+          onNav={onNav}
+          onReadinessContext={setIvdReadiness}
         />
       );
       break;
@@ -381,28 +426,19 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       surface = <SoftwareSurface program={programForContext} onAskAna={onAsk} />;
       break;
     case 'device-engineering':
-      surface = <EngineeringSurface program={programForContext} onAskAna={onAsk} />;
+      surface = <EngineeringSurface program={programForContext} onAskAna={onAsk} onPanelsContext={setEngineeringPanels} />;
       break;
     case 'device-udi':
-      surface = <UdiSurface onAskAna={onAsk} />;
+      /* Keyed by the project, so a switch starts the read afresh and never
+         draws the previous project's labels while the next project's read is in flight. */
+      surface = <UdiSurface key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} />;
       break;
     case 'device-postmarket':
       surface = <PostmarketSurface program={programForContext} onAskAna={onAsk} />;
       break;
     case 'device-presub':
-      surface = <PreSubManager onAskAna={onAsk} />;
-      break;
-    case 'device-vault':
-      surface = <VaultSurface program={programForContext} onAskAna={onAsk} />;
-      break;
-    case 'device-tasks':
-      surface = <TasksSurface onAskAna={onAsk} />;
-      break;
-    case 'device-validation':
-      surface = <ValidationSurface onAskAna={onAsk} />;
-      break;
-    case 'device-submission':
-      surface = <SubmissionsSurface onAskAna={onAsk} />;
+      /* Keyed by the project for the same reason as device-udi. */
+      surface = <PreSubManager key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} />;
       break;
     case 'device-analytics':
       surface = <AnalyticsSurface onAskAna={onAsk} />;
@@ -429,17 +465,17 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
          nothing called it, so a transient failure on the portfolio left the
          user with a dead screen and no control — UI standards §8. */
       surface = liveProgramsResult.loading ? (
-        <EmptyState busy title="Loading device programs" testId="mdx-programs-loading" />
+        <EmptyState busy title="Loading device projects" testId="mdx-programs-loading" />
       ) : liveProgramsResult.error ? (
         <ErrorState
           variant="panel"
-          title="Couldn't load your device programs"
+          title="Couldn't load your device projects"
           message={liveProgramsResult.error}
           retry={liveProgramsResult.refresh}
           testId="mdx-programs-error"
         />
       ) : (
-        <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} />
+        <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} onNewProject={() => openNewProject(onNav)} />
       );
       break;
   }
@@ -470,9 +506,9 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   /*
    * The scope root. Not optional, and not decoration.
    *
-   * Every rule in app.css, pathway-tabs.css, files-tree.css and drafter.css is
-   * scoped under `.mdx-shell` — 1,067/1,067, 247/247, 73/73 and 188/188 as of
-   * the surfaces.css port, measured with a CSS parser rather than counted by
+   * Every rule in app.css, pathway-tabs.css and files-tree.css is scoped
+   * under `.mdx-shell` — 1,067/1,067, 247/247 and 73/73 as of the surfaces.css
+   * port (drafter.css, 188/188, went with the AnaDrafter on 2026-10-29), measured with a CSS parser rather than counted by
    * hand. The class is what makes any of the kit's styling apply, and it also
    * carries the custom-property block those rules read. Without an element
    * carrying it, the surfaces render as unstyled markup with no tokens.

@@ -1,0 +1,49 @@
+# Wide run for 5ab138ed3 (the CSR filing-type rule), five batches, npx vitest run <dirs> --reporter=dot --maxWorkers=2
+# The batch scripts and their file lists: one batch per area the change reaches.
+
+## Batch 1: submission-service (server/services/submission-service)
+      2  FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts
+     20  FAIL  server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts
+      1  FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts
+     13  FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+ Test Files  5 failed | 28 passed | 1 skipped (34)
+      Tests  49 failed | 356 passed | 2 skipped (407)
+
+## Batch 2: projects (server/services/c2c, server/routes/c2c)
+ Test Files  101 passed (101)
+      Tests  1922 passed (1922)
+
+## Batch 3: regulatory and schema contracts (server/services/regulatory, shared/regulatory, tests/regulatory, tests/schema-contract)
+      1  FAIL  server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts
+      1  FAIL  tests/regulatory/csr-e3-overlay.test.ts
+      1  FAIL  tests/regulatory/ich-e6r3-citations.test.ts
+      1  FAIL  tests/regulatory/template-library-truth.test.ts
+      1  FAIL  tests/schema-contract/one-program-anchor-reader.contract.test.ts
+      1  FAIL  tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+ Test Files  6 failed | 303 passed (309)
+      Tests  5 failed | 4603 passed | 3 skipped (4611)
+
+## Batch 4: IND lifecycle and the submissions routes (server/services/ind-lifecycle, 16 server/routes/__tests__/submissions-* files)
+      1  FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts
+ Test Files  1 failed | 74 passed (75)
+      Tests  1 failed | 658 passed (659)
+
+## Batch 5: the client surfaces that show a filing class (28 client/src/concept2cure/v2/__tests__ files)
+ Test Files  28 passed (28)
+      Tests  359 passed (359)
+
+## Every failure, and why it is not this change's
+- Batch 1, 5 files / 49 tests: the same files and counts as the slice-1 baseline recorded before this change (docs/evidence/D7/2026-10-29-sequence-spine-fda-submission-id/wide.txt, lines 11-15).
+- coverage-report-verdict, one-program-anchor-reader (offender: server/routes/mdx-client-review.ts), submissions-request-current-access: re-run with this change's two source files at 5ab138ed3~1, same failures:
+base.raw: FAIL  tests/schema-contract/one-program-anchor-reader.contract.test.ts > a program anchor row has one reader > only the anchor module picks a projects row by its program
+base.raw: FAIL  server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts > regulatory coverage report — the closing verdict > includes medicinal cross-segment gaps and cannot turn device EUA/RFD scaffolds into biotech coverage
+base.raw:      Tests  2 failed | 6 passed (8)
+base4.raw: FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > refuses a committed transfer to a different accessible unique anchor at the final parent check
+base4.raw:      Tests  1 failed | 24 passed (25)
+- tenant-isolation-sweep: migrations/20261029h_capa_source_deviation.sql (another lane) references public.capa_records before the set creates it.
+- csr-e3-overlay, template-library-truth: they expect the CSR outline's 16 headings, and the overlay has 119 since 13bafc62f (recorded as stale in docs/design/CSR_PATH_REVIEW_2026-10-29.md, stage 3).
+- ich-e6r3-citations: server/services/ana/skills/library/clinical.ts names E6(R2) in a crosswalk label (another lane).
+
+## Total
+547 files; 7958 tests: 7898 passed, 55 failed, 5 skipped. None of the 55 is this change's.

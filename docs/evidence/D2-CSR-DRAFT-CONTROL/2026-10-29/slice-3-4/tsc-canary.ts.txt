@@ -1,0 +1,5 @@
+// Deliberate type errors across the lane's modules: the scoped check must report exactly these two.
+import { passageProposal } from '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/draftPassage';
+import { readDraftRevisionRequest } from '/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-draft-template';
+export const canaryOne: number = passageProposal({ sectionId: 'S', baseUpdatedAt: null, passage: { quote: 'q', prefix: '', suffix: '' }, replacement: 'r' }).operation;
+export const canaryTwo: string = readDraftRevisionRequest({})!.fromDraftId.length;

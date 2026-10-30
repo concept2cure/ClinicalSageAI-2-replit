@@ -102,6 +102,8 @@ function ctxOf(req: Request): Ctx | null {
 const CODE_STATUS: Record<string, number> = {
   ...SUBMISSION_ERROR_STATUS,
   NO_AUTHORED_CONTENT: 422,
+  // The guard could not keep the package's bytes, so it sent nothing.
+  SENT_PACKAGE_NOT_ARCHIVED: 503,
   // The gateway's own table, not a copy: a copy missed PLACEMENT_REFUSED (a
   // tenant placement refusal, 403) and answered it as a 500 (D6).
   ...GATEWAY_ERROR_HTTP_STATUS,
@@ -306,7 +308,7 @@ router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
       return;
     }
     if (typeof programParam !== 'string' || !isUuid(programParam)) {
-      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'programId must be a program uuid.' } });
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'programId must be a project UUID.' } });
     }
     const programId = programParam.toLowerCase();
     ok(res, await listSubmissionsForRequest(requestPgClient(req), ctx, programId));
@@ -1346,11 +1348,17 @@ router.get('/:id/provenance', limiter, requireRole(AUTHOR), async (req, res) => 
   }
 });
 
+/* The check compares SAVED sections, read by the engine (slice G4). A `text`
+   in the body is never compared; the reply says it was ignored. */
 const consistencySchema = z.object({
   dimension: z.string().min(1).max(64),
-  left: z.object({ ref: z.string(), text: z.string() }),
-  right: z.array(z.object({ ref: z.string(), text: z.string() })).min(1),
+  left: z.object({ sectionId: z.string().uuid() }),
+  right: z.array(z.object({ sectionId: z.string().uuid() })).min(1),
 });
+const suppliedTextIn = (body: unknown): boolean => {
+  const b = (body ?? {}) as { left?: { text?: unknown }; right?: Array<{ text?: unknown }> };
+  return typeof b.left?.text === 'string' || (Array.isArray(b.right) && b.right.some((r) => typeof r?.text === 'string'));
+};
 router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -1369,7 +1377,36 @@ router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) =
     // How many of the claim's figures got no verdict: an empty array is
     // "nothing compared" as often as "no conflict".
     res.setHeader('X-Consistency-Not-Compared', String(notCompared.length));
+    if (suppliedTextIn(req.body)) res.setHeader('X-Consistency-Supplied-Text', 'ignored');
     res.json(findings);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+/* Module 2 QC over what a package run would build now, from the project's
+   saved records (slice G5). The cross-summary QC was reachable only over
+   caller-supplied summaries (POST /api/authoring-pdf/m2-summary/qc, unmapped);
+   this reads and builds server-side, after the caller's read of the
+   submission and its project. Nothing is written. */
+router.get('/:id/module2-qc', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  try {
+    const q = requestPgClient(req);
+    const sub = await getSubmissionForRequest(q, ctx, id, readSelection(req));
+    if (!sub.programId) {
+      return res.status(409).json({ error: { code: 'UNANCHORED_SUBMISSION', message: 'This submission needs a verified project anchor before its Module 2 can be checked.' } });
+    }
+    const { requireCurrentProgramAccess } = await import('../services/c2c/current-program-access.js');
+    const access = await requireCurrentProgramAccess(q, { organizationId: ctx.organizationId, userId: ctx.userId, programId: sub.programId });
+    const { readSavedModule2Qc } = await import('../services/authoring/module2-saved-qc.js');
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await readSavedModule2Qc({
+      organizationId: ctx.organizationId, userId: ctx.userId, programId: sub.programId,
+      projectId: access.projectId ?? null, applicationType: sub.applicationType, primaryRegion: sub.primaryRegion,
+    }));
   } catch (err) {
     fail(res, err);
   }

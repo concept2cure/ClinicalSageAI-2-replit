@@ -1,0 +1,43 @@
+Mutation 1: restore the old tier as the parent.
+registryModel.ts breadcrumbTierOf, the line
+    if (isMdxProjectFeature(surface.id)) return PROJECTS_CRUMB;
+replaced by a comment. Restored from a byte copy afterwards; sha256 matched the fixed file.
+
+ × a project feature is crumbed under the open project > design controls, with a project open: Projects › the project › the feature 47ms
+ × a project feature is crumbed under the open project > risk, with a project open: the same trail, and no "Medical Device & IVD" parent 11ms
+ × a project feature is crumbed under the open project > names the project as the project chip beside it does 11ms
+ × a project feature is crumbed under the open project > names a project with no code by its title 9ms
+ × a project feature is crumbed under the open project > every MDX project feature: parents are Projects and the open project, never the old tier 9ms
+ × a project feature is crumbed under the open project > follows the channel when another project is opened 30ms
+ × the crumb never invents a project name > with no project open: Projects › the feature 12ms
+ × the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): Projects › the feature 9ms
+ ✓ other surfaces keep their crumbs > the project page is still named by the project, with no Projects crumb added 11ms
+ ✓ other surfaces keep their crumbs > a core place carries no project crumb, even with a project open 13ms
+ ✓ other surfaces keep their crumbs > a one-category surface keeps its category; an admin surface keeps Admin 0ms
+ × the registry model names Projects as a project feature’s parent > for every MDX project feature 1ms
+ × the registry model names Projects as a project feature’s parent > no surface is crumbed with the old tier 1ms
+ × ⌘K’s hint names Projects for a project feature > design controls 50ms
+ × ⌘K’s hint names Projects for a project feature > risk management 23ms
+ × ⌘K’s hint names Projects for a project feature > no ⌘K row is hinted with the old tier 30ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  13 failed | 3 passed (16)
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > risk, with a project open: the same trail, and no "Medical Device & IVD" parent
+AssertionError: expected [ 'Concept2Cure.RI', …(2) ] to deeply equal [ 'Concept2Cure.RI', 'Projects', …(2) ]
+- Expected
++ Received
+  [
+    "Concept2Cure.RI",
+-   "Projects",
+-   "NPX-510",
++   "Medical Device & IVD",
+    "Risk management",
+  ]
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:94:22
+     92|     publishShellProject(PROJECT);
+     93|     bar('risk');
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > risk management
+AssertionError: expected 'Medical Device & IVD' to be 'Projects' // Object.is equality
+Expected: "Projects"

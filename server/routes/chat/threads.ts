@@ -59,7 +59,7 @@ export async function listThreads(req: Request, res: Response) {
       if (!orgId) return res.json({ threads: [] });
       const program = programIdForThread(programId);
       if (!program) {
-        return res.status(400).json({ error: 'program_id must be a UUID', code: 'THREAD_PROGRAM_INVALID' });
+        return res.status(400).json({ error: 'The project id must be a UUID.', code: 'THREAD_PROGRAM_INVALID' });
       }
       if (me === null) return res.json({ threads: [] });
       /* Where in the list this read starts. The project page shows a

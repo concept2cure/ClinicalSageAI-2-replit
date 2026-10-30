@@ -1,0 +1,11 @@
+Mutation M2b-service-reads-without-project
+File: server/services/human-factors/hf-files-service.ts
+-         AND ($2::uuid IS NULL OR program_id = $2::uuid)
++         AND ($2::uuid IS NULL OR $2::uuid IS NOT NULL)
+Test: server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts
+
+× server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts > hf-files-service > records the project a file is created for, and reads it back only under that project 10ms
+× server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts > hf-files-service > keeps a file with no project out of every project read 4ms
+Tests  2 failed | 5 passed (7)
+
+Restored byte for byte: yes

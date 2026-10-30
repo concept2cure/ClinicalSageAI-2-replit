@@ -1,0 +1,59 @@
+Red run against HumanFactors.tsx at HEAD (928b70996); the file had no working-tree diff when this ran.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+--x-·-
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > offers no use-scenario write into a file it cannot tie to the project
+AssertionError: expected <button class="sp-primary">…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="sp-primary"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-plus"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M5 12h14"
+    />
+    <path
+      d="M12 5v14"
+    />
+  </svg>
+   Add use scenario
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx:122:56
+    120|     await waitFor(() => expect(bodyText()).not.toMatch(/Loading the HF…
+    121|
+    122|     expect(screen.queryByRole('button', ADD_SCENARIO)).toBeNull();
+       |                                                        ^
+    123|     expect(screen.queryByRole('button', { name: /Record a hazard-relat…
+    124|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 4 skipped (6)
+   Start at  03:17:00
+   Duration  1.85s (transform 353ms, setup 155ms, import 465ms, tests 405ms, environment 605ms)
+

@@ -1,0 +1,5 @@
+{
+  "receipt": "settled.json",
+  "kind": "actual report transport defect",
+  "detail": "Awaiting a large asynchronous stdout write permitted pending database logger records to interleave inside JSON under the test DATABASE_URL. Diagnostic raw outputs retained. Write the complete JSON synchronously before the existing CLI exit; do not relax any report/JSON assertions."
+}

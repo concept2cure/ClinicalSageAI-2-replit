@@ -1,0 +1,17 @@
+// The pre-change gate's --list, over the current tree, in its own format. Reads only.
+import { pathToFileURL } from 'node:url';
+const [newGate, oldGate] = process.argv.slice(2);
+const cur = await import(pathToFileURL(newGate).href);
+const old = await import(pathToFileURL(oldGate).href);
+const sources = cur.repoSources();
+for (const [f, src] of sources) {
+  if (!/['"]sign['"]/.test(src) && !/\b(?:approver_id|approved_by|approved_by_user_id|approved_at)\s*=/.test(src)) continue;
+  for (const s of old.scanSource(src)) {
+    const why = s.ok ? 'ok' : s.kind === 'approval-stamp' ? 'no signature row' : [!s.reauth && 'no signer re-verification', !s.signatureRow && 'no signature row'].filter(Boolean).join(', ');
+    console.log(`${f}:${s.line}  ${s.kind}  ${why}`);
+  }
+}
+for (const [f, src] of sources) {
+  if (!/\b(?:verifyReauth|reverifySigner)\s*\(/.test(src)) continue;
+  for (const s of old.scanAuthority(src)) console.log(`${f}:${s.line}  re-authentication  ${s.authority ? 'ok' : 'no signing-authority check in its handler'}`);
+}

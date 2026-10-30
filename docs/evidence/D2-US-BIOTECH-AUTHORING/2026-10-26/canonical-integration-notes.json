@@ -1,0 +1,14 @@
+{
+  "sourceCheckpoint": "14b27100d9006ed3719597630bd93a747b736c89",
+  "canonicalMerge": "1b9c3e89d6d85a5cfe61ee93560d3d279cc7f7e2",
+  "conflictResolution": {
+    "ProjectHome.tsx": "Retain biotech plan/current actor readers and incoming filing lifecycle reference.",
+    "ProjectPlan.tsx": "Retain biotech branch, incoming filing reference and both optional exact recorded/canonical registry fields.",
+    "projects.ts": "Expose exact recorded submission_type_id separately from canonical registry_id; no metadata payload disclosure."
+  },
+  "firstIntegratedLint": "integrated-lint.json",
+  "finding": "No errors; additive merge created one complexity warning in serializer above baseline.",
+  "remedy": "Extract exactRecordedFiling pure lookup; preserve both existing projection contracts.",
+  "correctedLint": "integrated-lint-corrected.json",
+  "existingTests": "Both auto-merged taxonomy assertion groups retained; no assertion weakening."
+}

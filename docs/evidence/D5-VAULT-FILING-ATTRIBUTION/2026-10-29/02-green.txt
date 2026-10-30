@@ -1,0 +1,48 @@
+# GREEN, 2026-10-29T07:00:17Z, at e944de496 plus this change
+
+## Real PostgreSQL 16, RLS_ENFORCE=on, app_service: the new suite and the Vault placement, where-used and re-upload suites
+ ✓ tests/db/vault-filing-attribution.dbtest.ts > the Vault read names who filed a document, and when (Part 11 review F4) > a document its uploader filed into a folder names them and the time
+ ✓ tests/db/vault-filing-attribution.dbtest.ts > the Vault read names who filed a document, and when (Part 11 review F4) > a suggestion names nobody: no filer is invented for a proposal
+ ✓ tests/db/vault-filing-attribution.dbtest.ts > the Vault read names who filed a document, and when (Part 11 review F4) > the person who files it afterwards is the one named
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > the filing row records the evidence kind before and after (VR-05)
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a viewer, and writes nothing
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses an actor with no current membership or cached request role
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > uses the active administrator membership when the cached request role is absent
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > lets a member file — the role SSO provisioning assigns
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each placement carries its sequence's dispatch status
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > admits the document with a classification and a retention policy
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that omits them changes nothing, writes no audit row, and leaves no second copy
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry asking for another title or type changes nothing, and says what differs
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+
+## Unit and client: every suite under server/routes/c2c/__tests__ and the Vault surface suites
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > names the person whose filing it is, and when, in UTC
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > gives a suggestion no filer: nobody decided it yet
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > says so when a filing records no person, rather than implying one
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf says who made the filing decision, and when (Part 11 review F4) > carries the person's name and the time as ISO, for a person's filing
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf says who made the filing decision, and when (Part 11 review F4) > names nobody for a suggestion
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf says who made the filing decision, and when (Part 11 review F4) > keeps a recorded person whose name this organisation cannot read as recorded
+ Test Files  78 passed (78)
+      Tests  879 passed (879)

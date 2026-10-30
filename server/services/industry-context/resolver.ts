@@ -100,7 +100,7 @@ export function defaultRigorForPrimaryIndustry(pi: string | null | undefined): A
 export function terminologyForVertical(v: IndustryVertical): Record<string, string> {
   return v === 'mdx'
     ? { product: 'Device', submission: 'Submission', study: 'Study' }
-    : { product: 'Program', submission: 'Submission', study: 'Study' };
+    : { product: 'Product', submission: 'Submission', study: 'Study' };
 }
 
 /** The layered inputs the pure merge consumes. */

@@ -1,0 +1,7 @@
+# mutation c3-note-whatever-the-computed-scope: 'if (run.computedScope !== 'organization') return null;' -> 'if (!run.computedScope) return null;'
+# file: client/src/concept2cure/v2/surfaces/InsightsRunsPanel.tsx; test: insightsRunHistoryScopeNote.test.tsx; restored after, sha256sum -c OK
+ × run history row — what an organization-scope run counted > a domain register whose engine computed the project says neither 42ms
+   → expected 'ABC-101Organization-wide recordsCount…' to be 'ABC-101' // Object.is equality
+ × run history row — what an organization-scope run counted > a project report says neither 35ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 2 passed (4)

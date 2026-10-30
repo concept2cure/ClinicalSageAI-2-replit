@@ -9,6 +9,12 @@
  * comes due within 48 hours and ONCE when it goes overdue, idempotent via
  * metadata markers on the task row, so a restarting server never re-spams.
  *
+ * A task with a long horizon may say how much notice it needs:
+ * `metadata.remindDaysBefore` (1 to MAX_REMIND_DAYS). A controlled document's
+ * periodic review carries 30 (services/qms/periodic-review-task.ts); two days'
+ * notice of an annual review is no notice. The window is decided in SQL, so the
+ * batch limit is still never filled by rows that are not yet due.
+ *
  * Lifecycle mirrors scheduleOfEventsSweep:
  *   - start() schedules a single timer (idempotent)
  *   - first sweep after a short startup delay
@@ -26,16 +32,31 @@ import { filterTenantsForBackgroundWork } from '../services/tenant/tenant-lifecy
 const logger = createScopedLogger('task-due-sweep');
 
 export const DUE_SOON_WINDOW_MS = 48 * 60 * 60 * 1000;
+/** The most notice a task may ask for; also the sweep's bound on the due-date index. */
+export const MAX_REMIND_DAYS = 90;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type DueClass = 'overdue' | 'due-soon' | null;
 
-/** Pure: how a due date reads at `now`. */
-export function classifyDue(dueDate: Date | string | null, now: number): DueClass {
+/**
+ * Pure: the notice a task asks for, from `metadata.remindDaysBefore`; 48 hours
+ * when it asks for none or for something else. The same reading as the sweep's
+ * SQL, which matches the value's text against /^[1-9][0-9]?$/.
+ */
+export function remindWindowMs(metadata: unknown): number {
+  const raw = (metadata as { remindDaysBefore?: unknown } | null | undefined)?.remindDaysBefore;
+  const text = typeof raw === 'number' || typeof raw === 'string' ? String(raw) : '';
+  const days = /^[1-9][0-9]?$/.test(text) ? Number(text) : 0;
+  return days >= 1 && days <= MAX_REMIND_DAYS ? days * DAY_MS : DUE_SOON_WINDOW_MS;
+}
+
+/** Pure: how a due date reads at `now`, with the task's own notice window. */
+export function classifyDue(dueDate: Date | string | null, now: number, windowMs: number = DUE_SOON_WINDOW_MS): DueClass {
   if (!dueDate) return null;
   const due = dueDate instanceof Date ? dueDate.getTime() : new Date(dueDate).getTime();
   if (!Number.isFinite(due)) return null;
   if (due < now) return 'overdue';
-  if (due <= now + DUE_SOON_WINDOW_MS) return 'due-soon';
+  if (due <= now + windowMs) return 'due-soon';
   return null;
 }
 
@@ -83,7 +104,8 @@ async function notifyOneTask(
   deps: { db: any; unifiedTasks: any; notifyTaskEvent: (p: any) => void }
 ): Promise<'overdue' | 'due-soon' | null> {
   const { db, unifiedTasks, notifyTaskEvent } = deps;
-  const cls = classifyDue(row.dueDate, now);
+  const windowMs = remindWindowMs(row.metadata);
+  const cls = classifyDue(row.dueDate, now, windowMs);
   if (!cls || alreadyNotified(row.metadata, cls)) return null;
 
   const marker = cls === 'overdue' ? 'overdueNotifiedAt' : 'dueSoonNotifiedAt';
@@ -115,13 +137,17 @@ async function notifyOneTask(
     category: 'task_update',
     severity: cls === 'overdue' ? 'warning' : 'info',
     title: cls === 'overdue' ? `Overdue: ${row.title}` : `Due soon: ${row.title}`,
-    body:
-      cls === 'overdue'
-        ? 'This task has passed its due date.'
-        : 'This task is due within 48 hours.',
+    body: dueNoticeBody(cls, row.dueDate, windowMs),
     taskId: row.taskId,
   });
   return cls;
+}
+
+/** The notice's sentence. A task with its own lead names its due date: "within 30 days" says less. */
+function dueNoticeBody(cls: 'overdue' | 'due-soon', dueDate: Date | null, windowMs: number): string {
+  if (cls === 'overdue') return 'This task has passed its due date.';
+  if (windowMs === DUE_SOON_WINDOW_MS || !dueDate) return 'This task is due within 48 hours.';
+  return `This task is due on ${new Date(dueDate).toISOString().slice(0, 10)}.`;
 }
 
 /** One sweep across every open, dated, assigned task in every organization. */
@@ -167,12 +193,24 @@ export async function runTaskDueSweep(): Promise<TaskDueSweepSummary> {
         .where(
           and(
             inArray(unifiedTasks.status, ['pending', 'in-progress', 'review', 'blocked']),
+            // A blocked review route member is waiting for an earlier step and
+            // cannot act: it is not reminded (RR1a, B11). Its step opening
+            // moves it to pending, and it is reminded from then.
+            sql`NOT (${unifiedTasks.status} = 'blocked' AND ${unifiedTasks.reviewRouteId} IS NOT NULL)`,
             isNull(unifiedTasks.deletedAt),
             isNotNull(unifiedTasks.assigneeId),
             isNotNull(unifiedTasks.dueDate),
-            // Only rows inside the window are candidates; far-future rows
-            // never leave the index.
-            lt(unifiedTasks.dueDate, new Date(now + DUE_SOON_WINDOW_MS)),
+            // Only rows inside their window are candidates: the 48 hours, or
+            // the task's own lead (remindWindowMs, in SQL so a non-numeric
+            // lead can never be cast). Far-future rows never leave the index.
+            lt(unifiedTasks.dueDate, new Date(now + MAX_REMIND_DAYS * DAY_MS)),
+            // Nested CASE: only it guarantees the cast runs after the pattern matched.
+            sql`${unifiedTasks.dueDate} < ${new Date(now)}::timestamp + make_interval(secs => CASE
+                 WHEN ${unifiedTasks.metadata} ->> 'remindDaysBefore' ~ '^[1-9][0-9]?$'
+                 THEN CASE WHEN (${unifiedTasks.metadata} ->> 'remindDaysBefore')::int <= ${MAX_REMIND_DAYS}
+                           THEN (${unifiedTasks.metadata} ->> 'remindDaysBefore')::int * 86400
+                           ELSE ${DUE_SOON_WINDOW_MS / 1000} END
+                 ELSE ${DUE_SOON_WINDOW_MS / 1000} END)`,
             // Already-handled rows are excluded IN SQL, not after the limit.
             // Filtering markers in JS let a batch of stamped rows consume the
             // whole limit forever, starving unnotified tasks beyond it.

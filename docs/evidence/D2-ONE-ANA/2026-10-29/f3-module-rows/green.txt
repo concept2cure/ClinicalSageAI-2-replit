@@ -1,0 +1,71 @@
+# Green
+
+## The changed and new suites
+ Test Files  5 passed (5)
+      Tests  53 passed (53)
+
+## Every Project home, dossier, outline and filing-path client suite (37 files)
+ Test Files  3 failed | 34 passed (37)
+      Tests  7 failed | 350 passed (357)
+      4 client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+      1 client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx
+      2 client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx
+The same 7 fail with these changes stashed, at 8b58354a: 3 files failed, 7 tests (projectHomeTeamResponsibilities, projectHomeIdentityFacts, filingPathNoDeadEnds).
+
+## ESLint per file, head -> now
+ProjectDossier.tsx 0->0, ProjectHome.tsx 6->6, CanvasDocumentList.tsx 0->0, FilingMarkets.tsx 0->0, startOutlineSection.ts 0->0, projectHomeDocuments.test.tsx 0->0; editingCopy.ts and editingCopy.test.tsx new, 0.
+
+## Four more suites that render ModuleCompletion (found by the typecheck, re-pointed to copyFor)
+dossierMapProgramScope, microWireups, projectArtifactReadiness, projectSectionTracking: 44/44.
+
+## Typecheck
+ci:typecheck:no-regression: 0 errors, once 142c133d cleared trunk's 10 (not this change's).
+
+## Part B (96ce3798)
+The changed suites: documentAuthoringDeepLink 17/17, editorTarget 22/22, projectHomeDocuments and
+projectDossierDetails green.
+
+ESLint per file, head -> now: DocumentWorkbench.tsx 12->12, editorTarget.ts 0->0, ProjectDossier.tsx 0->0,
+ProjectHome.tsx 6->6; linkedSectionPick.ts new, 0.
+
+### Every client suite that renders the editor, the editor target, Project home or the filing path (144 files)
+Run per group of 8 (the whole set in one process stalled), each with a time limit.
+- 134 files pass.
+- 7 files fail. Each failure is in code this change does not touch, and each file is handed on or fixed below:
+    authoringDraftTermination 1        assembly-queue wording, changed by a85d6885
+    conversationThread* (6 files) 39   useAuth with no AuthProvider (useDocumentList predates 55673579)
+    filingPathNoDeadEnds 4             the F16 gate; fixed in 7d83530f
+    projectHomeIdentityFacts 1         fixed in c74eb2da (a40f48f8 relabelled Client)
+    projectHomeTeamResponsibilities 2  fixed in c74eb2da (2aace71d holds the step per project)
+    vaultOpenInEditorCarriesDoc 1      the working-copy reason dialog; handed on
+- 3 files never finish, alone or together: authoringAnaInsertGate, authoringAnaMarkdown,
+  authoringConversationContext. Each was killed at its limit (exit 124).
+  They hang the same way on trees exported at 55673579 (before part B) and at 142c133d
+  (before part A), so neither part causes it. Handed on.
+
+## Typecheck
+ci:typecheck:no-regression: run by the pre-push hook for this push. A run beside four test agents was
+killed by the host for memory (exit 137) and is not counted.
+
+## Part C (the readiness card's market line), on 43fb57cc with the change
+Each file run alone, under timeout 240.
+
+### The changed suites
+projectHomeDocuments 26/26 (5 new), projectDossierDetails 8/8, projectSideNotRead 1/1.
+
+### The dossier and F3 suites
+projectDossierParity 7/7, editingCopy 3/3, dossierMapProgramScope 3/3, projectArtifactReadiness 15/15,
+projectSectionTracking 21/21, microWireups 5/5, projectHomeLaunchScope 14/14, documentAuthoringDeepLink 17/17,
+editorTarget 22/22. The two suites whose dossier holds an added market: projectHomeReadiness 12/12,
+filingOutlinePerMarket 3/3.
+
+### Every client suite that renders Project home (40 files)
+40 files pass, 0 fail, 398 tests. Nothing was red at head in this set.
+
+### ESLint per file (plain npx eslint), head -> now
+ProjectDossier.tsx 0->0, ProjectHome.tsx 6->6 (the ProjectHome function's 370 lines and complexity 142
+unchanged), ProjectSide.tsx 0->0, projectHomeDocuments.test.tsx 0->0, projectDossierDetails.test.tsx 0->0,
+projectSideNotRead.test.tsx 0->0.
+
+### Typecheck
+tsc --noEmit -p tsconfig.check.json over the whole working tree: exit 0, 0 errors.

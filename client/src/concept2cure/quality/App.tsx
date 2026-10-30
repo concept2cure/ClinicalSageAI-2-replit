@@ -1,10 +1,12 @@
 /**
- * QualityApp — Quality & Assurance domain shell.
+ * QualityApp — Quality domain shell.
  *
  * A tabbed shell (topbar + tab bar + scrollable page) over the quality
- * surfaces: the SOP register (controlled documents, periodic review, training)
- * and Change control (the change-control log, lifecycle flowchart, and the
- * links to deviations, CAPAs and validation records). Mirrors the host-
+ * surfaces: the SOP register (controlled documents, periodic review, training),
+ * Change control (the change-control log, lifecycle flowchart, and the links
+ * to deviations, CAPAs and validation records), and the quality records
+ * (QmsRecords.tsx: CAPA, nonconformances, suppliers, internal audits, management
+ * reviews; decision P-48). Mirrors the host-
  * integration contract of the other domain shells: AnA prompts hand off to the
  * host conversation surface via `onAskAna`; rail cross-links route through
  * `onNavigate`.
@@ -21,6 +23,9 @@ import * as React from 'react';
 import { I } from '../v2/icons';
 import { SopRegister, STATUS_FILTERS, type StatusFilter } from './SopRegister';
 import { ChangeControl } from './ChangeControl';
+import { QmsRecords, QMS_RECORD_ASK, QMS_RECORD_TABS } from './QmsRecords';
+import type { QmsRecordTab } from './qmsRecordData';
+import type { RecordRegisterContext } from './qmsRegisterKit';
 import { useChangeRegister } from './changeHooks';
 import {
   STATE_LABEL,
@@ -39,23 +44,30 @@ export interface QualityAppProps {
   onAskAna?: (text: string) => void;
   /** Host navigation for the canonical workbench and project links. */
   onNavigate?: (target: string) => void;
-  /** Which surface to open first ('sop' | 'change'). */
+  /** Which surface to open first. */
   initialTab?: QualityTab;
   qmsDocumentId?: string;
   qmsTargetRequest?: number;
 }
 
-type QualityTab = 'sop' | 'change';
+type QualityTab = 'sop' | 'change' | QmsRecordTab;
+
+const RECORD_ICON: Record<QmsRecordTab, React.ReactNode> = {
+  capa: I.target,
+  deviations: I.flag,
+  nonconforming: I.alertTriangle,
+  suppliers: I.building,
+  audits: I.clipboardList,
+  reviews: I.users,
+};
 
 const TABS: { id: QualityTab; label: string; icon: React.ReactNode }[] = [
   { id: 'sop', label: 'SOP register', icon: I.template },
   { id: 'change', label: 'Change control', icon: I.gitBranch },
+  ...QMS_RECORD_TABS.map((t) => ({ ...t, icon: RECORD_ICON[t.id] })),
 ];
 
-const HERE: Record<QualityTab, string> = {
-  sop: 'SOP register',
-  change: 'Change control',
-};
+const HERE = Object.fromEntries(TABS.map((t) => [t.id, t.label])) as Record<QualityTab, string>;
 
 const ASK_STARTER: Record<QualityTab, string> = {
   sop:
@@ -64,7 +76,35 @@ const ASK_STARTER: Record<QualityTab, string> = {
   change:
     'Give me a read-out on change control — what is awaiting approval, what is overdue for implementation, ' +
     'and which linked deviations or CAPAs are still open.',
+  ...QMS_RECORD_ASK,
 };
+
+/**
+ * What AnA is told on a record tab: the register's rows as read, or that it is
+ * still loading, or that its read failed (never an empty register in its place).
+ */
+export function recordTabContext(tab: QmsRecordTab, ctx: RecordRegisterContext | null) {
+  const here = HERE[tab];
+  const actions = [
+    'Switch between the Quality tabs',
+    `Raise or update ${here.toLowerCase()} records through the screen's drawers; each write is the person's own and is audited`,
+    'AnA reads the register as shown; it does not record, disposition, approve or close records for the user',
+  ];
+  if (!ctx || ctx.tab !== tab || ctx.state === 'loading') {
+    return { summary: `The user is on the ${here} tab of Quality. The register is still loading — its records are not readable yet.`, facts: { tab }, availableActions: actions };
+  }
+  if (ctx.state === 'failed') {
+    return { summary: `The user is on the ${here} tab of Quality. The register could not be read — a failure, not an empty register.`, facts: { tab, registerRead: 'failed' }, availableActions: actions };
+  }
+  const n = ctx.count ?? 0;
+  const counts = ctx.counts.map((c) => `${c.label}: ${c.val}`).join('; ');
+  return {
+    summary: `The user is on the ${here} tab of Quality. The register holds ${n} ${n === 1 ? ctx.noun[0] : ctx.noun[1]}` +
+      (counts ? ` (${counts})` : '') + '.' + (ctx.truncated ? ` Only the first ${ctx.records.length} are listed in the facts.` : ''),
+    facts: { tab, recordCount: n, counts: ctx.counts, records: ctx.records, truncated: ctx.truncated },
+    availableActions: actions,
+  };
+}
 
 export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumentId,qmsTargetRequest }: QualityAppProps) {
   const [tab, setTab] = React.useState<QualityTab>(initialTab);
@@ -98,6 +138,9 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
      none — the example change log (FIXTURE_CHANGES) and the sample mode that
      could show it were removed on 2026-10-14. */
   const changeReg = useChangeRegister();
+  /* The record register on screen reports what it read (QmsRecords.tsx), so
+     what AnA is told about a record tab is the register's own rows. */
+  const [recordCtx, setRecordCtx] = React.useState<RecordRegisterContext | null>(null);
   const changes: ChangeControlRow[] = changeReg.changes ?? NO_CHANGES;
 
   const onAsk = React.useCallback(
@@ -122,7 +165,8 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
   useSurfaceActionHandlers('quality', {
     'quality.open-tab': (params) => {
       if (editingDocument) return { ok: false, reason: 'Return to the Quality register before switching tabs.' };
-      const target: QualityTab = params.tab === 'change' ? 'change' : 'sop';
+      const target = TABS.find((t) => t.id === params.tab)?.id;
+      if (!target) return { ok: false, reason: `No Quality tab named "${params.tab}".` };
       if (tab === target) return { ok: true, detail: `Already on ${HERE[target]}` };
       setTab(target);
       return { ok: true, detail: `Opened ${HERE[target]}` };
@@ -227,10 +271,11 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
      publishes itself as exactly that, never as an empty log. */
   const anaContext = React.useMemo(() => {
     if (editingDocument) return {
-      summary: 'The user is in the controlled-document workbench inside Quality & Assurance. The document workbench owns the open content and edit permissions; Quality tabs and register actions are held until the user returns.',
+      summary: 'The user is in the controlled-document workbench inside Quality. The document workbench owns the open content and edit permissions; Quality tabs and register actions are held until the user returns.',
       facts: { tab, editingDocument: true },
       availableActions: ['Read or edit the open document through its workbench permissions', 'Return to the Quality register using the workbench’s Back control'],
     };
+    if (tab !== 'sop' && tab !== 'change') return recordTabContext(tab, recordCtx);
     const openRow = openId !== null ? (changes.find((c) => c.id === openId) ?? null) : null;
     const state: string[] = [];
     if (sopFilter !== 'all') {
@@ -240,7 +285,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
     if (stage !== 'all') state.push(`the change log is filtered to ${STATE_LABEL[stage]}`);
     if (openRow) state.push(`change ${openRow.changeNumber} is expanded`);
     const base =
-      `The user is on the ${HERE[tab]} tab of Quality & Assurance` +
+      `The user is on the ${HERE[tab]} tab of Quality` +
       (state.length ? ` — ${state.join('; ')}` : '') +
       '.';
     if (changeReg.loading) {
@@ -266,7 +311,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
         changeCount: changes.length,
       },
       availableActions: [
-        'Switch between the SOP register and change control tabs',
+        'Switch between the SOP register, change control, CAPA, nonconformances, suppliers, internal audits and management reviews tabs',
         'Filter the controlled-document register by status',
         'Filter the change log by lifecycle stage',
         'Expand a change to its linked deviations, CAPAs and validation records',
@@ -275,7 +320,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
         'People read controlled text and record their own personal acknowledgement in the SOP register; AnA cannot acknowledge for them',
       ],
     };
-  }, [editingDocument, tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error]);
+  }, [editingDocument, tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error, recordCtx]);
   usePublishSurfaceContext('quality', anaContext);
 
   /* The bus's ready signal: a not-ready open-change (retry: true) held across
@@ -286,10 +331,10 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
   }, [changeReg.loading]);
 
   return (
-    <div className="qms-shell" data-screen-label="Quality & Assurance" data-editing={editingDocument || undefined}>
+    <div className="qms-shell" data-screen-label="Quality" data-editing={editingDocument || undefined}>
       {!editingDocument && <div className="qms-topbar">
         <div className="qms-crumbs">
-          <span>Quality &amp; Assurance</span>
+          <span>Quality</span>
           <span className="sep" aria-hidden="true">/</span>
           <span className="here">{HERE[tab]}</span>
         </div>
@@ -319,7 +364,9 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
 
       <div className="qms-page">
         <div className="qms-page-inner">
-          {tab === 'sop' ? (
+          {tab !== 'sop' && tab !== 'change' ? (
+            <QmsRecords tab={tab} onAsk={onAsk} onContext={setRecordCtx} />
+          ) : tab === 'sop' ? (
             <SopRegister onAsk={onAsk} onNavigate={onNavigate} filter={sopFilter} onFilterChange={setSopFilter}
               onEditorOpenChange={setEditingDocument} qmsDocumentId={qmsDocumentId} qmsTargetRequest={qmsTargetRequest} />
           ) : (

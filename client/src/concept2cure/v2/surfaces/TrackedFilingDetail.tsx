@@ -35,7 +35,7 @@ function RecordedFiling({ data }: { data: TaskFilingHome }) {
     <table className="ub-inv" aria-label="Recorded filing details">
       <tbody>
         <tr><th scope="row">Catalog</th><td>{filing.catalogKey}</td></tr>
-        <tr><th scope="row">Program type</th><td>{filing.programType} · {filing.variant}</td></tr>
+        <tr><th scope="row">Filing type</th><td>{filing.programType} · {filing.variant}</td></tr>
         <tr><th scope="row">Status</th><td>{filing.status}</td></tr>
         <tr><th scope="row">Decision</th><td>{filing.decision || 'Not recorded'}</td></tr>
         <tr><th scope="row">FDA tracking number</th><td>{filing.fdaTrackingNumber || 'Not recorded'}</td></tr>
@@ -45,10 +45,10 @@ function RecordedFiling({ data }: { data: TaskFilingHome }) {
         <tr><th scope="row">Recorded document</th><td style={{ overflowWrap: 'anywhere' }}>{filing.filedArtifactDocumentId || 'No filed artifact document recorded'}</td></tr>
         <tr><th scope="row">Recorded SHA-256</th><td style={{ overflowWrap: 'anywhere' }}>{filing.filedArtifactSha256 || 'No filed artifact hash recorded'}</td></tr>
         <tr><th scope="row">Filing record ID</th><td>{filing.id}</td></tr>
-        <tr><th scope="row">Project ID</th><td>{home.projectId ?? 'No project binding recorded'}</td></tr>
-        <tr><th scope="row">Programme</th><td>{home.programId
-          ? <>{home.programTitle || 'Untitled programme'} <span className="sp-row-s">· {home.programId}</span></>
-          : 'No programme binding recorded'}</td></tr>
+        <tr><th scope="row">Tracking record ID</th><td>{home.projectId ?? 'No tracking record bound'}</td></tr>
+        <tr><th scope="row">Project</th><td>{home.programId
+          ? <>{home.programTitle || 'Untitled project'} <span className="sp-row-s">· {home.programId}</span></>
+          : 'No project recorded'}</td></tr>
         <tr><th scope="row">Created</th><td><RecordedDate value={filing.createdAt} /></td></tr>
         <tr><th scope="row">Last updated</th><td><RecordedDate value={filing.updatedAt} /></td></tr>
         <tr><th scope="row">Notes</th><td style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{filing.notes || 'No notes recorded'}</td></tr>

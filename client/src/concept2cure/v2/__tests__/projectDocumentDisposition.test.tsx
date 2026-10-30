@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { DocumentDispositionChoice } from '@shared/document-data-disposition';
 const apiRequest = vi.hoisted(() => vi.fn());
+/* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
+   no AuthProvider mounted, the real useAuth throws before Project home renders. */
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<Record<string, unknown>>()), apiRequest }));
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { Vault } from '../surfaces/Vault';
@@ -83,7 +86,7 @@ describe('reachable project document lifecycle controls', () => {
       if (url.includes('/search?')) return ok({ success: true, data: { query: 'retained', total: 1, limit: 100, offset: 0, results: [{
         id: '33333333-3333-4333-8333-333333333333', title: 'Retained search record', fileName: 'retained.pdf', documentType: 'REPORT',
         size: '1.0 MB', folderId: null, ctdSection: null, placementStatus: 'unfiled', snippet: 'Stored retained extraction',
-        originalFileAvailable: false, disposition: 'keep_data',
+        originalFileAvailable: false, disposition: 'keep_data', current: true,
       }] } });
       if (url === `/api/c2c/project-vault/${PID}`) return ok(vaultPayload());
       if (url.endsWith('/history')) return ok({ success: true, data: { entries: [], chain: { store: 'audit_logs', ok: true, rowsChecked: 0, legacyRows: 0, sequencedRows: 0 } } });

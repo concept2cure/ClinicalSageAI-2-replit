@@ -36,7 +36,6 @@ import { createComplianceReportRoutes } from '../routes/audit-compliance-reports
 import { createAnaRiInlineRoutes } from '../routes/ana-ri-inline-routes';
 import evidenceAskRouter from '../routes/evidence-ask';
 import esignatureRouter from '../routes/esignature';
-import dossierReadinessRouter from '../routes/dossier-readiness';
 import regulatorySubmissionsRoutes from '../routes/regulatorySubmissions';
 import submissionOpsRoutes from '../routes/submission-ops';
 import regulatoryProgramsRoutes from '../routes/regulatory-programs';
@@ -45,7 +44,6 @@ import validationKitRoutes from '../routes/validation-kit';
 import savedPrecedentQueriesRoutes from '../routes/saved-precedent-queries';
 import mdxRoutes from '../routes/mdx';
 import mdxAnaDraftsRoutes from '../routes/mdx-ana-drafts';
-import mdxVaultRoutes from '../routes/mdx-vault';
 import mdxEngineeringRoutes from '../routes/mdx-engineering';
 import mdxUdiRoutes from '../routes/mdx-udi';
 import mdxRiskRoutes from '../routes/mdx-risk-management';
@@ -274,11 +272,6 @@ export function registerInlinePlatformFacadesRoutes({
   app.use('/api/esignature', esignatureRouter);
   console.log('✅ E-signature routes mounted (/api/esignature)');
 
-  // Dossier section readiness derived from live concept2cure_artifacts
-  // (Doc System Convergence Phase 5 — replaces hardcoded section status).
-  app.use('/api/dossier-readiness', dossierReadinessRouter);
-  console.log('✅ Dossier readiness routes mounted (/api/dossier-readiness)');
-
   // AnA 1.0 RI endpoint + compatibility facades.
   app.use(
     '/api',
@@ -360,14 +353,9 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Governance routes:', error);
   }
 
-  // C2C regulatory commitments (source-anchored inbound + outbound obligations).
-  try {
-    const c2cCommitmentsModule = await import('../routes/c2c/commitments');
-    app.use('/api/c2c/commitments', authMiddleware, c2cCommitmentsModule.default);
-    console.info('✅ C2C Commitments routes mounted (/api/c2c/commitments)');
-  } catch (error) {
-    console.error('❌ Failed to mount C2C Commitments routes:', error);
-  }
+  // /api/c2c/commitments was retired 2026-10-29 (P-39 step 2): regulatory
+  // commitments are recorded in regulatory_commitments, through
+  // /api/ha-interactions/commitments and an agency answer's commitments route.
 
   // Study-design spine (validate / simulate / persist onto the CDISC PRM tables).
   try {
@@ -926,15 +914,10 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Doc journey route:', error);
   }
 
-  // Agency meetings — org-scoped list of regulatory interactions read by GET
-  // /api/agency-meetings (own sub-prefix). Feeds the AgencyMeetings surface.
-  try {
-    const agencyMeetingsModule = await import('../routes/agency-meetings.routes');
-    app.use('/api/agency-meetings', authMiddleware, agencyMeetingsModule.default);
-    console.info('✅ Agency meetings route mounted (/api/agency-meetings)');
-  } catch (error) {
-    console.error('❌ Failed to mount Agency meetings route:', error);
-  }
+  // /api/agency-meetings is retired (P-39 step 4, 2026-10-30): a meeting is
+  // recorded in Communication on ha_interactions (/api/ha-interactions), its
+  // minutes an inbox letter. c2c_agency_meetings is read-only, its rows kept
+  // (migrations/20261030b_c2c_agency_meetings_read_only.sql).
 
   // Design controls — org-scoped 820.30 traceability matrix read by GET
   // /api/design-controls (own sub-prefix). Feeds the DesignControls surface.
@@ -975,16 +958,6 @@ export async function registerInlineAiWorkflowRoutes({
     console.info('✅ Decision lineage route mounted (/api/decision-lineage)');
   } catch (error) {
     console.error('❌ Failed to mount Decision lineage route:', error);
-  }
-
-  // Dossier map — org-scoped CTD module-map completeness read by GET
-  // /api/dossier-map (own sub-prefix). Feeds the DossierMap surface.
-  try {
-    const dossierMapModule = await import('../routes/dossier-map.routes');
-    app.use('/api/dossier-map', authMiddleware, dossierMapModule.default);
-    console.info('✅ Dossier map route mounted (/api/dossier-map)');
-  } catch (error) {
-    console.error('❌ Failed to mount Dossier map route:', error);
   }
 
   // Wave-3 batch: org-scoped instance-list reads, each on its own sub-prefix,
@@ -1185,13 +1158,14 @@ export function registerInlineSubmissionWorkflowRoutes({
      multiple routers at the same /api/mdx prefix keeps the kit's URL
      space coherent without consolidating into a single mega-router.
      Each module owns its own audit + tenant-scope. */
-  // mdxAnaDrafts + mdxVault query the global pool (concept2cure_artifacts,
-  // ana drafts) with no tenant scope of their own — mounted with no auth here,
-  // they fail closed under RLS_ENFORCE=on (and read org from req.user, which
-  // nothing was populating). requireTenantContext authenticates, establishes the
-  // AsyncLocalStorage tenant scope so those queries are permitted, and populates
-  // req.user/req.tenantContext the handlers already read.
-  // The gate is bound to the two URL sub-trees these routers own, NOT to the
+  // mdxAnaDrafts queries the global pool (ana drafts) with no tenant scope of
+  // its own — mounted with no auth here, it fails closed under RLS_ENFORCE=on
+  // (and reads org from req.user, which nothing was populating).
+  // requireTenantContext authenticates, establishes the AsyncLocalStorage
+  // tenant scope so those queries are permitted, and populates
+  // req.user/req.tenantContext the handler already reads. (mdx-vault was the
+  // second such router until the device vault folded into the Vault, fold F3.)
+  // The gate is bound to the URL sub-tree this router owns, NOT to the
   // shared /api/mdx prefix. `app.use('/api/mdx', requireTenantContext, router)`
   // reads as "gate this router" and is not that: path-mounted middleware runs
   // for every request matching the prefix, so it gated all 20+ routers stacked
@@ -1200,9 +1174,9 @@ export function registerInlineSubmissionWorkflowRoutes({
   // 500-then-401 alternation in the UAT report's BP-02. Proven with a real
   // Express app before and after; see ledger L61.
   app.use('/api/mdx/ana-drafts', requireTenantContext);
-  app.use('/api/mdx/vault', requireTenantContext);
   app.use('/api/mdx', mdxAnaDraftsRoutes);
-  app.use('/api/mdx', mdxVaultRoutes);
+  // No mdx-vault router: the device vault folded into the Vault (D2, fold F3,
+  // 2026-10-29), whose reads are /api/c2c/project-vault and /api/artifacts-center.
   app.use('/api/mdx', mdxEngineeringRoutes);
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);

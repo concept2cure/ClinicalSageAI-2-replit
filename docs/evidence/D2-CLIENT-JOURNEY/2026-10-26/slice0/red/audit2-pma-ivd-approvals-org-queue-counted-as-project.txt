@@ -1,0 +1,41 @@
+RED (audit2 pma-ivd #3): the Approvals tab counts and badges the viewer's organisation-wide pending e-signatures (/api/approval-workflows/pending carries no project) under the open project's tab bar, and neither tab nor pane says the list covers all projects.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+---x---x---x---x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > the Approvals tab does not count the organisation's queue as this project's
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > the Approvals tab does not count the organisation's queue as this project's
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > the Approvals tab does not count the organisation's queue as this project's
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > the Approvals tab does not count the organisation's queue as this project's
+AssertionError: expected <span class="pwt-count badge"></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="pwt-count badge"
+>
+  3
+</span>
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx:126:51
+    124|     expect((await screen.findAllByText('Doc C')).length).toBeGreaterTh…
+    125|     // … but the tab neither counts nor badges it under this project …
+    126|     expect(approvals.querySelector('.pwt-count')).toBeNull();
+       |                                                   ^
+    127|     expect(approvals.querySelector('.badge')).toBeNull();
+    128|     // … and the tab and the pane say whose queue it is.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 12 skipped (16)
+   Start at  07:37:52
+   Duration  2.15s (transform 644ms, setup 176ms, import 796ms, tests 459ms, environment 536ms)
+

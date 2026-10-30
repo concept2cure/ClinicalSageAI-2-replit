@@ -17,6 +17,8 @@
  * @module server/services/toxicology/toxicology-knowledge
  */
 
+import { computeFirstInHumanDose, HUMAN_KM, HUMAN_REFERENCE_WEIGHT_KG, kmForSpecies } from '../preclinical/fih-dose-engine.js';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,6 +87,7 @@ export interface SafetyMarginResult {
   mrsd: number;
   mrsdUnit: string;
   safetyFactor: number;
+  /** Applied HED/MRSD dose margin; exposure margins are reported separately. */
   safetyMargin: number;
   aucMargin?: number;
   cmaxMargin?: number;
@@ -171,32 +174,6 @@ const REPEAT_DOSE_DURATION_MAP: Record<ClinicalPhase, { rodent: string; nonRoden
   phase2:    { rodent: '3 months',  nonRodent: '3 months',  maxClinicalDuration: 'up to 3 months' },
   phase3:    { rodent: '6 months',  nonRodent: '9 months',  maxClinicalDuration: '>3 months' },
   marketing: { rodent: '6 months',  nonRodent: '9 months',  maxClinicalDuration: '>6 months' },
-};
-
-/** FDA Guidance (2005) — Km factors for body surface area conversion */
-const KM_FACTORS: Record<string, number> = {
-  mouse:   3,
-  rat:     6,
-  hamster: 5,
-  guinea_pig: 8,
-  rabbit: 12,
-  dog:    20,
-  nhp:    12,   // Non-human primate (cynomolgus/rhesus ~ 3 kg)
-  minipig: 27,
-  human:  37,
-};
-
-/** Safety factors for MRSD calculation (FDA 2005 Guidance) */
-const SAFETY_FACTORS: Record<string, number> = {
-  mouse:   12.3,
-  rat:     6.2,
-  hamster: 7.4,
-  guinea_pig: 4.6,
-  rabbit:  3.1,
-  dog:     1.8,
-  nhp:     3.1,
-  minipig: 1.4,
-  human:   1.0,
 };
 
 /** Default group sizes per species */
@@ -895,7 +872,7 @@ export function calculateSafetyMargin(params: CalculateSafetyMarginInput): Safet
   const {
     noaelMgKg,
     species,
-    humanBodyWeightKg = 60,
+    humanBodyWeightKg = HUMAN_REFERENCE_WEIGHT_KG,
     method = 'body_surface_area',
     animalAuc,
     humanProjectedAuc,
@@ -906,29 +883,21 @@ export function calculateSafetyMargin(params: CalculateSafetyMarginInput): Safet
   } = params;
 
   const speciesKey = normalizeSpeciesKey(species);
-  const animalKm = KM_FACTORS[speciesKey];
-  const humanKm = KM_FACTORS.human;
-  const safetyFactor = SAFETY_FACTORS[speciesKey];
-  const calculations: CalculationStep[] = [];
-  const warnings: string[] = [];
-
-  if (!animalKm) {
-    return {
-      hed: 0,
-      hedMethod: 'error',
-      mrsd: 0,
-      mrsdUnit: 'mg/kg',
-      safetyFactor: 0,
-      safetyMargin: 0,
-      interpretation: `Unknown species "${species}". Supported species: ${Object.keys(KM_FACTORS).join(', ')}.`,
-      warnings: [`Species "${species}" not found in Km factor table.`],
-      calculations: [],
-      citations: [ICH_CITATIONS.FDA_FIH],
-    };
+  if (kmForSpecies(speciesKey) === null) {
+    throw new Error(`species must be supported by the FIH dose engine; no Km factor could be resolved for "${species}".`);
   }
+  const dose = computeFirstInHumanDose({
+    speciesNoaels: [{ species: speciesKey, noaelMgPerKg: noaelMgKg }],
+    safetyFactor: additionalSafetyFactor,
+    humanReferenceWeightKg: humanBodyWeightKg,
+  });
+  const { selectedHedMgPerKg: hed, mrsdMgPerKg: mrsd, mrsdTotalMg, safetyFactor: effectiveSafetyFactor } = dose.mrsd;
+  const animalKm = dose.mrsd.hedBySpecies[0].km;
+  const humanKm = HUMAN_KM;
+  const calculations: CalculationStep[] = [];
+  const warnings: string[] = [...dose.warnings];
 
-  // Step 1: Calculate HED using body surface area (FDA 2005 Guidance)
-  const hed = noaelMgKg * (animalKm / humanKm);
+  // HED/MRSD values (including rounding) come from the one FIH engine.
   calculations.push({
     step: 'Human Equivalent Dose (HED) via body surface area',
     formula: 'HED = NOAEL (mg/kg) x (animal Km / human Km)',
@@ -937,8 +906,6 @@ export function calculateSafetyMargin(params: CalculateSafetyMarginInput): Safet
   });
 
   // Step 2: Apply safety factor to get MRSD
-  const effectiveSafetyFactor = additionalSafetyFactor;
-  const mrsd = hed / effectiveSafetyFactor;
   calculations.push({
     step: 'Maximum Recommended Starting Dose (MRSD)',
     formula: 'MRSD = HED / safety factor',
@@ -946,8 +913,7 @@ export function calculateSafetyMargin(params: CalculateSafetyMarginInput): Safet
     result: Math.round(mrsd * 10000) / 10000,
   });
 
-  // Step 3: Convert to total mg for a 60 kg human
-  const mrsdTotalMg = mrsd * humanBodyWeightKg;
+  // Step 3: The canonical engine's total dose for the supplied human weight.
   calculations.push({
     step: 'MRSD as total dose',
     formula: 'MRSD (total mg) = MRSD (mg/kg) x human body weight (kg)',
@@ -1004,12 +970,12 @@ export function calculateSafetyMargin(params: CalculateSafetyMarginInput): Safet
   }
 
   return {
-    hed: Math.round(hed * 10000) / 10000,
+    hed,
     hedMethod: 'body_surface_area (Km factor)',
-    mrsd: Math.round(mrsd * 10000) / 10000,
+    mrsd,
     mrsdUnit: 'mg/kg',
     safetyFactor: effectiveSafetyFactor,
-    safetyMargin: safetyFactor,
+    safetyMargin: effectiveSafetyFactor,
     aucMargin: aucMargin ? Math.round(aucMargin * 100) / 100 : undefined,
     cmaxMargin: cmaxMargin ? Math.round(cmaxMargin * 100) / 100 : undefined,
     interpretation,
@@ -1020,15 +986,14 @@ export function calculateSafetyMargin(params: CalculateSafetyMarginInput): Safet
 }
 
 function normalizeSpeciesKey(species: string): string {
+  if (typeof species !== 'string' || !species.trim()) throw new Error('species is required.');
   const s = species.toLowerCase().trim();
-  if (s.includes('cynomolgus') || s.includes('rhesus') || s.includes('monkey') || s === 'nhp' || s === 'primate') return 'nhp';
-  if (s.includes('beagle') || s === 'dog') return 'dog';
-  if (s.includes('minipig') || s.includes('micropig') || s.includes('gottingen') || s.includes('yucatan')) return 'minipig';
-  if (s.includes('rabbit')) return 'rabbit';
-  if (s.includes('guinea')) return 'guinea_pig';
-  if (s.includes('hamster')) return 'hamster';
-  if (s.includes('mouse')) return 'mouse';
-  if (s.includes('rat') || s.includes('sprague') || s.includes('wistar')) return 'rat';
+  // Retain legacy spelling/strain aliases; Km values belong only to the FIH engine.
+  if (s.includes('gottingen') || s.includes('yucatan')) return 'minipig';
+  if (s.includes('micropig')) return 'micro-pig';
+  if (s.includes('guinea')) return 'guinea pig';
+  if (s.includes('sprague') || s.includes('wistar')) return 'rat';
+  if (s === 'rhesus') return 'rhesus monkey';
   return s;
 }
 

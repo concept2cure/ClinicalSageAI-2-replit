@@ -179,7 +179,7 @@ async function regionalRun(input: ComputeRunInput): Promise<RunComputationResult
 function recordAccessProjects(result: ComputeRunResult, input: ComputeRunInput): ComputeRunResult {
   if (input.scopeType === 'program') {
     if (!Array.isArray(input.programProjectIds) || !input.programProjectIds.every(id => Number.isSafeInteger(id) && id > 0)) {
-      throw new ReportTypeNotComputed('The program group project set could not be verified, so this report was not run.');
+      throw new ReportTypeNotComputed('The project group\'s project set could not be verified, so this report was not run.');
     }
     const sourceIds = result.computed.summary.accessProjectIds;
     result.computed.summary.accessProjectIds = [...new Set([...input.programProjectIds, ...(Array.isArray(sourceIds) ? sourceIds as number[] : [])])];

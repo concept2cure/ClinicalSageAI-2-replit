@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db';
-import { auditEvents, projects, clientWorkspaces, organizations } from '@shared/schema';
+import { auditEvents, projects } from '@shared/schema';
 import { and, eq } from 'drizzle-orm';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 import { emitRuleEvent } from '../services/rules-engine';
@@ -31,29 +31,12 @@ const log = createScopedLogger('projects-management');
 //   · the module entitlement gate mounted across every route family
 //     (/api/projects belongs to the `projects` and `project-home` modules —
 //     server/middleware/moduleEntitlementGate.ts).
-// Project quotas are enforced where the project is created
-// (atomicCreateProject reads the workspace and organization limits). One
+// Project creation and quotas belong to POST /api/c2c/projects (A2.9). One
 // decision per question; this router asks none of them twice.
 
 const router = Router();
 
 // Validation schemas
-const createProjectSchema = z.object({
-  name: z.string().min(3, 'Project name must be at least 3 characters'),
-  description: z.string().optional(),
-  type: z.enum(['clinical_trial', 'regulatory_submission', 'medical_device', 'literature_review']),
-  priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
-  dueDate: z.string().optional(),
-  parentProjectId: z.number().optional(),
-  organizationId: z
-    .union([z.string(), z.number()])
-    .transform(val => {
-      return typeof val === 'string' ? parseInt(val, 10) : val;
-    })
-    .pipe(z.number().int().positive())
-    .optional(),
-});
-
 const updateProjectSchema = z.object({
   name: z.string().min(3, 'Project name must be at least 3 characters').optional(),
   description: z.string().optional(),
@@ -143,201 +126,6 @@ router.get('/:projectId', async (req, res) => {
   } catch (error) {
     log.error('Error fetching project:', error);
     res.status(500).json({ error: 'Failed to fetch project' });
-  }
-});
-
-/**
- * POST /api/projects
- * Create a new project
- */
-router.post('/', async (req, res) => {
-  try {
-    log.debug('Create project request received');
-
-    const validatedData = createProjectSchema.parse(req.body);
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) {
-      return res.status(400).json({ error: tenantContext.error });
-    }
-    const authenticatedOrgId = tenantContext.organizationId;
-    if (
-      validatedData.organizationId !== undefined &&
-      validatedData.organizationId !== authenticatedOrgId
-    ) {
-      return res.status(403).json({
-        error: 'organizationId in payload does not match authenticated tenant',
-      });
-    }
-    const organizationId = authenticatedOrgId;
-
-    // Find an available client workspace for the organization first
-    const availableClients = await db
-      .select()
-      .from(clientWorkspaces)
-      .where(eq(clientWorkspaces.organizationId, organizationId))
-      .limit(1);
-
-    let clientWorkspaceId: number;
-
-    if (availableClients.length === 0) {
-      // Auto-create a default client workspace for the organization
-      log.debug(
-        `No client workspaces found for organization ${organizationId}. Creating default workspace.`
-      );
-
-      // Get organization info for default workspace creation
-      const [organization] = await db
-        .select()
-        .from(organizations)
-        .where(eq(organizations.id, organizationId))
-        .limit(1);
-
-      if (!organization) {
-        return res.status(400).json({
-          error: 'Organization not found',
-          code: 'ORGANIZATION_NOT_FOUND',
-        });
-      }
-
-      const [newClientWorkspace] = await db
-        .insert(clientWorkspaces)
-        .values({
-          organizationId,
-          name: `${organization.name} - Default Workspace`,
-          slug: `${organization.slug}-default`,
-          description: 'Default client workspace created automatically for project management',
-          status: 'active',
-          industry: organization.industryMode || 'pharmaceutical',
-          quotaProjects: organization.maxProjects || 10,
-          quotaStorage: organization.maxStorage || 5,
-        } as any)
-        .returning();
-
-      clientWorkspaceId = newClientWorkspace.id;
-      log.debug(
-        `Created default client workspace ${clientWorkspaceId} (${newClientWorkspace.name}) for organization ${organizationId}`
-      );
-    } else {
-      clientWorkspaceId = availableClients[0].id;
-      log.debug(
-        `Using existing client workspace ${clientWorkspaceId} (${availableClients[0].name}) for project creation`
-      );
-    }
-
-    // Use atomic project creation with quota enforcement.
-    // atomicQuotaService is an untyped JS module; the global '*.js' shim only
-    // surfaces a default export, so read the named function off the namespace.
-    const atomicQuotaService = (await import(
-      '../services/atomicQuotaService.js'
-    )) as unknown as {
-      atomicCreateProject: (
-        organizationId: number,
-        projectData: Record<string, unknown>,
-      ) => Promise<{
-        success: boolean;
-        error?: string;
-        message?: string;
-        details?: unknown;
-        data?: any;
-        quotaInfo?: unknown;
-      }>;
-    };
-    // The authenticated user's numeric id, for created_by_id / owner_id and the
-    // audit row. Identities that are not users rows (a non-numeric subject)
-    // record null rather than a made-up id.
-    const rawActorId = (req as any).user?.id ?? (req as any).user?.userId;
-    const actorUserId =
-      rawActorId != null && Number.isInteger(Number(rawActorId)) && Number(rawActorId) > 0
-        ? Number(rawActorId)
-        : null;
-    const result = await atomicQuotaService.atomicCreateProject(organizationId, {
-      name: validatedData.name,
-      description: validatedData.description || null,
-      type: validatedData.type,
-      priority: validatedData.priority,
-      dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : null,
-      clientWorkspaceId: clientWorkspaceId,
-      status: 'active',
-      createdById: actorUserId,
-    });
-
-    if (!result.success) {
-      if (result.error === 'QUOTA_EXCEEDED') {
-        return res.status(403).json({
-          success: false,
-          error: 'Quota exceeded',
-          message: result.message,
-          details: result.details,
-        });
-      }
-      // 2026-10-15: a limit not recorded (NULL max_projects) fell through to 400.
-      if (result.error === 'QUOTA_NOT_RECORDED') {
-        return res.status(403).json({
-          success: false,
-          error: result.error,
-          message: result.message,
-          details: result.details,
-        });
-      }
-      return res.status(result.error === 'ORGANIZATION_NOT_FOUND' ? 404 : 400).json({
-        success: false,
-        error: result.error,
-        message: result.message,
-      });
-    }
-
-    log.debug('Created project atomically:', result.data);
-    log.debug('Quota info:', result.quotaInfo);
-
-    try {
-      const now = new Date();
-      const { userName, userRole } = getRequestActor(req);
-
-      await db.insert(auditEvents).values({
-        organizationId,
-        eventType: 'project_create',
-        entityType: 'project',
-        entityId: result.data.id,
-        userId: actorUserId,
-        userName,
-        userRole,
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent') || null,
-        timestamp: now,
-        timestampUtc: now,
-        oldValues: null,
-        newValues: result.data,
-        changedFields: Object.keys(result.data || {}),
-        reason: 'Project created',
-        comments: null,
-        requiresSignature: false,
-        regulatorySignificant: true,
-        gxpRelevant: true,
-        metadata: {
-          source: 'projects-management',
-          clientWorkspaceId: result.data.client_workspace_id ?? result.data.clientWorkspaceId,
-        },
-      });
-    } catch (auditError) {
-      log.error('Audit trail creation failed (non-blocking):', auditError);
-    }
-
-    // Emit rules engine event for project creation
-    try {
-      await emitRuleEvent('project_created', organizationId, result.data.id, {
-        project: result.data,
-      });
-    } catch (ruleError) {
-      log.error('Rules engine event emission failed (non-blocking):', ruleError);
-    }
-
-    res.status(201).json(result.data);
-  } catch (error) {
-    log.error('Error creating project:', error);
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid project data', details: error.errors });
-    }
-    res.status(500).json({ error: 'Failed to create project' });
   }
 });
 

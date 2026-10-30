@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * UsageBilling ↔ /api/billing wiring (usage/limits + invoices).
+ * UsageBilling ↔ /api/billing wiring (usage/limits).
  *
  * Locks the FIXTURE-FREE contract of surfaces/UsageBilling.tsx — every panel
  * renders real persisted data, an honest empty state, or an honest error
@@ -8,8 +8,9 @@
  *  - GET /usage/limits → plan label, session window %, weekly buckets render
  *    live; an idle session (resetsAt null) is stated, never a fabricated
  *    countdown; a malformed/partial snapshot shows an honest empty state
- *  - GET /invoices → date/amount(→total)/status mapped to the display shape,
- *    hostedUrl drives a real View link; an empty list shows an honest empty
+ *  - the invoice list is not here: it moved to Licensing, for billing
+ *    administrators (fold billing into Licensing, 2026-10-29). Its cases moved
+ *    with it, to licensingInvoices.test.tsx
  *  - the credit ledger is never spent (credit-ledger.ts debitCredits has no
  *    caller), so no credit balance, auto-reload or per-category credit card is
  *    shown as if metered, and GET /credits is not read (settings/integrity
@@ -18,7 +19,7 @@
  */
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -28,6 +29,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { UsageBilling } from '../surfaces/UsageBilling';
+import { __resetSurfaceActionBus, applySurfaceAction } from '../surfaceActions';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 
 function surfaceOf(id: string): UiSurface {
   return {
@@ -37,8 +40,8 @@ function surfaceOf(id: string): UiSurface {
   } as unknown as UiSurface;
 }
 
-// Real shapes: UsageLimitsSnapshot (services/usage-windows.ts), the Stripe
-// invoice projection and { balanceCents, ledger, autoReload } (billing-dashboard.ts).
+// Real shapes: UsageLimitsSnapshot (services/usage-windows.ts) and
+// { balanceCents, ledger, autoReload } (billing-dashboard.ts).
 const LIMITS = {
   plan: 'enterprise',
   planLabel: 'Enterprise',
@@ -60,25 +63,6 @@ const LIMITS = {
   lastUpdated: new Date().toISOString(),
 };
 
-const INVOICES_RES = {
-  invoices: [
-    {
-      id: 'in_1', number: 'INV-0042', date: '2026-07-01T10:00:00.000Z',
-      amount: 42.5, amountPaid: 42.5, status: 'paid',
-      pdfUrl: null, hostedUrl: 'https://stripe.example/inv_1', currency: 'usd',
-      periodStart: null, periodEnd: null,
-    },
-    {
-      id: 'in_2', number: 'INV-0041', date: '2026-06-01T10:00:00.000Z',
-      amount: 19, amountPaid: 0, status: 'open',
-      pdfUrl: null, hostedUrl: null, currency: 'usd',
-      periodStart: null, periodEnd: null,
-    },
-  ],
-  hasMore: false,
-  total: 2,
-};
-
 const CREDITS_RES = {
   balanceCents: 1234,
   ledger: [{ id: 1, entryType: 'grant', amountCents: 1234, description: 'Pilot allocation', createdAt: '2026-07-01T10:00:00.000Z' }],
@@ -88,28 +72,41 @@ const CREDITS_RES = {
   },
 };
 
+/* GET /rate-limits (billing-dashboard.ts): the limits the platform enforces,
+   the same for every subscription (P-68; usageRateLimits.test.tsx). */
+const RATE_LIMITS_RES = {
+  tier: 'enterprise', tierRecorded: true, sameForEverySubscription: true,
+  limits: [{ category: 'api', label: 'General requests', windowSeconds: 60, perSignedInUser: 600, perAddress: 100, exemptRoles: [] }],
+  sharedRouteLimits: { appliesTo: [], limits: [] },
+};
+
 function ok(payload: unknown) {
   return { ok: true, status: 200, json: async () => payload } as Response;
 }
 
-/** All three GETs resolve live; per-URL payload overridable per test. */
+/** The GETs resolve live; per-URL payload overridable per test. An invoice
+    read is answered too, so a regression that reads it again is caught by the
+    call assertions below rather than hidden as a failed fetch. */
 function mockLive(overrides: Record<string, unknown> = {}) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method !== 'GET') throw new Error(`unexpected ${method} ${url}`);
     if (url === '/api/billing/usage/limits') return ok(overrides[url] ?? LIMITS);
-    if (url === '/api/billing/invoices') return ok(overrides[url] ?? INVOICES_RES);
+    if (url.startsWith('/api/billing/invoices')) return ok({ billingSetUp: true, invoices: [], hasMore: false, nextCursor: null });
     if (url === '/api/billing/credits') return ok(overrides[url] ?? CREDITS_RES);
+    if (url === '/api/billing/rate-limits') return ok(RATE_LIMITS_RES);
     throw new Error(`unexpected GET ${url}`);
   });
 }
+const invoiceReads = () => apiRequest.mock.calls.filter(([, url]) => String(url).startsWith('/api/billing/invoices'));
 
 const noop = () => {};
-const mount = (id: 'usage' | 'billing') =>
+const mount = (id: 'usage') =>
   render(<UsageBilling surface={surfaceOf(id)} onAsk={noop} onNav={noop} segment="biotech" />);
 
 afterEach(() => {
   cleanup();
   apiRequest.mockReset();
+  __resetSurfaceActionBus();
 });
 
 describe('UsageBilling — live plan usage (/api/billing/usage/limits)', () => {
@@ -156,23 +153,17 @@ describe('UsageBilling — live plan usage (/api/billing/usage/limits)', () => {
   });
 });
 
-describe('UsageBilling — live billing (/api/billing/invoices)', () => {
-  it('adopts mapped invoice rows', async () => {
+describe('UsageBilling — the invoice list moved to Licensing', () => {
+  it('reads no invoices and offers no Billing tab', async () => {
     mockLive();
-    mount('billing');
-    // invoices: date → "Jul 1, 2026", amount → total, status capitalized
-    expect(await screen.findByText('Jul 1, 2026')).toBeTruthy();
-    expect(screen.getByText('$42.50')).toBeTruthy();
-    expect(screen.getByText('Paid')).toBeTruthy();
-    expect(screen.getByText('Open')).toBeTruthy();
-    // hostedUrl → a real link; the row without any URL gets no dead control
-    const views = screen.getAllByText('View');
-    expect(views).toHaveLength(1);
-    expect(views[0].getAttribute('href')).toBe('https://stripe.example/inv_1');
-    // Fixture-free: the real invoice values render
-    // directly — no legacy "Live"/"Sample data" provenance pills.
-    expect(screen.queryByText('Live')).toBeNull();
-    expect(screen.queryByText('Sample data')).toBeNull();
+    const { container } = mount('usage');
+    expect(await screen.findByText('Enterprise plan')).toBeTruthy();
+    expect(invoiceReads()).toHaveLength(0);
+    const tabs = screen.getAllByRole('button').map((b) => (b.textContent ?? '').trim());
+    expect(tabs).toContain('Usage');
+    expect(tabs).toContain('Rate limits');
+    expect(tabs).not.toContain('Billing');
+    expect(container.textContent).not.toMatch(/Invoices|No invoices yet/);
   });
 
   /* Settings/integrity audit 2026-10-17, finding 4. Nothing debits the credit
@@ -181,8 +172,8 @@ describe('UsageBilling — live billing (/api/billing/invoices)', () => {
      unmetered number as metering. */
   it('shows no credit balance, auto-reload or credit pools — the ledger is never spent', async () => {
     mockLive();
-    mount('billing');
-    expect(await screen.findByText('Jul 1, 2026')).toBeTruthy();
+    mount('usage');
+    expect(await screen.findByText('Enterprise plan')).toBeTruthy();
     expect(screen.queryByText('$12.34')).toBeNull();
     expect(screen.queryByText(/Auto-reload/)).toBeNull();
     expect(screen.queryByText('Current balance')).toBeNull();
@@ -197,26 +188,50 @@ describe('UsageBilling — live billing (/api/billing/invoices)', () => {
     expect(container.textContent).not.toMatch(/usage credits/i);
   });
 
-  it('renders an honest empty state on an empty invoice list (never a fixture)', async () => {
-    mockLive({ '/api/billing/invoices': { invoices: [], hasMore: false, total: 0 } });
-    mount('billing');
-    // Empty invoices → the invoices panel shows its honest empty state.
-    // No fixture row, no pills.
-    expect(await screen.findByText('No invoices yet')).toBeTruthy();
-    expect(screen.queryByText('$16.70')).toBeNull(); // no fixture row
-    expect(screen.queryByText('Sample data')).toBeNull();
-    expect(screen.queryByText('Live')).toBeNull();
+  it('points to Compare subscriptions, where the invoices are', async () => {
+    mockLive();
+    const onNav = vi.fn();
+    render(<UsageBilling surface={surfaceOf('usage')} onAsk={noop} onNav={onNav} segment="biotech" />);
+    await screen.findByText('Enterprise plan');
+    screen.getByRole('button', { name: /Compare subscriptions/ }).click();
+    expect(onNav).toHaveBeenCalledWith('licensing');
   });
 });
 
 describe('UsageBilling — service unreachable', () => {
   it('renders honest error states when the billing service is unreachable', async () => {
     apiRequest.mockRejectedValue(new Error('network down'));
-    mount('billing');
+    mount('usage');
     // Every panel fails to an honest error state — never a fabricated fixture.
-    expect(await screen.findByText("Couldn't load invoices")).toBeTruthy();
+    expect(await screen.findByText("Couldn't load plan usage")).toBeTruthy();
+    expect(screen.getByText("Couldn't load weekly limits")).toBeTruthy();
+    expect(screen.queryByText('No plan usage yet')).toBeNull();
     expect(screen.queryByText('$20.64')).toBeNull(); // no fixture balance
     expect(screen.queryByText('Sample data')).toBeNull();
     expect(screen.queryByText('Live')).toBeNull();
+  });
+});
+
+describe("AnA's tab action after the fold", () => {
+  function openTab(tab: string) {
+    const resolved = resolveSurfaceAction('usage.open-tab', { tab });
+    if (!resolved.ok) throw new Error(resolved.error);
+    let outcome: { status: string; detail?: string; reason?: string } = { status: '' };
+    act(() => {
+      outcome = applySurfaceAction(resolved.directive, vi.fn()) as typeof outcome;
+    });
+    return outcome;
+  }
+
+  it('opens the two tabs the screen has; a billing tab is not offered at all', async () => {
+    mockLive();
+    mount('usage');
+    await screen.findByText('Enterprise plan');
+    expect(openTab('limits').status).toBe('applied');
+    expect(await screen.findByRole('table', { name: 'Rate limits' })).toBeTruthy();
+    // The declaration offers usage and limits only (surface-actions.ts), so a
+    // billing tab is refused before any handler runs.
+    expect(resolveSurfaceAction('usage.open-tab', { tab: 'billing' }).ok).toBe(false);
+    expect(invoiceReads()).toHaveLength(0);
   });
 });

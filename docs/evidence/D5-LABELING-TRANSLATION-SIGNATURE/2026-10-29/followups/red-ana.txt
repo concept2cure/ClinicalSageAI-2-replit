@@ -1,0 +1,12 @@
+Red, second round: AnA's labeling create tools against AnaToolExecutor.ts at HEAD.
+npx vitest run server/services/ana/__tests__/labeling-tools-record-creator.test.ts  (timeout 240)
+
+ × 'create_labeling_document' records who added the row > writes created_by as the acting user, as the HTTP create does
+   → expected undefined to be 42 // Object.is equality
+ ✓ 'create_labeling_document' records who added the row > with no acting user, adds nothing
+ × 'add_labeling_translation' records who added the row > writes created_by as the acting user, as the HTTP create does
+   → expected undefined to be 42 // Object.is equality
+ ✓ 'add_labeling_translation' records who added the row > with no acting user, adds nothing
+      Tests  2 failed | 2 passed (4)
+
+The two 'no acting user' cases already pass at HEAD: the tool wrapper refuses before the handler runs. The handlers now refuse it themselves too.

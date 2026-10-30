@@ -121,7 +121,10 @@ CREATE TABLE unified_tasks (
   created_at timestamp NOT NULL DEFAULT now(),
   updated_at timestamp NOT NULL DEFAULT now(),
   deleted_at timestamptz,
-  deleted_by integer
+  deleted_by integer,
+  -- migrations/20261023_review_routes.sql (RR1a): the route member columns; RR5 added the Authoring signature's.
+  review_route_id uuid, review_role text, review_step integer,
+  route_signature_id integer, route_act_id text, route_authoring_signature_id uuid
 );
 
 CREATE TABLE task_dependencies (

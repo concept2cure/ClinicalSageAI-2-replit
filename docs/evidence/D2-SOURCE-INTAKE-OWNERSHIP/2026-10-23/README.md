@@ -91,3 +91,21 @@ correction; no production, assertion, SQL, dependency or baseline changed.
 remains immutable; `compiler-corrected-source-freeze.json` is its successor,
 changing only the helper. Root qualifies that helper’s HTTP/lint behavior and
 uses the successor epoch for the next normal push and Git-blob verification.
+
+## Accepted canonical publication
+
+Normal direct push accepted **`2ebf8520eff1b054f071ac96f8472e226dd25298`**, and a subsequent authenticated
+fetch returned that same `concept2cure-v2` commit. `canonical-push-corrected.*`
+records exit zero, the full compiler at **0 errors / exit 0**, all ordinary
+push gates and zero declared-input drift. No hook or baseline was bypassed.
+`accepted-git-blobs.json` verifies all 92 successor input hashes from actual
+accepted Git objects and preserves both the source and incoming ancestry.
+
+The original merged 649-case qualification remains identified by its exact
+source epoch. The only successor code difference is the test helper’s callable
+type declaration; its actual 20-case HTTP suite and strict lint were replayed
+successfully, followed by the whole compiler. No production code changed after
+the combined qualification/build. `publication.json` records these limits and
+the 102 human cases still Not run. The final evidence/work-order follow-up is
+documentation only and uses an ordinary push; final clean/sync verification is
+read-only to avoid recursively rewriting a publication receipt.

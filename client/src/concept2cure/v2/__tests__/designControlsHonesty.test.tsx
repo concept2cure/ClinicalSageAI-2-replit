@@ -35,6 +35,11 @@
  * constructed at all. The wrapper is a probe, not a fixture — the component
  * under test is the real one, the hook under it is the real `useLiveRows`, and
  * the recorded titles are the surface's own strings.
+  *
+ * 2026-10-29 (D2, fold F1c): the Design controls screen folded into Engineering
+ * evidence, which mounts the same trace (v2/surfaces/DesignControlsTrace.tsx)
+ * for the open project. These cases run against it as Engineering mounts it
+ * (./engineeringPanels.harness.tsx); the read names the project and is keyed to it.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -60,7 +65,7 @@ vi.mock('../dataConnect', async (importOriginal) => {
   };
 });
 
-import { DesignControls } from '../surfaces/DesignControls';
+import { DC_READ, EngineeringDesignControlsPanel, keyedToPanelProject } from './engineeringPanels.harness';
 
 /** A design input traced end to end: output linked, verification and validation
  *  both recorded as passing. This is the positive evidence the surface treats as
@@ -92,19 +97,15 @@ const untraced = (id: string) => ({
 
 function respondWith(rows: unknown[]) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (String(method) === 'GET' && String(url) === '/api/design-controls') {
-      return { ok: true, status: 200, json: async () => ({ success: true, data: rows }) };
+    if (String(method) === 'GET' && String(url) === DC_READ) {
+      return { ok: true, status: 200, json: async () => ({ success: true, ...keyedToPanelProject(rows) }) };
     }
     return { ok: true, status: 200, json: async () => ({ success: true, data: null }) };
   });
 }
 
 function mount() {
-  render(
-    <DesignControls
-      {...({ surface: { id: 'design-controls' }, onAsk: vi.fn(), onNav: vi.fn() } as any)}
-    />,
-  );
+  render(<EngineeringDesignControlsPanel onAsk={vi.fn()} />);
 }
 
 const text = () => document.body.textContent ?? '';

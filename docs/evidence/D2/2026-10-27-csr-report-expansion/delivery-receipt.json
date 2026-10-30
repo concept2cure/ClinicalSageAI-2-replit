@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "collectionId": "lmn201-public-csr-expansion-2026-10-27",
+  "artifacts": [
+    {
+      "filename": "LMN201_CSR_Reference_Expansion_2026-10-27.zip",
+      "bytes": 153323279,
+      "sha256": "c93fb0e1f54b71d9514cb37417c8a043df2b188c34f456d6110a9d58a0e021ee",
+      "deliveryStatus": "saved_successfully"
+    },
+    {
+      "filename": "NIH_BPCA_Original_Source_Archives_2026-10-27.zip",
+      "bytes": 214869763,
+      "sha256": "9418e9f989789945e166b2e4b19eff9a98a9b7c9bc25a2c04d393565be15786d",
+      "deliveryStatus": "saved_successfully"
+    },
+    {
+      "filename": "LMN201_CSR_Source_Directory_2026-10-27.html",
+      "bytes": 54333,
+      "sha256": "56d2ae3a19f5449ceafe05ddfec15a087e923e4841fa80689339d3f4303769a7",
+      "deliveryStatus": "saved_successfully"
+    },
+    {
+      "filename": "LMN201_CSR_Acquisition_Catalog_2026-10-27.json",
+      "bytes": 188850,
+      "sha256": "2092b95051a0730e4331371e46b15409346315222d2778a41ccd014edead2353",
+      "deliveryStatus": "saved_successfully"
+    },
+    {
+      "filename": "LMN201_Regulatory_Readiness_2026-10-27.html",
+      "bytes": 27088,
+      "sha256": "e3dbfec756954fd21287b23c936fea98b5a217030b80271ed4703e621c0b1cdb",
+      "deliveryStatus": "saved_successfully"
+    },
+    {
+      "filename": "NIH_NBK567697_nichdcln01_CSR.pdf",
+      "bytes": 3932733,
+      "sha256": "aa349d14c36dd86f68994d3f4d3f776d590f85eed9b9720795fe4d826844f27d",
+      "deliveryStatus": "saved_successfully"
+    },
+    {
+      "filename": "NIH_NBK588444_nichdmeropen_CSR.pdf",
+      "bytes": 3648496,
+      "sha256": "16eff36e44ee1a036828f07a12775f4f6f400579ee578d70fce0ccea3e1e07b1",
+      "deliveryStatus": "saved_successfully"
+    },
+    {
+      "filename": "NIH_NBK588407_nichdstatus02_CSR.pdf",
+      "bytes": 4027008,
+      "sha256": "f15b4a1f0f461aa8616be9583e63031dfca5ca0764a560c8bdd7aca5b64bd55d",
+      "deliveryStatus": "saved_successfully"
+    }
+  ],
+  "allEightFilesSaved": true,
+  "newApplicationAdmissions": 0,
+  "trainingRuns": 0,
+  "deploymentPerformed": false
+}

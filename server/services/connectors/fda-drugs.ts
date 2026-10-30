@@ -11,6 +11,7 @@ import {
   ConnectorDocument,
   ConnectorCredentials,
 } from './connector-interface.js';
+import { normalizeApplicationDocuments } from '../integrations/drug-approvals-client.js';
 
 /**
  * URL-encode a user value for safe interpolation inside an openFDA search
@@ -77,7 +78,8 @@ export class FDADrugsConnector implements DataConnector {
     }
 
     const data = await res.json();
-    const results = data.results || [];
+    if (!Array.isArray(data?.results)) throw new Error('FDA API response has no results array (unexpected shape)');
+    const results = data.results;
 
     return results.map((drug: any, i: number) => {
       const appNo = drug.application_number || '';
@@ -92,7 +94,8 @@ export class FDADrugsConnector implements DataConnector {
         title: `${products || appNo} (${sponsor})`,
         summary: `Application: ${appNo} | Sponsor: ${sponsor} | Products: ${products} | Latest: ${latestAction}`,
         sourceRank: i + 1,
-        metadata: { applicationNumber: appNo, sponsor, products: drug.products, submissions },
+        metadata: { applicationNumber: appNo, sponsor, products: drug.products, submissions,
+          applicationDocuments: normalizeApplicationDocuments(drug) },
         url: `https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=${appNo.replace(/\D/g, '')}`,
       };
     });
@@ -109,7 +112,8 @@ export class FDADrugsConnector implements DataConnector {
     if (!res.ok) throw new Error(`FDA drug ${appNo} not found`);
 
     const data = await res.json();
-    const drug = data.results?.[0] || {};
+    if (!Array.isArray(data?.results) || !data.results.length) throw new Error(`FDA drug ${appNo} not found in response`);
+    const drug = data.results[0];
 
     return {
       id: resourceId,
@@ -117,7 +121,7 @@ export class FDADrugsConnector implements DataConnector {
       title: `FDA Application ${appNo}`,
       type: 'fda_approval',
       content: JSON.stringify(drug, null, 2),
-      metadata: drug,
+      metadata: { ...drug, applicationDocuments: normalizeApplicationDocuments(drug) },
       url: `https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=${appNo.replace(/\D/g, '')}`,
       retrievedAt: new Date(),
     };

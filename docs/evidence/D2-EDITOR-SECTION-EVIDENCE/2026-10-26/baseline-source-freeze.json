@@ -1,0 +1,13 @@
+{
+  "files": {
+    "server/services/authoring/authoring-assembly.ts": "393ebdfb3e28a4d863660a19fd7fed0cf37253bd4c8428526fb0aca80687d114",
+    "server/services/authoring/authoring-assembly-plan.ts": "cc47f6e9b96d72f15856fbd5c319c3974d94016faff71a80d0a150aa894ae5ee",
+    "server/services/authoring/authoring-assembly-source.ts": "9b88fa8db2a9868506a0f549bba81dcabc13349b602bd31e01cbe2e3df4c5bf2",
+    "server/services/authoring/authoring-assembly-sources.ts": "20cca555119e8e961ab4c60b3ae6883f45e1c3bd48be470cc0182d7cd101ace8",
+    "server/services/ana/draft-source-window.ts": "ec41c5b08809da08699e7f12a42751361671a7ba7d852435d2d8e77716fc4fdb",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": "505a55e44ea19e6eebc71f5e19477f7c054f6040aaa31577be8af619859fb777",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f"
+  }
+}

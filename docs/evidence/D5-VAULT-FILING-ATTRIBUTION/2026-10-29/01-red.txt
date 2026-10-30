@@ -1,0 +1,29 @@
+# RED at 97c5bace6 (trunk, the F4 implementation stashed), 2026-10-29
+
+## Real PostgreSQL 16, RLS_ENFORCE=on, app_service: tests/db/vault-filing-attribution.dbtest.ts
+ × tests/db/vault-filing-attribution.dbtest.ts > the Vault read names who filed a document, and when (Part 11 review F4) > a document its uploader filed into a folder names them and the time
+   → expected { folderId: 'module-3', …(6) } to match object { placementStatus: 'confirmed', …(2) }
+ × tests/db/vault-filing-attribution.dbtest.ts > the Vault read names who filed a document, and when (Part 11 review F4) > a suggestion names nobody: no filer is invented for a proposal
+   → expected undefined to be null
+ × tests/db/vault-filing-attribution.dbtest.ts > the Vault read names who filed a document, and when (Part 11 review F4) > the person who files it afterwards is the one named
+   → expected undefined to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed (3)
+
+## Unit (uploadLeaf) and client (the detail's filing block)
+ × client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > names the person whose filing it is, and when, in UTC
+   → Unable to find an element by: [data-testid="vault-filing-decided"]
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > gives a suggestion no filer: nobody decided it yet
+ × client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > says so when a filing records no person, rather than implying one
+   → Unable to find an element by: [data-testid="vault-filing-decided"]
+ × server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf says who made the filing decision, and when (Part 11 review F4) > carries the person's name and the time as ISO, for a person's filing
+   → expected { folderId: 'module-3', …(6) } to match object { placedBy: 'Fern Filer', …(2) }
+ × server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf says who made the filing decision, and when (Part 11 review F4) > names nobody for a suggestion
+   → expected { folderId: 'module-3', …(6) } to match object { placedBy: null, …(2) }
+ × server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf says who made the filing decision, and when (Part 11 review F4) > keeps a recorded person whose name this organisation cannot read as recorded
+   → expected { folderId: 'module-3', …(6) } to match object { placedBy: null, …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
++   "rationale": "CTD pattern \"Stability\" → Module 3 (3.2.P.8).",
++   "rationale": "CTD pattern \"Stability\" → Module 3 (3.2.P.8).",
++   "rationale": "CTD pattern \"Stability\" → Module 3 (3.2.P.8).",
+      Tests  5 failed | 1 passed | 32 skipped (38)

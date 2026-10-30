@@ -1,9 +1,13 @@
 /**
  * EngineeringSurface — DOC-FIRST.
  *
- * Documents the engineering team produces are the primary zone; the
- * dashboards (DHF strip, ISO 14971 heatmap, risk records) collapse into
- * a "Situational awareness" accordion the user expands on demand.
+ * Documents the engineering team produces are the primary zone. Below them
+ * sit the project's ISO 14971 risk register and its design-controls trace,
+ * the same panels the Risk and Design controls screens mount (fold F1 slice
+ * B, 2026-10-29: v2/surfaces/RiskRegister.tsx and DesignControlsTrace.tsx).
+ * The project's design history (its document sections), change requests and
+ * non-conformances collapse into a "Situational awareness" accordion the user
+ * expands on demand (EngineeringDesignHistory.tsx draws the first, P-60).
  *
  * ## Data honesty
  *
@@ -14,9 +18,13 @@
  * in this file — in a device workspace, an example risk file that looks
  * like your own risk file is a patient-safety hazard, not a placeholder.
  *
- * Panels whose source table has no program column are labelled
- * organization-wide from `live.scopes`, so the user is never led to
- * believe org-level rows belong to the selected program.
+ * Panels whose source table has no program column are not shown until
+ * `live.scopes` reports them keyed to the project (slice 0 of
+ * .design/client-journey/INFORMATION_ARCHITECTURE.md, the
+ * `device-engineering` row). Labelling them "Organization-wide" still drew
+ * another project's records under this project's name. The same holds for
+ * the metric cards counted from those rows and for the documents panel,
+ * which the route also reports organization-scoped.
  */
 
 import * as React from 'react';
@@ -24,13 +32,20 @@ import { I } from '../icons';
 import { DocumentsPanel, averageAssessedCompletion } from '../components/DocumentsPanel';
 import { DataGate } from '../components/DataGate';
 import { EmptyState } from '../../v2/dataConnect';
-import { ENG_RISK_PROB, ENG_RISK_SEVERITY } from '../data/engineering';
+import { assessmentState, mayReassure } from '../../v2/assessmentState';
+import { ProjectRefused } from '../../v2/projectScopedRead';
+import { RiskRegister, useRiskRegister } from '../../v2/surfaces/RiskRegister';
+import { DesignControlsTrace, useDesignControlsTrace } from '../../v2/surfaces/DesignControlsTrace';
 import { useEngineering, type PanelScope } from '../hooks/useEngineering';
 import { gatedOn, readyRows } from '../lib/dataState';
 import type { Program } from '../data/programs';
 import type { KitDocument } from '../components/DocumentsPanel';
+import { useReportPanelsContext, type EngineeringPanelsContextProps } from './engineeringPanelsContext';
+import { EngineeringDesignHistory } from './EngineeringDesignHistory';
 
-export interface EngineeringSurfaceProps {
+/* `onPanelsContext` (EngineeringPanelsContextProps) hands the risk register's
+   and the trace's AnA context to the host, which publishes device-engineering's. */
+export interface EngineeringSurfaceProps extends EngineeringPanelsContextProps {
   program: Program | null;
   onAskAna: (text: string, opts?: { tool?: string }) => void;
   /** Open a document in the editor — host wires this to the v2 editor route. */
@@ -49,34 +64,88 @@ interface Blocker {
 
 const SEV_ORDER: Record<Blocker['severity'], number> = { err: 0, warn: 1, low: 2 };
 
-/** Marker for panels that are organization-wide rather than per-program. */
-function ScopeNote({ scope }: { scope: PanelScope | undefined }) {
-  if (scope !== 'organization') return null;
+/* Slice 0 (INFORMATION_ARCHITECTURE.md, `device-engineering`): a panel read
+   by organisation may hold another project's rows, so a panel renders only
+   once the route reports it keyed to the project; an unreported scope counts
+   as not keyed. Since P-60 (2026-10-29) the route reads every panel for the
+   project. This replaces the "Organization-wide" pill, which drew those rows. */
+function keyedToProject(scope: PanelScope | undefined): boolean {
+  return scope === 'program';
+}
+
+const NOT_KEYED_LINE = "Shown once this screen reads this project's records.";
+
+/* Rendered inside the panel's DataGate, so loading, a failed read and an
+   empty organisation still read as themselves; this replaces only rows.
+   It says the records are held organization-wide only when the route said so. */
+function NotKeyedNote({ panel, scope }: { panel: string; scope: PanelScope | undefined }) {
   return (
-    <span className="scope-note" title="This source has no program column yet">
-      Organization-wide
-    </span>
+    <p className="eng-trace-summary" data-testid={`eng-not-keyed-${panel}`}>
+      {NOT_KEYED_LINE}
+      {scope === 'organization'
+        ? ' These records are held for the whole organization, not per project, so they are not shown here.'
+        : ''}
+    </p>
   );
 }
 
-export function EngineeringSurface({
-  program,
-  onAskAna,
-  onOpenEditor,
-}: EngineeringSurfaceProps) {
+/* Slice 0 audit 2: an empty read lands in the gate's empty branch, not in
+   NotKeyedNote, so its hint must not promise records "appear here" while they
+   would not be shown. Like the note, it names the organization only when the
+   route said so. */
+function notKeyedEmptyHint(scope: PanelScope | undefined): string {
+  return (scope === 'organization' ? 'Nothing is recorded for the organization. ' : '') +
+    "Records are shown here once this screen reads this project's records.";
+}
+
+/* Slice 0: a metric counted from rows not keyed to the project is not printed. */
+function NotKeyedMetric() {
+  return (
+    <>
+      <div className="metric-val">—</div>
+      <div className="metric-meta">{NOT_KEYED_LINE}</div>
+    </>
+  );
+}
+
+/** "a, b or c" / "a, b and c" for the blocker feed's copy. */
+function listOf(items: string[], conj: 'or' | 'and'): string {
+  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} ${conj} ${items[items.length - 1]}`;
+}
+
+export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsContext }: EngineeringSurfaceProps) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
-  const [cellFilter, setCellFilter] = React.useState<string | null>(null);
 
   const live = useEngineering(program?.id ?? null);
+
+  /* Fold F1 slice B: the Risk and Design controls screens' panels, for this
+     project only. They read once this screen's own route has answered for the
+     project, and nothing when it refused it (server/lib/admit-project.ts). */
+  const scoped = {
+    programId: program ? String(program.id) : null,
+    requireProject: true,
+    waiting: program != null && !live.answered,
+    refusal: live.refusal,
+  };
+  const risk = useRiskRegister({ ...scoped, surfaceId: 'device-engineering' });
+  const designControls = useDesignControlsTrace(scoped);
+  /* What AnA may see of both panels goes to the host, which publishes
+     device-engineering's context (./engineeringPanelsContext.ts). */
+  useReportPanelsContext(onPanelsContext, program, risk.anaContext, designControls.anaContext);
 
   /* Derived views read through readyRows: they yield [] for every
      non-ready state, and the surrounding DataGate has already told the
      user which state that is. No fixture can leak in here. */
-  const dhf = readyRows(live.dhf);
+  const dhfKeyed = keyedToProject(live.scopes.dhf);
+  const ecrsKeyed = keyedToProject(live.scopes.ecrs);
+  const issuesKeyed = keyedToProject(live.scopes.issues);
+  const docsKeyed = keyedToProject(live.scopes.documents);
+  /* Slice 0: a store not keyed to the project contributes no rows here, so
+     its records cannot reach the blocker feed either. */
+  const dhf = dhfKeyed ? readyRows(live.dhf) : [];
   const risks = readyRows(live.risks);
-  const ecrs = readyRows(live.ecrs);
-  const issues = readyRows(live.issues);
-  const trace = readyRows(live.trace);
+  const ecrs = ecrsKeyed ? readyRows(live.ecrs) : [];
+  const issues = issuesKeyed ? readyRows(live.issues) : [];
 
   const programContext = program ? `${program.code} · ${program.title}` : null;
 
@@ -89,7 +158,7 @@ export function EngineeringSurface({
         list.push({
           kind: 'dhf',
           severity: d.status === 'blocked' ? 'err' : 'warn',
-          ref: `DHF §${d.num}`,
+          ref: `§${d.num}`,
           title: d.label,
           note: d.meta,
           owner: d.owner,
@@ -137,54 +206,98 @@ export function EngineeringSurface({
     return list.sort((a, b) => SEV_ORDER[a.severity] - SEV_ORDER[b.severity]);
   }, [dhf, risks, ecrs, issues]);
 
-  const cellCounts = React.useMemo<Record<string, number>>(() => {
-    const m: Record<string, number> = {};
-    for (const r of risks) if (r.residual) m[r.residual] = (m[r.residual] ?? 0) + 1;
-    return m;
-  }, [risks]);
-
-  const visibleRisks = cellFilter
-    ? risks.filter((r) => r.residual === cellFilter)
-    : risks;
-
   /* Document metrics are computed from whatever the documents panel
      actually resolved to — never from a fixture — so the cards and the
      table can never disagree. */
   /* Every source the blocker feed reads. Its all-clear is only true if all
-     four actually answered. */
-  const blockersState = gatedOn(live.dhf, live.risks, live.ecrs, live.issues);
+     of them actually answered — and, since slice 0, it names only the sources
+     read for this project; the rest are said to be left out, not "found". */
+  /* `hard`: the only sources that can raise a hard blocker (a blocked DHF
+     section, an undispositioned non-conformance). `recorded`: what "nothing
+     recorded yet" names. */
+  const blockerSources = [
+    { keyed: dhfKeyed, state: live.dhf, sub: 'design history', found: 'draft or blocked document sections', left: 'document sections', hard: true, recorded: 'design history' },
+    { keyed: true, state: live.risks, sub: 'risk', found: 'unverified risks', left: 'risks', hard: false, recorded: 'risk file' },
+    { keyed: ecrsKeyed, state: live.ecrs, sub: 'change requests', found: 'open change requests', left: 'change requests', hard: false, recorded: 'change requests' },
+    { keyed: issuesKeyed, state: live.issues, sub: 'non-conformance', found: 'non-conformances', left: 'non-conformances', hard: true, recorded: 'non-conformances' },
+  ];
+  const readSources = blockerSources.filter((b) => b.keyed);
+  const leftOut = blockerSources.filter((b) => !b.keyed);
+  /* Slice 0 audit: with DHF or non-conformances left out, "0 hard blockers" is
+     zero by construction, so the count is not printed. */
+  const hardLeftOut = leftOut.filter((b) => b.hard);
+  /* Slice 0 audit: every source read for this project holds no rows (a source
+     left out contributes []), so nothing has been assessed. That is not the
+     same claim as "assessed and nothing is blocking". */
+  const nothingRecorded = dhf.length + risks.length + ecrs.length + issues.length === 0;
+  const leftOutSentence =
+    leftOut.length === 0
+      ? ''
+      : ` ${listOf(leftOut.map((b) => b.left), 'and').replace(/^./, (c) => c.toUpperCase())} are left out until this screen reads this project's records.`;
+  const blockersState = gatedOn(
+    live.risks,
+    ...readSources.filter((b) => b.state !== live.risks).map((b) => b.state),
+  );
+  /* Slice 0 audit 2: `blockers` is [] for a loading or failed read as well as
+     an empty one, so its counts are printed only once every source read for
+     this project has resolved. */
+  const blockersRead = blockersState.status === 'ready' || blockersState.status === 'empty';
+  /* The four-state discriminator (v2/assessmentState.ts) is what may select
+     "Nothing is blocking": the check ran only when every source read for this
+     project resolved AND held records. An empty `blockers` alone is not it. */
+  const blockerVerdict = assessmentState({
+    loading: blockersState.status === 'loading',
+    unreadable: blockersState.status === 'error',
+    scopeExists: !nothingRecorded,
+    findingCount: blockers.length,
+    assessmentRan: blockersRead,
+  });
 
-  const documents = readyRows(live.documents) as unknown as KitDocument[];
+  /* Slice 0 audit: the documents read is organization-scoped too (the route
+     reports `documents: 'organization'`), so its rows feed no card until keyed. */
+  const documents = (docsKeyed ? readyRows(live.documents) : []) as unknown as KitDocument[];
   const readyCount = documents.filter((d) => d.status === 'ready').length;
   const reviewCount = documents.filter((d) => d.status === 'review').length;
   const draftCount = documents.filter((d) => d.status === 'draft').length;
-  const blockedDocs = documents.filter((d) => d.blocker);
-  const pendingSig = documents.filter((d) => d.esigState === 'pending').length;
   const avgCompletion = averageAssessedCompletion(documents);
+
+  const header = (
+    <div className="page-header">
+      <div>
+        <div className="page-eyebrow">
+          Workstream{programContext ? ` · ${programContext}` : ''}
+        </div>
+        <h1 className="page-title">Device engineering</h1>
+        <div className="page-sub">
+          21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software ·
+          FDA premarket cybersecurity.
+        </div>
+      </div>
+      <div className="page-actions">
+        <button
+          className="btn ghost small"
+          onClick={() => onAskAna('Summarise the current state of the design history file.')}
+          type="button"
+        >
+          {I.sparkles} Ask AnA
+        </button>
+      </div>
+    </div>
+  );
+
+  /* The route refused the project, so it read nothing: one sentence, no panels. */
+  if (live.refusal) {
+    return (
+      <>
+        {header}
+        <ProjectRefused refusal={live.refusal} onRetry={live.refresh} testId="eng-project-refused" />
+      </>
+    );
+  }
 
   return (
     <>
-      <div className="page-header">
-        <div>
-          <div className="page-eyebrow">
-            Workstream{programContext ? ` · ${programContext}` : ''}
-          </div>
-          <h1 className="page-title">Device engineering</h1>
-          <div className="page-sub">
-            21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software ·
-            FDA premarket cybersecurity.
-          </div>
-        </div>
-        <div className="page-actions">
-          <button
-            className="btn ghost small"
-            onClick={() => onAskAna('Summarise the current state of the design history file.')}
-            type="button"
-          >
-            {I.sparkles} Ask AnA
-          </button>
-        </div>
-      </div>
+      {header}
 
       <DataGate
         /* Four of these cards count `documents`, not `summary` — "Documents in
@@ -194,40 +307,70 @@ export function EngineeringSurface({
         state={gatedOn(live.summary, live.documents)}
         label="engineering metrics"
         onRetry={live.refresh}
-        emptyHint="Metrics appear once this program has design, risk or change records."
+        emptyHint="Metrics appear once this project has design, risk or change records."
       >
         {(s) => (
           <div className="metrics-row metrics-compact">
+            {/* Slice 0 audit: "Documents in flight", "Open change requests" and
+                "DHF completion" are counted from organisation-wide rows, so each
+                prints only once its source is keyed to the project. */}
             <div className="metric-card">
               <div className="metric-label">Documents in flight</div>
-              <div className="metric-val">{documents.length}</div>
-              <div className="metric-meta">
-                {readyCount} ready · {reviewCount} in review · {draftCount} draft
-              </div>
+              {docsKeyed ? (
+                <>
+                  <div className="metric-val">{documents.length}</div>
+                  <div className="metric-meta">
+                    {readyCount} ready · {reviewCount} in review · {draftCount} draft
+                  </div>
+                </>
+              ) : (
+                <NotKeyedMetric />
+              )}
             </div>
             <div className="metric-card" data-tone="err">
               <div className="metric-label">Open risks</div>
               <div className="metric-val">{s.openRisks}</div>
               <div className="metric-meta">
-                {s.openRisks === 0 ? 'All risks verified' : 'Not yet verified'}
+                {/* Slice 0 audit: an empty risk file is not "all verified". */}
+                {/* `risks` is [] for a failed or pending read too; this card is
+                    gated on summary and documents, not on the risk file. */}
+                {live.risks.status === 'error'
+                  ? 'Risk file could not be read'
+                  : live.risks.status === 'loading'
+                    ? 'Reading the risk file'
+                    : risks.length === 0
+                      ? 'No risks recorded yet'
+                      : s.openRisks === 0 ? 'All risks verified' : 'Not yet verified'}
               </div>
             </div>
-            <div className="metric-card" data-tone="warn">
+            <div className="metric-card" data-tone={ecrsKeyed ? 'warn' : undefined}>
               <div className="metric-label">Open change requests</div>
-              <div className="metric-val">{s.openEcrs}</div>
-              <div className="metric-meta">
-                {blockedDocs.length} blocked · {pendingSig} awaiting signature
-              </div>
+              {/* The meta line used to count documents (blocked, awaiting
+                  signature), which are not change requests. */}
+              {ecrsKeyed ? (
+                <>
+                  <div className="metric-val">{s.openEcrs}</div>
+                  <div className="metric-meta">Open or in review</div>
+                </>
+              ) : (
+                <NotKeyedMetric />
+              )}
             </div>
             <div className="metric-card">
-              <div className="metric-label">DHF completion</div>
-              <div className="metric-val">
-                {s.dhfCompletion}
-                <span className="unit">%</span>
-              </div>
-              <div className="metric-meta">
-                Required sections validated · avg doc {avgCompletion === null ? '—' : `${avgCompletion}%`}
-              </div>
+              <div className="metric-label">Mandatory sections approved</div>
+              {dhfKeyed ? (
+                <>
+                  <div className="metric-val">
+                    {s.dhfCompletion}
+                    <span className="unit">%</span>
+                  </div>
+                  <div className="metric-meta">
+                    Across this project&apos;s documents · avg doc {avgCompletion === null ? '—' : `${avgCompletion}%`}
+                  </div>
+                </>
+              ) : (
+                <NotKeyedMetric />
+              )}
             </div>
           </div>
         )}
@@ -237,26 +380,47 @@ export function EngineeringSurface({
         state={live.documents}
         label="engineering documents"
         onRetry={live.refresh}
-        emptyHint="Design and software deliverables appear here once artifacts exist for this organization."
+        emptyHint={docsKeyed
+          ? 'Design and software deliverables appear here once artifacts exist for this organization.'
+          : notKeyedEmptyHint(live.scopes.documents)}
       >
-        {(docs) => (
-          <DocumentsPanel
-            title="Documents in flight"
-            subtitle="Tap any row to open in the editor · sparkle to ask AnA to draft the next section"
-            docs={docs as unknown as KitDocument[]}
-            onOpenEditor={onOpenEditor}
-            onAskAna={(text) => onAskAna(text)}
-          />
-        )}
+        {(docs) =>
+          /* Slice 0 audit: the artifacts in this list are read by organisation
+             only, so the list is not shown until the route keys it. */
+          !docsKeyed ? (
+            <section className="section">
+              <div className="section-head">
+                <h2>Documents in flight</h2>
+              </div>
+              <NotKeyedNote panel="documents" scope={live.scopes.documents} />
+            </section>
+          ) : (
+            <DocumentsPanel
+              title="Documents in flight"
+              subtitle="Tap any row to open in the editor · sparkle to ask AnA to draft the next section"
+              docs={docs as unknown as KitDocument[]}
+              onOpenEditor={onOpenEditor}
+              onAskAna={(text) => onAskAna(text)}
+            />
+          )
+        }
       </DataGate>
 
       <section className="section">
         <div className="section-head">
           <h2>What&apos;s blocking your documents</h2>
           <span className="section-sub">
-            {blockers.filter((b) => b.severity === 'err').length} hard blockers ·{' '}
-            {blockers.filter((b) => b.severity === 'warn').length} review-pending ·
-            pulled from DHF · risk · change requests · non-conformance
+            {!blockersRead ? (
+              `Not counted until the ${listOf(readSources.map((b) => b.recorded), 'and')} ${readSources.length === 1 ? 'is' : 'are'} read`
+            ) : (
+              <>
+                {hardLeftOut.length === 0
+                  ? `${blockers.filter((b) => b.severity === 'err').length} hard blockers`
+                  : `Hard blockers not counted: ${listOf(hardLeftOut.map((b) => b.left), 'and')} are left out`}{' · '}
+                {blockers.filter((b) => b.severity === 'warn').length} review-pending ·
+                pulled from {readSources.map((b) => b.sub).join(' · ')}
+              </>
+            )}
           </span>
         </div>
         {/* `blockers` is built from dhf, risks, ecrs and issues through
@@ -266,11 +430,23 @@ export function EngineeringSurface({
             unverified risks, open change requests or non-conformances were
             found" — the one positive regulatory claim on this surface, and the
             sentence the user acts on, asserted over records nobody read. */}
-        {blockersState.status !== 'ready' && blockersState.status !== 'empty' ? (
+        {!blockersRead ? (
           <DataGate state={blockersState} label="blocker sources" onRetry={live.refresh}>
             {() => null}
           </DataGate>
-        ) : blockers.length === 0 ? (
+        ) : blockers.length === 0 && nothingRecorded ? (
+          /* Slice 0 audit: nothing recorded is nothing assessed, so no check
+             mark and no "were found". */
+          <EmptyState
+            icon={I.fileText}
+            title={readSources.length === 1 ? 'No risk records for this project yet' : 'No records for this project yet'}
+            hint={
+              `Nothing has been recorded in this project's ${listOf(readSources.map((b) => b.recorded), 'or')}, so there is nothing to check yet.` +
+              leftOutSentence
+            }
+            testId="eng-no-blockers"
+          />
+        ) : blockerVerdict === 'assessed-clear' ? (
           /* The last hand-rolled copy of the empty state `<DataGate>` used to
              draw — it reproduced the gate's `data-gate-inner` / `-copy` /
              `-title` / `-detail` markup by hand, and was the only thing still
@@ -278,10 +454,13 @@ export function EngineeringSurface({
              `<EmptyState>`. No `action`: this panel is empty because nothing is
              wrong, and there is nothing for the user to fix. That is the one
              case the contract's part 3 does not apply to. */
+          /* Slice 0: with a source left out for not being keyed to the project,
+             "nothing is blocking" would be a claim over records never read
+             for it, so the copy names what was read and what was left out. */
           <EmptyState
             icon={I.checkCircle}
-            title="Nothing is blocking your documents"
-            hint="No draft or blocked DHF sections, unverified risks, open change requests or non-conformances were found."
+            title={leftOut.length === 0 && mayReassure(blockerVerdict) ? 'Nothing is blocking your documents' : 'No blockers in the records read for this project'}
+            hint={`No ${listOf(readSources.map((b) => b.found), 'or')} were found.` + leftOutSentence}
             testId="eng-no-blockers"
           />
         ) : (
@@ -321,6 +500,38 @@ export function EngineeringSurface({
         )}
       </section>
 
+      {/* Fold F1 slice B: the project's whole risk file and design-controls
+          trace, the panels the Risk and Design controls screens mount. They
+          replace the residual-only heatmap, the four-row risk list and the
+          one-line trace count this screen drew in the accordion. */}
+      {program && (
+        <section className="section" data-testid="eng-risk-register">
+          <div className="section-head">
+            <h2>Risk management · ISO 14971</h2>
+            {risk.canWrite && (
+              <button className="btn ghost small" onClick={() => risk.setForm(true)} disabled={!risk.mayAdd} type="button">
+                {I.plus} New hazard
+              </button>
+            )}
+          </div>
+          <RiskRegister register={risk} onAsk={(text) => onAskAna(text)} />
+        </section>
+      )}
+
+      {program && (
+        <section className="section" data-testid="eng-design-controls">
+          <div className="section-head">
+            <h2>Design controls · DHF</h2>
+            {designControls.canWrite && (
+              <button className="btn ghost small" onClick={() => designControls.setForm(true)} disabled={!designControls.mayAdd} type="button">
+                {I.plus} New design input
+              </button>
+            )}
+          </div>
+          <DesignControlsTrace dc={designControls} onAsk={(text) => onAskAna(text)} />
+        </section>
+      )}
+
       <section className="section eng-awareness" data-open={awarenessOpen}>
         <button
           className="eng-awareness-head"
@@ -331,189 +542,33 @@ export function EngineeringSurface({
           <span className="eng-awareness-chev">{awarenessOpen ? I.down : I.right}</span>
           <h2>Situational awareness</h2>
           <span className="section-sub">
-            DHF strip · ISO 14971 heatmap · design-controls trace · change requests ·
-            non-conformances
+            Design history · change requests · non-conformances
           </span>
         </button>
 
         {awarenessOpen && (
           <div className="eng-awareness-body">
-            <div className="section-head" style={{ marginTop: 0 }}>
-              <h2 style={{ fontSize: 14 }}>Design history file</h2>
-              <ScopeNote scope={live.scopes.dhf} />
-            </div>
-            <DataGate
-              state={live.dhf}
-              label="DHF sections"
-              onRetry={live.refresh}
-              dense
-              emptyHint="Device-category sections appear here once the 510(k) section set is created."
-            >
-              {(rows) => (
-                <div className="eng-dhf-strip">
-                  {rows.map((d) => (
-                    <div key={d.id} className="eng-dhf-cell" data-status={d.status} title={d.label}>
-                      <div className="eng-dhf-num mono">§{d.num}</div>
-                      <div className="eng-dhf-label">{d.label}</div>
-                      <div className="eng-dhf-meta">
-                        <span className="mono">{d.ver}</span>
-                        <span className="dot-sep" aria-hidden="true">·</span>
-                        <span>{d.updated}</span>
-                      </div>
-                      <span className={`status-pill ${d.status}`}>{d.status}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </DataGate>
-
-            <div className="eng-grid eng-grid-awareness">
-              <section>
-                <div className="section-head" style={{ marginTop: 0 }}>
-                  <h2 style={{ fontSize: 14 }}>Residual risk · ISO 14971</h2>
-                  <span className="section-sub">
-                    {cellFilter ? (
-                      <>
-                        Filtered {cellFilter} ·{' '}
-                        <button
-                          className="chip-filter"
-                          onClick={() => setCellFilter(null)}
-                          type="button"
-                        >
-                          Clear {I.close}
-                        </button>
-                      </>
-                    ) : (
-                      'Click a cell to filter'
-                    )}
-                  </span>
-                </div>
-                {/* The matrix axes are policy constants, not tenant data —
-                    they render regardless. Only the cell counts come from
-                    the risk file, and they are zero when it is empty.
-                    When the risk read FAILED they were also zero, and an
-                    all-zero residual matrix is not a blank: it asserts that no
-                    hazard sits in any severity/probability band, the
-                    unacceptable ones included. That claim needs the read to
-                    have happened. */}
-                {live.risks.status === 'error' ? (
-                  <DataGate state={live.risks} label="the risk file" onRetry={live.refresh}>
-                    {() => null}
-                  </DataGate>
-                ) : (
-                <div className="eng-heat">
-                  <div className="eng-heat-corner" />
-                  {ENG_RISK_PROB.map((p) => (
-                    <div key={p.id} className="eng-heat-col-lbl">
-                      <span className="mono tiny">{p.id}</span>
-                      <span>{p.label}</span>
-                    </div>
-                  ))}
-                  {[...ENG_RISK_SEVERITY].reverse().map((s) => (
-                    <React.Fragment key={s.id}>
-                      <div className="eng-heat-row-lbl">
-                        <span className="mono tiny">{s.id}</span>
-                        <span>{s.label}</span>
-                      </div>
-                      {ENG_RISK_PROB.map((p) => {
-                        const key = `${s.id}${p.id}`;
-                        const count = cellCounts[key] ?? 0;
-                        const isFiltered = cellFilter === key;
-                        return (
-                          <button
-                            key={key}
-                            className={`eng-heat-cell${isFiltered ? ' on' : ''}${
-                              count === 0 ? ' empty' : ''
-                            }`}
-                            onClick={() => count > 0 && setCellFilter(isFiltered ? null : key)}
-                            type="button"
-                          >
-                            <span className="eng-heat-n">{count || ''}</span>
-                          </button>
-                        );
-                      })}
-                    </React.Fragment>
-                  ))}
-                </div>
-                )}
-              </section>
-
-              <section>
-                <div className="section-head" style={{ marginTop: 0 }}>
-                  <h2 style={{ fontSize: 14 }}>Risk records</h2>
-                  <span className="section-sub">
-                    {/* `risks` is [] for a failed read as well as an empty one,
-                        so "0 of 0 shown" read as a count of the file rather
-                        than as the absence of one — directly above the gate
-                        that says it could not be loaded. */}
-                    {live.risks.status === 'error'
-                      ? 'not loaded'
-                      : `${visibleRisks.length} of ${risks.length} shown`}
-                  </span>
-                </div>
-                <DataGate
-                  state={live.risks}
-                  label="risk records"
-                  onRetry={live.refresh}
-                  dense
-                  emptyHint="Add hazards to this program's ISO 14971 risk file to populate the matrix."
-              regulation="Serves the ISO 14971 risk management file"
-                >
-                  {() => (
-                    <div className="eng-risks">
-                      {visibleRisks.slice(0, 4).map((r) => (
-                        <button
-                          key={r.id}
-                          className="eng-risk-row"
-                          data-state={r.state}
-                          onClick={() => onAskAna(`Open risk ${r.id} (${r.hazard}).`)}
-                          type="button"
-                        >
-                          <div className="eng-risk-head">
-                            <span className="mono eng-risk-id">{r.id}</span>
-                            <span className="eng-risk-hazard">{r.hazard}</span>
-                            <span className="mono tiny eng-risk-resid">{r.residual ?? '—'}</span>
-                          </div>
-                          <div className="eng-risk-harm">{r.harm}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </DataGate>
-
-                <div className="section-head">
-                  <h2 style={{ fontSize: 14 }}>Design-controls trace</h2>
-                  <ScopeNote scope={live.scopes.trace} />
-                </div>
-                <DataGate
-                  state={live.trace}
-                  label="traceability rows"
-                  onRetry={live.refresh}
-                  dense
-                  emptyHint="Design inputs trace to outputs, verification and validation once design controls are recorded."
-                >
-                  {(rows) => (
-                    <div className="eng-trace-summary mono tiny">
-                      {rows.length} traceability rows tracked ·{' '}
-                      {rows.filter((t) => t.state === 'verified').length} verified
-                    </div>
-                  )}
-                </DataGate>
-              </section>
-            </div>
+            {/* The project's own document sections (P-60). */}
+            <EngineeringDesignHistory state={live.dhf} keyed={dhfKeyed} onRetry={live.refresh}
+              notKeyedEmptyHint={notKeyedEmptyHint(live.scopes.dhf)}
+              notKeyed={<NotKeyedNote panel="dhf" scope={live.scopes.dhf} />} />
 
             <div className="section-head">
               <h2 style={{ fontSize: 14 }}>Change requests</h2>
-              <ScopeNote scope={live.scopes.ecrs} />
             </div>
+            {/* Slice 0: rows not shown until keyed to the project. */}
             <DataGate
               state={live.ecrs}
               label="change requests"
               onRetry={live.refresh}
               dense
-              emptyHint="Engineering change requests appear here as they are raised."
+              emptyHint={ecrsKeyed
+                ? 'Engineering change requests appear here as they are raised.'
+                : notKeyedEmptyHint(live.scopes.ecrs)}
             >
-              {(rows) => (
+              {(rows) => !ecrsKeyed ? (
+                <NotKeyedNote panel="ecrs" scope={live.scopes.ecrs} />
+              ) : (
                 <div className="eng-trace-summary mono tiny">
                   {rows.length} change requests ·{' '}
                   {rows.filter((e) => e.state === 'open' || e.state === 'review').length} in flight
@@ -523,16 +578,20 @@ export function EngineeringSurface({
 
             <div className="section-head">
               <h2 style={{ fontSize: 14 }}>Non-conformances</h2>
-              <ScopeNote scope={live.scopes.issues} />
             </div>
+            {/* Slice 0: rows not shown until keyed to the project. */}
             <DataGate
               state={live.issues}
               label="non-conformances"
               onRetry={live.refresh}
               dense
-              emptyHint="Non-conforming product records appear here when raised in the quality system."
+              emptyHint={issuesKeyed
+                ? 'Non-conforming product records appear here when raised in the quality system.'
+                : notKeyedEmptyHint(live.scopes.issues)}
             >
-              {(rows) => (
+              {(rows) => !issuesKeyed ? (
+                <NotKeyedNote panel="issues" scope={live.scopes.issues} />
+              ) : (
                 <div className="eng-trace-summary mono tiny">
                   {rows.length} non-conformances ·{' '}
                   {rows.filter((n) => n.severity === 'high').length} undispositioned

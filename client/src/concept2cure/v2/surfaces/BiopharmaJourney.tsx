@@ -266,9 +266,9 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     'program-journey.select-stage': (params) => {
       const raw = String(params.stage ?? '').trim();
       if (!raw) return { ok: false, reason: 'Name a stage by its id or label.' };
-      if (loading) return { ok: false, reason: 'The program journey is still loading.', retry: true };
-      if (error) return { ok: false, reason: 'The program journey did not load, so there is no record to select a stage on.' };
-      if (empty) return { ok: false, reason: 'No program journey is recorded in this organization yet.' };
+      if (loading) return { ok: false, reason: 'The project journey is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The project journey did not load, so there is no record to select a stage on.' };
+      if (empty) return { ok: false, reason: 'No project journey is recorded in this organization yet.' };
       const needle = raw.toLowerCase();
       const byId = PJ_STAGES.filter((s) => s.id.toLowerCase() === needle);
       const hits = byId.length ? byId : PJ_STAGES.filter((s) => s.label.toLowerCase().includes(needle));
@@ -284,9 +284,9 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
       if (target !== 'biotech' && target !== 'pharma') {
         return { ok: false, reason: `"${target}" is not a segment — choose biotech or pharma.` };
       }
-      if (loading) return { ok: false, reason: 'The program journey is still loading.', retry: true };
-      if (error) return { ok: false, reason: 'The program journey did not load, so there is no view to switch.' };
-      if (empty) return { ok: false, reason: 'No program journey is recorded in this organization yet.' };
+      if (loading) return { ok: false, reason: 'The project journey is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The project journey did not load, so there is no view to switch.' };
+      if (empty) return { ok: false, reason: 'No project journey is recorded in this organization yet.' };
       if (seg === target) return { ok: true, detail: `Already on the ${target} segment` };
       setSeg(target);
       return { ok: true, detail: `Switched to the ${target} segment` };
@@ -302,18 +302,18 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
      outcomes do — neither is published. */
   const anaContext = useMemo(() => {
     if (loading) {
-      return { summary: 'The program journey is still loading; nothing on screen is final yet.' };
+      return { summary: 'The project journey is still loading; nothing on screen is final yet.' };
     }
     if (error) {
       return {
         summary:
-          'The program journey could not be loaded — the program-journey store did not respond. A failed read, not an empty portfolio.',
+          'The project journey could not be loaded — the project-journey store did not respond. A failed read, not an empty portfolio.',
       };
     }
     if (empty) {
       return {
         summary:
-          'Program journey: no program journey data yet — once a program is provisioned for this organization, its end-to-end regulatory arc appears here.',
+          'Project journey: no project journey data yet — once a project is provisioned for this organization, its end-to-end regulatory arc appears here.',
       };
     }
     const bySegCtx: Record<string, PjRecord> = {};
@@ -323,7 +323,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     const done = PJ_STAGES.filter((s) => (overlay[s.id] ?? 'upcoming')[0] === 'done').length;
     return {
       summary:
-        `Program journey (${seg}): ${rec.code} — ${rec.name} (${rec.app}), ${done} of 9 stages complete` +
+        `Project journey (${seg}): ${rec.code} — ${rec.name} (${rec.app}), ${done} of 9 stages complete` +
         (typeof rec.readiness === 'number' ? `, ${rec.readiness}% ready` : '') +
         `. Current stage: ${rec.current}.`,
       facts: {
@@ -353,7 +353,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
   if (loading) {
     return (
       <div className="pj">
-        <div role="status" className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>Loading program journey…</div>
+        <div role="status" className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>Loading project journey…</div>
       </div>
     );
   }
@@ -363,8 +363,8 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
-          title="Couldn't load the program journey"
-          hint="The program-journey store didn't respond. This is your organization's concept-to-submission spine — sign in and retry, or check that the service is reachable."
+          title="Couldn't load the project journey"
+          hint="The project-journey store didn't respond. This is your organization's concept-to-submission spine — sign in and retry, or check that the service is reachable."
         />
       </div>
     );
@@ -374,8 +374,8 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
       <div className="pj">
         <EmptyState
           icon={I.gitBranch}
-          title="No program journey data yet"
-          hint="Once a program is provisioned for this organization, its end-to-end regulatory arc — stages, CTD readiness, review clock, predicted HAQs and blockers — appears here, segment-scoped with its real status."
+          title="No project journey data yet"
+          hint="Once a project is provisioned for this organization, its end-to-end regulatory arc — stages, CTD readiness, review clock, predicted HAQs and blockers — appears here, segment-scoped with its real status."
         />
       </div>
     );
@@ -408,8 +408,8 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     <div className="pj">
       <div className="pj-head">
         <div>
-          <div className="pj-eyebrow">{seg === 'pharma' ? 'Pharma' : 'Biotech'} {I.dot} program lifecycle</div>
-          <h1 className="pj-title">Program journey — concept to submission</h1>
+          <div className="pj-eyebrow">{seg === 'pharma' ? 'Pharma' : 'Biotech'} {I.dot} project lifecycle</div>
+          <h1 className="pj-title">Project journey — concept to submission</h1>
           <p className="pj-intro">The end-to-end regulatory arc for {prog.code}, from candidate selection to approval and lifecycle. Each stage carries its agency gate, deliverables and the tools that serve it — and every intelligence signal routes into the surface that owns it.</p>
         </div>
         <div className="pj-switch">
@@ -517,7 +517,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
               ))}
             </div>
             <div className="pj-deliv-note">
-              What this stage requires. Per-deliverable status is not tracked on the programme record — the stage progress above is the live signal.
+              What this stage requires. Per-deliverable status is not tracked on the project record — the stage progress above is the live signal.
             </div>
 
             <div className="pj-seclbl">Capabilities that serve this stage</div>
@@ -558,7 +558,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
               ))}
             </div>
             <div className="pj-deliv-note">
-              Which agency interactions this stage involves. Their outcomes are not tracked on the programme record — Agency meetings holds the real history.
+              Which agency interactions this stage involves. Their outcomes are not tracked on the project record — Agency meetings holds the real history.
             </div>
 
             <button className="pj-ana" onClick={() => ask(stage.ana)}>{I.sparkles} {stage.ana}</button>

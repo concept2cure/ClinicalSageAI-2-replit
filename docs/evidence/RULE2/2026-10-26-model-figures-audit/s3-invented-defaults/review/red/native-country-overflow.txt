@@ -1,0 +1,55 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-26T15:47:02.897Z","pid":4899,"hostname":"21cc6ae857bb","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-26T15:47:02.898Z","pid":4899,"hostname":"21cc6ae857bb","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-26T15:47:02.898Z","pid":4899,"hostname":"21cc6ae857bb","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/capa-governed-transactions.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > commits all eight actual mutation types with the corresponding timeline and chained audit
+[database] Database connection successful
+
+{"level":40,"time":"2026-10-26T15:47:03.694Z","pid":4899,"hostname":"21cc6ae857bb","context":{"organizationId":7,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > uses genuine authentication, async scope, verified TLS runtime and deployed FORCE RLS
+ × tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > commits all eight actual mutation types with the corresponding timeline and chained audit 158ms
+   → {"error":"The governed CAPA operation could not be completed. Read the current record before retrying.","code":"CAPA_PERSISTENCE_UNAVAILABLE"}: expected 503 to be 201 // Object.is equality
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > refuses private, foreign and unanchored programmes and a current viewer with forged admin claims
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > proves the actual schema prevents a second programme anchor instead of inventing an impossible ambiguous fixture
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > refuses an invalid state transition without changing domain, timeline or audit rows
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > refuses an MDR backlink to another accessible programme without changing either complaint or the proposed MDR
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > holds actor, programme, anchor and private-sharing authority until state, timeline and audit commit together
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > rolls back all eight mutation types on actual timeline-refusal without claiming successful audit
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > rolls back all eight mutation types on actual audit-refusal without claiming successful audit
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > reports an actual committed transaction with lost completion as uncertain and provides current authorized readback
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes
+ ↓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > verifies the real tenant audit chain and HMAC seals after successful, refused and uncertain operations
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > commits all eight actual mutation types with the corresponding timeline and chained audit
+AssertionError: {"error":"The governed CAPA operation could not be completed. Read the current record before retrying.","code":"CAPA_PERSISTENCE_UNAVAILABLE"}: expected 503 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 503
+
+ ❯ expectCommitted tests/db/capa-governed-transactions.dbtest.ts:210:58
+    208|
+    209| function expectCommitted(response: request.Response, status = 200) {
+    210|   expect(response.status, JSON.stringify(response.body)).toBe(status);
+       |                                                          ^
+    211|   expect(response.body.meta.auditTrail).toEqual({ persisted: true, cha…
+    212|   return String(response.body.id);
+ ❯ tests/db/capa-governed-transactions.dbtest.ts:230:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  15:47:01
+   Duration  2.55s (transform 1.30s, setup 58ms, import 1.18s, tests 1.08s, environment 0ms)
+

@@ -72,7 +72,7 @@ export const MODULE3_WRITE_FAILED_WARNING =
   'Saved to the register. The Module 3 canonical write did not complete, so this record is not composed into the dossier yet. Retry its Module 3 link in the CMC register-links panel; saving it again also re-attempts the link.';
 
 export const MODULE3_PROJECT_NOT_IN_TENANT_WARNING =
-  'Saved to the register only. The project named on the request is not one of this organization\'s programs or projects, so the record was not linked into any Module 3 dossier.';
+  'Saved to the register only. The project named on the request is not one of this organization\'s projects or tracking records, so the record was not linked into any Module 3 dossier.';
 
 /**
  * How a program with no canonical source gets one, said the same way by every
@@ -86,7 +86,7 @@ export const MODULE3_PROJECT_NOT_IN_TENANT_WARNING =
  * cmc_source_objects is the registers' write-through below.
  */
 export const NO_CANONICAL_SOURCES_REMEDY =
-  'Record the program\'s CMC data in the registers (substance, product, methods, specifications, batches, stability); each record reaches Module 3 as a canonical source.';
+  'Record the project\'s CMC data in the registers (substance, product, methods, specifications, batches, stability); each record reaches Module 3 as a canonical source.';
 
 /**
  * Observe a failed canonical write-through to the Module 3 submission source

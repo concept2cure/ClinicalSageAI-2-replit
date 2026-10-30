@@ -1,0 +1,28 @@
+{
+  "revision": "ddbdfb938896ce5611483c8d19ef13de46626c92",
+  "paths": [
+    "client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx",
+    "client/src/concept2cure/v2/surfaces/DiscoveryQuestions.tsx",
+    "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
+    "client/src/concept2cure/v2/surfaces/OnboardingSecurity.tsx",
+    "client/src/concept2cure/v2/useOnboardingDiscovery.ts",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/README.md",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/baseline-red.txt",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/browser-check.json",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/build.txt",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/continuation-build.txt",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/continuation-tests.txt",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/lint.txt",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/prepush.txt",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/regressions.txt",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/review-1440-dark.png",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/review-1440-light.png",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/review-390-dark.png",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/review-390-light.png",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/targeted-tests.txt",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/typecheck.txt",
+    "docs/evidence/W1/2026-10-26-onboarding-draft-safety/warning-ratchet.txt"
+  ],
+  "declaredInputIntersection": []
+}

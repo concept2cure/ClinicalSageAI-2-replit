@@ -206,7 +206,7 @@ export async function registerCompanyLegalDocument(req: Request, body: unknown):
   catch (error) { throw new CompanyDocumentsError(400, 'LEGAL_SCOPE_UNKNOWN', error instanceof Error ? error.message : 'Select a recognized filing scope.'); }
   await requireCurrentProgramAccess(ctx.q, { organizationId: ctx.organizationId, userId: ctx.userId, programId: input.programId });
   const source = await readVaultLifecycleSource(ctx.q, ctx.organizationId, input.vaultDocumentId);
-  if (!source || source.programId !== input.programId) throw new CompanyDocumentsError(404, 'VAULT_DOCUMENT_NOT_FOUND', 'Vault document not found in this program.');
+  if (!source || source.programId !== input.programId) throw new CompanyDocumentsError(404, 'VAULT_DOCUMENT_NOT_FOUND', 'Vault document not found in this project.');
   const { rows } = await ctx.q.query('SELECT mime_type FROM vault.documents WHERE id=$1::uuid AND program_id=$2::uuid AND organization_id=$3 AND deleted_at IS NULL', [input.vaultDocumentId, input.programId, ctx.organizationId]);
   if (rows[0]?.mime_type !== 'application/pdf') throw new CompanyDocumentsError(400, 'PDF_REQUIRED', 'Register the original PDF; submission assembly preserves PDF bytes.');
   // Registration is an inventory decision, never an approval. A current draft

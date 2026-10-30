@@ -1,0 +1,17 @@
+# mutation M4-server-drops-blocking: server/routes/taskBoard.routes.ts
+# replaced:     blocking: item.blocking,
+# with:         blocking: item.status === 'blocked',
+
+== server/routes/__tests__/taskBoard-blocking.test.ts
+ × server/routes/__tests__/taskBoard-blocking.test.ts > task board: another store's blocking work > marks a review or correspondence item with a blocker type as blocking, without calling it blocked 22ms
+   → expected { taskId: 'review:WI-1', …(29) } to match object { Object (blocking, blocked, ...) }
+ × server/routes/__tests__/taskBoard-blocking.test.ts > task board: another store's blocking work > marks an unfinished critical-to-quality schedule task as blocking, without calling it blocked 4ms
+   → expected { taskId: 'schedule:41', …(29) } to match object { blocking: true, blocked: false }
+ × server/routes/__tests__/taskBoard-blocking.test.ts > task board: another store's blocking work > counts exactly what the cross-store summary counts as blocking 3ms
+   → expected +0 to be 3 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { taskId: 'review:WI-1', …(29) } to match object { Object (blocking, blocked, ...) }
+AssertionError: expected { taskId: 'schedule:41', …(29) } to match object { blocking: true, blocked: false }
+AssertionError: expected +0 to be 3 // Object.is equality
+      Tests  3 failed | 1 passed (4)
+# restored byte-for-byte (cmp)

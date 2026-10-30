@@ -322,6 +322,9 @@ function emptyText(r: CatalogRecordView): string {
   if (r.extractionStatus === 'extraction_failed') {
     return 'No description is recorded: the text of this version could not be read. Upload a readable copy to have it described.';
   }
+  if (r.extractionStatus === 'extraction_pending') {
+    return 'Reading the text of this version. No description is recorded until it has been read.';
+  }
   return 'No description is recorded for this version. AnA records one after reading the whole document; ask AnA to catalog it.';
 }
 

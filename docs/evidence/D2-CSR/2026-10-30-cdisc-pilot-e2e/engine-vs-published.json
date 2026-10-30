@@ -1,0 +1,37 @@
+{
+ "what": "Engine cells against the published pilot CSR (cdiscpilot01.pdf) where both use one definition. Counts only.",
+ "cells": 174,
+ "matched": 174,
+ "mismatched": 0,
+ "byTable": {
+  "14-1.01": {
+   "cells": 12,
+   "mismatched": 0
+  },
+  "14-2.01": {
+   "cells": 18,
+   "mismatched": 0
+  },
+  "14-4.01": {
+   "cells": 3,
+   "mismatched": 0
+  },
+  "14-5.01 subjects": {
+   "cells": 135,
+   "mismatched": 0
+  },
+  "14-5.02": {
+   "cells": 3,
+   "mismatched": 0
+  },
+  "12.3.1 text": {
+   "cells": 3,
+   "mismatched": 0
+  }
+ },
+ "perturbedEngineCell": {
+  "cells": 174,
+  "matched": 173,
+  "mismatched": 1
+ }
+}

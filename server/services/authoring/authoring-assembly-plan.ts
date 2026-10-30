@@ -25,6 +25,7 @@ export interface AssemblyTemplate {
   /** Server-read immutable source and guide metadata, not accepted from a client. */
   metadataFor: (code: string) => Record<string, unknown>;
   guidanceFor: (code: string) => string | undefined;
+  draftingModeFor?: (code: string) => 'narrative' | 'manual' | undefined;
 }
 
 export function parseAssemblyInput(raw: unknown, commit = false): AssemblyPreviewInput | AssemblyCommitInput {
@@ -70,6 +71,21 @@ function checkedTemplateRows(template: AssemblyTemplate): TemplateSectionSeed[] 
   return rows.sort((a, b) => a.ordering - b.ordering || a.index - b.index);
 }
 
+function chosenTemplateRows(template: AssemblyTemplate, selection: AssemblySelection): TemplateSectionSeed[] {
+  const rows = checkedTemplateRows(template);
+  const key = selection.target === 'section' ? assemblyCodeKey(selection.code) : null;
+  const chosen = key === null ? rows : rows.filter(row => assemblyCodeKey(row.code) === key);
+  if (!chosen.length) throw new AssemblyError(404, 'ASSEMBLY_SECTION_NOT_FOUND', 'The selected section is not in this template. Nothing was changed.');
+  return chosen;
+}
+
+/** Reference terms choose an excerpt; they do not establish source support. */
+export function assemblySourceQuery(module: string | null, template: AssemblyTemplate, selection: AssemblySelection): string {
+  if (selection.target === 'document') return `${module ?? ''} ${template.name} `;
+  const [row] = chosenTemplateRows(template, selection);
+  return `${row.title} ${template.guidanceFor(row.code) ?? ''}`;
+}
+
 function currentSections(rows: AssemblyStoredSection[]): Map<string, AssemblyStoredSection> {
   const map = new Map<string, AssemblyStoredSection>();
   for (const row of rows) {
@@ -81,21 +97,25 @@ function currentSections(rows: AssemblyStoredSection[]): Map<string, AssemblySto
   return map;
 }
 
+function rowDrafting(template: AssemblyTemplate, code: string) {
+  if (template.draftingModeFor?.(code) === 'manual') return { aiDraftable: false,
+    aiDraftableReason: 'This section requires manual source preparation; retain the original outputs, forms and signed records.' };
+  return { aiDraftable: template.aiDraftable, aiDraftableReason: template.aiDraftableReason };
+}
+
 function plannedRow(row: TemplateSectionSeed, saved: AssemblyStoredSection | undefined, ordering: number, template: AssemblyTemplate): AssemblyPlanRow {
   const content = saved ? saved.content ?? '' : row.content;
   const gaps = content.trim() ? [] : ['No authored text is stored for this section.'];
   const draftingGuidance = template.guidanceFor(row.code);
   return { code: saved?.code ?? row.code, title: saved?.title ?? row.title, content,
     ordering: saved?.order_index ?? ordering, disposition: saved ? 'preserve' : 'append',
-    ...(saved ? { existingSectionId: saved.id } : {}), aiDraftable: template.aiDraftable,
-    aiDraftableReason: template.aiDraftableReason, ...(draftingGuidance ? { draftingGuidance } : {}), gaps };
+    ...(saved ? { existingSectionId: saved.id } : {}), ...rowDrafting(template, row.code),
+    ...(draftingGuidance ? { draftingGuidance } : {}), gaps };
 }
 
 export function buildAssemblyPlan(doc: AssemblyDocument, existing: AssemblyStoredSection[], template: AssemblyTemplate, input: AssemblyPreviewInput, sources?: AssemblySourceManifest): AssemblyPlan {
   const current = currentSections(existing);
-  const templateRows = checkedTemplateRows(template);
-  const chosen = input.selection.target === 'document' ? templateRows : templateRows.filter(row => assemblyCodeKey(row.code) === assemblyCodeKey(input.selection.target === 'section' ? input.selection.code : ''));
-  if (!chosen.length) throw new AssemblyError(404, 'ASSEMBLY_SECTION_NOT_FOUND', 'The selected section is not in this template. Nothing was changed.');
+  const chosen = chosenTemplateRows(template, input.selection);
   let next = existing.length ? Math.max(...existing.map(row => row.order_index)) + 1 : 0;
   const rows = chosen.map(row => {
     const saved = current.get(assemblyCodeKey(row.code));

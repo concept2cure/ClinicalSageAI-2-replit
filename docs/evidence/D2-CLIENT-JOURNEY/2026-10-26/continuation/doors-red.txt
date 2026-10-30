@@ -1,0 +1,90 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Find or start a document in the editor 9ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Review documents on the review board 1ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Build the risk file and design-control trace 1ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Check the software and cybersecurity documentation 1ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Run post-market surveillance and CAPA 1ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Write the clinical evaluation (CER) 1ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Record the clinical studies behind this filing 1ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Record analytical and clinical performance (IVDR) 1ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Choose predicates and build the SE comparison 1ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Assemble the eSTAR 1ms
+   → expected false to be true // Object.is equality
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button See which PMA modules are written 0ms
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Export the PMA package 0ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Gather literature and map the GSPRs 0ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Export the CER 0ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Record classification and performance evidence 0ms
+   → expected false to be true // Object.is equality
+ × tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Assemble the technical documentation 0ms
+   → expected false to be true // Object.is equality
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > keeps the already covered door Add or find files in Vault 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > keeps the already covered door Write the protocol in the protocol workspace 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > keeps the already covered door See your tasks in Tasks 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > keeps the already covered door Build the IND · FDA (US) sequence in Submission Center 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Run validation into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Export the PMA package now into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Export the CER to Vault into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Download the CER into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Create a document in the editor into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Approve documents on the review board into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Save changes to Vault into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Assign work in Tasks into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Your tasks into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action  into navigation 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Find or start a document in the editor
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Review documents on the review board
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Build the risk file and design-control trace
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Check the software and cybersecurity documentation
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Run post-market surveillance and CAPA
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Write the clinical evaluation (CER)
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Record the clinical studies behind this filing
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Record analytical and clinical performance (IVDR)
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Choose predicates and build the SE comparison
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Assemble the eSTAR
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Export the PMA package
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Gather literature and map the GSPRs
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Export the CER
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Record classification and performance evidence
+ FAIL  tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Assemble the technical documentation
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/launch-walk-doors.test.ts:23:36
+     21|     'Assemble the technical documentation',
+     22|   ])('includes the navigation button %s', name => {
+     23|     expect(isLaunchWalkDoor(name)).toBe(true);
+       |                                    ^
+     24|   });
+     25|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 15 passed (30)
+   Start at  15:12:15
+   Duration  414ms (transform 95ms, setup 98ms, import 23ms, tests 26ms, environment 0ms)
+

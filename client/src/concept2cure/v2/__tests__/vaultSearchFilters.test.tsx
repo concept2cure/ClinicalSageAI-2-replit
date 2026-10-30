@@ -45,6 +45,9 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload());
     if (url.includes('/search?')) return onSearch(url);
+    // The Vault's seals (VR-19), answered as a Vault never sealed, so a failed
+    // filtered read stays the one alert these tests look for.
+    if (url.endsWith('/seals')) return ok({ success: true, data: { seals: [] } });
     return ok({ success: true, data: {} });
   });
 });
@@ -146,6 +149,21 @@ describe('the find view filters by metadata on the server', () => {
     const url = searchUrls().at(-1)!;
     expect(url.startsWith('/api/c2c/project-vault/search?')).toBe(true);
     expect(params(url).getAll('documentType')).toEqual(['CSR']);
+  });
+});
+
+describe('versions still being read (MR-08 Stage 3)', () => {
+  it('a search says how many documents it cannot see yet, and says nothing when there are none', async () => {
+    onSearch = () => ok({ success: true, data: { query: '', mode: 'browse', total: 1, limit: 100, offset: 0, results: [hit()], pendingCount: 2 } });
+    const row = await open();
+    choose(row, 'Type', 'Module 3 · quality');
+    expect((await screen.findByTestId('vault-search-pending')).textContent).toBe('2 documents are still being read and are not searched yet.');
+    cleanup();
+    onSearch = () => ok({ success: true, data: { query: '', mode: 'browse', total: 1, limit: 100, offset: 0, results: [hit()], pendingCount: 0 } });
+    const again = await open();
+    choose(again, 'Type', 'Module 3 · quality');
+    await screen.findByText('Batch analysis report');
+    expect(screen.queryByTestId('vault-search-pending')).toBeNull();
   });
 });
 

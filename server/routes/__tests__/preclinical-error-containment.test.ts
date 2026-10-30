@@ -15,7 +15,8 @@
  *    (server/lib/api-response.ts): a static INTERNAL_ERROR envelope with the
  *    request id, the detail and the source PDF id in the log.
  *
- * The 422 for a validation-shaped failure is a 4xx and is pinned unchanged.
+ * Validation-shaped failures also receive a fixed message: a provider/database
+ * error can contain "Invalid" or "expected" without being safe to disclose.
  *
  * The ingest service and the feature flag are doubles; the upload guard, the
  * route and the helper are real.
@@ -86,14 +87,15 @@ describe('POST /api/preclinical/ingest: the 5xx bodies are contained', () => {
     });
   });
 
-  it('leaves the validation-shaped 422 exactly as it was', async () => {
-    ingestStudy.mockRejectedValueOnce(new Error('Invalid study: expected a dose table'));
+  it('contains validation-shaped errors without exposing provider or database details', async () => {
+    ingestStudy.mockRejectedValueOnce(new Error('Invalid study: expected a dose table; SENTINEL-PROVIDER-DETAIL'));
     const r = await ingest();
     expect(r.status).toBe(422);
     expect(r.body).toEqual({
       success: false,
-      error: 'Invalid study: expected a dose table',
+      error: 'The extracted study did not pass validation.',
       code: 'PRECLINICAL_INGEST_VALIDATION',
     });
+    expect(JSON.stringify(r.body)).not.toContain('SENTINEL-PROVIDER-DETAIL');
   });
 });

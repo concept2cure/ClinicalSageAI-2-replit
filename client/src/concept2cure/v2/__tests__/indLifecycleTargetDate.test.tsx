@@ -119,7 +119,7 @@ describe('IndLifecycle — 30-day clock from the RECORDED target date only', () 
     expect(await screen.findByText('No target date set')).toBeTruthy();
     expect(screen.getByText('No target date')).toBeTruthy(); // the clock chip
     expect(document.body.textContent).toContain(
-      'No target submission date is recorded for this program',
+      'No target submission date is recorded for this project',
     );
     // Nothing is projected from an invented offset: no 14-days-out receipt date.
     const invented = fmt(new Date(Date.now() + 14 * 86400000).toISOString());
@@ -283,13 +283,14 @@ describe('IndLifecycle — deliverable cards carry no false affordance', () => {
     render(<IndLifecycle {...p} />);
     await screen.findByText('No target date set');
 
-    // The briefing-book card (wired end-to-end) offers Draft with AnA, and that
-    // button hands its generic prompt to AnA — nothing else.
-    const briefingCard = screen.getByText('Pre-IND Briefing Book').closest('.indl-dcard')! as HTMLElement;
-    fireEvent.click(within(briefingCard).getByText('Draft with AnA'));
-    expect(p.onAsk).toHaveBeenCalledWith('Draft the Pre-IND briefing book for this program in the editor.');
+    // The cover-letter card offers Draft with AnA, and that button hands its
+    // generic prompt to AnA — nothing else. (The briefing book is an editor
+    // document since slice G14; its AnA action is the template start's.)
+    const coverCard = screen.getByText('IND Cover Letter').closest('.indl-dcard')! as HTMLElement;
+    fireEvent.click(within(coverCard).getByText('Draft with AnA'));
+    expect(p.onAsk).toHaveBeenCalledWith('Draft the IND cover letter (m1.2) for this IND in the editor.');
     // No POST fired from asking AnA.
-    expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ind-lifecycle/briefing-book')).toBe(false);
+    expect(apiRequest.mock.calls.some((c) => c[0] === 'POST')).toBe(false);
   });
 
   it('the cover-letter exemplar POSTs the real route and renders the SERVER model + gaps', async () => {

@@ -1,0 +1,86 @@
+RED (audit2 presub-software #2): with the pre-fix PreSubManager.tsx and usePresub.ts, selecting Q-Sub B while its detail read is pending draws B's header over A's summary, question, position and FDA response; usePresubDetail's first render with an id is neither pending, delivered nor failed (the frame that fell to 'Package in draft'); and the hook hands back A's record for id B.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailOfSelectedRow.test.tsx > PreSubManager — the detail pane shows the selected Q-Sub and no other > while B's read is pending, B's header is not drawn over A's summary or A's FDA response
+AssertionError: expected 'DEV-1 · Q000002 · Pre-SubBetaFDA team…' not to contain 'Summary of ALPHA'
+
+Expected: "Summary of ALPHA"
+Received: "DEV-1 · Q000002 · Pre-SubBetaFDA team · OHT3 · Filed 2026-09-01 Summarize Export packageSummary of ALPHA01Planning02Package03Filed04Awaiting FDA05Feedback06IntegrateQuestions 1/1Timeline 0Commitments 0Q1FDA respondedALPHA questionOur positionALPHA positionFDA responseFDA said yes to ALPHA"
+
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailOfSelectedRow.test.tsx:84:24
+     82|     const pane = container.querySelector('.ps-detail')!.textContent ??…
+     83|     for (const alpha of ['Summary of ALPHA', 'ALPHA question', 'ALPHA …
+     84|       expect(pane).not.toContain(alpha);
+       |                        ^
+     85|     }
+     86|     expect(screen.getByText('Loading Q-Sub detail')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailOfSelectedRow.test.tsx > usePresubDetail — with an id, every render is pending, delivered or failed > never reports no detail, not loading and no error (the frame that read "Package in draft")
+AssertionError: expected [ { detail: false, …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "detail": false,
++     "error": null,
++     "loading": false,
++   },
++ ]
+
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailOfSelectedRow.test.tsx:106:77
+    104|     render(<Probe />);
+    105|     await waitFor(() => expect(seen[seen.length - 1].detail).toBe(true…
+    106|     expect(seen.filter((s) => !s.detail && !s.loading && s.error === n…
+       |                                                                             ^
+    107|   });
+    108|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailOfSelectedRow.test.tsx > usePresubDetail — with an id, every render is pending, delivered or failed > never hands back the previous id's record for a new id, whoever keys the caller
+AssertionError: expected [ { id: 'qs-b', …(2) }, …(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "id": "qs-b",
++     "loading": false,
++     "summary": "Summary of ALPHA",
++   },
++   {
++     "id": "qs-b",
++     "loading": true,
++     "summary": "Summary of ALPHA",
++   },
++ ]
+
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailOfSelectedRow.test.tsx:120:85
+    118|     rerender(<Probe id="qs-b" />);
+    119|     await waitFor(() => expect(seen[seen.length - 1].id).toBe('qs-b'));
+    120|     expect(seen.filter((s) => s.id === 'qs-b' && s.summary === 'Summar…
+       |                                                                                     ^
+    121|     expect(seen[seen.length - 1].loading).toBe(true);
+    122|     await act(async () => { releaseB(); });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  07:46:10
+   Duration  2.33s (transform 464ms, setup 237ms, import 597ms, tests 266ms, environment 862ms)
+

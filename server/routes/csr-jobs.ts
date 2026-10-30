@@ -4,9 +4,27 @@
  *
  * HTTP surface for the persistent CSR job runner:
  *   POST   /api/csr/jobs                  — enqueue + kick off worker
+ *   GET    /api/csr/jobs?programId&runId  — the builds bound to one retained run,
+ *                                            newest first (the Submission Center
+ *                                            CSR card, 2026-10-30)
  *   GET    /api/csr/jobs/:jobId           — org-scoped status read
  *   GET    /api/csr/jobs/:jobId/sections  — org-scoped section listing
+ *   GET    /api/csr/jobs/:jobId/headings  — the canonical ICH E3 tree with each
+ *                                            heading's output and review state
+ *                                            (csr-headings.ts; the CSR card's section
+ *                                            review, D2/W1 2026-10-30)
  *   POST   /api/csr/jobs/:jobId/cancel    — terminal cancel transition
+ *   POST   /api/csr/jobs/:jobId/sections/:sectionNumber/review
+ *                                          — record one section review decision
+ *                                            (submit | approve | send_back), as the
+ *                                            signed-in reviewer (csr-section-review.ts)
+ *   /api/csr/jobs/:jobId/narratives…      — queue the build's patient safety narratives
+ *                                            from its bound run's ADaM data (§14.3.3,
+ *                                            §12.3.2; slice 7), its progress and the
+ *                                            per-subject QC list (csr-jobs-narratives.ts)
+ *   /api/csr/jobs/:jobId/assembly…        — assemble the build's eCTD leaves off the
+ *                                            request thread and place them in a sequence
+ *                                            (csr-jobs-assembly.ts)
  *
  * Tenant scoping rules:
  *   - organizationId MUST be resolved from req.tenantContext / req.user.
@@ -26,11 +44,12 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { and, eq, notInArray } from 'drizzle-orm';
+import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
 
 import { db } from '../db';
 import { csrBuildJobs } from '@shared/schema';
 import {
+  getICHE3Structure,
   launchCSRBuildAsync,
   type CSRBuildRequest,
 } from '../services/csr-builder.js';
@@ -39,7 +58,17 @@ import {
   getCSRSectionOutputs,
 } from '../services/csr/csr-job-runner.js';
 import { createScopedLogger } from '../utils/logger.js';
-import { CsrScopeError, parseCsrScopeId, requireCsrJobAccess } from '../services/csr/project-scope';
+import { CsrScopeError, parseCsrScopeId, requireCsrJobAccess, resolveCsrScope } from '../services/csr/project-scope';
+import {
+  CsrSectionReviewError,
+  decideCsrSectionReview,
+  effectiveReviewState,
+  type CsrReviewDecision,
+} from '../services/csr/csr-section-review';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { buildHeadings } from '../services/csr/csr-headings';
+import { csrAssemblyRouter } from './csr-jobs-assembly';
+import { csrNarrativeRouter } from './csr-jobs-narratives';
 
 const log = createScopedLogger('csr-jobs');
 
@@ -110,6 +139,66 @@ function requireDb(): NonNullable<typeof db> {
   return db;
 }
 
+type Refusal = { status: number; body: { error: string; code: string } };
+
+function inputRefusal(body: { projectId?: unknown; programId?: unknown }, buildRequest: CSRBuildRequest): Refusal | null {
+  // A program UUID may resolve to its canonical project in the existing scope service.
+  if (body.projectId === undefined && body.programId === undefined) {
+    return { status: 400, body: { code: 'CSR_PROJECT_REQUIRED', error: 'Select a project before starting CSR drafting. No job was created.' } };
+  }
+  if (typeof buildRequest.studyInfo?.protocolNumber !== 'string' || !buildRequest.studyInfo.protocolNumber.trim()) {
+    return { status: 400, body: { code: 'CSR_STUDY_IDENTIFIER_REQUIRED',
+      error: 'Record the study protocol number before starting CSR drafting. No job was created.' } };
+  }
+  return null;
+}
+
+/**
+ * A retained run binds only to a build for the program it was retained under:
+ * the protocol number alone does not tie a run in one program to a CSR filed
+ * in another. Checked before the run is read; a numeric-project build carries
+ * no program id to compare, and the runner re-checks the run's own scope.
+ */
+function evidenceProgramRefusal(body: { programId?: unknown }, buildRequest: CSRBuildRequest): Refusal | null {
+  const runProgram = buildRequest.evidenceSource?.programId;
+  if (typeof body.programId !== 'string' || runProgram === body.programId) return null;
+  return { status: 409, body: { code: 'CSR_EVIDENCE_PROGRAM_MISMATCH',
+    error: 'The retained run belongs to another program than this build. No job was created.' } };
+}
+
+/**
+ * Reads the bound run's retained tables through the canonical, receipt-verified
+ * reader (cortex-authoring-reader) before a job exists, and checks they are for
+ * the study being built. Returns the refusal to send, or null when the run is
+ * readable. The runner re-reads per section; this only stops a build that
+ * could never draft a results section from being queued.
+ */
+async function evidenceSourceRefusal(
+  req: Request, organizationId: number, userId: number, buildRequest: CSRBuildRequest,
+): Promise<Refusal | null> {
+  const refuse = (status: number, code: string, why: string): Refusal =>
+    ({ status, body: { code, error: `${why} No job was created.` } });
+  const [{ requestPgClient }, { loadCsrAuthoringEvidence }, { CsrAuthoringContextError }, { CsrSourceInputError }] = await Promise.all([
+    import('../db/requestDb.js'), import('../services/csr/cortex-authoring-reader.js'),
+    import('../services/csr/cortex-authoring-context.js'), import('../services/csr/source-access.js'),
+  ]);
+  try {
+    const evidence = await loadCsrAuthoringEvidence(requestPgClient(req), { organizationId, userId },
+      { ...(buildRequest.evidenceSource as object), sectionNumber: '2' });
+    if (evidence.source.protocolNumber !== buildRequest.studyInfo.protocolNumber.trim()) {
+      return refuse(409, 'CSR_EVIDENCE_STUDY_MISMATCH', 'The retained run holds tables for another protocol.');
+    }
+    return null;
+  } catch (err) {
+    if (err instanceof CsrSourceInputError) return refuse(err.status, err.code, err.message);
+    if (err instanceof CsrAuthoringContextError) {
+      return refuse(err.status, err.code, 'The retained run’s clinical tables could not be read for this build.');
+    }
+    log.error('CSR evidence source check failed', { err: err instanceof Error ? err.message : String(err), organizationId });
+    return refuse(503, 'CSR_EVIDENCE_UNAVAILABLE', 'The retained run’s clinical tables could not be verified.');
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/csr/jobs — enqueue a new build job
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,6 +238,16 @@ router.post('/', async (req: Request, res: Response) => {
     userId: requestedBy,
   };
 
+  // Missing anchor or study identity are client input errors, refused before
+  // dispatching a job or consuming model quota. A build bound to a retained
+  // run must also be able to read that run's tables now, for this study, as
+  // this user; otherwise no job is created.
+  const refusal = inputRefusal(body, buildRequest)
+    ?? (buildRequest.evidenceSource !== undefined
+      ? evidenceProgramRefusal(body, buildRequest)
+        ?? await evidenceSourceRefusal(req, organizationId, requestedBy, buildRequest) : null);
+  if (refusal) return res.status(refusal.status).json(refusal.body);
+
   try {
     const projectId = parseCsrScopeId(body.projectId, 'projectId');
     const clientWorkspaceId = parseCsrScopeId(body.clientWorkspaceId, 'clientWorkspaceId');
@@ -170,6 +269,49 @@ router.post('/', async (req: Request, res: Response) => {
       organizationId,
     });
     return res.status(500).json({ error: 'Failed to enqueue CSR build job' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/csr/jobs?programId&runId — the builds bound to one retained run
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RUN_ID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+
+/**
+ * Submission Center's CSR card reaches a build through the saved run it was
+ * bound to (evidenceSource.runId in the job's snapshot). The csr-workflow
+ * board read only the latest job and is refused in production (D2/W1,
+ * 2026-10-30). Scoped by organization and the program's project, which the
+ * actor must be able to read; a refusal is stated, never an empty list.
+ */
+router.get('/', async (req: Request, res: Response) => {
+  const organizationId = resolveOrganizationId(req);
+  if (organizationId == null) return res.status(401).json({ error: 'Organization context required' });
+  const runId = typeof req.query.runId === 'string' ? req.query.runId : '';
+  if (!RUN_ID.test(runId)) return res.status(400).json({ code: 'CSR_RUN_REQUIRED', error: 'runId must identify a saved run.' });
+  if (typeof req.query.programId !== 'string') {
+    return res.status(400).json({ code: 'CSR_PROJECT_REQUIRED', error: 'Select a project to list its CSR builds.' });
+  }
+  try {
+    const database = requireDb();
+    const scope = await resolveCsrScope(database, organizationId, { programId: req.query.programId }, { forWrite: false, actorUserId: resolveUserId(req) });
+    if (scope.projectId === undefined) return res.status(400).json({ code: 'CSR_PROJECT_REQUIRED', error: 'Select a project to list its CSR builds.' });
+    const rows = await database.select({
+      id: csrBuildJobs.id, studyId: csrBuildJobs.studyId, status: csrBuildJobs.status,
+      progress: csrBuildJobs.progress, updatedAt: csrBuildJobs.updatedAt,
+    }).from(csrBuildJobs).where(and(
+      eq(csrBuildJobs.organizationId, organizationId), eq(csrBuildJobs.projectId, scope.projectId),
+      sql`${csrBuildJobs.studyInfoSnapshot} -> 'evidenceSource' ->> 'runId' = ${runId}`,
+    )).orderBy(desc(csrBuildJobs.updatedAt), desc(csrBuildJobs.id)).limit(25);
+    return res.json({ jobs: rows.map(row => ({
+      jobId: row.id, studyId: row.studyId, status: row.status, progress: row.progress,
+      updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+    })) });
+  } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
+    log.error('Failed to list CSR builds for a run', { err: err instanceof Error ? err.message : String(err), organizationId });
+    return res.status(500).json({ error: 'Failed to list CSR builds' });
   }
 });
 
@@ -234,7 +376,9 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
     }
 
     const sections = await getCSRSectionOutputs(jobId, organizationId);
-    return res.json({ sections });
+    // The review state a reader should see: an approval of since-redrafted
+    // text reads as a draft (csr-section-review.ts effectiveReviewState).
+    return res.json({ sections: sections.map(section => ({ ...section, review: effectiveReviewState(section) })) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to read CSR section outputs', {
@@ -243,6 +387,33 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
       jobId,
     });
     return res.status(500).json({ error: 'Failed to read job sections' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/csr/jobs/:jobId/headings — the ICH E3 tree with the job's review state
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The same headings the csr-workflow board publishes (csr-headings.ts), under
+ * this launch prefix: Submission Center's CSR card reviews, approves and
+ * imports a build's sections from them (D2/W1, 2026-10-30). Scoped exactly as
+ * /:jobId/sections; a missing or cross-org job is 404, never an empty tree.
+ */
+router.get('/:jobId/headings', async (req: Request, res: Response) => {
+  const jobId = parseJobIdParam(req.params.jobId);
+  if (jobId == null) return res.status(400).json({ error: 'Valid numeric job id required' });
+  const organizationId = resolveOrganizationId(req);
+  if (organizationId == null) return res.status(401).json({ error: 'Organization context required' });
+  try {
+    if (!await requireCsrJobAccess(requireDb(), organizationId, jobId, resolveUserId(req))) return res.status(404).json({ error: 'Job not found' });
+    if (await getCSRBuildJobStatus(jobId, organizationId) == null) return res.status(404).json({ error: 'Job not found' });
+    const outputs = await getCSRSectionOutputs(jobId, organizationId);
+    return res.json({ headings: buildHeadings(getICHE3Structure(), outputs) });
+  } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
+    log.error('Failed to read CSR headings', { err: err instanceof Error ? err.message : String(err), organizationId, jobId });
+    return res.status(500).json({ error: 'Failed to read the build’s headings' });
   }
 });
 
@@ -327,5 +498,60 @@ router.post('/:jobId/cancel', async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Failed to cancel job' });
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/csr/jobs/:jobId/sections/:sectionNumber/review — one review decision
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Write access to the job's project, checked now (not retained from enqueue). */
+async function requireCsrJobWriteAccess(organizationId: number, jobId: number, userId: number): Promise<boolean> {
+  const d = requireDb();
+  if (!await requireCsrJobAccess(d, organizationId, jobId, userId)) return false;
+  const [job] = await d.select({ projectId: csrBuildJobs.projectId }).from(csrBuildJobs)
+    .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId))).limit(1);
+  if (!job) return false;
+  if (job.projectId != null) {
+    await resolveCsrScope(d, organizationId, { projectId: job.projectId }, { forWrite: true, actorUserId: userId });
+  }
+  return true;
+}
+
+router.post('/:jobId/sections/:sectionNumber/review', async (req: Request, res: Response) => {
+  const jobId = parseJobIdParam(req.params.jobId);
+  const sectionNumber = String(req.params.sectionNumber ?? '');
+  if (jobId == null || !/^\d+(\.\d+)*$/.test(sectionNumber)) {
+    return res.status(400).json({ error: 'Valid job id and ICH E3 section number required' });
+  }
+  const organizationId = resolveOrganizationId(req);
+  const reviewerId = resolveUserId(req);
+  if (organizationId == null || reviewerId == null) {
+    return res.status(401).json({ error: 'A signed-in reviewer is required' });
+  }
+  const body = (req.body ?? {}) as { decision?: unknown; reason?: unknown; expectedContentHash?: unknown };
+  try {
+    if (!await requireCsrJobWriteAccess(organizationId, jobId, reviewerId)) return res.status(404).json({ error: 'Job not found' });
+    const review = await decideCsrSectionReview(queryableFromDrizzle(requireDb()), {
+      organizationId, jobId, sectionNumber, reviewerId,
+      decision: body.decision as CsrReviewDecision,
+      expectedContentHash: body.expectedContentHash as string,
+      ...(typeof body.reason === 'string' ? { reason: body.reason } : {}),
+    });
+    return res.json({ review });
+  } catch (err) {
+    if (err instanceof CsrSectionReviewError || err instanceof CsrScopeError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
+    log.error('Failed to record CSR section review', {
+      err: err instanceof Error ? err.message : String(err), organizationId, jobId, sectionNumber,
+    });
+    return res.status(500).json({ error: 'The review decision was not recorded' });
+  }
+});
+
+// Patient safety narratives (CSR slice 7), queued off the request thread since 2026-10-30: csr-jobs-narratives.ts.
+router.use(csrNarrativeRouter({ resolveOrganizationId, resolveUserId, parseJobIdParam, requireWriteAccess: requireCsrJobWriteAccess }));
+
+// CSR assembly, its progress and its placement into a sequence (2026-10-30): csr-jobs-assembly.ts.
+router.use(csrAssemblyRouter({ resolveOrganizationId, resolveUserId, parseJobIdParam, requireWriteAccess: requireCsrJobWriteAccess }));
 
 export default router;

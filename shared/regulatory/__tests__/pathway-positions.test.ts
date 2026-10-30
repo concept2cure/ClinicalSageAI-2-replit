@@ -116,17 +116,27 @@ describe('the bridge to the modality frame', () => {
   it('offers a modality only what the frame allows it, in the frame’s order', () => {
     expect(pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality: 'biosimilar' }).map(p => p.value)).toEqual([
       'US_351K',
-      /* The frame's routes, then the position that is not one. */
+      /* The frame's routes, then the positions that are not one (expanded
+         access, then the IND last). */
+      'US_EXPANDED_ACCESS_INDIVIDUAL',
+      'US_EXPANDED_ACCESS_INTERMEDIATE',
+      'US_EXPANDED_ACCESS_TREATMENT',
       'US_IND',
     ]);
     expect(pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality: 'small_molecule' }).map(p => p.value)).toEqual([
       'US_NDA',
       'US_505B2',
       'US_ANDA',
+      'US_EXPANDED_ACCESS_INDIVIDUAL',
+      'US_EXPANDED_ACCESS_INTERMEDIATE',
+      'US_EXPANDED_ACCESS_TREATMENT',
       'US_IND',
     ]);
     expect(pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality: 'mab' }).map(p => p.value)).toEqual([
       'US_BLA',
+      'US_EXPANDED_ACCESS_INDIVIDUAL',
+      'US_EXPANDED_ACCESS_INTERMEDIATE',
+      'US_EXPANDED_ACCESS_TREATMENT',
       'US_IND',
     ]);
   });

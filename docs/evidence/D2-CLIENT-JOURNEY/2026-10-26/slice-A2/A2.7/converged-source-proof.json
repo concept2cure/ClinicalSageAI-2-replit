@@ -1,0 +1,15 @@
+{
+  "commit": "117a3591acdea64cbae9f2cf4a90d8f8d48f399a",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/ProjectDossier.tsx": "2fb77a26c4abc926bf03ae41e663270d4222468f",
+    "client/src/concept2cure/v2/surfaces/ProjectArtifactReadiness.tsx": "457716dbb0bf36fec353aad9f5c553921e5c3bc3",
+    "server/routes/c2c/projects.ts": "2b07344b08b5da29abcb767798a58e0c292144bf",
+    "server/services/c2c/dossier-read.ts": "dcef9f9e00953476efecae5b37a90dc27af14ab0",
+    "server/services/c2c/dossier-artifact-read.ts": "1ba25848db5fbbbb7f0fbe8f52c7db3b6229de17",
+    "shared/types/dossier-artifact-readiness.ts": "b4f24c478faf2cdeecd1a15c1a026ce2308a37de",
+    "client/src/concept2cure/v2/routing.ts": "72840e339a4a5d93305b8a6ca49309728ecb86ca",
+    "client/src/concept2cure/v2/V2App.tsx": "6337fcafaf63b95ded273a23aaf6a6e7e3b37045"
+  },
+  "browserFlows": 4,
+  "fixture": "local concept_handoff only; app_service reads with RLS_ENFORCE=on"
+}

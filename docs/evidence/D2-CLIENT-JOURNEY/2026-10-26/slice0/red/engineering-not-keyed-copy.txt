@@ -1,0 +1,58 @@
+Red run against EngineeringSurface.tsx as slice 0's first pass left it in the working tree (before the audit fixes), filtered with -t to this item's tests.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+------------x·x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says in plain words why a panel is not shown
+AssertionError: expected 'Shown once this screen reads this pro…' to match /Shown once this screen reads this pro…/
+
+- Expected:
+/Shown once this screen reads this project's records\. These records are held for the whole organization, not per project, so they are not shown here\./
+
++ Received:
+"Shown once this screen reads this project's records; this store is not keyed to a project yet."
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx:308:18
+    306|
+    307|     const note = screen.getByTestId('eng-not-keyed-dhf').textContent ?…
+    308|     expect(note).toMatch(
+       |                  ^
+    309|       /Shown once this screen reads this project's records\. These rec…
+    310|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows a failed read as a failure, not as a panel waiting to be keyed
+AssertionError: expected <p class="eng-trace-summary" …(1)></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p
+  class="eng-trace-summary"
+  data-testid="eng-not-keyed-dhf"
+>
+  Shown once this screen reads this project's records; this store is not keyed to a project yet.
+</p>
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx:335:72
+    333|     fireEvent.click(container.querySelector('[aria-expanded]') as HTML…
+    334|
+    335|     expect(container.querySelector('[data-testid^="eng-not-keyed-"]'))…
+       |                                                                        ^
+    336|     expect(text(container)).toMatch(/Could not load DHF sections/);
+    337|     expect(text(container)).toMatch(/Could not load change requests/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 12 skipped (15)
+   Start at  03:13:14
+   Duration  1.58s (transform 356ms, setup 166ms, import 520ms, tests 159ms, environment 577ms)
+

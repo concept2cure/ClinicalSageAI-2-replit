@@ -327,9 +327,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           createdAt: record.created_at,
         },
       };
-      res.setHeader('Content-Type', 'application/json');
       const safeId = String(id).replace(/[^a-zA-Z0-9\-_]/g, '');
-      res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
 
       // Register governed export (fail-closed for governed flows)
       const reportJson = JSON.stringify(report);
@@ -355,6 +353,9 @@ export default function createIVDRRoutes(pool: Pool): Router {
         ipAddress: req.ip,
       });
 
+      // After the record, so a refused export is an error, not a saved file.
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
       return res.json(report);
     } catch (error: any) {
       return safeError(res, error, 'IVDR_CLASS_REPORT_ERROR', 'Classification report');
@@ -402,7 +403,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
     try {
       const orgId = getServerOrgId(req);
       const programId = parseProgramId(req);
-      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+      if (programId === INVALID) return res.status(422).json({ error: 'The project id must be a UUID.' });
 
       /* Validations reach a programme through their classification. The join
          stays LEFT so an unclassified validation is still visible in the
@@ -669,7 +670,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
     try {
       const orgId = getServerOrgId(req);
       const programId = parseProgramId(req);
-      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+      if (programId === INVALID) return res.status(422).json({ error: 'The project id must be a UUID.' });
 
       /* Same reachability as validations: clinical evidence belongs to a
          programme via its classification. Sensitivity and specificity are

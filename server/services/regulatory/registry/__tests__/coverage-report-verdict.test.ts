@@ -29,29 +29,15 @@ const SCRIPT = path.resolve(process.cwd(), 'scripts/regulatory-coverage-report.t
 const run = (...args: string[]): string =>
   execFileSync('npx', ['tsx', SCRIPT, ...args], { encoding: 'utf8', timeout: 180_000 });
 
-/* The pool logger writes JSON lines to stdout both BEFORE and AFTER the report,
-   so the report object has to be cut out of the stream rather than parsed from
-   the whole of it: it is the pretty-printed object that starts on a line of its
-   own, and it ends where its braces balance. */
-function reportJson(stdout: string): string {
-  const at = stdout.search(/^\{$/m);
-  if (at < 0) throw new Error(`no report object in --json output:\n${stdout.slice(0, 400)}`);
-  let depth = 0;
-  let inStr = false;
-  let esc = false;
-  for (let i = at; i < stdout.length; i++) {
-    const ch = stdout[i];
-    if (esc) { esc = false; continue; }
-    if (ch === '\\') { esc = true; continue; }
-    if (ch === '"') { inStr = !inStr; continue; }
-    if (inStr) continue;
-    if (ch === '{') depth++;
-    else if (ch === '}' && --depth === 0) return stdout.slice(at, i + 1);
-  }
-  throw new Error('report object never closed');
-}
-
+// JSON mode must produce one complete parseable value; diagnostics belong on stderr.
 interface ReportJson {
+  usBiotechAuthoring?: {
+    format: string;
+    qualification: string;
+    filings: Array<{ registryId: string; editorTemplateId: string | null; assessment: string; scopeConcerns: string[] }>;
+    reusableDocuments: Array<{ entryId: string; editorTemplateId: string | null; narrativeSections: number; manualSections: number }>;
+    unrepresentedNeeds: Array<{ need: string; existingOwners: string[] }>;
+  };
   submittability: {
     total: number;
     byTier: Record<string, number>;
@@ -65,9 +51,37 @@ describe('regulatory coverage report — the closing verdict', () => {
   let text: string;
 
   beforeAll(() => {
-    json = JSON.parse(reportJson(run('--json'))) as ReportJson;
+    json = JSON.parse(run('--json')) as ReportJson;
     text = run();
   }, 300_000);
+
+  it('reports actual US biotech editor inventory separately from static blueprint readiness', () => {
+    const authoring = json.usBiotechAuthoring;
+    expect(authoring?.format).toBe('concept2cure.us-biotech-authoring-coverage.v1');
+    expect(authoring?.qualification).toBe('inventory-only; workflow and human acceptance require separate evidence');
+    for (const id of ['US_IND', 'US_NDA', 'US_BLA', 'US_351K', 'US_505B2', 'US_DMF', 'US_REMS', 'US_PADER']) {
+      const filing = authoring?.filings.find(row => row.registryId === id);
+      expect(filing?.editorTemplateId).toMatch(/^[a-f0-9-]{36}$/);
+      expect(filing?.assessment).toBe('catalogue-inventory');
+    }
+  });
+
+  it('includes medicinal cross-segment gaps and cannot turn device EUA/RFD scaffolds into biotech coverage', () => {
+    for (const id of ['US_EUA', 'US_RFD']) {
+      expect(json.usBiotechAuthoring?.filings.find(row => row.registryId === id)?.scopeConcerns.length).toBeGreaterThan(0);
+    }
+    expect(json.usBiotechAuthoring?.unrepresentedNeeds.some(row => /expanded access/i.test(row.need) && row.existingOwners.length > 0)).toBe(true);
+  });
+
+  it('accounts for usable core and exact lifecycle documents without labelling them fully qualified', () => {
+    for (const entryId of ['component:protocol', 'component:informed_consent', 'component:dsur', 'component:us_lifecycle_iss']) {
+      const row = json.usBiotechAuthoring?.reusableDocuments.find(document => document.entryId === entryId);
+      expect(row?.editorTemplateId).toMatch(/^[a-f0-9-]{36}$/);
+      expect(row?.narrativeSections).toBeGreaterThan(0);
+      expect(row?.manualSections).toBeGreaterThan(0);
+    }
+    expect(text).toContain('Blueprint coverage is not complete authoring, agency readiness or Weave parity');
+  });
 
   it('the tier counts it PRINTS account for every filing', () => {
     // The module's own partition is sound; the defect was in the rendering.

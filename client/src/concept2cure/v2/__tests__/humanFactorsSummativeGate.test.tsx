@@ -47,6 +47,11 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { ApiRequestError } from '@/lib/queryClient';
 import { HumanFactors } from '../surfaces/HumanFactors';
+import { clearShellProject, publishShellProject } from '../shellProject';
+
+/** The open project. The screen reads its file by project, and draws a file only when the route says it is this
+ *  project's (D2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/device-features-human-factors/). */
+const PROJECT = '0b6f1c1e-4d2a-4c55-9a1e-3f7b2d9c8e10';
 
 const REASON = 'Alarm escalation redesign verified in formative round 3; risk control RC-14 documented';
 
@@ -66,7 +71,10 @@ const FILE = {
       },
     ],
   },
-  meta: { count: 1, source: 'hf_engineering_files' },
+  // Slice 0: the screen shows the file only when the route reports the read keyed
+  // to the project. The route cannot send `scope: 'program'` today (slice 19 keys
+  // hf_engineering_files); humanFactorsProjectKeyed.test.tsx covers today's response.
+  meta: { count: 1, source: 'hf_engineering_files', scope: 'program', programId: PROJECT },
 };
 
 const ok = (body: unknown, status = 200) => ({ ok: true, status, json: async () => body });
@@ -92,8 +100,9 @@ const bodyText = () => document.body.textContent || '';
  *  bare one in the use-related risk table. */
 const rowMitigate = () => screen.getByRole('button', { name: 'Mitigate' });
 
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); clearShellProject(); });
 beforeEach(() => {
+  publishShellProject({ id: PROJECT, title: 'Aurora' });
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string) =>
     method === 'GET' ? ok(FILE) : ok({ data: null }),
@@ -206,7 +215,7 @@ describe('HumanFactors — HFE/UE completeness reads the record', () => {
     const [method, path, body] = apiRequest.mock.calls[0];
     expect(method).toBe('PATCH');
     expect(path).toBe('/api/human-factors/elements');
-    expect(body).toEqual({ element: 'useEnvironments', present: true });
+    expect(body).toEqual({ element: 'useEnvironments', present: true, programId: PROJECT });
 
     await waitFor(() => expect(bodyText()).toMatch(/30% complete against IEC 62366-1/));
   });

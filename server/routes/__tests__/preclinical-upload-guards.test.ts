@@ -17,7 +17,10 @@ import express from 'express';
 import request from 'supertest';
 
 const { ingestStudy } = vi.hoisted(() => ({
-  ingestStudy: vi.fn(async () => ({ studyId: 1, extractionConfidence: 0.9, model: 'double' })),
+  ingestStudy: vi.fn(async () => ({
+    studyId: 1, extractionConfidence: 0.9, model: 'double',
+    registration: { status: 'not_requested' },
+  })),
 }));
 
 vi.mock('../../services/preclinical/feature-flags', () => ({

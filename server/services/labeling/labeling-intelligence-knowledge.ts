@@ -70,10 +70,6 @@ const isOneOf = (v: unknown, allowed: readonly string[]): boolean => typeof v ==
 const oneOf = (field: string, value: unknown, allowed: readonly string[]): RequiredInputCheck =>
   ({ field, value, ok: isOneOf(value, allowed), expected: `one of ${allowed.join(', ')}` });
 
-/** A required true or false; absent is not false. */
-const yesNo = (field: string, value: unknown): RequiredInputCheck =>
-  ({ field, value, ok: typeof value === 'boolean', expected: 'true or false' });
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Function 1 Interfaces — PLR Structure Assessment
 // ─────────────────────────────────────────────────────────────────────────────
@@ -232,7 +228,8 @@ export interface AnimalReproToxData {
 export interface PregnancyLabelingSection {
   sectionTitle: string;
   subsections: { name: string; contentGuidance: string; }[];
-  requiredStatements: string[];
+  /** Product statements are not assessed without a recorded evidence source. */
+  requiredStatements: null;
 }
 
 export interface RiskCommunicationItem {
@@ -246,18 +243,22 @@ export interface FormerCategoryMapping {
   status: string;
 }
 
-const TRANSFER_STATUSES = ['known', 'likely', 'unknown', 'none'] as const;
+type TransferStatus = 'known' | 'likely' | 'unknown' | 'none';
 
 export interface AssessPregnancyLactationInput {
   animalReproToxData: AnimalReproToxData[];
   humanPregnancyData: boolean;
-  placentalTransfer: (typeof TRANSFER_STATUSES)[number];
-  breastMilkExcretion: (typeof TRANSFER_STATUSES)[number];
+  placentalTransfer: TransferStatus;
+  breastMilkExcretion: TransferStatus;
   mechanismBasedRisk: boolean;
   pregnancyRegistryData: boolean;
 }
 
 export interface AssessPregnancyLactationResult {
+  status: 'not_assessed';
+  reason: string;
+  instruction: string;
+  ignoredSuppliedFigures: boolean;
   section8_1: PregnancyLabelingSection;
   section8_2: PregnancyLabelingSection;
   section8_3: PregnancyLabelingSection;
@@ -759,6 +760,34 @@ const SPL_LOINC_CODES = {
   'medication_guide': '34072-9',
   'spl_unclassified': '42231-1',
 } as const;
+
+/** Shared source format, copied for each caller; no product applicability is inferred. */
+const BOXED_WARNING_FORMAT: BoxedWarningFormatRequirements = {
+  headerText: 'WARNING: [Descriptive Title in ALL CAPS]',
+  borderStyle: 'The boxed warning must be set off by a prominently printed box with a black border. In Highlights, "See full prescribing information for complete boxed warning" must appear.',
+  placement: [
+    'Highlights of Prescribing Information: Concise summary in a box immediately after the product header',
+    'Full Prescribing Information: Complete text in a box preceding Section 1 Indications and Usage',
+    'Medication Guide (if applicable): Boxed warning text must be included',
+  ],
+  fontRequirements: 'Text within the box must be in bold type. The word "WARNING" must appear at the top of the box in bold capital letters.',
+  symbolRequirements: 'An inverted black triangle symbol (or text reference) must appear in Highlights adjacent to each section that is described in the Boxed Warning, cross-referencing to the relevant section of the FPI.',
+};
+
+function copyBoxedWarningFormat(): BoxedWarningFormatRequirements {
+  return { ...BOXED_WARNING_FORMAT, placement: [...BOXED_WARNING_FORMAT.placement] };
+}
+
+/** Existing PLR source structure for a blank working document, without a product assessment. */
+export function getPLRAuthoringSections(): {
+  highlightsStructure: PLRSectionDescriptor[]; fullPIStructure: PLRSectionDescriptor[];
+  boxedWarningFormat: BoxedWarningFormatRequirements;
+} {
+  const copy = (section: PLRSectionDescriptor): PLRSectionDescriptor => ({ ...section,
+    ...(section.subsections ? { subsections: [...section.subsections] } : {}) });
+  return { highlightsStructure: HIGHLIGHTS_SECTIONS.map(copy), fullPIStructure: FPI_SECTIONS.map(copy),
+    boxedWarningFormat: copyBoxedWarningFormat() };
+}
 
 /** Boxed Warning Common Categories with Real Drug Examples */
 const BOXED_WARNING_CATEGORIES: BoxedWarningCategory[] = [
@@ -1370,17 +1399,7 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
   }
 
   // Format requirements
-  const formatRequirements: BoxedWarningFormatRequirements = {
-    headerText: 'WARNING: [Descriptive Title in ALL CAPS]',
-    borderStyle: 'The boxed warning must be set off by a prominently printed box with a black border. In Highlights, "See full prescribing information for complete boxed warning" must appear.',
-    placement: [
-      'Highlights of Prescribing Information: Concise summary in a box immediately after the product header',
-      'Full Prescribing Information: Complete text in a box preceding Section 1 Indications and Usage',
-      'Medication Guide (if applicable): Boxed warning text must be included',
-    ],
-    fontRequirements: 'Text within the box must be in bold type. The word "WARNING" must appear at the top of the box in bold capital letters.',
-    symbolRequirements: 'An inverted black triangle symbol (or text reference) must appear in Highlights adjacent to each section that is described in the Boxed Warning, cross-referencing to the relevant section of the FPI.',
-  };
+  const formatRequirements = copyBoxedWarningFormat();
 
   // Filter relevant categories based on safety signal type
   const relevantCategories = BOXED_WARNING_CATEGORIES.filter(cat => {
@@ -1614,195 +1633,52 @@ export function designREMS(params: DesignREMSInput): DesignREMSResult {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Assesses pregnancy and lactation labeling requirements under the PLLR
+ * Returns pregnancy and lactation labeling structure under the PLLR
  * (Pregnancy and Lactation Labeling Rule), Final Rule 79 FR 72064, effective
- * June 30, 2015. Returns structured section content, risk communication
- * framework, and implementation guidance.
+ * June 30, 2015. Returns generic reference guidance and the section structure,
+ * with no product-specific statements until a recorded evidence reader exists.
  *
  * The PLLR replaced the former A/B/C/D/X pregnancy letter categories with
  * narrative risk summaries in three subsections: 8.1 Pregnancy, 8.2 Lactation,
  * and 8.3 Females and Males of Reproductive Potential.
  */
-export function assessPregnancyLactationLabeling(params: AssessPregnancyLactationInput): AssessPregnancyLactationResult {
-  // 2026-10-15: an unstated fact was read as "no": breastMilkExcretion missing fell through to "Drug is
-  // not excreted in breast milk", humanPregnancyData missing to "There are no adequate data ...". Each
-  // of these writes label text, so each is required; [] states that no animal studies were conducted.
-  refuseUnlessStated('assessPregnancyLactationLabeling', [
-    {
-      field: 'animalReproToxData', value: params.animalReproToxData, ok: Array.isArray(params.animalReproToxData),
-      expected: 'the animal reproductive toxicology studies, or [] if none were conducted',
-    },
-    yesNo('humanPregnancyData', params.humanPregnancyData),
-    oneOf('placentalTransfer', params.placentalTransfer, TRANSFER_STATUSES),
-    oneOf('breastMilkExcretion', params.breastMilkExcretion, TRANSFER_STATUSES),
-    yesNo('mechanismBasedRisk', params.mechanismBasedRisk),
-  ], 'assessed');
-  const { animalReproToxData, humanPregnancyData, placentalTransfer, breastMilkExcretion, mechanismBasedRisk, pregnancyRegistryData } = params;
-
-  // ── Section 8.1: Pregnancy ──
-  const pregnancyRequiredStatements: string[] = [];
-  const pregnancyRiskSummaryGuidance: string[] = [];
-
-  if (humanPregnancyData) {
-    pregnancyRiskSummaryGuidance.push(
-      'Human data available: Risk Summary should describe the available human data first. State the nature, size, and design of the data source (prospective pregnancy registry, retrospective cohort, case series, etc.).',
-      'Contextualize findings: compare observed malformation rates to background rates in the general population (approximately 2-4% for major birth defects and 15-20% for miscarriage in clinically recognized pregnancies).',
-    );
-    if (pregnancyRegistryData) {
-      pregnancyRiskSummaryGuidance.push(
-        'Pregnancy registry data available: Describe the design (prospective enrollment before outcome is known), sample size, comparison group, and key findings.',
-        'If the registry is ongoing, state: "There is a pregnancy exposure registry that monitors pregnancy outcomes in women exposed to [drug name] during pregnancy. Healthcare providers are encouraged to register patients by calling [phone number] or visiting [website]."',
-      );
-    }
-  } else {
-    pregnancyRiskSummaryGuidance.push(
-      'No human data available: State "There are no adequate data on the developmental risk associated with the use of [drug name] in pregnant women." Then proceed to describe animal data.',
-    );
-  }
-
-  if (animalReproToxData.length > 0) {
-    const hasAdverseFindings = animalReproToxData.some(d => d.findings.toLowerCase().includes('malformation') || d.findings.toLowerCase().includes('embryoleth') || d.findings.toLowerCase().includes('teratogen') || d.findings.toLowerCase().includes('fetal death'));
-    if (hasAdverseFindings) {
-      pregnancyRiskSummaryGuidance.push(
-        'Adverse animal findings: Describe the species, adverse developmental outcomes (malformations, embryolethality, reduced fetal weight), doses at which effects occurred, and relationship to human exposure (multiples of MRHD on a mg/m2 or AUC basis).',
-        'Include standard statement: "In animal reproduction studies, [adverse effect] was observed in [species] at doses [X] times the maximum recommended human dose (MRHD) based on [body surface area/AUC]."',
-      );
-      pregnancyRequiredStatements.push(
-        'Based on animal data, advise pregnant women and females of reproductive potential of the potential risk to a fetus.',
-      );
-    } else {
-      pregnancyRiskSummaryGuidance.push(
-        'No adverse animal findings: State "In animal reproduction studies, no adverse developmental effects were observed at doses up to [X] times the MRHD based on [body surface area/AUC]." Provide details of species, doses, and exposure multiples in the Data subsection.',
-      );
-    }
-  } else {
-    pregnancyRiskSummaryGuidance.push(
-      'No animal data: State "Animal reproduction studies have not been conducted with [drug name]." This represents a data gap that should be acknowledged.',
-    );
-  }
-
-  if (mechanismBasedRisk) {
-    pregnancyRiskSummaryGuidance.push(
-      'Mechanism-based risk: If the pharmacological mechanism suggests developmental risk (e.g., antiangiogenic agents, retinoids, ACE inhibitors in 2nd/3rd trimester), describe the mechanistic basis for concern even in the absence of direct evidence.',
-    );
-    pregnancyRequiredStatements.push(
-      'Based on the mechanism of action, [drug name] may cause fetal harm when administered to a pregnant woman.',
-    );
-  }
-
-  // Placental transfer assessment
-  if (placentalTransfer === 'known') {
-    pregnancyRiskSummaryGuidance.push('Placental transfer is known to occur. State this in the Risk Summary and describe implications for fetal exposure.');
-  } else if (placentalTransfer === 'likely') {
-    pregnancyRiskSummaryGuidance.push('Placental transfer is likely based on molecular characteristics (e.g., IgG antibodies cross the placenta, small molecules generally cross). Note this in the Risk Summary.');
-  } else if (placentalTransfer === 'unknown') {
-    pregnancyRiskSummaryGuidance.push('Placental transfer status is unknown. Acknowledge this data gap in the Risk Summary.');
-  }
-
-  pregnancyRequiredStatements.push(
-    'Background risk statement required: "The estimated background risk of major birth defects and miscarriage for the indicated population is unknown. All pregnancies have a background risk of birth defect, loss, or other adverse outcomes. In the U.S. general population, the estimated background risk of major birth defects and miscarriage in clinically recognized pregnancies is 2% to 4% and 15% to 20%, respectively."',
-  );
-
+export function assessPregnancyLactationLabeling(params: Partial<AssessPregnancyLactationInput> = {}): AssessPregnancyLactationResult {
+  // Rule 2 S4: this tool has no recorded evidence reader. Typed findings and
+  // yes/no answers cannot establish a product's pregnancy or lactation label.
+  const ignoredSuppliedFigures = [
+    'animalReproToxData', 'humanPregnancyData', 'placentalTransfer',
+    'breastMilkExcretion', 'mechanismBasedRisk', 'pregnancyRegistryData',
+  ].some(key => Object.prototype.hasOwnProperty.call(params, key));
+  const reason = 'No pregnancy, lactation or reproductive-potential records were read. Product-specific required statements are not assessed; evidence given in this call is not used.';
+  const titles = FPI_SECTIONS.find(section => section.sectionNumber === '8')?.subsections;
+  if (!titles || titles.length < 3) throw new Error('PLLR section titles are unavailable in the PLR catalog.');
   const section8_1: PregnancyLabelingSection = {
-    sectionTitle: '8.1 Pregnancy',
+    sectionTitle: titles[0],
     subsections: [
-      {
-        name: 'Pregnancy Exposure Registry',
-        contentGuidance: pregnancyRegistryData
-          ? 'Include pregnancy exposure registry information with contact details (phone number and/or website). This statement appears first in Section 8.1, before the Risk Summary.'
-          : 'If no registry exists, this subsection is omitted. Consider whether a registry should be established based on the anticipated patient population.',
-      },
-      {
-        name: 'Risk Summary',
-        contentGuidance: pregnancyRiskSummaryGuidance.join(' '),
-      },
-      {
-        name: 'Clinical Considerations',
-        contentGuidance: 'Describe disease-associated maternal and/or embryo/fetal risk if the disease itself poses a risk in pregnancy. Include information on dose adjustments during pregnancy and labor/delivery considerations if relevant. Address fetal/neonatal adverse reactions if the drug is used during pregnancy or near delivery.',
-      },
-      {
-        name: 'Data',
-        contentGuidance: 'Detailed description of human data (epidemiological studies, pregnancy registries, clinical trials) and animal data (species, study design, doses, route, timing, findings, exposure margins). Present animal data with doses expressed as multiples of the MRHD on a mg/m2 or AUC basis.',
-      },
+      { name: 'Pregnancy Exposure Registry', contentGuidance: 'When a registry is recorded, include its enrollment and contact information before the Risk Summary.' },
+      { name: 'Risk Summary', contentGuidance: 'Describe the recorded human, animal and pharmacologic evidence and the background risk required by the rule. No product risk statement was assessed here.' },
+      { name: 'Clinical Considerations', contentGuidance: 'Address disease-associated maternal and fetal risks, dose adjustments and adverse reactions where the recorded evidence supports them.' },
+      { name: 'Data', contentGuidance: 'Describe the human and animal source records, including species, design, doses, exposure multiples and findings. Do not infer an absent study or result.' },
     ],
-    requiredStatements: pregnancyRequiredStatements,
+    requiredStatements: null,
   };
-
-  // ── Section 8.2: Lactation ──
-  const lactationGuidance: string[] = [];
-
-  if (breastMilkExcretion === 'known') {
-    lactationGuidance.push(
-      'Drug is known to be present in human milk. Describe the amount detected, milk-to-plasma ratio if known, and effects on the breastfed infant if observed.',
-      'Include statement: "[Drug name] is present in human milk. [Describe effects on breastfed infant or state that effects are unknown.] Consider the developmental and health benefits of breastfeeding along with the mother\'s clinical need for [drug name] and any potential adverse effects on the breastfed infant from [drug name] or from the underlying maternal condition."',
-    );
-  } else if (breastMilkExcretion === 'likely') {
-    lactationGuidance.push(
-      'Drug is likely excreted in human milk based on molecular characteristics or animal lactation data. State: "There are no data on the presence of [drug name] in human milk. [Drug name] is present in [animal species] milk. Because of the potential for [adverse reactions] in breastfed infants from [drug name], advise [appropriate action]."',
-    );
-  } else if (breastMilkExcretion === 'unknown') {
-    lactationGuidance.push(
-      'Breast milk excretion is unknown. State: "There are no data on the presence of [drug name] in human milk, the effects on the breastfed infant, or the effects on milk production."',
-    );
-  } else {
-    // breastMilkExcretion === 'none' (stated): the only value left.
-    lactationGuidance.push(
-      'Drug is not excreted in breast milk. State this and note whether breastfeeding may be continued during therapy.',
-    );
-  }
-
   const section8_2: PregnancyLabelingSection = {
-    sectionTitle: '8.2 Lactation',
+    sectionTitle: titles[1],
     subsections: [
-      {
-        name: 'Risk Summary',
-        contentGuidance: lactationGuidance.join(' '),
-      },
-      {
-        name: 'Clinical Considerations',
-        contentGuidance: 'If the drug could affect the breastfed infant, describe monitoring or management strategies. If pumping and discarding milk is recommended, specify the duration (e.g., "during treatment and for [X days/weeks] after the last dose").',
-      },
-      {
-        name: 'Data',
-        contentGuidance: 'Detailed human and animal lactation data if available, including milk concentrations, infant exposure estimates, and observed effects in nursing offspring.',
-      },
+      { name: 'Risk Summary', contentGuidance: 'Address the presence of drug in milk, effects on the breastfed child and effects on milk production from the recorded evidence. None was assessed here.' },
+      { name: 'Clinical Considerations', contentGuidance: 'Describe evidence-supported ways to minimize exposure and monitor the breastfed child, if applicable.' },
+      { name: 'Data', contentGuidance: 'Describe the source human or animal lactation data. Milk excretion, infant effects and study absence are not inferred from conversation inputs.' },
     ],
-    requiredStatements: [
-      'A risk-benefit statement regarding breastfeeding is required: "Consider the developmental and health benefits of breastfeeding along with the mother\'s clinical need for [drug name] and any potential adverse effects on the breastfed infant from [drug name] or from the underlying maternal condition."',
-    ],
+    requiredStatements: null,
   };
-
-  // ── Section 8.3: Females and Males of Reproductive Potential ──
-  const reproGuidance: string[] = [];
-  if (mechanismBasedRisk || animalReproToxData.some(d => d.findings.toLowerCase().includes('fertility'))) {
-    reproGuidance.push(
-      'Based on mechanism of action or animal fertility data, this section should address pregnancy testing requirements, contraception recommendations, and infertility potential.',
-    );
-  }
-
   const section8_3: PregnancyLabelingSection = {
-    sectionTitle: '8.3 Females and Males of Reproductive Potential',
+    sectionTitle: titles[2],
     subsections: [
-      {
-        name: 'Pregnancy Testing',
-        contentGuidance: mechanismBasedRisk
-          ? 'Verify pregnancy status in females of reproductive potential prior to initiating therapy. Specify the type of pregnancy test and timing.'
-          : 'Include pregnancy testing recommendation if the drug poses a risk to the embryo/fetus. Omit if not applicable.',
-      },
-      {
-        name: 'Contraception',
-        contentGuidance: mechanismBasedRisk
-          ? 'Advise females of reproductive potential to use effective contraception during treatment and for a specified period after the last dose. If the drug affects male fertility, male patients should also be advised. Specify the recommended duration based on the drug\'s half-life (typically 5 half-lives plus the duration of any relevant biologic effect).'
-          : 'Include contraception recommendations if warranted by animal or human data. State duration of contraception relative to treatment completion.',
-      },
-      {
-        name: 'Infertility',
-        contentGuidance: animalReproToxData.some(d => d.findings.toLowerCase().includes('fertility'))
-          ? 'Based on animal findings, [drug name] may impair fertility in [males/females/both]. Describe the animal findings, reversibility, and relevance to humans.'
-          : 'Include only if there is evidence of potential impairment of fertility from nonclinical or clinical data.',
-      },
+      { name: 'Pregnancy Testing', contentGuidance: 'Include testing recommendations only when supported by the recorded developmental-risk evidence.' },
+      { name: 'Contraception', contentGuidance: 'Use recorded reproductive-risk and pharmacokinetic evidence for any contraception recommendation and duration.' },
+      { name: 'Infertility', contentGuidance: 'Describe recorded fertility findings and their relevance when applicable. No fertility effect was assessed here.' },
     ],
-    requiredStatements: reproGuidance,
+    requiredStatements: null,
   };
 
   // ── Risk Communication Framework ──
@@ -1874,6 +1750,10 @@ export function assessPregnancyLactationLabeling(params: AssessPregnancyLactatio
   ];
 
   return {
+    status: 'not_assessed',
+    reason,
+    instruction: 'These sections are structure only. All product-specific required statements remain unassessed. Generic risk-communication templates are reference material: do not select or apply a template to a product from conversation facts. Draft product text in the governed authoring flow from the source records the author cites.',
+    ignoredSuppliedFigures,
     section8_1,
     section8_2,
     section8_3,

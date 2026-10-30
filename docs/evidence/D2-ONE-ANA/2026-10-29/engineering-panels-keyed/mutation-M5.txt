@@ -1,0 +1,14 @@
+# M5: Engineering reports documents as the organization's
+# mutation: server/routes/mdx-engineering.ts: 27 chars replaced by 32 chars
+# test: server/routes/__tests__/mdx-engineering-panels-by-project.test.ts
+# exit=1  Tests  2 failed | 7 passed (9)
+# restored byte for byte: True (sha256 3d302e10495d01fa66301857fbb7d34bb2b07f8ae7b4ba61cc02b01b8ed150b5)
+
+## replaced
+      documents: 'program',
+## with
+      documents: 'organization',
+
+## failing tests
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > reads the artifacts of the project's own anchored records, plus its IEC 62304 items, and reports the panel keyed to the project 8ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports the DHF and change requests as the organization's, and every other panel as the project's 7ms

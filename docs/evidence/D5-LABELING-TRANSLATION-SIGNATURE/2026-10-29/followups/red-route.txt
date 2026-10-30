@@ -1,0 +1,69 @@
+Red: the new PGlite route test, with migration 20261029b already in the set (it changes no route behaviour) and server/routes/mdx-labeling.ts as 96537cfe left it.
+npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts  (timeout 240)
+
+ ✓ the migration > is in the set after the tables it alters and before the tenant sweep
+ ✓ the migration > adds the approval stamp and the creators, nullable, keyed to users
+ × 1. a labeling document moves to approved or effective only by a signature > a PATCH to approved with no signature: 400, and the document is unchanged
+ × 1. a labeling document moves to approved or effective only by a signature > a PATCH to effective with no signature: 400, and the document is unchanged
+ × 1. a labeling document moves to approved or effective only by a signature > a create as approved: 428, and nothing is inserted
+ × 1. a labeling document moves to approved or effective only by a signature > a create as effective: 428, and nothing is inserted
+ × 1. a labeling document moves to approved or effective only by a signature > a signed approval records the signer as approver, with the ledger pair and the signature row
+ × 1. a labeling document moves to approved or effective only by a signature > a signed move to effective keeps the approval it carries, and stamps the date it takes effect
+ × 1. a labeling document moves to approved or effective only by a signature > a document made effective without an approval is approved by that signature, effective today
+ × 1. a labeling document moves to approved or effective only by a signature > a document already approved cannot be signed approved again: 409, nothing signed
+ × 1. a labeling document moves to approved or effective only by a signature > a document already effective cannot be signed approved again: 409, nothing signed
+ × 1. a labeling document moves to approved or effective only by a signature > a document already effective cannot be signed effective again: 409, nothing signed
+ × 1. a labeling document moves to approved or effective only by a signature > a signed move that also edits the document: 400, the signature covers the document as it stands
+ × 2. the record's creator cannot approve it > a create records who added the document and the translation
+ × 2. the record's creator cannot approve it > the translation's creator signing its approval: 403, and it stays in review
+ × 2. the record's creator cannot approve it > a translation that records no creator cannot be shown independent: 409, nothing signed
+ ✓ 2. the record's creator cannot approve it > a colleague of the creator approves it
+ × 2. the record's creator cannot approve it > the document's creator signing it approved: 403; one with no creator: 409
+ × 2. the record's creator cannot approve it > the document's creator signing it effective: 403; one with no creator: 409
+ × 3. an approval never outlives what it signed > editing an approved translation (language): 409, and it stays as signed
+ × 3. an approval never outlives what it signed > editing an approved translation (translator): 409, and it stays as signed
+ × 3. an approval never outlives what it signed > editing an approved translation (method): 409, and it stays as signed
+ × 3. an approval never outlives what it signed > moving an approved translation back to review withdraws its approval: no stamp is left
+ ✓ 3. an approval never outlives what it signed > a translation not yet approved can still be edited, and carries no stamp
+ × 3. an approval never outlives what it signed > editing a approved document: 409, and it stays as signed
+ × 3. an approval never outlives what it signed > editing a effective document: 409, and it stays as signed
+ × 3. an approval never outlives what it signed > editing a superseded document: 409, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a approved document back to draft withdraws its approval (effective date kept: 2026-10-02)
+ × 3. an approval never outlives what it signed > moving a approved document back to review withdraws its approval (effective date kept: 2026-10-02)
+ × 3. an approval never outlives what it signed > moving a effective document back to draft withdraws its approval (effective date kept: null)
+ × 3. an approval never outlives what it signed > moving a effective document back to review withdraws its approval (effective date kept: null)
+ ✓ 3. an approval never outlives what it signed > a document superseded keeps the approval it was released under
+ ✓ 3. an approval never outlives what it signed > a draft can still be edited
+ ✓ 3. an approval never outlives what it signed > an edit of a document the organization does not hold is still a 404
+
+Why each red is red (vitest's first line per failure):
+   → expected { status: 'approved', …(5) } to match object { status: 'review', approved_by: null }
+   → expected { status: 'effective', …(5) } to match object { status: 'review', approved_by: null }
+   → expected [ { id: 4 } ] to deeply equal []
+   → expected [ { id: 5 } ] to deeply equal []
+   → expected 200 to be 201 // Object.is equality
+   → expected 200 to be 201 // Object.is equality
+   → expected 200 to be 201 // Object.is equality
+   → expected 200 to be 409 // Object.is equality
+   → expected 200 to be 409 // Object.is equality
+   → expected 200 to be 409 // Object.is equality
+   → expected 200 to be 400 // Object.is equality
+   → expected { status: 'draft', …(5) } to match object { created_by: 3 }
+   → expected { status: 'approved', …(4) } to match object { status: 'review', approved_by: null }
+   → expected 201 to be 409 // Object.is equality
+   → expected 200 to be 403 // Object.is equality
+   → expected 200 to be 403 // Object.is equality
+   → expected { status: 'approved', …(4) } to match object { status: 'approved', …(2) }
+   → expected 200 to be 409 // Object.is equality
+   → expected 200 to be 409 // Object.is equality
+   → expected { status: 'review', …(4) } to match object { status: 'review', …(2) }
+   → expected { status: 'approved', …(5) } to match object { status: 'approved', …(2) }
+   → expected { status: 'effective', …(5) } to match object { status: 'effective', …(2) }
+   → expected { status: 'superseded', …(5) } to match object { status: 'superseded', …(2) }
+   → expected { status: 'draft', …(5) } to match object { status: 'draft', …(3) }
+   → expected { status: 'review', …(5) } to match object { status: 'review', …(3) }
+   → expected { status: 'draft', …(5) } to match object { status: 'draft', …(3) }
+   → expected { status: 'review', …(5) } to match object { status: 'review', …(3) }
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 27 ⎯⎯⎯⎯⎯⎯⎯
+Tests  27 failed | 7 passed (34)

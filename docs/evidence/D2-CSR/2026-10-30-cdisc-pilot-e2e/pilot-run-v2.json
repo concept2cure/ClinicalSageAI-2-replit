@@ -1,0 +1,486 @@
+{
+  "heapStartMiB": 99.5,
+  "sha256": {
+    "adsl": "c5139f873a93ef6add77bc4297beb6460a398bbdd036874382a9f39dfc92091d",
+    "adae": "b8678e70946473a753bb01d002917f478bf51b59bdd0dc19587b97128059b6a0",
+    "adlbc": "b9f6b5106965b5e2e3b33062a18710b58ceecc0c8cf1e54271849653037998ea",
+    "adlbh": "de568850f5585266844abe6eb7ef0290ea130d90c3f023efcb9f13c2a586455b",
+    "advs": "28233c8ed038d0f315a9538d910beb43cf1bb4b69f8f1c39b32463c7b018dff1",
+    "adtte": "68513fc4126744b6b2c7328eb70eb7b9683865d12c58b36539325f3c0c0ab93d",
+    "adqsadas": "ac3fa1217651810b0f15fe489fdda7d99eff10553ded025156ad7c1b89f84608",
+    "adqscibc": "16e7118f606d907e817f0a5885d662c2e7177c430d2b3ec6c0ba9096cb3d7bc1",
+    "adqsnpix": "90cf438913cfb976a34e9cf6c44291eab7a65c5c0146f8df092cd9ce2bd8c44a"
+  },
+  "conventions": {
+    "disposition": "DCDECOD",
+    "aeDiscontinuationFlag": "DSRAEFL",
+    "causality": {
+      "REMOTE": "not related"
+    },
+    "rangeIndicator": {
+      "N": "NORMAL",
+      "H": "HIGH",
+      "L": "LOW"
+    },
+    "lastOnTreatment": {
+      "variable": "AVISIT",
+      "value": "End of Treatment"
+    },
+    "exposure": {
+      "durationDays": "TRTDUR",
+      "averageDailyDose": {
+        "variable": "AVGDD",
+        "unit": "mg"
+      }
+    }
+  },
+  "steps": [
+    {
+      "step": "read adsl.xpt",
+      "ok": true,
+      "ms": 22,
+      "heapAfterMiB": 102.4,
+      "rssMaxMiB": 305.5,
+      "detail": {
+        "name": "ADSL",
+        "rows": 254,
+        "columns": 48,
+        "bytes": 114640
+      }
+    },
+    {
+      "step": "read adae.xpt",
+      "ok": true,
+      "ms": 30,
+      "heapAfterMiB": 109,
+      "rssMaxMiB": 305.5,
+      "detail": {
+        "name": "ADAE",
+        "rows": 1191,
+        "columns": 55,
+        "bytes": 713600
+      }
+    },
+    {
+      "step": "read adlbc.xpt",
+      "ok": true,
+      "ms": 1464,
+      "heapAfterMiB": 147.9,
+      "rssMaxMiB": 352.3,
+      "detail": {
+        "name": "ADLBC",
+        "rows": 74264,
+        "columns": 46,
+        "bytes": 34242960
+      }
+    },
+    {
+      "step": "read adlbh.xpt",
+      "ok": true,
+      "ms": 982,
+      "heapAfterMiB": 167.6,
+      "rssMaxMiB": 375.4,
+      "detail": {
+        "name": "ADLBH",
+        "rows": 49932,
+        "columns": 46,
+        "bytes": 23025920
+      }
+    },
+    {
+      "step": "read advs.xpt",
+      "ok": true,
+      "ms": 500,
+      "heapAfterMiB": 182.1,
+      "rssMaxMiB": 379.3,
+      "detail": {
+        "name": "ADVS",
+        "rows": 32139,
+        "columns": 34,
+        "bytes": 13632480
+      }
+    },
+    {
+      "step": "read adtte.xpt",
+      "ok": true,
+      "ms": 8,
+      "heapAfterMiB": 171.4,
+      "rssMaxMiB": 379.3,
+      "detail": {
+        "name": "ADTTE",
+        "rows": 254,
+        "columns": 26,
+        "bytes": 91840
+      }
+    },
+    {
+      "step": "read adqsadas.xpt",
+      "ok": true,
+      "ms": 239,
+      "heapAfterMiB": 179,
+      "rssMaxMiB": 379.3,
+      "detail": {
+        "name": "ADQSADAS",
+        "rows": 12463,
+        "columns": 40,
+        "bytes": 5178480
+      }
+    },
+    {
+      "step": "read adqscibc.xpt",
+      "ok": true,
+      "ms": 21,
+      "heapAfterMiB": 181,
+      "rssMaxMiB": 379.3,
+      "detail": {
+        "name": "ADQSCIBC",
+        "rows": 730,
+        "columns": 36,
+        "bytes": 290480
+      }
+    },
+    {
+      "step": "read adqsnpix.xpt",
+      "ok": true,
+      "ms": 584,
+      "heapAfterMiB": 194.6,
+      "rssMaxMiB": 383.7,
+      "detail": {
+        "name": "ADQSNPIX",
+        "rows": 31140,
+        "columns": 41,
+        "bytes": 13147600
+      }
+    },
+    {
+      "step": "A derive, no conventions declared (fail closed as before)",
+      "ok": false,
+      "ms": 2,
+      "heapAfterMiB": 186.5,
+      "rssMaxMiB": 384,
+      "detail": {
+        "name": "AdamDerivationError",
+        "code": "CSR_ADAM_VARIABLE_MISSING",
+        "message": "ADSL has no EOSSTT variable; the CSR derivation requires it.",
+        "issues": [
+          {
+            "path": "ADSL.EOSSTT",
+            "message": "ADSL has no EOSSTT variable; the CSR derivation requires it."
+          }
+        ]
+      }
+    },
+    {
+      "step": "A narrative selection, no conventions declared",
+      "ok": false,
+      "ms": 2,
+      "heapAfterMiB": 186.7,
+      "rssMaxMiB": 384,
+      "detail": {
+        "name": "AdamDerivationError",
+        "code": "CSR_ADAM_VALUE_MISSING",
+        "message": "AEACN does not record the action taken with study treatment for a treatment-emergent event.",
+        "issues": [
+          {
+            "path": "ADAE[1].AEACN",
+            "message": "AEACN does not record the action taken with study treatment for a treatment-emergent event."
+          }
+        ]
+      }
+    },
+    {
+      "step": "B derive, conventions declared",
+      "ok": true,
+      "ms": 258,
+      "heapAfterMiB": 203.8,
+      "rssMaxMiB": 391.4,
+      "detail": {
+        "participants": 254,
+        "adverseEvents": 1126,
+        "labShiftSummaries": 204,
+        "vitalSignRecords": 2483,
+        "exposureArms": 3
+      }
+    },
+    {
+      "step": "B buildCSRTables",
+      "ok": true,
+      "ms": 44,
+      "heapAfterMiB": 190.2,
+      "rssMaxMiB": 391.5,
+      "detail": {
+        "disposition": {
+          "rows": 7,
+          "cells": 28
+        },
+        "analysisPopulations": {
+          "rows": 4,
+          "cells": 16
+        },
+        "demographics": {
+          "rows": 5,
+          "cells": 15
+        },
+        "primaryEfficacy": {
+          "rows": 6,
+          "cells": 30
+        },
+        "exposure": {
+          "rows": 3,
+          "cells": 12
+        },
+        "aeOverallSummary": {
+          "rows": 6,
+          "cells": 18
+        },
+        "aeBySOC": {
+          "rows": 23,
+          "cells": 69
+        },
+        "aeTopPT": {
+          "rows": 21,
+          "cells": 84
+        },
+        "deathsSAEsDiscontinuations": {
+          "rows": 4,
+          "cells": 12
+        },
+        "labShifts": {
+          "rows": 210,
+          "cells": 1260
+        },
+        "vitalSigns": {
+          "rows": 33,
+          "cells": 165
+        }
+      }
+    },
+    {
+      "step": "B narrative selection",
+      "ok": true,
+      "ms": 3,
+      "heapAfterMiB": 188.1,
+      "rssMaxMiB": 391.5,
+      "detail": {
+        "subjects": 95,
+        "counts": {
+          "death": 3,
+          "serious": 3,
+          "discontinuation": 92,
+          "aesi": 0
+        }
+      }
+    },
+    {
+      "step": "C narrative job (template prose, no model)",
+      "ok": true,
+      "ms": 27,
+      "heapAfterMiB": 189.3,
+      "rssMaxMiB": 391.5,
+      "detail": {
+        "status": "incomplete",
+        "selected": 95,
+        "composed": 6,
+        "refused": 89,
+        "reason": "narratives_refused",
+        "sections": {
+          "written": [],
+          "kept": []
+        }
+      }
+    },
+    {
+      "step": "C narrative QC: missing-field counts over all composed narratives",
+      "ok": true,
+      "ms": 0,
+      "heapAfterMiB": 0,
+      "rssMaxMiB": 0,
+      "detail": {
+        "deathDate (ADSL has no DTHDT or DTHADY)": 3,
+        "deathCause (ADSL has no DTHCAUS)": 3,
+        "event.action": 6,
+        "exposureDays (no ADEX)": 6,
+        "concomitantMedications (no ADCM)": 6,
+        "medicalHistory (no ADMH)": 6
+      }
+    },
+    {
+      "step": "C reconcile every composed narrative against its facts",
+      "ok": true,
+      "ms": 2,
+      "heapAfterMiB": 188.6,
+      "rssMaxMiB": 391.5,
+      "detail": {
+        "ok": 6,
+        "failed": 89,
+        "facts": 811
+      }
+    },
+    {
+      "step": "D assembleCsr (body with contents, §14 TFLs, §16.2 listings; nothing supplied; ADLBC as the §16.2.8 dataset)",
+      "ok": true,
+      "ms": 28217,
+      "heapAfterMiB": 242.8,
+      "rssMaxMiB": 399.9,
+      "detail": {
+        "status": "incomplete",
+        "structure": {
+          "ok": false,
+          "findings": [
+            {
+              "file": "csr-body.pdf",
+              "code": "BOOKMARK_DEPTH",
+              "message": "The body's bookmarks reach 3 level(s); 4 are required."
+            }
+          ],
+          "bodyOutlineDepth": 3,
+          "linksChecked": 49
+        },
+        "unresolvedReferences": 0,
+        "missing": [
+          "16.1.1 (blocking)",
+          "16.1.2 (blocking)",
+          "16.1.3 (blocking)",
+          "16.1.4 (blocking)",
+          "16.1.5 (blocking)",
+          "16.1.6",
+          "16.1.7 (blocking)",
+          "16.1.8",
+          "16.1.9 (blocking)",
+          "16.1.10",
+          "16.1.11",
+          "16.1.12",
+          "16.2.5",
+          "16.2.6 (blocking)",
+          "16.3 (blocking)"
+        ],
+        "leaves": [
+          {
+            "appendix": "body",
+            "fileName": "csr-body.pdf",
+            "origin": "generated",
+            "pages": 4,
+            "bytes": 30766
+          },
+          {
+            "appendix": "14",
+            "fileName": "csr-14-tables.pdf",
+            "origin": "generated",
+            "pages": 22,
+            "bytes": 47217
+          },
+          {
+            "appendix": "16.2.1",
+            "fileName": "csr-16-2-1-discontinued.pdf",
+            "origin": "generated",
+            "pages": 5,
+            "bytes": 32130
+          },
+          {
+            "appendix": "16.2.2",
+            "fileName": "csr-16-2-2-deviations.pdf",
+            "origin": "generated",
+            "pages": 1,
+            "bytes": 3590
+          },
+          {
+            "appendix": "16.2.3",
+            "fileName": "csr-16-2-3-efficacy-exclusions.pdf",
+            "origin": "generated",
+            "pages": 1,
+            "bytes": 3711
+          },
+          {
+            "appendix": "16.2.4",
+            "fileName": "csr-16-2-4-demographics.pdf",
+            "origin": "generated",
+            "pages": 10,
+            "bytes": 62276
+          },
+          {
+            "appendix": "16.2.7",
+            "fileName": "csr-16-2-7-adverse-events.pdf",
+            "origin": "generated",
+            "pages": 74,
+            "bytes": 196698
+          },
+          {
+            "appendix": "16.2.8",
+            "fileName": "csr-16-2-8-laboratory.pdf",
+            "origin": "generated",
+            "pages": 3516,
+            "bytes": 7830379
+          }
+        ],
+        "listings": [
+          {
+            "number": "16.2.1",
+            "rows": 144,
+            "pages": 5,
+            "verification": {
+              "number": "16.2.1",
+              "ok": true,
+              "rows": 144,
+              "findings": []
+            }
+          },
+          {
+            "number": "16.2.2",
+            "rows": 0,
+            "pages": 1,
+            "verification": {
+              "number": "16.2.2",
+              "ok": true,
+              "rows": 0,
+              "findings": []
+            }
+          },
+          {
+            "number": "16.2.3",
+            "rows": 0,
+            "pages": 1,
+            "verification": {
+              "number": "16.2.3",
+              "ok": true,
+              "rows": 0,
+              "findings": []
+            }
+          },
+          {
+            "number": "16.2.4",
+            "rows": 254,
+            "pages": 10,
+            "verification": {
+              "number": "16.2.4",
+              "ok": true,
+              "rows": 254,
+              "findings": []
+            }
+          },
+          {
+            "number": "16.2.7",
+            "rows": 1126,
+            "pages": 74,
+            "verification": {
+              "number": "16.2.7",
+              "ok": true,
+              "rows": 1126,
+              "findings": []
+            }
+          },
+          {
+            "number": "16.2.8",
+            "rows": 74264,
+            "pages": 3516,
+            "verification": {
+              "number": "16.2.8",
+              "ok": true,
+              "rows": 74264,
+              "findings": []
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

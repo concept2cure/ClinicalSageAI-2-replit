@@ -1,0 +1,36 @@
+{
+ "extends": "<repo>/tsconfig.json",
+ "compilerOptions": {
+  "incremental": false,
+  "noEmit": true
+ },
+ "include": [
+  "<repo>/client/src/**/*.d.ts",
+  "<repo>/server/**/*.d.ts",
+  "<repo>/shared/**/*.d.ts"
+ ],
+ "files": [
+  "<repo>/client/src/concept2cure/mdx/workbench/Workbench.tsx",
+  "<repo>/client/src/concept2cure/mdx/data/workbench.ts",
+  "<repo>/client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx",
+  "<repo>/client/src/concept2cure/mdx/workbench/__tests__/workbenchNoFixtures.test.tsx",
+  "<repo>/client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+  "<repo>/client/src/concept2cure/mdx/surfaceIds.ts",
+  "<repo>/client/src/concept2cure/v2/surfaceViews.ts",
+  "<repo>/client/src/concept2cure/v2/registryModel.ts",
+  "<repo>/client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts",
+  "<repo>/client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+  "<repo>/shared/constants/ui-surface-registry.ui-v2.ts",
+  "<repo>/shared/constants/launch-scope.ts",
+  "<repo>/shared/constants/mdx-project-features.ts",
+  "<repo>/shared/navigation/index.ts",
+  "<repo>/shared/navigation/demo-scripts.ts",
+  "<repo>/server/services/entitlements/folded-module-successors.ts",
+  "<repo>/server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts",
+  "<repo>/server/services/entitlements/__tests__/launch-scope.test.ts",
+  "<repo>/server/middleware/__tests__/launch-scope-device-features.test.ts",
+  "<repo>/tests/schema-contract/catalog-module-claims.contract.test.ts",
+  "<repo>/scripts/ci/check-launch-scope-api.ts",
+  "<repo>/scripts/visual-qa/dump-v2-surfaces.spec.tsx"
+ ]
+}

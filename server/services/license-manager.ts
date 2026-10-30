@@ -24,6 +24,7 @@ import auditService from './auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
 import type { Request, Response, NextFunction } from 'express';
 import { LAUNCH_MODULE_IDS } from '../../shared/constants/launch-scope';
+import { grantsHeldThroughFolds } from './entitlements/folded-module-successors.js';
 
 const logger = createScopedLogger('license-manager');
 
@@ -36,6 +37,14 @@ export interface LicenseInfo {
   tier: string;
   industryMode: string;
   enabledModules: string[];
+  /**
+   * Modules this organization holds through a fold (decision P-61 item 4): each
+   * fold target, with the folded module whose live grant carries it
+   * (entitlements/folded-module-successors.ts). Derived here, once, from
+   * `enabledModules`, so canAccessModule and getModuleCatalog read one answer.
+   * The target's own row still comes first in both.
+   */
+  heldThroughFolds: Readonly<Record<string, string>>;
   /** The organization row's limits as recorded: null when not recorded, 0 when zero. */
   maxUsers: number | null;
   maxProjects: number | null;
@@ -125,8 +134,19 @@ export interface ModuleCatalogEntry {
   icon: string | null;
   path: string | null;
   isEnabled: boolean; // true if org has active subscription
-  /** The subscription row's own state — see {@link ModuleSubscriptionState}. */
+  /**
+   * The subscription row's own state — see {@link ModuleSubscriptionState}.
+   * For a fold's target with no row of its own, the state a live grant of its
+   * folded module carries ('enabled', named by `heldThrough`), so every reader
+   * resolves it as the grant it is with no branch of its own to forget.
+   */
   subscriptionState: ModuleSubscriptionState;
+  /**
+   * The folded module whose live grant entitles this one (decision P-61 item
+   * 4, entitlements/folded-module-successors.ts). Absent when the module's own
+   * row decides, or when nothing carries.
+   */
+  heldThrough?: string;
   isAvailable: boolean; // true if tier + industry match
   requiredTier: string | null; // lowest tier that includes this module
   /**
@@ -197,17 +217,21 @@ export async function readLicenseInfo(organizationId: number): Promise<LicenseIn
   if (orgResult.rows.length === 0) return null;
 
   const org = orgResult.rows[0];
+  // An expired grant is not an enabled module. It is not a DENIED one
+  // either — dropping it here lets tier + industry answer, which is the
+  // whole point of an expiry bounding the override rather than the
+  // entitlement.
+  const enabledModules: string[] = modulesResult.rows
+    .filter((r: any) => !isGrantExpired(r.expires_at))
+    .map((r: any) => r.module_id);
   return {
     organizationId: org.id,
     tier: org.tier || 'standard',
     industryMode: org.industry_mode || 'biotech',
-    // An expired grant is not an enabled module. It is not a DENIED one
-    // either — dropping it here lets tier + industry answer, which is the
-    // whole point of an expiry bounding the override rather than the
-    // entitlement.
-    enabledModules: modulesResult.rows
-      .filter((r: any) => !isGrantExpired(r.expires_at))
-      .map((r: any) => r.module_id),
+    enabledModules,
+    // The one place the fold mapping is consulted (P-61 item 4): a live grant
+    // of a folded module carries to the module its screen moved into.
+    heldThroughFolds: grantsHeldThroughFolds(enabledModules),
     maxUsers: recordedLimit(org.max_users),
     maxProjects: recordedLimit(org.max_projects),
     maxStorageGB: recordedLimit(org.max_storage),
@@ -234,6 +258,40 @@ export async function getLicenseInfo(organizationId: number): Promise<LicenseInf
 /** A limit as the organization row records it: null when not recorded, 0 when zero. */
 function recordedLimit(raw: unknown): number | null {
   return raw == null ? null : Number(raw);
+}
+
+/**
+ * PURE: a catalogue row's subscription answer.
+ *
+ * LEFT JOIN: `isSubscribed` null means no subscription row at all, which is NOT
+ * the same as a row that says false. See ModuleSubscriptionState.
+ *
+ * An EXPIRED grant collapses to 'none' — deliberately, and this is the
+ * load-bearing line of the whole feature. 'none' is "no override applies",
+ * which is exactly what a lapsed trial leaves behind, and it routes every
+ * existing consumer straight to the tier/industry answer with no new branch to
+ * forget. It must not collapse to 'disabled': that would deny the module
+ * outright and tell the customer an admin switched it off, which is both a
+ * repossession and a lie. An expired grant no longer enables, so everything
+ * downstream that asks "may they use it" falls through to tier + industry.
+ *
+ * A fold's target with no row of its own (own state 'none') takes the live
+ * grant of its folded module, `carriedBy` (decision P-61 item 4,
+ * LicenseInfo.heldThroughFolds), as 'enabled'. Its own row, grant or
+ * revocation, decides first, as in canAccessModule.
+ */
+function catalogSubscription(
+  isSubscribed: boolean | null,
+  grantExpired: boolean,
+  carriedBy: string | undefined,
+): { isEnabled: boolean; subscriptionState: ModuleSubscriptionState; heldThrough?: string } {
+  let own: ModuleSubscriptionState = 'none';
+  if (isSubscribed === true && !grantExpired) own = 'enabled';
+  else if (isSubscribed === false) own = 'disabled';
+  if (own === 'none' && carriedBy !== undefined) {
+    return { isEnabled: true, subscriptionState: 'enabled', heldThrough: carriedBy };
+  }
+  return { isEnabled: own === 'enabled', subscriptionState: own };
 }
 
 /**
@@ -309,26 +367,7 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
         category: m.category,
         icon: m.icon,
         path: m.path,
-        // An expired grant no longer enables. Everything downstream that asks
-        // "may they use it" therefore falls through to tier + industry.
-        isEnabled: m.is_subscribed === true && !grantExpired,
-        // LEFT JOIN: null means no subscription row at all, which is NOT the
-        // same as a row that says false. See ModuleSubscriptionState.
-        //
-        // An EXPIRED grant collapses to 'none' — deliberately, and this is the
-        // load-bearing line of the whole feature. 'none' is "no override
-        // applies", which is exactly what a lapsed trial leaves behind, and it
-        // routes every existing consumer straight to the tier/industry answer
-        // with no new branch to forget. It must not collapse to 'disabled':
-        // that would deny the module outright and tell the customer an admin
-        // switched it off, which is both a repossession and a lie.
-        subscriptionState: grantExpired
-          ? 'none'
-          : m.is_subscribed === true
-            ? 'enabled'
-            : m.is_subscribed === false
-              ? 'disabled'
-              : 'none',
+        ...catalogSubscription(m.is_subscribed ?? null, grantExpired, license.heldThroughFolds[m.module_id]),
         isAvailable: tierMatch && industryMatch,
         requiredTier: lowestTier,
         launchScope: LAUNCH_MODULE_IDS.includes(m.module_id) ? 'launch' : 'later',
@@ -401,7 +440,7 @@ export async function canAccessModule(
      */
     ignoreRevocation?: boolean;
   } = {},
-): Promise<{ allowed: boolean; reason?: string }> {
+): Promise<{ allowed: boolean; reason?: string; heldThrough?: string }> {
   const access = await licenseForAccess(organizationId, moduleId);
   if ('denied' in access) return access.denied;
   const { license } = access;
@@ -446,6 +485,17 @@ export async function canAccessModule(
       allowed: false,
       reason: `Module '${moduleId}' has been turned off for this organization by an administrator`,
     };
+  }
+
+  /*
+   * Grant continuity (decision P-61 item 4): a live grant of a module folded
+   * into this one entitles it, after this module's own row and before the plan.
+   * A revocation written on this module therefore still refuses, above; the
+   * admin toggle (ignoreRevocation) may switch it back on.
+   */
+  const heldThrough = license.heldThroughFolds[moduleId];
+  if (heldThrough !== undefined) {
+    return { allowed: true, heldThrough };
   }
 
   const meta = row.metadata || {};

@@ -1,0 +1,8 @@
+Affected set after the review round (81 files, including the server tests that read the document list):
+ Test Files  4 failed | 77 passed (81)
+      Tests  10 failed | 820 passed (830)
+Failing files: the same four that fail at 2246406e4 (preexisting-at-HEAD.txt):
+      4  FAIL  client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx
+      4  FAIL  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+      1  FAIL  client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx
+      1  FAIL  server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts

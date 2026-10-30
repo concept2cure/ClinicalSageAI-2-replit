@@ -1,0 +1,24 @@
+{
+  "startedUtc": "2026-10-26T20:09:04.258277+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts",
+    "--testNamePattern=full CSR|generic blank CRF",
+    "--reporter=verbose"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "exitCode": 0,
+  "elapsedSeconds": 21.367,
+  "sourceDrift": [],
+  "testSummary": [
+    "Test Files  1 passed (1)",
+    "Tests  6 passed | 24 skipped (30)",
+    "Duration  20.90s (transform 6.03s, setup 119ms, import 4.14s, tests 16.29s, environment 0ms)"
+  ],
+  "rawOutput": "green-global.log.gz",
+  "rawGzipSha256": "5620d24fc674fe23d3ed6c1f77aa13c56de34ca2f8bd2b391ce0265f41414fdf"
+}

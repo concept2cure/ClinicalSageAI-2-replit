@@ -255,8 +255,8 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
 
       {pkg == null ? (
         <div className="pj-card"><div className="pj-card-b"><EmptyState icon={I.layers}
-          title={seed.raw == null ? 'Enter a submission package to assess' : 'This program has no numeric package id'}
-          hint="The Submission Twin operates on a numeric submission package id. Enter one above (it defaults to the open program when that id is numeric), then load its living readiness, drift, and reviewer-challenge intelligence." /></div></div>
+          title={seed.raw == null ? 'Enter a submission package to assess' : 'This project has no numeric package id'}
+          hint="The Submission Twin operates on a numeric submission package id. Enter one above (it defaults to the open project when that id is numeric), then load its living readiness, drift, and reviewer-challenge intelligence." /></div></div>
       ) : (
         <>
           {/* Readiness & fragility */}

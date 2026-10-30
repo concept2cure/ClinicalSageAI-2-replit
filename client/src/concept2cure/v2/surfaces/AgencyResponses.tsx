@@ -43,17 +43,19 @@
  * this person would be refused.
  */
 import React from 'react';
-import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+import { AgencyResponseEditor } from './AgencyResponseEditor';
+import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { ApiRequestError, apiRequest, assertApiResponseOk } from '@/lib/queryClient';
 import { useAuthUser, type AuthUser } from '@/services/portal/authService';
 import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import { C2CForm } from '../C2CForm';
-import { EmptyState, useLiveData } from '../dataConnect';
+import { EmptyState, useLiveData, type DataReadOwner } from '../dataConnect';
 import { downloadBlob } from '../download';
 import { I } from '../icons';
 import type { CommRow } from './AgencyInbox';
 import { RESPONSE_STATE_LABEL as STATE_LABEL, RESPONSE_STATE_TONE as STATE_TONE, type ResponseState } from './agencyQuestionState';
+import { LetterQuestionProposals } from './LetterQuestionProposals';
 
 interface SignatureView {
   signatureId: number;
@@ -120,6 +122,8 @@ interface QuestionsPayload {
     communicationType: string;
     closureStatus: string;
     dueDate: string | null;
+    /** The agency's date, or the one the response clock derives from the letter's class: what overdue is judged by. */
+    responseDueDate?: string | null;
     responseRequired: boolean;
     /** Why the letter may not be closed now, in the server's words; null when it may. */
     closeRefusal: string | null;
@@ -186,7 +190,13 @@ function QuestionCard({
   busy,
   viewer,
   targeted = false,
-  onSave,
+  projectId,
+  eventId,
+  onNav,
+  onSaved,
+  onBusy,
+  currentVisit,
+  fire,
   onSign,
   onCommit,
   onWithdraw,
@@ -199,7 +209,9 @@ function QuestionCard({
   viewer: ViewerCapabilities;
   /** Opened from a link to this question (CMC's "Open on its letter"): scrolled into view. */
   targeted?: boolean;
-  onSave: (q: AgencyQuestionView, baseRevision: number, text: string, reason: string) => Promise<boolean>;
+  projectId: string; eventId: string; onNav?: (id: string) => void;
+  onSaved: () => void; onBusy: (busy: boolean) => void; fire: (message: string, tone?: 'ok' | 'error') => void;
+  currentVisit: () => boolean;
   onSign: (q: AgencyQuestionView) => void;
   onCommit: (q: AgencyQuestionView) => void;
   onWithdraw: (q: AgencyQuestionView) => void;
@@ -211,28 +223,13 @@ function QuestionCard({
     if (targeted) itemRef.current?.scrollIntoView?.({ block: 'center' });
   }, [targeted]);
   const [editing, setEditing] = React.useState(false);
-  const [text, setText] = React.useState(q.responseText);
-  const [reason, setReason] = React.useState('');
-  /* The revision the edit started from, held for the whole edit: a reload
-     while typing must not quietly move the base under the writer, or their
-     save would overwrite a text they never saw. */
-  const [baseRevision, setBaseRevision] = React.useState(q.responseRevision);
   const textId = React.useId();
-  const reasonId = React.useId();
   const withdrawn = q.state === 'withdrawn';
   const writable = !closed && !withdrawn && viewer.canWrite;
   const signable = !closed && (q.state === 'drafted' || q.state === 'changed-after-approval') && viewer.canWrite;
   const signBlock = q.signRefusal?.message ?? (viewer.canSign ? null : viewer.signAuthorityRefusal);
 
-  const startEdit = () => {
-    setText(q.responseText);
-    setReason('');
-    setBaseRevision(q.responseRevision);
-    setEditing(true);
-  };
-  const save = async () => {
-    if (await onSave(q, baseRevision, text, reason)) setEditing(false);
-  };
+  const startEdit = () => setEditing(true);
 
   return (
     <li ref={itemRef} className="cc-q" data-state={q.state} data-question-id={q.id} data-targeted={targeted || undefined}>
@@ -259,39 +256,9 @@ function QuestionCard({
       )}
 
       {editing ? (
-        <div className="cc-q-edit">
-          <label className="de-label" htmlFor={textId}>Response</label>
-          <textarea id={textId} className="cc-q-area" rows={6} value={text} onChange={(e) => setText(e.target.value)} />
-          <label className="de-label" htmlFor={reasonId}>Reason for this change</label>
-          <input
-            id={reasonId}
-            className="cc-q-reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="e.g. Drafted from the 13-week toxicology report"
-          />
-          {q.state === 'approved' && (
-            <p className="cc-q-note">Saving a change ends this approval. The new text needs its own signature.</p>
-          )}
-          {q.responseRevision !== baseRevision && (
-            <p className="cc-q-note" data-tone="err">
-              Someone saved revision {q.responseRevision} while you were editing revision {baseRevision}. Your save will be
-              refused; copy your text, cancel, and start again from the current response.
-            </p>
-          )}
-          <div className="cc-comm-foot">
-            <button
-              className="cc-btn sm primary"
-              disabled={busy || reason.trim().length < GOVERNED_REASON_MIN}
-              onClick={() => void save()}
-            >
-              Save response
-            </button>
-            <button className="cc-btn sm" disabled={busy} onClick={() => setEditing(false)}>
-              Cancel
-            </button>
-          </div>
-        </div>
+        <AgencyResponseEditor projectId={projectId} eventId={eventId} questionId={q.id} questionRef={q.questionRef}
+          responseRevision={q.responseRevision} onNav={onNav} onSaved={onSaved} onCancel={() => setEditing(false)} hostCurrent={currentVisit}
+          onBusy={onBusy} fire={fire} />
       ) : (
         !withdrawn && (
           <div className="cc-q-resp">
@@ -394,26 +361,41 @@ function QuestionCard({
   );
 }
 
-/** The questions and responses of one inbox letter. */
-export function AgencyResponses({
+interface AgencyResponsesProps {
+  projectId: string; letter: CommRow; fire: (m: string, tone?: 'ok' | 'error') => void;
+  /** A question another screen linked to (CMC's "Open on its letter"). */
+  focusQuestionId?: number | null; onNav?: (id: string) => void;
+}
+/** Retire all retained questions and action forms before a different visit renders. */
+export function AgencyResponses(props: AgencyResponsesProps) {
+  const session = useAuthoringReadSession(useAuthUser());
+  const key = `${session.actor}:${session.key}:${props.projectId}:${props.letter.id}`;
+  const owner = React.useRef({ key });
+  if (owner.current.key !== key) owner.current = { key };
+  const visit = owner.current;
+  const readOwner = React.useMemo(() => ({ key, current: () => owner.current === visit && session.sameRevision() }), [key, visit, session]);
+  return <ScopedAgencyResponses key={key} {...props} readOwner={readOwner} />;
+}
+
+/** The questions and responses of one admitted inbox-letter visit. */
+function ScopedAgencyResponses({
   projectId,
   letter,
-  fire,
+  fire: hostFire,
   focusQuestionId = null,
-}: {
-  projectId: string;
-  letter: CommRow;
-  fire: (m: string, tone?: 'ok' | 'error') => void;
-  /** A question another screen linked to (CMC's "Open on its letter"). */
-  focusQuestionId?: number | null;
-}) {
+  onNav,
+  readOwner,
+}: AgencyResponsesProps & { readOwner: DataReadOwner }) {
   const base = `/api/concept2cure/projects/${encodeURIComponent(projectId)}/agency-communications/${encodeURIComponent(letter.id)}`;
   const [version, setVersion] = React.useState(0);
-  const reload = () => setVersion((v) => v + 1);
-  const read = useLiveData<QuestionsPayload>(`${base}/questions`, [base, version], isQuestionsPayload);
+  const reload = () => { if (readOwner.current()) setVersion((v) => v + 1); };
+  const fire = (message: string, tone?: 'ok' | 'error') => { if (readOwner.current()) hostFire(message, tone); };
+  const read = useLiveData<QuestionsPayload>(`${base}/questions`, [base, version],
+    (value: unknown): value is QuestionsPayload => isQuestionsPayload(value) && value.letter.id === letter.id, readOwner);
   const authUser = useAuthUser();
   const [busy, setBusy] = React.useState(false);
-  const [adding, setAdding] = React.useState(false);
+  /** The Record-a-question form, open; filled with a question the letter's text numbers (G3), or empty. */
+  const [adding, setAdding] = React.useState<null | { questionRef: string; questionText: string }>(null);
   const [committing, setCommitting] = React.useState<AgencyQuestionView | null>(null);
   const [withdrawing, setWithdrawing] = React.useState<AgencyQuestionView | null>(null);
   const [classifying, setClassifying] = React.useState<AgencyQuestionView | null>(null);
@@ -424,6 +406,7 @@ export function AgencyResponses({
   const team = useLiveData<TeamMember[]>(
     assigning ? `/api/concept2cure/projects/${encodeURIComponent(projectId)}/team` : null,
     [projectId, assigning?.id ?? null],
+    undefined, readOwner,
   );
   const [askingNothing, setAskingNothing] = React.useState(false);
   const [signing, setSigning] = React.useState<AgencyQuestionView | null>(null);
@@ -435,6 +418,7 @@ export function AgencyResponses({
   const closed = data?.letter.closureStatus === 'closed';
 
   const addQuestion = async (v: Record<string, string>) => {
+    if (!readOwner.current()) return;
     setBusy(true);
     try {
       const res = await apiRequest('POST', `${base}/questions`, {
@@ -446,7 +430,8 @@ export function AgencyResponses({
         reason: v.reason,
       });
       if (!res.ok) await assertApiResponseOk(res);
-      setAdding(false);
+      if (!readOwner.current()) return;
+      setAdding(null);
       fire(`Question ${v.questionRef} recorded, with an audit entry.`);
       reload();
     } catch (e) {
@@ -456,25 +441,9 @@ export function AgencyResponses({
     }
   };
 
-  const saveResponse = async (q: AgencyQuestionView, baseRevision: number, text: string, reason: string): Promise<boolean> => {
-    setBusy(true);
-    try {
-      // The revision the writer started from, never the one on screen now.
-      const res = await apiRequest('PUT', `${base}/questions/${q.id}/response`, { responseText: text, expectedRevision: baseRevision, reason });
-      if (!res.ok) await assertApiResponseOk(res);
-      fire(`Response to ${q.questionRef} saved, with an audit entry.`);
-      reload();
-      return true;
-    } catch (e) {
-      fire(`Response to ${q.questionRef} not saved: ${said(e)}.`, 'error');
-      if (e instanceof ApiRequestError && e.code && STALE_CODES.has(e.code)) reload();
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const recordCommitment = async (v: Record<string, string>) => {
+    if (!readOwner.current()) return;
     if (!committing) return;
     setBusy(true);
     try {
@@ -486,6 +455,7 @@ export function AgencyResponses({
         reason: v.reason,
       });
       if (!res.ok) await assertApiResponseOk(res);
+      if (!readOwner.current()) return;
       fire(`Commitment recorded from ${committing.questionRef}. It is listed under Meetings & commitments.`);
       setCommitting(null);
       reload();
@@ -497,11 +467,13 @@ export function AgencyResponses({
   };
 
   const withdraw = async (v: Record<string, string>) => {
+    if (!readOwner.current()) return;
     if (!withdrawing) return;
     setBusy(true);
     try {
       const res = await apiRequest('POST', `${base}/questions/${withdrawing.id}/withdraw`, { reason: v.reason });
       if (!res.ok) await assertApiResponseOk(res);
+      if (!readOwner.current()) return;
       fire(`Question ${withdrawing.questionRef} withdrawn, with an audit entry. It stays in the record.`);
       setWithdrawing(null);
       reload();
@@ -517,11 +489,13 @@ export function AgencyResponses({
      it (3.2.p.5 → 3.2.P.5) or refuses what is not a CTD code; an empty value
      clears it. The approval is not affected: the signature does not cover it. */
   const classify = async (v: Record<string, string>) => {
+    if (!readOwner.current()) return;
     if (!classifying) return;
     setBusy(true);
     try {
       const res = await apiRequest('PATCH', `${base}/questions/${classifying.id}`, { ctdSection: v.ctdSection?.trim() || null, reason: v.reason });
       if (!res.ok) await assertApiResponseOk(res);
+      if (!readOwner.current()) return;
       fire(`Section of ${classifying.questionRef} recorded, with an audit entry.`);
       setClassifying(null);
       reload();
@@ -535,12 +509,14 @@ export function AgencyResponses({
 
   /* The owner of a question's response, set or cleared with a reason. */
   const assign = async (v: Record<string, string>) => {
+    if (!readOwner.current()) return;
     if (!assigning) return;
     const ownerUserId = v.owner === NO_OWNER ? null : Number(v.owner);
     setBusy(true);
     try {
       const res = await apiRequest('PATCH', `${base}/questions/${assigning.id}/owner`, { ownerUserId, reason: v.reason });
       if (!res.ok) await assertApiResponseOk(res);
+      if (!readOwner.current()) return;
       fire(
         ownerUserId === null
           ? `Owner of ${assigning.questionRef} cleared, with an audit entry.`
@@ -557,10 +533,12 @@ export function AgencyResponses({
   };
 
   const markNoResponseRequired = async (v: Record<string, string>) => {
+    if (!readOwner.current()) return;
     setBusy(true);
     try {
       const res = await apiRequest('POST', `${base}/no-response-required`, { reason: v.reason });
       if (!res.ok) await assertApiResponseOk(res);
+      if (!readOwner.current()) return;
       fire('Letter marked as needing no response, with an audit entry. It can now be closed.');
       setAskingNothing(false);
       reload();
@@ -573,6 +551,7 @@ export function AgencyResponses({
   };
 
   const sign = async (input: { meaning: EsigMeaning; reason: string; password: string; totp?: string }): Promise<EsigSignedManifest> => {
+    if (!readOwner.current()) throw new Error('The letter or session changed. Reopen the response before signing.');
     const q = signing!;
     try {
       const res = await apiRequest('POST', `${base}/questions/${q.id}/approve`, {
@@ -583,6 +562,7 @@ export function AgencyResponses({
         expectedRevision: q.responseRevision,
       });
       const body = (await res.json().catch(() => null)) as { signedAt?: string; meaning?: string; data?: { state?: string } } | null;
+      if (!readOwner.current()) throw new Error('The letter or session changed. Reopen the response to read its signing result.');
       if (!res.ok || body?.data?.state !== 'approved' || !body.signedAt) {
         throw new Error('Whether the response was approved could not be confirmed. Reload before signing again.');
       }
@@ -601,6 +581,7 @@ export function AgencyResponses({
   };
 
   const download = async (format: 'md' | 'docx') => {
+    if (!readOwner.current()) return;
     setBusy(true);
     try {
       const res = await apiRequest('POST', `${base}/response-package`, { format });
@@ -609,7 +590,9 @@ export function AgencyResponses({
         return;
       }
       const sha = res.headers.get('X-Export-Sha256');
-      const ok = downloadBlob(`response-${letter.id}.${format}`, await res.blob());
+      const blob = await res.blob();
+      if (!readOwner.current()) return;
+      const ok = downloadBlob(`response-${letter.id}.${format}`, blob);
       fire(
         ok
           ? `Response package downloaded and recorded${sha ? ` (sha256 ${sha.slice(0, 12)}…)` : ''}.`
@@ -654,7 +637,7 @@ export function AgencyResponses({
           </span>
         </div>
         {!closed && viewer.canWrite && (
-          <button className="cc-btn sm" disabled={busy} onClick={() => setAdding(true)}>
+          <button className="cc-btn sm" disabled={busy} onClick={() => setAdding({ questionRef: '', questionText: '' })}>
             {I.plus} Record question
           </button>
         )}
@@ -664,6 +647,11 @@ export function AgencyResponses({
         <p className="cc-q-note" role="note">
           You can read the questions and responses on this letter. {viewer.writeRefusal}
         </p>
+      )}
+
+      {!closed && viewer.canWrite && (
+        <LetterQuestionProposals base={base} version={version} readOwner={readOwner} disabled={busy}
+          onRecord={(p) => setAdding({ questionRef: p.ref, questionText: p.text })} />
       )}
 
       {questions.length === 0 ? (
@@ -680,7 +668,7 @@ export function AgencyResponses({
               closed={closed}
               busy={busy}
               viewer={viewer}
-              onSave={saveResponse}
+              projectId={projectId} eventId={letter.id} onNav={onNav} onSaved={reload} onBusy={setBusy} fire={fire} currentVisit={readOwner.current}
               onSign={(x) => {
                 reloadOnClose.current = false;
                 setSigning(x);
@@ -699,7 +687,7 @@ export function AgencyResponses({
           or (a response-required letter) no question to answer recorded. */}
       {!closed && data?.letter.overdue && (
         <p className="cc-q-note" data-tone="err" role="note">
-          Overdue: past its due date{data.letter.dueDate ? ` (${data.letter.dueDate.slice(0, 10)})` : ''}
+          Overdue: past its due date{(data.letter.responseDueDate ?? data.letter.dueDate) ? ` (${(data.letter.responseDueDate ?? data.letter.dueDate)!.slice(0, 10)})` : ''}
           {asked.length === 0 ? ', with no question recorded.' : ', with responses not approved as they stand.'}
         </p>
       )}
@@ -735,6 +723,7 @@ export function AgencyResponses({
 
       {adding && (
         <C2CForm
+          key={`${adding.questionRef}:${adding.questionText.length}`}
           config={{
             eyebrow: 'Agency letter · questions',
             title: 'Record a question',
@@ -742,15 +731,15 @@ export function AgencyResponses({
             governed: 'Recorded with your reason in the audit trail.',
             submitLabel: 'Record question',
             fields: [
-              { key: 'questionRef', label: 'Question number', type: 'text', placeholder: 'As the agency numbered it, e.g. Q3', required: true, half: true },
+              { key: 'questionRef', label: 'Question number', type: 'text', placeholder: 'As the agency numbered it, e.g. Q3', required: true, half: true, default: adding.questionRef },
               { key: 'discipline', label: 'Discipline', type: 'select', options: ['Clinical', 'Nonclinical', 'CMC', 'Biostatistics', 'Labeling', 'Safety', 'Regulatory'], half: true },
               { key: 'severity', label: 'Severity', type: 'seg', options: ['major', 'minor', 'critical'] },
               { key: 'ctdSection', label: 'CTD section (optional)', type: 'text', placeholder: 'e.g. 3.2.P.5.1', half: true },
-              { key: 'questionText', label: 'Question text', type: 'textarea', placeholder: 'Paste the question verbatim', required: true },
+              { key: 'questionText', label: 'Question text', type: 'textarea', placeholder: 'Paste the question verbatim', required: true, default: adding.questionText },
               { key: 'reason', label: 'Reason', type: 'text', placeholder: 'e.g. Recording the IR received 2026-10-12', required: true },
             ],
           }}
-          onCancel={() => setAdding(false)}
+          onCancel={() => setAdding(null)}
           onSubmit={(v) => void addQuestion(v)}
         />
       )}

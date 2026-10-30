@@ -1,0 +1,91 @@
+discovered 872 tables; seeding 872 targets for p72-a, p72-b
+p72-a: rows written 850; seeded without optional keys 5
+p72-b: rows written 846; seeded without optional keys 5
+targets seeded 1693 of 1744; failures 51
+FAIL | p72-a | public.ana_record_blobs | new row for relation "ana_record_blobs" violates check constraint "ana_record_blobs_check"
+FAIL | p72-a | public.ana_source_read_receipts | new row for relation "ana_source_read_receipts" violates check constraint "ana_source_receipt_checkpoint"
+FAIL | p72-a | public.ana_turn_records | new row for relation "ana_turn_records" violates check constraint "ana_turn_records_check"
+FAIL | p72-a | public.authoring_tracked_change_decisions | new row for relation "authoring_tracked_change_decisions" violates check constraint "authoring_tracked_change_decisions_decision_check"
+FAIL | p72-a | public.c2c_commitments | c2c_commitments is read-only since 2026-10-29 (INSERT refused): regulatory commitments are recorded in Communication (regulatory_commitments), with a reason, an
+FAIL | p72-a | public.company_document_designs | new row for relation "company_document_designs" violates check constraint "company_document_designs_sha256_check"
+FAIL | p72-a | public.company_document_identity_reviews | new row for relation "company_document_identity_reviews" violates check constraint "company_document_identity_reviews_filing_sha256_check"
+FAIL | p72-a | public.company_document_revisions | new row for relation "company_document_revisions" violates check constraint "company_document_revisions_sha256_check"
+FAIL | p72-a | public.company_legal_registry | new row for relation "company_legal_registry" violates check constraint "company_legal_registry_document_valid"
+FAIL | p72-a | public.csr_narrative_outputs | new row for relation "csr_narrative_outputs" violates check constraint "csr_narrative_outputs_content_check"
+FAIL | p72-a | public.document_data_dispositions | DISPOSITION_IDENTITY_REFUSED: organization, project, typed source and SHA-256 must agree
+FAIL | p72-a | public.document_span_lineage | new row for relation "document_span_lineage" violates check constraint "document_span_lineage_kind_shape"
+FAIL | p72-a | public.ivdr_binder_evidence | new row for relation "ivdr_binder_evidence" violates check constraint "chk_binder_evidence_source_integrity"
+FAIL | p72-a | public.mcp_oauth_authorization_codes | duplicate key value violates unique constraint "unique_user_org"
+FAIL | p72-a | public.mcp_oauth_refresh_tokens | duplicate key value violates unique constraint "unique_user_org"
+FAIL | p72-a | public.organization_retention_settings | new row for relation "organization_retention_settings" violates check constraint "organization_retention_settings_shorter_is_reasoned"
+FAIL | p72-a | public.organization_users | duplicate key value violates unique constraint "unique_user_org"
+FAIL | p72-a | public.qms_document_versions | new row for relation "qms_document_versions" violates check constraint "qms_document_versions_check"
+FAIL | p72-a | public.reg_questions | reg_questions is read-only since 2026-10-19 (INSERT refused): agency questions are recorded on the letter they came in, in Communication, where each response is
+FAIL | p72-a | public.reg_responses | reg_questions is read-only since 2026-10-19 (INSERT refused): agency questions are recorded on the letter they came in, in Communication, where each response is
+FAIL | p72-a | public.submission_filed_baselines | new row for relation "submission_filed_baselines" violates check constraint "submission_filed_baselines_last_format"
+FAIL | p72-a | public.tenant_offboarding_certificates | OFFBOARDING_CERTIFICATE_REFUSED: organization 7 is not purged; a certificate is written by its purge.
+FAIL | p72-a | public.vault_document_relationships | new row for relation "vault_document_relationships" violates check constraint "vault_document_relationships_not_self_ck"
+FAIL | p72-a | public.vault_version_annotations | VAULT_ANNOTATION_REFUSED: the annotation names a program or organisation that is not its version's.
+FAIL | p72-a | vault.legal_holds | new row for relation "legal_holds" violates check constraint "vault_legal_holds_scope_target"
+FAIL | p72-b | public.ana_record_blobs | new row for relation "ana_record_blobs" violates check constraint "ana_record_blobs_check"
+FAIL | p72-b | public.ana_source_read_receipts | new row for relation "ana_source_read_receipts" violates check constraint "ana_source_receipt_checkpoint"
+FAIL | p72-b | public.ana_turn_records | new row for relation "ana_turn_records" violates check constraint "ana_turn_records_check"
+FAIL | p72-b | public.authoring_tracked_change_decisions | new row for relation "authoring_tracked_change_decisions" violates check constraint "authoring_tracked_change_decisions_decision_check"
+FAIL | p72-b | public.c2c_commitments | c2c_commitments is read-only since 2026-10-29 (INSERT refused): regulatory commitments are recorded in Communication (regulatory_commitments), with a reason, an
+FAIL | p72-b | public.company_document_designs | new row for relation "company_document_designs" violates check constraint "company_document_designs_sha256_check"
+FAIL | p72-b | public.company_document_identity_reviews | new row for relation "company_document_identity_reviews" violates check constraint "company_document_identity_reviews_filing_sha256_check"
+FAIL | p72-b | public.company_document_revisions | new row for relation "company_document_revisions" violates check constraint "company_document_revisions_sha256_check"
+FAIL | p72-b | public.company_legal_registry | new row for relation "company_legal_registry" violates check constraint "company_legal_registry_document_valid"
+FAIL | p72-b | public.csr_narrative_outputs | new row for relation "csr_narrative_outputs" violates check constraint "csr_narrative_outputs_content_check"
+FAIL | p72-b | public.document_data_dispositions | DISPOSITION_IDENTITY_REFUSED: organization, project, typed source and SHA-256 must agree
+FAIL | p72-b | public.document_span_lineage | new row for relation "document_span_lineage" violates check constraint "document_span_lineage_kind_shape"
+FAIL | p72-b | public.ivdr_binder_evidence | new row for relation "ivdr_binder_evidence" violates check constraint "chk_binder_evidence_source_integrity"
+FAIL | p72-b | public.mcp_oauth_authorization_codes | duplicate key value violates unique constraint "unique_user_org"
+FAIL | p72-b | public.mcp_oauth_refresh_tokens | duplicate key value violates unique constraint "unique_user_org"
+FAIL | p72-b | public.organization_retention_settings | new row for relation "organization_retention_settings" violates check constraint "organization_retention_settings_shorter_is_reasoned"
+FAIL | p72-b | public.organization_users | duplicate key value violates unique constraint "unique_user_org"
+FAIL | p72-b | public.protocol_budget_params | duplicate key value violates unique constraint "uq_protocol_budget_params_doc"
+FAIL | p72-b | public.qms_document_versions | new row for relation "qms_document_versions" violates check constraint "qms_document_versions_check"
+FAIL | p72-b | public.reg_questions | reg_questions is read-only since 2026-10-19 (INSERT refused): agency questions are recorded on the letter they came in, in Communication, where each response is
+FAIL | p72-b | public.reg_responses | reg_questions is read-only since 2026-10-19 (INSERT refused): agency questions are recorded on the letter they came in, in Communication, where each response is
+FAIL | p72-b | public.submission_filed_baselines | new row for relation "submission_filed_baselines" violates check constraint "submission_filed_baselines_last_format"
+FAIL | p72-b | public.tenant_offboarding_certificates | OFFBOARDING_CERTIFICATE_REFUSED: organization 8 is not purged; a certificate is written by its purge.
+FAIL | p72-b | public.vault_document_relationships | new row for relation "vault_document_relationships" violates check constraint "vault_document_relationships_not_self_ck"
+FAIL | p72-b | public.vault_version_annotations | VAULT_ANNOTATION_REFUSED: the annotation names a program or organisation that is not its version's.
+FAIL | p72-b | vault.legal_holds | new row for relation "legal_holds" violates check constraint "vault_legal_holds_scope_target"
+vault_document_relationships required columns: organization_id,program_id,from_document_id,to_document_id,relationship_type
+p72-a: pass-2 rows written 17
+vault_document_relationships required columns: organization_id,program_id,from_document_id,to_document_id,relationship_type
+p72-b: pass-2 rows written 17
+pass-2 failures 16
+FAIL | p72-a | public.ana_source_read_receipts | new row for relation "ana_source_read_receipts" violates check constraint "ana_source_receipt_ranges"
+FAIL | p72-a | public.company_document_identity_reviews | new row for relation "company_document_identity_reviews" violates check constraint "company_document_identity_reviews_profile_sha256_check"
+FAIL | p72-a | public.submission_filed_baselines | new row for relation "submission_filed_baselines" violates check constraint "submission_filed_baselines_original_filed"
+FAIL | p72-a | public.qms_document_versions | new row for relation "qms_document_versions" violates check constraint "qms_document_versions_check"
+FAIL | p72-a | public.document_data_dispositions (replica) | new row for relation "document_data_dispositions" violates check constraint "document_data_dispositions_audit_receipt_check"
+FAIL | p72-a | public.vault_version_annotations (replica) | new row for relation "vault_version_annotations" violates check constraint "vva_root_anchor_ck"
+FAIL | p72-a | public.protocol_budget_params (replica) | duplicate key value violates unique constraint "uq_protocol_budget_params_doc"
+FAIL | p72-a | vault.legal_holds (hand) | operator does not exist: integer = text
+FAIL | p72-b | public.ana_source_read_receipts | new row for relation "ana_source_read_receipts" violates check constraint "ana_source_receipt_ranges"
+FAIL | p72-b | public.company_document_identity_reviews | new row for relation "company_document_identity_reviews" violates check constraint "company_document_identity_reviews_profile_sha256_check"
+FAIL | p72-b | public.submission_filed_baselines | new row for relation "submission_filed_baselines" violates check constraint "submission_filed_baselines_original_filed"
+FAIL | p72-b | public.qms_document_versions | new row for relation "qms_document_versions" violates check constraint "qms_document_versions_check"
+FAIL | p72-b | public.document_data_dispositions (replica) | new row for relation "document_data_dispositions" violates check constraint "document_data_dispositions_audit_receipt_check"
+FAIL | p72-b | public.vault_version_annotations (replica) | new row for relation "vault_version_annotations" violates check constraint "vva_root_anchor_ck"
+FAIL | p72-b | public.protocol_budget_params (replica) | duplicate key value violates unique constraint "uq_protocol_budget_params_doc"
+FAIL | p72-b | vault.legal_holds (hand) | operator does not exist: integer = text
+INSERT 0 2
+INSERT 0 2
+?column? | organization_id | count
+legal_holds | 7 | 1
+legal_holds | 8 | 1
+vault_document_relationships | 7 | 1
+vault_document_relationships | 8 | 1
+(4 rows)
+SET
+UPDATE 4
+SET
+organization_id | docs | resolved
+7 | 4 | 4
+8 | 5 | 5
+(2 rows)

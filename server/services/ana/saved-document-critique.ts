@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import { stableStringify } from '../../../shared/canonical-json';
 import { resolveCitation } from '../../../shared/authoring/citations';
+import { isCsrTemplateId, labelledCsr } from '../../../shared/authoring/csr-scientific-review';
 import type { RequestSqlClient } from '../../db/requestDb';
 import { withTenantConnection, type WithTenantConnectionOptions } from '../../db/withTenantConnection';
 import { sectionContentToBlocks, collectCitedSourceIds } from '../../export/authoring-section-content';
@@ -16,8 +17,12 @@ import type { ReadabilityAudience } from './medical-writing-qc';
 import type { ClaimRegister } from './promotional-screening';
 import { RESULT_BUDGET } from './agentic-loop';
 import { savedTemplateReview, type SavedTemplateReview } from './saved-template-review';
+import { assessSavedCsrEvidence, csrEvidenceRuns, importedCsrEvidence, type RetainedRunRead, type SavedCsrEvidenceVerdict } from './csr-saved-evidence';
+import type { RetainedCsrTables } from '../csr/cortex-authoring-context';
 
-type Connection = (opts: WithTenantConnectionOptions, fn: (q: RequestSqlClient) => Promise<string>) => Promise<string>;
+export type Connection = (opts: WithTenantConnectionOptions, fn: (q: RequestSqlClient) => Promise<string>) => Promise<string>;
+/** The receipt-verified retained-table reader (csr/saved-clinical-tables readSavedClinicalTables). */
+export type RetainedTableReader = (q: RequestSqlClient, scope: { organizationId: number; userId: number; programId: string }, runId: string) => Promise<RetainedCsrTables>;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_SECTIONS = 512;
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -37,9 +42,9 @@ function finding(f: PrecisionFinding) {
   return { ...f, message: clip(f.message, 600), evidence: f.evidence.slice(0, 3).map(e => clip(e, 240)), ...(truncated ? { truncated: true } : {}) };
 }
 
-interface SavedSection {
+export interface SavedSection {
   sectionId: string; code: string | null; title: string; updatedAt: string;
-  sha256: string; text: string; pendingInsertions: number; pendingDeletions: number;
+  sha256: string; content: string; text: string; pendingInsertions: number; pendingDeletions: number;
   citations: Awaited<ReturnType<typeof listCitationSources>>; citationGaps: string[];
 }
 
@@ -73,7 +78,7 @@ async function sections(q: RequestSqlClient, documentId: string, tenantId: numbe
     const citations = await listCitationSources(tenantId, ids, { documentId, sectionId: record.id, userId }, q);
     const lookup = new Map(citations.map(c => [c.id, c]));
     out.push({ sectionId: record.id, code: record.code, title: record.title, updatedAt: record.updatedAt,
-      sha256: digest(content), text: acceptedSectionText(rendered),
+      sha256: digest(content), content, text: acceptedSectionText(rendered),
       pendingInsertions: rendered.spans.filter(s => s.kind === 'insertion').length,
       pendingDeletions: rendered.spans.filter(s => s.kind === 'deletion').length,
       citations, citationGaps: ids.filter(id => !resolveCitation(id, key => lookup.get(key)).found) });
@@ -110,21 +115,68 @@ function reviewItems(saved: SavedSection[], result: ReturnType<typeof critiqueDo
   return items;
 }
 
-function report(documentId: string, programId: string, saved: SavedSection[], input: Record<string, unknown>, context: { header: Record<string, unknown>; template: SavedTemplateReview }): string {
-  const { header, template } = context;
+/** A saved CSR cannot evade scientific evidence checks by asking the critique
+ * tool to treat it as a different document type. Saved identity wins. */
+export function savedIsCsr(header: Record<string, unknown>): boolean {
+  // Review of slice 5 (2026-10-30): the CSR import saves the copy under the
+  // study's title with module null, so its provenance is the saved identity too.
+  const provenance = header.provenance as { importSource?: { kind?: unknown } } | null | undefined;
+  if (provenance && typeof provenance === 'object' && provenance.importSource?.kind === 'csr') return true;
+  // 2026-10-30: the one CSR rule (shared/authoring/csr-scientific-review.ts):
+  // the label, plural included, and the built-in CSR templates by stored id.
+  return [header.module, header.product_code, header.title].some(labelledCsr) || isCsrTemplateId(header.template_id);
+}
+
+/** CSR slice 5: the evidence summary on every page; its detail is paginated as items. */
+function csrSummary(csr: SavedCsrEvidenceVerdict) {
+  return { status: csr.status, basis: csr.basis, checkedSections: csr.checkedSections, checkedClaims: csr.checkedClaims,
+    issueCount: csr.issues.length, unclaimedFigureCount: csr.unclaimedFigures.length,
+    blockingUnclaimedFigureCount: csr.unclaimedFigures.filter(f => f.blocking).length, editedSectionCount: csr.editedSections.length, runs: csr.runs };
+}
+
+function csrItems(csr: SavedCsrEvidenceVerdict | null): Array<Record<string, unknown>> {
+  if (!csr) return [];
+  const bySection = new Map<string, { blocking: boolean; figures: string[] }>();
+  for (const f of csr.unclaimedFigures) {
+    const at = bySection.get(f.section) ?? { blocking: f.blocking, figures: [] };
+    at.figures.push(f.figure);
+    bySection.set(f.section, at);
+  }
+  return [
+    ...csr.editedSections.map(edited => ({ kind: 'csr-edited-section', ...edited })),
+    ...csr.issues.map(issue => ({ kind: 'csr-evidence-issue', ...issue })),
+    ...[...bySection].map(([section, at]) => ({ kind: 'csr-unclaimed-figures', section, blocking: at.blocking,
+      count: at.figures.length, figures: at.figures.slice(0, 40).map(f => clip(f, 40)), ...(at.figures.length > 40 ? { truncated: true } : {}) })),
+  ];
+}
+
+const INSTRUCTION = 'Score covers writing precision of all accepted saved text. For a CSR, csrEvidence re-reads the retained run behind each imported section\'s claim receipts: blocked names the exact cell, section and figure that failed (a changed section, a claim that no longer matches its cell, a figure stated with no claim, the same figure stated differently in two sections, a figure an edit changed to one no cell holds); a section edited after import is re-checked by its current text against its receipts and the run (csr-edited-section), and a claimed figure an edit removed is reported with blocking false; not_assessed means the document carries no claim receipts. reconciled_pending_human_review is transcription agreement only, never scientific approval. This is not approval or evidence verification. Read every nextOffset with this document_id and expected_snapshot and the same review options, including every template reference part. Template guidance is reference material, not authored evidence or checklist completion. Preparation worksheets do not replace original forms, datasets, certificates or signed records; respect recorded source limits. Pending changes require review. Read exact sections before remedies; clipped evidence is marked truncated.';
+
+function documentVerdict(result: ReturnType<typeof critiqueDocument>, coverage: ReturnType<typeof reviewCoverage>, csr: SavedCsrEvidenceVerdict | null): 'pass' | 'revise' {
+  if (csr && csr.status !== 'reconciled_pending_human_review') return 'revise';
+  return result.verdict === 'revise' || coverage.emptySections || coverage.citationGaps || coverage.pendingInsertions || coverage.pendingDeletions ? 'revise' : 'pass';
+}
+
+function report(documentId: string, programId: string, saved: SavedSection[], input: Record<string, unknown>,
+  context: { header: Record<string, unknown>; template: SavedTemplateReview; csr: SavedCsrEvidenceVerdict | null }): string {
+  const { header, template, csr } = context;
   const opts = reviewOptions(input);
-  const snapshotSha256 = digest(stableStringify({ header, saved, opts, template: { source: template.source, references: template.references } }));
+  if (savedIsCsr(header)) opts.documentType = 'csr';
+  const snapshotSha256 = digest(stableStringify({ header, saved, opts, template: { source: template.source, references: template.references }, csr }));
   if (input.expected_snapshot !== undefined && input.expected_snapshot !== snapshotSha256) return refuse('Saved document or review options changed. Restart critique_document at offset 0.');
-  const result = critiqueDocument(saved.map(s => ({ title: [s.code, s.title].filter(Boolean).join(' '), text: s.text })), opts);
+  const result = critiqueDocument(saved.map(s => ({ title: [s.code, s.title].filter(Boolean).join(' '), text: s.text })),
+    { ...opts, ...(csr?.claims.length ? { csrClaims: csr.claims, csrEvidence: csr.facts } : {}) });
   const coverage = reviewCoverage(saved);
-  const items = [...template.items, ...reviewItems(saved, result)];
+  const items = [...template.items, ...csrItems(csr), ...reviewItems(saved, result)];
   const offset = input.offset === undefined ? 0 : Number(input.offset);
   if (offset >= items.length) return refuse('Review offset is outside this snapshot. Restart at offset 0.');
+  const csrEvidence = csr ? csrSummary(csr) : result.csrEvidence;
   const base = { engine: 'deterministic', scope: 'saved_document', complete: true, documentId, programId,
     snapshotSha256, documentScore: result.documentScore, precisionVerdict: result.verdict,
-    verdict: result.verdict === 'revise' || coverage.emptySections || coverage.citationGaps || coverage.pendingInsertions || coverage.pendingDeletions ? 'revise' : 'pass',
+    verdict: documentVerdict(result, coverage, csr),
     register: result.register, structure: result.structure, coverage, template: template.template,
-    instruction: 'Score covers writing precision of all accepted saved text. This is not approval or evidence verification. Read every nextOffset with this document_id and expected_snapshot and the same review options, including every template reference part. Template guidance is reference material, not authored evidence or checklist completion. Preparation worksheets do not replace original forms, datasets, certificates or signed records; respect recorded source limits. Pending changes require review. Read exact sections before remedies; clipped evidence is marked truncated.' };
+    ...(csrEvidence ? { csrEvidence } : {}),
+    instruction: INSTRUCTION };
   const page: Array<Record<string, unknown>> = [];
   const serialize = () => JSON.stringify({ ...base, pagination: { offset, shown: page.length, total: items.length, nextOffset: offset + page.length < items.length ? offset + page.length : null }, items: page });
   for (let i = offset; i < items.length; i++) {
@@ -133,6 +185,39 @@ function report(documentId: string, programId: string, saved: SavedSection[], in
   }
   return page.length ? serialize() : refuse('This review item exceeds the tool budget. Read individual saved sections; no complete result is returned.');
 }
+
+/** CSR slice 5: read each retained run behind the document's claim receipts, inside
+ * this snapshot. A read that fails is recorded, never treated as agreement; the
+ * savepoint keeps a failed read from aborting the review transaction. */
+async function savedCsrEvidence(q: RequestSqlClient, header: Record<string, unknown>, saved: SavedSection[],
+  actor: { organizationId: number; userId: number }, read: RetainedTableReader): Promise<SavedCsrEvidenceVerdict | null> {
+  if (!savedIsCsr(header)) return null;
+  const receipts = importedCsrEvidence(header.provenance);
+  return assessSavedCsrEvidence(saved, receipts, await readCsrEvidenceRuns(q, receipts, actor, read));
+}
+
+/** Each retained run behind the receipts, read inside the caller's snapshot
+ * (also medical_writing_review with a document reference, 2026-10-30). */
+export async function readCsrEvidenceRuns(q: RequestSqlClient, receipts: ReturnType<typeof importedCsrEvidence>,
+  actor: { organizationId: number; userId: number }, read: RetainedTableReader): Promise<Map<string, RetainedRunRead>> {
+  const reads = new Map<string, RetainedRunRead>();
+  for (const run of csrEvidenceRuns(receipts)) {
+    const key = `${run.programId.toLowerCase()}:${run.runId.toLowerCase()}`;
+    await q.query('SAVEPOINT csr_evidence_read');
+    try {
+      reads.set(key, { ok: true, tables: await read(q, { ...actor, programId: run.programId }, run.runId) });
+      await q.query('RELEASE SAVEPOINT csr_evidence_read');
+    } catch (error) {
+      await q.query('ROLLBACK TO SAVEPOINT csr_evidence_read');
+      const code = (error as { code?: unknown })?.code;
+      reads.set(key, { ok: false, code: typeof code === 'string' && /^[A-Z][A-Z0-9_]{2,80}$/.test(code) ? code : 'CSR_EVIDENCE_SOURCE_UNAVAILABLE' });
+    }
+  }
+  return reads;
+}
+
+export const defaultRetainedReader: RetainedTableReader = async (q, scope, runId) =>
+  (await import('../csr/saved-clinical-tables')).readSavedClinicalTables(q, scope, runId);
 
 /** Dedicated tenant connection and one consistent, read-only-in-behavior snapshot; no writes or model call. */
 function invalidSnapshot(input: Record<string, unknown>): boolean {
@@ -153,46 +238,66 @@ function documentRecord(row: Record<string, unknown>): Record<string, unknown> {
   return { ...row, updated_at: stamp(row.updated_at) };
 }
 
-function currentContext(ctx?: ToolContext): ctx is ToolContext & { organizationId: number; userId: number } {
+export function currentContext(ctx?: ToolContext): ctx is ToolContext & { organizationId: number; userId: number } {
   return typeof ctx?.organizationId === 'number' && Number.isSafeInteger(ctx.organizationId) && ctx.organizationId > 0 &&
     typeof ctx.userId === 'number' && Number.isSafeInteger(ctx.userId) && ctx.userId > 0 && !!(ctx.projectRef || ctx.projectId);
 }
 
-export async function critiqueSavedDocument(input: Record<string, unknown>, ctx?: ToolContext, connection: Connection = withTenantConnection): Promise<string> {
+/** The project-admitted, permission-checked saved document and its complete
+ * sections, read inside the caller's open snapshot; throws on any refusal.
+ * Shared with medical_writing_review's document reference (2026-10-30). */
+export async function readAuthorizedSavedDocument(q: RequestSqlClient,
+  ctx: ToolContext & { organizationId: number; userId: number }, documentId: string) {
+  const tenantId = ctx.organizationId;
+  const userId = ctx.userId;
+  const project = await admitAnaProjectScope(q, { organizationId: tenantId, userId, projectRef: ctx.projectRef, projectId: ctx.projectId });
+  if (!project.programId) throw new Error('No authoring program');
+  const programId: string = project.programId;
+  // Email-only document grants use the active caller's recorded identity,
+  // bound to canonical membership in this snapshot's organization.
+  const actor = await q.query(`SELECT email FROM users WHERE id=$1 AND status=$2
+    AND EXISTS (SELECT 1 FROM organization_users ou WHERE ou.user_id=users.id AND ou.organization_id=$3)`,
+    [userId, 'active', tenantId]);
+  if (actor.rows.length !== 1 || (actor.rows[0].email !== null && typeof actor.rows[0].email !== 'string')) throw new Error('Actor unavailable');
+  const authorized = await authorizeAuthoringProgram(q, { tenantId, actor: { id: String(userId), email: actor.rows[0].email }, programId, forWrite: false });
+  const doc = await q.query(`SELECT d.id::text, d.title, d.module, d.product_code, d.status, d.updated_at,
+    to_jsonb(d)->>'template_id' AS template_id, to_jsonb(d)->'provenance' AS provenance FROM authoring_documents d
+    WHERE d.id=$1 AND d.tenant_id=$2 AND d.client_program_id=$3`, [documentId, tenantId, programId]);
+  if (doc.rows.length !== 1) throw new Error('Document outside project');
+  const scope = await resolveAuthoringDocumentScope(q, tenantId, documentId);
+  if (!(await decideAuthoringPermission({ pool: q, principal: authorized.principal, scope, action: 'view' })).allowed) throw new Error('Document access denied');
+  const saved = await sections(q, documentId, tenantId, userId);
+  return { project: { ...project, programId }, header: documentRecord(doc.rows[0]), saved };
+}
+
+/** One REPEATABLE READ snapshot on a dedicated tenant connection; rolled back on any throw. */
+export async function inSavedDocumentSnapshot(ctx: ToolContext & { organizationId: number }, connection: Connection, caller: string,
+  fn: (q: RequestSqlClient) => Promise<string>): Promise<string> {
+  return connection({ tenantId: ctx.organizationId, orgUuid: ctx.organizationUuid, source: 'job', caller }, async q => {
+    await q.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+    try {
+      const output = await fn(q);
+      await q.query('COMMIT');
+      return output;
+    } catch (error) {
+      await q.query('ROLLBACK');
+      throw error;
+    }
+  });
+}
+
+export async function critiqueSavedDocument(input: Record<string, unknown>, ctx?: ToolContext, connection: Connection = withTenantConnection,
+  readRetained: RetainedTableReader = defaultRetainedReader): Promise<string> {
   const invalid = inputError(input);
   if (invalid) return refuse(invalid);
   if (!currentContext(ctx)) return refuse('Open an authorized project before reviewing a saved document.');
-  const tenantId = ctx?.organizationId;
-  const userId = ctx?.userId;
+  const tenantId = ctx.organizationId;
   try {
-    return await connection({ tenantId, orgUuid: ctx.organizationUuid, source: 'job', caller: 'ana-saved-document-critique' }, async q => {
-      await q.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
-      try {
-        const project = await admitAnaProjectScope(q, { organizationId: tenantId, userId, projectRef: ctx.projectRef, projectId: ctx.projectId });
-        if (!project.programId) throw new Error('No authoring program');
-        // Email-only document grants use the active caller's recorded identity,
-        // bound to canonical membership in this snapshot's organization.
-        const actor = await q.query(`SELECT email FROM users WHERE id=$1 AND status=$2
-          AND EXISTS (SELECT 1 FROM organization_users ou WHERE ou.user_id=users.id AND ou.organization_id=$3)`,
-          [userId, 'active', tenantId]);
-        if (actor.rows.length !== 1 || (actor.rows[0].email !== null && typeof actor.rows[0].email !== 'string')) throw new Error('Actor unavailable');
-        const authorized = await authorizeAuthoringProgram(q, { tenantId, actor: { id: String(userId), email: actor.rows[0].email }, programId: project.programId, forWrite: false });
-        const doc = await q.query(`SELECT d.id::text, d.title, d.module, d.product_code, d.status, d.updated_at,
-          to_jsonb(d)->>'template_id' AS template_id, to_jsonb(d)->'provenance' AS provenance FROM authoring_documents d
-          WHERE d.id=$1 AND d.tenant_id=$2 AND d.client_program_id=$3`, [input.document_id, tenantId, project.programId]);
-        if (doc.rows.length !== 1) throw new Error('Document outside project');
-        const scope = await resolveAuthoringDocumentScope(q, tenantId, input.document_id as string);
-        if (!(await decideAuthoringPermission({ pool: q, principal: authorized.principal, scope, action: 'view' })).allowed) throw new Error('Document access denied');
-        const saved = await sections(q, input.document_id as string, tenantId, userId);
-        const header = documentRecord(doc.rows[0]);
-        const template = await savedTemplateReview(q, { tenantId, documentId: input.document_id as string, programId: project.programId }, header, saved);
-        const output = report(input.document_id as string, project.programId, saved, input, { header, template });
-        await q.query('COMMIT');
-        return output;
-      } catch (error) {
-        await q.query('ROLLBACK');
-        throw error;
-      }
+    return await inSavedDocumentSnapshot(ctx, connection, 'ana-saved-document-critique', async q => {
+      const { project, header, saved } = await readAuthorizedSavedDocument(q, ctx, input.document_id as string);
+      const template = await savedTemplateReview(q, { tenantId, documentId: input.document_id as string, programId: project.programId }, header, saved);
+      const csr = await savedCsrEvidence(q, header, saved, { organizationId: tenantId, userId: ctx.userId }, readRetained);
+      return report(input.document_id as string, project.programId, saved, input, { header, template, csr });
     });
   } catch {
     return refuse('Complete saved-document review could not be verified: check current project/document access, saved sections, template identity/guidance and the 512-section / 8 MiB content / 8 MiB reference / 20,000-reference-item limits. No document verdict is returned.');

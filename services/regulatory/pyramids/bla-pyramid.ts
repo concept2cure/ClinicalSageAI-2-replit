@@ -4,7 +4,7 @@ import { buildPhase } from './types.js';
 export function buildBlaPyramid(): SubmissionPyramid {
   const phases: PyramidPhase[] = [];
 
-  const phase1 = buildPhase('phase1', 'Program Planning', 1, [
+  const phase1 = buildPhase('phase1', 'Planning', 1, [
     { id: 'reg_strategy', name: 'Define BLA strategy', estimatedHours: 8, role: 'ra_lead', critical: true },
     { id: 'cber_alignment', name: 'CBER alignment plan', estimatedHours: 6, role: 'ra_lead' },
     { id: 'potency_plan', name: 'Potency assay strategy', estimatedHours: 8, role: 'cmc_lead', critical: true },

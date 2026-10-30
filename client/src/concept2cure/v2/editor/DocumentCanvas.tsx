@@ -411,7 +411,7 @@ export function DocumentCanvas({
             {programId ? (
               <span className="dcv-project">{I.folder} {programLineFor(program, programState)}</span>
             ) : (
-              <span className="dcv-project dcv-project-none" data-testid="dc-no-program">{I.folder} Not filed under a program</span>
+              <span className="dcv-project dcv-project-none" data-testid="dc-no-program">{I.folder} Not filed under a project</span>
             )}
             {state === 'ready' && (
               <span data-testid="dc-progress">
@@ -571,8 +571,8 @@ export function DocumentCanvas({
               fireToast={fireToast}
             />
           )}
-          <button type="button" className="nda-open dcv-open-surface" onClick={openInAuthoring} title="Open this document on the Authoring surface" data-testid="dc-edit-in-authoring">
-            {I.penLine} Edit in Authoring
+          <button type="button" className="nda-open dcv-open-surface" onClick={openInAuthoring} title="Open this document in the editor" data-testid="dc-edit-in-authoring">
+            {I.penLine} Edit in the editor
           </button>
         </div>
       </div>

@@ -153,15 +153,7 @@ export const DESIGN_REPEAT_DOSE_STUDY: AnaTool = {
 export const CALCULATE_SAFETY_MARGIN: AnaTool = {
   name: 'calculate_safety_margin',
   description:
-    'Calculate the Human Equivalent Dose (HED) and Maximum Recommended Starting ' +
-    'Dose (MRSD) from a nonclinical NOAEL using the FDA body surface area (Km ' +
-    'factor) method (FDA 2005 Guidance). Returns step-by-step calculations: ' +
-    'HED = NOAEL × (animal Km / human Km), MRSD = HED / safety factor. ' +
-    'Optionally computes AUC-based and Cmax-based safety margins when exposure ' +
-    'data are provided. Includes regulatory interpretation, warnings for low ' +
-    'margins, and ICH S9 oncology-specific dose-selection considerations ' +
-    '(STD10, HNSTD). Supported species: mouse, rat, hamster, guinea pig, ' +
-    'rabbit, dog, NHP, minipig. ' + DETERMINISTIC_NOTE,
+    "Calculate a safety-margin worksheet from explicitly stated NOAEL and exposure inputs. Uses the canonical FIH engine for HED and MRSD via FDA 2005 Km scaling and the stated safety factor, and returns separate AUC/Cmax ratios when exposures are supplied. No study records are read; it is not the program's starting dose, readiness verdict or governed content. Do not pass invented or inferred study figures. Unknown species are refused. Report the stated basis, calculations and warnings verbatim.",
   input_schema: {
     type: 'object',
     properties: {
@@ -285,16 +277,7 @@ export const DESIGN_GENOTOX_BATTERY: AnaTool = {
 export const ASSESS_CARCINOGENICITY_NEED: AnaTool = {
   name: 'assess_carcinogenicity_need',
   description:
-    'Evaluate whether carcinogenicity studies are required per ICH S1A triggers ' +
-    'and, if so, recommend a study design per ICH S1B(R1) and S1C(R2). Evaluates ' +
-    'all ICH S1A triggers: clinical duration ≥6 months, positive genotoxicity, ' +
-    'structural alerts, preneoplastic lesions in repeat-dose studies, endocrine ' +
-    'activity, immunosuppression. Returns trigger-by-trigger assessment, ' +
-    'recommended design (2-year rat bioassay, 6-month Tg.rasH2 transgenic mouse ' +
-    'model, or weight-of-evidence waiver per ICH S1B(R1) 2022 revision), dose ' +
-    'selection per ICH S1C(R2), and statistical approaches. Handles biologics ' +
-    '(ICH S6(R1) — standard bioassays generally inappropriate) and oncology ' +
-    '(ICH S9 — typically not required). ' + DETERMINISTIC_NOTE,
+    "Worksheet over explicitly stated clinical duration, modality, genotoxicity and other risk inputs, using ICH S1A triggers and S1B(R1)/S1C(R2) study-design guidance. No study records are read: do not present stated genotoxicity findings as the program's recorded results or this worksheet as governed content. Covers duration, structural alerts, preneoplastic lesions, endocrine activity and immunosuppression, with S6(R1) biologic and S9 oncology considerations. Report its stated basis and trigger-by-trigger comparison verbatim. " + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {

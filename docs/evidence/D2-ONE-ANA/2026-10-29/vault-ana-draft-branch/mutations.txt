@@ -1,0 +1,105 @@
+# Mutations, 2026-10-29, on ca574ff80 + this change
+# Each: one replacement in one product file, the named suites run, the file restored and its SHA-256 checked.
+# Runner: a script kept outside the repo (old text must occur exactly once; restore in a finally block).
+
+## First pass, M1 SURVIVED (recorded, then the test was fixed)
+M1 registry read drops the organization predicate (server/services/artifact-registry-read.ts): STILL GREEN, ['Tests  4 passed (4)']
+  Why: every cross-tenant row in the PGlite fixture was also excluded by the projects join
+  (p.organization_id = a.organization_id). No row was excluded by the organization predicate alone.
+  Fix: fixture row 10, another organization's artifact on its own project (13, org 8) anchored to
+  this program, plus the assertion that it is not listed. Re-run below: red.
+
+## Final pass: 16 mutations, 16 red, 16 reverted
+M1 [RED] registry read drops the organization predicate
+   file: server/services/artifact-registry-read.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts
+   Tests  2 failed | 2 passed (4)   reverted: True (sha256 6d6a9ba0ffb9a135… restored)
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > lists every non-archived artifact of the project across CTD
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > counts the project exactly, and another project of the orga
+
+M2 [RED] project scope keeps archived artifacts
+   file: server/services/artifact-registry-read.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts, server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+   Tests  3 failed | 12 passed (15)   reverted: True (sha256 6d6a9ba0ffb9a135… restored)
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > lists every non-archived artifact of the project across CTD
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > counts the project exactly, and another project of the orga
+   × project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reads the registry bound to the organization and the program, ne
+
+M3 [RED] project scope narrowed back to Module 3 (ctd_section LIKE 3.%)
+   file: server/services/artifact-registry-read.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts
+   Tests  4 failed (4)   reverted: True (sha256 6d6a9ba0ffb9a135… restored)
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > lists every non-archived artifact of the project across CTD
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > reads the signature on the current version in four states, 
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > names the author through actor_name, and says nothing where
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > counts the project exactly, and another project of the orga
+
+M4 [RED] projects join loses its same-organization condition
+   file: server/services/artifact-registry-read.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts, server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts
+   Tests  3 failed | 3 passed (6)   reverted: True (sha256 6d6a9ba0ffb9a135… restored)
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > lists every non-archived artifact of the project across CTD
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > counts the project exactly, and another project of the orga
+   × artifacts-center-foreign-project.pglite.test.ts > GET /api/artifacts-center — the project shown is the artifact’s own organization’s > an artifact under another organization's project id never shows
+
+M5 [RED] review counted on any version, not the current one
+   file: server/services/artifact-registry-read.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts
+   Tests  1 failed | 3 passed (4)   reverted: True (sha256 6d6a9ba0ffb9a135… restored)
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > reads the signature on the current version in four states, 
+
+M6 [RED] a signature on an earlier version reads as current
+   file: shared/artifact-governance.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts, server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts, server/routes/__tests__/artifacts-center-signature-staleness.test.ts
+   Tests  5 failed | 17 passed (22)   reverted: True (sha256 38777732cae9cd87… restored)
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > reads the signature on the current version in four states, 
+   × project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > each leaf carries kind, format, model, status, version, author, r
+   × project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > states the signature in the four states the Artifacts center uses
+   × project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reports the status breakdown and the count, and the count joins 
+   × artifacts-center-signature-staleness.test.ts > GET /api/artifacts-center — signature staleness > REGRESSION: an artifact signed at an earlier version reports stale 8ms
+
+M7 [RED] a row with no recorded origin is attributed to AnA
+   file: shared/artifact-governance.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+   Tests  1 failed | 10 passed (11)   reverted: True (sha256 38777732cae9cd87… restored)
+   × project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > names an origin only where the row records one 6ms
+
+M8 [RED] author not read (actor_name dropped)
+   file: server/services/artifact-registry-read.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts
+   Tests  1 failed | 3 passed (4)   reverted: True (sha256 6d6a9ba0ffb9a135… restored)
+   × project-vault-governed-artifacts.pglite.test.ts > GET /api/c2c/project-vault/:id — the governed artifacts of this project, on PostgreSQL > names the author through actor_name, and says nothing where
+
+M9 [RED] an unanchored project is rendered as an empty branch
+   file: server/routes/c2c/project-vault.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+   Tests  1 failed | 10 passed (11)   reverted: True (sha256 aa598c8e1f10021d… restored)
+   × project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an unanchored project is reported unavailable, never as an empty branch 7ms
+
+M10 [RED] an unprovisioned registry is swallowed as an empty branch
+   file: server/routes/c2c/project-vault.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+   Tests  1 failed | 10 passed (11)   reverted: True (sha256 aa598c8e1f10021d… restored)
+   × project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a registry this environment has not provisioned is reported unavailable 15ms
+
+M11 [RED] the total counts the window, not the project
+   file: server/routes/c2c/project-vault.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+   Tests  2 failed | 9 passed (11)   reverted: True (sha256 aa598c8e1f10021d… restored)
+   × project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > an anchored project with no artifacts is an honest empty: no branch, a zero, no unavailable 
+   × project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — honest states of the branch > a project with more artifacts than the window says so and keeps the exact total 6ms
+
+M12 [RED] §3 artifacts listed in text order, not section order
+   file: server/routes/c2c/project-vault.ts   suites: server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+   Tests  1 failed | 10 passed (11)   reverted: True (sha256 aa598c8e1f10021d… restored)
+   × project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections > lists Module 1, 2, 3 and 5 artifacts and those with no CTD sectio
+
+M13 [RED] the lane drops its unavailable state, so a failed branch read is not said (it renders nothing)
+   file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx   suites: client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx
+   Tests  1 failed | 9 passed (10)   reverted: True (sha256 dc47df8c18ba1bb6… restored)
+   × vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > a branch the server could not read is said as a failure, never as no artifacts 5022ms
+
+M14 [RED] a stale signature is shown as signed on the current version
+   file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx   suites: client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx
+   Tests  1 failed | 9 passed (10)   reverted: True (sha256 dc47df8c18ba1bb6… restored)
+   × vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > opens an artifact on its governance: kind, format, origin, model, author, signature, review, sources, hash 264ms
+
+M15 [RED] an unrecorded origin is shown as Drafted by AnA
+   file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx   suites: client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx
+   Tests  1 failed | 9 passed (10)   reverted: True (sha256 dc47df8c18ba1bb6… restored)
+   × vaultGovernedArtifacts.test.tsx > Vault — the project’s governed artifacts > an artifact with no recorded origin or model says so, rather than naming one 243ms
+
+M16 [RED] AnA is told nothing (null) when the branch could not be read
+   file: client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx   suites: client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx
+   Tests  1 failed | 9 passed (10)   reverted: True (sha256 dc47df8c18ba1bb6… restored)
+   × vaultGovernedArtifacts.test.tsx > Vault — honest states of the governed artifacts > tells AnA what the branch holds, and what it could not read 5094ms
+

@@ -18,49 +18,58 @@
 
 /* ─── Pathway / program type ───────────────────────────────────────── */
 
-export const REGULATORY_PATHWAYS = ['k510', 'pma', 'cer', 'ivdr'] as const;
+export const REGULATORY_PATHWAYS = [
+  'k510', 'pma', 'cer', 'ivdr', 'ide', 'device', 'hde', 'mdl',
+  'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx', 'other',
+] as const;
 export type RegulatoryPathway = typeof REGULATORY_PATHWAYS[number];
 
-/** Backend `regulatoryPath` column → kit pathway code. */
-export const REGULATORY_PATH_TO_PATHWAY: Record<string, RegulatoryPathway> = {
-  '510k':    'k510',
-  'de_novo': 'k510',
-  'pma':     'pma',
-  'cer':     'cer',
-  'mdr':     'cer',
-  'mdr_td':  'cer',
-  'eu_mdr':  'cer',
-  'ivd':     'ivdr',
-  'ivdr':    'ivdr',
-  'ivdr_td': 'ivdr',
-};
-
-/** Backend `programType` column → kit pathway code (null = non-MDX type). */
-export const PROGRAM_TYPE_TO_PATHWAY: Record<string, RegulatoryPathway | null> = {
-  '510K':    'k510',
-  '510(K)':  'k510',
-  '510k':    'k510',
-  'DE_NOVO': 'k510',
-  'PMA':     'pma',
-  'CER':     'cer',
-  'MDR':     'cer',
-  'MDR_TD':  'cer',
-  'IVD':     'ivdr',
-  'IVDR':    'ivdr',
-  'IVDR_TD': 'ivdr',
-  /* Non-MDX program types — surfaces filter these out. */
-  'IND': null,
-  'NDA': null,
-  'BLA': null,
-};
-
-/** Display label for the kit pathway. */
+/** A portfolio classification, not admission to a pathway authoring feature. */
 export const PATHWAY_LABEL: Record<RegulatoryPathway, string> = {
-  k510: '510(k)',
-  pma:  'PMA',
-  cer:  'CER',
-  ivdr: 'IVDR',
+  k510: '510(k)', pma: 'PMA', cer: 'CER', ivdr: 'IVDR', ide: 'IDE',
+  device: 'Device', hde: 'HDE', mdl: 'MDL', ivd_licence: 'IVD licence',
+  shonin: 'Shonin', ninsho: 'Ninsho', todokede: 'Todokede',
+  ivd_approval: 'IVD approval', jp_cdx: 'Japan CDx', other: 'Other',
 };
+
+/** Backend regulatory_path aliases. Unknown values are retained as Other. */
+export const REGULATORY_PATH_TO_PATHWAY: Readonly<Record<string, RegulatoryPathway>> = {
+  '510k': 'k510', '510(k)': 'k510', k510: 'k510', de_novo: 'k510',
+  pma: 'pma', cer: 'cer', mdr: 'cer', mdr_td: 'cer', eu_mdr: 'cer',
+  ivd: 'ivdr', ivdr: 'ivdr', ivdr_td: 'ivdr', ide: 'ide', device: 'device',
+  hde: 'hde', mdl: 'mdl', ivd_licence: 'ivd_licence', shonin: 'shonin',
+  ninsho: 'ninsho', todokede: 'todokede', ivd_approval: 'ivd_approval', jp_cdx: 'jp_cdx',
+};
+
+/** Exact evaluation/regional filing identity wins over a separately recorded
+ * US route. Generic IVD/device programs may still carry their actual route. */
+export const PATHWAY_IDENTITY_PROGRAM_TYPES = [
+  'cer', 'mdr', 'mdr_td', 'eu_mdr', 'ivdr', 'ivdr_td', 'ide', 'hde',
+  'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx',
+] as const;
+
+/** Compatibility program-type lookup, derived from the canonical aliases. */
+export const PROGRAM_TYPE_TO_PATHWAY: Readonly<Record<string, RegulatoryPathway | null>> =
+  Object.freeze(Object.fromEntries([
+    ...Object.entries(REGULATORY_PATH_TO_PATHWAY).map(([key, value]) => [key.toUpperCase(), value]),
+    ['IND', null], ['NDA', null], ['BLA', null],
+  ]));
+
+export function pathwayKey(value: string | null | undefined): string {
+  return String(value ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+}
+
+/** The same precedence is rendered by pathwaySqlCase for portfolio SQL. */
+export function pathwayForProgram(programType: string | null | undefined,
+  regulatoryPath: string | null | undefined): RegulatoryPathway {
+  const type = pathwayKey(programType);
+  if ((PATHWAY_IDENTITY_PROGRAM_TYPES as readonly string[]).includes(type)) {
+    return REGULATORY_PATH_TO_PATHWAY[type];
+  }
+  const path = pathwayKey(regulatoryPath);
+  if (Object.hasOwn(REGULATORY_PATH_TO_PATHWAY, path)) return REGULATORY_PATH_TO_PATHWAY[path];
+  return Object.hasOwn(REGULATORY_PATH_TO_PATHWAY, type) ? REGULATORY_PATH_TO_PATHWAY[type] : 'other';
+}
 
 export const MDX_DIAGNOSTICS_SURFACE_ID = 'device-diagnostics-workbench' as const;
 
@@ -103,8 +112,9 @@ export const STAGE_LABELS = [
   'Cleared',
 ] as const;
 
-/** PMA-specific 10-phase grid (kit content; mapping from kit's 7-stage to
- *  this grid lives in surfaces/PmaSurface.tsx). */
+/** PMA-specific 10-phase grid (kit content). It carries no position: a
+ *  project records a generic project phase (PROGRAM_PHASES), not a PMA phase,
+ *  and the kit-stage-to-PMA mapping was deleted in slice 0 (PmaSurface.tsx). */
 export const PMA_PHASE_IDS = [
   'presub', 'preclin', 'ide', 'mfg', 'pivotal',
   'labeling', 'module', 'panel', 'approval', 'postapp',
@@ -208,35 +218,8 @@ export const FAMILY_TO_SUBMISSION_PATHWAY: Record<string, SubmissionPathway> = {
 export const SUBMISSION_KIT_STATUSES = ['active', 'blocked', 'complete'] as const;
 export type SubmissionKitStatus = typeof SUBMISSION_KIT_STATUSES[number];
 
-/* ─── Tasks (Workbench Kanban) ─────────────────────────────────────── */
-
-export const TASK_COLUMNS = ['todo', 'doing', 'review', 'blocked', 'done'] as const;
-export type TaskColumn = typeof TASK_COLUMNS[number];
-
-export const STATUS_TO_TASK_COL: Record<string, TaskColumn> = {
-  todo:              'todo',
-  pending:           'todo',
-  in_progress:       'doing',
-  doing:             'doing',
-  ready_for_review:  'review',
-  review:            'review',
-  blocked:           'blocked',
-  done:              'done',
-  completed:         'done',
-};
-
-export const TASK_KINDS = ['edit', 'review', 'sign'] as const;
-export type TaskKind = typeof TASK_KINDS[number];
-
-export const TYPE_TO_TASK_KIND: Record<string, TaskKind> = {
-  edit:      'edit',
-  draft:     'edit',
-  authoring: 'edit',
-  review:    'review',
-  approval:  'sign',
-  sign:      'sign',
-  signoff:   'sign',
-};
+/* No Workbench Kanban maps. Their one reader, the kit's task panel, folded into
+   Tasks (D2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/). */
 
 /* ─── Audit / mutation actions ─────────────────────────────────────── */
 

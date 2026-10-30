@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { and, eq, desc, asc, inArray, isNull, sql } from 'drizzle-orm';
+import { and, eq, desc, asc, isNull, sql } from 'drizzle-orm';
 import {
   unifiedTasks,
   taskTemplates,
@@ -30,6 +30,10 @@ import {
   TASK_TRANSITIONS,
   CREATABLE_TASK_STATUSES,
   isLegalTransition,
+  refuseRouteColumnsInInput,
+  refuseRouteTaskWrite,
+  RouteTaskWriteRefused,
+  routeTaskRefusalBody,
   type TaskStatus,
 } from '../services/tasking/task-state-machine';
 import {
@@ -43,8 +47,12 @@ import {
   calculateCriticalPath,
   getOptimalAssignee,
 } from '../services/tasking/task-planning';
-import { requestDb } from '../db/requestDb';
-import { projectForTaskSource, AUTHORING_DOCUMENT_SOURCE } from '../services/tasking/task-project';
+import { requestDb, type RequestDb } from '../db/requestDb';
+import { createTaskInTx, type TaskInsertRunner } from '../services/tasking/create-task';
+import { readMyWork } from '../services/tasking/my-work';
+import { routeRemindRefusal } from '../services/review/review-route';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { projectForTaskSource, PROJECT_TELLING_SOURCES } from '../services/tasking/task-project';
 import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
 
 const router = Router();
@@ -196,7 +204,7 @@ async function taskProjectOrRefuse(
   organizationId: number,
   data: { projectId?: number; sourceEntityType?: string; sourceEntityId?: string },
 ): Promise<{ projectId: number | undefined } | null> {
-  if (data.projectId !== undefined || data.sourceEntityType !== AUTHORING_DOCUMENT_SOURCE) {
+  if (data.projectId !== undefined || !PROJECT_TELLING_SOURCES.includes(String(data.sourceEntityType))) {
     return { projectId: data.projectId };
   }
   try {
@@ -245,6 +253,8 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
     const ctx = governedWriter(req, res);
     if (!ctx) return;
     const { organizationId, actorUserId } = ctx;
+    // A route member is written only by the review route (RR1a, B1/M9).
+    refuseRouteColumnsInInput(req.body, 'task.create');
     const validatedData = createTaskSchema.parse(req.body);
     const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
@@ -291,11 +301,11 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
     // Part 11 lineage — the create is written to the governed ledger on THIS
     // path too (assessment D11), in the create's own transaction.
     const newTask = await storage.db.transaction(async (tx) => {
-      const [row] = await tx
-        .insert(unifiedTasks)
-        .values({
-          taskId,
-          organizationId,
+      const row = await createTaskInTx(tx as unknown as TaskInsertRunner, {
+        organizationId,
+        actorUserId,
+        taskId,
+        values: {
           ...taskFields,
           projectId: project.projectId,
           startDate: startDate ? new Date(startDate) : undefined,
@@ -306,15 +316,8 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
           status: validatedData.status ?? 'pending',
           progress: 0,
           completionPercentage: 0,
-          createdById: actorUserId,
-        })
-        .returning();
-      await auditTaskActionInTx(tx, {
-        orgId: organizationId,
-        userId: actorUserId,
-        command: 'task.create',
-        taskId,
-        payload: {
+        },
+        auditPayload: {
           moduleType: validatedData.moduleType,
           title: validatedData.title,
           priority: validatedData.priority,
@@ -337,6 +340,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
       data: newTask,
     });
   } catch (error) {
+    if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The task');
     if (commitInFlight) return outcomeUnknown(res);
     console.error('Error creating task:', error);
@@ -456,6 +460,8 @@ router.patch('/tasks/:taskId', (req, res, next) => {
     if (!existing) {
       return res.status(404).json({ success: false, error: 'Task not found' });
     }
+    // A route member's status is the route's (RR1a, B1).
+    refuseRouteTaskWrite(existing, 'task.transition');
 
     if (!isLegalTransition(existing.status, parsed.status)) {
       return res.status(409).json({
@@ -627,6 +633,7 @@ router.patch('/tasks/:taskId', (req, res, next) => {
 
     return res.json({ success: true, data: updated });
   } catch (error) {
+    if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The status change');
     if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.errors });
     console.error('Error updating task:', error);
@@ -721,6 +728,8 @@ router.post('/tasks/bulk-create', requireEditorAccess, async (req: Request, res:
     const ctx = governedWriter(req, res);
     if (!ctx) return;
     const { organizationId, actorUserId } = ctx;
+    refuseRouteColumnsInInput(req.body, 'task.create');
+    for (const each of Array.isArray(req.body?.tasks) ? req.body.tasks : []) refuseRouteColumnsInInput(each, 'task.create');
     const validatedData = bulkCreateTasksSchema.parse(req.body);
     const taskIdMapping: Record<string, string> = {};
 
@@ -770,6 +779,7 @@ router.post('/tasks/bulk-create', requireEditorAccess, async (req: Request, res:
 
     res.json({ success: true, data: createdTasks, count: createdTasks.length });
   } catch (error) {
+    if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
     if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.errors });
     const audit = error instanceof TaskAuditNotRecordedError;
     if (!audit) console.error('Error bulk creating tasks:', error);
@@ -808,6 +818,7 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
     if (!ctx) return;
     const { organizationId, actorUserId } = ctx;
     const templateId = String(req.params.templateId);
+    refuseRouteColumnsInInput(req.body, 'task.create');
     const { projectId, startDate, adjustDates } = req.body;
 
     // Get template — the org's own row wins; a built-in catalog entry serves
@@ -841,6 +852,9 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
     if (!template) return res.status(404).json({ success: false, error: 'Template not found' });
 
     const taskDefinitions = template.tasks as any[];
+    // A stored template's task definitions are org-authored data: one naming
+    // a route column instantiates nothing (RR1a, M9).
+    for (const taskDef of taskDefinitions) refuseRouteColumnsInInput(taskDef, 'task.create');
     const taskIdMapping: Record<string, string> = {};
 
     // The workflow is instantiated as ONE transaction — every task, its ledger
@@ -962,6 +976,7 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
 
     res.json({ success: true, data: createdTasks, count: createdTasks.length, template: template.name });
   } catch (error) {
+    if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The workflow');
     console.error('Error creating tasks from template:', error);
     res.status(500).json({ success: false, error: 'Failed to create tasks from template' });
@@ -1022,7 +1037,7 @@ router.post('/tasks/dependencies', requireEditorAccess, async (req: Request, res
 
     const [predecessorRows, successorRows] = await Promise.all([
       storage.db
-        .select({ taskId: unifiedTasks.taskId, status: unifiedTasks.status })
+        .select({ taskId: unifiedTasks.taskId, status: unifiedTasks.status, reviewRouteId: unifiedTasks.reviewRouteId })
         .from(unifiedTasks)
         .where(
           and(
@@ -1038,6 +1053,7 @@ router.post('/tasks/dependencies', requireEditorAccess, async (req: Request, res
           status: unifiedTasks.status,
           title: unifiedTasks.title,
           assigneeId: unifiedTasks.assigneeId,
+          reviewRouteId: unifiedTasks.reviewRouteId,
         })
         .from(unifiedTasks)
         .where(
@@ -1057,6 +1073,10 @@ router.post('/tasks/dependencies', requireEditorAccess, async (req: Request, res
         error: 'One or both tasks not found for organization',
       });
     }
+    // Either end a route member: route steps are opened by the route, never
+    // by the generic dependency graph (RR1a, B1, §3).
+    refuseRouteTaskWrite(predecessorTask, 'task.link');
+    refuseRouteTaskWrite(successorTask, 'task.link');
 
     // Reject an edge that would close a cycle — the DAG previously accepted
     // A→B, B→A, after which the critical-path walk relied on its visited-set
@@ -1154,6 +1174,7 @@ router.post('/tasks/dependencies', requireEditorAccess, async (req: Request, res
       successorBlocked,
     });
   } catch (error) {
+    if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The dependency');
     console.error('Error creating dependency:', error);
     res.status(400).json({
@@ -1385,6 +1406,14 @@ router.post('/tasks/:taskId/notify', requireEditorAccess, async (req: Request, r
     if (!task) {
       return res.status(404).json({ success: false, error: 'Task not found' });
     }
+    // A review route member is reminded by the route's sender or an
+    // administrator, while their step is open (RR1b, REVIEW_ROUTING §2.11).
+    if (task.reviewRouteId) {
+      const refused = await routeRemindRefusal(queryableFromDrizzle(storage.db), {
+        organizationId, actorUserId, reviewRouteId: task.reviewRouteId, taskStatus: task.status,
+      });
+      if (refused) return res.status(refused.status).json({ success: false, error: refused.message, code: refused.code });
+    }
 
     let recipientUserId = parsed.recipientUserId ?? task.assigneeId ?? null;
     if (parsed.recipientUserId) {
@@ -1559,6 +1588,20 @@ router.delete('/tasks/:taskId', requireEditorAccess, async (req: Request, res: R
     }
 
     const archived = await storage.db.transaction(async (tx) => {
+      // Read under the row lock first: a route member is archived only by its
+      // route (RR1a, B1), and the refusal must come before any write.
+      const [current] = await tx
+        .select({ reviewRouteId: unifiedTasks.reviewRouteId })
+        .from(unifiedTasks)
+        .where(
+          and(
+            eq(unifiedTasks.taskId, taskId),
+            eq(unifiedTasks.organizationId, organizationId),
+            isNull(unifiedTasks.deletedAt)
+          )
+        )
+        .for('update');
+      if (current) refuseRouteTaskWrite(current, 'task.delete');
       const [row] = await tx
         .update(unifiedTasks)
         .set({ deletedAt: new Date(), deletedBy: actorUserId, updatedAt: new Date() })
@@ -1588,6 +1631,7 @@ router.delete('/tasks/:taskId', requireEditorAccess, async (req: Request, res: R
     }
     return res.json({ success: true, archived: true, taskId });
   } catch (error) {
+    if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The archive');
     console.error('Error archiving task:', error);
     return res.status(500).json({ success: false, error: 'Failed to archive task' });
@@ -1598,8 +1642,9 @@ router.delete('/tasks/:taskId', requireEditorAccess, async (req: Request, res: R
 //
 // One org-scoped answer to "what is assigned to me right now" from the
 // canonical store: open unified tasks for the caller, split into overdue /
-// due-soon / open, plus the approvals awaiting them. The tray previously
-// showed a hardcoded count (assessment D40).
+// due-soon / open, plus the approvals awaiting them, each with its project's
+// name (services/tasking/my-work.ts). The tray previously showed a hardcoded
+// count (assessment D40).
 router.get('/my-work', async (req: Request, res: Response) => {
   try {
     // A read, so not behind requireEditorAccess: the organization comes from
@@ -1609,61 +1654,8 @@ router.get('/my-work', async (req: Request, res: Response) => {
     if (!Number.isFinite(organizationId) || organizationId <= 0 || !actorUserId) {
       return res.status(401).json({ success: false, error: 'Organization and user context required' });
     }
-
-    const rows = await storage.db
-      .select()
-      .from(unifiedTasks)
-      .where(
-        and(
-          eq(unifiedTasks.organizationId, organizationId),
-          eq(unifiedTasks.assigneeId, actorUserId),
-          inArray(unifiedTasks.status, ['pending', 'in-progress', 'review', 'blocked']),
-          isNull(unifiedTasks.deletedAt)
-        )
-      )
-      .orderBy(sql`${unifiedTasks.dueDate} asc nulls last`)
-      .limit(200);
-
-    const now = Date.now();
-    const soonCutoff = now + 48 * 60 * 60 * 1000;
-    const items = rows.map(row => {
-      const dueMs = row.dueDate ? new Date(row.dueDate).getTime() : null;
-      return {
-        taskId: row.taskId,
-        title: row.title,
-        projectId: row.projectId ?? null,
-        moduleType: row.moduleType,
-        taskType: row.taskType ?? '',
-        status: row.status,
-        priority: row.priority,
-        dueDate: row.dueDate ? new Date(row.dueDate).toISOString() : null,
-        overdue: dueMs != null && dueMs < now,
-        dueSoon: dueMs != null && dueMs >= now && dueMs <= soonCutoff,
-        blocked: row.status === 'blocked' || (Array.isArray(row.blockedBy) && row.blockedBy.length > 0),
-        approvalRequired: row.approvalRequired ?? false,
-        approvalStatus: row.approvalStatus ?? 'not_started',
-        criticalPath: row.criticalPath ?? false,
-      };
-    });
-
-    return res.json({
-      success: true,
-      data: {
-        items,
-        total: items.length,
-        overdue: items.filter(i => i.overdue).length,
-        dueSoon: items.filter(i => i.dueSoon).length,
-        blocked: items.filter(i => i.blocked).length,
-        approvalsPending: items.filter(
-          // Mirrors the gate's own definition (task-signoff.ts): anything
-          // approval-gated that is not yet approved still needs a signature.
-          // Testing === 'pending' made this structurally zero — approval_status
-          // is nullable with no default and no write path ever sets 'pending'
-          // (only 'approved'), so the count never left 0.
-          i => i.approvalRequired && i.approvalStatus !== 'approved'
-        ).length,
-      },
-    });
+    const data = await readMyWork(storage.db as unknown as RequestDb, organizationId, actorUserId);
+    return res.json({ success: true, data });
   } catch (error) {
     console.error('Error loading my work:', error);
     return res.status(500).json({ success: false, error: 'Failed to load my work' });

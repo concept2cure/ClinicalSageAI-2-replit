@@ -19,6 +19,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { NAVIGATION_TARGETS } from '../../../../../shared/navigation/index';
+import { LAUNCH_SHELL_SURFACES, LAUNCH_SURFACE_IDS } from '../../../../../shared/constants/launch-scope';
+import { UI_SURFACES } from '../../../../../shared/constants/ui-surface-registry';
 import { DEEP_LINK_ALIASES } from '../registryModel';
 import { SURFACE_VIEWS } from '../surfaceViews';
 import { locationForSurface, surfaceIdFromLocation } from '../routing';
@@ -36,6 +38,42 @@ describe('navigation-registry ↔ shell reachability', () => {
     expect(unreachable, `registry ids with no real surface view: ${unreachable.join(', ')}`).toEqual(
       [],
     );
+  });
+
+  /* Slice 0 of .design/client-journey/INFORMATION_ARCHITECTURE.md: an alias must not land on a lock.
+     Under the launch scope the server gives every registered surface outside the release a
+     'launch-scope' lock (navigation-entitlements.ts, the launch overlay over UI_SURFACES); the shell
+     forwards those to AnA as locked screens (V2App AnaLockPublisher), and navigate_to refuses them
+     in the conversation instead of moving the person. That holds only for a target whose screen is
+     in the release, or is a registered surface the overlay can lock. A target resolving anywhere
+     else would reach a screen AnA is never told is closed. */
+  it('every target opens in the release, or resolves to a surface the launch scope can lock for AnA', () => {
+    const registered = new Set(UI_SURFACES.map((s) => s.id));
+    const unlockable: string[] = [];
+    for (const target of NAVIGATION_TARGETS) {
+      const resolved = surfaceIdFromLocation(locationForSurface(target.id));
+      const inRelease = resolved === 'home' || LAUNCH_SURFACE_IDS.has(resolved) || resolved in LAUNCH_SHELL_SURFACES;
+      if (!inRelease && !registered.has(resolved)) unlockable.push(`${target.id} → ${resolved}`);
+    }
+    expect(unlockable).toEqual([]);
+  });
+
+  it('"biopharma" opens Projects, where a project is opened and created, not a screen outside the release', () => {
+    /* It resolved to program-journey, outside the release: AnA was refused, and a link opened a lock.
+       The journey's six steps are each project's own (project-home); the module's entry is Projects. */
+    expect(DEEP_LINK_ALIASES.biopharma).toBe('projects');
+    expect(LAUNCH_SURFACE_IDS.has(surfaceIdFromLocation(locationForSurface('biopharma')))).toBe(true);
+  });
+
+  it('the retained MDX handle reaches admitted Projects while the device portfolio remains registered', () => {
+    const target = NAVIGATION_TARGETS.find(t => t.id === 'mdx');
+    expect(target?.scope).toBe('global');
+    expect(target?.description).toMatch(/Projects/);
+    expect(surfaceIdFromLocation(locationForSurface('mdx'))).toBe('projects');
+    expect(LAUNCH_SURFACE_IDS.has(surfaceIdFromLocation(locationForSurface('mdx')))).toBe(true);
+    expect(NAVIGATION_TARGETS.some(t => t.id === 'device-workstream')).toBe(true);
+    expect(UI_SURFACES.some(s => s.id === 'device-workstream')).toBe(true);
+    expect(SURFACE_VIEWS['device-workstream']).toBeTruthy();
   });
 
   it('aliases only point AT real views — a dangling alias is drift in the other direction', () => {

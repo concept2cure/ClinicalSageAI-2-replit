@@ -1,0 +1,190 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+{
+  "timestamp": "2026-10-26T15:18:25.397Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:18:25.399Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+{
+  "timestamp": "2026-10-26T15:18:25.399Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+[database] Database connection successful
+
+stderr | server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+{
+  "timestamp": "2026-10-26T15:18:25.430Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > none does not suppress an FDA-reportable malfunction 28ms
+   → expected { fdaReportable: false, …(11) } to match object { fdaReportable: true, …(1) }
+(14 matching properties omitted from actual)
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > injury does not suppress an FDA-reportable malfunction 5ms
+   → expected { fdaReportable: false, …(11) } to match object { fdaReportable: true, …(1) }
+(14 matching properties omitted from actual)
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > none leaves FDA reportability unknown when malfunction risk was not stated 2ms
+   → expected { fdaReportable: false, …(11) } to match object { fdaReportable: null, …(1) }
+(14 matching properties omitted from actual)
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > injury leaves FDA reportability unknown when malfunction risk was not stated 1ms
+   → expected { fdaReportable: false, …(11) } to match object { fdaReportable: null, …(1) }
+(14 matching properties omitted from actual)
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > no actual harm does not settle an EU malfunction serious-incident determination 1ms
+   → expected { fdaReportable: false, …(11) } to match object { fdaReportable: true, …(2) }
+(13 matching properties omitted from actual)
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a serious injury with nothing else stated is FDA reportable, and the rest is not determined 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a malfunction whose recurrence risk is not stated is not "not reportable" 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a malfunction in the EU leaves EU vigilance not assessed, not "not reportable" 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a country stated as unknown leaves EU vigilance undetermined, not "outside the EU" 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > records the facts it used, and is complete when every one it turns on is stated 1ms
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the normalized country for "       de       ", within the varchar(8) limit 3ms
+   → expected '       de       ' to be 'DE' // Object.is equality
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the normalized country for "  UnKnOwN  ", within the varchar(8) limit 1ms
+   → expected '  UnKnOwN  ' to be 'unknown' // Object.is equality
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without anticipatesCorrection, and stores nothing 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without isMalfunction 2ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without eventLocationCountry 13ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without trendThresholdCrossed 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a country it cannot read rather than read it as outside the EU 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the facts as stated; a country stated as unknown leaves EU vigilance undetermined 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > assess_mdr_reportability asks for each omitted fact > { patientHarm: "serious_injury" } is not a 30-day report: it names each fact it was not given 2ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > assess_mdr_reportability asks for each omitted fact > computes from stated facts, and says what a country stated as unknown leaves undetermined 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > none does not suppress an FDA-reportable malfunction
+ FAIL  server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > injury does not suppress an FDA-reportable malfunction
+AssertionError: expected { fdaReportable: false, …(11) } to match object { fdaReportable: true, …(1) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "fdaReportable": true,
+-   "suggestedFdaReportType": "initial_30day",
++   "fdaReportable": false,
++   "suggestedFdaReportType": null,
+  }
+
+ ❯ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts:86:20
+     84|   it.each(['none', 'injury'] as const)('%s does not suppress an FDA-re…
+     85|     const result = classify({ patientHarm, ...STATED, isMalfunction: t…
+     86|     expect(result).toMatchObject({ fdaReportable: true, suggestedFdaRe…
+       |                    ^
+     87|     expect(result.rationale).toMatch(/Malfunction/);
+     88|     expect(result.rationale).not.toMatch(/no FDA MDR|no MDR/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > none leaves FDA reportability unknown when malfunction risk was not stated
+ FAIL  server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > injury leaves FDA reportability unknown when malfunction risk was not stated
+AssertionError: expected { fdaReportable: false, …(11) } to match object { fdaReportable: null, …(1) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "determinationComplete": false,
+-   "fdaReportable": null,
++   "determinationComplete": true,
++   "fdaReportable": false,
+  }
+
+ ❯ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts:93:20
+     91|   it.each(['none', 'injury'] as const)('%s leaves FDA reportability un…
+     92|     const result = classify({ patientHarm, ...STATED, isMalfunction: u…
+     93|     expect(result).toMatchObject({ fdaReportable: null, determinationC…
+       |                    ^
+     94|     expect(factNames(result.missingFacts)).toContain('isMalfunction');
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > no actual harm does not settle an EU malfunction serious-incident determination
+AssertionError: expected { fdaReportable: false, …(11) } to match object { fdaReportable: true, …(2) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "determinationComplete": false,
+-   "fdaReportable": true,
+-   "mdrEuReportable": null,
++   "determinationComplete": true,
++   "fdaReportable": false,
++   "mdrEuReportable": false,
+  }
+
+ ❯ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts:99:20
+     97|   it('no actual harm does not settle an EU malfunction serious-inciden…
+     98|     const result = classify({ patientHarm: 'none', ...STATED, isMalfun…
+     99|     expect(result).toMatchObject({ fdaReportable: true, mdrEuReportabl…
+       |                    ^
+    100|     expect(result.rationale).toMatch(/not assessed/);
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the normalized country for "       de       ", within the varchar(8) limit
+AssertionError: expected '       de       ' to be 'DE' // Object.is equality
+
+Expected: "DE"
+Received: "       de       "
+
+ ❯ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts:178:42
+    176|     await createComplaint(3, { ...INTAKE, ...STATED, eventLocationCoun…
+    177|     const stored = H.inserted.find((row) => 'preliminaryClassification…
+    178|     expect(stored?.eventLocationCountry).toBe(storedCountry);
+       |                                          ^
+    179|   });
+    180|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the normalized country for "  UnKnOwN  ", within the varchar(8) limit
+AssertionError: expected '  UnKnOwN  ' to be 'unknown' // Object.is equality
+
+Expected: "unknown"
+Received: "  UnKnOwN  "
+
+ ❯ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts:178:42
+    176|     await createComplaint(3, { ...INTAKE, ...STATED, eventLocationCoun…
+    177|     const stored = H.inserted.find((row) => 'preliminaryClassification…
+    178|     expect(stored?.eventLocationCountry).toBe(storedCountry);
+       |                                          ^
+    179|   });
+    180|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 13 passed (20)
+   Start at  15:18:22
+   Duration  10.73s (transform 7.16s, setup 151ms, import 10.13s, tests 67ms, environment 0ms)
+

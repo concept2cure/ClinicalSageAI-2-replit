@@ -35,13 +35,30 @@ import { ORG, UUID, LEAVES, REAL_BACKBONE, handlerOf, makeBundleZip, assembledRe
  * here only when its submission is anchored to this project, so the MAA's
  * compile names what its export and transmit would.
  */
-const NDA_PROGRAM = { id: UUID, code: 'ONC-221', name: 'ONC-221 Program', product_name: 'Vorelinib', program_type: 'nda', application_number: '214321' };
+// primary_agency: the project's home market, NOT NULL on the real table; a
+// package whose project names no recognized agency is refused (b0beb9392).
+const NDA_PROGRAM = { id: UUID, code: 'ONC-221', name: 'ONC-221 Program', product_name: 'Vorelinib', program_type: 'nda', application_number: '214321', primary_agency: 'FDA' };
 /** The project's own NDA submission (55) has sequence 9 (FDA); its MAA (56) has sequence 21 (EU). */
 const OWN_SEQUENCES: Record<number, { submission_id: number; application_type: string; primary_region: string; sequence_number: string; region: string }> = {
   21: { submission_id: 56, application_type: 'maa', primary_region: 'eu', sequence_number: '0000', region: 'eu' },
   /** The MAA's next sequence, with nothing placed in it yet. */
   22: { submission_id: 56, application_type: 'maa', primary_region: 'eu', sequence_number: '0001', region: 'eu' },
 };
+
+/** The package's market read (P-44): both submissions are anchored to this
+ *  project; the MAA (56) is its EU market, with `maaNumber` recorded as that
+ *  market's own number, and the NDA (55) its home market, which reads the
+ *  project's. Wraps whatever the pool answers already. */
+function marketMocks(maaNumber: string | null) {
+  const base = poolQuery.getMockImplementation()!;
+  poolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+    if (/to_jsonb\(s\)->>'application_number'/.test(sql)) {
+      const maa = Number(params[0]) === 56;
+      return { rows: [{ program_id: UUID, primary_region: maa ? 'eu' : 'fda', market_number: maa ? maaNumber : null }] };
+    }
+    return base(sql, params);
+  });
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -66,6 +83,8 @@ beforeEach(() => {
     if (/FROM submission_leaves/i.test(sql)) return { rows: LEAVES };
     return { rows: [] };
   });
+  // The MAA records its own market's number; the P-44 cases below replace it.
+  marketMocks('EMEA-H-C-005124');
 });
 
 const compile = handlerOf(ectdCompileRoutes, '/:projectIdent/compile', 'post');
@@ -134,18 +153,6 @@ describe('compile carries the sequence (F14)', () => {
    214321, and with none recorded it is refused before anything is assembled
    (security review: compile read the project's number). */
 describe("compile carries the sequence's own market's number (P-44)", () => {
-  function marketMocks(maaNumber: string | null) {
-    const base = poolQuery.getMockImplementation()!;
-    poolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
-      if (/to_jsonb\(s\)->>'application_number'/.test(sql)) {
-        const maa = Number(params[0]) === 56;
-        return { rows: [{ program_id: UUID, primary_region: maa ? 'eu' : 'fda', market_number: maa ? maaNumber : null }] };
-      }
-      const out = await base(sql, params);
-      return /FROM organizations/i.test(sql) ? { rows: out.rows.map((r: object) => ({ ...r, primary_agency: 'FDA' })) } : out;
-    });
-  }
-
   it('with no number recorded for the EU market, nothing is assembled, and the refusal names the market', async () => {
     marketMocks(null);
     await selfContainedAssembly();

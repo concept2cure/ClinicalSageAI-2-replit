@@ -1,0 +1,12 @@
+M4: risk list drops admitProject
+file: server/routes/mdx-risk-management.ts
+test: server/routes/__tests__/mdx-risk-program-scope.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > reads that project's register after the ownership check, and says so 23ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > refuses another organization's project with 404 and reads nothing 9ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > refuses a missing project with 404 and reads nothing 6ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > refuses a deleted project with 404 and reads nothing 5ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > answers 503 when the ownership check cannot run, and reads nothing 7ms
+      Tests  5 failed | 30 passed (35)

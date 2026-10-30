@@ -1,0 +1,6 @@
+Affected set (30 files: Home, the work panel, the shell, the lock panel):
+ Test Files  2 failed | 28 passed (30)
+      Tests  6 failed | 572 passed (578)
+Failing (identical at 2246406e4, the conversation composer foot, not touched here):
+      1  FAIL  client/src/concept2cure/v2/__tests__/engineChoices.test.tsx
+      5  FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx

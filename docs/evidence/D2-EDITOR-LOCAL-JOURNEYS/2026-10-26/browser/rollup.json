@@ -1,0 +1,25 @@
+{
+  "utc": "2026-10-26T15:34:58.235649+00:00",
+  "authoritativeEpoch": "final-latched/summary.json",
+  "passed": 44,
+  "failed": 0,
+  "sourcePins": 29,
+  "sharedPins": 3,
+  "fixturePins": 11,
+  "stageCount": 60,
+  "axeCaptureCount": 16,
+  "axeViolationCount": 0,
+  "axeIncompleteRuleCount": 0,
+  "onlySuccessorSourceDelta": [
+    "client/src/concept2cure/v2/editor/assemblySourceIntent.ts"
+  ],
+  "fixtureBytesUnchanged": true,
+  "currentPinsVerify": true,
+  "rawHashVerified": true,
+  "ownedServerStopped": true,
+  "limits": [
+    "The positive host switches to the actual native Workbench at the onNav boundary; it does not emulate the complete shell router.",
+    "Axe incomplete results require manual assessment; this is a bounded automated check, not a complete accessibility audit.",
+    "Only display/identity/read/handoff are exercised; preview, build, generation and acceptance remain separate explicit actions."
+  ]
+}

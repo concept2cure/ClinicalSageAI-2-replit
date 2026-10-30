@@ -20,6 +20,9 @@ const pivotal: CSRSummaryInput = {
   // 2026-10-15: efficacy is concluded only from a recorded outcome, never from
   // a Phase 3 CSR existing; this fixture records the outcome its result describes.
   primaryEndpointMet: true,
+  // 2026-10-29: pivotal is the sponsor's declaration, never the phase
+  // (csr/study-pivotal-declaration.ts); this fixture's study is declared pivotal.
+  pivotal: true,
   sampleSize: 600,
   ittPopulation: 590,
   saeCount: 12,
@@ -36,6 +39,7 @@ const phase1: CSRSummaryInput = {
   // Extracted and zero, not "never extracted".
   saeCount: 0,
   deathCount: 0,
+  pivotal: false,
 };
 
 describe('buildM23QualityOverallSummary (QOS via Module 3 composition)', () => {
@@ -193,7 +197,7 @@ describe('QOS preserves the upstream stability qualification', () => {
 });
 
 describe('buildM25ClinicalOverview', () => {
-  it('composes the 2.5.1–2.5.6 critical assessment and leaves the benefit-risk conclusion to the sponsor', () => {
+  it('composes the 2.5.1–2.5.7 critical assessment and leaves the benefit-risk conclusion to the sponsor', () => {
     const r = buildM25ClinicalOverview({
       csrs: [phase1, pivotal],
       indication: 'type 2 diabetes',
@@ -211,10 +215,13 @@ describe('buildM25ClinicalOverview', () => {
     expect(r.gaps).toEqual([
       'biopharmaceutics (2.5.2): no biopharmaceutic data recorded',
       'benefit-risk conclusion (sponsor medical/regulatory judgment; not drawn automatically)',
+      // D2 cleanup C4c: the record's 2.5.6 subdivisions this composer does not write (2.5.6.5 is conditional).
+      'headings of 2.5 this composer does not write: 2.5.6.1–2.5.6.4',
     ]);
     // Completeness measures the clinical data present. 2026-10-15: this pinned
     // 100 by counting 2.5.2 biopharmaceutics, which has no input, as summarized.
-    expect(r.completeness).toBe(83);
+    // 2026-10-26 (3b Slice 1): 83 counted the caller's rationale as 2.5.1; 4 of 6.
+    expect(r.completeness).toBe(67);
     expect(r.tables.map(t => t.title)).toContain('Benefit-Risk Safety Overview');
   });
 
@@ -234,7 +241,7 @@ describe('buildM25ClinicalOverview', () => {
       indication: 'type 2 diabetes',
       investigationalProduct: 'BX-115',
     });
-    expect(r.gaps).toContain('pivotal (Phase 3) efficacy evidence');
+    expect(r.gaps).toContain('pivotal efficacy evidence (no study is declared pivotal)');
     expect(r.narrative).toMatch(/cannot be concluded/);
     expect(r.completeness).toBeLessThan(100);
   });
@@ -324,5 +331,15 @@ describe('a sample size that was never recorded is not "n=0"', () => {
   it('a recorded size still prints as the number', () => {
     const r = buildM25ClinicalOverview({ csrs: [phase1, pivotal], indication: 'type 2 diabetes', investigationalProduct: 'BX-115' });
     expect(r.narrative).toMatch(/BX-301 \(Phase 3, n=600\)/);
+  });
+});
+
+describe('buildM25ClinicalOverview completeness counts recorded inputs only (3b Slice 1)', () => {
+  it('a rationale written by the caller does not raise completeness: 2.5.1 has no recorded input', () => {
+    const base = { csrs: [phase1, pivotal], indication: 'type 2 diabetes', investigationalProduct: 'BX-115' };
+    const without = buildM25ClinicalOverview(base);
+    const withProse = buildM25ClinicalOverview({ ...base, developmentRationale: 'Significant unmet need despite available therapies.' });
+    expect(withProse.completeness).toBe(without.completeness);
+    expect(withProse.narrative).toContain('Significant unmet need despite available therapies.');
   });
 });

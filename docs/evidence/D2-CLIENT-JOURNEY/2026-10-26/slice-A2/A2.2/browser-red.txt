@@ -1,0 +1,34 @@
+
+Running 1 test using 1 worker
+
+(node:12795) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12795) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › tests/e2e/projects-client-filter.e2e.ts:4:1 › the portfolio filters the owning client and the project names that client (4.2s)
+
+
+  1) [chromium] › tests/e2e/projects-client-filter.e2e.ts:4:1 › the portfolio filters the owning client and the project names that client 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m11[39m
+    Received: [31mundefined[39m
+
+      39 |     expect(created.status(), await created.text()).toBe(201);
+      40 |     const receipt = await created.json();
+    > 41 |     expect(receipt.data.client_workspace_id).toBe(Number(client.id));
+         |                                              ^
+      42 |     expect(receipt.data.client_name).toBe(client.name);
+      43 |     ids.push(receipt.data.id);
+      44 |   }
+        at /workspace/ClinicalSageAI-2-replit/tests/e2e/projects-client-filter.e2e.ts:41:46
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e/projects-client-filter.e2e-d5715-e-project-names-that-client-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e/projects-client-filter.e2e-d5715-e-project-names-that-client-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/projects-client-filter.e2e.ts:4:1 › the portfolio filters the owning client and the project names that client 

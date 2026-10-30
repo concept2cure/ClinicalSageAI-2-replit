@@ -8,7 +8,7 @@ import { reserveWritableDocument, DocumentWriteReservationError } from './docume
 import { insertSectionSeedTx } from './authoring-section-seed';
 import { describeRefusedFigures, refusedFigures } from './authoring-html-sanitizer';
 import { writeAuthoringAuditTrail, type Queryable } from './authoring-evidence';
-import { AssemblyError, buildAssemblyPlan, parseAssemblyInput, type AssemblyDocument, type AssemblyStoredSection, type AssemblyTemplate } from './authoring-assembly-plan';
+import { AssemblyError, assemblySourceQuery, buildAssemblyPlan, parseAssemblyInput, type AssemblyDocument, type AssemblyStoredSection, type AssemblyTemplate } from './authoring-assembly-plan';
 import { resolveAssemblyTemplate } from './authoring-assembly-source';
 import { AssemblySourceError, readSelectedAuthoringSources } from './authoring-assembly-sources';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
@@ -72,10 +72,11 @@ async function scopedPlan(q: Queryable, ctx: CreateContext, principal: Authoring
   if (lock && input.sources) await lockDocumentDispositionProgram(q, ctx.tenantId, input.programId);
   const saved = await target(q, current.context, current.principal, args);
   const template = await resolveAssemblyTemplate(q, ctx.tenantId, input.templateId, saved.doc, lock);
-  const query = `${saved.doc.module ?? ''} ${template.name} ${input.selection.target === 'section' ? input.selection.code : ''}`;
+  const structure = buildAssemblyPlan(saved.doc, saved.sections, template, input);
   const selected = input.sources ? await readSelectedAuthoringSources(q, { organizationId: ctx.tenantId,
-    userId: Number(ctx.actor.id), programId: input.programId }, input.sources, { query, lock }) : undefined;
-  const plan = buildAssemblyPlan(saved.doc, saved.sections, template, input, selected?.manifest);
+    userId: Number(ctx.actor.id), programId: input.programId }, input.sources,
+  { query: assemblySourceQuery(saved.doc.module, template, input.selection), lock }) : undefined;
+  const plan = selected ? buildAssemblyPlan(saved.doc, saved.sections, template, input, selected.manifest) : structure;
   // An unbound document needs no filing lookup; a bound target must pass the
   // canonical market/common rule without its historical fail-soft fallback.
   if (saved.doc.c2c_document_id) {

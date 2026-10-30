@@ -4,11 +4,12 @@ import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('../../../db', () => ({pool:{query:async () => ({rows:[]})},getPool:()=>({query:async () => ({rows:[]})}),db:{}}));
 vi.mock('../../../lib/unified-ai-client', () => ({ai:null}));
-import { materializeWorkflowSource, WorkflowSourceImportError, type WorkflowMaterializationInput } from '../workflow-source-import';
+import { materializeCsrAssemblySource, materializeWorkflowSource, WorkflowSourceImportError, type WorkflowMaterializationInput } from '../workflow-source-import';
 import { getProtocolExport } from '../../protocol-export/protocol-export-service';
 import { savedImportSource, verifySavedWorkflowImport } from '../import-source-references';
 import { removeVisitTx, removeSoaAssessmentTx } from '../../protocol-development/protocol-development-service';
 import { renderProtocolSoaMarkdown } from '../../protocol-export/protocol-export-logic';
+import { workflowCopySectionContent } from '../workflow-copy-content';
 
 const PROGRAM='11111111-1111-4111-8111-111111111111';
 const OTHER='22222222-2222-4222-8222-222222222222';
@@ -189,12 +190,33 @@ describe('stored CSR materialization',()=>{
     expect(result.origin.sourceScope).toEqual({level:'project',programId:null,projectId:11});
     expect(result.origin.version).toBeNull();
   });
+  // CSR slice 5 (2026-10-30): a section's claim receipts travel into the import, bound to the stored copy.
+  it('carries a section\'s claim receipts bound to the copy it stores, and drops receipts made for other text',async()=>{
+    const prose='Global cure occurred in 16/305 (5.2%) subjects in the Recorded CSR study 1 arm.';
+    const receipts={schema:'c2c.csr-claim-receipts.v1',programId:PROGRAM,runId:'33333333-3333-4333-8333-333333333333',studyId:'study-1',sectionNumber:'11.4',
+      evidenceDigest:'c'.repeat(64),sourceSha256:'d'.repeat(64),outputSha256:hash(prose),
+      claims:[{table:'primaryEfficacy',row:0,column:2,value:'16/305 (5.2%)',endpoint:'Global cure',population:'Result'}]};
+    await database.query("INSERT INTO csr_section_outputs VALUES(705,7,11,1,'11.4',$1,$2,true,'m',$3,'2026-10-02T00:00:00Z')",[prose,hash(prose),JSON.stringify({claimReceipts:receipts})]);
+    const result=await materializeWorkflowSource(input({kind:'csr',jobId:1,sectionNumbers:['11.4']}),q);
+    expect(result.origin.sectionOrigins[0].csrEvidence).toEqual({...receipts,sectionSha256:hash(workflowCopySectionContent(prose)),studyInformationNumbers:[]});
+    // "1" is in neither a claim nor the job's study information, so it is not whitelisted: the gate will report it.
+    await database.query('UPDATE csr_section_outputs SET lineage=$1 WHERE id=705',[JSON.stringify({claimReceipts:{...receipts,outputSha256:hash('other text')}})]);
+    const forged=await materializeWorkflowSource(input({kind:'csr',jobId:1,sectionNumbers:['11.4']}),q);
+    expect(forged.origin.sectionOrigins[0]).not.toHaveProperty('csrEvidence');
+    expect(forged.fingerprint).not.toBe(result.fingerprint);
+  });
   it('preserves partial gaps and organization source scope with explicit association, rather than completing missing output',async()=>{
     const result=await materializeWorkflowSource(input({kind:'csr',jobId:2}),q);
     expect(result.origin.sourceScope.level).toBe('organization');
     expect(result.association.required).toBe(true);
     expect(result.gaps).toContain('The saved CSR job is failed; available output is a partial draft.');
-    expect(result.gaps).toContain('CSR section 14 has no saved output in this selection.');
+    // Gaps name the headings a job drafts (ICH_E3_GUIDANCE, 2026-10-29):
+    // manual §14, prepared from source, is never a missing job output — but
+    // its absence from the draft is still a gap, said as what it is.
+    expect(result.gaps).not.toContain('CSR section 14 has no saved output in this selection.');
+    expect(result.gaps).toContain('CSR section 14 is prepared from source outputs and records, not drafted by a CSR job; this draft does not contain it.');
+    // The job's recorded scope is §13 and §14, so §3 is not this draft's gap.
+    expect(result.gaps.some(g => g.startsWith('CSR section 3 '))).toBe(false);
     expect(result.gaps.some(g=>g.includes('placeholder'))).toBe(true);
     expect(result.origin.sectionOrigins[0].originalAuthorship).toBe('unknown');
   });
@@ -202,7 +224,9 @@ describe('stored CSR materialization',()=>{
     await database.query("INSERT INTO csr_section_outputs VALUES(703,7,11,1,'11.1',$1,$2,true,NULL,NULL,'2026-10-02T00:00:00Z')",['Saved descendant',hash('Saved descendant')]);
     const result=await materializeWorkflowSource(input({kind:'csr',jobId:1,sectionNumbers:['11']}),q);
     expect(result.sections.map(s=>s.code)).toEqual(['11.1']);
-    expect(result.gaps).toContain('CSR section 11 has no saved output in this selection.');
+    expect(result.gaps).toContain('CSR section 11.4.1 has no saved output in this selection.');
+    expect(result.gaps).not.toContain('CSR section 11 has no saved output in this selection.');
+    expect(result.gaps.some(g => g.includes('prepared from source'))).toBe(false);
     expect(result.origin.selection).toEqual({kind:'csr',jobId:1,sectionNumbers:['11']});
   });
   it('refuses missing selected output and a changed or forged recorded hash',async()=>{
@@ -232,6 +256,32 @@ describe('stored CSR materialization',()=>{
     expect(queries.some(text=>/^\s*(INSERT|UPDATE|DELETE|LOCK)/i.test(text))).toBe(false);
     await database.exec("UPDATE users SET status='disabled' WHERE id=5");
     await expect(materializeWorkflowSource(input({kind:'csr',jobId:1}),q)).rejects.toMatchObject({status:403});
+  });
+});
+
+// CSR slice 8 (2026-10-29): the assembler reads the job through the same checks as an import.
+describe('stored CSR assembly source',()=>{
+  beforeEach(async()=>{ await database.exec('ALTER TABLE csr_build_jobs ADD COLUMN IF NOT EXISTS source_run_id text'); });
+  it('returns the import’s verified sections and gaps with the job’s study, retained run and newest generation time',async()=>{
+    await database.exec("UPDATE csr_build_jobs SET source_run_id='run-1' WHERE id=1");
+    const imported=await materializeWorkflowSource(input({kind:'csr',jobId:1}),q);
+    const source=await materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q);
+    expect(source).toMatchObject({jobId:1,studyId:'study-1',sourceRunId:'run-1',title:'Recorded CSR study',fingerprint:imported.fingerprint,sections:imported.sections,gaps:imported.gaps});
+    expect(source.lastGeneratedAt?.toISOString()).toBe('2026-10-01T12:00:00.000Z');
+  });
+  it('refuses through the import’s own checks: another actor, a forged hash, a non-CSR source',async()=>{
+    await expect(materializeCsrAssemblySource(input({kind:'csr',jobId:1},{userId:20}),q)).rejects.toMatchObject({status:403});
+    await database.exec("UPDATE csr_section_outputs SET content='Changed without matching retained hash' WHERE id=701");
+    await expect(materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q)).rejects.toMatchObject({code:'WORKFLOW_CSR_HASH_MISMATCH'});
+    await expect(materializeCsrAssemblySource(input({kind:'protocol',documentId:1}),q)).rejects.toMatchObject({code:'WORKFLOW_SOURCE_INVALID'});
+  });
+  it('carries the study’s ClinicalTrials.gov number from the job’s source, and none the source did not state',async()=>{
+    expect((await materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q)).nctNumber).toBeNull();
+    await database.exec(`UPDATE csr_build_jobs SET study_info_snapshot='{"studyInfo":{"title":"Recorded CSR study","nctNumber":"NCT05330182"}}' WHERE id=1`);
+    expect((await materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q)).nctNumber).toBe('NCT05330182');
+  });
+  it('reports a job with no retained run as such, never inventing one',async()=>{
+    expect((await materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q)).sourceRunId).toBeNull();
   });
 });
 

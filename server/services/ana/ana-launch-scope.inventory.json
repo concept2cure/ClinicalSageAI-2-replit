@@ -1,11 +1,12 @@
 {
- "$note": "Every AnA tool and platform command, classified against the launch catalog on 2026-09-26 by reading its handler (docs/evidence/D2-API-SCOPE/2026-09-26-ana-tools/). hiddenApp: operates records of surfaces outside the launch catalog only; withheld/refused in production. inScope: operates a launch surface, or no tenant records (knowledge). A new tool or command must be added to one of the two, or ana-launch-scope.test.ts fails. Amended 2026-10-12 (decision P-28): CMC / Module 3 joined the launch catalog, so its 10 tools and 6 commands moved from hiddenApp to inScope. The move is bookkeeping, not the mechanism — anaCapabilityInLaunchScope re-checks the surface against LAUNCH_SURFACE_IDS rather than trusting this file, so the tools came back the moment the surface did. What this file would otherwise say is that a launch surface is outside the catalog. Amended 2026-10-22: Communication Center joined the launch catalog on 2026-10-16 (327bc9fb6, shared/constants/launch-scope.ts), so create_ha_interaction, which serves it and agency-meetings, moved to inScope by the rule above for a tool that touches a launch surface. It was already offered in production; only this file still called it hidden.",
+ "$note": "Every AnA tool and platform command, classified against the launch catalog on 2026-09-26 by reading its handler (docs/evidence/D2-API-SCOPE/2026-09-26-ana-tools/). hiddenApp: operates records of surfaces outside the launch catalog only; withheld/refused in production. inScope: operates a launch surface, or no tenant records (knowledge). A new tool or command must be added to one of the two, or ana-launch-scope.test.ts fails. Amended 2026-10-12 (decision P-28): CMC / Module 3 joined the launch catalog, so its 10 tools and 6 commands moved from hiddenApp to inScope. The move is bookkeeping, not the mechanism — anaCapabilityInLaunchScope re-checks the surface against LAUNCH_SURFACE_IDS rather than trusting this file, so the tools came back the moment the surface did. What this file would otherwise say is that a launch surface is outside the catalog. Amended 2026-10-22: Communication Center joined the launch catalog on 2026-10-16 (327bc9fb6, shared/constants/launch-scope.ts), so create_ha_interaction, which serves it and agency-meetings, moved to inScope by the rule above for a tool that touches a launch surface. It was already offered in production; only this file still called it hidden. Amended 2026-10-26: the device and diagnostics surfaces that joined the launch catalog on 2026-10-23 (62a8d5e7f, shared/constants/launch-scope.ts) took the tools and commands that operate them to inScope, by the same rule (a tool or command that touches a launch surface is inScope, even when it also serves one still outside): device-510k: compose_510k_summary, compose_correspondence_cover_letter, generate_se_matrix, get_predicate_defense_preview, k510_workflow.document_preview, predicate.candidate.set_status, se_matrix.patch, section.approve, section.update, suggest_predicate_devices, write_kit_section; device-cer: analyze_cross_document, assess_stored_cer, generate_clinical_insights, gspr.mapping.upsert, record_literature; device-clinical-studies: create_clinical_study, log_study_ae, log_study_deviation, record_endpoint_result; device-diagnostics: categorize_clia_complexity, classify_ivd_device, create_per_document, pair_companion_diagnostic, record_analytical_performance_study, record_clinical_performance_study, register_ldt; device-postmarket: create_complaint, open_device_capa, post_market.document.approve, post_market.document.create, post_market.document.supersede, post_market.document.update, post_market.document.validate, read_vigilance_timeline, reconcile_device_documents, triage_capa_mdr_queue; device-presub: create_q_sub, pdev.fda_feedback.apply, pdev.fda_feedback.proposals, pdev.program.fda_interactions, q_sub.commitment.set_rolled_in, q_sub.create, update_q_sub_commitment_rolled_in, write_q_sub_section; device-software: create_software_lifecycle_item; device-udi: create_udi_record; device-workstream: evidence_sufficiency.assess, reviewer_simulation.run; labeling: add_labeling_symbol, add_labeling_translation, create_labeling_document, review_label_currency; risk: add_risk_control, create_risk_item. They were already offered in production, because anaCapabilityInLaunchScope re-checks the surface; only this file still called them hidden. A2.10 placement clarification (2026-10-26): evidence_sufficiency.assess and reviewer_simulation.run serve the selected project in project-home, identified by programId. Both already reside in the flat commands.inScope list and have no executable dependency on device-workstream; its historical association above is not a launch claim. The same handlers, ownership verification, confirmation and reason gates, policy and audit behavior remain in force. This clarification grants no additional capability and does not retire the device portfolio shell.",
  "classifiedOn": "2026-09-26",
+ "amended20261030": "agency-meetings retired into Communication (P-39 step 4; docs/evidence/D2-AGENCY-MEETINGS-RETIRED/2026-10-30/). Its hidden tools stay hidden: prepare_meeting_package and review_ha_interaction are filed under pdev-fda-interactions, the remaining surface for FDA meeting touchpoints; the commitment tools under lifecycle-mgmt, which they already named. Neither is a launch surface, so nothing new is offered in production.",
  "tools": {
   "hiddenApp": [
    {
     "surfaces": [
-     "agency-meetings"
+     "pdev-fda-interactions"
     ],
     "names": [
      "prepare_meeting_package",
@@ -14,7 +15,6 @@
    },
    {
     "surfaces": [
-     "agency-meetings",
      "lifecycle-mgmt"
     ],
     "names": [
@@ -64,108 +64,6 @@
    },
    {
     "surfaces": [
-     "device-510k"
-    ],
-    "names": [
-     "compose_510k_summary",
-     "compose_correspondence_cover_letter",
-     "write_kit_section"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-510k",
-     "precedent-intelligence"
-    ],
-    "names": [
-     "generate_se_matrix",
-     "get_predicate_defense_preview",
-     "suggest_predicate_devices"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-cer"
-    ],
-    "names": [
-     "assess_stored_cer",
-     "record_literature"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-clinical-studies",
-     "clinical-ops"
-    ],
-    "names": [
-     "create_clinical_study",
-     "log_study_ae",
-     "log_study_deviation",
-     "record_endpoint_result"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-diagnostics"
-    ],
-    "names": [
-     "categorize_clia_complexity",
-     "classify_ivd_device",
-     "create_per_document",
-     "pair_companion_diagnostic",
-     "record_analytical_performance_study",
-     "record_clinical_performance_study",
-     "register_ldt"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-postmarket"
-    ],
-    "names": [
-     "create_complaint",
-     "open_device_capa",
-     "read_vigilance_timeline",
-     "triage_capa_mdr_queue"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-postmarket",
-     "change-assessment"
-    ],
-    "names": [
-     "reconcile_device_documents"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-presub"
-    ],
-    "names": [
-     "create_q_sub",
-     "update_q_sub_commitment_rolled_in",
-     "write_q_sub_section"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-software"
-    ],
-    "names": [
-     "create_software_lifecycle_item"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-udi"
-    ],
-    "names": [
-     "create_udi_record"
-    ]
-   },
-   {
-    "surfaces": [
      "etmf"
     ],
     "names": [
@@ -178,16 +76,6 @@
      "review_tmf_completeness",
      "seed_tmf",
      "update_tmf_artifact_status"
-    ]
-   },
-   {
-    "surfaces": [
-     "labeling"
-    ],
-    "names": [
-     "add_labeling_symbol",
-     "add_labeling_translation",
-     "create_labeling_document"
     ]
    },
    {
@@ -262,15 +150,6 @@
     "names": [
      "create_rim_product",
      "set_registration_status"
-    ]
-   },
-   {
-    "surfaces": [
-     "registrations",
-     "labeling"
-    ],
-    "names": [
-     "review_label_currency"
     ]
    },
    {
@@ -359,15 +238,6 @@
    },
    {
     "surfaces": [
-     "risk"
-    ],
-    "names": [
-     "add_risk_control",
-     "create_risk_item"
-    ]
-   },
-   {
-    "surfaces": [
      "source-tracer",
      "change-assessment"
     ],
@@ -395,11 +265,14 @@
    "add_capa_action",
    "add_eligibility_criterion",
    "add_irb_site",
+   "add_labeling_symbol",
+   "add_labeling_translation",
    "add_protocol_budget_item",
    "add_protocol_milestone",
    "add_protocol_objective",
    "add_protocol_review_comment",
    "add_protocol_risk",
+   "add_risk_control",
    "add_soa_assessment",
    "adjust_multiplicity",
    "advise_coa_selection",
@@ -532,6 +405,7 @@
    "assess_signal_priority",
    "assess_small_population_design",
    "assess_statistical_defensibility",
+   "assess_stored_cer",
    "assess_structural_alerts",
    "assess_submission_package",
    "assess_substantial_equivalence",
@@ -552,6 +426,7 @@
    "calculate_safety_margin",
    "calculate_ttc",
    "catalog_project_document",
+   "categorize_clia_complexity",
    "characterize_pk",
    "check_consistency",
    "check_dataset_conformance",
@@ -574,6 +449,7 @@
    "classify_gmp_deviation",
    "classify_immunogenicity_clinical_impact",
    "classify_impurity",
+   "classify_ivd_device",
    "classify_medical_device",
    "classify_mutagenic_impurity",
    "classify_pediatric_age",
@@ -597,6 +473,8 @@
    "compare_submission_against_precedent",
    "compare_vault_versions",
    "compile_correspondence_response_package",
+   "compose_510k_summary",
+   "compose_correspondence_cover_letter",
    "compute_analytical_performance",
    "compute_assurance",
    "compute_diagnostic_accuracy",
@@ -608,13 +486,21 @@
    "convert_docx_to_pdf",
    "convert_to_rps_v4",
    "create_calendar_event",
+   "create_clinical_study",
+   "create_complaint",
    "create_consent_form",
    "create_ha_interaction",
    "create_irb_submission",
+   "create_labeling_document",
+   "create_per_document",
    "create_protocol_amendment",
    "create_protocol_document",
    "create_protocol_template",
+   "create_q_sub",
    "create_qms_document",
+   "create_risk_item",
+   "create_software_lifecycle_item",
+   "create_udi_record",
    "critique_document",
    "critique_draft",
    "define_estimand",
@@ -716,6 +602,7 @@
    "generate_psur_structure",
    "generate_report",
    "generate_schedule_of_events",
+   "generate_se_matrix",
    "generate_sop",
    "generate_spl",
    "generate_spl_xml",
@@ -726,6 +613,7 @@
    "get_biotech_program_status",
    "get_client_journey",
    "get_cmc_requirements",
+   "get_csr_section_evidence",
    "get_csr_template",
    "get_ctd_module_home",
    "get_device_labeling",
@@ -739,6 +627,7 @@
    "get_org_capabilities",
    "get_plan_usage",
    "get_portfolio_readiness",
+   "get_predicate_defense_preview",
    "get_regulatory_timeline",
    "get_session_briefing",
    "get_sterilization_requirements",
@@ -799,6 +688,8 @@
    "list_validation_rules",
    "list_vault_documents",
    "log_nonconforming_product",
+   "log_study_ae",
+   "log_study_deviation",
    "lookup_fda_guidance",
    "lookup_icd10_code",
    "lookup_ich_guideline",
@@ -817,8 +708,10 @@
    "narrate_statistical_result",
    "navigate_to",
    "ocr_document_pages",
+   "open_device_capa",
    "override_import_mapping",
    "package_ectd_for_region",
+   "pair_companion_diagnostic",
    "pdf_overlay",
    "place_into_sequence",
    "place_project_document",
@@ -861,11 +754,18 @@
    "read_spreadsheet",
    "read_uploaded_document",
    "read_vault_document",
+   "read_vigilance_timeline",
    "recall_rim_patterns",
    "recall_session_context",
+   "reconcile_device_documents",
    "reconcile_dossier_numbers",
    "reconcile_extracted_figures",
+   "record_analytical_performance_study",
+   "record_clinical_performance_study",
+   "record_endpoint_result",
+   "record_literature",
    "record_validation_finding",
+   "register_ldt",
    "register_supplier",
    "remember_document_in_project",
    "render_signature_manifestation",
@@ -888,6 +788,7 @@
    "review_informed_consent",
    "review_interim_operating_characteristics",
    "review_irb_submission",
+   "review_label_currency",
    "review_master_protocol",
    "review_mmrm_sizing",
    "review_multiplicity_control",
@@ -980,6 +881,7 @@
    "stress_test_protocol",
    "structure_benefit_risk_framework",
    "structure_smpc",
+   "suggest_predicate_devices",
    "suggest_reports",
    "summarize_onboarding_readiness",
    "summarize_rim_intelligence",
@@ -987,10 +889,12 @@
    "trace_design_recommendation",
    "trace_provenance",
    "transmit_submission",
+   "triage_capa_mdr_queue",
    "triage_compliance_attention",
    "update_consent_element",
    "update_plan",
    "update_protocol_section",
+   "update_q_sub_commitment_rolled_in",
    "update_vault_document",
    "validate_adam_dataset",
    "validate_analytical_method",
@@ -1007,7 +911,9 @@
    "verify_citations",
    "verify_docx_against_source",
    "verify_memory_atom",
-   "verify_revision"
+   "verify_revision",
+   "write_kit_section",
+   "write_q_sub_section"
   ]
  },
  "commands": {
@@ -1031,66 +937,6 @@
    },
    {
     "surfaces": [
-     "csr-workflow",
-     "device-cer"
-    ],
-    "names": [
-     "analyze_cross_document",
-     "generate_clinical_insights"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-510k"
-    ],
-    "names": [
-     "k510_workflow.document_preview",
-     "predicate.candidate.set_status",
-     "se_matrix.patch",
-     "section.approve",
-     "section.update"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-cer"
-    ],
-    "names": [
-     "gspr.mapping.upsert"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-postmarket"
-    ],
-    "names": [
-     "post_market.document.approve",
-     "post_market.document.create",
-     "post_market.document.supersede",
-     "post_market.document.update",
-     "post_market.document.validate"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-presub"
-    ],
-    "names": [
-     "q_sub.commitment.set_rolled_in",
-     "q_sub.create"
-    ]
-   },
-   {
-    "surfaces": [
-     "device-workstream"
-    ],
-    "names": [
-     "evidence_sufficiency.assess",
-     "reviewer_simulation.run"
-    ]
-   },
-   {
-    "surfaces": [
      "pdev"
     ],
     "names": [
@@ -1102,16 +948,6 @@
      "pdev.program.get",
      "pdev.program.readiness",
      "pdev.readiness.snapshot"
-    ]
-   },
-   {
-    "surfaces": [
-     "pdev",
-     "device-presub"
-    ],
-    "names": [
-     "pdev.fda_feedback.apply",
-     "pdev.fda_feedback.proposals"
     ]
    },
    {
@@ -1147,15 +983,6 @@
    },
    {
     "surfaces": [
-     "pdev-fda-interactions",
-     "device-presub"
-    ],
-    "names": [
-     "pdev.program.fda_interactions"
-    ]
-   },
-   {
-    "surfaces": [
      "pdev-ind-assembly"
     ],
     "names": [
@@ -1185,6 +1012,7 @@
    "add_review_comment",
    "analyze_cms_strategy",
    "analyze_crl_triggers",
+   "analyze_cross_document",
    "analyze_jurisdictions",
    "analyze_rtf_triggers",
    "assess_diagnostic_validation",
@@ -1200,7 +1028,6 @@
    "correspondence.ingest",
    "create_artifact",
    "create_milestone",
-   "create_project",
    "create_review_thread",
    "create_submission_package",
    "create_task",
@@ -1208,13 +1035,17 @@
    "detect_drift",
    "draft_section",
    "erase_personal_data",
+   "evidence_sufficiency.assess",
    "export_artifact",
    "export_document",
    "export_personal_data",
    "freeze_document",
    "generate_checklist",
+   "generate_clinical_insights",
    "generate_sap",
+   "gspr.mapping.upsert",
    "ich_compliance",
+   "k510_workflow.document_preview",
    "k510_workflow.preflight",
    "k510_workflow.transmit",
    "list_artifact_versions",
@@ -1235,18 +1066,33 @@
    "module3_refresh_stale",
    "module3_stale_sections",
    "pdev.activity.ai_draft",
+   "pdev.fda_feedback.apply",
+   "pdev.fda_feedback.proposals",
    "pdev.ind_assembly.compile",
+   "pdev.program.fda_interactions",
    "pdev.registry.list",
    "place_in_dossier",
+   "post_market.document.approve",
+   "post_market.document.create",
+   "post_market.document.supersede",
+   "post_market.document.update",
+   "post_market.document.validate",
+   "predicate.candidate.set_status",
    "predict_next_artifact",
+   "q_sub.commitment.set_rolled_in",
+   "q_sub.create",
    "revert_to_version",
    "review_version_impact",
+   "reviewer_simulation.run",
    "run_compliance_scan",
    "run_rim_scan",
    "run_submission_assessment",
    "scan_contradictions",
    "scan_deficiencies",
+   "se_matrix.patch",
    "search_artifacts",
+   "section.approve",
+   "section.update",
    "sign_document",
    "simulate_challenges",
    "submit_document",
@@ -1258,5 +1104,5 @@
    "variations_classify"
   ]
  },
- "amendedOn": "2026-10-22"
+ "amendedOn": "2026-10-26"
 }

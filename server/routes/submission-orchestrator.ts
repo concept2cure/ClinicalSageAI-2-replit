@@ -228,7 +228,7 @@ router.get('/csr/readiness', async (req, res) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
   const parsed = z.string().uuid().safeParse(req.query.programId);
-  if (!parsed.success) return res.status(400).json({ error: 'CSR_SCOPE_INVALID', message: 'A program UUID is required.' });
+  if (!parsed.success) return res.status(400).json({ error: 'CSR_SCOPE_INVALID', message: 'A project UUID is required.' });
   const userId = orchestratorActorId(req);
   try {
     return res.json(await readProgramCsrSourceReadiness(pool, organizationId, parsed.data, userId));
@@ -276,7 +276,7 @@ async function sendStartedProgramRun(res: Response, input: {
       catch (err) { continuationError = err instanceof OrchestratorContinuationRefusal || err instanceof CsrScopeError ? err.code : 'CONTINUATION_UNAVAILABLE'; }
     }
     return res.json({ ...currentRun, steps: currentRun.steps.map(redactStepOutputRef), m3Refusal, continuationError,
-      inputGaps: ['No nonclinical study corpus is linked to this canonical program.',
+      inputGaps: ['No nonclinical study corpus is linked to this project.',
         ...(clinicalSource ? ['Clinical tables use the selected supporting source. Clinical verification and CDISC/FDA qualification are not established; first-study AI narrative generation remains unavailable.']
           : ['No clinical supporting source was selected for this run. Only completed, accessible CSR summaries are included.'])],
     });
@@ -308,7 +308,7 @@ router.post('/runs/for-program', requireOrchestratorWrite, async (req, res) => {
     if (enableCSRNarrative === true) return res.status(409).json({ error: CSR_NARRATIVE_INPUTS_REQUIRED.code, message: CSR_NARRATIVE_INPUTS_REQUIRED.message });
     const anchor = recordedProgramAnchor(programId, program);
     const spine = sequenceId ? await resolveSequenceSpine(anchor, organizationId, sequenceId) : await resolveSubmissionSpine(anchor, organizationId);
-    if (!spine?.sequence || spine.match !== 'program') return res.status(409).json({ error: 'SUBMISSION_SEQUENCE_REQUIRED', message: 'The selected program needs a recorded submission and sequence before it can be orchestrated.' });
+    if (!spine?.sequence || spine.match !== 'program') return res.status(409).json({ error: 'SUBMISSION_SEQUENCE_REQUIRED', message: 'The selected project needs a recorded submission and sequence before it can be orchestrated.' });
     // The sequence's own market's number (P-44), as the run's identity reader judges it.
     const identity = await readSubmissionPackageIdentity(pool, organizationId, spine.submissionId, { region: spine.sequence.region });
     const identityRefusal = packageIdentityRefusal(identity, 'Nothing was built.');
@@ -445,9 +445,10 @@ const RunCommonSchema = z.object({
   drugProductName: z.string().optional(),
   indication: z.string().optional(),
   skipValidation: z.boolean().optional(),
-  // clinicalStudyData has NO loader yet (per PATH_TO_GA §D.3 — needs a real
-  // CDISC ADaM extractor). Accept it in BOTH modes for now; future GA-2 work
-  // will populate it from a server-side extractor and remove it from the body.
+  // Development fixtures only. Outside development a non-empty array is refused
+  // before parsing (refusedInlineRunInputs, Rule 2 audit S1): the run's
+  // clinical study data comes from the approved CSR Vault source, through
+  // POST /runs/for-program with `clinicalSource`.
   clinicalStudyData: z.array(StudyDataSchema).default([]),
 });
 
@@ -533,9 +534,71 @@ function refusedInlineCmcSources(rawBody: any, res: Response, organizationId: nu
       'CMC data cannot be supplied in the request. Module 3 reaches a submission through the CMC module: ' +
       'compile the sections (POST /api/cmc/module3-os/compile/:projectId), approve each one, then place them ' +
       '(POST /api/cmc/module3-os/place-into-submission/:projectId). Send cmcProjectId instead and the run ' +
-      'reads that program\u2019s approved Module 3.',
+      'reads that project\u2019s approved Module 3.',
   });
   return true;
+}
+
+/** The run inputs that carry clinical or nonclinical figures. */
+const INLINE_RUN_INPUT_FIELDS = ['nonclinicalStudies', 'csrInputs', 'clinicalStudyData'] as const;
+
+/**
+ * Clinical and nonclinical figures come from the record, not from the request
+ * (CLAUDE.md Rule 2; Rule 2 audit S1, 2026-10-26).
+ *
+ * `nonclinicalStudies`, `csrInputs` and `clinicalStudyData` in a body became
+ * Module 2.4/2.5/2.7 and the CSR tables of a run that `package.sign` can sign:
+ * figures nobody recorded or approved. A Mode A `ctdProgramId` composed Module
+ * 2.4 from `ctd_nonclinical_studies`, the landing table of the model-run
+ * preclinical extractor. A Mode A regenerate runs no loader at all, so it
+ * re-ran every step over empty inputs.
+ *
+ * Checked on the raw body, before any read or write, on both routes that take
+ * run inputs, after the CMC refusal (which keeps its own code). Empty arrays
+ * are not refused; development keeps the fixture door.
+ *
+ * @returns true when the request was refused and the response already sent.
+ */
+function refusedInlineRunInputs(rawBody: any, res: Response, organizationId: number, route: 'runs' | 'regenerate'): boolean {
+  if (refusedInlineCmcSources(rawBody, res, organizationId)) return true;
+  if (config.isDevelopment) return false;
+  const field = INLINE_RUN_INPUT_FIELDS.find(k => Array.isArray(rawBody?.[k]) && rawBody[k].length > 0);
+  if (field) {
+    log.warn('Inline run inputs refused outside development', { organizationId, field });
+    res.status(400).json({
+      error: 'INLINE_RUN_INPUTS_REFUSED',
+      field,
+      message:
+        'Clinical and nonclinical data cannot be supplied in the request. Start the run from the program ' +
+        '(POST /api/submission-orchestrator/runs/for-program) and choose its approved CSR source (clinicalSource); ' +
+        'the run reads the project\u2019s completed CSR builds. Module 2.4 has no record source yet, so a run carries none.',
+    });
+    return true;
+  }
+  if (rawBody?.ctdProgramId !== undefined && rawBody?.ctdProgramId !== null) {
+    log.warn('ctdProgramId run input refused outside development', { organizationId });
+    res.status(400).json({
+      error: 'CTD_PROGRAM_INPUTS_REFUSED',
+      field: 'ctdProgramId',
+      message:
+        'A run does not read nonclinical studies from a CTD program: those rows are the preclinical extractor\u2019s output, ' +
+        'not a governed record. Module 2.4 has no record source yet, so a run carries none. ' +
+        'Start the run from the program (POST /api/submission-orchestrator/runs/for-program).',
+    });
+    return true;
+  }
+  if (route === 'regenerate' && rawBody?.projectId !== undefined && rawBody?.projectId !== null) {
+    log.warn('Mode A regenerate refused outside development', { organizationId });
+    res.status(400).json({
+      error: 'REGENERATE_MODE_A_UNSUPPORTED',
+      field: 'projectId',
+      message:
+        'A regenerate reads no project inputs, so it would re-run every step over none. ' +
+        'Start a new run from the program (POST /api/submission-orchestrator/runs/for-program).',
+    });
+    return true;
+  }
+  return false;
 }
 
 // ── Routes ──────────────────────────────────────────────────────────────────
@@ -555,10 +618,14 @@ router.post('/runs', requireOrchestratorWrite, async (req: Request, res: Respons
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
 
+  const rawBody = req.body ?? {};
+  // Refused figures get their own code and field whatever else the body
+  // carries (S1 review, 2026-10-26: beside a projectId they read as ambiguous).
+  if (refusedInlineRunInputs(rawBody, res, organizationId, 'runs')) return;
+
   // Defensive: reject ambiguous requests where the caller supplied BOTH
   // projectId AND any hand-built input array. Either mode by itself is
   // valid; both together is a programming error.
-  const rawBody = req.body ?? {};
   const hasProjectId = typeof rawBody.projectId === 'number';
   const hasInlineInputs =
     Array.isArray(rawBody.cmcSources) ||
@@ -575,8 +642,6 @@ router.post('/runs', requireOrchestratorWrite, async (req: Request, res: Respons
         'Supply either projectId OR inline {cmcSources, nonclinicalStudies, csrInputs} — never both.',
     });
   }
-
-  if (refusedInlineCmcSources(rawBody, res, organizationId)) return;
 
   const parsed = RunSchema.safeParse(rawBody);
   if (!parsed.success) {
@@ -843,6 +908,8 @@ router.get('/runs/:runId/audit', async (req: Request, res: Response) => {
 router.post('/runs/:runId/regenerate', requireOrchestratorWrite, async (req: Request, res: Response) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
+  // Before the run is read: the refusal depends on the body alone (S1 review).
+  if (refusedInlineRunInputs(req.body ?? {}, res, organizationId, 'regenerate')) return;
 
   let previousRun;
   try {
@@ -851,8 +918,6 @@ router.post('/runs/:runId/regenerate', requireOrchestratorWrite, async (req: Req
     return serverError(res, log, 'reading the run', err);
   }
   if (!previousRun) return res.status(404).json({ error: 'run_not_found' });
-
-  if (refusedInlineCmcSources(req.body ?? {}, res, organizationId)) return;
 
   const RegenSchema = buildRunSchema({
     changedStep: z.string().optional(),

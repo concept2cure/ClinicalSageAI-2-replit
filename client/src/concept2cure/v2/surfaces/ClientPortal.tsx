@@ -94,7 +94,7 @@ export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
           {loading ? (
             <EmptyState
               title="Loading your workspace…"
-              hint="Fetching your programs and shared deliverables."
+              hint="Fetching your projects and shared deliverables."
               icon={I.clock}
             />
           ) : notShared ? (
@@ -124,7 +124,7 @@ export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
       {ctxOpen && cp.mode !== 'client' && (
         <div className="cp-ctx">
           <span className="cp-ctx-ic">{I.eye || I.info}</span>
-          <span className="cp-ctx-t"><b>External client view.</b> This is the read-only portal your client ({cp.client}) sees — program status and shared deliverables only, no internal tools.</span>
+          <span className="cp-ctx-t"><b>External client view.</b> This is the read-only portal your client ({cp.client}) sees — project status and shared deliverables only, no internal tools.</span>
           <button className="cp-ctx-back" onClick={() => onNav('project-home')}>Back to your workspace {I.arrowRight}</button>
           <button className="cp-ctx-x" onClick={() => setCtxOpen(false)} title="Dismiss" aria-label="Dismiss">{I.close || '×'}</button>
         </div>
@@ -152,7 +152,7 @@ export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
               {cp.client ? ` · ${cp.client}` : ''}
             </div>
             <h1 className="ph-title" style={{ fontSize: 26 }}>
-              Your programs{cp.cro ? ` with ${cp.cro}` : ''}
+              Your projects{cp.cro ? ` with ${cp.cro}` : ''}
             </h1>
             <div className="ph-sub">A read-only view of everything your regulatory partner is building for you — status, shared deliverables, and what needs your input.</div>
           </div>
@@ -165,7 +165,7 @@ export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
 
         {cp.programs.length === 0 && (
           <div className="scaf-note" style={{ maxWidth: 560 }}>
-            No active programs yet. Your regulatory partner will share programs and deliverables
+            No active projects yet. Your regulatory partner will share projects and deliverables
             here as work begins.
           </div>
         )}
@@ -199,7 +199,7 @@ export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
               <div className="scaf-note">No deliverables have been shared with you yet.</div>
             ) : (
               <div className="ctable">
-                <div className="ct-head" style={{ gridTemplateColumns: '1fr 90px 100px 90px' }}><div>Document</div><div>Program</div><div>Status</div><div>Shared</div></div>
+                <div className="ct-head" style={{ gridTemplateColumns: '1fr 90px 100px 90px' }}><div>Document</div><div>Project</div><div>Status</div><div>Shared</div></div>
                 {cp.deliverables.map((d, i) => (
                   /* Was a <button>: a pointer cursor, a tab stop and a button role
                on every row, with no onClick behind any of them. The surface's

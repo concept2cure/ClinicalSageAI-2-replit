@@ -1,0 +1,9 @@
+# Red: the Submission Center suites, one mutation at a time, each restored after its run
+
+## C1 the next number ignores the declaration (client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx)
+ × submissionCenterCreate.test.tsx > SubmissionCenter — the next sequence > after sequences declared filed outside the platform, the first one here is numbered after them, and is a follow-up 59ms
+      Tests  1 failed | 11 passed (12)
+
+## C2 a failed read still offers a number (client/src/concept2cure/v2/surfaces/FiledElsewhereBaseline.tsx)
+ × filedElsewhereBaseline.test.tsx > Sequences filed before this platform > a failed read is said, and no sequence number is offered 10ms
+      Tests  1 failed | 11 passed (12)

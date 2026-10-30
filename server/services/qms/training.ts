@@ -7,12 +7,16 @@ import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { isActiveAccountStatus } from '../account-standing';
 import { derivePosture } from '../tenant/tenant-lifecycle';
 import type { QmsDocumentRow } from './document-approval-signature';
-import { authorizeQmsContentRead } from './controlled-document-content';
+import { QmsContentRefusedError } from './controlled-document-content';
 import { verifiedTrainingReceipt } from './training-content';
 import { readQmsTrainingReleaseContext, type CurrentQmsReleaseApproval } from './current-release-approval';
-import { resolveInForceRelease } from './in-force-release';
+import { isPendingEffective, resolveInForceRelease } from './in-force-release';
+import { authorizeQmsTrainingRead } from './training-assignment';
 
-export { readQmsTrainingCompliance } from './training-compliance';
+export {
+  readQmsTrainingCompliance, readQmsTrainingExpiring, summarizeQmsTrainingCompliance,
+  type QmsTrainingComplianceRow, type QmsTrainingExpiry,
+} from './training-compliance';
 export interface TrainingSqlClient {
   query(sql: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
   discard?(reason: Error): Promise<void>;
@@ -78,19 +82,45 @@ async function currentReceipt(client: TrainingSqlClient, actor: TrainingActor, c
   return null;
 }
 
+/**
+ * The versions training reads (P-49): the version in force (while a successor
+ * is drafted, or approved for a later day, its signed predecessor), and the
+ * version approved for a later day, which may be read and acknowledged ahead
+ * of it. A first version approved for a later day is both: nothing is in force.
+ */
+async function trainableVersions(client: TrainingSqlClient, document: QmsDocumentRow) {
+  const inForce = (await resolveInForceRelease(client, document))?.release ?? null;
+  const pending = isPendingEffective(document) ? document : null;
+  return { primary: inForce ?? document, pending, successor: inForce && pending ? pending : null };
+}
+
+/** The successor's context for this reader: refused to someone who may not read it, with the reason and none of its text. */
+async function successorContext(client: TrainingSqlClient, input: TrainingActor & { document: QmsDocumentRow }, successor: QmsDocumentRow) {
+  try {
+    await authorizeQmsTrainingRead(client, input.organizationId, input.userId, successor);
+  } catch (error) {
+    if (!(error instanceof QmsContentRefusedError) || (error.status !== 403 && error.status !== 404)) throw error;
+    const { context } = await readQmsTrainingReleaseContext(client, successor, input.now, { ahead: true });
+    return { ...context, eligible: false, sections: [], unavailableReason: error.message, acknowledgement: null };
+  }
+  const { context } = await readQmsTrainingReleaseContext(client, successor, input.now, { ahead: true });
+  return { ...context, acknowledgement: await currentReceipt(client, input, context) };
+}
+
 export async function readQmsTrainingContext(client: TrainingSqlClient, input: TrainingActor & { document: QmsDocumentRow }) {
   if (input.document.organization_id !== input.organizationId) throw new QmsTrainingRefused(404, 'QMS_TRAINING_NOT_FOUND', 'Document not found in this organization.');
   const posture = await currentStanding(client, input);
-  // Training reads the version in force: while a successor is drafted that is
-  // its signed predecessor, and access is decided on what is read (in-force-release.ts).
-  const release = (await resolveInForceRelease(client, input.document))?.release ?? input.document;
-  await authorizeQmsContentRead(client, input.organizationId, input.userId, release);
-  const { context } = await readQmsTrainingReleaseContext(client, release, input.now);
+  // Access is decided on what is read (in-force-release.ts), and being assigned grants reading it (D3).
+  const { primary, pending, successor } = await trainableVersions(client, input.document);
+  await authorizeQmsTrainingRead(client, input.organizationId, input.userId, primary);
+  const { context } = await readQmsTrainingReleaseContext(client, primary, input.now, { ahead: primary === pending });
   const acknowledgement = await currentReceipt(client, input, context);
   const canEditControlledText = posture.decision === 'allow' && !!posture.membershipRole
     && GOVERNED_WRITE_ROLES.has(posture.membershipRole) && !input.document.authoring_document_id && ['draft', 'in_review'].includes(input.document.status);
-  return { ...context, acknowledgement, canEditControlledText,
-    ...(posture.decision === 'allow' ? {} : { eligible: false, unavailableReason: posture.reason }) };
+  const next = successor ? await successorContext(client, input, successor) : null;
+  const refusal = posture.decision === 'allow' ? {} : { eligible: false, unavailableReason: posture.reason };
+  return { ...context, acknowledgement, canEditControlledText, ...refusal,
+    ...(next ? { successor: { ...next, ...refusal } } : {}) };
 }
 
 async function recordAcknowledgement(client: TrainingSqlClient, params: TrainingInput) {
@@ -103,17 +133,20 @@ async function recordAcknowledgement(client: TrainingSqlClient, params: Training
   );
   const document = rows[0] as QmsDocumentRow | undefined;
   if (!document) throw new QmsTrainingRefused(404, 'QMS_TRAINING_NOT_FOUND', 'Document not found in this organization.');
-  // The row stays locked; the acknowledgement is of the version in force (in-force-release.ts).
-  const release = (await resolveInForceRelease(client, document))?.release ?? document;
-  await authorizeQmsContentRead(client, params.organizationId, params.userId, release);
-  const { context, approval } = await readQmsTrainingReleaseContext(client, release, now, { lock: true });
+  // The row stays locked. The acknowledgement is of the version the body names: the
+  // version in force or the one approved for a later day (P-49); anything else is stale.
+  const { primary, pending, successor } = await trainableVersions(client, document);
+  const release = [primary, successor].find(candidate => candidate?.version === params.input.documentVersion) ?? primary;
+  await authorizeQmsTrainingRead(client, params.organizationId, params.userId, release);
+  const { context, approval } = await readQmsTrainingReleaseContext(client, release, now, { lock: true, ahead: release === pending });
   const releaseApprovalSignatureId = approvedTrainingSignatureId(context, approval);
   if (params.input.documentVersion !== context.documentVersion || params.input.contentDigest !== context.contentDigest) throw new QmsTrainingRefused(409, 'QMS_TRAINING_STALE', 'The released revision changed. Reload and read it before acknowledging.');
   const existing = await currentReceipt(client, { ...params, now }, context);
   if (existing) return { acknowledgement: existing, alreadyAcknowledged: true };
   const expiresAt = new Date(now.getTime() + 365 * 86_400_000);
   const metadata = { declaration: QMS_TRAINING_DECLARATION, contentDigest: context.contentDigest,
-    bindingBasis: 'qms-document-version-content-sha256', releaseApprovalSignatureId, documentSnapshot: release };
+    bindingBasis: 'qms-document-version-content-sha256', releaseApprovalSignatureId, documentSnapshot: release,
+    effectiveDate: context.effectiveDate ?? null, inForceAtAcknowledgement: context.inForce !== false };
   const inserted = await client.query(
     `INSERT INTO qms_training_records (organization_id, user_id, document_id, document_version,
        acknowledgment_method, acknowledged_at, expires_at, metadata)
@@ -127,7 +160,7 @@ async function recordAcknowledgement(client: TrainingSqlClient, params: Training
     resourceType: 'qms_document', resourceId: String(params.documentId),
     ipAddress: params.ipAddress, userAgent: params.userAgent,
     details: { method: 'attestation', documentVersion: context.documentVersion, contentDigest: context.contentDigest,
-      releaseApprovalSignatureId,
+      releaseApprovalSignatureId, effectiveDate: context.effectiveDate ?? null, inForceAtAcknowledgement: context.inForce !== false,
       declaration: QMS_TRAINING_DECLARATION, trainingRecordId: acknowledgement.id },
   });
   return { acknowledgement, alreadyAcknowledged: false };

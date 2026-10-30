@@ -7,6 +7,7 @@ const io = vi.hoisted(() => ({
   memory: vi.fn(),
   route: vi.fn(),
   history: vi.fn(),
+  sectionGuide: vi.fn(),
 }));
 vi.mock('../../../db.js', () => ({ pool: {} }));
 vi.mock('../index.js', () => ({
@@ -25,7 +26,7 @@ vi.mock('../../chat-thread-helpers.js', () => ({
 }));
 vi.mock('../../lumen-context-builder.js', () => ({
   getIntelligencePrefix: vi.fn(async () => 'Intelligence retained.'),
-  buildSectionSpecificPrompt: vi.fn(() => ''),
+  buildSectionSpecificPrompt: io.sectionGuide,
 }));
 vi.mock('../context-enrichment.js', () => ({
   enrichContextForChat: vi.fn(async () => ({ block: '', sources: [] })),
@@ -57,6 +58,9 @@ vi.mock('../../account-canon.js', () => ({
 }));
 
 import { buildChatContext } from '../chat-context-builder.js';
+import { buildSectionSpecificPrompt } from '../../lumen-context/sections';
+
+const scopedGuide = buildSectionSpecificPrompt as (code: string, registryId?: string | null) => string | null;
 
 const memoryResult = { memoryBlock: 'Scoped memory retained.', atoms: [], diagnostics: null };
 function request(threadId: string | null = 'thread-owned') {
@@ -77,8 +81,22 @@ beforeEach(() => {
   io.history.mockReset().mockResolvedValue([{ role: 'assistant', content: 'Owned prior turn.' }]);
   io.memory.mockReset().mockResolvedValue(memoryResult);
   io.route.mockReset().mockResolvedValue('Optional route context retained.');
+  io.sectionGuide.mockReset().mockImplementation(scopedGuide);
 });
 afterEach(() => { vi.useRealTimers(); });
+
+describe('canonical chat section guidance uses the prefetched document type', () => {
+  it.each(['ICH_PROTOCOL', 'CA_CTA', 'US_IND', null])('passes canonical %s scope instead of the client US_IND label', async registryId => {
+    const req = request();
+    req.body.authoring_context = { sectionCode: '3', ...(registryId ? { documentType: registryId } : {}) };
+    req.body.submission_type = 'US_IND';
+    const context = await buildChatContext(req);
+    expect(io.sectionGuide).toHaveBeenCalledExactlyOnceWith('3', registryId);
+    const marker = scopedGuide('3', 'US_IND')!.split('\n')[0];
+    if (registryId === 'US_IND') expect(JSON.stringify(context.messages)).toContain(marker);
+    else expect(JSON.stringify(context.messages)).not.toContain(marker);
+  });
+});
 
 describe('memory startup in the canonical chat context builder', () => {
   it('starts scoped memory while optional route context remains pending and retains both', async () => {

@@ -73,3 +73,25 @@ export function canAttestAuditTrail(user: { permissions?: unknown } | null | und
   const perms = user?.permissions;
   return !Array.isArray(perms) || perms.includes(AUDIT_ATTEST_PERMISSION);
 }
+
+/**
+ * The organisation roles that administer billing: the `requireRole` on the
+ * invoice read (GET /api/billing/invoices) and on the seat, weekly-limit and
+ * credit auto-reload writes (PUT /api/billing/seats, /weekly-limits/:metric,
+ * /credits/auto-reload), all in server/routes/billing-dashboard.ts.
+ *
+ * The invoice read used to answer any authenticated member, and the account
+ * menu offered every member a Billing entry, while the writes beside it were
+ * already admin and owner (D2, fold billing into Licensing, 2026-10-29). The
+ * guards read this list and the session derives BILLING_ADMIN_PERMISSION from
+ * it, so Licensing shows the invoice list, and the menu its Billing entry, to
+ * exactly the roles the server admits. The client mirrors no role list.
+ */
+export const BILLING_ADMIN_ROLES: readonly string[] = withExtendingRoles(['owner', 'admin']);
+export const BILLING_ADMIN_PERMISSION = 'billing:admin';
+
+/** Whether to offer billing administration to `user`. Unknown permissions offer it, as the three above do; the server decides. */
+export function canAdministerBilling(user: { permissions?: unknown } | null | undefined): boolean {
+  const perms = user?.permissions;
+  return !Array.isArray(perms) || perms.includes(BILLING_ADMIN_PERMISSION);
+}

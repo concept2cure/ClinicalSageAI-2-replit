@@ -1,0 +1,12 @@
+# plain npx eslint <file> now; head through git show HEAD:<file> | npx eslint --stdin --stdin-filename <file> (head = 96537cfe)
+client/src/concept2cure/mdx/hooks/useEngineering.ts | head: ✖ 1 problem (0 errors, 1 warning) | now: ✖ 1 problem (0 errors, 1 warning)
+client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx | head: ✖ 1 problem (0 errors, 1 warning) | now: ✖ 1 problem (0 errors, 1 warning)
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx | head: (new file) | now: ✖ 1 problem (0 errors, 1 warning)
+client/src/concept2cure/v2/surfaces/ProjectDossier.tsx | head: no problems | now: no problems
+client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx | head: no problems | now: no problems
+client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx | head: no problems | now: no problems
+# The mdx tree is in the ESLint ignore list: each mdx file's one warning is "File ignored because of a matching ignore pattern", at head and now.
+# extra, outside the gate: the same with --no-ignore
+client/src/concept2cure/mdx/hooks/useEngineering.ts | head: ✖ 1 problem (0 errors, 1 warning) | now: ✖ 1 problem (0 errors, 1 warning)
+client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx | head: ✖ 6 problems (0 errors, 6 warnings) | now: ✖ 6 problems (0 errors, 6 warnings)
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx | head: (new file) | now: no problems

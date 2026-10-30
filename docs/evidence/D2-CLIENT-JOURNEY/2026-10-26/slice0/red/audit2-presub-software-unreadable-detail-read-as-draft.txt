@@ -1,0 +1,106 @@
+RED (audit2 presub-software #3): a 200 Q-Sub detail the client cannot read ({}, {data:null}, {data:[]}, {data:{}}, JSON null) renders 'Package in draft ... once the Q-Sub is filed' or an empty Q-Sub, with no error and no retry; a real Q-Sub with no questions draws a blank Questions tab.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xxxxxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailUnreadable.test.tsx > PreSubManager — an unreadable Q-Sub detail is a failed read > reports an envelope with no payload as a failure with a retry, not as a draft or an empty Q-Sub
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailUnreadable.test.tsx > PreSubManager — an unreadable Q-Sub detail is a failed read > reports an explicit null payload as a failure with a retry, not as a draft or an empty Q-Sub
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailUnreadable.test.tsx > PreSubManager — an unreadable Q-Sub detail is a failed read > reports a list where the record was expected as a failure with a retry, not as a draft or an empty Q-Sub
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailUnreadable.test.tsx > PreSubManager — an unreadable Q-Sub detail is a failed read > reports a record with no questions or timeline field as a failure with a retry, not as a draft or an empty Q-Sub
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailUnreadable.test.tsx > PreSubManager — an unreadable Q-Sub detail is a failed read > reports a JSON null body as a failure with a retry, not as a draft or an empty Q-Sub
+TestingLibraryElementError: Unable to find an element by: [data-testid="presub-detail-error"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-header"
+    >
+      <div>
+        <div
+          class="page-eyebrow"
+        >
+          Workbench
+        </div>
+        <h...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-header"
+      >
+        <div>
+          <div
+            class="page-eyebrow"
+          >
+            ...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailUnreadable.test.tsx:61:13
+     59|       detailBody = body;
+     60|       const { container } = render(<PreSubManager onAskAna={() => {}} …
+     61|       await waitFor(() => expect(screen.getByTestId('presub-detail-err…
+       |             ^
+     62|       expect(screen.getByRole('button', { name: /try again|retry/i }))…
+     63|       const text = container.textContent ?? '';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailUnreadable.test.tsx > PreSubManager — a Q-Sub with no questions on record says so > draws the record with an empty question list that is named, not blank
+TestingLibraryElementError: Unable to find an element with the text: No questions recorded. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-header"
+    >
+      <div>
+        <div
+          class="page-eyebrow"
+        >
+          Workbench
+        </div>
+        <h...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailUnreadable.test.tsx:77:19
+     75|     await waitFor(() => expect(container.querySelector('.ps-tabs')).to…
+     76|     expect(screen.queryByTestId('presub-detail-error')).toBeNull();
+     77|     expect(screen.getByText('No questions recorded')).toBeTruthy();
+       |                   ^
+     78|     expect(container.textContent).not.toContain('Package in draft');
+     79|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  07:39:09
+   Duration  26.67s (transform 357ms, setup 182ms, import 477ms, tests 25.14s, environment 662ms)
+
+
+--- Excerpt of the DOM the 'envelope with no payload' case rendered in place of an error (same run without DEBUG_PRINT_LIMIT; the detail pane):
+            <div
+              class="c2c-empty-t"
+            >
+              Package in draft
+            </div>
+            <div
+              class="c2c-empty-h"
+            >
+              The question list and the FDA response appear here once the Q-Sub is filed.
+            </div>
+            <div
+              class="c2c-empty-reg"
+            >
+              Serves the pre-submission record (FDA Q-Submission programme)

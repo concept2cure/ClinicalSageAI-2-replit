@@ -59,7 +59,7 @@ The Vault's intake and download paths are sound. Ingest hashes each file, checks
 | Immutable intake record and 'filed as which version' | **absent** | checksum is write-once by convention only (migrations/20260829_cre_source_versioning.sql:4-9); 'filed' is a bare checksum join (project-vault.ts dataRoom block) | VR-16 |
 | Duplicate detection by exact content | **partial** | vault-ingest.service.ts:716-733; UNIQUE (program_id, content_hash) exists only on install-fresh databases (db/migrations/044c_gcc_vault_schema.sql:106-107; scripts/db/deploy-migrate.mjs:30) | VR-08 makes check-in behaviour the same on every install path |
 | Data-room seal: freeze a hash-verified snapshot | **absent** | no seal or snapshot model for vault documents | VR-19 (FD8, FD9) |
-| Closing archive: the room's bytes, index and audit trail in one verifiable file | **absent** | the tenant export carries rows and a digest but no bytes (server/services/tenant-export/tenant-full-export.service.ts:71,210) | VR-20 (FD8, FD10) |
+| Closing archive: the room's bytes, index and audit trail in one verifiable file | **part 1 done 2026-10-29** (a seal's archive; the data return is open) | the tenant export carries rows and a digest but no bytes (server/services/tenant-export/tenant-full-export.service.ts:71,210) | VR-20 (FD8, FD10) |
 | External room: invitations, non-tenant principal, permission tiers, NDA, Q&A, expiry, per-viewer analytics, redaction, view-only | **absent** | client_access has no writer; the portal serves GET /overview only and reads public.documents (server/routes/client-portal.ts:88-266); authentication requires an organization_users row (server/auth.ts:196-216) | excluded (FD12) |
 | Periodic review of vault documents | **absent** | exists only for QMS next_review_date (server/routes/mdx-qms.ts:409-426) | excluded |
 | FORCE RLS and a NOT NULL tenant key on vault.* | **partial** | ENABLE without FORCE (db/migrations/044c_gcc_vault_schema.sql:112-139); organization_id is nullable (shared/schema/vault.ts:95-106); production boot refuses runtime-owned non-FORCE tables (server/db/rlsEnforcement.ts:164-290) | excluded (D3 lane) |
@@ -435,6 +435,8 @@ duplication); no slice adds a parallel store. A version is a `vault.documents` r
 
 ### VR-19 — Seal the data room: a hash-verified snapshot nobody can alter  `[M]`
 
+**Done 2026-10-29** (`docs/design/VAULT_DATA_ROOM_SEAL_2026-10-29.md`, `docs/evidence/D5/2026-10-29-data-room-seal/`). Three departures from the slice as written, each recorded there: the meaning is approval or responsibility, from the closed vocabulary; who may seal is Vault write access plus the one signing-authority policy, leaving a narrower seal role as FD9's open half; the purge erases seals through a door of their own.
+
 - **Launch row:** No D row names this. It is nearest to D5 (tamper-evident records), plus a new URS-VAULT requirement for D4. Under Rule 2 it needs the founder's scheduling decision (FD8). Evidence: docs/evidence/D5/<date>-data-room-seal/.
 - **Veeva capability:** Binder or submission-archive snapshot with pinned versions; a data room's closing snapshot.
 - **User outcome:** A user with the role named in FD9 seals a program's data room with a reason, and an e-signature if FD9 says so. The server records every document's id, version, content hash, folder, section, index number, filing status and lifecycle stage as they stand, hashes that manifest, and writes the seal to an append-only table and to the audit chain. Later, anyone in the tenant can Verify seal. The server recomputes the manifest hash, checks each document still exists with the same hash, and optionally re-hashes stored bytes. The answer is intact, changed (naming documents), or could not verify, and never intact when anything was unreadable.
@@ -453,6 +455,12 @@ duplication); no slice adds a parallel store. A version is a `vault.documents` r
 - **Depends on:** VR-15, VR-01, VR-07, VR-13
 
 ### VR-20 — Closing archive: a sealed room's bytes, index and audit trail in one verifiable file  `[L]`
+
+**Part 1 done 2026-10-29** (`docs/design/VAULT_CLOSING_ARCHIVE_2026-10-29.md`, `docs/evidence/D6/2026-10-29-closing-archive/`). The builder is `openVaultArchive` (`server/services/vault/vault-archive-builder.ts`). It is staged from the seal's own byte check, so each file is read once and the bytes that made the verdict are the bytes archived. An archive that cannot be built is refused as `SEAL_NOT_INTACT`, carrying the verdict, rather than `ARCHIVE_INCOMPLETE`. The 200 MB heap test is not done; the reason is recorded there. Part 2, the tenant data return through the same builder, is open. It waits on a founder decision, because two written decisions disagree:
+- FD10 (c) decides "download only, built from a staged, fully verified file". Its option (b), an expiring link through the audited reader, says "never a presigned URL".
+- `docs/work-orders/MR-16-commercial-readiness.md` Stage 6 specifies an off-request job that uploads the archive to storage and serves it through a pre-signed URL.
+
+A tenant-wide return can run to gigabytes, so it cannot be built inside one request. Whichever way it is decided, the bytes go through `openVaultArchive`; there is no second ZIP builder.
 
 - **Launch row:** D6-adjacent: the tenant data return carries no document bytes (open item on the D6 purge row of docs/work-orders/README.md: 'the data return's bytes (founder)'). It is also inspection readiness. It needs FD8 and FD10. Evidence: docs/evidence/D6/<date>-closing-archive/.
 - **Veeva capability:** Data room closing archive; Submissions Archive export.

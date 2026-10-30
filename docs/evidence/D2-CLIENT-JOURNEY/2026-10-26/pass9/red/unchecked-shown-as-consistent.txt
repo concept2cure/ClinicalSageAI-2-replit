@@ -1,0 +1,3 @@
+ × client/src/concept2cure/v2/__tests__/submissionConsistency.test.tsx > an unchecked submission is never shown as a consistent one > says no check has run, and says that is not a finding of consistency
+ × client/src/concept2cure/v2/__tests__/submissionConsistency.test.tsx > an unchecked submission is never shown as a consistent one > tells the reader how a check is run
+      Tests  2 failed | 12 passed (14)

@@ -1,0 +1,72 @@
+# 2026-10-26T03:36:11Z HEAD 928b70996 (working tree, before the fix)
+# npx vitest run --reporter=dot client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx -t prompts name no invented authority|header, the pipeline|empty list names no destination
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+-xxx-------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission states no target the record does not carry (slice 0) > the Transmit and View receipt prompts name no invented authority
+AssertionError: expected 'Transmit pkg-1 · Infusion pump 510(k)…' not to match /\bESG\b|\bNB\b|TÜV|notified/i
+
+- Expected:
+/\bESG\b|\bNB\b|TÜV|notified/i
+
++ Received:
+"Transmit pkg-1 · Infusion pump 510(k). Re-run the gate (validation, cover letter, e-signature, package), confirm the package hash, then hand off to the ESG/NB transmitter and log the audit entry."
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:102:52
+    100|     fireEvent.click(screen.getByRole('button', { name: /view receipt/i…
+    101|     expect(asked).toHaveLength(2);
+    102|     for (const prompt of asked) expect(prompt).not.toMatch(INVENTED);
+       |                                                    ^
+    103|   });
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission states no target the record does not carry (slice 0) > the header, the pipeline and the New submission prompt name no destination
+AssertionError: expected 'WorkbenchSubmission centerPackage and…' not to match /\bESG\b|\bNB\b|TÜV|notified/i
+
+- Expected:
+/\bESG\b|\bNB\b|TÜV|notified/i
+
++ Received:
+"WorkbenchSubmission centerPackage and transmit — FDA ESG, notified bodies, EU MDR. Status tracking in-flight. Filter New submission"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:110:76
+    108|     const { container } = render(<SubmissionsSurface onAskAna={(t) => …
+    109|     await waitFor(() => expect(screen.getByText('Infusion pump EU MDR'…
+    110|     expect(container.querySelector('.page-header')?.textContent ?? '')…
+       |                                                                            ^
+    111|     expect(container.querySelector('.sub-pipeline')?.textContent ?? ''…
+    112|     fireEvent.click(screen.getByRole('button', { name: /new submission…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission states no target the record does not carry (slice 0) > the empty list names no destination
+AssertionError: expected 'No submissions yetPackages you create…' not to match /\bESG\b|\bNB\b|TÜV|notified/i
+
+- Expected:
+/\bESG\b|\bNB\b|TÜV|notified/i
+
++ Received:
+"No submissions yetPackages you create appear here — FDA ESG, notified body, or EU MDR transmittals.New submission"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:122:41
+    120|     render(<SubmissionsSurface onAskAna={() => {}} />);
+    121|     const empty = await screen.findByTestId('workbench-no-submissions'…
+    122|     expect(empty.textContent ?? '').not.toMatch(INVENTED);
+       |                                         ^
+    123|   });
+    124|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 8 skipped (11)
+   Start at  03:36:12
+   Duration  2.27s (transform 409ms, setup 171ms, import 555ms, tests 821ms, environment 560ms)
+

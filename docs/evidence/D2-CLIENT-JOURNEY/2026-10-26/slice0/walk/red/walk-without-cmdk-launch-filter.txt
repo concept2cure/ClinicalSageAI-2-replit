@@ -1,0 +1,112 @@
+# The launch walk, made to fail: slice 0's ⌘K filter removed in a scratch copy of HEAD
+# (Shell.tsx CmdK: 'if (isLaunchScopeLocked(verdictFor(s.id))) return false;' deleted), server LAUNCH_SCOPE_ENFORCE=on,
+# with NavUnlockPanel's data-lock-source in place. Fresh biotech organisation.
+
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › tests/e2e/launch-walk-no-lock.e2e.ts:183:3 › a fresh biotech organisation reaches no "not in this release" lock from the rail, ⌘K or a project's doors (3.1m)
+
+
+  1) [chromium] › tests/e2e/launch-walk-no-lock.e2e.ts:183:3 › a fresh biotech organisation reaches no "not in this release" lock from the rail, ⌘K or a project's doors 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 76
+
+    - Array []
+    + Array [
+    +   "⌘K \"submission\" → Submission twin — not in this release (/concept2cure/submission-center)",
+    +   "⌘K \"submission\" → eCTD co-author — not in this release (/concept2cure/gateway-transmittals)",
+    +   "⌘K \"submission\" → Publishing center — not in this release (/concept2cure/ectd-compile)",
+    +   "⌘K \"submission\" → Product development (PDEV → IND) — not in this release (/concept2cure/ectd-compile)",
+    +   "⌘K \"submission\" → Dossier map — not in this release (/concept2cure/ectd-compile)",
+    +   "⌘K \"submission\" → Sponsor portfolio — not in this release (/concept2cure/ectd-compile)",
+    +   "⌘K \"submission\" → Filings catalog — not in this release (/concept2cure/ectd-compile)",
+    +   "⌘K \"submission\" → Project journey — not in this release (/concept2cure/ectd-compile)",
+    +   "⌘K \"submission\" → Shadow review — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"submission\" → Dossier — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"submission\" → Health authority questions — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"submission\" → NDA / BLA filing — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"submission\" → MAA Module 1 (Regional) — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"readiness\" → Submission twin — not in this release (/concept2cure/project-home)",
+    +   "⌘K \"readiness\" → Investigator's Brochure — not in this release (/concept2cure/project-home)",
+    +   "⌘K \"readiness\" → Protocol analysis — not in this release (/concept2cure/project-home)",
+    +   "⌘K \"readiness\" → AnA Command — not in this release (/concept2cure/project-home)",
+    +   "⌘K \"readiness\" → Inspection readiness — not in this release (/concept2cure/project-home)",
+    +   "⌘K \"readiness\" → Project journey — not in this release (/concept2cure/project-home)",
+    +   "⌘K \"readiness\" → Shadow review — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"readiness\" → NDA / BLA filing — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"readiness\" → EU SmPC (QRD) — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"readiness\" → Orchestration & readiness — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"readiness\" → PDEV CMC workstream — not in this release (/concept2cure/insights)",
+    +   "⌘K \"readiness\" → PDEV clinical workstream — not in this release (/concept2cure/insights)",
+    +   "⌘K \"readiness\" → IND assembly readiness — not in this release (/concept2cure/insights)",
+    +   "⌘K \"readiness\" → Codebase coverage — not in this release (/concept2cure/insights)",
+    +   "⌘K \"readiness\" → Mission control — not in this release (/concept2cure/insights)",
+    +   "⌘K \"protocol\" → Protocol analysis — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"protocol\" → Research administration — not in this release (/concept2cure/protocol-dev)",
+    +   "⌘K \"protocol\" → Clinical operations — not in this release (/concept2cure/protocol-dev)",
+    +   "⌘K \"cmc\" → Lifecycle management — not in this release (/concept2cure/quality)",
+    +   "⌘K \"cmc\" → PDEV CMC workstream — not in this release (/concept2cure/quality)",
+    +   "⌘K \"quality\" → Quality management plans — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"quality\" → Training & enablement — not in this release (/concept2cure/quality)",
+    +   "⌘K \"report\" → Protocol analysis — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"report\" → PV cockpit — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"report\" → Report governance — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"report\" → AnA Command — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"report\" → Inspection readiness — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"report\" → Risk-based monitoring — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"report\" → IND assembly readiness — not in this release (/concept2cure/compliance-reports)",
+    +   "⌘K \"report\" → Pharmacovigilance — not in this release (/concept2cure/compliance-reports)",
+    +   "⌘K \"task\" → Biostatistics — not in this release (/concept2cure/tasks)",
+    +   "⌘K \"task\" → Submission pyramid — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"task\" → Orchestration & readiness — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"task\" → Regulatory change intelligence — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"audit\" → Product development (PDEV → IND) — not in this release (/concept2cure/vault)",
+    +   "⌘K \"audit\" → AnA Command — not in this release (/concept2cure/part11-console)",
+    +   "⌘K \"audit\" → PDEV CMC workstream — not in this release (/concept2cure/compliance-reports)",
+    +   "⌘K \"ind\" → Product development (PDEV → IND) — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"ind\" → Global regulatory intelligence — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"ind\" → FDA CRL library — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"ind\" → Protocol analysis — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"ind\" → Shadow review — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → Decision lineage — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → Inconsistency Intelligence — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → Research administration — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → Submission pyramid — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → Agency meetings — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → Nonclinical / Module 4 — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → PDEV CMC workstream — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → PDEV nonclinical workstream — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → PDEV clinical workstream — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → PDEV regulatory workstream — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → IND assembly readiness — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → Contradictions registry — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → FDA interactions — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"ind\" → Mission control — not in this release (/concept2cure/dispatch-readiness)",
+    +   "⌘K \"device\" → Agency meetings — not in this release (/concept2cure/vault)",
+    +   "⌘K \"label\" → Source Tracer — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"label\" → Prescribing information — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"label\" → EU SmPC (QRD) — not in this release (/concept2cure/conversation-thread)",
+    +   "⌘K \"communication\" → FDA interactions — not in this release (/concept2cure/conversation-thread)",
+    + ]
+
+      228 |     }
+      229 |     expect(r.visited, 'the walk visited nothing: its selectors no longer match the shell').toBeGreaterThan(10);
+    > 230 |     expect(r.launchLocks.map((v) => `${v.from} → ${v.via} (${v.url})`)).toEqual([]);
+          |                                                                         ^
+      231 |   });
+      232 | }
+      233 |
+        at /home/user/ClinicalSageAI-2-replit/tests/e2e/launch-walk-no-lock.e2e.ts:230:73
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/walk-out-red/launch-walk-no-lock.e2e.ts-e7faa-ail-⌘K-or-a-project-s-doors-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/walk-out-red/launch-walk-no-lock.e2e.ts-e7faa-ail-⌘K-or-a-project-s-doors-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/launch-walk-no-lock.e2e.ts:183:3 › a fresh biotech organisation reaches no "not in this release" lock from the rail, ⌘K or a project's doors 

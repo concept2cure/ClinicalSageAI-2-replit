@@ -1,0 +1,67 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xx··
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.noCommitmentsKpis.test.tsx > PreSubManager — no commitments recorded is neither integrated nor failed > a Q-Sub with no commitments yet: no "All integrated", no green or red commitment card
+AssertionError: expected { rolled: [ …(2) ], pending: [ …(2) ] } to deeply equal { rolled: [ …(2) ], pending: [ …(2) ] }
+
+- Expected
++ Received
+
+  {
+    "pending": [
+-     "Pending rollin—No commitments recorded yet",
+-     "",
++     "Pending rollin0All integrated",
++     "ok",
+    ],
+    "rolled": [
+-     "Commitments rolled—No commitments recorded yet",
+-     "",
++     "Commitments rolled0%0 of 0",
++     "err",
+    ],
+  }
+
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.noCommitmentsKpis.test.tsx:65:8
+     63|       rolled: [rolled.textContent, rolled.getAttribute('data-tone')],
+     64|       pending: [pending.textContent, pending.getAttribute('data-tone')…
+     65|     }).toEqual({
+       |        ^
+     66|       rolled: ['Commitments rolled—No commitments recorded yet', ''],
+     67|       pending: ['Pending rollin—No commitments recorded yet', ''],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.noCommitmentsKpis.test.tsx > PreSubManager — no commitments recorded is neither integrated nor failed > an empty portfolio says the same
+AssertionError: expected <div class="metric-meta"></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="metric-meta"
+>
+  All integrated
+</div>
+
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.noCommitmentsKpis.test.tsx:76:50
+     74|     const { container } = render(<PreSubManager onAskAna={() => {}} />…
+     75|     await waitFor(() => expect(screen.getByText('No Q-Subs yet')).toBe…
+     76|     expect(screen.queryByText('All integrated')).toBeNull();
+       |                                                  ^
+     77|     expect(card(container, 'Commitments rolled')!.getAttribute('data-t…
+     78|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  03:02:38
+   Duration  1.44s (transform 336ms, setup 165ms, import 436ms, tests 153ms, environment 521ms)
+

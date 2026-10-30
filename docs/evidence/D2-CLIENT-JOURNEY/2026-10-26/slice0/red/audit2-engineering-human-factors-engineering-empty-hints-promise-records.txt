@@ -1,0 +1,53 @@
+RED (audit2 engineering-human-factors #2, Engineering): with an organisation that has no documents, DHF sections, trace rows, change requests or non-conformances, the five panels not keyed to the project show the empty hint "… appear here once …", promising records that would not be shown until the read is keyed (the NotKeyedNote renders only in the gate's ready branch, so an empty organisation never reaches it).
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+··············xx··
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not promise that records appear here while the read is not keyed to the project
+AssertionError: expected 'No engineering documents yetDesign an…' not to match /appear here|once artifacts exist|once…/
+
+- Expected:
+/appear here|once artifacts exist|once design controls are recorded/
+
++ Received:
+"No engineering documents yetDesign and software deliverables appear here once artifacts exist for this organization.Check again"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx:351:21
+    349|     for (const g of gates) {
+    350|       const t = g.textContent ?? '';
+    351|       expect(t).not.toMatch(/appear here|once artifacts exist|once des…
+       |                     ^
+    352|       expect(t).toMatch(/Nothing is recorded for the organization\./);
+    353|       expect(t).toMatch(/Records are shown here once this screen reads…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not say an unreported read is organization-wide in its empty hint
+AssertionError: expected 'No engineering documents yetDesign an…' not to match /appear here|for the organization/
+
+- Expected:
+/appear here|for the organization/
+
++ Received:
+"No engineering documents yetDesign and software deliverables appear here once artifacts exist for this organization.Check again"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx:365:39
+    363|     expect(gates.length).toBe(5);
+    364|     for (const g of gates) {
+    365|       expect(g.textContent ?? '').not.toMatch(/appear here|for the org…
+       |                                       ^
+    366|       expect(g.textContent ?? '').toMatch(/Records are shown here once…
+    367|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 16 passed (18)
+   Start at  07:54:13
+   Duration  1.84s (transform 350ms, setup 171ms, import 471ms, tests 553ms, environment 497ms)
+

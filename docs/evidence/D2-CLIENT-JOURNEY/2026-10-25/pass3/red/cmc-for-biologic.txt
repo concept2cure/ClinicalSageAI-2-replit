@@ -1,0 +1,3 @@
+# Mutation: cmc-for-biologic
+ × a phase opens the feature that composes it, on this project > a biologic IND is not sent to CMC, which composes small-molecule Module 3 only 96ms
+      Tests  1 failed | 12 passed (13)

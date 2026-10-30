@@ -1,0 +1,47 @@
+# Gates at b8f8aca1c (over cef786a3f, 6549fe2b5, b8f8aca1c against origin/concept2cure-v2 = 37c17a3f0)
+
+## npm run ci:pushed-lint-warnings
+[ci:eslint-warning-ratchet] --since 37c17a3f055ef0296459647983291b2da84e7cd4 (37c17a3f0) -- 17 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since 37c17a3f055ef0296459647983291b2da84e7cd4.
+exit 0
+
+## npm run ci:pushed-lint-errors
+[ci:pushed-lint-errors] OK — no ESLint errors in 17 changed file(s) against origin/concept2cure-v2.
+exit 0
+
+## npm run ci:sql-interpolation
+[ci:sql-interpolation] 27 fixed canonical predicate(s) proved separately; no value allowance added:
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1058 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+exit 0
+
+## npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit 0
+
+## npm run ci:untracked-imports
+[ci:untracked-imports] OK — every relative import in 17 file(s) resolves to a tracked file.
+exit 0
+
+## npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+exit 0
+
+## npm run ci:tenant-isolation:no-regression
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+exit 0
+
+## NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.check.json
+exit 0
+
+## Before each commit (the tree of exactly that commit; unstaged work stashed with --keep-index)
+cef786a3f  ci:tenant-isolation:no-regression exit 0 (was FAIL at 37c17a3f0: server/services/vault/vault-placement.service.ts#faad7a0ef639);
+           eslint on the file: 0 warnings before and after; tsc exit 0 (run with the full working tree); vault-processing-sweep.dbtest.ts 16/16.
+6549fe2b5  tsc exit 0; ci:sql-interpolation, ci:undefined-css-classes, ci:sign-ceremony, ci:tenant-isolation:no-regression exit 0;
+           RR2 QMS+Vault DB suites 17/17; ledger, by-target, compliance-report unit tests 135/135.
+           After the commit: ci:pushed-lint-warnings, ci:pushed-lint-errors, ci:untracked-imports exit 0 (these diff origin...HEAD, so they see only committed files).
+b8f8aca1c  tsc exit 0; ci:sql-interpolation, ci:undefined-css-classes, ci:sign-ceremony, ci:tenant-isolation:no-regression exit 0;
+           Vault RR2 + vault-lifecycle + RR1b DB suites 26/26; Vault lifecycle unit and client suites 32/32.
+           After the commit: ci:pushed-lint-warnings, ci:pushed-lint-errors, ci:untracked-imports exit 0.
+No baseline was raised.

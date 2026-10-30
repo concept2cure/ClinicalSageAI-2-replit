@@ -8,7 +8,8 @@ import { capturedActorHeaders } from '@/utils/authToken';
 import { surfaceLeaveRefusal } from './navParams';
 import { taskActorScope, taskTargetLocation, type TaskActorScope } from './taskTarget';
 import { NotificationOpenButton } from './NotificationOpenButton';
-import { NotificationPreferences } from './NotificationPreferences';
+import { NotificationPreferences, NOTIFICATION_PREFERENCES_CHANGED } from './NotificationPreferences';
+import { OpenWorkGroups, useOpenWorkReads, type MyQueue, type MyWork, type MyWorkItem, type PendingApproval } from './OpenWork';
 
 /* ================================================================
    Task Tray — the persistent "what needs me" affordance in every
@@ -38,47 +39,6 @@ import { NotificationPreferences } from './NotificationPreferences';
    hardcoded rail "12" is gone (D40) — or "?" when a count read failed.
    ================================================================ */
 
-interface MyWorkItem {
-  taskId: string;
-  title: string;
-  projectId: number | null;
-  moduleType: string;
-  status: string;
-  priority: string;
-  dueDate: string | null;
-  overdue: boolean;
-  dueSoon: boolean;
-  blocked: boolean;
-  approvalRequired: boolean;
-  approvalStatus: string;
-  criticalPath: boolean;
-}
-interface MyWork {
-  items: MyWorkItem[];
-  total: number;
-  overdue: number;
-  dueSoon: number;
-  blocked: number;
-  approvalsPending: number;
-}
-interface MyQueue {
-  threads: Array<{ threadId: string; title: string | null; artifactTitle?: string | null; priority?: string | null }>;
-  tasks: Array<{ taskId: string; title: string; dueAt?: string | null; artifactTitle?: string | null; taskType?: string }>;
-  totalThreads: number;
-  totalTasks: number;
-  unreadNotifications: number;
-  overdueTasks: number;
-}
-/** The fields of one GET /api/review/board queue row this tray reads
- *  (ReviewItemView, server/services/review/authoring-review-board.ts). The
- *  authoring store records no due date, so none is shown. */
-interface PendingApproval {
-  id: string;
-  doc: string;
-  prog: string | null;
-  role: string;
-  atMySignOff: boolean;
-}
 interface NotificationRow {
   id: number;
   category: string;
@@ -90,18 +50,6 @@ interface NotificationRow {
   resource_id?: string | number | null;
   action_url?: string | null;
   metadata?: Record<string,unknown> | null;
-}
-
-/** Only a canonical saved-run resource creates a report navigation target. */
-function dueLabel(iso: string | null): string {
-  if (!iso) return '';
-  const due = new Date(iso);
-  if (Number.isNaN(due.getTime())) return '';
-  const days = Math.round((due.getTime() - Date.now()) / 86_400_000);
-  if (days < 0) return `${-days}d overdue`;
-  if (days === 0) return 'due today';
-  if (days === 1) return 'due tomorrow';
-  return `due in ${days}d`;
 }
 
 type TaskTrayProps = { onNav?: (id: string) => void; onAsk?: (text: string) => void };
@@ -122,6 +70,20 @@ function useTaskTrayOwnership(scope: TaskActorScope | null, onNav: TaskTrayProps
   return { stillOwned, beforeNotificationOpen };
 }
 
+function useNotificationPreferenceRefresh(scope: TaskActorScope | null, stillOwned: () => boolean,
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>) {
+  useEffect(() => {
+    const refresh = (event: Event) => {
+      const changed = (event as CustomEvent<TaskActorScope>).detail;
+      if (changed?.userId === scope?.userId && changed?.organizationId === scope?.organizationId && stillOwned()) {
+        setRefreshKey(key => key + 1);
+      }
+    };
+    window.addEventListener(NOTIFICATION_PREFERENCES_CHANGED, refresh);
+    return () => window.removeEventListener(NOTIFICATION_PREFERENCES_CHANGED, refresh);
+  }, [scope?.userId, scope?.organizationId, stillOwned, setRefreshKey]);
+}
+
 export function TaskTray(props: TaskTrayProps) {
   const { user } = useAuth();
   const scope = taskActorScope(user);
@@ -135,21 +97,17 @@ function TaskTrayOwner({ onNav, onAsk, scope }: TaskTrayProps & { scope: TaskAct
   const [navigationError, setNavigationError] = useState('');
   const { stillOwned, beforeNotificationOpen } = useTaskTrayOwnership(scope, onNav);
 
+  useNotificationPreferenceRefresh(scope, stillOwned, setRefreshKey);
+
   // The badge needs a count while the tray is closed; the heavier sources load
   // when it opens. refreshKey re-pulls after a mutation (mark read).
-  const myWork = useLiveData<MyWork>('/api/task-management/my-work', ['my-work', open, refreshKey]);
-  const queue = useLiveData<MyQueue>(open ? '/api/concept2cure/reviews/my-queue' : null, ['my-queue', open, refreshKey]);
-  const approvals = useLiveData<{ queue: PendingApproval[] }>(
-    open ? '/api/review/board?scope=mine&limit=25' : null, ['approvals', open, refreshKey]
-  );
+  const { myWork, queue, approvals, assigned, approvalRows } = useOpenWorkReads(open, refreshKey);
   const notifs = useLiveRows<NotificationRow>(
     open ? '/api/mdx/notifications?unread=true&limit=20' : null, ['notifs', open, refreshKey]
   );
   const unread = useLiveData<{ unread: number }>('/api/mdx/notifications/unread-count', ['unread', open, refreshKey]);
 
   const work = myWork.data;
-  const assigned = work?.items ?? [];
-  const approvalRows = (approvals.data?.queue ?? []).filter((a) => a.atMySignOff);
   /* A failed fetch used to be indistinguishable from "nothing pending": the
      group simply did not render. For the one surface whose job is telling a
      regulatory professional what needs their signature, silence that means
@@ -238,7 +196,7 @@ function TaskTrayOwner({ onNav, onAsk, scope }: TaskTrayProps & { scope: TaskAct
           openPreferences={() => { if (!stillOwned()) { setNavigationError('Your signed-in account or organization changed. Reopen Your work.'); return; } setOpen(false); setPreferencesOpen(true); }}
         />
       )}
-      {preferencesOpen && <NotificationPreferences onClose={()=>setPreferencesOpen(false)} onSaved={()=>setRefreshKey(key=>key+1)}/>}
+      {preferencesOpen && scope && <NotificationPreferences scope={scope} onClose={()=>setPreferencesOpen(false)}/>}
     </>
   );
 }
@@ -274,16 +232,6 @@ function TrayPanel({
   beforeNotificationOpen: () => void;
 }) {
   const ref = useDialog(onClose);
-  // Overdue first, then due-soon, then the rest — the triage order.
-  const ordered = [...assigned].sort((a, b) =>
-    Number(b.overdue) - Number(a.overdue) || Number(b.dueSoon) - Number(a.dueSoon)
-  );
-  const reviewTasks = queue?.tasks ?? [];
-  const reviewThreads = queue?.threads ?? [];
-  // "Not yet approved", not "== pending": approval_status is nullable with no
-  // default and nothing writes 'pending', so the old predicate meant this
-  // group could never list a task.
-  const approvalsFromBoard = assigned.filter(t => t.approvalRequired && t.approvalStatus !== 'approved');
 
   return (
     <>
@@ -306,104 +254,9 @@ function TrayPanel({
         )}
 
         <div className="tt-scroll">
-          <div className="tt-group">
-            <div className="tt-group-head">Assigned to you</div>
-            {workLoading ? (
-              <div className="tt-empty">Loading…</div>
-            ) : workError ? (
-              <div className="tt-empty" role="alert">Couldn't load your tasks — retry from the board.</div>
-            ) : !ordered.length ? (
-              <div className="tt-empty">Nothing assigned to you right now. Tasks land here as soon as someone assigns you one.</div>
-            ) : ordered.slice(0, 8).map(t => (
-              <button key={t.taskId} className="tt-item" onClick={() => openTask(t.taskId)}>
-                <span className={`tt-dot tt-dot-${t.overdue ? 'err' : t.dueSoon || t.blocked ? 'warn' : 'ok'}`} aria-hidden />
-                <span className="tt-item-body">
-                  <span className="tt-item-title">{t.title}</span>
-                  <span className="tt-item-sub">
-                    {t.moduleType}{t.blocked ? ' · blocked' : ''}{t.dueDate ? ` · ${dueLabel(t.dueDate)}` : ''}
-                  </span>
-                </span>
-                <span className="tt-go">{I.arrowRight}</span>
-              </button>
-            ))}
-            {ordered.length > 8 && (
-              <button className="tt-more" onClick={() => go('tasks')}>+{ordered.length - 8} more on the board</button>
-            )}
-          </div>
-
-          {(approvalsFromBoard.length > 0 || approvalRows.length > 0 || approvalsError) && (
-            <div className="tt-group">
-              <div className="tt-group-head">Approvals — you sign</div>
-              {approvalsError && (
-                <div className="tt-empty" role="alert">
-                  Couldn't load your approvals, so this list may be incomplete — open Review to check.
-                </div>
-              )}
-              {approvalsFromBoard.map(t => (
-                <button key={t.taskId} className="tt-item" onClick={() => openTask(t.taskId)}>
-                  <span className="tt-dot tt-dot-err" aria-hidden />
-                  <span className="tt-item-body">
-                    <span className="tt-item-title">{t.title}</span>
-                    <span className="tt-item-sub">Task approval pending{t.dueDate ? ` · ${dueLabel(t.dueDate)}` : ''}</span>
-                  </span>
-                  <span className="tt-go">{I.arrowRight}</span>
-                </button>
-              ))}
-              {approvalRows.slice(0, 5).map((a) => (
-                <button key={a.id} className="tt-item" onClick={() => go('review')}>
-                  <span className="tt-dot tt-dot-err" aria-hidden />
-                  <span className="tt-item-body">
-                    <span className="tt-item-title">{a.doc || 'Document approval'}</span>
-                    <span className="tt-item-sub">{a.role ? `${a.role} · ` : ''}{a.prog ? `${a.prog} · ` : ''}awaiting your sign-off</span>
-                  </span>
-                  <span className="tt-go">{I.arrowRight}</span>
-                </button>
-              ))}
-              {/* Without this, someone with 7 pending approvals saw 5 and had no
-                  signal the other 2 existed — for signature-required items. */}
-              {approvalRows.length > 5 && (
-                <button className="tt-more" onClick={() => go('review')}>
-                  +{approvalRows.length - 5} more awaiting your sign-off
-                </button>
-              )}
-            </div>
-          )}
-
-          {(reviewTasks.length > 0 || reviewThreads.length > 0 || queueError) && (
-            <div className="tt-group">
-              <div className="tt-group-head">Review — threads &amp; change requests</div>
-              {queueError && (
-                <div className="tt-empty" role="alert">
-                  Couldn't load your review queue, so this list may be incomplete — open Review to check.
-                </div>
-              )}
-              {reviewTasks.slice(0, 5).map(t => (
-                <button key={t.taskId} className="tt-item" onClick={() => go('review')}>
-                  <span className="tt-dot tt-dot-warn" aria-hidden />
-                  <span className="tt-item-body">
-                    <span className="tt-item-title">{t.title}</span>
-                    <span className="tt-item-sub">{t.artifactTitle || 'Review task'}{t.dueAt ? ` · ${dueLabel(t.dueAt)}` : ''}</span>
-                  </span>
-                  <span className="tt-go">{I.arrowRight}</span>
-                </button>
-              ))}
-              {reviewThreads.slice(0, 5).map(t => (
-                <button key={t.threadId} className="tt-item" onClick={() => go('review')}>
-                  <span className="tt-dot tt-dot-warn" aria-hidden />
-                  <span className="tt-item-body">
-                    <span className="tt-item-title">{t.title || 'Review thread'}</span>
-                    <span className="tt-item-sub">{t.artifactTitle || 'Open discussion assigned to you'}</span>
-                  </span>
-                  <span className="tt-go">{I.arrowRight}</span>
-                </button>
-              ))}
-              {(reviewTasks.length > 5 || reviewThreads.length > 5) && (
-                <button className="tt-more" onClick={() => go('review')}>
-                  +{Math.max(reviewTasks.length - 5, 0) + Math.max(reviewThreads.length - 5, 0)} more in review
-                </button>
-              )}
-            </div>
-          )}
+          <OpenWorkGroups workLoading={workLoading} workError={workError} assigned={assigned}
+            queue={queue} queueError={queueError} approvalRows={approvalRows} approvalsError={approvalsError}
+            go={go} openTask={openTask} />
 
           <div className="tt-group">
             <div className="tt-group-head">Messages &amp; alerts <button type="button" className="btn ghost small" onClick={openPreferences}>Notification preferences</button></div>

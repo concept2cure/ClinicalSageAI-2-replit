@@ -307,22 +307,59 @@ describe('GET /api/mdx/engineering/:programId', () => {
     expect(res.body.meta.unavailable ?? []).not.toContain('risks');
   });
 
-  it('computes DHF completion only over required sections', async () => {
+  /* P-60 (2026-10-29): the DHF panel reads the project's own document sections
+     (c2c_document_sections), so the figure is over their mandatory sections. */
+  it('computes DHF completion only over mandatory sections', async () => {
     query.mockResolvedValueOnce({ rows: [{ id: PROGRAM }] }); // tenancy
     query.mockResolvedValueOnce({ rows: [] }); // risks
     query.mockResolvedValueOnce({ rows: [] }); // trace
+    const section = (id: number, key: string, status: string, mandatory: boolean) => ({
+      id, section_key: key, label: `Section ${key}`, status, mandatory, version: 1, updated_at: null,
+      document_id: 'doc_1', document_title: 'Device 510(k)',
+    });
     query.mockResolvedValueOnce({
-      rows: [
-        { id: 1, section_number: '01', section_title: 'Plan', status: 'approved',  is_required: true,  completion_percentage: 100, updated_at: null },
-        { id: 2, section_number: '02', section_title: 'Inputs', status: 'draft',   is_required: true,  completion_percentage: 40,  updated_at: null },
-        { id: 3, section_number: '03', section_title: 'Optional', status: 'draft', is_required: false, completion_percentage: 0,   updated_at: null },
-      ],
+      rows: [section(1, '01', 'approved', true), section(2, '02', 'drafted', true), section(3, '03', 'drafted', false)],
     });
     query.mockResolvedValue({ rows: [] });
 
     const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
-    /* 1 of 2 required sections approved — the optional row is excluded
+    /* 1 of 2 mandatory sections approved — the optional row is excluded
        from both numerator and denominator. */
     expect(res.body.data.summary.dhfCompletion).toBe(50);
+  });
+});
+
+/* ── The project ownership refusal is the shared one (D2, 2026-10-29;
+      docs/evidence/D2-ONE-ANA/2026-10-29/small-honest-state-fixes/).
+      q-sub, mdx-udi, mdx-labeling and human-factors refuse through
+      server/lib/admit-project.ts: 404 "Project not found" when the
+      organization does not own the project, 503 VERIFICATION_UNAVAILABLE when
+      the check could not run. This route asked programInOrganization inline,
+      so a lookup that could not run fell to its catch and answered 500, as if
+      the route had crashed rather than a check not having run. Either refusal
+      reads nothing. ───────────────────────────────────────────────────────── */
+describe('GET /api/mdx/engineering/:programId — the project ownership refusal', () => {
+  /** Every query after the ownership check: the panels a refusal must not read. */
+  const panelReads = () => query.mock.calls.filter(([sql]) => !/FROM regulatory_programs/.test(String(sql)));
+
+  it('answers 503 VERIFICATION_UNAVAILABLE when the ownership check cannot run, and reads nothing', async () => {
+    query.mockRejectedValueOnce(Object.assign(new Error('connection terminated'), { code: '57P01' })); // ownership
+    query.mockResolvedValue({ rows: [] });
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({ success: false, error: 'VERIFICATION_UNAVAILABLE' });
+    expect(res.body.message).toMatch(/^The project ownership check could not be run\. This is not a verdict/);
+    // The store's own words go to the log, never to the client.
+    expect(JSON.stringify(res.body)).not.toMatch(/connection terminated|57P01/);
+    expect(panelReads()).toHaveLength(0);
+  });
+
+  it('refuses a project the organization does not own with 404 "Project not found", and reads nothing', async () => {
+    query.mockResolvedValueOnce({ rows: [] }); // ownership: not this organization's
+    query.mockResolvedValue({ rows: [] });
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Project not found');
+    expect(panelReads()).toHaveLength(0);
   });
 });

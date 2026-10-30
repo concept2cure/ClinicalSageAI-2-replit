@@ -153,6 +153,34 @@ Every file that enters the Vault is scanned for malware before it is stored, on 
 
 ### Stage 3 — Admit IND content, bound archives and take OCR off the request (Phase 1 · M · engineering) — closes SEC-17; advances CAT1-05 (file types and extraction)
 
+**Steps 1(c), 1(d) and 2 done 2026-10-29: SEC-17 is closed** (`docs/evidence/D6/2026-10-29-archive-limits/`). `server/services/archive/safeZip.ts` is called from:
+- `assertUploadSafe` (422);
+- `extractTemplateFromFile` (422 on both template routes);
+- `extractDocumentText`, before mammoth and exceljs;
+- `validateEctdPackage` (422; a package this server assembled passes `origin: 'platform-generated'`);
+- the legacy import detector (an error finding).
+
+The bounded reader is replaced by one measured inflate before any reader, which also covers mammoth and exceljs. The reason is recorded there.
+
+**Step 3 and step 1(a) done 2026-10-29** (`docs/evidence/D2-VAULT-DEFINE-STYLESHEET/2026-10-29/`):
+- `.xsl` and `.pptx` are Vault formats.
+- `.xsl` binds `application/xslt+xml` for its own name only, is checked as text and is read as raw text.
+- A version is stored under the type its name binds: an `.xpt` sent as octet-stream is stored as `application/x-sas-xport`.
+- A test holds every Vault format to a byte check and a name binding.
+
+**Steps 1(b) and 4 to 6 done 2026-10-29** (`docs/evidence/D1/2026-10-29-ocr-off-request/`):
+- Ingest reads a text layer only, within 20 MiB and 10 s, and records `extraction_pending` otherwise.
+- `server/jobs/vaultProcessingSweep.ts` reads each pending version once. It claims each one by advisory lock, reads it through the verified reader with OCR in a conversion slot, and writes the text, the outcome and a chained audit row, then indexes the passages.
+- The ingest response, the catalog record, AnA's catalog eligibility and search say a version is still being read.
+
+Born-digital files are still read and chunked in the request; that decision is recorded there.
+
+**Step 5's re-proposal done 2026-10-29** (`docs/evidence/D1/2026-10-29-filing-from-read-text/`):
+- The sweep runs the filing classifier over the text it read, in its own transaction, through `proposeFilingFromReadText` in the placement service. It writes `suggested` and a chained `vault.document.file` row naming the classifier.
+- It proposes only for a version that is unfiled, placed by no person, with no person's or agent's filing on record, and not a check-in. A `suggested` placement is left as it is, which is narrower than step 5 allows; the evidence says why.
+
+Stage 3 is complete.
+
 1. **Red tests first**, each run on HEAD and captured:
    - (a) a valid SAS V5 `.xpt` to `/api/vault/ingest` returns 400 `FILE_TYPE_NOT_ALLOWED`;
    - (b) a 300-page image-only PDF holds the response open until OCR finishes;
@@ -247,6 +275,25 @@ Every file that enters the Vault is scanned for malware before it is stored, on 
 
 ### Stage 5 — Document control: restore, withdraw, legal holds, and check-out if decided (Phase 3 · M, L with check-out · engineering) — closes CAT1-04, CAT1-15
 
+**Steps 1 (restore half) and 2 done 2026-10-29** (`docs/evidence/D5/2026-10-29-vault-version-restore/`):
+- An editor restores an earlier version from the versions panel with a reason. `restoreVaultVersion` (`server/services/vault/vault-version-restore.ts`) reads the version's verified bytes and checks them in again through the one ingest as the next version, with `lineage.restoredFrom` and the reason in the chained audit row.
+- The check-in admits those bytes only for the version being restored.
+- `vault.documents.restored_from_id` marks a restore, and a trigger admits it only for a live version of the same document holding the same bytes. 044c's program-hash unique index is narrowed to rows that are not restores (`migrations/20261029_vault_documents_restored_from.sql`).
+
+Four things differ from the steps below, and the evidence says why:
+- the ingest is called itself, not factored into a shared row writer;
+- the restore is one `vault.document.ingest` event, not a `vault.version.restored` action;
+- the unique index the steps did not mention had to be narrowed;
+- the verified reader has not moved.
+
+**Step 4 and the legal-hold half of step 1 done 2026-10-29** (`docs/evidence/D5/2026-10-29-vault-legal-holds-append-only/`):
+- A hold is placed once and lifted once. A row trigger admits only the write-once lift and an owner DELETE, a statement trigger refuses TRUNCATE, and both are on the boot list (`migrations/20261029b_vault_legal_holds_append_only.sql`).
+- Step 5's register already existed (`LegalHoldsCard.tsx` in Admin Settings).
+
+**Step 5's notice done 2026-10-30** (`docs/evidence/D5/2026-10-30-vault-hold-notice/`): the Vault read carries the project's active holds, as matter reference and date but not the reason. The document panel tells every reader that a document is on hold, or that the holds could not be read.
+
+Steps 3 and 6 are open; each waits on a decision named below.
+
 1. **Red first.**
    - Add `tests/db/vault-version-restore.dbtest.ts`. Check in v1, then v2, then `POST …/versions/<v1>/restore` with a reason, and expect v3 with v1's `content_hash` superseding v2. At HEAD the route 404s, and re-uploading v1's bytes returns 409 `CONTENT_ALREADY_A_VERSION`.
    - Add `tests/db/vault-legal-hold-append-only.dbtest.ts`. Running as the runtime role, `UPDATE vault.legal_holds SET reason = …` and `DELETE` both succeed at HEAD.
@@ -315,6 +362,23 @@ Every file that enters the Vault is scanned for malware before it is stored, on 
 - Dropping a folder of 12 files, 2 of them `.exe`, uploads 10 with a row each and lists the 2 as skipped. Red on HEAD, which has no drop target.
 - Exporting 5 versions returns 202, then a ZIP whose `SHA256SUMS` verifies against each version's `content_hash`. Tampering with one stored object makes the export fail as a whole.
 - A DOCX preview renders inline with the rendition label, and download of the same document still returns the original bytes with a matching `X-Content-SHA256`.
+
+**Step 1 was delivered by gap 7.1** (`client/src/concept2cure/v2/FileDropZone.tsx`, around the Vault picker and the Data Room; folder upload; skipped files listed with the reason).
+
+**Step 2 done 2026-10-30** (`docs/evidence/D2/2026-10-30-vault-upload-progress/`): the ingest request goes through `client/src/concept2cure/v2/vaultIngestTransport.ts` (XHR, `upload.onprogress`). The request is the same: the bearer header, the session cookie, a browser-written multipart body. Each row of the upload list says one of:
+- waiting while the file before it goes;
+- "Uploading… n% of size sent", with a labelled progress bar;
+- "Sent. The server is scanning it and storing it…";
+- then recorded as vN, or refused in the server's words.
+
+The per-row document type was already there (gap 7.1). **Concurrency stays one file at a time:** a second file in flight shares the same person's bandwidth, so the batch finishes no sooner, and it doubles the server's concurrent scans for one person. The evidence README records the reasoning.
+
+**Step 3 done 2026-10-30, as a folder export** (`docs/evidence/D2/2026-10-30-vault-folder-export/`):
+- **The route:** `GET /api/c2c/project-vault/:id/folders/:folderId/export` composes the builder VR-20 built (`vault-archive-builder.ts`) and the verified reader. The archive holds the folder's current versions, `manifest.json`, `INDEX.txt`, `SHA256SUMS` and the chained audit rows of those versions.
+- **Refusals:** one file that fails its hash refuses the whole export, and the refusal names it. A disposition-withdrawn file is listed as withheld.
+- **Audit:** a chained `vault.folder.export` row carries the archive's SHA-256 before a byte is sent.
+- **The client:** "Export <folder>" on the Vault's filing folders saves the file only when it matches that hash.
+- **What changed from the step as written:** it is a synchronous, staged download rather than the 202 job and `public.vault_exports` table. FD10's decision for the seal archive covers both archives: no copy of governed bytes is left at rest to need its own retention and hold handling. The queued variant calls the same staging loop, and waits until a folder is too large for one request. The evidence README records the reasoning.
 
 ### Stage 7 — Folder and document permissions (Phase 3 · L · engineering) — closes CAT1-13
 

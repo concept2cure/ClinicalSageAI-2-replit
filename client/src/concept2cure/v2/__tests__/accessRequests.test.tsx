@@ -217,7 +217,7 @@ describe('NavUnlockPanel — the member who cannot buy', () => {
   it('never asks the server about requests for an administrator', async () => {
     api.fn.mockImplementation(async () => json({ requests: [] }));
     renderPanel(true);
-    await screen.findByRole('button', { name: /view plans/i });
+    await screen.findByRole('button', { name: 'Compare subscriptions' });
     expect(api.fn).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: /ask an administrator/i })).toBeNull();
   });

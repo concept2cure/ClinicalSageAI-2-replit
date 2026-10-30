@@ -25,6 +25,17 @@ import request from 'supertest';
 
 const query = vi.fn();
 vi.mock('../../db.js', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+/* The listing is bound to the projects the caller can open (fold F3 slice C,
+   2026-10-29). The sharing policy is stubbed here to open project 4, the
+   fixture's own; artifacts-center-accessible-projects.pglite.test.ts proves the binding. */
+vi.mock('../../services/c2c/current-program-access.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/c2c/current-program-access')>()),
+  readCurrentProgramActor: async () => ({ userId: 5, role: 'author' }),
+}));
+vi.mock('../../services/report-os/project-access.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [4],
+}));
 
 import createArtifactsCenterRoutes from '../artifacts-center-routes';
 
@@ -116,8 +127,13 @@ describe('GET /api/artifacts-center — signature staleness', () => {
   it('scopes the read to the caller organization', async () => {
     query.mockResolvedValueOnce({ rows: [] });
     await request(appWith(42)).get('/api/artifacts-center');
-    expect(query.mock.calls[0][1]).toEqual([42]);
+    // The registry's one read (services/artifact-registry-read.ts, shared with
+    // the project Vault since 2026-10-29): organization, no program, the
+    // projects the caller can open (slice C: never the whole organization),
+    // and one past the window, all bound.
+    expect(query.mock.calls[0][1]).toEqual([42, null, [4], 201]);
     expect(query.mock.calls[0][0]).toContain('a.organization_id = $1');
+    expect(query.mock.calls[0][0]).toContain('p.id = ANY($3::int[])');
   });
 
   it('refuses without organization context', async () => {

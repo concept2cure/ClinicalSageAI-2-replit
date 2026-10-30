@@ -1,0 +1,92 @@
+# Mutations: each one is a single exact-string change to a product line the test pins.
+# Run in an isolated copy (git archive of HEAD into the scratch directory, with the two edited tests
+# copied in), so no other agent's test run in the shared tree could see a mutated product file.
+# After each run the file is written back from its saved bytes and compared with `git show HEAD:<file>`.
+# Baseline in that copy, unmutated: 8/8 passed.
+
+## Case 1: client/src/concept2cure/v2/editor/assemblyDraftQueue.ts:82 (4/4 red)
+
+### M1a count: the remaining count reports the retained count
+file: client/src/concept2cure/v2/editor/assemblyDraftQueue.ts
+- ${remaining ? `${remaining} failed or not-started
++ ${remaining ? `${ready} failed or not-started
+ × client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 7ms
+   → expected '1 candidate retained for individual r…' to match /\b2 failed or not-started candidates …/
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+restored byte-for-byte to HEAD blob: True
+
+### M1b explicit: continuation no longer says it is explicit
+file: client/src/concept2cure/v2/editor/assemblyDraftQueue.ts
+- Continue explicitly to prepare up to 20
++ Continuing to prepare up to 20
+ × client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 7ms
+   → expected '1 candidate retained for individual r…' to match /\bContinue explicitly to prepare up t…/
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+restored byte-for-byte to HEAD blob: True
+
+### M1c auto-accept: the no-auto-accept clause is dropped
+file: client/src/concept2cure/v2/editor/assemblyDraftQueue.ts
+- Continue explicitly to prepare up to 20; nothing is accepted automatically.
++ Continue explicitly to prepare up to 20.
+ × client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 6ms
+   → expected '1 candidate retained for individual r…' to match /\bnothing is accepted automatically\.$/
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+restored byte-for-byte to HEAD blob: True
+
+### M1d retained: the retained count is dropped from the message
+file: client/src/concept2cure/v2/editor/assemblyDraftQueue.ts
+- message: `${ready} candidate${ready === 1
++ message: `Candidate${ready === 1
+ × client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 6ms
+   → expected 'Candidate retained for individual rev…' to match /^1 candidate retained for individual …/
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+restored byte-for-byte to HEAD blob: True
+
+## Case 2: the Vault working-copy path (3/3 red)
+
+### M2a Vault opens the uploaded source id, not the saved working copy
+file: client/src/concept2cure/v2/surfaces/Vault.tsx
+- onOpenDocument={docId => openImportedDocument(docId, projectId, onNav)}
++ onOpenDocument={() => openImportedDocument(pullDoc.docId!, projectId, onNav)}
+ × client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 762ms
+   → expected { docType: null, …(7) } to match object { …(2) }
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+restored byte-for-byte to HEAD blob: True
+
+### M2b intake dispatches without the signed-in account's captured bearer
+file: client/src/concept2cure/v2/editor/useSourceIntake.ts
+-     const headers = capturedActorHeaders(owner.actor);
+    return current()
++     const headers = { Authorization: 'Bearer anonymous', 'x-organization-id': String(owner.actor.organizationId) };
+    return current()
+ × client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 605ms
+   → expected [ [ 'POST', …(3) ] ] to deeply equal [ [ 'POST', …(3) ] ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+restored byte-for-byte to HEAD blob: True
+
+### M2c the dialog opens the receipt's origin id instead of the saved doc id
+file: client/src/concept2cure/v2/editor/SourceImportDialog.tsx
+- const savedId = intake.result.doc.id;
++ const savedId = intake.result.origin.id;
+ × client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 685ms
+   → expected { docType: null, …(7) } to match object { …(2) }
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+restored byte-for-byte to HEAD blob: True
+
+## Case 2, fixture half-step (not a product mutation)
+
+### F1 fixture half-step: signed-in session added, receipt left as the pre-8c86a44a thin shape
+× client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 5389ms
+→ Unable to find an element with the text: Extracted text requires review.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+Tests  1 failed | 3 skipped (4)
+restored to the working-tree test byte-for-byte: True
+
+## Shared tree after all runs
+git diff --stat -- assemblyDraftQueue.ts Vault.tsx useSourceIntake.ts SourceImportDialog.tsx: (empty, 0 lines)

@@ -42,6 +42,7 @@
  * @module server/services/governance/separation-of-duties
  */
 import { pool } from '../../db.js';
+import { QmsControlledTextAuthorshipInvalid, qmsControlledTextAuthorIds } from '../qms/controlled-text-authorship.js';
 /* Who entered the register records a Module 3 section was composed from. The
    reader lives with the CMC registers because the lineage it walks is theirs;
    the rule applied to its answer is this module's. */
@@ -198,6 +199,41 @@ async function documentAuthors(db: AuthorshipReader, documentId: string, orgId: 
       );
   set.add(owner.rows, 'owner_id', 'recorded owner');
   return set.result();
+}
+
+/**
+ * qms-document:<id> (RR4, docs/design/REVIEW_ROUTING_2026-10-23.md §2.5, NEW-4):
+ * a QMS controlled document's authors are its recorded author (author_id, the
+ * creator or the reviser of this version), every recorded controlled-text
+ * contributor (metadata.controlledTextAuthorship, the set the approval's own
+ * two-person rule reads) and, for a document authored in the canonical editor,
+ * that Authoring document's creator and contributors. A contributor record that
+ * cannot be read is unresolved, never "no authors".
+ */
+async function qmsDocumentAuthors(db: AuthorshipReader, documentId: string, orgId: number): Promise<TargetAuthorship> {
+  if (!/^\d{1,10}$/.test(documentId)) return new AuthorSet().result();
+  const { rows } = await db.query(
+    `SELECT author_id, metadata, authoring_document_id FROM qms_documents WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    [documentId, orgId],
+  );
+  if (rows.length !== 1) return new AuthorSet().result();
+  const set = new AuthorSet();
+  set.add(rows, 'author_id', 'QMS document author');
+  let contributors: number[];
+  try { contributors = qmsControlledTextAuthorIds(rows[0].metadata); }
+  catch (err) {
+    if (err instanceof QmsControlledTextAuthorshipInvalid) throw new SeparationOfDutiesAuthorUnresolvedError(err.message);
+    throw err;
+  }
+  set.add(contributors.map((id) => ({ id })), 'id', 'controlled-text contributor');
+  const own = set.result();
+  if (!rows[0].authoring_document_id) return own;
+  const authored = await authoringDocumentAuthors(db, String(rows[0].authoring_document_id), orgId);
+  return {
+    modelled: true,
+    authors: [...new Set([...own.authors, ...authored.authors])].sort((a, b) => a - b),
+    sources: [...new Set([...own.sources, ...authored.sources])].sort(),
+  };
 }
 
 /**
@@ -402,7 +438,7 @@ const SINGLE_AUTHOR: Record<string, { sql: string; column: string; source: strin
     source: 'package creator',
     numericId: true,
   },
-  program: { sql: `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'program creator' },
+  program: { sql: `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'project creator' },
   // Report finalize is signed (reporting review 2026-10-01). The run's content
   // is computed by the engines; the person who requested it is its author. A
   // run whose requester was removed has none, and is refused.
@@ -410,6 +446,24 @@ const SINGLE_AUTHOR: Record<string, { sql: string; column: string; source: strin
     sql: `SELECT requested_by FROM report_runs WHERE id = $1::int AND organization_id = $2 LIMIT 1`,
     column: 'requested_by',
     source: 'run requester',
+    numericId: true,
+  },
+  // A labeling document and a labeling translation (D5, 2026-10-29): approving
+  // one is signed (routes/mdx-labeling.ts), and its author is whoever added it,
+  // which the create records (migrations/20261029b). `translator` is a free-text
+  // name, not a user, so it is not an author source. A row added before
+  // 20261029b records no creator and is refused, never guessed. A later editor
+  // of the row is not recorded, so is not counted (the evidence README says so).
+  'labeling-document': {
+    sql: `SELECT created_by FROM labeling_documents WHERE id = $1::int AND organization_id = $2 LIMIT 1`,
+    column: 'created_by',
+    source: 'labeling document creator',
+    numericId: true,
+  },
+  'labeling-translation': {
+    sql: `SELECT created_by FROM labeling_translations WHERE id = $1::int AND organization_id = $2 LIMIT 1`,
+    column: 'created_by',
+    source: 'translation creator',
     numericId: true,
   },
 };
@@ -474,7 +528,7 @@ async function cmcModule3SectionAuthors(
   if (read.cited.length === 0) {
     result.incomplete =
       `§${sectionKey} cites no recorded source, so this approval cannot be shown to be independent of whoever ` +
-      'entered its data. Nothing was signed. Compile the section from the programme\u2019s records, then approve.';
+      'entered its data. Nothing was signed. Compile the section from the project\u2019s records, then approve.';
   } else if (read.unattributed.length > 0) {
     result.incomplete = unattributedRecordsRefusal(sectionKey, read.unattributed);
   }
@@ -485,6 +539,17 @@ async function cmcModule3SectionAuthors(
  * Resolve the authors of a governed target, org-scoped. THROWS when a lookup
  * fails — that is not an answer about authorship and must not be read as one.
  */
+/** The record types whose authorship is read from more than one source, each by its own reader. */
+const COMPOSITE_AUTHORS: Record<string, (db: AuthorshipReader, rest: string, orgId: number) => Promise<TargetAuthorship>> = {
+  'authoring-document': authoringDocumentAuthors,
+  document: (db, rest, orgId) => documentAuthors(db, rest, orgId, null),
+  section: documentSectionAuthors,
+  'protocol-document': protocolDocumentAuthors,
+  canonical_document: canonicalDocumentAuthors,
+  'qms-document': qmsDocumentAuthors,
+  'cmc-module3-section': cmcModule3SectionAuthors,
+};
+
 export async function resolveTargetAuthors(target: string, orgId: number, db: AuthorshipReader = pool): Promise<TargetAuthorship> {
   const colonIdx = target.indexOf(':');
   if (colonIdx === -1) return NOT_MODELLED;
@@ -497,19 +562,10 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
     return single(db, one.sql, [rest, orgId], one.column, one.source);
   }
 
+  const composite = COMPOSITE_AUTHORS[prefix];
+  if (composite) return composite(db, rest, orgId);
+
   switch (prefix) {
-    case 'authoring-document':
-      return authoringDocumentAuthors(db, rest, orgId);
-    case 'document':
-      return documentAuthors(db, rest, orgId, null);
-    case 'section':
-      return documentSectionAuthors(db, rest, orgId);
-    case 'protocol-document':
-      return protocolDocumentAuthors(db, rest, orgId);
-    case 'canonical_document':
-      return canonicalDocumentAuthors(db, rest, orgId);
-    case 'cmc-module3-section':
-      return cmcModule3SectionAuthors(db, rest, orgId);
     case 'protocol-review-assignment': {
       // A reviewer signs over the protocol, so independence is from its authors.
       if (!/^\d+$/.test(rest)) return new AuthorSet().result();

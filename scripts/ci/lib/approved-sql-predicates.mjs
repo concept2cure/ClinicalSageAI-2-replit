@@ -26,10 +26,36 @@ const VAULT_FILTER_FROM_ROUTES = new Map([
 ]);
 const VAULT_FILTER_FROM_VAULT = new Map([
   ['vaultLifecycleStageSql', './vault-document-filter.js'],
+  // The search's pending count (MR-08 Stage 3, 2026-10-29) asks the read model's
+  // own eligibility and current-version questions, with a literal alias.
+  ['vaultDataEligibleSql', '../document-data-disposition/eligibility.js'],
+  ['supersededSql', './vault-version-family.js'],
+]);
+// The Vault seal (VR-19, 2026-10-29): a seal records the documents the tree
+// shows, by the tree's own predicates (data eligibility, the current version,
+// the lifecycle stage), each with a literal alias. No value reaches them.
+const VAULT_SEAL_BUILDERS = new Map([
+  ['vaultDataEligibleSql', '../document-data-disposition/eligibility.js'],
+  ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility.js'],
+  ['supersededSql', './vault-version-family.js'],
+  ['vaultLifecycleStageSql', './vault-document-filter.js'],
+]);
+// A Vault restore (MR-08 Stage 5, 2026-10-29) refuses a version whose original
+// file a disposition withdrew, by the one availability predicate, alias `s`.
+const VAULT_RESTORE_BUILDERS = new Map([
+  ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility.js'],
+]);
+// A folder export (MR-08 Stage 6, 2026-10-30) lists a withdrawn file as
+// withheld, by the one availability predicate, alias `d`.
+const VAULT_FOLDER_EXPORT_BUILDERS = new Map([
+  ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility.js'],
 ]);
 const CALLERS = new Map([
+  ['server/services/vault/vault-version-restore.ts', { alias: 's', builders: VAULT_RESTORE_BUILDERS }],
+  ['server/services/vault/vault-folder-export.ts', { alias: 'd', builders: VAULT_FOLDER_EXPORT_BUILDERS }],
   ['server/routes/c2c/project-vault.ts', { alias: 'd', builders: VAULT_FILTER_FROM_ROUTES }],
   ['server/services/vault/vault-search.ts', { alias: 'd', builders: VAULT_FILTER_FROM_VAULT }],
+  ['server/services/vault/vault-seal.service.ts', { alias: 'd', builders: VAULT_SEAL_BUILDERS }],
   ['server/services/csr/vault-source-input.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   ['server/services/csr/source-receipt-eligibility.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   // A commitment's fulfilment evidence (P-41, 2026-10-19): the Vault version's

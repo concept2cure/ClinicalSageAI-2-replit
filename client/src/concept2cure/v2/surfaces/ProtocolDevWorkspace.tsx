@@ -282,7 +282,7 @@ function TabBody(props: BodyProps) {
   switch (tab) {
     case 'soa': return <SoaTab doc={doc} canWrite={canWrite} onError={onError} onEdit={onEdit} />;
     case 'study-design':
-      return <StudyDesignTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} />;
+      return <StudyDesignTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} onNav={onNav} />;
     case 'derivation':
       return <DerivationTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} />;
     case 'compliance': return <ComplianceTab doc={doc} />;
@@ -591,7 +591,7 @@ function ProtocolHeaderState(props: HeaderProps & { sourcePending: boolean; prog
   return <>
     <ProtocolHeader {...props} />
     {props.sourcePending && <p className="scaf-note">Save the protocol editor's pending changes before opening a saved working copy.</p>}
-    {!props.programId && <p className="scaf-note">Select a target program to open this saved protocol in Document authoring.</p>}
+    {!props.programId && <p className="scaf-note">Select a target project to open this saved protocol in Document authoring.</p>}
     {props.reloadError && <StaleNotice />}
   </>;
 }

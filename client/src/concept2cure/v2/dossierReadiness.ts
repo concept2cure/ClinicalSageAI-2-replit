@@ -18,7 +18,7 @@ export const DOSSIER_READINESS_LABEL = 'Dossier readiness';
 
 /** What the figure measures, for a tooltip or a hint. */
 export const DOSSIER_READINESS_MEANS =
-  'The share of this program’s own filing sections that are approved or locked. Empty headings that hold other sections are not counted. A market added to the project is measured on its own line.';
+  'The share of this project’s own filing sections that are approved or locked. Empty headings that hold other sections are not counted. A market added to the project is measured on its own line.';
 
 /** The state of a figure, as the server states it: measured, nothing to
  *  count, or not read. */
@@ -30,11 +30,11 @@ export function isMeasuredReadiness(pct: number | null | undefined, state?: Doss
   return (state == null || state === 'measured') && typeof pct === 'number' && Number.isFinite(pct);
 }
 
-/** The figure as the screens print it: "62%", "not measured" or
+/** The figure as the screens print it: "62%", "Not recorded" or
  *  "unavailable", never a 0 for no figure. */
 export function dossierReadinessValue(pct: number | null | undefined, state?: DossierFigureState | null): string {
   if (state === 'unavailable') return 'unavailable';
-  return isMeasuredReadiness(pct, state) ? `${pct}%` : 'not measured';
+  return isMeasuredReadiness(pct, state) ? `${pct}%` : 'Not recorded';
 }
 
 /** When the server measured the figure, as a sentence; null with no usable time

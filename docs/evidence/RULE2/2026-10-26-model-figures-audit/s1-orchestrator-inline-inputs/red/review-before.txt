@@ -1,0 +1,26 @@
+# S1 review red: the new and tightened cases on trunk 0d94a6666 (S1 as pushed). 7 fail: the regenerate refusal read the run first, and a projectId beside an array answered ambiguous_request.
+
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline csrInputs on POST /runs, before anything is read, and names the route to use 37ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline nonclinicalStudies on POST /runs, before anything is read, and names the route to use 7ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline clinicalStudyData on POST /runs, before anything is read, and names the route to use 5ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses clinicalStudyData in a Mode A body too 5ms
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses a projectId beside inline csrInputs with the same code and field 15ms
+   → expected { error: 'ambiguous_request', …(1) } to match object { …(2) }
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses a projectId beside inline nonclinicalStudies with the same code and field 7ms
+   → expected { error: 'ambiguous_request', …(1) } to match object { …(2) }
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses a Mode A ctdProgramId: the extractor’s rows are not a record 5ms
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses csrInputs on the regenerate route: the same door one level down 6ms
+   → the run was read before the refusal: expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses nonclinicalStudies on the regenerate route: the same door one level down 8ms
+   → the run was read before the refusal: expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses clinicalStudyData on the regenerate route: the same door one level down 6ms
+   → the run was read before the refusal: expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses projectId on the regenerate route: the same door one level down 5ms
+   → the run was read before the refusal: expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > the regenerate refusal does not depend on the run > refuses inline figures for a run that does not exist, without reading it 5ms
+   → {"error":"run_not_found"}: expected 404 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > does not refuse EMPTY arrays: they carry no figures 11ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > runs a plain Mode A body, reading the project’s own records 5ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > keeps the fixture door open in development 7ms
+ Test Files  1 failed (1)
+      Tests  7 failed | 8 passed (15)

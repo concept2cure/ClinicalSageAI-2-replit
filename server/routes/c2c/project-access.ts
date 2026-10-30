@@ -113,6 +113,18 @@ export function getProjectScope(
   return { numericId };
 }
 
+/**
+ * The integer project a route's `:projectId` names, for a handler behind
+ * `router.param('projectId', projectAdmissionMiddleware(…))`: that admission
+ * refuses a URL naming no project, so this only throws if a route is mounted
+ * without it.
+ */
+export function admittedProjectId(req: Request): number {
+  const scope = getProjectScope(req.params.projectId);
+  if (!scope) throw new Error('No admitted project on this request');
+  return scope.numericId;
+}
+
 export async function loadProjectAccessRow(params: {
   organizationId: number;
   clientWorkspaceId: number;
@@ -366,11 +378,37 @@ export async function requireCurrentProjectActor(req: Request, forWrite = false)
   }
 }
 
+/**
+ * The three things an admission can admit a request to do.
+ *   read   — the sharing policy, or a live review assignment, lets the caller use the project.
+ *   write  — and the caller's current role may write (GOVERNED_WRITE_ROLES), the
+ *            project's sharing gives them edit permission, and it is not archived.
+ *   review — a write that takes part in a review: a thread, a review task, a
+ *            comment, its resolution, a review decision, and an artifact's
+ *            status change (an approver is often deliberately not an editor of
+ *            what they approve; the status route's own ceremony decides who
+ *            may approve or lock). The current role must
+ *            still be one that writes (so a viewer is refused) and the project must
+ *            not be archived, but the read policy decides the project: the reviewer
+ *            a live assignment admits is not an edit member, and write mode would
+ *            refuse the very person the assignment names. The act's own ceremony
+ *            (its role table, the assignment, self-review) still runs after it.
+ * `forWrite` keeps its boolean meaning for every existing caller; 'review' is
+ * the third value.
+ */
+export type ProjectAdmissionMode = 'read' | 'review' | 'write';
+const ADMISSION_WRITE: Readonly<Record<ProjectAdmissionMode, boolean | 'review'>> = { read: false, write: true, review: 'review' };
+
 /** Add fresh write authority to the existing sharing/read-assignment policy. */
-export async function requireProjectAdmission(req: Request, projectId: string | string[] | undefined, forWrite = false,
+export async function requireProjectAdmission(req: Request, projectId: string | string[] | undefined, forWrite: boolean | 'review' = false,
   pinned?: { executor: RequestSqlClient; programId?: string; forShare?: boolean }): Promise<AdmittedProject> {
-  if (pinned) return requirePinnedProjectAdmission(req, projectId, forWrite, pinned);
-  const actor = await requireCurrentProjectActor(req, forWrite);
+  if (pinned) {
+    // The pinned path decides edit permission on the caller's executor and has
+    // no review variant; refusing here keeps a review act from reading as a read.
+    if (typeof forWrite !== 'boolean') throw new TypeError('Review admission is not available on a pinned executor.');
+    return requirePinnedProjectAdmission(req, projectId, forWrite, pinned);
+  }
+  const actor = await requireCurrentProjectActor(req, forWrite !== false);
   const scope = getProjectScope(projectId);
   if (!scope) throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
   try {
@@ -378,16 +416,17 @@ export async function requireProjectAdmission(req: Request, projectId: string | 
     const { project } = await loadProjectAccessRow({ organizationId, userId: actor.userId,
       actorRole: actor.role as ProjectActorRole, projectId: scope.numericId, clientWorkspaceId: await resolveClientWorkspaceId(req) });
     if (!project) throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
-    if (forWrite) {
+    if (forWrite === true) {
       const sharing = await loadProjectSharingState(project.id, organizationId, project);
       if (!GOVERNED_WRITE_ROLES.has(actor.role) || !canEditProject({ actor: { userId: actor.userId, orgRole: actor.role },
         project: { ownerId: project.ownerId, createdById: project.createdById,
           settings: applyProjectSharingState(normalizeProjectSettings(project.settings), sharing) } })) {
         throw new ProjectAdmissionRefusal(403, 'PROJECT_WRITE_PERMISSION_DENIED', 'Your current role and project permissions do not allow changes to this record.');
       }
-      if (['archived', 'deleted'].includes(project.status)) {
-        throw new ProjectAdmissionRefusal(409, 'PROJECT_ARCHIVED', 'This project is archived. Retained records can still be read.');
-      }
+    }
+    // Write and review alike: an archived project keeps its records and takes no change.
+    if (forWrite !== false && ['archived', 'deleted'].includes(project.status)) {
+      throw new ProjectAdmissionRefusal(409, 'PROJECT_ARCHIVED', 'This project is archived. Retained records can still be read.');
     }
     return project;
   } catch (error) {
@@ -420,7 +459,7 @@ async function pinnedProjectRow(q: RequestSqlClient, projectId: number, org: num
 
 async function pinnedWorkspace(req: Request, q: RequestSqlClient, project: AdmittedProject, current: CurrentProgramAccess | null): Promise<void> {
   if (current && (current.projectId !== project.id || current.clientWorkspaceId !== project.clientWorkspaceId)) {
-    throw new ProjectAdmissionRefusal(409, 'PROJECT_SCOPE_MISMATCH', 'The project does not identify the selected program. Nothing was changed.');
+    throw new ProjectAdmissionRefusal(409, 'PROJECT_SCOPE_MISMATCH', 'The tracking record does not match the project you have open. Nothing was changed.');
   }
   const claimed = (req.tenantContext as Record<string, unknown> | undefined)?.clientWorkspaceId;
   const workspace = current ? current.clientWorkspaceId : await resolveClientWorkspaceId(req, q);
@@ -467,11 +506,30 @@ async function requirePinnedProjectAdmission(req: Request, projectId: string | s
   }
 }
 
-/** Run before route bodies, upload receivers or project-content reads. */
-export function projectAdmissionMiddleware(options: { forWrite?: boolean } = {}): RequestHandler {
+/**
+ * Run before route bodies, upload receivers or project-content reads; mounted
+ * as `router.param('projectId', …)`. A GET or HEAD is admitted in read mode and
+ * every other method in write mode, unless:
+ *   - `forWrite` fixes one mode for the whole router; or
+ *   - `routes` names a route, as 'METHOD <path as registered>', in another mode:
+ *     a review act in review mode, a POST that changes no project record in
+ *     read mode. A route it does not name keeps its method's mode, so a new
+ *     write is admitted as a write.
+ * `projectId` is for a router whose URL may name the project another way (a
+ * program uuid): it returns the tracking record's id, or null for none (404).
+ */
+export function projectAdmissionMiddleware(options: {
+  forWrite?: boolean;
+  routes?: Readonly<Record<string, ProjectAdmissionMode>>;
+  projectId?: (req: Request) => Promise<number | null>;
+} = {}): RequestHandler {
   return async (req, res, next) => {
     try {
-      await requireProjectAdmission(req, req.params.projectId, options.forWrite ?? !['GET', 'HEAD'].includes(req.method));
+      const named = options.routes?.[`${req.method} ${String(req.route?.path ?? '')}`];
+      const mode = named ? ADMISSION_WRITE[named] : options.forWrite ?? !['GET', 'HEAD'].includes(req.method);
+      const projectId = options.projectId ? await options.projectId(req) : req.params.projectId;
+      if (projectId === null) throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+      await requireProjectAdmission(req, typeof projectId === 'number' ? String(projectId) : projectId, mode);
       next();
     } catch (error) {
       const refusal = error instanceof ProjectAdmissionRefusal ? error : new ProjectAdmissionRefusal(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was changed.');

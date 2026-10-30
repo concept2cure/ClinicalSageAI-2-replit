@@ -13,15 +13,24 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { isUuid } from '../middleware/uuidParam';
 import { enforceOrgMembership, requireEditorAccess } from '../middleware/orgMembership';
+import { applyOrganizationRole } from '../middleware/auth';
 import { getPool } from '../db';
-import { requestConnectable, requestPgClient } from '../db/requestDb';
+import { requestConnectable, requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
 import { readAuthoringDocuments, readAuthoringDocument, readAuthoringDocumentSections, AuthoringReadInputError } from '../services/authoring/authoring-document-read';
 import { authoringReviewInputSchema } from '../../shared/authoring/peer-review';
 import {
-  readAuthoringPeerReviews, submitAuthoringPeerReview, requestAuthoringPeerReviews,
+  readAuthoringPeerReviews, submitAuthoringPeerReview, requestAuthoringPeerReviews, reassignAuthoringReviewRequest,
   AuthoringPeerReviewRefused, AuthoringPeerReviewCommitUnconfirmed,
 } from '../services/authoring/peer-review';
+import {
+  authoringReviewerPrecheck, authoringRouteSubject, authoringStanding, closeAuthoringReviewerTask, parseAuthoringRoute,
+  routeOnVerdict, routeReviewRequest,
+} from '../services/authoring/authoring-review-route';
+import { ReviewRouteRefusal } from '../services/review/review-route-member';
+import { handBackMember, reassignMember, routeTxOf, senderTimeZone } from '../services/review/review-route';
+import { readRouteRounds } from '../services/review/review-route-standing';
+import { listRouteCandidates, namingOf } from '../services/review/review-route-candidates';
 import type { PoolClient } from 'pg';
 import { SourceReadAccessError } from '../services/clinical-regulatory-evidence/source-read-access';
 import { ProgramReadAccessError } from '../services/c2c/current-program-access';
@@ -29,6 +38,11 @@ import { currentTenantOrgUuid, TenantKeyRequiredError } from '../db/currentTenan
 import { writeChainedAuditRow } from '../services/auditService';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate.js';
+import {
+  assertSignerIsNotAuthor,
+  SeparationOfDutiesAuthorUnresolvedError,
+  SeparationOfDutiesError,
+} from '../services/governance/separation-of-duties.js';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
 import { authedOrgId } from '../utils/authedOrgId';
@@ -87,7 +101,7 @@ import {
 import {
   checkSectionWritable,
   checkDocumentWritable,
-  reserveWritableSection, reserveWritableDocument, DocumentWriteReservationError,
+  reserveWritableSection, reserveWritableDocument, DocumentWriteReservationError, refuseNarrativeReferenceContentWrite,
   LOCKED_DOCUMENT_STATUSES as LOCKED_STATUSES,
 } from '../services/authoring/document-lock';
 // The document/section creators, the Part 11 evidence writers and the export
@@ -106,7 +120,7 @@ import { getBuiltinAuthoringTemplates, builtinTemplateReference, type BuiltinAut
 import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
 import { AuthoringProgramAccessError } from '../services/authoring/authoring-program-access';
 import { refileSavedAuthoringSection } from '../services/authoring/authoring-refile-saved-section';
-import { requireGovernedReason, optionalGovernedReason } from './governed-reason';
+import { requireGovernedReason, optionalGovernedReason, GOVERNED_REASON_MIN } from './governed-reason';
 import {
   createDocumentFromDraft,
   parseDraftInput,
@@ -148,6 +162,8 @@ import {
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
 import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
 import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
+import { savedSectionDraftTemplate, buildSectionDraftPrompt, draftRevisionFor, recordedFilingDraftContext } from '../services/authoring/authoring-draft-template';
+import { draftPassageFor } from '../services/authoring/authoring-draft-passage';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
 import {
   fileAuthoringDocumentToVault,
@@ -174,9 +190,10 @@ const router = Router();
 // resolves to the same file under vitest, tsx, and the production build —
 // verifyJwtWithRotation via ../utils/jwtVerify (whose .js is a shim that
 // re-exports the .ts), nonAccessTokenReason via ../middleware/tokenType (no .js
-// twin), enforceOrgMembership via ../middleware/orgMembership (no .js twin). An
-// extensionless import of '../middleware/auth' would instead bind to the stale
-// auth.js twin under vitest and silently drop AUTH_008/AUTH_009.
+// twin), enforceOrgMembership via ../middleware/orgMembership (no .js twin),
+// applyOrganizationRole via ../middleware/auth, whose .js twin is now a pure
+// re-export of auth.ts (KNOWN_ISSUES_LEDGER M-5), so every resolver runs the
+// same code.
 router.use((req: Request, res: Response, next: any) => {
   // SECURITY (ledger C-18): drop every caller-supplied identity header BEFORE
   // anything downstream reads them. requireAny() reads x-roles, createAuditTrail
@@ -254,7 +271,17 @@ router.use((req: Request, res: Response, next: any) => {
   // AUTH_009 (terminal): live organization_users re-check — fail-closed 403 on a
   // revoked membership, fail-open only on infra-indeterminate. Same control and
   // ~60s cache as authenticateToken.
-  return enforceOrgMembership(req, res, next);
+  return enforceOrgMembership(req, res, () => {
+    // The membership row's role replaces the token's claim, as authenticateToken
+    // does (IAM-10). Until 2026-10-30 req.user.role stayed the claim, and the
+    // image upload re-entered its scope with it, so the token's copy of the role
+    // at sign-in reached app.current_user_role (P-72 slice 1a). x-roles follows.
+    applyOrganizationRole(req);
+    const live: unknown = (req.user as { roles?: unknown } | undefined)?.roles;
+    const liveRoles = Array.isArray(live) && live.length ? live : undefined;
+    setOrClear('x-roles', liveRoles ? liveRoles.map((r: unknown) => String(r).toUpperCase()).join(',') : undefined);
+    next();
+  });
 });
 /* A disk-backed multer instance and its MIME allowlist stood here, attached
    to no route. The two upload routes this file does serve build their own
@@ -1874,6 +1901,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
     try {
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
+      if (content !== undefined) await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
 
       // The previous body is a transaction-held fact, read after the parent
       // reservation and before this update. Client-supplied text and the
@@ -2234,6 +2262,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     try {
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
+      await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
       result = await client.query(
         `UPDATE authoring_sections
          SET content = $1, updated_at = NOW()
@@ -3058,6 +3087,12 @@ function peerReviewFailure(res: Response, error: unknown): Response {
   return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
 }
 
+/** A review route's refusal (RR5: the request's route, or a route act), in the peer-review envelope. */
+function routeOrPeerReviewFailure(res: Response, error: unknown): Response {
+  if (error instanceof ReviewRouteRefusal) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+  return peerReviewFailure(res, error);
+}
+
 function validPeerReviewers(reviewers: unknown): reviewers is Array<{ id: string | number; name?: string; email?: string }> {
   if (!Array.isArray(reviewers) || !reviewers.length) return false;
   const ids = new Set<string>();
@@ -3166,6 +3201,9 @@ async function closeReviewTasksOnVerdict(
       orm.eq(unifiedTasks.taskType, 'review'),
       orm.eq(unifiedTasks.assigneeId, actor),
       orm.isNull(unifiedTasks.deletedAt),
+      // A review route's member row is the route's (RR5): its review signature
+      // closes it, and a negative verdict returns the route (routeOnVerdict).
+      orm.isNull(unifiedTasks.reviewRouteId),
       orm.inArray(unifiedTasks.status, ['pending', 'in-progress', 'review', 'blocked']),
     ))
     .orderBy(unifiedTasks.taskId)
@@ -3223,15 +3261,37 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
     if (!body.success) return res.status(400).json({ success: false,
       error: { code: 'REVIEW_INPUT_INVALID', message: 'A verdict and the exact saved review context are required.' } });
     const saved = await submitAuthoringPeerReview(requestConnectable(req), { ...peerReviewInput(req), body: body.data },
-      { audit: peerReviewAudit(req), closeTasks: closeReviewTasksOnVerdict });
+      { audit: peerReviewAudit(req), closeTasks: closeVerdictTasksAndRoute });
     if (saved.tasks.notices.length) {
       const { notifyTaskEvent } = await import('../services/tasking/task-side-effects');
       for (const notice of saved.tasks.notices) notifyTaskEvent(notice);
     }
     return res.json({ success: true, review: saved.review,
-      tasks: { completed: saved.tasks.completed, leftOpen: saved.tasks.leftOpen }, auditTrail: saved.auditTrail });
+      tasks: { completed: saved.tasks.completed, leftOpen: saved.tasks.leftOpen },
+      route: saved.tasks.returnedRouteId ? { id: saved.tasks.returnedRouteId, status: 'returned' } : null, auditTrail: saved.auditTrail });
   } catch (error) { return peerReviewFailure(res, error); }
 });
+
+/**
+ * The verdict's two task effects, on its transaction (RR5): a grandfathered
+ * review task closes as before (closeReviewTasksOnVerdict, which leaves route
+ * rows alone), and a named reviewer's "changes requested" or "rejected"
+ * returns the document's route (routeOnVerdict), unblocking nobody. The
+ * route's rows are locked here, before the verdict's audit row; it is returned
+ * after it, with the task rows' ledger.
+ */
+async function closeVerdictTasksAndRoute(client: Queryable, v: Parameters<typeof closeReviewTasksOnVerdict>[1]) {
+  const route = await routeOnVerdict(client, { tenantId: v.tenantId, docId: v.docId, reviewerId: v.reviewerId, verdict: v.verdict, reason: v.reason });
+  const legacy = await closeReviewTasksOnVerdict(client, v);
+  const recordLegacy = legacy.record;
+  return Object.assign(legacy, {
+    returnedRouteId: route.routeId,
+    record: async () => {
+      await recordLegacy();
+      legacy.notices.push(...await route.record());
+    },
+  });
+}
 
 // POST /api/authoring/documents/:id/request-review - Request review from users
 /** The pool the permission helpers take; a transaction client answers the same queries. */
@@ -3312,23 +3372,170 @@ const REVIEWER_IS_AUTHOR_REFUSAL = {
   field: 'reviewers',
 } as const;
 
+/** What each reviewer's route task carries beyond the route: the instructions the sender wrote, and a priority. */
+function reviewTaskDetails(body: Record<string, unknown> | undefined): { description?: string; priority?: string } {
+  const instructions = typeof body?.instructions === 'string' ? body.instructions.trim().slice(0, 4000) : '';
+  const priority = typeof body?.priority === 'string' && ['low', 'medium', 'high', 'critical'].includes(body.priority) ? body.priority : undefined;
+  return { ...(instructions ? { description: instructions } : {}), ...(priority ? { priority } : {}) };
+}
+
+/**
+ * Since RR5 (docs/design/REVIEW_ROUTING_2026-10-23.md) the request, its
+ * Reviewer grants, the review route's header and each reviewer's route task
+ * are ONE transaction: they commit together or not at all. The body names the
+ * reviewers, a governed reason (now required: sending is a governed act, M2)
+ * and the route: `{ reviewDueDate }`, or one after another
+ * `{ order: 'sequential', reviewStepDueDates }`, each the end of that day in
+ * the sender's time zone. Each person is admitted by the route's one member
+ * validator (signing authority, project access, separation of duties).
+ * Notices go after COMMIT.
+ */
 router.post('/documents/:id/request-review', async (req: Request, res: Response) => {
   try {
     const { reviewers } = req.body;
     if (!validPeerReviewers(reviewers)) return res.status(400).json({ success: false,
       error: 'reviewers must be a non-empty array of distinct reviewer identities with valid optional name and email fields' });
-    const stated = optionalGovernedReason(req.body?.reason);
-    if (!stated.ok) return res.status(400).json({ success: false, error: stated.error, field: 'reason' });
+    const stated = requireGovernedReason(req.body?.reason);
+    if (!stated.ok) return res.status(400).json({ success: false, error: { code: 'REASON_REQUIRED', message: `${stated.error} Nothing was requested.` }, field: 'reason' });
     const input = peerReviewInput(req);
+    let notices: import('../services/tasking/task-side-effects').TaskEventNotice[] = [];
     const saved = await requestAuthoringPeerReviews(requestConnectable(req), { ...input, reviewers, reason: stated.reason }, {
       audit: peerReviewAudit(req),
       grant: (client, current) => grantRequestedReviewers({ client, req, docId: input.documentId,
         tenantId: input.tenantId, scope: current.scope, principal: current.actor.principal,
         reviews: current.reviews.map(review => ({ id: review.id, reviewer_id: review.reviewer_id,
           reviewer_email: typeof review.reviewer_email === 'string' ? review.reviewer_email : null })), reason: current.reason }),
+      route: {
+        prepare: (ids) => parseAuthoringRoute(req.body?.route, ids.map(Number)),
+        write: async (client, current) => {
+          const sent = await routeReviewRequest(client, { tenantId: input.tenantId, senderId: Number(current.actor.id), docId: input.documentId,
+            reason: stated.reason, request: current.prepared, taskDetails: reviewTaskDetails(req.body) });
+          notices = sent.notices;
+          return { id: sent.routeId, added: sent.added, timeZone: sent.timeZone, tasks: sent.members };
+        },
+      },
     });
+    const { notifyTaskEvent } = await import('../services/tasking/task-side-effects');
+    for (const notice of notices) notifyTaskEvent(notice);
     return res.json({ success: true, ...saved, message: `Review requested from ${reviewers.length} reviewer(s)` });
-  } catch (error) { return peerReviewFailure(res, error); }
+  } catch (error) { return routeOrPeerReviewFailure(res, error); }
+});
+
+// ── RR5: the document's review route (docs/design/REVIEW_ROUTING_2026-10-23.md) ──
+// GET  /documents/:id/review-route                    the round: every member, the naming history
+// GET  /documents/:id/route-candidates[?for=reassign] who may be named, with the one validator's answer
+// POST /documents/:id/review-route/reassign           the sender or an administrator (RR3's reassignMember);
+//                                                     the review request moves with the assignment
+// POST /documents/:id/review-route/hand-back          a named reviewer (RR3's handBackMember)
+
+/**
+ * A read of the document's route, on one transaction of the request's own
+ * connection, rolled back: it writes nothing. Not READ ONLY, because the
+ * member validator reads signing authority FOR SHARE, as it does at a send.
+ */
+async function readOnRoute<T>(req: Request, work: (client: RequestSqlClient, input: ReturnType<typeof peerReviewInput>) => Promise<T>): Promise<T> {
+  const input = peerReviewInput(req);
+  const client = await requestConnectable(req).connect();
+  try {
+    await client.query('BEGIN');
+    const found = await client.query('SELECT 1 FROM authoring_documents WHERE id::text = lower($1) AND tenant_id = $2', [input.documentId, input.tenantId]);
+    if (!found.rows.length) throw new AuthoringPeerReviewRefused(404, 'REVIEW_DOCUMENT_NOT_FOUND', 'Document not found.');
+    return await work(client, input);
+  } finally {
+    await client.query('ROLLBACK').catch(() => undefined);
+    client.release();
+  }
+}
+
+router.get('/documents/:id/review-route', async (req: Request, res: Response) => {
+  try {
+    const round = await readOnRoute(req, async (client, input) => (await readRouteRounds(client, {
+      organizationId: input.tenantId, subjectType: 'authoring_document', subjectIds: [input.documentId.toLowerCase()],
+    })).get(input.documentId.toLowerCase()) ?? null);
+    return res.json({ success: true, round });
+  } catch (error) { return routeOrPeerReviewFailure(res, error); }
+});
+
+router.get('/documents/:id/route-candidates', async (req: Request, res: Response) => {
+  try {
+    const body = await readOnRoute(req, async (client, input) => {
+      const readerId = Number(input.actorId);
+      const subject = await authoringRouteSubject(client, { tenantId: input.tenantId, docId: input.documentId });
+      const standing = await authoringStanding(client, input.tenantId, subject.id);
+      const candidates = await listRouteCandidates(client, {
+        organizationId: input.tenantId, subjectTarget: `authoring-document:${subject.id}`, programId: subject.programId,
+        contentDigest: subject.contentDigest, readerId, naming: namingOf(standing, readerId, req.query.for === 'reassign'),
+      });
+      return { timeZone: await senderTimeZone(client, readerId), canonicalId: null, candidates };
+    });
+    return res.json({ success: true, ...body });
+  } catch (error) { return routeOrPeerReviewFailure(res, error); }
+});
+
+/** The actor's reason for a route act, or the 400 that says so with nothing written. */
+function routeActReason(req: Request, res: Response): string | null {
+  const stated = requireGovernedReason(req.body?.reason);
+  if (stated.ok) return stated.reason;
+  res.status(400).json({ success: false, error: { code: 'REASON_REQUIRED', message: `${stated.error} Nothing was changed.` }, field: 'reason' });
+  return null;
+}
+
+/** The open route on the document (under its row lock, which the caller holds), or the refusal. */
+async function liveAuthoringRoute(client: RequestSqlClient, tenantId: number, docId: string, forUpdate: boolean) {
+  const subject = await authoringRouteSubject(client, { tenantId, docId });
+  const standing = await authoringStanding(client, tenantId, subject.id, forUpdate);
+  if (standing.state !== 'live') throw new ReviewRouteRefusal(409, 'ROUTE_NOT_OPEN', 'This document has no open review route. Nothing was changed.');
+  return { subject, standing };
+}
+
+router.post('/documents/:id/review-route/reassign', async (req: Request, res: Response) => {
+  const reason = routeActReason(req, res); if (reason === null) return;
+  const taskId = typeof req.body?.taskId === 'string' ? req.body.taskId.trim() : '';
+  const assigneeId = Number(req.body?.assigneeId);
+  if (!taskId || !Number.isSafeInteger(assigneeId) || assigneeId <= 0) return res.status(400).json({ success: false,
+    error: { code: 'ROUTE_INVALID', message: 'Name the assignment (taskId) and the person to give it to (assigneeId). Nothing was changed.' } });
+  try {
+    const input = peerReviewInput(req);
+    let notices: import('../services/tasking/task-side-effects').TaskEventNotice[] = [];
+    const saved = await reassignAuthoringReviewRequest(requestConnectable(req), { ...input, reason }, {
+      audit: peerReviewAudit(req),
+      // The standing under the document's row lock, without locking the member rows (RR3's decision 1).
+      route: async (client) => {
+        const { subject, standing } = await liveAuthoringRoute(client, input.tenantId, input.documentId, false);
+        const done = await reassignMember(routeTxOf(client), req, {
+          organizationId: input.tenantId, actorUserId: Number(input.actorId), reason, subject, standing, taskId, assigneeId,
+        });
+        notices = done.notices;
+        return { routeId: standing.route!.id, taskId, fromUserId: done.member.userId, toUserId: done.to.userId, actId: done.actId };
+      },
+      grant: (client, current) => grantRequestedReviewers({ client, req, docId: input.documentId, tenantId: input.tenantId,
+        scope: current.scope, principal: current.actor.principal, reason: current.reason,
+        reviews: current.reviews.map(review => ({ id: review.id, reviewer_id: review.reviewer_id,
+          reviewer_email: typeof review.reviewer_email === 'string' ? review.reviewer_email : null })) }),
+    });
+    void sendTaskNotices(notices);
+    return res.json({ success: true, ...saved });
+  } catch (error) { return routeOrPeerReviewFailure(res, error); }
+});
+
+router.post('/documents/:id/review-route/hand-back', async (req: Request, res: Response) => {
+  const reason = routeActReason(req, res); if (reason === null) return;
+  let client: Awaited<ReturnType<ReturnType<typeof requestConnectable>['connect']>> | null = null;
+  try {
+    const input = peerReviewInput(req);
+    client = await requestConnectable(req).connect();
+    await client.query('BEGIN');
+    const doc = await client.query('SELECT id::text AS id FROM authoring_documents WHERE id::text = lower($1) AND tenant_id = $2 FOR UPDATE', [input.documentId, input.tenantId]);
+    if (!doc.rows.length) throw new AuthoringPeerReviewRefused(404, 'REVIEW_DOCUMENT_NOT_FOUND', 'Document not found.');
+    const { subject, standing } = await liveAuthoringRoute(client, input.tenantId, input.documentId, true);
+    const done = await handBackMember(routeTxOf(client), { organizationId: input.tenantId, actorUserId: Number(input.actorId), reason, subject, standing });
+    await client.query('COMMIT');
+    void sendTaskNotices(done.notices);
+    return res.json({ success: true, route: { id: standing.route!.id, taskId: done.member.taskId, role: done.member.role, actId: done.actId } });
+  } catch (error) {
+    await client?.query('ROLLBACK').catch(() => undefined);
+    return routeOrPeerReviewFailure(res, error);
+  } finally { client?.release(); }
 });
 
 // ============= AI Integration =============
@@ -3373,13 +3580,14 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
   let draftTurn: DraftTurn | null = null;
   try {
     const { sectionId } = req.params;
-    const { tone = 'professional', region = 'FDA', context, requirements } = req.body;
+    const { tone = 'professional', context, requirements } = req.body;
     const tenantId = getTenantId(req);
 
     // Get section details
     const sectionResult = await pool.query(
       `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at,
               s.updated_at::text AS base_updated_at, s.tenant_id, d.module, d.product_code,
+              d.template_id::text, to_jsonb(d)->'provenance' AS provenance,
               to_jsonb(d)->>'client_program_id' AS client_program_id
        FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
@@ -3403,6 +3611,20 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       userId: Number(getActorId(req)),
       projectRef: section.client_program_id,
     });
+    const { region: templateRegion, recordedRegion, referenceBlock } = await savedSectionDraftTemplate(pool, {
+      tenantId, documentId: section.doc_id, programId: section.client_program_id,
+      sectionId: String(sectionId), code: section.code,
+    }, section, req.body.region);
+    // A passage of the saved section, for alternatives to it alone; never parked (slice 4).
+    const passage = draftPassageFor(req.body, section);
+    // A revision drafts from a live candidate of this section, read and never consumed (slice 3).
+    const revision = await draftRevisionFor(req.body, async draftId => (await import(
+      '../services/clinical-regulatory-evidence/draft-candidate-store.js')).readDraftCandidate(tenantId, String(sectionId), draftId, section));
+    // P-73 slice 2: the application the project records, and its requirements, as AnA's batch drafting reads them.
+    const filing = await recordedFilingDraftContext(pool,
+      { tenantId, programId: projectScope ? section.client_program_id : null, code: section.code },
+      String(templateRegion), recordedRegion ?? null);
+    const region = filing.region;
     const sourceIdentity = { organizationId: tenantId, userId: Number(getActorId(req)), programId: section.client_program_id };
     const selectedSources = Object.hasOwn(req.body ?? {}, 'sources')
       ? await readDraftAssemblySources(requestConnectable(req), sourceIdentity, req.body.sources) : null;
@@ -3513,28 +3735,14 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       });
     }
 
-    const prompt = `Generate professional ${region} regulatory content for:
-Module: ${section.module}
-Section: ${section.code} - ${section.title}
-Product: ${section.product_code || 'Medical Product'}
-Tone: ${tone}
-${context ? `Context: ${context}` : ''}
-${requirements ? `Requirements: ${requirements}` : ''}
-${evidenceBlock}
-
-Return ONLY a JSON object of this exact shape:
-{"content": "<the drafted section as clean prose>", "attributions": [{"quote": "<a sentence copied verbatim from content>", "src": <the SRC number>}]}
-- "content" is the full section a reviewer reads — do NOT put [SRC-n] markers in it.
-- Add one "attributions" entry for each sentence you DERIVED from a provided [SRC-n] source: "quote" copied EXACTLY from "content", "src" the integer n.
-- Omit sentences that are your own analysis or not based on a provided source. Never cite a src not shown above.
-Provide detailed, compliance-ready content following ${region} guidelines.`;
+    const prompt = buildSectionDraftPrompt({ section, tone, region, context, requirements, evidenceBlock, referenceBlock, filingBlock: filing.block, revision: revision.prompt, passage: passage.prompt });
 
     draftTurn = openDraftTurn(pool, {
       orgId: tenantId,
       userId: getActorId(req),
       sectionId: String(sectionId),
       request: { tone, region, context: context ?? null, requirements: requirements ?? null,
-        ...(assemblySources ? { sources: assemblySources } : {}) },
+        ...(assemblySources ? { sources: assemblySources } : {}), ...revision.turnRequest, ...passage.turnRequest },
       prompt,
       audit: { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
     });
@@ -3609,7 +3817,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
       shownEvidence: retrievalStatus === 'ok' ? evidenceShown(evidenceBlock) : null,
       // The header lines exactly as the prompt shows them.
       sectionHeader: `Module: ${section.module}\nSection: ${section.code} - ${section.title}\nProduct: ${section.product_code || 'Medical Product'}`,
-      personWords: [context, requirements].filter((v) => typeof v === 'string' && v.trim()).join('\n'),
+      personWords: [context, requirements, revision.instruction].filter((v) => typeof v === 'string' && v.trim()).join('\n'),
       retrievalStatus,
     });
     // Park the draft + the sources it came from so the accept endpoint can
@@ -3661,7 +3869,8 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
       const { createDraftCandidate, savedSectionDraftBase } = await import(
         '../services/clinical-regulatory-evidence/draft-candidate-store.js'
       );
-      const candidate = await createDraftCandidate(
+      // The whole-section accept is a candidate's one consumer, so a passage is never parked.
+      const candidate = passage.prompt ? null : await createDraftCandidate(
         tenantId,
         String(sectionId),
         generatedContent,
@@ -3685,10 +3894,11 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           ...(vaultSourceReceipt ? { vaultSources: vaultSourceReceipt } : {}),
           ...(assemblySources ? { assemblySources } : {}),
           savedSectionBase: savedSectionDraftBase(section),
+          ...revision.generator,
         },
         assertions,
       );
-      draftId = candidate.id;
+      draftId = candidate?.id;
     } catch (attrErr: any) {
       console.warn(
         '[Authoring] draft-candidate creation failed (non-fatal):',
@@ -3709,9 +3919,13 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
         // The engine's check of the draft as generated, and whether its turn was filed.
         check: drafted?.check ?? null,
         turnRecord: drafted?.turnRecord ?? { status: 'not_recorded', reason: 'This draft had no organization to file it under.' },
+        ...revision.generator,
+        ...passage.response,
         metadata: {
           tone,
           region,
+          submissionType: filing.submissionType,
+          requirementsSource: filing.requirementsSource,
           generated_at: new Date().toISOString(),
           model: gwResponse.model,
           provider: gwResponse.provider,
@@ -3824,6 +4038,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       transaction.began = true;
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
+      await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
 
       const candidate = await consumeDraftCandidate(tenantId, String(sectionId), draftId, client, true);
       if (!candidate) {
@@ -4652,8 +4867,8 @@ async function freezeCensus(
   return { openCommentCount, pendingEdits };
 }
 
-/** The 409 a freeze answers while work is outstanding — naming it, never a status code. */
-function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
+/** The 409 a freeze, or an approval, answers while work is outstanding — naming it, never a status code. */
+function notSettledRefusal(openCommentCount: number, pendingEdits: number, act: 'freeze' | 'approve' = 'freeze') {
   const parts: string[] = [];
   if (openCommentCount > 0) {
     parts.push(`${openCommentCount} unresolved comment${openCommentCount === 1 ? '' : 's'}`);
@@ -4661,19 +4876,50 @@ function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
   if (pendingEdits > 0) {
     parts.push(`${pendingEdits} tracked change${pendingEdits === 1 ? '' : 's'} nobody has accepted or rejected`);
   }
+  const message = act === 'approve'
+    ? `Not approved — this document still has ${parts.join(' and ')}. ` +
+      'An approval seals the content for filing, so the questions would go ' +
+      'unanswered and the proposed edits would stay undecided in the approved ' +
+      'text. Resolve them, or approve again confirming you intend to approve it ' +
+      'as it stands. Nothing was signed.'
+    : `Not frozen — this document still has ${parts.join(' and ')}. ` +
+      'Freezing seals the content for signature and filing, so the questions ' +
+      'would go unanswered and the proposed edits would reach a reviewer ' +
+      'undecided. Resolve them, or freeze again confirming you intend to ' +
+      'seal it as it stands.';
   return {
     success: false,
-    error: {
-      code: 'DOCUMENT_NOT_SETTLED',
-      message:
-        `Not frozen — this document still has ${parts.join(' and ')}. ` +
-        'Freezing seals the content for signature and filing, so the questions ' +
-        'would go unanswered and the proposed edits would reach a reviewer ' +
-        'undecided. Resolve them, or freeze again confirming you intend to ' +
-        'seal it as it stands.',
-    },
+    error: { code: 'DOCUMENT_NOT_SETTLED', message },
     unresolved: { openComments: openCommentCount, pendingEdits },
   };
+}
+
+/**
+ * What an APPROVER e-signature must clear before the credential (2026-10-30,
+ * the CSR path sweep): separation of duties, then the settle question Freeze
+ * asks. An approval freezes the document too, and it did not ask, so an
+ * approved CSR could carry open review comments and undecided tracked changes
+ * inside the signed text. Refused (409) while either is outstanding, unless the
+ * approver states they approve it as it stands; that is recorded on this
+ * transaction, as Freeze records it. Before re-authentication, so a refusal
+ * spends no second factor.
+ */
+async function approvalRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
+): Promise<boolean> {
+  if (await signingRefused(client, req, res, ids)) return true;
+  const { openCommentCount, pendingEdits } = await freezeCensus(ids.docId, ids.tenantId, current.sections, client);
+  if (openCommentCount === 0 && pendingEdits === 0) return false;
+  if (req.body?.acknowledgeUnresolved !== true) {
+    res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits, 'approve'));
+    return true;
+  }
+  await createAuditTrail(req, ids.docId, null, 'APPROVAL_UNRESOLVED_ACKNOWLEDGED', null, null,
+    `Approved with ${openCommentCount} unresolved comment(s) and ${pendingEdits} undecided tracked change(s), acknowledged by ${getActorEmail(req)}.`,
+    { openCommentCount, pendingEdits, acknowledged: true }, client);
+  return false;
 }
 
 /**
@@ -4755,6 +5001,47 @@ async function sealRefusedForFiling(
   return refusal !== null;
 }
 
+/**
+ * The seal refusal, then separation of duties (21 CFR 11.10(g)) for every
+ * meaning but AUTHOR: an author of this document may not approve it, or sign
+ * a workflow step that can seal it. Both routes checked the org role, the
+ * document grant and the password, and never authorship, while the creator is
+ * granted `approve` — so an author could approve their own CSR (Part 11 audit
+ * of the CSR path, 2026-10-29). The one check the governed ceremony asks
+ * (separation-of-duties.ts), before re-authentication, so a refused signer
+ * spends no second factor and nothing is signed. A failed lookup refuses (503)
+ * in the canonical sentence; its cause stays in the log.
+ */
+/** A signature whose meaning its signer did not state: refused, nothing signed. */
+function signatureReasonRefusal() {
+  return { error: `State what this signature means, in at least ${GOVERNED_REASON_MIN} characters. Nothing was signed.`,
+    code: 'SIGNATURE_REASON_REQUIRED' };
+}
+
+async function signingRefused(
+  client: Queryable, req: Request, res: Response,
+  { docId, tenantId, meaning }: { docId: string | string[] | undefined; tenantId: number; meaning: string },
+): Promise<boolean> {
+  if (await sealRefusedForFiling(client, res, docId, tenantId)) return true;
+  if (meaning === 'AUTHOR') return false;
+  try {
+    await assertSignerIsNotAuthor(`authoring-document:${String(docId)}`, tenantId, Number(getActorId(req)),
+      { command: 'sign', meaning: meaning.toLowerCase(), client });
+    return false;
+  } catch (err) {
+    if (err instanceof SeparationOfDutiesError || err instanceof SeparationOfDutiesAuthorUnresolvedError) {
+      res.status(err instanceof SeparationOfDutiesError ? 403 : 409).json({ error: err.message, code: err.code });
+    } else {
+      console.error('[authoring] separation of duties unverified:', err instanceof Error ? err.message : err);
+      res.status(503).json({
+        error: 'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.',
+        code: 'SEPARATION_OF_DUTIES_UNVERIFIED',
+      });
+    }
+    return true;
+  }
+}
+
 async function lockedSigningContent(client: Queryable, req: Request, docId: string, tenantId: number) {
   const document = await client.query(
     "SELECT d.*, to_jsonb(d)->'provenance' AS provenance, to_jsonb(d)->>'client_program_id' AS client_program_id FROM authoring_documents d WHERE d.id=$1 AND d.tenant_id=$2 FOR UPDATE",
@@ -4777,7 +5064,18 @@ async function adoptionForSigning(client: Queryable, req: Request, current: Awai
   return null;
 }
 
+/** Notices a committed act owes (RR5: a route signature's), sent after COMMIT. */
+async function sendTaskNotices(notices: import('../services/tasking/task-side-effects').TaskEventNotice[]): Promise<void> {
+  if (!notices.length) return;
+  const { notifyTaskEvent } = await import('../services/tasking/task-side-effects');
+  for (const notice of notices) notifyTaskEvent(notice);
+}
+
 function workflowGovernanceReply(error: unknown, res: Response): boolean {
+  if (error instanceof ReviewRouteRefusal) {
+    res.status(error.status).json({ success: false, code: error.code, error: error.code, message: error.message });
+    return true;
+  }
   if (error instanceof DocumentWriteReservationError) {
     res.status(error.status).json({ success:false,code:error.code,error:error.code,message:error.message });
     return true;
@@ -5078,16 +5376,14 @@ async function approveAndSnapshotForSignature(args: {
 router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
-    const { meaning, intent } = req.body;
+    const { meaning, intent: statedIntent } = req.body;
     // Part 11 §11.100 attribution: the SIGNER identity on an electronic
     // signature must come from the verified JWT, never from client-supplied
     // headers. x-user-email here meant anyone could sign as anyone.
     const email = getActorEmail(req);
     const tenantId = getTenantId(req);
 
-    if (!email) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
+    if (!email) return res.status(401).json({ error: 'Authentication required' });
 
     // §11.10(g) authority, checked BEFORE the credentials. Order matters: an
     // unauthorized caller must not learn whether a password is correct, and
@@ -5099,7 +5395,12 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid signature meaning' });
     }
 
-    if (!intent) return res.status(400).json({ error: 'Signature intent is required' });
+    // §11.50(a)(3): what the signature means, stated by its signer. A blank or
+    // whitespace-only intent used to pass and was stored verbatim; the signing
+    // dialog already asks for the same eight characters (EsignModal MIN_REASON).
+    const intentVerdict = requireGovernedReason(statedIntent);
+    if (!intentVerdict.ok) return res.status(400).json(signatureReasonRefusal());
+    const intent = intentVerdict.reason;
 
     // §11.70 — a signature must be linked to the record it signs. Without this
     // an unknown or cross-tenant docId produced a signature bound to sha256("").
@@ -5127,7 +5428,9 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
          Before `reverifyAuthoringSigner`, so a refusal spends no
          re-authentication code; before the status flip, the snapshot and the
          signature row, so a refused approval seals nothing. */
-      if (meaning === 'APPROVER' && await sealRefusedForFiling(client, res, docId, tenantId)) return;
+      if (meaning === 'APPROVER' && await approvalRefused(client, req, res, current, { docId, tenantId, meaning })) return;
+      // RR5: on a live review route only a named reviewer whose turn it is signs REVIEWER, over the route's content; refused before the credential.
+      const routed = meaning === 'REVIEWER' ? await authoringReviewerPrecheck(client, { tenantId, docId: String(current.doc.id), title: String(current.doc.title ?? ''), signerId: Number(getActorId(req)), digest: sectionsDigest(current.sections) }) : null;
 
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;
@@ -5172,6 +5475,8 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         covered,
         tenantId,
       });
+      // RR5: the named reviewer's route task closes on this signature, on this transaction (authoring-review-route.ts).
+      const routeNotices = routed ? await closeAuthoringReviewerTask(client, routed, { tenantId, signatureId, actorUserId: Number(getActorId(req)), reason: intent }) : [];
 
       // Spine F1: the approval signature approves the filing sections it
       // covers, in this transaction, recorded through recordGovernedAction.
@@ -5220,7 +5525,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       });
 
       await client.query('COMMIT');
-      committed = true;
+      committed = true; void sendTaskNotices(routeNotices);
       res.json({
         success: true,
         signatureId,
@@ -5657,66 +5962,21 @@ router.get('/docs/:docId/exports', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/authoring/export-history/:id - Delete export history entry
-router.delete('/export-history/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const tenantId = getTenantId(req);
-    /* SECURITY (21 CFR Part 11): DELETING a filing's export-history record is a
-       governed action and must be attributed to the VERIFIED principal. This
-       read `x-user-email || 'system'` — a header the router's middleware clears,
-       falling through to the anonymous 'system' that is nobody, and the value
-       drove BOTH the permission check (`entry.exported_by !== userEmail`) and
-       the EXPORT_HISTORY_DELETED audit event. Use getActorEmail, the JWT-derived
-       accessor every other governed mutation here uses, and fail closed when the
-       token carries no identity rather than record a record-deletion against
-       'system'. */
-    const userEmail = getActorEmail(req);
-    if (!userEmail) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    // Check if user has permission (only QA or the original exporter can delete)
-    const roles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase();
-    const isQA = roles.includes('QA');
-
-    // Get the export entry
-    const exportEntry = await pool.query(
-      `SELECT exported_by, document_id FROM authoring_export_history
-       WHERE id = $1 AND tenant_id = $2`,
-      [id, tenantId]
-    );
-
-    if (((exportEntry.rowCount ?? 0) === 0)) {
-      return res.status(404).json({ error: 'Export entry not found' });
-    }
-
-    const entry = exportEntry.rows[0];
-
-    // Check permission
-    if (!isQA && entry.exported_by !== userEmail) {
-      return res.status(403).json({
-        error: 'Permission denied. Only QA or the original exporter can delete this entry.',
-      });
-    }
-
-    // Delete the entry
-    await pool.query(`DELETE FROM authoring_export_history WHERE id = $1 AND tenant_id = $2`, [
-      id,
-      tenantId,
-    ]);
-
-    // Log the deletion
-    await createAuditTrail(req, entry.document_id, null, 'EXPORT_HISTORY_DELETED', null, null, null, {
-      export_id: id,
-      deleted_by: userEmail,
-    });
-
-    res.json({ success: true, message: 'Export history entry deleted successfully' });
-  } catch (error) {
-    console.error('DELETE /export-history/:id', error);
-    res.status(500).json({ error: 'Failed to delete export history entry' });
-  }
+// DELETE /api/authoring/export-history/:id — refused: an export record is kept.
+//
+// This hard-deleted the row recording what was exported, by whom, with the
+// bytes' SHA-256 and, for a filing, the Vault copy it became; its exporter or
+// anyone with QA in the token could do it. The row is read beyond the Exports
+// rail: data disposition takes it as the proof that a filed Vault rendition
+// carries another document's data (document-data-disposition/impact.ts), so
+// deleting it let that source be withdrawn while its filed copy stayed. No
+// client called the route (CSR path review, 2026-10-29). It answers what was
+// asked and writes nothing.
+router.delete('/export-history/:id', (_req: Request, res: Response) => {
+  res.status(409).json({
+    error: 'An export record is kept: it is part of the audit trail and of the evidence data disposition reads. Nothing was deleted.',
+    code: 'EXPORT_RECORD_RETAINED',
+  });
 });
 
 // Diff since latest export = tokens created/updated after export timestamp
@@ -7077,6 +7337,15 @@ async function workflowApprovalMayRelease(client: Queryable, current: Awaited<Re
   }
 }
 
+/** Whether this signature may decide a workflow step. 2026-10-30: authorship
+ * decides none. An AUTHOR signature skips the separation-of-duties check
+ * (signingRefused), so an author with the QA role could clear their own step
+ * with it and seal their own CSR. */
+function decidesWorkflowStep(meaning: string, userRoles: string[]): boolean {
+  if (meaning === 'AUTHOR') return false;
+  return userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC');
+}
+
 async function advanceWorkflowForSignature(args: {
   client: Queryable;
   req: Request;
@@ -7096,7 +7365,7 @@ async function advanceWorkflowForSignature(args: {
   // (ledger C-18).
   const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
     .map((r) => String(r).toUpperCase());
-  if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
+  if (decidesWorkflowStep(meaning, userRoles)) {
     // RETURNING, read as rows (PGlite does not populate rowCount): whether THIS
     // signature decided a pending step. Spine F1 approves filing sections only
     // for the signature that clears the last step, never for a later signature
@@ -7137,7 +7406,10 @@ async function advanceWorkflowForSignature(args: {
     const totalSteps = Number(stepCounts.rows[0]?.total ?? 0);
     const pendingCount = Number(stepCounts.rows[0]?.pending ?? 0);
 
-    if (totalSteps > 0 && pendingCount === 0) {
+    // 2026-10-30: only an approval signature approves. A REVIEWER signature
+    // that clears the last step records the review and leaves the document
+    // unapproved, as /e-sign does; it no longer seals on "Review".
+    if (totalSteps > 0 && pendingCount === 0 && meaning === 'APPROVER') {
       if (!await workflowApprovalMayRelease(client, args.current, meaning)) return false;
       await approveAndFreezeDocument({ client, docId, tenantId, signerEmail, contentHash });
       // Spine F1: true only when this signature cleared the last pending step.
@@ -7165,7 +7437,7 @@ async function advanceWorkflowForSignature(args: {
 router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
-    const { meaning = 'REVIEWER', reason } = req.body;
+    const { meaning = 'REVIEWER', reason: statedReason } = req.body;
     const tenantId = getTenantId(req);
     // Part 11 §11.100: the signer is the VERIFIED principal. This took its
     // identity from `x-user-email || req.body.signer_email || 'system'`, so a
@@ -7190,9 +7462,11 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
 
     // Validate required fields
-    if (!reason) {
-      return res.status(400).json({ error: 'A reason is required for signing' });
-    }
+    // The same rule as /e-sign: a stated reason of at least eight characters,
+    // trimmed, never whitespace.
+    const reasonVerdict = requireGovernedReason(statedReason);
+    if (!reasonVerdict.ok) return res.status(400).json(signatureReasonRefusal());
+    const reason = reasonVerdict.reason;
 
     // §11.50(a)(3) — the MEANING of the signature is a closed set, and this
     // path took it as a free string with a default. `/e-sign` has validated it
@@ -7229,7 +7503,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
          around it. If evidence later shows reviewers blocked by a divergence
          they cannot clear, narrow this to the sealing step — do not weaken the
          refusal. */
-      if (await sealRefusedForFiling(client, res, docId, tenantId)) return;
+      if (await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
 
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;

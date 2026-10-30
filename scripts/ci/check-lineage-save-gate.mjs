@@ -84,12 +84,6 @@ const ROOT = process.cwd();
  */
 const NOT_PROSE = [
   {
-    // Exposed by L53 slice 8 (the artifact writers' gate enlistment had made the
-    // whole main file read as guarded); moved here with the handler in slice 10.
-    file: 'server/routes/c2c/haq-sessions.ts',
-    why: 'PUT …/haq-session writes the HAQ Manager\'s session state — an opaque `questions` array the client round-trips — as JSON into a haq_session artifact; it is read back only by GET …/haq-session in the same file, its governed contract refuses export, and no packager or other reader resolves it into a document',
-  },
-  {
     file: 'server/services/AssemblyLine.ts',
     why: 'assembly_docs is a scratch pipeline reached only through routes/test-assembly.ts, which nothing mounts; its content never reaches a governed document',
   },
@@ -143,6 +137,10 @@ const NOT_PROSE = [
   {
     file: 'server/services/compute/exportGovernance.ts',
     why: "content is a one-line reference string ('[Governed Export: PDF] name.pdf (12345 bytes)') because, as the file's own header states, an export artifact stores reference metadata rather than the streamed binary — the prose lives in the document that was exported",
+  },
+  {
+    file: 'server/services/csr/csr-narrative-store.ts',
+    why: "the CSR narrative job's engine-output store (csr_narrative_outputs, and the §14.3.3 / §12.3.2 rows of csr_section_outputs), not a governed document: every value is composed from the subject's ADaM facts (narrative-compose.ts, nothing typed in), each row carries its facts_digest, and the database verifies the stored SHA-256. The text is never copied into an Authoring document; §14.3.3 is imported as a reference that is made only after every stored narrative matches the landed text (csr-narrative-reference-import.ts). Reviewed 2026-10-30 (own-the-product sweep)",
   },
 ];
 

@@ -1,0 +1,26 @@
+# Mutation M2-design-controls-fold-door: 'design-controls': ENGINEERING_DESTINATION  ->  'design-controls': { surface: 'design-controls', label: DEVICE_DOORS.engineering }
+# The diff is against HEAD. Its PATHWAY_FEATURES export line is the lead's change, already in the working tree, not part of the mutation.
+@@ -30 +30 @@ const FILING_LABELS: Record<string, string> = { '510k': '510(k)', de_novo: 'De N
+-const PATHWAY_FEATURES: Record<string, { surface: string; doors: { strategy: string; assembly: string } }> = {
++export const PATHWAY_FEATURES: Record<string, { surface: string; doors: { strategy: string; assembly: string } }> = {
+@@ -72 +72 @@ const WORK_DESTINATIONS: Record<string, WorkDestination> = {
+-  'design-controls': ENGINEERING_DESTINATION, 'risk-management': ENGINEERING_DESTINATION,
++  'design-controls': { surface: 'design-controls', label: DEVICE_DOORS.engineering }, 'risk-management': ENGINEERING_DESTINATION,
+
+ × client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens an existing feature and uses project evidence for specialist laboratory reports
+   → expected "vi.fn()" to be called with arguments: [ 'device-engineering' ]
+ × client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those eight features from a device project's Plan, over every recorded route and product type
+   → expected [ 'design-controls', …(8) ] to deeply equal [ 'device-510k', 'device-cer', …(6) ]
+ × client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to design-controls from inside the project
+   → design-controls: folds into device-engineering, which Plan already opens: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens an existing feature and uses project evidence for specialist laboratory reports
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'device-engineering' ]
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those eight features from a device project's Plan, over every recorded route and product type
+AssertionError: expected [ 'design-controls', …(8) ] to deeply equal [ 'device-510k', 'device-cer', …(6) ]
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to design-controls from inside the project
+AssertionError: design-controls: folds into device-engineering, which Plan already opens: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed | 27 passed (30)
+
+# Restored from the scratch copy; cmp against it reported no difference.

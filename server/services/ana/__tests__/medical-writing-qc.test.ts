@@ -61,6 +61,16 @@ describe('buildAbbreviationList', () => {
     expect(byAbbr.get('PFS')?.expansion).toContain('progression-free');
   });
 
+  it('keeps only the words the abbreviation stands for, not the sentence before them (CSR slice 8, 2026-10-29)', () => {
+    // The assembled CSR prints this expansion in its §4 list; "study of an
+    // Investigational Medicinal Product" is not what IMP stands for.
+    const r = buildAbbreviationList('The Clinical Study Report (CSR) summarises a study of an Investigational Medicinal Product (IMP). Adverse events (AEs) were coded.');
+    const byAbbr = new Map(r.abbreviations.map(a => [a.abbreviation, a]));
+    expect(byAbbr.get('CSR')?.expansion).toBe('Clinical Study Report');
+    expect(byAbbr.get('IMP')?.expansion).toBe('Investigational Medicinal Product');
+    expect(byAbbr.get('AEs')?.expansion).toBe('Adverse events');
+  });
+
   it('flags abbreviations used without a first-use definition', () => {
     const text = 'The ORR and the DoR were both reported, but neither ORR nor DoR was defined.';
     const r = buildAbbreviationList(text);

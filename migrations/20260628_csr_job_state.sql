@@ -14,6 +14,76 @@
 --   * No ALTER on existing tables
 --   * No CASCADE on references to existing tables
 --   * Rollback is the inverse DROP TABLE (only safe before rows are written)
+--
+-- AMENDED IN PLACE 2026-10-29 (D2, CSR end to end, slice 3 of
+-- docs/design/CSR_END_TO_END_2026-10-29.md; RULE 1 of CLAUDE.md):
+--   * The file was on no deploy applier (it sat in
+--     scripts/ci/migration-deploy-path-baseline.json). It is now on
+--     C2C_MIGRATION_FILES, above the final isolation pair, so it re-runs on
+--     every deploy. Every CREATE is therefore IF NOT EXISTS and every
+--     constraint is added only when absent: a database where the tables were
+--     pushed from shared/schema.ts keeps its rows and gains the columns below.
+--   * csr_build_jobs.source_run_id: the retained Submission Center run whose
+--     engine tables ground the build. A STORED generated column over
+--     study_info_snapshot->'evidenceSource'->>'runId', which the job runner
+--     already writes at enqueue, so the two can never disagree. NULL for a
+--     build with no bound run (metadata-only, never a results draft).
+--   * csr_section_outputs review state, per section: review_status
+--     ('draft' | 'in_review' | 'approved', default 'draft'), reviewer_id (the
+--     user who made the last review decision), review_decided_at,
+--     review_reason (a send-back's stated reason) and reviewed_content_hash
+--     (the content_hash the decision was made on: an approval binds that exact
+--     text, and a redraft that changes content_hash leaves the approval
+--     stale, which server/services/csr/csr-section-review.ts reports as a
+--     draft). Written only by csr-section-review.ts.
+--   Nothing is dropped; no file in the set re-creates or removes these.
+--
+-- AMENDED IN PLACE 2026-10-29 (D2, CSR end to end, slice 7 of
+-- docs/design/CSR_END_TO_END_2026-10-29.md; RULE 1 of CLAUDE.md):
+--   * Table 3, csr_narrative_outputs: one row per subject the E3 §12.3.2 rule
+--     selects for a patient safety narrative in a CSR build
+--     (server/services/csr/csr-narrative-job.ts, its only writer). Each composed
+--     narrative carries its SHA-256 and the digest of the ADaM facts it was
+--     composed from, so a resumed build skips exactly the subjects whose
+--     verified narrative still matches its facts and preserves a damaged row
+--     rather than overwriting it. A refused subject is recorded with its
+--     reason and no text. Public, organization_id INTEGER NOT NULL, so the
+--     final tenant sweep polices it. CREATE ... IF NOT EXISTS only, with its
+--     constraints inside the CREATE; nothing is dropped and no other file in
+--     the set creates or removes it.
+--
+-- AMENDED IN PLACE 2026-10-30 (D2, CSR end to end, reach of slice 8:
+-- docs/evidence/D2-CSR/2026-10-30-assembly-reach/; RULE 1 of CLAUDE.md):
+--   * Table 4, csr_assembly_runs: one row per assembly of a CSR build into
+--     its eCTD leaves (server/services/csr/csr-assembly-run.ts, its only
+--     writer). The assembly runs off the request thread, like the build it
+--     assembles; the row carries its status, progress and stage, the
+--     appendices the user declared not applicable (each with its reason, who
+--     and when), the Vault documents supplied for 16.1.x / 16.3 by exact
+--     digest, the result (each leaf with page count, SHA-256 and the
+--     rendered_leaf_files row that retains its bytes; every missing appendix
+--     and whether it blocks), and the placement into a sequence. A partial
+--     unique index allows one queued or running assembly per build. Public,
+--     organization_id INTEGER NOT NULL, so the final tenant sweep polices it.
+--     CREATE ... IF NOT EXISTS only, with its constraints inside the CREATE;
+--     nothing is dropped and no other file in the set creates or removes it.
+--
+-- AMENDED IN PLACE 2026-10-30 (D2, CSR end to end, the narrative build off
+-- the request path: docs/evidence/D2-CSR/2026-10-30-narrative-queue/; RULE 1
+-- of CLAUDE.md):
+--   * Table 5, csr_narrative_runs: one row per request to build a CSR's
+--     patient safety narratives (server/services/csr/csr-narrative-run.ts, its
+--     only writer). The build runs off the request thread on the CSR build's
+--     own queue pattern (a durable row, a worker started with setImmediate,
+--     claimed by a conditional UPDATE); the row carries its status (queued,
+--     running, complete, incomplete, failed, cancelled), subjects done of
+--     total, the attempt that holds it, and the outcome or the refusal by
+--     code. A run whose worker stopped (a restart) is taken over by the next
+--     request and resumes per subject from csr_narrative_outputs. A partial
+--     unique index allows one queued or running build per CSR build. Public,
+--     organization_id INTEGER NOT NULL, so the final tenant sweep polices it.
+--     CREATE ... IF NOT EXISTS only, with its constraints inside the CREATE;
+--     nothing is dropped and no other file in the set creates or removes it.
 -- ============================================================================
 
 BEGIN;
@@ -27,7 +97,7 @@ BEGIN;
 -- (not an enum) so it can be loosened with a single ALTER TABLE.
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE csr_build_jobs (
+CREATE TABLE IF NOT EXISTS csr_build_jobs (
   id                    serial PRIMARY KEY,
 
   -- Tenant scoping (non-negotiable)
@@ -58,16 +128,16 @@ CREATE TABLE csr_build_jobs (
 );
 
 -- Tenant-first index for status dashboards
-CREATE INDEX csr_build_jobs_org_project_idx
+CREATE INDEX IF NOT EXISTS csr_build_jobs_org_project_idx
   ON csr_build_jobs (organization_id, project_id);
 
 -- Partial index for the worker poll path — only "live" rows matter
-CREATE INDEX csr_build_jobs_status_idx
+CREATE INDEX IF NOT EXISTS csr_build_jobs_status_idx
   ON csr_build_jobs (status)
   WHERE status IN ('queued', 'loading_data', 'drafting', 'tabulating', 'cross_linking');
 
 -- Org+study lookup for "show me the latest CSR for this study"
-CREATE INDEX csr_build_jobs_org_study_idx
+CREATE INDEX IF NOT EXISTS csr_build_jobs_org_study_idx
   ON csr_build_jobs (organization_id, study_id);
 
 -- ----------------------------------------------------------------------------
@@ -80,7 +150,7 @@ CREATE INDEX csr_build_jobs_org_study_idx
 -- parent job (the inverse of the job's project_id rule).
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE csr_section_outputs (
+CREATE TABLE IF NOT EXISTS csr_section_outputs (
   id                serial PRIMARY KEY,
 
   -- Tenant scoping (denormalized from the job for cheap org-scoped reads)
@@ -112,10 +182,10 @@ CREATE TABLE csr_section_outputs (
   CONSTRAINT csr_section_outputs_job_section_unique UNIQUE (job_id, section_number)
 );
 
-CREATE INDEX csr_section_outputs_org_project_idx
+CREATE INDEX IF NOT EXISTS csr_section_outputs_org_project_idx
   ON csr_section_outputs (organization_id, project_id);
 
-CREATE INDEX csr_section_outputs_job_idx
+CREATE INDEX IF NOT EXISTS csr_section_outputs_job_idx
   ON csr_section_outputs (job_id);
 
 -- ----------------------------------------------------------------------------
@@ -146,5 +216,147 @@ BEGIN
                  EXECUTE FUNCTION set_updated_at()';
     END IF;
 END $$;
+
+-- ----------------------------------------------------------------------------
+-- 2026-10-29 amendment: bound source run and per-section review state
+-- ----------------------------------------------------------------------------
+
+ALTER TABLE csr_build_jobs
+  ADD COLUMN IF NOT EXISTS source_run_id text
+    GENERATED ALWAYS AS ((study_info_snapshot -> 'evidenceSource' ->> 'runId')) STORED;
+
+CREATE INDEX IF NOT EXISTS csr_build_jobs_org_source_run_idx
+  ON csr_build_jobs (organization_id, source_run_id)
+  WHERE source_run_id IS NOT NULL;
+
+ALTER TABLE csr_section_outputs
+  ADD COLUMN IF NOT EXISTS review_status text NOT NULL DEFAULT 'draft',
+  ADD COLUMN IF NOT EXISTS reviewer_id integer REFERENCES users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS review_decided_at timestamptz,
+  ADD COLUMN IF NOT EXISTS review_reason text,
+  ADD COLUMN IF NOT EXISTS reviewed_content_hash text;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'csr_section_outputs_review_status_check'
+      AND conrelid = 'csr_section_outputs'::regclass
+  ) THEN
+    ALTER TABLE csr_section_outputs
+      ADD CONSTRAINT csr_section_outputs_review_status_check
+      CHECK (review_status IN ('draft', 'in_review', 'approved'));
+  END IF;
+  -- A decision is recorded with when it was made and on which text; an
+  -- approval without them is not an approval.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'csr_section_outputs_review_decision_check'
+      AND conrelid = 'csr_section_outputs'::regclass
+  ) THEN
+    ALTER TABLE csr_section_outputs
+      ADD CONSTRAINT csr_section_outputs_review_decision_check
+      CHECK (review_status = 'draft' AND review_decided_at IS NULL
+             OR review_decided_at IS NOT NULL AND reviewed_content_hash IS NOT NULL);
+  END IF;
+END $$;
+
+-- ----------------------------------------------------------------------------
+-- Table 3 (2026-10-29 amendment, slice 7): csr_narrative_outputs
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS csr_narrative_outputs (
+  id                serial PRIMARY KEY,
+  organization_id   integer NOT NULL REFERENCES organizations(id),
+  job_id            integer NOT NULL REFERENCES csr_build_jobs(id) ON DELETE CASCADE,
+  -- ADSL USUBJID, and the subject's place in treatment-group and subject order
+  subject_id        text NOT NULL,
+  sequence          integer NOT NULL CHECK (sequence >= 0),
+  status            text NOT NULL CHECK (status IN ('composed', 'refused')),
+  content           text,
+  content_hash      text,                   -- SHA-256 lowercase hex of content
+  facts_digest      text NOT NULL,          -- SHA-256 of the ADaM facts composed from
+  qc                jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at        timestamp NOT NULL DEFAULT now(),
+  updated_at        timestamp NOT NULL DEFAULT now(),
+  CONSTRAINT csr_narrative_outputs_job_subject_unique UNIQUE (job_id, subject_id),
+  CONSTRAINT csr_narrative_outputs_content_check
+    CHECK (status = 'composed' AND content IS NOT NULL AND content_hash IS NOT NULL
+           OR status = 'refused' AND content IS NULL AND content_hash IS NULL)
+);
+
+CREATE INDEX IF NOT EXISTS csr_narrative_outputs_org_job_idx
+  ON csr_narrative_outputs (organization_id, job_id, sequence);
+
+-- ----------------------------------------------------------------------------
+-- Table 4 (2026-10-30 amendment, assembly reach): csr_assembly_runs
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS csr_assembly_runs (
+  id                serial PRIMARY KEY,
+  organization_id   integer NOT NULL REFERENCES organizations(id),
+  job_id            integer NOT NULL REFERENCES csr_build_jobs(id) ON DELETE CASCADE,
+  requested_by      integer REFERENCES users(id) ON DELETE SET NULL,
+  status            text NOT NULL DEFAULT 'queued'
+    CHECK (status IN ('queued', 'assembling', 'assembled', 'failed')),
+  progress          integer NOT NULL DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+  stage             text,
+  -- { "16.2.3": { "reason": "...", "declaredBy": 5, "declaredAt": "..." } }
+  not_applicable    jsonb NOT NULL DEFAULT '{}'::jsonb,
+  -- { "16.1.1": { "documentId": "<vault uuid>", "sha256": "<hex>" } }
+  supplied          jsonb NOT NULL DEFAULT '{}'::jsonb,
+  result            jsonb,
+  error             jsonb,
+  placement         jsonb,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now(),
+  started_at        timestamptz,
+  completed_at      timestamptz,
+  CONSTRAINT csr_assembly_runs_outcome_check
+    CHECK (status <> 'assembled' OR result IS NOT NULL),
+  CONSTRAINT csr_assembly_runs_failure_check
+    CHECK (status <> 'failed' OR error IS NOT NULL)
+);
+
+CREATE INDEX IF NOT EXISTS csr_assembly_runs_org_job_idx
+  ON csr_assembly_runs (organization_id, job_id, id);
+
+-- One queued or running assembly per build.
+CREATE UNIQUE INDEX IF NOT EXISTS csr_assembly_runs_one_active_idx
+  ON csr_assembly_runs (job_id) WHERE status IN ('queued', 'assembling');
+
+-- ----------------------------------------------------------------------------
+-- Table 5 (2026-10-30 amendment, narrative build off the request path): csr_narrative_runs
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS csr_narrative_runs (
+  id                serial PRIMARY KEY,
+  organization_id   integer NOT NULL REFERENCES organizations(id),
+  job_id            integer NOT NULL REFERENCES csr_build_jobs(id) ON DELETE CASCADE,
+  requested_by      integer REFERENCES users(id) ON DELETE SET NULL,
+  status            text NOT NULL DEFAULT 'queued'
+    CHECK (status IN ('queued', 'running', 'complete', 'incomplete', 'failed', 'cancelled')),
+  subjects_done     integer NOT NULL DEFAULT 0 CHECK (subjects_done >= 0),
+  subjects_total    integer CHECK (subjects_total IS NULL OR subjects_total >= 0),
+  -- Incremented by each claim; a worker writes only while it holds the latest attempt.
+  attempt           integer NOT NULL DEFAULT 0 CHECK (attempt >= 0),
+  result            jsonb,
+  error             jsonb,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now(),
+  started_at        timestamptz,
+  completed_at      timestamptz,
+  CONSTRAINT csr_narrative_runs_outcome_check
+    CHECK (status NOT IN ('complete', 'incomplete') OR result IS NOT NULL),
+  CONSTRAINT csr_narrative_runs_failure_check
+    CHECK (status <> 'failed' OR error IS NOT NULL)
+);
+
+CREATE INDEX IF NOT EXISTS csr_narrative_runs_org_job_idx
+  ON csr_narrative_runs (organization_id, job_id, id);
+
+-- One queued or running narrative build per CSR build.
+CREATE UNIQUE INDEX IF NOT EXISTS csr_narrative_runs_one_active_idx
+  ON csr_narrative_runs (job_id) WHERE status IN ('queued', 'running');
 
 COMMIT;

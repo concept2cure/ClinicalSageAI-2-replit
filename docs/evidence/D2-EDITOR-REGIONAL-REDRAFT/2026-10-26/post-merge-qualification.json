@@ -1,0 +1,8 @@
+{
+  "head": "785b9fbb5b551ff11021d80873d04f305e7d2707",
+  "sourceCommit": "424ca42d805802cec5e79dbb39aea6838e348048",
+  "mergedOrigin": "33694a45aad70b0a0061e83f8e5ab46bbab36e0e",
+  "incoming": "Rule2 stated-input calculator/record-read boundaries; no declared qualified input overlap",
+  "verifiedDistinctGitBlobs": 55,
+  "allMatch": true
+}

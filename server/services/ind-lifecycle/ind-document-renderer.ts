@@ -29,7 +29,6 @@ import type {
   RightOfReferenceStatementModel,
   AuthorizedPersonsListModel,
 } from './ind-cross-reference-service';
-import type { BriefingBookModel } from './ind-briefing-book-service';
 import type { CoverLetterModel } from './ind-cover-letter-service';
 import type { PackageManifest } from './ind-package-manifest';
 import type { SequenceDiff } from './ind-sequence-diff';
@@ -166,16 +165,4 @@ export async function renderCoverLetterPdf(model: CoverLetterModel): Promise<Buf
   // A cover letter is one continuous letter, not a section tree — render flat
   // with a single document-level bookmark.
   return renderLeafPdf(model.body, { title: 'IND Cover Letter', sectionCode: 'm1.2' });
-}
-
-/** Render an FDA meeting briefing book (Pre-IND / Type A/B/C) to a PDF. */
-export async function renderBriefingBookPdf(model: BriefingBookModel): Promise<Buffer> {
-  const sections: LeafSection[] = model.sections.map((s) => ({
-    heading: s.heading,
-    body: s.body && s.body.length > 0 ? s.body : '[To be completed by the sponsor.]',
-  }));
-  return renderStructuredLeafPdf(sections, {
-    title: `FDA Briefing Document — ${model.productName} (${model.indication})`,
-    sectionCode: 'm1.6',
-  });
 }

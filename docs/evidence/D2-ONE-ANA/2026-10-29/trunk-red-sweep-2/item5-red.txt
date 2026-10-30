@@ -1,0 +1,13 @@
+# item 5 red at head bbe7971e (not fixed): node scripts/ci/check-client-reachability.mjs
+[ci:client-reachability] 768 reachable / 2 unreachable (baseline 0) from client/src/main.tsx.
+
+[ci:client-reachability] FAIL — 2 new client module(s) the browser cannot reach:
+
+  client/src/concept2cure/hooks/useRejectWorkflow.ts
+  client/src/concept2cure/services/workflowDecisionService.ts
+
+Nothing imports these from client/src/main.tsx, so they cannot mount, their handlers
+never fire, and they will still read like product to the next person who greps for the
+capability. Either wire it into a surface / route, or do not land it.
+
+If a file is genuinely reached by a mechanism this tracer does not model, say which

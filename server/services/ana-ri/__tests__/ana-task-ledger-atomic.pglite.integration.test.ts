@@ -66,6 +66,8 @@ CREATE TABLE unified_tasks (
   created_by_id integer, progress integer DEFAULT 0, completion_percentage integer DEFAULT 0,
   completed_at timestamptz, approval_required boolean DEFAULT false, approval_status text,
   approvers json, blocked_by text[], deleted_at timestamptz,
+  -- migrations/20261023_review_routes.sql (RR1a): the mirror read names it.
+  review_route_id uuid,
   created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
 );
 `;

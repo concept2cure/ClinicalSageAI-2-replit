@@ -1,0 +1,75 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:05:38.466Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T05:05:38.468Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:05:38.469Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:05:39.225Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+Loaded 0 academic documents
+
+ ↓ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > AnA cannot move a review route member (B1) > update_task on a project task mirrored by a route member: refused, nothing written
+ ↓ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > AnA create_task naming reviewRouteId: refused, no project task, no board row
+ × server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > a rule's create_task action naming review_route_id: the action fails, nothing inserted 43ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > the same rule action without a route column still creates its task (the refusal is the route column's) 5ms
+ ↓ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > a blueprint milestone naming reviewRouteId: nothing seeded
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > a rule's create_task action naming review_route_id: the action fails, nothing inserted
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts:126:28
+    124|       { ruleId: 'rule-1', name: 'Rule' } as never,
+    125|     );
+    126|     expect(result.success).toBe(false);
+       |                            ^
+    127|     expect(result.error).toMatch(/Review route fields/);
+    128|     expect((await run('SELECT count(*)::int AS n FROM unified_tasks'))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 3 skipped (5)
+   Start at  05:05:30
+   Duration  18.27s (transform 9.53s, setup 130ms, import 786ms, tests 16.98s, environment 0ms)
+

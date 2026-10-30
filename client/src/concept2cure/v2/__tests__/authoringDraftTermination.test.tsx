@@ -120,9 +120,10 @@ describe('actual assembly queue preserves completed work on a termination refusa
   it('retains the first candidate, fails the second, and never starts the third or accepts/retries automatically', async () => {
     const sections = savedSections();
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return response({ success: true, documents: [{ id: DOC, program_id: PROGRAM }] });
-      if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) return response({ success: true, document: { id: DOC, client_program_id: PROGRAM } });
-      if (method === 'GET' && url.endsWith('/sections')) return response({ success: true, sections });
+      const path = new URL(url, 'http://localhost').pathname;
+      if (method === 'GET' && path === '/api/authoring/docs') return response({ success: true, documents: [{ id: DOC, program_id: PROGRAM, readScope: 'document' }] });
+      if (method === 'GET' && path === `/api/authoring/docs/${DOC}`) return response({ success: true, document: { id: DOC, client_program_id: PROGRAM, readScope: 'document' } });
+      if (method === 'GET' && path.endsWith('/sections')) return response({ success: true, sections, readScope: 'document' });
       if (url === '/api/authoring/sections/first/ai/draft') return candidate('first-candidate', 'Completed first candidate.');
       if (url === '/api/authoring/sections/second/ai/draft') throw cutoff();
       throw new Error(`Unexpected request: ${method} ${url}`);
@@ -137,11 +138,20 @@ describe('actual assembly queue preserves completed work on a termination refusa
     expect(state.slots[0].review).toMatchObject({ draft: { draftId: 'first-candidate', generated: 'Completed first candidate.' }, body: 'Completed first candidate.' });
     expect(state.slots[0].current?.()).toBe(true);
     expect(state.slots[1]).toMatchObject({ message: MESSAGE, review: { draft: null, body: '' } });
-    expect(state.message).toMatch(/1 candidate retained.*retry failed or not-started.*explicitly/i);
+    // 13bafc62 replaced "retry failed or not-started sections explicitly" with a
+    // counted, bounded continuation. Pin its meaning, not its old wording: one
+    // retained, the exact count still pending, an explicit continue, no auto-accept.
+    expect(state.message).toMatch(/^1 candidate retained for individual review\. /);
+    expect(state.message).toMatch(/\b2 failed or not-started candidates remain\b/);
+    expect(state.message).toMatch(/\bContinue explicitly to prepare up to 20\b/);
+    expect(state.message).toMatch(/\bnothing is accepted automatically\.$/);
     const posts = apiRequest.mock.calls.filter(([method]) => method === 'POST');
     expect(posts.map(([, url]) => url)).toEqual([
       '/api/authoring/sections/first/ai/draft', '/api/authoring/sections/second/ai/draft',
     ]);
+    for (const [method, url] of apiRequest.mock.calls) {
+      if (method === 'GET') expect(new URL(String(url), 'http://localhost').searchParams.get('programId')).toBe(PROGRAM);
+    }
     expect(sections.every(section => section.content === '')).toBe(true);
     expect(onAccepted).not.toHaveBeenCalled();
   });

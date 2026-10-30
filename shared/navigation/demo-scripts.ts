@@ -82,25 +82,25 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     audience: 'A new subscriber team learning to run their regulatory work here.',
     minutes: 8,
     description:
-      'The complete working tour of the launch catalog: the Projects portfolio and a real program, the Vault, Authoring and the protocol workspace, CMC / Module 3, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
+      'The complete working tour of the launch catalog: the Projects portfolio and a real project, the Vault, Authoring and the protocol workspace, CMC / Module 3, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
     steps: [
       {
         say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the work areas in this release, and they can interrupt with a question at any moment.',
       },
       {
-        say: 'Projects is the front door: every regulatory program with its workstream, stage, readiness and blockers. Name the programs actually in their portfolio — drug and device programs sit side by side in one portfolio. If it is empty, say so plainly and offer to set up their first program together.',
+        say: 'Projects is the front door: every project with its workstream, stage, readiness and blockers. Name the projects actually in their portfolio — drug and device projects sit side by side in one portfolio. If it is empty, say so plainly and offer to set up their first project together.',
         navigate: { target: 'projects' },
       },
       {
-        say: 'Open one of their real programs (pick it from the portfolio on screen). Opening a program scopes every project surface to it.',
+        say: 'Open one of their real projects (pick it from the portfolio on screen). Opening a project scopes every project surface to it.',
         act: { actionId: 'projects.open-program' },
       },
       {
-        say: 'Project home is the program cockpit: lifecycle stage, workstreams, recent drafts, the team, and the conversation thread with AnA all live here.',
+        say: 'Project home is the project’s cockpit: lifecycle stage, workstreams, recent drafts, the team, and the conversation thread with AnA all live here.',
         navigate: { target: 'project-home' },
       },
       {
-        say: 'The Vault is the governed document store: uploads are checksummed and virus-scanned, auto-classified into the dossier structure, and every source is tracked from captured to filed — the CTD tree for a drug or biologic program, the device submission folders for a device.',
+        say: 'The Vault is the governed document store: uploads are checksummed and virus-scanned, auto-classified into the dossier structure, and every source is tracked from captured to filed — the CTD tree for a drug or biologic project, the device submission folders for a device.',
         navigate: { target: 'vault' },
       },
       {
@@ -108,7 +108,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'authoring' },
       },
       {
-        say: 'Protocol development is the second Authoring workspace: the protocol as structured data — sections, objectives and endpoints, eligibility, the schedule of assessments, the risk register and milestones — with a deterministic completeness gate before anyone can finalize.',
+        say: 'The protocol workspace is Authoring’s second workspace: the protocol as structured data — sections, objectives and endpoints, eligibility, the schedule of assessments, the risk register and milestones — with a deterministic completeness gate before anyone can finalize.',
         navigate: { target: 'protocol-dev' },
       },
       {
@@ -120,11 +120,11 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'submissions' },
       },
       {
-        say: 'Open the validation workspace so they see the pre-flight findings the team clears before anyone is asked to sign — real findings on the program’s real sequence, not a slide of them.',
+        say: 'Open the validation workspace so they see the pre-flight findings the team clears before anyone is asked to sign — real findings on the project’s real sequence, not a slide of them.',
         act: { actionId: 'submissions.set-workspace', params: { workspace: 'validation' } },
       },
       {
-        say: 'Submission Readiness is the judgment layer: the dispatch gate for the program’s sequence, computed from stored facts — validation errors, unacknowledged shadow-review criticals and the release signature — with every blocker named until it is cleared.',
+        say: 'Submission Readiness is the judgment layer: the dispatch gate for the project’s sequence, computed from stored facts — validation errors, unacknowledged shadow-review criticals and the release signature — with every blocker named until it is cleared.',
         navigate: { target: 'dispatch-readiness' },
       },
       {
@@ -136,7 +136,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         act: { actionId: 'quality.filter-changes', params: { stage: 'approved' } },
       },
       {
-        say: 'Reporting & analytics is the same central service for every client type: governed reports drawn from the program records, each with its confidence, its gaps and its blockers stated.',
+        say: 'Reporting & analytics is the same central service for every client type: governed reports drawn from the project records, each with its confidence, its gaps and its blockers stated.',
         navigate: { target: 'insights' },
       },
       {
@@ -162,14 +162,14 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       'The dispatch-day route: the Vault sources, the documents in Authoring, the review queue, the Submission Center’s sequence and validation workspaces, the readiness verdict, and the Part 11 record of it all. Freezing and dispatching stay with a person; this tour shows everything up to their signature.',
     steps: [
       {
-        say: 'Frame the day: a sequence goes out today, and this is the exact route the team will drive — on their real program, with every governed gate left in human hands.',
+        say: 'Frame the day: a sequence goes out today, and this is the exact route the team will drive — on their real project, with every governed gate left in human hands.',
       },
       {
-        say: 'Start at the portfolio and open the program that is submitting (pick it from the list on screen).',
+        say: 'Start at the portfolio and open the project that is submitting (pick it from the list on screen).',
         navigate: { target: 'projects' },
       },
       {
-        say: 'Open the program whose sequence ships today.',
+        say: 'Open the project whose sequence ships today.',
         act: { actionId: 'projects.open-program' },
       },
       {
@@ -205,11 +205,13 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'dispatch-readiness' },
       },
       {
-        say: 'The Part 11 console shows how compliance is evidenced: the signer mode in force, the signature manifestations, and the audit-chain verifier — the record a reviewer will ask for.',
-        navigate: { target: 'part11-console' },
-      },
-      {
-        say: 'And the audit trail itself: the freeze and the dispatch will appear here under the person’s signature — the two acts that stay theirs. Close: recap the route, name where their sequence stands today, and offer to walk the validation findings together next.',
+        /* One stop since 2026-10-29: the Part 11 console folded into the audit
+           trail, whose banner states both audit chains' verdicts (D2,
+           docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/). The
+           console's line also named signer modes and signature manifestations,
+           which it had stopped showing on 2026-10-17; the stop says only what
+           the screen shows. */
+        say: 'And the audit trail itself, the record a reviewer will ask for: both audit hash chains verified on the server, and the freeze and the dispatch will appear here under the person’s signature — the two acts that stay theirs. Close: recap the route, name where their sequence stands today, and offer to walk the validation findings together next.',
         navigate: { target: 'audit-trail' },
       },
     ],
@@ -221,21 +223,21 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     audience: 'A prospect or stakeholder deciding whether this platform runs their regulatory operation.',
     minutes: 6,
     description:
-      'The value story end to end, in the founder’s pitch order: a real program, AI drafting in Authoring, the protocol as data, the governed Vault, the Submission Center, the readiness verdict, controlled documents, and the audit trail — what gets faster, what stays compliant, and why.',
+      'The value story end to end, in the founder’s pitch order: a real project, AI drafting in Authoring, the protocol as data, the governed Vault, the Submission Center, the readiness verdict, controlled documents, and the audit trail — what gets faster, what stays compliant, and why.',
     steps: [
       {
         say: 'Open with the thesis: one platform where the regulatory work is done, not tracked — AnA works the screens with the team, numbers and verdicts come from deterministic engines, and everything governed stays governed under a person’s signature.',
       },
       {
-        say: 'Start at Projects: the whole portfolio, biotech and device side by side, each program with stage, readiness and blockers — name the programs actually listed. If it is empty, say so plainly and offer to set one up together.',
+        say: 'Start at Projects: the whole portfolio, biotech and device side by side, each project with stage, readiness and blockers — name the projects actually listed. If it is empty, say so plainly and offer to set one up together.',
         navigate: { target: 'projects' },
       },
       {
-        say: 'Enter a real program (pick one from the portfolio on screen). Everything from here on is scoped to it automatically.',
+        say: 'Enter a real project (pick one from the portfolio on screen). Everything from here on is scoped to it automatically.',
         act: { actionId: 'projects.open-program' },
       },
       {
-        say: 'The headline capability: Authoring. AnA drafts regulatory documents grounded in the program evidence, with provenance on every claim and a governed version history — this is where weeks become days.',
+        say: 'The headline capability: Authoring. AnA drafts regulatory documents grounded in the project evidence, with provenance on every claim and a governed version history — this is where weeks become days.',
         navigate: { target: 'authoring' },
       },
       {
@@ -276,18 +278,18 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       'A device or diagnostics team learning to run their 510(k), PMA, De Novo, or EU MDR/IVDR work here.',
     minutes: 8,
     description:
-      'The complete device working tour: the portfolio, the task workbench, the 510(k) pathway, the ISO 14971 risk file worked hands-on, design controls and V&V, the significant-change worklist, EU MDR clinical evaluation, and the submission packages — each stop showing what the team actually does there.',
+      'The complete device working tour: the portfolio, Tasks, the 510(k) pathway, the ISO 14971 risk file worked hands-on, design controls and V&V, the significant-change worklist, EU MDR clinical evaluation, and the submission packages — each stop showing what the team actually does there.',
     steps: [
       {
-        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own device programs, on their real data, and they can interrupt with a question at any moment.',
+        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own device projects, on their real data, and they can interrupt with a question at any moment.',
       },
       {
-        say: 'The device portfolio is the front door: every device program with its pathway — 510(k), PMA, De Novo, MDR — its stage and its readiness in one place.',
+        say: 'The device portfolio is the front door: every device project with its pathway — 510(k), PMA, De Novo, MDR — its stage and its readiness in one place.',
         navigate: { target: 'device-workstream' },
       },
       {
-        say: 'The device task workbench is where the day starts: every open item across their programs with its owner, so nothing waits on a shared drive or an email thread.',
-        navigate: { target: 'device-tasks' },
+        say: 'Tasks is where the day starts: every open item across their projects, from the board, the schedule, agency correspondence and tracked filings, each labelled with where it lives and with the work another store records as blocking marked, so nothing waits on a shared drive or an email thread.',
+        navigate: { target: 'tasking' },
       },
       {
         say: 'Pre-Submissions shape the pathway before you build it — the agency-meetings workspace tracks each Q-Sub / Pre-Sub with its briefing book and the FDA feedback, so the team designs to the agency’s answer instead of guessing it.',
@@ -298,24 +300,26 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'device-510k' },
       },
       {
-        say: 'The ISO 14971 risk file is the discipline at the center of every device submission — hazards, severity and probability, and the controls that bring residual risk down.',
-        navigate: { target: 'risk' },
-      },
-      {
-        say: 'Work one hazard, do not slide it — open a hazard from their real file (pick one on screen) so they see its severity, probability, and controls the way they will actually use it.',
-        act: { actionId: 'risk.select-hazard' },
-      },
-      {
-        say: 'Switch to the residual matrix — the assessment after their controls. Accepting residual risk stays a signed human judgment; AnA shows the picture and never makes that call for them.',
-        act: { actionId: 'risk.set-matrix-view', params: { view: 'residual' } },
-      },
-      {
-        say: 'Design controls are the engineering backbone: requirements, verification and validation traced end to end — the spine an auditor follows and the team maintains here.',
+        // 2026-10-29 (D2, fold F1c): the risk file and the design-control trace are Engineering's, for the open project.
+        say: 'The ISO 14971 risk file is the discipline at the center of every device submission — hazards, severity and probability, and the controls that bring residual risk down. It lives in the project\'s engineering evidence.',
         navigate: { target: 'device-engineering' },
       },
       {
-        say: 'The validation center is where V&V evidence lands and its completeness is tracked against the plan — protocols, runs, and what is still open.',
-        navigate: { target: 'device-validation' },
+        say: 'Work one hazard, do not slide it — open a hazard from their real file (pick one on screen) so they see its severity, probability, and controls the way they will actually use it.',
+        act: { actionId: 'device-engineering.select-hazard' },
+      },
+      {
+        say: 'Switch to the residual matrix — the assessment after their controls. Accepting residual risk stays a signed human judgment; AnA shows the picture and never makes that call for them.',
+        act: { actionId: 'device-engineering.set-matrix-view', params: { view: 'residual' } },
+      },
+      {
+        say: 'On the same screen, design controls are the engineering backbone: requirements, verification and validation traced end to end — the spine an auditor follows and the team maintains here.',
+      },
+      {
+        // 2026-10-29 (D2, fold F5 item 2): no organization-wide blocker list. A
+        // blocker is its filing's own readiness, and Submission Center lists the filings.
+        say: 'What stops a device filing belongs to that filing: its eSTAR filing readiness, assessed against the project\'s own authored content, names every gap, and a gap closes when it is fixed. Submission Center lists every filing being tracked.',
+        navigate: { target: 'submissions' },
       },
       {
         say: 'The significant-change worklist is the call they make all the time: for each change, is it a letter-to-file or a new 510(k), and what is the EU MDR significant-change determination.',
@@ -330,8 +334,9 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'device-cer' },
       },
       {
-        say: 'The submission packages are the final mile: eSTAR and eCTD pre-flight validation and the transmittal chain — the last step lives here too, not in a vendor hand-off.',
-        navigate: { target: 'device-submission' },
+        // 2026-10-30 (D2, fold F5 item 1): device filings are Submission Center's, over one store.
+        say: 'The final mile is in Submission Center: every device filing being tracked, each draft with its own readiness and every gap named, and each filing\'s history on its record. Filing it stays a signed human act.',
+        navigate: { target: 'submissions' },
       },
       {
         say: 'Close the loop: recap the route just driven, name the one or two screens most relevant to what this team does daily, and invite them to try the next task with you in Live Drive.',
@@ -346,13 +351,13 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       'A device or diagnostics prospect — 510(k), PMA, De Novo, or EU MDR/IVDR — deciding whether this platform runs their regulatory operation.',
     minutes: 6,
     description:
-      'The device value story end to end: the program portfolio, the 510(k) pathway with predicate intelligence, design controls, the ISO 14971 risk file, EU MDR clinical evaluation, the significant-change worklist, and the submission packages — what gets faster, and what stays governed.',
+      'The device value story end to end: the project portfolio, the 510(k) pathway with predicate intelligence, design controls, the ISO 14971 risk file, EU MDR clinical evaluation, the significant-change worklist, and the submission packages — what gets faster, and what stays governed.',
     steps: [
       {
         say: 'Open with the thesis for device teams: one platform where the 510(k), PMA, De Novo and EU MDR work is done, not tracked — AnA works the screens with the team, and every governed determination stays a human sign-off.',
       },
       {
-        say: 'Start at the device portfolio: every device program, its pathway and its readiness, in one place instead of a spreadsheet and a shared drive.',
+        say: 'Start at the device portfolio: every device project, its pathway and its readiness, in one place instead of a spreadsheet and a shared drive.',
         navigate: { target: 'device-workstream' },
       },
       {
@@ -368,12 +373,12 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'device-engineering' },
       },
       {
-        say: 'The ISO 14971 risk file: the discipline at the center of every device submission — hazards, severity and probability, and the controls that bring residual risk down.',
-        navigate: { target: 'risk' },
+        // 2026-10-29 (D2, fold F1c): the risk file is on the same Engineering screen as the trace.
+        say: 'On the same screen, the ISO 14971 risk file: the discipline at the center of every device submission — hazards, severity and probability, and the controls that bring residual risk down.',
       },
       {
         say: 'Switch to the residual matrix — after the controls. Accepting residual risk is the one thing AnA never does for them: it stays a signed human judgment, and the screen shows exactly that.',
-        act: { actionId: 'risk.set-matrix-view', params: { view: 'residual' } },
+        act: { actionId: 'device-engineering.set-matrix-view', params: { view: 'residual' } },
       },
       {
         say: 'For Europe, the CER: clinical evaluation under EU MDR, with the benefit-risk and GSPR reasoning laid out — an uncharacterized dimension is never quietly treated as favourable.',
@@ -384,8 +389,9 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'change-assessment' },
       },
       {
-        say: 'The submission packages: eSTAR and eCTD pre-flight validation and the transmittal chain — the last mile lives here too, not in a vendor hand-off.',
-        navigate: { target: 'device-submission' },
+        // 2026-10-30 (D2, fold F5 item 1): device filings are Submission Center's, over one store.
+        say: 'The last mile, in Submission Center: each device filing with its readiness from the project\'s own content, every gap named, and its history on the record. Filing is a signed act a person makes.',
+        navigate: { target: 'submissions' },
       },
       {
         say: 'Close on governance: 21 CFR Part 11 signatures, hash-chained audit, and the rule that holds across every pathway — AnA prepares while a person approves. Then invite their questions and the next step.',

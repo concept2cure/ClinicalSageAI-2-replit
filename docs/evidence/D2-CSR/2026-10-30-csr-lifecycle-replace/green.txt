@@ -1,0 +1,344 @@
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > places a revised CSR as a replace of each earlier file of the same study and part, naming its parent; a new part stays new (SYNTHETIC) 2871ms
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > lists an earlier file the revised assembly no longer has, refuses to drop it silently, and places once the user keeps it on file (SYNTHETIC) 767ms
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > withdraws only the files a part-way placement wrote, in its still-open sequence, after the build changed (SYNTHETIC) 600ms
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > refuses to withdraw a completed placement, or a part-way one whose sequence has since been frozen (SYNTHETIC) 1529ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > canonical study metadata writes > persists explicit metadata on insert and records the values in the existing audit 28ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > canonical study metadata writes > ordinary updates preserve omitted metadata and explicit null clears it 10ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > canonical study metadata writes > changes only metadata and updatedAt, even when the source has changed and supplied pointers disagree 6ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > canonical study metadata writes > demotes a validated sequence on a real metadata edit 7ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > canonical study metadata writes > a no-op preserves validation, timestamps and audit history 7ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses a null revision without auditing or demoting validation 6ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses a stale expected snapshot: {"expectedStudyId":"other"} 6ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses a stale expected snapshot: {"expectedStfFileTag":"other"} 8ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses a stale expected snapshot: {"expectedUpdatedAt":"2000-01-01T00:00:00.000Z"} 9ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses changed row identity: {"title":"another title"} 9ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses changed row identity: {"sectionCode":"5.3.5.2"} 12ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses metadata edits in frozen sequences 7ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses metadata edits in dispatched sequences 11ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > does not expose another tenant or another sequence leaf 5ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses duplicate placement with differing explicit metadata instead of discarding it 5ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > returns unchanged for a duplicate with matching explicit metadata 5ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > reports both unconfirmed audits without undoing committed metadata or its sequence transition 6ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses malformed direct metadata edits: {} 5ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses malformed direct metadata edits: {"reason":42} 7ms
+ × server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > refuses malformed direct metadata edits: {"studyTaggingEdit":{"expectedStudyId":null,"expectedStfFileTag":null,"expectedUpdatedAt":"October 20, 2026"}} 7ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"studyId":"bad/id"} 13ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"studyId":""} 4ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"stfFileTag":""} 3ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"stfFileTag":"a\nwrong-tag"} 3ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"stfFileTag":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"} 3ms
+ ✓ server/services/submission-service/__tests__/leaf-study-tagging.pglite.test.ts > study metadata edit guards and outcomes > validates non-route callers before writing: {"studyTaggingEdit":{},"studyId":null,"stfFileTag":null} 3ms
+ ✓ server/services/csr/__tests__/csr-assembly-scale.test.ts > the CSR listings are generated streaming, at several thousand pages > assembles 400 synthetic subjects with the heap under a fixed ceiling 11684ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > queues, runs off the request, and retains every leaf with its page count and SHA-256 (SYNTHETIC) 491ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a stored copy that differs from the assembled file as a failure, not an assembly 166ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a build with no bound run, and a declaration without a reason 54ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a frozen sequence, a transmitted one and another project’s, before writing any leaf 359ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses placement while a blocking 16.1.x appendix is missing, naming it 253ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > places every leaf under 5.3.5.1 with its STF role once each blocking appendix is supplied or declared, and records the declarations 386ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a writer refusal part-way as a partial placement, naming what was placed 418ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place an assembly made before the build’s sections changed (its fingerprint is not the job’s now) 357ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place a body whose drafted text keeps a data placeholder, naming the section; a manual heading not supplied does not block 838ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > lets a placement claim left by a stopped worker expire: shown as interrupted, and placed again into the same sequence only 425ms
+ ✓ server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts > packages a placed CSR with every GoToR link in the body naming a file in the package (SYNTHETIC) 2173ms
+ ✓ server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts > finishes a placement refused part-way by placing again, with no second leaf for a file already placed (SYNTHETIC) 865ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it 374ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker 162ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > derives registered legal identity from the canonical tenant registry and preserves its exact source in the final ZIP and governance proof 215ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > is empty only when nothing was left out and nothing is unapproved 1ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > names every leaf left out of the package 0ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > never reads an un-itemised unapproved count as nothing 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > folds the latest recorded compile of each earlier sequence, filed or not, and names the unfiled 10ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > the filed prior state never reads a rehearsal compile, even of a sequence that was sent 3ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal 303ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts 111ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed 109ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > an original sequence has nothing to rehearse against, and says so 13ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against 148ms
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences 85ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none 367ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > with no agency number recorded, is refused by name — the program code is never an application number 13ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > for a submission with no program, is refused by name: no number is recorded for it 9ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used 178ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that contradicts the recorded one is refused 13ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied value that is not a usable identifier is refused, never written into a filename 6ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > is the organisation the record names, not a placeholder 174ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > an organisation whose record has no usable name is refused by name 6ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > refuses an unbound sponsor even when the organization name is present 7ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > refuses a caller-supplied DUNS that differs from the bound sponsor 5ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > refuses incomplete contact facts instead of producing a placeholder 6ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > recorded FDA sponsor facts remain authoritative at export > keeps telephone vocabulary and agency DTD qualification gaps visible 167ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > ships the capture by value even when the caller later mutates its input object 165ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > assembly returns the exact supplied identity capture > refuses packaging inputs that disagree with the claimed FDA identity 27ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-FDA identifiers retain their regional meaning > does not substitute FDA DUNS for an absent or explicitly supplied EMA identifier 353ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries EU proof that agrees with the actual regional XML bytes 160ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries JP proof that agrees with the actual regional XML bytes 170ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CA proof that agrees with the actual regional XML bytes 152ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CN proof that agrees with the actual regional XML bytes 169ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries KR proof that agrees with the actual regional XML bytes 162ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries UK proof that agrees with the actual regional XML bytes 159ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries AU proof that agrees with the actual regional XML bytes 169ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries CH proof that agrees with the actual regional XML bytes 151ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries BR proof that agrees with the actual regional XML bytes 156ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries IN proof that agrees with the actual regional XML bytes 131ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > export carries SG proof that agrees with the actual regional XML bytes 163ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed programId before packaging 26ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicationNumber before packaging 25ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > refuses a non-US supplied proof with a changed applicantName before packaging 21ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > non-US export and supplied proof use the recorded regional identity > returns projected non-US proof while preserving its caller-supplied regional identifier 151ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared replace against the leaf its predecessor was filed as 257ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared append against the leaf its predecessor was filed as 152ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > never files it beside the filed version: placed as new, it is the replace of its predecessor 135ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version 111ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the withdrawal placed first: a version whose predecessor this sequence withdraws binds nothing 171ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the new version placed first: a version whose predecessor this sequence withdraws binds nothing 162ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > leaves only the new version on file once the replace is filed 173ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses to choose when two filed leaves carry earlier versions of it 111ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one 125ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses a version placed beside an act on its own filed predecessor 170ms
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > does not follow a link the database rules refuse 100ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > queues an assembly off the request, records the declarations, and reads it back 106ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses a short declaration and an unreachable job by status, not as an empty result 15ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place into a frozen sequence before the leaf writer is called 50ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place an assembly whose body cites a table or listing it does not contain, or a build that is not complete 24ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > shows and places a revised body as a replace of the study's earlier body, and refuses to withdraw a placement that is not partial (SYNTHETIC) 40ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it 282ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a Vault document of another project, and writes nothing 15ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s Vault document that carries no organization attribution 6ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a governed section of another project’s filing document 7ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s authoring filing copy (reached through the alias map) 19ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > places the project’s own document, and the ledger names the document, its pin and the project 28ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses re-pointing an existing leaf at another project’s document 26ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > re-pointing a leaf to another document of the project names both, old and new, in its ledger row (PF-11) 36ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > an update that keeps the same document says so 24ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a project document placed into a submission that records no project (P-14), and writes nothing 8ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > the leaf ledger records the filing copy’s status > placing and re-placing an authoring copy records the copy’s status at each write (draft, then approved) 22ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > both rows written: the result says so 366ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing 159ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row 170ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a refused assembly throws an error that carries whether the refusal was recorded 18ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success 130ms
+ ✓ server/services/ectd/__tests__/lifecycle-parent-leaf-binding.test.ts > binds a declared replace to the filed leaf its cross-sequence parent was filed as (SYNTHETIC) 292ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > placing the same document into the same section again returns the existing leaf and writes nothing 46ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > the same document under a different lifecycle operation is refused by name, and nothing is written 28ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a DIFFERENT document may still be placed into an occupied section: the section may hold several New leaves 30ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a document whose earlier leaf was removed is placed again as a new leaf (the check reads only live leaves) 27ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new 283ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf 173ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing 98ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence 92ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document 71ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file 92ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved 331ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s unified_documents id 21ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s ctd_onboarding_documents id 5ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses a c2c_document_sections row whose PARENT document belongs to another organization 5ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > persists NO leaf row for any of those refusals 2ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — the caller’s own sources are accepted AND pinned > pins the sha256 of the latest workflow version for its own unified_documents leaf 23ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — the caller’s own sources are accepted AND pinned > pins the sha256 of the section body for its own c2c_document_sections leaf 14ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > drift guard > the tenancy dispatch covers every table the read-side resolver can materialize 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-from-core.test.ts > lifecycle from the canonical spine (submission-id keyed) > sequence 0001 ships a delete (for the dropped 0000 leaf) + a new leaf 408ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-earlier-sequence.pglite.test.ts > admits a replace naming the current leaf of an earlier sequence of the same submission 40ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-earlier-sequence.pglite.test.ts > refuses a parent in a later sequence, another submission, another organization, a removed leaf or a withdrawal 24ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-earlier-sequence.pglite.test.ts > still refuses a parent outside the sequence for a leaf that is not a lifecycle act 6ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized 106ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from 6ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it 272ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing 171ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly 182ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section 161ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal 163ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf 114ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section 125ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section 141ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > neither stages nor reports as unresolved a document referenced only by a delete 10ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees 342ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees 273ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees 314ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees 270ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped 262ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > builds the body, §14 and §16 leaves; bookmarks reach four levels and every link resolves 501ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > numbers the engine tables 14.1.x / 14.2.x / 14.3.x and bookmarks them to four levels in the §14 leaf 401ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > renders identically twice (the leaf digests a later sequence compares) 837ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > lists the protocol, sample CRF, investigators, signatures and SAP as blocking gaps when they are not supplied 348ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied document whose bytes are not the version named, or that is not a PDF 113ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied copy of a listing the source generates, and a not-applicable claim without a reason 115ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails a link to a §14 table the tables leaf does not define, a file outside the assembly and an undefined internal destination 353ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails bookmarks that stop at three levels, and a heading drawn without its bookmark 13ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > marks an assembly incomplete when its drafted body has no fourth-level heading 394ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > reports a body cross-reference that names nothing in the assembly, and does not link it 393ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > names the subject and column when the source records something else, and a source record left unlisted 379ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > holds the adverse-event listing to every source event of the subject, each used once 322ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > hand-off to Submission Center’s packager > packages the leaves into the study folder with its stf-<study-id>.xml and every cross-reference resolved 751ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the laboratory listing shows only what ADLB records > reads Baseline as not recorded when ADLB has no ABLFL, and an XPT date as a date 608ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a listing value the PDF fonts cannot draw fails the source check > records the row as drawn, so a "?" in place of a character is a disagreement, and a lossless substitution is not 420ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a run with no engine table does not claim a Section 14 document > says Section 14 is not supplied, files no tables leaf, and is incomplete 313ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > reads page count and named destinations from the cross-reference table, as a whole read does 138ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > falls back to a whole read for a leaf laid out otherwise (an xref stream), and still fails a destination it lacks 60ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > queues the assembly and shows its progress while it runs 322ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a refusal to assemble as stated 67ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a failed read as an alert, not as "not assembled" 33ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lists each leaf with pages and SHA-256 and each missing appendix with whether it blocks; shows a placement refusal as stated 175ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > assembles again with the supplied document and the declarations the user entered 182ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > is reachable on the csr-workflow board for the job 60ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a placement a stopped worker left as interrupted, not as being placed, and offers to place it again into that sequence (2026-10-30) 73ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > marks a drafted section that keeps a data placeholder as blocking placement 17ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows what each file replaces in the chosen sequence, and places only once an earlier file left out is confirmed on file (2026-10-30) 96ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > offers to withdraw the partly placed CSR files with a reason, and shows a refusal as stated (2026-10-30) 58ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > states a withdrawal and offers a fresh placement (2026-10-30) 31ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > composes from the verified job and its retained run; §3, §14 and §16 are filled here, §15 stays a gap 488ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a job that was not built from a retained run, before reading any source rows 70ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a retained source whose records do not name their subject 46ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > reads a well-formed history oldest-first 11ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > DROPS an entry it cannot fully read, rather than reconstructing a partial prior state 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > is empty for a package that has filed nothing, or whose metadata is unreadable 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > is the fold of every sequence, not the last one: a later filing supersedes, an untouched leaf survives, and each carries the sequence that HOLDS it 2ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > a withdrawn leaf drops out — it is no longer on file 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > a withdrawal filed WITHOUT the document's key still takes the keyed document off file 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > carries the pre-normalization digest into the prior state, and treats a malformed one as unreadable 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > folds in sequence order however the history is ordered 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > 0000 is an original: every leaf is new, and no prior state is consulted 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a follow-up REPLACES what changed, keeps what is new as new, and OMITS what is byte-identical 2ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a leaf on file but absent from this assembly stays on file — absence is not withdrawal 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a follow-up when nothing has been transmitted: an assembled-but-unsent 0000 is not on file 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a sequence number already transmitted, for 0000 and for a follow-up alike 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a follow-up that does not say what it is filing — only 0000 is an original by definition 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a term the region has no code for, and says which terms it does — an unfilable type is not a 500 out of the packager 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > checks the vocabulary on 0000 too — a term the backbone cannot carry is unfilable whatever it diffs to 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > accepts what the region accepts, and names its terms when it asks for one 2ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a region with no vocabulary takes the operator at their word — the list is not invented 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > WITHDRAWS a named document, pointing the delete at the sequence that holds it 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a withdrawal names the identity of the document it withdraws, so the filed history records which one left 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a sequence that ONLY withdraws is a filing 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a withdrawal of something that is not on file, and one that contradicts what is being filed 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a withdrawn document leaves the prior state, so re-filing it later is NEW 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > follows a document through a change of FILE NAME, because the name is not its identity 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a renamed section whose CONTENT is unchanged still files nothing 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a history filed BEFORE leaf keys existed still matches on the path — the fallback is not optional 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > moving a document to a DIFFERENT CTD section is not a replace across sections — and the copy left on file is named 4ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > per-submission documents (FDA cover letters and forms) — sweep F13 > a new cover letter files as NEW, never as a replace of the one on file 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > per-submission documents (FDA cover letters and forms) — sweep F13 > the letter on file, unchanged, is not filed again as this sequence's letter 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > per-submission documents (FDA cover letters and forms) — sweep F13 > without the predicate (every region but FDA) a letter is diffed like any document 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a document filed at TWO sections on purpose is not a move 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > names an empty-section placeholder still on file from before placeholders stopped being filed 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a gap and a backfill alike — the only ordering this knows is the sequence number 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a sequence in which nothing changed — a filing that files nothing consumes a sequence number to say nothing 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > diffs against the FOLD, not the last sequence: a leaf untouched since 0000 is still compared to 0000 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > a filing the agency rejected is not on file (sweep F19) > the reader skips a rejected entry; an entry with no state, or "transmitted", is on file 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > a filing the agency rejected is not on file (sweep F19) > a "rejected" state that carries no recorded evidence does not un-file anything 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > a filing the agency rejected is not on file (sweep F19) > the rejected number is reused, diffed against the sequence before it, and the one after it is out of order 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (create) 4ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (update) 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > names the allowed tables in the refusal so the caller can correct it 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf addressed by an integer — a uuid-keyed store has no integer to name 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf with no uuid at all — it would name no document 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a uuid on an integer-keyed table — that store has no uuids 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault document belonging to another organization, and pins nothing 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > still accepts a leaf with no document pointer at all 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > records the reason given on a new placement 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > writes no reason key when the caller gave none, rather than inventing one 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses with the gate verdict and performs no write when the gate refuses 5ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses a submission that does not file on CTD headings, before any read or write 2ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > another program's submission is refused before anything is read or written 3ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > the same program, in any case, is placed 2ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > a legacy numeric project is compared with the program's anchored row: another one is refused 2ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > a legacy numeric project of the anchored row is placed 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > a program with no anchor cannot be judged, and is not refused (as upsertLeaf) 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places normally when the submission files on CTD headings 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > carries the section label into coauthor_documents.module_name 2ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > files a section already placed in an earlier sequence as replace of that leaf, not as new 2ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > placing again into the SAME sequence updates its leaves rather than adding a second copy 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > snapshots approved sections into coauthor_documents and places m-prefixed leaves 2ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses a sequence that belongs to a different submission 3ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > skips (and says it skipped) an approved section with no compiled narrative 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > carries the composed tables the narrative cites into the placed snapshot 2ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places the placeable sections and says which ones were skipped as pre-tables 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses the whole placement — with no write — when every approved section is unplaceable 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places a genuinely table-free section with no table block and no trailing blank tail 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > toLeafSectionCode > prefixes the eCTD spine's m onto CMC OS section keys 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > the governed artifact and the filed leaf are the same bytes > renders a narrative with a trailing space identically for both consumers 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > marks a leaf absent from prior as new 3ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > marks a changed leaf (different checksum) as replace by default 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > honors appendOnChange to emit append instead of replace 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > omits an unchanged leaf (same checksum) by default 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > surfaces unchanged as a no-op append when includeUnchanged is set 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a prior leaf the new sequence does not mention is unchanged, NOT withdrawn 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a DECLARED withdrawal is a delete carrying the prior leaf's identity and checksum 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > refuses to withdraw a leaf that was never filed 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > uses an explicit leafKey identity over ctdSection/fileName (rename within same leaf) 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a keyed leaf still matches an UNKEYED prior leaf by path — a history filed before keys existed is not re-filed whole 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > two DIFFERENTLY keyed leaves at one path are two documents — never a replace of one by the other 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > counts unchanged by what was MATCHED: a replaced leaf is not also reported as still on file 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > compares like with like: the desired md5 against the prior's PRE-normalization digest when it was recorded 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > handles a mixed sequence: new + replace + delete + unchanged together 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > throws on ambiguous duplicate identity in the desired set 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a new leaf carries NO modified-file 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a replace names the prior leaf by its backbone and ID, prefixed to the prior sequence 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > an append of a Module 1 leaf names the regional backbone, from the sequence root 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a delete names the withdrawn prior leaf the same way 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > traverses to the sequence that last published the leaf, over the caller prefix 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > with no prefix and no sequence, names the backbone in the same root 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > never names a leaf by its file path: a prior leaf with only an href gets no modified-file 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > refuses to name a malformed ID or a backbone outside the sequence 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > omits modified-file (rather than guessing) when the prior leaf is not identified at all 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses a value that is not a CTD code, and writes nothing 6ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > names the value it refused, and what one looks like 2ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '' 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '   ' 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses 'foo' 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '6.1' 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses 'm1/us/1.2' 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '1' 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '3' 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses on UPDATE too — a leaf cannot be edited into an unplaceable section 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > stores a precise section EXACTLY as given — 3.2.S.4.2 is not collapsed 2ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.1' — a code this product actually writes 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.2' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.5' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.7' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.9' — a code this product actually writes 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.12.4' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.13' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.1.1' — a code this product actually writes 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm5.3.5' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm3.2.S.2' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '2.5' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '3.2.S' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '3.2.S.4.2' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '5.3.5.1' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '1.14.4.2' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > accepts an eSTAR device section on a 510(k), which the CTD gate refused outright 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > accepts an IRB package slot on an IRB submission 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses that same eSTAR code on an IND, because an IND files on CTD headings 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses a CTD code on an IRB submission, in the other direction 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses a misspelled IRB slot by name, because that list is closed 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses a path fragment on a 510(k) too — the folder-name defect is vocabulary-independent 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > falls back to the CTD gate for an application type it does not recognise 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > narrows to CTD when the submission row cannot be read at all 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > still accepts a CTD code when the submission row cannot be read 0ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins the SHA-256 of the document content it filed 7ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > the pin is re-derivable by an inspector from the document row 2ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > REGRESSION: a document edited after filing no longer matches its pin 2ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins NULL, not sha256 of empty, when the document has no content 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins nothing when the leaf carries no document pointer 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > re-pins on update, so a re-pointed leaf cannot keep an old attestation 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > still refuses a document that belongs to another organization 3ms
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > refuses on a frozen sequence before touching anything 6ms
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > refuses to remove a leaf another leaf lifecycle-references 1ms
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > soft-deletes a removable leaf and writes the audit event 4ms
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > a scoped miss is NOT_FOUND, never a silent success 1ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > upsertLeaf parentLeafId scoping > rejects a parentLeafId that is not a leaf in this sequence for this org 7ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > upsertLeaf parentLeafId scoping > allows a parentLeafId that resolves to a leaf in this sequence for this org 3ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > upsertLeaf parentLeafId scoping > does not run a parent lookup when no parentLeafId is given (new leaf) 1ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > SubmissionError > carries a code 0ms
+ ✓ server/services/ectd/__tests__/rendered-leaf-files.test.ts > storeRenderedLeafFile > stores the bytes under the caller organization and returns the leaf source 5ms
+ ✓ server/services/ectd/__tests__/rendered-leaf-files.test.ts > storeRenderedLeafFile > deletes the stored object when the row insert fails, so no unreachable bytes remain 2ms
+ ✓ server/services/ectd/__tests__/rendered-leaf-files.test.ts > storeRenderedLeafFile > refuses a zero-length render rather than recording an empty document 1ms
+ Test Files  1 failed | 33 passed (34)
+      Tests  20 failed | 322 passed (342)

@@ -11,6 +11,7 @@ import type { AssemblyPlan } from '../../../shared/authoring/assembly';
 import { getIndAuthoringTemplates } from '../../services/authoring/ind-authoring-templates';
 import { builtinAuthoringTemplateId } from '../../services/authoring/builtin-authoring-templates';
 import { registerAssemblyFilingCases } from './_authoring-assembly-filing-cases';
+import { registerAssemblySectionSourceCases } from './_authoring-assembly-section-source-cases';
 import { readSelectedAuthoringSources } from '../../services/authoring/authoring-assembly-sources';
 import type { AssemblySourceManifest, AssemblySourceSelector } from '../../../shared/authoring/assembly-sources';
 
@@ -474,9 +475,11 @@ describe('fresh authorization, structure and regional template scope', () => {
   });
 });
 
-registerAssemblyFilingCases({ query: (sql, args) => db.pool.query(sql, args), documentId: () => docId,
+const assemblyCaseFixture = { query: (sql: string, args?: unknown[]) => db.pool.query(sql, args), documentId: () => docId,
   clearStatements: () => { seam.sql.length = 0; }, getStatements: () => seam.sql,
-  preview, commit, plan, stored, evidenceCounts, captured });
+  preview, commit, plan, stored, evidenceCounts, captured };
+registerAssemblyFilingCases(assemblyCaseFixture);
+registerAssemblySectionSourceCases({ ...assemblyCaseFixture, templateId: TEMPLATE, vaulted, readSources });
 
 describe('uncertain assembly commit transport', () => {
   it.each(['before', 'after'] as const)('discards the client without rollback/retry when the %s-COMMIT transport fails', async fault => {

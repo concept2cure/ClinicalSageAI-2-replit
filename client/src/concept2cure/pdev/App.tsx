@@ -228,8 +228,8 @@ export function PdevApp({
   // ── AnA screen context ────────────────────────────────────────────
   /* One builder, eight literal publish calls: the AnA coverage gate counts
      single-quoted surface-id literals, so each of the 8 pdev* surface ids
-     this host serves gets its own call (the two-id shape in
-     v2/surfaces/UsageBilling.tsx is the sanctioned precedent; quality/App.tsx
+     this host serves gets its own call (the two-id shape UsageBilling.tsx used
+     until billing folded into Licensing is the sanctioned precedent; quality/App.tsx
      is the kit-App precedent). The store keys on surface id, so the seven
      calls whose nav is not active publish null and are ignored. Branches
      mirror the render gates in the `surface` chain below — the context never

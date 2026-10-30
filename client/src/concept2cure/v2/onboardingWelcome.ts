@@ -78,23 +78,23 @@ const FAMILIES: Record<
   { label: string; subline: string; starters: WelcomeStarter[] }
 > = {
   biotech: {
-    label: 'biotech program',
-    subline: 'I can help you stand up your first IND-enabling program and keep it submission-ready.',
+    label: 'biotech project',
+    subline: 'I can help you stand up your first IND, with its IND-enabling studies, and keep it submission-ready.',
     starters: [
-      { label: 'Set up my first IND program', prompt: 'Help me set up my first IND-enabling program. Ask me what you need — sponsor, molecule, indication, target dates — and we’ll fill it in together.', iconKey: 'flask' },
-      { label: 'Plan a clinical protocol', prompt: 'Walk me through planning a clinical protocol for my lead program — design, endpoints, and what a strong first draft needs.', iconKey: 'file' },
+      { label: 'Set up my first IND project', prompt: 'Help me set up my first IND project. Ask me what you need — sponsor, molecule, indication, target dates — and we’ll fill it in together.', iconKey: 'flask' },
+      { label: 'Plan a clinical protocol', prompt: 'Walk me through planning a clinical protocol for my lead project — design, endpoints, and what a strong first draft needs.', iconKey: 'file' },
     ],
   },
   pharma: {
-    label: 'drug program',
-    subline: 'I can help you organize your program toward an NDA/BLA and keep the dossier consistent.',
+    label: 'drug project',
+    subline: 'I can help you organize your project toward an NDA/BLA and keep the dossier consistent.',
     starters: [
-      { label: 'Set up a submission program', prompt: 'Help me set up a program aimed at an NDA/BLA. Ask me for the drug, indication, and pathway and we’ll capture it.', iconKey: 'clip' },
-      { label: 'Draft product labeling', prompt: 'Walk me through drafting product labeling for my program and how you keep it consistent with the rest of the dossier.', iconKey: 'globe' },
+      { label: 'Set up a submission project', prompt: 'Help me set up a project aimed at an NDA/BLA. Ask me for the drug, indication, and pathway and we’ll capture it.', iconKey: 'clip' },
+      { label: 'Draft product labeling', prompt: 'Walk me through drafting product labeling for my project and how you keep it consistent with the rest of the dossier.', iconKey: 'globe' },
     ],
   },
   device: {
-    label: 'medical device program',
+    label: 'medical device project',
     subline: 'I can help you start a 510(k) or PMA and set up your design controls.',
     starters: [
       { label: 'Start a 510(k) submission', prompt: 'Help me start a 510(k). Ask me about the device, intended use, and predicate strategy, and we’ll set it up.', iconKey: 'file' },
@@ -102,7 +102,7 @@ const FAMILIES: Record<
     ],
   },
   diagnostics: {
-    label: 'diagnostics program',
+    label: 'diagnostics project',
     subline: 'I can help you set up an IVD performance study and organize your submission or CLIA path.',
     starters: [
       { label: 'Set up an IVD performance study', prompt: 'Help me set up an IVD performance study. Ask me about the assay, intended use, and comparator, and we’ll capture it.', iconKey: 'flask' },
@@ -113,15 +113,15 @@ const FAMILIES: Record<
     label: 'CRO workspace',
     subline: 'I can help you set up a client workspace and see everything in one portfolio.',
     starters: [
-      { label: 'Set up a client workspace', prompt: 'Help me set up a workspace for one of my clients — the client, their programs, and who should have access.', iconKey: 'shieldCheck' },
-      { label: 'Show my portfolio', prompt: 'Show me how to see all of my clients’ programs in one portfolio view.', iconKey: 'search' },
+      { label: 'Set up a client workspace', prompt: 'Help me set up a workspace for one of my clients — the client, their projects, and who should have access.', iconKey: 'shieldCheck' },
+      { label: 'Show my portfolio', prompt: 'Show me how to see all of my clients’ projects in one portfolio view.', iconKey: 'search' },
     ],
   },
   generic: {
     label: 'workspace',
-    subline: 'I can help you set up your first program and keep it submission-ready.',
+    subline: 'I can help you set up your first project and keep it submission-ready.',
     starters: [
-      { label: 'Set up my first program', prompt: 'Help me set up my first program. Ask me what you need and we’ll fill it in together.', iconKey: 'flask' },
+      { label: 'Set up my first project', prompt: 'Help me set up my first project. Ask me what you need and we’ll fill it in together.', iconKey: 'flask' },
       { label: 'Explain what I can do here', prompt: 'Give me a quick, plain-language tour of what I can do in this workspace and where to start.', iconKey: 'sparkles' },
     ],
   },

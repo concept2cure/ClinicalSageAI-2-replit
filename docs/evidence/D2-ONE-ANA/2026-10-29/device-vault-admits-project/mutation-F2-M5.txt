@@ -1,0 +1,17 @@
+# F2-M5: the merge drops the trace's facts
+# file: client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+# test: client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx
+# mutation (find -> replace):
+-  designControlsTrace: designControls.facts ?? null
++  designControlsTrace: null
+   ---
+
+ × device-engineering: AnA sees the open project's risk register and design-control trace > carries the register's and the trace's facts, summaries and actions in the one context 5160ms
+   → expected undefined to be 3 // Object.is equality
+ × device-engineering: AnA sees the open project's risk register and design-control trace > never carries the previous project's register or trace under the next project 156ms
+   → expected undefined to be 1 // Object.is equality
+ ✓ device-engineering: AnA sees the open project's risk register and design-control trace > after leaving Engineering and coming back, carries nothing from the earlier visit while it reads again 98ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+exit=1
+restored byte for byte: yes (sha256 54ff51fca4efd579)

@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/a374e482-cd64-42d2-ad36-0f49896bb4b8/file",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "documentId": "8e954c30-636b-4b94-9718-6706464831b4",
+      "folderId": "k510"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 60,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "INVALID_FOLDER",
+      "message": "Folder 'k510' does not exist in this project's pharma vault taxonomy."
+    }
+  }
+}

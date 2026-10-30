@@ -14,6 +14,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import JSZip from 'jszip';
 import { promises as fs } from 'fs';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { applyCompanyLegalReads } from './support/company-legal-reads';
 
 const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
 // The lifecycle read path uses the raw `pool` (loadLatestPriorManifestBySubmission);
@@ -39,6 +40,10 @@ beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
   holder.db = harness.db;
   holder.pglite = harness.pglite;
+  // Assembly reads the tenant's saved legal requirements and its legal
+  // registry before it packages; this tenant has saved none.
+  await applyCompanyLegalReads(harness.pglite);
+  await harness.pglite.exec(`INSERT INTO organizations (id) VALUES (${ORG})`);
 
   // Minimal ectd_compilations for the prior-manifest read (cols the loader uses;
   // compilation_type since 2026-09-23 — the filed state excludes rehearsals).
@@ -62,9 +67,9 @@ beforeAll(async () => {
     -- sequences that were actually transmitted, so a compilation whose sequence
     -- was never dispatched is a local draft and contributes nothing. 0001 is the
     -- sequence being built, so it is deliberately left undispatched.
-    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, dispatch_status)
-    VALUES (1, 1, 'fda', '0000', ${ORG}, ${USER}, 'sent'),
-           (2, 1, 'fda', '0001', ${ORG}, ${USER}, NULL);
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, dispatch_status)
+    VALUES (1, 1, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'),
+           (2, 1, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL);
 
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number)
     VALUES (100, ${ORG}, 'Drug Substance General', '<p>DS general v1</p>', '3.2'),

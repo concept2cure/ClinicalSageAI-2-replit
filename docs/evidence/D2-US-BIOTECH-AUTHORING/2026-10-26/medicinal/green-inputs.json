@@ -1,0 +1,18 @@
+{
+  "files": {
+    "server/services/market-specs/ctd-component-outlines.ts": "493024445739292667d08805b2bfabd1afb8bcafe5cb1bc91cebeab4c62d33e9",
+    "server/services/labeling/labeling-intelligence-knowledge.ts": "db437ad836dd5f2f4dd05ec909323071d2d7a57f3ecbe2e6ec8d2bd416a84ecb",
+    "server/services/regulatory/templateCatalog.ts": "c608c3a2171ade651b1023fb887f71543ba472b4178320940eb782e28815637e",
+    "server/services/market-specs/document-template-library.ts": "fd2bb95548e9ebc9dc5afe51336221cbf0a4a025abb3e714db7bfcf09af7f893",
+    "server/services/market-specs/document-preparation.ts": "061a4e05062990a52fabb3ed59424afc75d9266b34f355255e5b6607f8c5e174",
+    "server/services/authoring/builtin-authoring-templates.ts": "8f131b5e58ea6937186e1389b3f030dd0ce844df5e103ab75b6994d52e06ab37",
+    "server/services/authoring/document-template-outline-sections.ts": "24f15bad33d12d8f2bedb3cb731fe17abe52db63fc450bcaabbcde2090b29c64",
+    "server/services/authoring/__tests__/medicinal-working-templates.test.ts": "0599cf503a4783c4703bbe375abd5acd6dd2dd3cc468733a339b9a7f54812e30",
+    "server/routes/__tests__/medicinalTemplateEligibility.pglite.integration.test.ts": "52eca23fdf5dfe03f7913cd24f9951b35a54054a9223b72b9b07447a25e636bf",
+    "server/services/market-specs/medicinal-working-templates.ts": "d4fbf3e6945710697bd03c8c31200e3fb5bd16859ff50f4b3b76f3b061ea1edb",
+    "server/services/authoring/ind-template-outlines-m2-m3.ts": "1cd01d713a330ca54ea8e72f30103c9b81d1a91fb5a235840657b6a7da1a2afc",
+    "server/services/authoring/__tests__/cmc-ind-source-policy.test.ts": "d2c758a81f86fc0d52d4c5ffa943fa4c03d5fb20b9018efe75d0a1d8f6b56fda",
+    "server/services/authoring/__tests__/ctd-module-registry-templates.test.ts": "d973f9d9483839ee7080df0aaf2d84432c242e105278e30c830debf66aae8054",
+    "server/services/authoring/__tests__/builtin-authoring-templates.test.ts": "9aaa873bd121cc6d179ac69613d44a7ab02883b18e34f2301ae94b81da77427b"
+  }
+}

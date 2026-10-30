@@ -445,7 +445,7 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
                 <div className="ml-thead" role="row">
                   {scope === 'all' && <span role="columnheader">Workspace</span>}
                   <span role="columnheader">Who asked</span>
-                  <span role="columnheader">App</span>
+                  <span role="columnheader">Feature</span>
                   <span role="columnheader">Asked</span>
                   <span role="columnheader">Answer</span>
                 </div>

@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { CsrSourceReceipt, CsrSourceSelection } from '@shared/csr-source-input';
 import { apiCall, apiErrorText } from '../apiCall';
+import { CsrBuildDraftControl } from './CsrBuildProgress';
+import { CsrRunBuilds } from './CsrRunBuilds';
+import { StudyPivotalDeclarations } from './StudyPivotalDeclarations';
 
 const FORMAT = 'concept2cure.csr-source.v1';
 const SOURCES = '/api/submission-orchestrator/csr/sources';
@@ -72,7 +75,7 @@ function ClinicalTable({ table }: { table: Table }) {
 }
 function SourceTables({ source, tables }: { source: CsrSourceReceipt; tables: Tables }) {
   return <div>
-    <p><strong>{source.studyInfo.title}</strong> · {source.protocolNumber} · data cut {source.dataCutDate}</p>
+    <p><strong>{source.studyInfo.title}</strong> · {source.protocolNumber} · {source.studyInfo.nctNumber ?? 'no ClinicalTrials.gov number in the source'} · data cut {source.dataCutDate}</p>
     <p>Source: {source.documentTitle}, version {source.version}</p>
     <details><summary>Source fingerprint</summary><code style={{ overflowWrap: 'anywhere' }}>{source.sha256}</code></details>
     {Object.entries(tables).filter((entry): entry is [string, Table] => Boolean(entry[1])).map(([key, table]) => <ClinicalTable key={`${source.sha256}:${key}`} table={table} />)}
@@ -156,7 +159,7 @@ export function CsrSourceInputControls({ programId, runId, interactionBusy, onSe
   if (!programId) return null;
   return <section aria-label="Clinical source tables">
     <strong>Clinical source tables</strong>
-    <p>Choose a supporting JSON document from this program’s Vault. Preview its tables, then explicitly include an approved source in the next package run.</p>
+    <p>Choose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.</p>
     <p>Review clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.</p>
     <p>These tables are saved with the run for review. They are not automatically placed into an eCTD package.</p>
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -169,7 +172,10 @@ export function CsrSourceInputControls({ programId, runId, interactionBusy, onSe
     <ClinicalSourcePicker activeSources={activeSources} blocked={blocked} documentId={documentId} choose={choose} choice={choice} prepare={prepare} previewBusy={previewBusy} />
     {previewError && <p role="alert">{previewError}</p>}
     <ClinicalSourcePreview activePreview={activePreview} blocked={blocked} included={included} setIncluded={setIncluded} onSelectionChange={selectionHandler.current} />
-    <FrozenClinicalTables runId={runId} activeSaved={activeSaved} blocked={blocked} onRetry={() => setSavedRefresh(value => value + 1)} />
+    <FrozenClinicalTables runId={runId} activeSaved={activeSaved} blocked={blocked} onRetry={() => setSavedRefresh(value => value + 1)} onNav={onNav} />
+    {/* Pivotal declarations (D5, 2026-10-29) on the CSR card a launch screen shows; the
+        CSR workflow board, where they also appear, is not a launch surface. */}
+    <StudyPivotalDeclarations scope={{ programId }} />
   </section>;
 }
 
@@ -180,7 +186,7 @@ function ClinicalSourcePicker({ activeSources, blocked, documentId, choose, choi
     {!activeSources && <p role="status">Loading clinical source documents…</p>}
     {activeSources?.error && <p role="alert">{activeSources.error}</p>}
     {activeSources && !activeSources.error && <>
-      {activeSources.sources.length === 0 ? <p>No supporting JSON sources are listed for this program.</p> : <label>Clinical source document <select aria-label="Clinical source document" disabled={blocked} value={documentId} onChange={event => choose(event.target.value)}>
+      {activeSources.sources.length === 0 ? <p>No supporting JSON sources are listed for this project.</p> : <label>Clinical source document <select aria-label="Clinical source document" disabled={blocked} value={documentId} onChange={event => choose(event.target.value)}>
         <option value="">Choose a source</option>
         {activeSources.sources.map(source => <option key={source.documentId} value={source.documentId}>{source.documentTitle} · v{source.version} · {source.approved ? 'approved' : 'not approved'}</option>)}
       </select></label>}
@@ -201,9 +207,11 @@ function ClinicalSourcePreview({ activePreview, blocked, included, setIncluded, 
       }} /> Include these source tables in the next package run</label>
     </div>}
   </>; }
-function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry }: {
-  runId: string | null; activeSaved: SavedState | null; blocked: boolean; onRetry: () => void;
-}) { return <>
+function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry, onNav }: {
+  runId: string | null; activeSaved: SavedState | null; blocked: boolean; onRetry: () => void; onNav?: (surface: string) => void;
+}) {
+  const [queued, setQueued] = useState<number | null>(null);
+  return <>
     {runId && <div aria-label="Frozen run clinical tables">
       <h4>Frozen clinical tables for {runId}</h4>
       {!activeSaved && <p role="status">Loading frozen clinical tables…</p>}
@@ -212,9 +220,14 @@ function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry }: {
         <p>Historical source versions are retained with this run. They can differ from the current Vault version.</p>
         {activeSaved.data.studies.length === 0 && <p>This run has no linked clinical source tables.</p>}
         {activeSaved.data.studies.map(study => <SourceTables key={`${study.source.documentId}:${study.source.sha256}`} source={study.source} tables={study.tables} />)}
+        <CsrBuildDraftControl programId={activeSaved.programId} runId={activeSaved.runId} studies={activeSaved.data.studies} blocked={blocked} onQueued={setQueued} />
+        {/* The build's section review and import into Authoring, narratives, assembly and placement
+            (D2/W1, 2026-10-30): on this launch card, not the csr-workflow board, which production refuses. */}
+        {activeSaved.data.studies.length > 0 && <CsrRunBuilds programId={activeSaved.programId} runId={activeSaved.runId} focus={queued} onNav={onNav} />}
       </>}
     </div>}
-  </>; }
+  </>;
+}
 
 function savedTablesForRun(saved: SavedState | null, programId: string | null, runId: string | null): SavedState | null {
   return saved?.programId === programId && saved.runId === runId ? saved : null;

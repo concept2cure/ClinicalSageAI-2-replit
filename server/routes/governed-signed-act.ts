@@ -27,6 +27,13 @@
  *      route's `meanings`; plan P1-51, DP-64), checked
  *      before the password so a refused meaning spends
  *      no guess                                         400 SIGNATURE_MEANING_* / MEANING_NOT_ALLOWED
+ *   3p. the act's own precheck, when it has one (RR4,
+ *      docs/design/REVIEW_ROUTING_2026-10-23.md §2.8,
+ *      B7), before 3a: a read that refuses a signer
+ *      the act will refuse anyway (not named on the
+ *      review route, not their turn), so the refusal
+ *      costs no credential check. It decides nothing:
+ *      `run` re-checks under its row lock            the act's own codes
  *   3a. the signer's role carries signing authority
  *      (§11.10(g): identity is not authority), read
  *      from the membership row, before the password     403 ESIGNATURE_NO_AUTHORITY
@@ -38,6 +45,9 @@
  *      first left it, and its domain write refuses), the domain write (a coded
  *      domain error refuses)
  *   6. the `sign` ledger pair and the electronic_signatures row, on the same client
+ *   6a. the act's afterSign, when it has one (RR4, B7), on the same
+ *      transaction: work that cites the signature row's id (a review route's
+ *      task closes on `esig:<id>`). A throw rolls the whole act back
  *   7. COMMIT: the act, its ledger pair and its signature land together or not at all
  *
  * In front of it, `signedActAttempts`: the per-signer limit on credential checks
@@ -45,9 +55,16 @@
  * that signs through here. A wrong password also counts toward the account's
  * lockout inside reverifySigner.
  *
- * The signature row records only the factors step 4 verified, and binds the
- * ledger's chain hash with its basis named (deriveGovernedTargetBinding has no
- * content digest for these record types and says so; it never invents one).
+ * The signature row records only the factors step 4 verified. It binds what
+ * deriveGovernedTargetBinding derives for the target: the content digest when
+ * the target's prefix has a content binder (services/part11/
+ * governed-target-binders.ts), otherwise the ledger's chain hash with its
+ * basis named (it never invents a content hash). An act whose target has a
+ * binder declares that basis (`contentBasis`), and a binding that falls back
+ * then refuses the act, 409 SIGNATURE_CONTENT_UNBOUND, with nothing signed:
+ * the labeling approvals and the residual-risk acceptance, since 2026-10-29
+ * (docs/evidence/D5-CONTENT-DIGEST-BINDERS/2026-10-29/). The manifest keeps
+ * the ledger's chain hash beside the content digest either way.
  *
  * Not here: separation of duties. Authorship is not modelled for these record
  * types (resolveTargetAuthors returns "not modelled"), so an independence check
@@ -64,10 +81,11 @@ import { serverError } from '../lib/api-response';
 import type { RequestDbClient } from '../middleware/lazyRequestDbClient';
 import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
+import { signerOrganizationStatusesFor } from '../services/part11/custody-signature';
 import { reverifySigner, type SignerReverification } from '../services/part11/reverify-signer';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
 import { signMeaningRefusal, type GovernedSignMeaning } from '../services/part11/signature-meanings';
-import { persistGovernedSignSignature } from '../services/part11/signature-persistence';
+import { persistGovernedSignSignature, type BindingBasis } from '../services/part11/signature-persistence';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { resolveOrgId, resolveUserId } from '../types/auth-request';
 import { clientIpOf } from '../utils/client-ip';
@@ -119,10 +137,47 @@ export interface SignedAct {
   meanings: readonly GovernedSignMeaning[];
   /** The route's domain refusal codes and their statuses. Any other error is a 500 with no error text. */
   codeStatus: Readonly<Record<string, number>>;
+  /**
+   * The content basis (BINDING_BASIS) the target's binder records, when it has
+   * one (21 CFR 11.70). Declared, the signature binds that content or the act
+   * is refused, 409 SIGNATURE_CONTENT_UNBOUND, and nothing is signed: it never
+   * falls back to the ledger chain hash. Left out, the signature binds what
+   * deriveGovernedTargetBinding derives, the ledger basis named when there is
+   * no binder.
+   */
+  contentBasis?: BindingBasis;
   /** Set as app.current_user_role on the signing transaction, where the route's other writes set it. */
   tenantRole?: string;
+  /**
+   * The organisation statuses a signer may sign from; active when absent. Only
+   * the custody act of a departing tenant's export (P-58,
+   * services/part11/custody-signature.ts isCustodyAct: its target, domain and
+   * meanings together) may name pending_deletion; any other act that does is
+   * held to active organisations, so its signer is refused as before.
+   */
+  signerOrganizationStatuses?: readonly ('active' | 'pending_deletion')[];
+  /**
+   * Asked before the signing authority check and the credential (RR4, B7): a
+   * read on the request's client, outside the transaction, that refuses a
+   * signer the domain write would refuse anyway, so the refusal spends no
+   * password guess. Throw an error with a `code` in `codeStatus` to refuse.
+   * It never authorizes: `run` re-checks what it read under its own lock.
+   */
+  precheck?: (client: RequestDbClient, orgId: number, userId: number) => Promise<void>;
   /** The domain write, on the signing transaction. Throw an error with a `code` to refuse. */
   run: (client: RequestDbClient, orgId: number, userId: number) => Promise<SignedActResult>;
+  /**
+   * Work on the signing transaction after the electronic_signatures row is
+   * written and before COMMIT (RR4, B7), so it can cite the row's id. A throw
+   * rolls back the act, its ledger pair and the signature together.
+   */
+  afterSign?: (client: RequestDbClient, signature: { id: number; signedAt: Date }, result: SignedActResult, orgId: number, userId: number) => Promise<void>;
+  /**
+   * Work that follows the committed act (a reminder, a task), run after COMMIT
+   * and before the response. Best effort: a failure is logged and never
+   * changes the signature or the answer, which have already committed.
+   */
+  afterCommit?: (result: SignedActResult, orgId: number, userId: number) => Promise<void>;
 }
 
 interface SignatureComponents {
@@ -132,6 +187,16 @@ interface SignatureComponents {
   meaning: GovernedSignMeaning;
   password: string;
   mfaToken?: string;
+}
+
+/** The act's follow-up work, never able to touch what committed (SignedAct.afterCommit). */
+async function runAfterCommit(act: SignedAct, result: SignedActResult, orgId: number, userId: number): Promise<void> {
+  if (!act.afterCommit) return;
+  try {
+    await act.afterCommit(result, orgId, userId);
+  } catch (err) {
+    log.warn('Work after a signed act failed; the act stands', { domain: act.domain, target: act.target, err: err instanceof Error ? err.message : String(err) });
+  }
 }
 
 function refusal(res: Response, status: number, code: string, message: string, extra: Record<string, unknown> = {}): null {
@@ -168,8 +233,17 @@ function signatureComponents(req: Request, res: Response, meanings: readonly Gov
   return { orgId, userId, ...parsed.data, meaning };
 }
 
+/**
+ * The ceremony's own refusals inside the transaction, beside each route's. A
+ * declared content basis that cannot be bound (SignatureContentUnboundError)
+ * signed nothing, so it is a refusal the signer can read, not a 5xx whose
+ * outcome is unconfirmed.
+ */
+const CEREMONY_CODE_STATUS: Readonly<Record<string, number>> = { SIGNATURE_CONTENT_UNBOUND: 409 };
+
 /** A coded domain refusal keeps its status and sentence; anything else is a 500 that carries no error text. */
-function answerFailure(res: Response, codeStatus: Readonly<Record<string, number>>, err: unknown): void {
+function answerFailure(res: Response, routeCodeStatus: Readonly<Record<string, number>>, err: unknown): void {
+  const codeStatus = { ...CEREMONY_CODE_STATUS, ...routeCodeStatus };
   const code = (err as { code?: unknown } | null)?.code;
   if (typeof code === 'string' && codeStatus[code]) {
     res.status(codeStatus[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
@@ -198,12 +272,22 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
     return;
   }
 
+  // Step 3p (RR4, B7): the act's own refusal, before authority or any credential is asked.
+  if (act.precheck) {
+    try {
+      await act.precheck(client, orgId, userId);
+    } catch (err) {
+      answerFailure(res, act.codeStatus, err);
+      return;
+    }
+  }
+
   // Step 3a (§11.10(g)): the platform's one signing-authority policy
   // (checkSigningAuthority), from the persisted membership, never the token or
   // the body. Until 2026-10-01 these routes had none, so a viewer who knew their
   // own password signed an IRB approval. Until 2026-10-08 (P-27) they asked a
   // copy of it, whose failed role lookup answered 500 rather than 503.
-  const authority = await checkSigningAuthority(userId, orgId, client);
+  const authority = await checkSigningAuthority(userId, orgId, client, { organizationStatuses: signerOrganizationStatusesFor(act) });
   if (authority) {
     refusal(res, authority.status, authority.code, authority.message);
     return;
@@ -235,7 +319,8 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
     // that both read a draft both signed it. A second sign of this target now
     // waits here until the first commits or rolls back, then reads what it left.
     await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [`governed-signed-act:${orgId}:${act.target}`]);
-    const { target, payload = {}, body } = await act.run(client, orgId, userId);
+    const result = await act.run(client, orgId, userId);
+    const { target, payload = {}, body } = result;
     if (target !== act.target) throw new Error(`signed act wrote ${target}, declared ${act.target}`);
     const signedPayload = { ...payload, meaning };
     const gov = await recordGovernedAction(client, { orgId, userId, command: 'sign', target, reason, payload: signedPayload, domain: act.domain });
@@ -254,8 +339,11 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
       ipAddress: clientIpOf(req),
       occurredAt: new Date(),
       ...(Object.keys(payload).length > 0 ? { extraManifest: { act: payload } } : {}),
+      ...(act.contentBasis ? { requiredBasis: act.contentBasis } : {}),
     });
+    if (act.afterSign) await act.afterSign(client, { id: signature.id, signedAt: signature.signedAt }, result, orgId, userId);
     await client.query('COMMIT');
+    await runAfterCommit(act, result, orgId, userId);
     res.status(201).json({ ...body, ...gov, signatureId: signature.id, signedAt: signature.signedAt.toISOString(), meaning });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);

@@ -1,0 +1,4 @@
+# Mutation (TZ=America/Los_Angeles): date-in-viewer-zone
+ × a US IND’s Plan is what the filing needs, by phase > a new project opens on it, phases in order, with the target date 394ms
+ × what Plan says, and when (design review, pass 3) > the target date is the recorded day, never shifted by the viewer’s zone 5061ms
+      Tests  2 failed | 17 passed (19)

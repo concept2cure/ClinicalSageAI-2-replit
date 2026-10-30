@@ -1,0 +1,83 @@
+# core-project-record-gating.test.ts against the registry at HEAD (no claim by projects). Trimmed: verdict lines, then the received verdicts of each failing org case.
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > reads the calls from the screens and the routes from the routers 3ms
+ × server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a free-tier organization that holds Projects by tier and has no grant 32ms
+ × server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a self-serve organization whose administrator switched Submission Center off 12ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a paying organization with the launch grants, as before 8ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > refuses it to an organization that holds no claimant: Projects and Submission Center switched off, free tier 7ms
+ × server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > is claimed by projects beside the claims it already had 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+
+## Received for org 301 (free tier, no grant) — every path:
++   "/api/c2c/projects": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/activity": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/adopt": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/archive": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/conversation-files": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/document-dispositions": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/document-dispositions/preview": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/dossier": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/drafts": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/evidence": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/evidence/ev-1": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/markets": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/records": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/source-changes": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/sources": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/team": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/unarchive": "403 MODULE_NOT_LICENSED",
+
+## Received for org 302 (self-serve, Submission Center switched off) — every path:
++   "/api/c2c/projects": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/activity": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/adopt": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/archive": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/conversation-files": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/document-dispositions": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/document-dispositions/preview": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/dossier": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/drafts": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/evidence": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/evidence/ev-1": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/markets": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/records": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/source-changes": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/sources": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/team": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/projects/prog-1/unarchive": "403 MODULE_NOT_LICENSED",
+
+## The gate's own log line for one refusal (org 301):
+    "path": "/api/c2c/projects/prog-1/dossier",
+    "organizationId": 301,
+    "modules": [
+      "submission-center",
+      "ivd-completeness"
+    ],
+    "reasons": [
+      "submission-center: Module 'submission-center' requires standard tier or higher (current: free)",
+      "ivd-completeness: Module 'ivd-completeness' requires standard tier or higher (current: free)"
+    ]
+  }
+}
+{
+  "timestamp": "2026-10-29T09:19:00.587Z",
+  "level": "warn",
+  "message": "[module-entitlement-gate] module access denied",
+  "context": {
+
+## The claim at HEAD:
+ FAIL  server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > is claimed by projects beside the claims it already had
+AssertionError: expected [ 'ivd-completeness', …(1) ] to deeply equal [ Array(3) ]
+
+- Expected
++ Received
+
+  [
+    "ivd-completeness",
+-   "projects",
+    "submission-center",
+  ]
+

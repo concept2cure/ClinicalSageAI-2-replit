@@ -1,0 +1,26 @@
+{
+  "utc": "2026-10-23T22:23:24.266893+00:00",
+  "acceptedCodeCommit": "2ebf8520eff1b054f071ac96f8472e226dd25298",
+  "fetchedCanonicalCommit": "2ebf8520eff1b054f071ac96f8472e226dd25298",
+  "branch": "concept2cure-v2",
+  "normalPushReceipt": "canonical-push-corrected.json",
+  "pushExit": 0,
+  "compilerErrors": 0,
+  "compilerExit": 0,
+  "sourceFreeze": "compiler-corrected-source-freeze.json",
+  "gitBlobVerification": "accepted-git-blobs.json",
+  "declaredInputCount": 92,
+  "declaredInputDrift": [],
+  "sourceCommit": "8c86a44a3",
+  "normalMergedIncoming": "eba2d8050",
+  "sourceAndIncomingAncestorsVerified": true,
+  "qualificationEpochs": {
+    "originalMerged": "336/16 editor + 313/20 canonical; 649 disjoint cases",
+    "successor": "type-only test mock declaration; actual 20-case HTTP replay and strict helper lint pass; whole compiler zero"
+  },
+  "humanCases": {
+    "notRun": 102
+  },
+  "deployment": "none",
+  "liveProviderOrAgencyCalls": "none"
+}

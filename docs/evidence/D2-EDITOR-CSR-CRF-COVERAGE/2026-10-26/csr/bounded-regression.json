@@ -1,0 +1,38 @@
+{
+  "startedAt": "2026-10-26T22:18:30.023654+00:00",
+  "argv": [
+    "/workspace/scratch/editor-toolchain/node_modules/.bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts",
+    "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts",
+    "server/services/csr/__tests__/csr-project-scope.pglite.test.ts",
+    "server/services/csr/__tests__/csr-builder-scope-quota.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 10.942,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "csr/final-inputs.json",
+  "sourcesBefore": {
+    "server/services/csr/csr-job-runner.ts": "61dfec4a95719a988ab1b1491c4f7019545982136a5ebf0da68693b02f6f6066",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "f745a4b5df653b075ad9d60e0f2b571f9da178c850ca15a9579c4e49060c1eab",
+    "docs/evidence/D2-EDITOR-CSR-CRF-COVERAGE/2026-10-26/csr/check-lint.py": "a9adb57ee50cba7460b68b9ca488462f706e68933831293768250204dd90b095"
+  },
+  "sourcesAfter": {
+    "server/services/csr/csr-job-runner.ts": "61dfec4a95719a988ab1b1491c4f7019545982136a5ebf0da68693b02f6f6066",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "f745a4b5df653b075ad9d60e0f2b571f9da178c850ca15a9579c4e49060c1eab",
+    "docs/evidence/D2-EDITOR-CSR-CRF-COVERAGE/2026-10-26/csr/check-lint.py": "a9adb57ee50cba7460b68b9ca488462f706e68933831293768250204dd90b095"
+  },
+  "sourceDrift": [],
+  "rawOutput": "bounded-regression.log.gz",
+  "rawGzipSha256": "9d321f81656fbfe04f4651a71fae0a1b91faeef2c44877d9d9dd0d200f471c4f",
+  "testSummary": [
+    "Test Files  4 passed (4)",
+    "Tests  36 passed (36)",
+    "Duration  10.45s (transform 2.57s, setup 100ms, import 3.14s, tests 6.59s, environment 0ms)"
+  ]
+}

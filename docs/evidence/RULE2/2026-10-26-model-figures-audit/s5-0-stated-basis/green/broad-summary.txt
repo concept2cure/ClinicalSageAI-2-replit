@@ -1,0 +1,8 @@
+Command: NODE_OPTIONS=--max-old-space-size=4096 node node_modules/vitest/vitest.mjs run server/services/ana/__tests__ --reporter=dot
+Node: 22.23.4
+Exit: 0
+
+ Test Files  431 passed (431)
+      Tests  6778 passed | 1 skipped (6779)
+   Start at  16:44:44
+   Duration  888.48s (transform 26.22s, setup 5.17s, import 633.92s, tests 190.09s, environment 40ms)

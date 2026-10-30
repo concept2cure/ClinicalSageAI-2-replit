@@ -7,7 +7,7 @@
 /* ════ AnA-first landing ════ */
 .c2c-v2 .landing{display:flex;align-items:center;justify-content:center;min-height:100%;padding:40px 20px;}
 .c2c-v2 .landing-center{width:100%;max-width:920px;display:flex;flex-direction:column;align-items:center;gap:24px;}
-.c2c-v2 .landing-center>.landing-greet, .c2c-v2 .landing-center>.landing-segctx, .c2c-v2 .landing-center>.landing-composer, .c2c-v2 .landing-center>.landing-actions{width:100%;max-width:640px;}
+.c2c-v2 .landing-center>.landing-greet, .c2c-v2 .landing-center>.landing-composer{width:100%;max-width:640px;}
 .c2c-v2 .landing-greet{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
 .c2c-v2 .landing-greet h1{font-size:28px;font-weight:500;letter-spacing:-.02em;color:var(--text-100);}
 .c2c-v2 .landing-mark{font-size:32px;color:var(--accent-100);line-height:1;}
@@ -39,32 +39,60 @@
 .c2c-v2 .landing-mode-menu button[data-on]{background:var(--accent-bg);color:var(--accent-100);}
 .c2c-v2 .landing-mode-menu .lm-label{font-weight:600;}
 .c2c-v2 .landing-mode-menu .lm-desc{font-size:11px;color:var(--text-400);}
-.c2c-v2 .landing-segctx{display:flex;flex-direction:column;gap:9px;align-items:center;width:100%;max-width:520px;margin:-8px auto 4px;padding:14px 18px;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--bg-000);}
-.c2c-v2 .landing-segctx-top{display:flex;align-items:center;gap:10px;}
 .c2c-v2 .landing-segctx-cat{font-size:13px;font-weight:600;color:var(--accent-200);}
-/* Still live: HomeLeadProgram's "+N more" count reuses this. The segment
-   TAGLINE that used to sit beside .landing-segctx-cat is what was removed. */
-.c2c-v2 .landing-segctx-tag{font-size:11.5px;font-weight:500;color:var(--text-400);}
-.c2c-v2 .landing-segctx-prog{display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:600;color:var(--text-100);text-align:center;flex-wrap:wrap;}
-.c2c-v2 .landing-segctx-prog .ico{font-size:14px;width:14px;height:14px;flex-shrink:0;color:var(--text-400);display:inline-flex;align-items:center;}
-.c2c-v2 .landing-segctx-prog .ico svg{width:14px;height:14px;}
-/* The lead-programme line is a BUTTON when a real programme loaded (it opens the
-   portfolio) and a plain div in the loading / empty / error states. Neutralize
-   the UA button chrome so both render identically; only the interactive form
-   takes a pointer and an underline on hover. */
-.c2c-v2 button.landing-segctx-prog{background:none;border:0;padding:0;font:inherit;color:var(--text-100);cursor:pointer;}
-.c2c-v2 button.landing-segctx-prog:hover{text-decoration:underline;}
 .c2c-v2 .landing-newproj{display:inline-flex;align-items:center;gap:7px;margin-top:4px;padding:9px 16px;border-radius:var(--radius-lg);background:var(--accent-strong);color:var(--accent-on-strong);font-size:13px;font-weight:600;transition:background var(--dur);}
 .c2c-v2 .landing-newproj:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
 .c2c-v2 .landing-newproj .ico{font-size:15px;}
-.c2c-v2 .landing-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;}
-.c2c-v2 .landing-action{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid var(--bg-200);font-size:12.5px;font-weight:500;color:var(--text-200);background:var(--bg-000);transition:background var(--dur),border-color var(--dur);}
-.c2c-v2 .landing-action:hover{background:var(--bg-100);border-color:var(--bg-300);}
-.c2c-v2 .landing-action .ico{font-size:14px;color:var(--text-400);}
 
-/* ════ "Browse all capabilities" — the home's link to the long tail ════ */
-.c2c-v2 .landing-browse{margin-top:14px;padding:4px 8px;border:0;background:none;font-size:12.5px;font-weight:500;color:var(--text-400);border-radius:var(--radius-md);transition:color var(--dur),background var(--dur);}
-.c2c-v2 .landing-browse:hover{color:var(--text-200);background:var(--bg-100);}
+/* ════ Home: where a client starts (docs/design/CLIENT_JOURNEY_2026-10-25.md) ════
+   Projects first, then tasks, Ask AnA and recent conversations, top-aligned in
+   one reading column. The page grows with the work, so it is not centred
+   vertically as the single composer was. */
+.c2c-v2 .landing.home-start{align-items:flex-start;}
+.c2c-v2 .home-start .landing-center{align-items:stretch;gap:28px;max-width:680px;}
+.c2c-v2 .home-start .landing-greet{margin-bottom:0;flex-wrap:wrap;}
+.c2c-v2 .home-start .landing-greet .landing-segctx-cat{margin-left:auto;}
+.c2c-v2 .home-sec{display:flex;flex-direction:column;gap:10px;width:100%;}
+.c2c-v2 .home-sec-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.c2c-v2 .home-sec-h{font-size:15px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .home-sec-inline{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+.c2c-v2 .home-note{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;line-height:1.5;color:var(--text-300);}
+.c2c-v2 .home-note[data-tone="error"]{color:var(--error);}
+.c2c-v2 .home-note .ico{display:inline-flex;font-size:14px;}
+.c2c-v2 .home-link{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;padding:0;border:0;background:none;font-size:13px;font-weight:500;color:var(--accent-200);cursor:pointer;}
+.c2c-v2 .home-link:hover{text-decoration:underline;}
+.c2c-v2 .home-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--bg-000);overflow:hidden;}
+.c2c-v2 .home-list>li+li{border-top:1px solid var(--border);}
+.c2c-v2 .home-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;border:0;background:transparent;text-align:left;cursor:pointer;transition:background var(--dur);}
+.c2c-v2 .home-row:hover{background:var(--bg-100);}
+.c2c-v2 .home-row-t{flex:1;min-width:0;font-size:13.5px;font-weight:500;color:var(--text-100);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.c2c-v2 .home-row-m{font-size:12px;color:var(--text-300);white-space:nowrap;}
+.c2c-v2 .home-row-go{display:inline-flex;color:var(--text-400);}
+.c2c-v2 .home-setup-hint{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--text-300);white-space:normal;}
+.c2c-v2 .home-setup .home-row-t{white-space:normal;}
+.c2c-v2 .home-setup-done{cursor:default;}
+.c2c-v2 .home-setup-done:hover{background:transparent;}
+.c2c-v2 .home-open{padding:10px 8px 0;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--bg-000);}
+.c2c-v2 .home-first{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:18px 20px;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--bg-000);}
+.c2c-v2 .home-first-lead{font-size:13.5px;line-height:1.55;color:var(--text-200);}
+.c2c-v2 .home-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.5;color:var(--text-200);}
+.c2c-v2 .home-step-l{font-weight:600;color:var(--text-100);margin-right:8px;}
+.c2c-v2 .home-step-t{color:var(--text-300);}
+.c2c-v2 .home-first .landing-welcome{margin:4px 0 0;max-width:none;width:100%;border-bottom:0;padding-bottom:0;margin-bottom:0;}
+.c2c-v2 .home-first .landing-newproj{margin-top:0;}
+/* AnA's run controls, shown by "AnA settings" in the composer (Home). */
+.c2c-v2 .landing-settings{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 12px 12px;border-top:1px solid var(--border);}
+.c2c-v2 .landing-tool[data-on]{background:var(--bg-100);color:var(--text-100);}
+@media (max-width:640px){
+  .c2c-v2 .home-row{flex-wrap:wrap;row-gap:4px;}
+  .c2c-v2 .home-row-t{flex-basis:100%;white-space:normal;}
+  .c2c-v2 .home-row-m{flex:1;white-space:normal;}
+  .c2c-v2 .home-start .landing-greet .landing-segctx-cat{margin-left:0;}
+  /* The engine pill and Send no longer fit beside the attach and settings
+     buttons; the composer clips its overflow, which cut Send off. */
+  .c2c-v2 .home-start .landing-crow{flex-wrap:wrap;row-gap:6px;}
+  .c2c-v2 .home-start .landing-crow-r{margin-left:auto;}
+}
 
 /* ════ CapabilityBrowser — the module launcher, in an overlay ════
    These are the former `.landing-modules` rules, rescoped. The grid, group and
@@ -138,6 +166,12 @@
 /* split list/detail */
 .c2c-v2 .split{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start;}
 .c2c-v2 .split-list{display:flex;flex-direction:column;gap:8px;}
+/* At a phone's width the list and its detail stack (RR5 phone acceptance,
+   2026-10-30). Side by side, the 340px list alone was wider than the page
+   column at 390px: the page scrolled sideways under the rail, and the
+   detail, with the Review board's "Open in editor" and "Request changes...",
+   sat off the right of the screen where no tap could reach it. */
+@media (max-width:760px){.c2c-v2 .split{grid-template-columns:minmax(0,1fr);}}
 /* Named properties rather than `all`: the only things that actually change on
    :hover and [data-on] are paint-only (see the two rules below), and `all`
    would silently start animating whatever property is added here next. */
@@ -157,6 +191,7 @@
 
 .c2c-v2 .split-detail{border:1px solid var(--border);border-radius:var(--radius-2xl);background:var(--bg-050);overflow:hidden;}
 .c2c-v2 .dt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid var(--border);}
+.c2c-v2 .dt-acts{display:flex;gap:8px;}
 .c2c-v2 .dt-eyebrow{font-size:11px;color:var(--text-400);font-weight:500;}
 .c2c-v2 .dt-eyebrow .agency{color:var(--text-200);}
 .c2c-v2 .dt-title{font-size:17px;font-weight:600;letter-spacing:-.01em;margin:5px 0 0;}
@@ -279,6 +314,7 @@
 .c2c-v2 .rv-doc-l{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);}
 .c2c-v2 .rv-doc-l svg{width:14px;height:14px;}
 .c2c-v2 .rv-doc-acts{display:flex;align-items:center;gap:10px;}
+.c2c-v2 .btn.rv-doc-open{height:28px;}
 .c2c-v2 .rv-conf{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:5px;}
 .c2c-v2 .rv-conf[data-tone="ok"]{background:var(--success-muted);color:var(--success);}
 .c2c-v2 .rv-conf[data-tone="warn"]{background:var(--warning-muted);color:var(--warning);}
@@ -302,6 +338,24 @@
 .c2c-v2 .rv-reply{display:flex;gap:8px;align-items:center;padding:0 20px 20px;}
 .c2c-v2 .rv-reply-in{flex:1;height:36px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);padding:0 12px;font:inherit;font-size:13px;color:var(--text-100);}
 .c2c-v2 .rv-reply-in:focus{outline:none;border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
+/* The Review board at a phone's width (RR5 phone acceptance, 2026-10-30).
+   Measured at 390px, the detail's overflow:hidden cut off what did not fit:
+   "Record review decision" and half of "Request changes..." past the right
+   edge of the head, "Open in editor" past the right of the document's bar,
+   and Comment past the right of the reply row. Each now
+   wraps onto a line of its own, and every control a reviewer taps here is a
+   44px target ("Open in editor" was 28px). The project switch names the
+   project, and a button does not wrap: a long name (or, opened from a link,
+   the project's id) ran 36px past the screen; it wraps inside the column. */
+@media (max-width:760px){
+  .c2c-v2 .dt-head{flex-wrap:wrap;}
+  .c2c-v2 .dt-acts{flex-wrap:wrap;}
+  .c2c-v2 .rv-doc-h{flex-wrap:wrap;}
+  .c2c-v2 .dt-acts .btn,.c2c-v2 .btn.rv-doc-open,.c2c-v2 .rv-reply .btn{height:auto;min-height:44px;}
+  .c2c-v2 .rv-reply{flex-wrap:wrap;}
+  .c2c-v2 .rv-reply-in{min-width:0;min-height:44px;}
+  .c2c-v2 .btn.rv-scope-program{max-width:100%;height:auto;min-height:32px;white-space:normal;overflow-wrap:anywhere;text-align:left;}
+}
 .c2c-v2 .thread{display:flex;flex-direction:column;gap:10px;padding:0 20px 20px;}
 .c2c-v2 .cmt{border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;background:var(--bg-000);}
 .c2c-v2 .cmt[data-ai="true"]{border-color:var(--accent-muted);background:var(--accent-000);}

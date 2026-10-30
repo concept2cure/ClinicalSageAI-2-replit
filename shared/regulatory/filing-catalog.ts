@@ -37,6 +37,11 @@ import {
   getSegmentsSorted,
 } from './filing-taxonomy';
 
+/** The existing filing question shared by the catalog and project intake. */
+export function filingAskPrompt(displayName: string): string {
+  return `Tell me about the ${displayName} — when it's required, what it contains, and what evidence I need.`;
+}
+
 // ─── Display labels ───────────────────────────────────────────────────────────
 
 /** Agency → the label a customer reads (underscores are storage, not copy). */

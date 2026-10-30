@@ -1,0 +1,47 @@
+# Red: both test files as committed at HEAD 96ce3798, product unchanged
+# $ npx vitest run client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx \
+#                  client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx
+# (ANSI stripped; stderr, stack frames and most of the DOM dumps trimmed)
+
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > renders disambiguated identities and publishes identity/source facts to AnA without contact details 381ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'wrong program' as unavailable, never an empty roster or identity facts 153ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'legacy shape' as unavailable, never an empty roster or identity facts 117ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'invalid identity' as unavailable, never an empty roster or identity facts 118ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'null response' as unavailable, never an empty roster or identity facts 89ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'missing store' as unavailable, never an empty roster or identity facts 147ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > distinguishes a verified empty roster from a failed read 98ms
+ × projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > hides the previous program roster immediately while its replacement loads 119ms
+   → Unable to find an element with the text: Loading team….
+ × projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > ignores a late successful roster from an abandoned program 5090ms
+   → Unable to find an element with the text: Alex Chen · Account #9.
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > keeps email-bearing account names, legacy names and display labels outside AnA facts 114ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > states the total and truncation when AnA receives a roster excerpt 95ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > retries the actual scoped GET after an unavailable read 108ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders the catalog authority label for saved Health_Canada 159ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders the catalog authority label for saved Registered_Certification_Body 81ms
+ × projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders sponsor, product, indication and the IND number from GET /api/c2c/projects/:id 257ms
+   → Unable to find an element with the text: Sponsor.
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > takes product from the row, not from the navigation handoff 116ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > labels the number by program type 119ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not assigned" when the agency has not numbered the program — never a placeholder 113ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not recorded" for sponsor, product or indication the row lacks 84ms
+ Test Files  2 failed (2)
+      Tests  3 failed | 16 passed (19)
+
+# Failure locations
+ ❯ projectHomeIdentityFacts.test.tsx:75:18
+ ❯ projectHomeTeamResponsibilities.test.tsx:106:19
+ ❯ projectHomeTeamResponsibilities.test.tsx:122:18
+
+# Identity case: the region the test searched. It says Client (not Sponsor) and
+# "not recorded", because the fixture carries only sponsor_name, not client_name.
+<section aria-label="Project identity" class="pj-facts">  (dt | dd, from the testing-library dump)
+  Client      | not recorded
+  Product     | Vorelinib
+  Indication  | KIT-mutant gastrointestinal stromal tumor
+  IND number  | 000512
+</section>
+
+# Team cases: after the switch, program B's page renders (title "Programme B", "Loading project…",
+# the lifecycle nav with Plan, Evidence, …) but no Team section, so neither "Loading team…" nor
+# B's roster can be found. The DOM dumps are truncated by testing-library before the step body.

@@ -1,0 +1,1382 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > creates a document from Plan and comes back to Plan through the real top-bar chip 5508ms
+   → expected 'Author' to be 'Plan' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"topbar"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"crumbs"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"crumb-root"[39m
+          [36m>[39m
+            [0mConcept2Cure.RI[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"sep crumb-root-sep"[39m
+          [36m>[39m
+            [0m›[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"here"[39m
+          [36m>[39m
+            [0mA-101[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"tb-spacer"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"tb-proj"[39m
+          [33mtitle[39m=[32m"A-101 — Project A"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-folder"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m>[39m
+            [0mOpen project [0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tb-proj-lbl"[39m
+          [36m>[39m
+            [0mA-101[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"tb-org"[39m
+          [33mtitle[39m=[32m"Test organization"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"tb-org-mark"[39m
+          [36m>[39m
+            [0mTO[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tb-org-name"[39m
+          [36m>[39m
+            [0mTest organization[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Organizations and invitations"[39m
+          [33mclass[39m=[32m"tb-btn"[39m
+          [33mtitle[39m=[32m"Organizations and invitations"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-users"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"9"[39m
+              [33mcy[39m=[32m"7"[39m
+              [33mr[39m=[32m"4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M16 3.13a4 4 0 0 1 0 7.75"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Search, jump, or run a command"[39m
+          [33mclass[39m=[32m"tb-cmdk"[39m
+          [33mtitle[39m=[32m"Search, jump, or run a command (⌘K)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"11"[39m
+                [33mcy[39m=[32m"11"[39m
+                [33mr[39m=[32m"8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21 21-4.3-4.3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mSearch, jump, or run a command[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"kbd"[39m
+          [36m>[39m
+            [0m⌘K[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"tb-task"[39m
+          [33mtitle[39m=[32m"New task — assign & track from this screen"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-square-check-big"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheig...
+ × client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > restores a remembered explicit step even when the document list is empty 5052ms
+   → expected 'Plan' to be 'Respond' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner pj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m All projects[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-crumb"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-i"[39m
+            [33mdata-cur[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-crumb-k"[39m
+            [36m>[39m
+              [0mProject[0m
+            [36m</span>[39m
+            [0mTest project[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-top-l"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"pj-title"[39m
+            [36m>[39m
+              [0mTest project[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-tags"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0mIND[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0mFDA[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ok"[39m
+              [36m>[39m
+                [0mactive[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Project identity"[39m
+              [33mclass[39m=[32m"pj-facts"[39m
+            [36m>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mSponsor[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mProduct[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIndication[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIND number[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot assigned[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+            [36m</section>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Where this filing stands"[39m
+          [33mclass[39m=[32m"pj-status"[39m
+          [33mdata-testid[39m=[32m"pj-status-line"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-status-item"[39m
+            [33mdata-tone[39m=[32m"idle"[39m
+          [36m>[39m
+            [0mNo market yet[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-status-item"[39m
+            [33mdata-tone[39m=[32m"warn"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 9v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 17h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m<...
+ × client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > resets a different project to its own default without a surface remount 94ms
+   → expected undefined to be 'plan' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors the Tasks stage handoff above remembered state and a pending action 5039ms
+   → expected 'Author' to be 'Evidence' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner pj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m All projects[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-crumb"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-i"[39m
+            [33mdata-cur[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-crumb-k"[39m
+            [36m>[39m
+              [0mProject[0m
+            [36m</span>[39m
+            [0mTest project[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-top-l"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"pj-title"[39m
+            [36m>[39m
+              [0mTest project[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-tags"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0mIND[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0mFDA[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ok"[39m
+              [36m>[39m
+                [0mactive[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Project identity"[39m
+              [33mclass[39m=[32m"pj-facts"[39m
+            [36m>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mSponsor[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mProduct[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIndication[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIND number[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot assigned[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+            [36m</section>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Where this filing stands"[39m
+          [33mclass[39m=[32m"pj-status"[39m
+          [33mdata-testid[39m=[32m"pj-status-line"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-status-item"[39m
+            [33mdata-tone[39m=[32m"idle"[39m
+          [36m>[39m
+            [0mNo market yet[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-status-item"[39m
+            [33mdata-tone[39m=[32m"warn"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 9v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 17h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m<...
+ × client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors a pending step action above remembered state and the empty-list default 48ms
+   → expected 'respond' to be 'submit' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > falls back to Review for a bare workId, including an invalid stage 38ms
+   → expected undefined to be 'review' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > keeps a selected step through same-project card republishing 15ms
+   → expected undefined to be 'review' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > drops the prior project step on A → B → A 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > clear retires the step and its mirror 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > restores a valid step only for the URL’s same project 2ms
+ × client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step "lifecycle" 1ms
+   → expected 'lifecycle' to be undefined
+ × client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step "not-a-step" 1ms
+   → expected 'not-a-step' to be undefined
+ × client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step 3 1ms
+   → expected 3 to be undefined
+ × client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step {} 1ms
+   → expected {} to be undefined
+ × client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step null 1ms
+   → expected null to be undefined
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > creates a document from Plan and comes back to Plan through the real top-bar chip
+AssertionError: expected 'Author' to be 'Plan' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"topbar"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"crumbs"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"crumb-root"[39m
+          [36m>[39m
+            [0mConcept2Cure.RI[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"sep crumb-root-sep"[39m
+          [36m>[39m
+            [0m›[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"here"[39m
+          [36m>[39m
+            [0mA-101[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"tb-spacer"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-current[39m=[32m"page"[39m
+          [33mclass[39m=[32m"tb-proj"[39m
+          [33mtitle[39m=[32m"A-101 — Project A"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-folder"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m>[39m
+            [0mOpen project [0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tb-proj-lbl"[39m
+          [36m>[39m
+            [0mA-101[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"tb-org"[39m
+          [33mtitle[39m=[32m"Test organization"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"tb-org-mark"[39m
+          [36m>[39m
+            [0mTO[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tb-org-name"[39m
+          [36m>[39m
+            [0mTest organization[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Organizations and invitations"[39m
+          [33mclass[39m=[32m"tb-btn"[39m
+          [33mtitle[39m=[32m"Organizations and invitations"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-users"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"9"[39m
+              [33mcy[39m=[32m"7"[39m
+              [33mr[39m=[32m"4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M16 3.13a4 4 0 0 1 0 7.75"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Search, jump, or run a command"[39m
+          [33mclass[39m=[32m"tb-cmdk"[39m
+          [33mtitle[39m=[32m"Search, jump, or run a command (⌘K)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"11"[39m
+                [33mcy[39m=[32m"11"[39m
+                [33mr[39m=[32m"8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21 21-4.3-4.3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mSearch, jump, or run a command[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"kbd"[39m
+          [36m>[39m
+            [0m⌘K[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"tb-task"[39m
+          [33mtitle[39m=[32m"New task — assign & track from this screen"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ico"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-square-check-big"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheig...
+
+Expected: "Plan"
+Received: "Author"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx:69:42
+     67|     await screen.findByTestId('editor-visit');
+     68|     fireEvent.click(screen.getByRole('button', { name: /Open project\s…
+     69|     await waitFor(() => expect(active()).toBe('Plan'));
+       |                                          ^
+     70|     expect(await screen.findByRole('button', { name: /Open Target Prod…
+     71|     expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/do…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > restores a remembered explicit step even when the document list is empty
+AssertionError: expected 'Plan' to be 'Respond' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner pj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m All projects[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-crumb"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-i"[39m
+            [33mdata-cur[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-crumb-k"[39m
+            [36m>[39m
+              [0mProject[0m
+            [36m</span>[39m
+            [0mTest project[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-top-l"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"pj-title"[39m
+            [36m>[39m
+              [0mTest project[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-tags"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0mIND[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0mFDA[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ok"[39m
+              [36m>[39m
+                [0mactive[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Project identity"[39m
+              [33mclass[39m=[32m"pj-facts"[39m
+            [36m>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mSponsor[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mProduct[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIndication[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIND number[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot assigned[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+            [36m</section>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Where this filing stands"[39m
+          [33mclass[39m=[32m"pj-status"[39m
+          [33mdata-testid[39m=[32m"pj-status-line"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-status-item"[39m
+            [33mdata-tone[39m=[32m"idle"[39m
+          [36m>[39m
+            [0mNo market yet[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-status-item"[39m
+            [33mdata-tone[39m=[32m"warn"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 9v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 17h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m<...
+
+Expected: "Respond"
+Received: "Plan"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx:78:42
+     76|     render(<ProjectHome {...props} />);
+     77|     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET',…
+     78|     await waitFor(() => expect(active()).toBe('Respond'));
+       |                                          ^
+     79|   });
+     80|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > resets a different project to its own default without a surface remount
+AssertionError: expected undefined to be 'plan' // Object.is equality
+
+- Expected:
+"plan"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx:90:38
+     88|     view.rerender(<ProjectHome {...props} />);
+     89|     await waitFor(() => expect(active()).toBe('Plan'));
+     90|     expect(readShellProject()?.step).toBe('plan');
+       |                                      ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors the Tasks stage handoff above remembered state and a pending action
+AssertionError: expected 'Author' to be 'Evidence' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner pj"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m All projects[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-crumb"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-i"[39m
+            [33mdata-cur[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-crumb-k"[39m
+            [36m>[39m
+              [0mProject[0m
+            [36m</span>[39m
+            [0mTest project[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-top-l"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"pj-title"[39m
+            [36m>[39m
+              [0mTest project[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pj-tags"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0mIND[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+              [36m>[39m
+                [0mFDA[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ok"[39m
+              [36m>[39m
+                [0mactive[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Project identity"[39m
+              [33mclass[39m=[32m"pj-facts"[39m
+            [36m>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mSponsor[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mProduct[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIndication[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot recorded[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+              [36m<dl[39m
+                [33mclass[39m=[32m"pj-fact"[39m
+              [36m>[39m
+                [36m<dt>[39m
+                  [0mIND number[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"pj-fact-none"[39m
+                  [36m>[39m
+                    [0mnot assigned[0m
+                  [36m</span>[39m
+                [36m</dd>[39m
+              [36m</dl>[39m
+            [36m</section>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Where this filing stands"[39m
+          [33mclass[39m=[32m"pj-status"[39m
+          [33mdata-testid[39m=[32m"pj-status-line"[39m
+          [33mrole[39m=[32m"group"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-status-item"[39m
+            [33mdata-tone[39m=[32m"idle"[39m
+          [36m>[39m
+            [0mNo market yet[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-status-item"[39m
+            [33mdata-tone[39m=[32m"warn"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 9v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 17h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m<...
+
+Expected: "Evidence"
+Received: "Author"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx:98:42
+     96|     stashNavParamsForTarget('project-home', { stage: 'evidence' });
+     97|     render(<ProjectHome {...props} />);
+     98|     await waitFor(() => expect(active()).toBe('Evidence'));
+       |                                          ^
+     99|   });
+    100|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors a pending step action above remembered state and the empty-list default
+AssertionError: expected 'respond' to be 'submit' // Object.is equality
+
+Expected: "submit"
+Received: "respond"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx:106:38
+    104|     render(<ProjectHome {...props} />);
+    105|     await waitFor(() => expect(active()).toBe('Submit'));
+    106|     expect(readShellProject()?.step).toBe('submit');
+       |                                      ^
+    107|   });
+    108|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > falls back to Review for a bare workId, including an invalid stage
+AssertionError: expected undefined to be 'review' // Object.is equality
+
+- Expected:
+"review"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx:113:38
+    111|     render(<ProjectHome {...props} />);
+    112|     await waitFor(() => expect(active()).toBe('Review'));
+    113|     expect(readShellProject()?.step).toBe('review');
+       |                                      ^
+    114|   });
+    115| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > keeps a selected step through same-project card republishing
+AssertionError: expected undefined to be 'review' // Object.is equality
+
+- Expected:
+"review"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts:16:38
+     14|     updateShellProject({ step: 'review' });
+     15|     publishShellProject({ id: A.toUpperCase(), title: 'A renamed' });
+     16|     expect(readShellProject()?.step).toBe('review');
+       |                                      ^
+     17|     expect(JSON.parse(sessionStorage.getItem(KEY)!).step).toBe('review…
+     18|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step "lifecycle"
+AssertionError: expected 'lifecycle' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"lifecycle"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts:47:41
+     45|   it.each(['lifecycle', 'not-a-step', 3, {}, null])('discards invalid …
+     46|     sessionStorage.setItem(KEY, JSON.stringify({ id: A, step }));
+     47|     expect(restoreShellProject()?.step).toBeUndefined();
+       |                                         ^
+     48|     expect(readShellProject()?.id).toBe(A);
+     49|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step "not-a-step"
+AssertionError: expected 'not-a-step' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"not-a-step"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts:47:41
+     45|   it.each(['lifecycle', 'not-a-step', 3, {}, null])('discards invalid …
+     46|     sessionStorage.setItem(KEY, JSON.stringify({ id: A, step }));
+     47|     expect(restoreShellProject()?.step).toBeUndefined();
+       |                                         ^
+     48|     expect(readShellProject()?.id).toBe(A);
+     49|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step 3
+AssertionError: expected 3 to be undefined
+
+- Expected:
+undefined
+
++ Received:
+3
+
+ ❯ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts:47:41
+     45|   it.each(['lifecycle', 'not-a-step', 3, {}, null])('discards invalid …
+     46|     sessionStorage.setItem(KEY, JSON.stringify({ id: A, step }));
+     47|     expect(restoreShellProject()?.step).toBeUndefined();
+       |                                         ^
+     48|     expect(readShellProject()?.id).toBe(A);
+     49|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step {}
+AssertionError: expected {} to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{}
+
+ ❯ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts:47:41
+     45|   it.each(['lifecycle', 'not-a-step', 3, {}, null])('discards invalid …
+     46|     sessionStorage.setItem(KEY, JSON.stringify({ id: A, step }));
+     47|     expect(restoreShellProject()?.step).toBeUndefined();
+       |                                         ^
+     48|     expect(readShellProject()?.id).toBe(A);
+     49|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step null
+AssertionError: expected null to be undefined
+
+- Expected:
+undefined
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts:47:41
+     45|   it.each(['lifecycle', 'not-a-step', 3, {}, null])('discards invalid …
+     46|     sessionStorage.setItem(KEY, JSON.stringify({ id: A, step }));
+     47|     expect(restoreShellProject()?.step).toBeUndefined();
+       |                                         ^
+     48|     expect(readShellProject()?.id).toBe(A);
+     49|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  12 failed | 3 passed (15)
+   Start at  15:46:57
+   Duration  19.15s (transform 1.63s, setup 206ms, import 1.99s, tests 15.81s, environment 874ms)
+

@@ -82,6 +82,8 @@ function makeApp() {
 function sectionExists() {
   mockQuery.mockImplementation(async (sql: unknown) => {
     const s = String(sql);
+    // The canonical reference-size aggregate returns one zero row on an empty audit set.
+    if (s.includes('AS reference_bytes')) return { rowCount: 1, rows: [{ reference_bytes: 0 }] };
     if (s.includes('FROM authoring_sections')) {
       return {
         rowCount: 1,

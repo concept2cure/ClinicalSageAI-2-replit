@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { readRefusalOf, type ReadRefusal } from '../../mdx/hooks/useFetchJson';
+import { ReadRefused, unreadContext } from '../projectScopedRead';
 import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentState } from '../assessmentState';
@@ -10,6 +12,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { shellProgramId, useShellProject } from '../shellProject';
 
 /* ── Render contract (GET /api/human-factors → { data: HfFileData | null }) ── */
 
@@ -99,6 +102,30 @@ function hfThrownReason(e: unknown): string {
     : 'the human-factors service could not be reached';
 }
 
+/* What AnA is told while no file is drawn: no project, still loading, a failed
+   read, no file, or a file the screen cannot tie to the open project. Each is
+   published as itself. Null when a file is drawn and the full context applies. */
+const HF_CTX = 'Human factors (IEC 62366-1): ';
+function hfNotReadyContext(s: {
+  programId: string | null; projectOpen: boolean; loading: boolean; error: boolean; refusal: ReadRefusal | null; noFile: boolean; keyed: boolean;
+}): { summary: string; availableActions?: string[] } | null {
+  if (!s.programId) {
+    const why = s.projectOpen ? "the open project can't be read by project here" : 'No project is open';
+    return { summary: `${HF_CTX}${why}, so no HFE/UE file is read or shown. Nothing is claimed here about any usability engineering file.`, availableActions: ['Open a project from Projects'] };
+  }
+  if (s.loading) return { summary: 'The HFE/UE file is still loading; nothing on screen is final yet.' };
+  if (s.error) return unreadContext(s.refusal, 'the HFE/UE file', HF_CTX, 'Retry the HFE/UE file read', 'The human-factors store could not be read, so this screen is showing no HFE/UE file because of a failure, not because none exists.');
+  /* Slice 0 audit 2: AnA is offered no action nothing performs. Keyed, the
+     screen itself offers "Start the usability file" (slice 19). Unkeyed, a
+     file recorded later would not be shown here either, and AnA is told so. */
+  if (s.noFile && s.keyed) return { summary: `${HF_CTX}this project has no HFE/UE file yet, so there is no completeness score or use-related risk analysis on screen.`, availableActions: ['Start the usability file for this project (records the device under evaluation)'] };
+  if (s.noFile) return { summary: `${HF_CTX}this organisation has no HFE/UE file yet, so there is no completeness score or use-related risk analysis on screen. A file recorded later is not shown here until this screen reads this project's records.` };
+  /* Slice 0: the screen hides a file it cannot tie to the project, so AnA is
+     not handed that file's facts, or its writes, as this screen's either. */
+  if (!s.keyed) return { summary: `${HF_CTX}this screen reads the organization's first HFE/UE file, which may be another project's, so it shows no file, completeness or use-related risk analysis, and offers no write into it, until the read is keyed to the project.` };
+  return null;
+}
+
 function hfAnalyzeRisk(scenarios: HfScenario[]): HfRiskResult {
   const crit = scenarios.filter(s => HF_SERIOUS.has(s.potentialHarmSeverity));
   const unmit = crit.filter(t => !t.mitigated).length;
@@ -107,14 +134,40 @@ function hfAnalyzeRisk(scenarios: HfScenario[]): HfRiskResult {
 
 /* ════ Human Factors -- IEC 62366-1 surface ════ */
 
-export function HumanFactors({ onAsk }: SurfaceViewProps) {
+export function HumanFactors({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
+  /* Slice 19 (D2, 2026-10-29): the file is the open project's. The project is
+     the shell's open project (useShellProject), the read every project screen
+     makes, and hf_engineering_files records it (20261029). With no project
+     open, or one with no project record id, nothing is read and the screen
+     says which. `reads` re-reads the file after "Start the usability file". */
+  const openProject = useShellProject();
+  const programId = shellProgramId(openProject);
+  const [reads, setReads] = useState(0);
   /* Fixture-free (real-data standard): the HFE/UE file reads the org's REAL
      human-factors store (hf_engineering_files, written via POST /api/human-factors)
      plus its hazard-related use scenarios (c2c_hf_scenarios). Real data, an honest
      empty, or an honest error — never a fabricated stand-in. */
-  const hf = useLiveData<HfFileData>('/api/human-factors');
+  const hf = useLiveData<HfFileData>(
+    programId ? '/api/human-factors?program_id=' + encodeURIComponent(programId) : null,
+    [programId, reads],
+  );
   const file = hf.data;
+  /* A refused read is said as what it is, not as a failed one (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/refusal-not-failed-read/): the route
+     answers 403 ORG_REQUIRED, refuses a project the organization does not own
+     (404) or could not check (503), and sits behind the module gate (403), and
+     each was drawn as "Couldn't load the HFE/UE file". Null for a genuine
+     failure, which still is. */
+  const hfRefusal = hf.error ? readRefusalOf(hf) : null;
+  /* Slice 0 (INFORMATION_ARCHITECTURE.md, `human-factors` row): the read
+     returned the organization's FIRST file, which may be another project's.
+     Its panels, and the writes into it, render only when the route reports the
+     read keyed to the OPEN project: `meta.scope === 'program'` and its
+     `programId`. An unreported scope, the organization's scope, or another
+     project's id counts as not keyed, so an unscoped file is never drawn under
+     a project. */
+  const keyed = programId != null && hf.meta?.scope === 'program' && hf.meta?.programId === programId;
 
   /* ── The overlay holds ONLY what the server has acknowledged ───────────────
      This screen renders a SAFETY GATE: the IEC 62366-1 §5.9 summative-evaluation
@@ -145,6 +198,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
   const device = file?.device ?? '';
 
   const [form, setForm] = useState(false);
+  const [starting, setStarting] = useState(false);
   /** The critical task a reason for change is being captured against. */
   const [mitigating, setMitigating] = useState<HfScenario | null>(null);
   const [elBusy, setElBusy] = useState<string | null>(null);
@@ -197,7 +251,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     const next = !present[k];
     setElBusy(k);
     try {
-      const res = await apiRequest('PATCH', '/api/human-factors/elements', { element: k, present: next });
+      const res = await apiRequest('PATCH', '/api/human-factors/elements', { element: k, present: next, programId });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         fire('Element not saved — ' + (hfReason(body) || 'the HFE/UE file did not accept the change') + '. Completeness is unchanged.');
@@ -221,7 +275,9 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     eyebrow: 'Use-related risk — IEC 62366-1',
     title: 'Add use scenario',
     sub: 'Each scenario is a task where a use error could cause harm. Serious or critical harm makes it a critical task that must be mitigated before summative testing.',
-    governed: 'Use scenarios feed the use-related risk analysis and the HFE/UE report; changes are audit-logged.',
+    /* Slice 0 audit: "changes are audit-logged" dropped — creating a scenario
+       records no audit row (server/routes/human-factors.ts:269). */
+    governed: 'Use scenarios feed the use-related risk analysis and the HFE/UE report.',
     submitLabel: 'Add scenario',
     fields: [
       { key: 'task', label: 'Task / use step', type: 'text', placeholder: 'e.g. Result interpretation (positive call)', required: true },
@@ -239,10 +295,10 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     // server actually stored so completeness/risk recompute from it.
     try {
       const res = await apiRequest('POST', '/api/human-factors/scenarios', {
-        task: v.task, useError: v.useError, potentialHarmSeverity: sev, mitigated: mit,
+        task: v.task, useError: v.useError, potentialHarmSeverity: sev, mitigated: mit, programId,
       });
       if (!res.ok) {
-        fire('Could not add scenario — the organization needs an HFE/UE file');
+        fire('Could not add scenario — this project needs an HFE/UE file');
         return;
       }
       const body = await res.json().catch(() => null);
@@ -324,6 +380,47 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     }
   };
 
+  /* ── Start the usability file (slice 19) ────────────────────────────────────
+     A project with no file of its own reached a dead end: every file recorded
+     before 20261029 has no project, so no project shows it, and nothing here
+     created one. This records the device's HFE/UE file FOR THIS PROJECT over the
+     existing POST, which checks the organization owns the project. Only a create
+     the route reports as this project's is taken as one; then the file is read
+     again from the record, so what is drawn is what was stored. A refused or
+     failed start says so, and no file is drawn. */
+  const START_FORM: C2CFormConfig = {
+    eyebrow: 'Usability engineering — IEC 62366-1',
+    title: 'Start the usability file',
+    sub: 'The HFE/UE file for this project\u2019s device. Every IEC 62366-1 element starts as not present; mark each one as its evidence is recorded.',
+    governed: 'The file is recorded for this project and the creation is written to the audit trail.',
+    submitLabel: 'Start the file',
+    fields: [
+      { key: 'device', label: 'Device under evaluation', type: 'text', placeholder: 'e.g. Aurora CGM — continuous glucose monitor', required: true },
+    ],
+  };
+
+  const startFile = async (v: Record<string, string>) => {
+    const deviceName = (v.device || '').trim();
+    if (!deviceName) {
+      fire('File not started — name the device under evaluation.');
+      return;
+    }
+    try {
+      const res = await apiRequest('POST', '/api/human-factors', { device: deviceName, programId });
+      const body = await res.json().catch(() => null);
+      const recorded = res.ok && body?.meta?.scope === 'program' && body?.meta?.programId === programId;
+      if (!recorded) {
+        fire('File not started — ' + (hfReason(body) || 'the HFE/UE record did not take it as this project\u2019s') + '.');
+        return;
+      }
+      setStarting(false);
+      fire('Usability file started for ' + deviceName);
+      setReads(n => n + 1);
+    } catch (e) {
+      fire('File not started — ' + hfThrownReason(e) + '.');
+    }
+  };
+
   /* What AnA can see of this screen.
      Published BEFORE the loading / error / empty early returns below — a
      publisher that only runs on the success path goes silent exactly when the
@@ -333,25 +430,11 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
      different fact from "the store did not answer", and an unmitigated critical
      task count derived from a failed read would be a safety claim nobody made. */
   const anaContext = useMemo(() => {
-    if (hf.loading) {
-      return { summary: 'The HFE/UE file is still loading; nothing on screen is final yet.' };
-    }
-    if (hf.error) {
-      return {
-        summary:
-          'The human-factors store could not be read, so this screen is showing no HFE/UE file because of ' +
-          'a failure, not because none exists.',
-        availableActions: ['Retry the HFE/UE file read'],
-      };
-    }
-    if (hf.empty || !file) {
-      return {
-        summary:
-          'Human factors (IEC 62366-1): this organisation has no HFE/UE file yet, so there is no ' +
-          'completeness score or use-related risk analysis on screen.',
-        availableActions: ['Create the HFE/UE file for this device'],
-      };
-    }
+    const notReady = hfNotReadyContext({
+      programId, projectOpen: openProject != null, loading: hf.loading, error: Boolean(hf.error),
+      refusal: hfRefusal, noFile: hf.empty || !file, keyed,
+    });
+    if (notReady) return notReady;
     return {
       summary:
         `Human factors (IEC 62366-1) for ${device || 'this device'}: HFE/UE file ${compPct}% complete ` +
@@ -394,16 +477,29 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         })),
       },
       availableActions: [
-        'Add a use scenario (feeds the use-related risk analysis; the write is audit-logged)',
+        /* Slice 0 audit: no "audit-logged" — the scenario create writes no audit row. */
+        'Add a use scenario (feeds the use-related risk analysis)',
         'Record a mitigation against a critical task (governed — requires a reason for change, and only a ' +
           'mitigation the HFE/UE record accepts can move the summative gate)',
         'Mark an HFE/UE file element present or absent (written to the HFE/UE record and audit-logged)',
       ],
     };
-  }, [hf.loading, hf.error, hf.empty, file, device, compPct, hfe, risk, firstUnmit, scenarios]);
+  }, [programId, openProject, hf.loading, hf.error, hfRefusal, hf.empty, file, keyed, device, compPct, hfe, risk, firstUnmit, scenarios]);
   usePublishSurfaceContext('human-factors', anaContext);
 
-  /* ── Honest states: loading / error / empty (no fixture fallback) ── */
+  /* ── Honest states: no project / loading / error / empty (no fixture fallback) ── */
+  if (!programId) {
+    return (
+      <div className="hf" style={{ maxWidth: 1140 }}>
+        <EmptyState icon={I.info} testId="hf-no-project"
+          title="Open a project to see its usability engineering file"
+          hint={openProject
+            ? "The open project can't be read by project here, so this screen reads no HFE/UE file."
+            : 'No project is open, so this screen reads no HFE/UE file.'}
+          action={{ label: 'Open projects', onAct: () => onNav('projects') }} />
+      </div>
+    );
+  }
   if (hf.loading) {
     return (
       <div className="hf" style={{ maxWidth: 1140 }}>
@@ -411,19 +507,34 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       </div>
     );
   }
+  if (hfRefusal) {
+    return (
+      <div className="hf" style={{ maxWidth: 1140 }}>
+        <ReadRefused refusal={hfRefusal} what="the HFE/UE file" retry={() => setReads((n) => n + 1)} testId="hf-refused" />
+      </div>
+    );
+  }
   if (hf.error) {
     return (
       <div className="hf" style={{ maxWidth: 1140 }}>
         <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the HFE/UE file"
-          hint="The organization's IEC 62366-1 human-factors file didn't respond. Sign in and retry, or check the service is reachable." />
+          hint="This project's IEC 62366-1 human-factors file could not be read, so none is shown. Sign in and retry, or check the service is reachable." />
       </div>
     );
   }
   if (hf.empty || !file) {
+    /* Slice 0 audit 2: this branch runs before the keyed check, so unkeyed it
+       must not promise a recorded file "appears here" — it would be hidden. */
     return (
       <div className="hf" style={{ maxWidth: 1140 }}>
         <EmptyState icon={I.fileText} title="No HFE/UE file yet"
-          hint="Once an IEC 62366-1 HFE/UE file is recorded, its element completeness and use-related risk analysis — the gate before summative usability testing — appear here." />
+          hint={keyed
+            ? 'Once an IEC 62366-1 HFE/UE file is recorded, its element completeness and use-related risk analysis — the gate before summative usability testing — appear here.'
+            : "No IEC 62366-1 HFE/UE file is recorded for the organization. A file is shown here once this screen reads this project's records."}
+          /* Slice 19: only the project's own empty file can be started from here. */
+          action={keyed ? { label: 'Start the usability file', onAct: () => setStarting(true) } : undefined} />
+        {starting && <C2CForm config={START_FORM} onCancel={() => setStarting(false)} onSubmit={startFile} />}
+        <C2CToast msg={toast} />
       </div>
     );
   }
@@ -434,10 +545,24 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} human factors</div>
           <h1 className="sp-title">Human factors {I.dot} IEC 62366-1</h1>
-          <p className="sp-state">Organization-wide usability records. {device} — use-related risk analysis and HFE/UE file completeness, the gate before summative testing.</p>
+          {/* Slice 0: the device name is the file's record, so it is named only once the read is keyed. */}
+          <p className="sp-state">{keyed
+            ? `${device} — use-related risk analysis and HFE/UE file completeness, the gate before summative testing.`
+            : 'Use-related risk analysis and HFE/UE file completeness, the gate before summative testing.'}</p>
         </div>
-        <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add use scenario</button>
+        {/* Slice 0 audit: the scenario POST attaches to the organization's oldest
+            file (human-factors.ts:259), not necessarily the one read, so no write
+            is offered into a file this screen cannot tie to the project. */}
+        {keyed && <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add use scenario</button>}
       </div>
+
+      {/* Slice 0: the file panels below read the organization's first file, which
+          may be another project's, so they are not shown until the read is keyed. */}
+      {!keyed ? (
+        <EmptyState icon={I.info} testId="hf-not-keyed"
+          title="Shown once this screen reads this project's records"
+          hint="This screen reads the organization's first HFE/UE file, which may be another project's, so its use-related risk analysis and completeness are not shown here, and no use scenario is added from here." />
+      ) : (<>
 
       {/* Three branches, because there are three states. The middle one — an
           HFE/UE file with no hazard-related use scenarios on it — used to fall
@@ -528,6 +653,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
           </button>
         ))}
       </div>
+      </>)}
 
       {form && <C2CForm config={FORM} onCancel={() => setForm(false)} onSubmit={addScenario} />}
       {mitigating && <C2CForm config={MITIGATE_FORM} onCancel={() => setMitigating(null)} onSubmit={recordMitigation} />}

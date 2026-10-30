@@ -1,0 +1,7 @@
+{
+  "files": {
+    "scripts/regulatory-coverage-report.ts": "702aba670bc99fdee5f519c573efd093dd875a23538a855d9f11bab9f542e4aa",
+    "server/services/regulatory/registry/usBiotechAuthoringCoverage.ts": "feb366667d2a8373687a21287debdb0b52d64371535e6b443f2549ca02e259e4",
+    "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts": "236b26f11215aae5ddbc6f5f51fbfbeaf67cf4b4b960d0b5c39016298ff678ec"
+  }
+}

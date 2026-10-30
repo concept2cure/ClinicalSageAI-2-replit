@@ -33,7 +33,11 @@ const { queryMock, grantLookup, state } = vi.hoisted(() => {
   };
 });
 
+const runQuery = (sql: string, params?: unknown[]) => /^(BEGIN|COMMIT|ROLLBACK)$/.test(sql) ? Promise.resolve({ rows: [] }) : /FROM platform_role_grants/.test(sql) ? grantLookup(params)
+  : /SELECT id FROM organizations/.test(sql) ? Promise.resolve({ rows: [{ id: params?.[0] }] }) : queryMock(sql, params);
+vi.mock('../../services/auditService', () => ({ writeChainedAuditRow: vi.fn(async () => undefined) }));
 vi.mock('../../db', () => ({
+  pool: { connect: async () => ({ query: runQuery, release: vi.fn() }) },
   query: (sql: string, params?: unknown[]) =>
     /FROM platform_role_grants/.test(sql) ? grantLookup(params) : queryMock(sql, params),
 }));
@@ -54,6 +58,8 @@ let app: express.Express;
 
 beforeEach(async () => {
   vi.clearAllMocks();
+  queryMock.mockReset();
+  queryMock.mockResolvedValue({ rows: [] });
   // A platform super_admin grant holder whose tenant membership role is admin.
   state.role = 'admin';
   state.platformGrant = 'super_admin';
@@ -84,7 +90,7 @@ describe('admin SCIM-tenants API', () => {
     });
     const res = await request(app)
       .post('/api/admin/scim-tenants')
-      .send({ organizationId: 7, label: 'Okta' });
+      .send({ organizationId: 7, label: 'Okta', reason: 'Configure approved directory.' });
 
     expect(res.status).toBe(201);
     expect(res.body.organizationId).toBe(7);
@@ -106,7 +112,7 @@ describe('admin SCIM-tenants API', () => {
     queryMock.mockResolvedValue({
       rows: [{ id: 5, organization_id: 7, label: 'Okta', enabled: true }],
     });
-    const res = await request(app).post('/api/admin/scim-tenants/5/rotate').send();
+    const res = await request(app).post('/api/admin/scim-tenants/5/rotate').send({ reason: 'Rotate approved directory credential.' });
     expect(res.status).toBe(200);
     expect(res.body.token).toMatch(/^scim_/);
   });
@@ -115,18 +121,51 @@ describe('admin SCIM-tenants API', () => {
     queryMock.mockResolvedValue({
       rows: [{ id: 5, organization_id: 7, label: 'Okta', enabled: false }],
     });
-    const res = await request(app).patch('/api/admin/scim-tenants/5').send({ enabled: false });
+    const res = await request(app).patch('/api/admin/scim-tenants/5').send({ enabled: false, reason: 'Retire directory access.' });
     expect(res.status).toBe(200);
     expect(res.body.enabled).toBe(false);
   });
 
   it('deletes a tenant (204), 404 when missing', async () => {
-    queryMock.mockResolvedValueOnce({ rows: [{ id: 5 }] });
-    const ok = await request(app).delete('/api/admin/scim-tenants/5');
+    queryMock.mockResolvedValueOnce({ rows: [{ id: 5, organization_id: 7, enabled: true }] }).mockResolvedValueOnce({ rows: [{ id: 5, organization_id: 7, enabled: true }] });
+    const ok = await request(app).delete('/api/admin/scim-tenants/5').send({ reason: 'Revoke retired directory.' });
     expect(ok.status).toBe(204);
 
     queryMock.mockResolvedValueOnce({ rows: [] });
-    const missing = await request(app).delete('/api/admin/scim-tenants/999');
+    const missing = await request(app).delete('/api/admin/scim-tenants/999').send({ reason: 'Revoke retired directory.' });
     expect(missing.status).toBe(404);
+  });
+});
+
+describe('SCIM token change validation', () => {
+  it.each(['create', 'rotate', 'update', 'delete'])('requires a reason before %s changes a credential', async kind => {
+    queryMock.mockResolvedValue({ rows: [{ id: 5, organization_id: 7, enabled: true }] });
+    const endpoint = request(app);
+    const res = kind === 'create' ? await endpoint.post('/api/admin/scim-tenants').send({ organizationId: 7 })
+      : kind === 'rotate' ? await endpoint.post('/api/admin/scim-tenants/5/rotate').send({})
+        : kind === 'update' ? await endpoint.patch('/api/admin/scim-tenants/5').send({ enabled: false })
+          : await endpoint.delete('/api/admin/scim-tenants/5').send({});
+    expect(res.status).toBe(400);
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses fractional organization ids before generating a credential', async () => {
+    queryMock.mockResolvedValue({ rows: [{ id: 5, organization_id: 7.5, enabled: true }] });
+    const res = await request(app).post('/api/admin/scim-tenants').send({ organizationId: 7.5, reason: 'Configure approved directory.' });
+    expect(res.status).toBe(400);
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('SCIM credential target validation', () => {
+  it.each(['0', '-1', '1.5', '9007199254740992'])('refuses invalid credential id %s without a mutation', async id => {
+    const response = await request(app).post(`/api/admin/scim-tenants/${id}/rotate`).send({ reason: 'Approved token rotation.' });
+    expect(response.status).toBe(404);
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+  it('refuses request fields that attempt to redirect an existing token to another organization', async () => {
+    const response = await request(app).patch('/api/admin/scim-tenants/5').send({ enabled: false, organizationId: 999, reason: 'Approved directory change.' });
+    expect(response.status).toBe(400);
+    expect(queryMock).not.toHaveBeenCalled();
   });
 });

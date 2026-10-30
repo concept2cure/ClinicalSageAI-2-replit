@@ -12,11 +12,19 @@
 import { describe, it, expect, vi } from 'vitest';
 
 // Module 2 tools read the program's completed CSRs (ana/module2-csr-inputs.ts);
-// the loader is mocked so the M2.7 cases stay offline.
+// the loader is mocked so the M2.7 cases stay offline. Since 3b Slice 1 the open
+// project is first resolved through the CSR scope, as the person asking; it is
+// mocked to resolve the project the context names (module2-csr-inputs.pglite.test.ts
+// runs both for real).
 const csrRecords = vi.hoisted(() => ({ rows: [] as unknown[] }));
 vi.mock('../../csr/load-csr-inputs-for-project.js', () => ({
   loadCsrInputsForProject: vi.fn(async () => csrRecords.rows),
 }));
+vi.mock('../../csr/project-scope.js', async (orig) => ({
+  ...await orig<typeof import('../../csr/project-scope.js')>(),
+  resolveCsrScope: vi.fn(async (_db: unknown, _org: number, input: { projectId?: number }) => ({ projectId: input.projectId })),
+}));
+vi.mock('../../../db.js', () => ({ db: {}, pool: { query: vi.fn() }, getPool: vi.fn() }));
 
 import { getToolHandler } from '../AnaToolExecutor.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
@@ -116,29 +124,24 @@ describe('select_exposure_response_dose handler', () => {
 });
 
 describe('draft_nonclinical_overview_m2_4 handler', () => {
-  it('returns needs_parameters without studies', async () => {
-    const handler = getToolHandler('draft_nonclinical_overview_m2_4')!;
-    const out = JSON.parse(await handler({ studies: [] }));
-    expect(out.status).toBe('needs_parameters');
-  });
-
-  it('drafts the M2.4 overview with gaps and an adversity profile', async () => {
+  // Rule 2 audit S2 (2026-10-26): it composed from studies[] the model wrote.
+  // The composer (buildEnrichedM24) is tested in preclinical/__tests__/
+  // nonclinical-m24-adapter.test.ts; the refusal and the outline in
+  // nonclinical-drafts-refuse-model-figures.test.ts.
+  it('does not compose from studies supplied in the call', async () => {
     const handler = getToolHandler('draft_nonclinical_overview_m2_4')!;
     const out = JSON.parse(
-      await handler({
-        studies: [
-          { studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 13, glpCompliant: true, noael: '50 mg/kg/day' },
-          { studyType: 'genotox', studyTitle: 'Ames', keyFindings: 'Negative' },
-        ],
-        findings: [{ organ: 'liver', finding: 'hepatocellular hypertrophy' }],
-        drugSubstanceName: 'BX-115',
-      }),
+      await handler(
+        {
+          studies: [{ studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 13, glpCompliant: true, noael: '50 mg/kg/day' }],
+          findings: [{ organ: 'liver', finding: 'hepatocellular hypertrophy' }],
+          drugSubstanceName: 'BX-115',
+        },
+        { organizationId: 3, projectId: 9 } as never,
+      ),
     );
-    expect(out.status).toBe('drafted');
-    expect(out.sectionKey).toBe('2.4');
-    expect(out.content).toMatch(/NONCLINICAL OVERVIEW/);
-    expect(out.gaps).toContain('primary pharmacology studies');
-    expect(out.toxProfile.adaptive).toContain('hepatocellular hypertrophy');
+    expect(out).toMatchObject({ ok: false, status: 'needs_data', ignoredSuppliedFigures: true, projectId: 9 });
+    expect(out.status).not.toBe('drafted');
   });
 });
 
@@ -197,19 +200,18 @@ describe('draft_quality_overall_summary_m2_3 handler', () => {
 });
 
 describe('draft_nonclinical_summaries_m2_6 handler', () => {
-  it('drafts the M2.6 summaries with tables', async () => {
+  // Rule 2 audit S2: as M2.4. The composer's tables are tested in
+  // preclinical/__tests__/m26-nonclinical-summaries.test.ts.
+  it('does not compose from studies supplied in the call', async () => {
     const handler = getToolHandler('draft_nonclinical_summaries_m2_6')!;
     const out = JSON.parse(
-      await handler({
-        studies: [
-          { studyType: 'pharmacology', studyId: 'PD-1', species: 'rat', keyFindings: 'engaged' },
-          { studyType: 'repeat_dose_tox', studyId: 'TX-1', species: 'rat', durationWeeks: 13, noael: '50 mg/kg/day' },
-        ],
-      }),
+      await handler(
+        { studies: [{ studyType: 'repeat_dose_tox', studyId: 'TX-1', species: 'rat', durationWeeks: 13, noael: '50 mg/kg/day' }] },
+        { organizationId: 3, projectId: 9 } as never,
+      ),
     );
-    expect(out.status).toBe('drafted');
-    expect(out.sectionKey).toBe('2.6');
-    expect(Array.isArray(out.tables)).toBe(true);
+    expect(out).toMatchObject({ ok: false, status: 'needs_data', ignoredSuppliedFigures: true });
+    expect(out.tables).toBeUndefined();
   });
 });
 
@@ -242,20 +244,20 @@ describe('assess_nonclinical_program handler', () => {
 });
 
 describe('assess_nonclinical_safety handler', () => {
-  it('rolls up the integrated assessment with a readiness verdict', async () => {
+  it('does not roll typed study figures into a readiness verdict', async () => {
     const handler = getToolHandler('assess_nonclinical_safety')!;
     const out = JSON.parse(
       await handler({
         fih: { speciesNoaels: [{ species: 'dog', noaelMgPerKg: 30 }], mabel: { minAnticipatedEffectiveExposure: 10, exposurePerMgDose: 1 } },
         program: { maxClinicalDurationWeeks: 4, targetPhase: 2 },
         presentStudies: [{ studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 4 }],
-      }),
+      }, { organizationId: 3, projectId: 9 } as never),
     );
-    expect(out.status).toBe('assessed');
-    expect(out.readiness).toBe('gaps_block_fih');
-    expect(out.recommendedStartingDoseMg).toBe(10);
-    expect(out.blockers.length).toBeGreaterThan(0);
-    expect(out.programAssessed).toBe(true);
+    expect(out.status).toBe('needs_data');
+    expect(out.readiness).toBe('not_assessed');
+    expect(out.recommendedStartingDoseMg).toBeUndefined();
+    expect(out.programGaps).toBeNull();
+    expect(out.programAssessed).toBe(false);
   });
 
   it('a dose with no program context is not ready_for_fih, and programGaps is null rather than []', async () => {
@@ -263,10 +265,11 @@ describe('assess_nonclinical_safety handler', () => {
     // as [] — "assessed, no gaps" — when the study battery was never checked.
     const handler = getToolHandler('assess_nonclinical_safety')!;
     const out = JSON.parse(await handler({ drugSubstanceName: 'BX-115', fih: { speciesNoaels: [{ species: 'rat', noaelMgPerKg: 10 }] } }));
-    expect(out.readiness).toBe('insufficient_input');
+    expect(out.readiness).toBe('not_assessed');
+    expect(out.status).toBe('needs_project');
     expect(out.programAssessed).toBe(false);
     expect(out.programGaps).toBeNull();
-    expect(out.summary).toMatch(/study battery was not assessed/);
+    expect(out.recommendedStartingDoseMg).toBeUndefined();
   });
 });
 
@@ -395,7 +398,7 @@ describe('draft_clinical_summary_m2_7 handler', () => {
 // tool result, although their text points at them (M2.7: "… are tabulated
 // below"); the M2.5 handler already returned them. A draft carries the tables
 // its narrative refers to.
-describe('the M2.4 and M2.7 drafts return the tables their text refers to', () => {
+describe('the M2.7 draft returns the tables its text refers to', () => {
   it('M2.7', async () => {
     csrRecords.rows = [
       { studyId: 'X-301', protocolNumber: 'X-301', phase: '3', studyDesign: 'randomized, double-blind', primaryEndpoint: 'ORR',
@@ -413,14 +416,5 @@ describe('the M2.4 and M2.7 drafts return the tables their text refers to', () =
     expect(JSON.stringify(out.tables)).toContain('X-301');
   });
 
-  it('M2.4', async () => {
-    const out = JSON.parse(
-      await getToolHandler('draft_nonclinical_overview_m2_4')!({
-        studies: [{ studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 13, glpCompliant: true, noael: '50 mg/kg/day' }],
-        drugSubstanceName: 'BX-115',
-      }),
-    );
-    expect(out.status).toBe('drafted');
-    expect(Array.isArray(out.tables)).toBe(true);
-  });
+  // M2.4's tables: preclinical/__tests__/nonclinical-m24-adapter.test.ts (Rule 2 audit S2).
 });

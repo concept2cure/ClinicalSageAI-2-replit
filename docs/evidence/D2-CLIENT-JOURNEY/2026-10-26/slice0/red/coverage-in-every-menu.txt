@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·······x·x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Codebase coverage > is not offered to a member or an organisation administrator
+AssertionError: expected [ 'Account', 'Admin', …(9) ] to not include 'Codebase coverage'
+ ❯ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx:168:29
+    166|     mockNav(async () => ok(payload({ platformAdmin: false })));
+    167|     const { menuItems } = await openAccountMenu();
+    168|     expect(menuItems()).not.toContain('Codebase coverage');
+       |                             ^
+    169|   });
+    170|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Codebase coverage > is not offered, even to a platform administrator, when the release locks it
+AssertionError: expected [ 'Account', 'Admin', …(10) ] to not include 'Codebase coverage'
+ ❯ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx:183:29
+    181|     const { menuItems } = await openAccountMenu();
+    182|     expect(menuItems()).toContain('Licensing');
+    183|     expect(menuItems()).not.toContain('Codebase coverage');
+       |                             ^
+    184|   });
+    185| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  02:10:48
+   Duration  4.67s (transform 1.47s, setup 264ms, import 1.73s, tests 1.36s, environment 842ms)
+

@@ -1,0 +1,61 @@
+What the database alone does with a project id the route did not check.
+PostgreSQL 16, a throwaway cluster. fk-probe.sql builds udi_records and labeling_documents from their CREATE TABLE text in
+migrations/20260507_mdx_beta_surfaces.sql and migrations/20260511_qms_and_labeling.sql, and adds the same-organization key
+that migrations/20261013b_qms_inspection_same_org_keys.sql adds to labeling_documents.program_id. All three are on C2C_MIGRATION_FILES.
+regulatory_programs is reduced to the columns the keys read (id, organization_id, deleted_at).
+Organization 7 files one record under each project: its own (aaaa), organization 8's (bbbb), one that does not exist (cccc),
+and its own soft-deleted one (dddd).
+
+psql -q -f fk-probe.sql
+
+-- organization 7 files a UDI record under OWN
+ id |              program_id              
+----+--------------------------------------
+  1 | aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+(1 row)
+
+-- organization 7 files a UDI record under FOREIGN
+ id |              program_id              
+----+--------------------------------------
+  2 | bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+(1 row)
+
+-- organization 7 files a UDI record under MISSING
+psql:fk-probe.sql:75: ERROR:  insert or update on table "udi_records" violates foreign key constraint "udi_records_program_id_fkey"
+-- organization 7 files a UDI record under DELETED
+ id |              program_id              
+----+--------------------------------------
+  4 | dddddddd-dddd-4ddd-8ddd-dddddddddddd
+(1 row)
+
+-- organization 7 files a labeling document under OWN
+ id |              program_id              
+----+--------------------------------------
+  1 | aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+(1 row)
+
+-- organization 7 files a labeling document under FOREIGN
+psql:fk-probe.sql:81: ERROR:  insert or update on table "labeling_documents" violates foreign key constraint "labeling_documents_program_same_org_fk"
+-- organization 7 files a labeling document under MISSING
+psql:fk-probe.sql:83: ERROR:  insert or update on table "labeling_documents" violates foreign key constraint "labeling_documents_program_id_fkey"
+-- organization 7 files a labeling document under DELETED
+ id |              program_id              
+----+--------------------------------------
+  4 | dddddddd-dddd-4ddd-8ddd-dddddddddddd
+(1 row)
+
+-- rows stored
+         t          |              program_id              
+--------------------+--------------------------------------
+ labeling_documents | aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+ labeling_documents | dddddddd-dddd-4ddd-8ddd-dddddddddddd
+ udi_records        | aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+ udi_records        | bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+ udi_records        | dddddddd-dddd-4ddd-8ddd-dddddddddddd
+(5 rows)
+
+
+So, before this change, on a deployed database:
+  udi_records         another organization's project: stored. Missing: refused by udi_records_program_id_fkey (the route answered 500). Deleted: stored.
+  labeling_documents  another organization's project: refused by labeling_documents_program_same_org_fk (500). Missing: refused (500). Deleted: stored.
+  q_submissions       program_id is text with no key; createQSubmission's own check was the only guard.

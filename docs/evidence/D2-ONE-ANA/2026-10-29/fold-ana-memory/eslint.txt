@@ -1,0 +1,29 @@
+ESLint, Parts 1 and 2 (tools/eslint-compare.sh.txt: warnings/errors at HEAD 984913ea5 and now, plain npx eslint --no-ignore)
+server/routes/mdx-ana-memory.ts  head=0w/0e  now=0w/0e
+server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts  head=new  now=0w/0e
+client/src/concept2cure/v2/WhatAnaRemembers.tsx  head=new  now=0w/0e
+client/src/concept2cure/v2/surfaces/ConversationThread.tsx  head=5w/0e  now=5w/0e
+client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx  head=new  now=0w/0e
+client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx  head=new  now=0w/0e
+client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts  head=new  now=0w/0e
+shared/constants/ui-surface-registry.ui-v2.ts  head=1w/0e  now=1w/0e
+shared/constants/ui-surface-registry.ts  head=1w/0e  now=1w/0e
+shared/constants/deferred-capability-inventory.ts  head=0w/0e  now=0w/0e
+shared/constants/__tests__/deferred-capability-inventory.test.ts  head=0w/0e  now=0w/0e
+shared/constants/launch-scope.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/registryModel.ts  head=1w/0e  now=1w/0e
+client/src/concept2cure/v2/surfaceViews.ts  head=0w/0e  now=0w/0e
+scripts/ci/check-ana-surface-context.mjs  head=5w/0e  now=5w/0e
+scripts/ci/check-surface-discoverability.mjs  head=2w/0e  now=2w/0e
+server/middleware/__tests__/launch-scope-api-gate.test.ts  head=1w/0e  now=1w/0e
+server/services/entitlements/__tests__/launch-scope.test.ts  head=0w/0e  now=0w/0e
+tests/mdx-notifications-clinical-routes.test.ts  head=0w/0e  now=0w/0e
+tests/ci/no-ghost-globals.contract.test.ts  head=0w/0e  now=0w/0e
+tests/concept2cure/design-system-surfaces-smoke.test.tsx  head=0w/0e  now=0w/0e
+tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx  head=0w/0e  now=0w/0e
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs  head=14w/0e  now=14w/0e
+client/src/concept2cure/mdx/surfaceIds.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/surfaces/AnaMemory.tsx  head=2w/0e  now=deleted
+client/src/concept2cure/v2/__tests__/anaMemoryNoFixtures.test.tsx  head=0w/0e  now=deleted
+client/src/concept2cure/v2/__tests__/anaMemoryPlainLanguage.test.tsx  head=0w/0e  now=deleted
+No file gains a warning: each count above is the same as at HEAD, or the file is new at 0, or deleted.

@@ -1,0 +1,6 @@
+{
+  "originalReceipt": "initial.json",
+  "result": "16 passed,1 fixture calibration failure, no source drift.",
+  "correction": "The canonical saved-section PATCH expects changeReason, not reason. The400 correctly enforced that guard. Correct test payload; no production change.",
+  "prepatchClaim": false
+}

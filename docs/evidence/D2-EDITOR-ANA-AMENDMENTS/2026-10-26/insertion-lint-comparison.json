@@ -1,0 +1,72 @@
+{
+  "noWarningGrowth": true,
+  "rows": [
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringRemedies.tsx",
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "beforeMetrics": [],
+      "afterMetrics": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringRemedies.test.ts",
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "beforeMetrics": [],
+      "afterMetrics": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringOversight.ts",
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "beforeMetrics": [],
+      "afterMetrics": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/proposalAnchor.ts",
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "beforeMetrics": [],
+      "afterMetrics": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/suggestions.ts",
+      "beforeWarnings": 8,
+      "afterWarnings": 8,
+      "beforeMetrics": [
+        "File has too many lines (1227). Maximum allowed is 500.",
+        "Function 'rememberAcceptedAuthor' has too many parameters (7). Maximum allowed is 5.",
+        "Method 'addProseMirrorPlugins' has too many lines (109). Maximum allowed is 100.",
+        "Method 'appendTransaction' has a complexity of 17. Maximum allowed is 15.",
+        "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "Blocks are nested too deeply (7). Maximum allowed is 4.",
+        "Blocks are nested too deeply (5). Maximum allowed is 4."
+      ],
+      "afterMetrics": [
+        "File has too many lines (1158). Maximum allowed is 500.",
+        "Function 'rememberAcceptedAuthor' has too many parameters (7). Maximum allowed is 5.",
+        "Method 'addProseMirrorPlugins' has too many lines (109). Maximum allowed is 100.",
+        "Method 'appendTransaction' has a complexity of 17. Maximum allowed is 15.",
+        "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "Blocks are nested too deeply (7). Maximum allowed is 4.",
+        "Blocks are nested too deeply (5). Maximum allowed is 4."
+      ]
+    },
+    {
+      "path": "server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts",
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "beforeMetrics": [],
+      "afterMetrics": []
+    },
+    {
+      "path": "shared/authoring/remedies.ts",
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "beforeMetrics": [],
+      "afterMetrics": []
+    }
+  ]
+}

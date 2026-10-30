@@ -8,6 +8,11 @@
  * server/routes/submission-orchestrator.ts sent every error but CsrScopeError
  * to serverError, so the caller's own bad input read as a server failure.
  *
+ * Since Rule 2 audit S1 (2026-10-26) a `ctdProgramId` is refused 400
+ * CTD_PROGRAM_INPUTS_REFUSED outside development, before any loader runs
+ * (orchestrator-inline-run-inputs-refused.test.ts). It is read only on a
+ * development server, so these cases run there.
+ *
  * Harness: orchestrator-module3-governed.test.ts.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -111,6 +116,7 @@ beforeEach(() => {
   h.scope.mockReset().mockResolvedValue({ projectId: 7 });
   h.loadNonclinical.mockReset();
   h.logAction.mockClear();
+  h.isDevelopment = true;
 });
 
 describe('a CTD program outside the organization', () => {
@@ -120,7 +126,7 @@ describe('a CTD program outside the organization', () => {
 
     expect(res.status, `a foreign ctdProgramId answered ${res.status}: ${JSON.stringify(res.body)}`).toBe(422);
     expect(res.body.code).toBe('CTD_PROGRAM_NOT_FOUND');
-    expect(res.body.error).toMatch(/CTD program 77 is not on record/);
+    expect(res.body.error).toMatch(/CTD dossier 77 is not on record/);
     expect(h.runOrchestrator).not.toHaveBeenCalled();
   });
 

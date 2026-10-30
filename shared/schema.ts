@@ -2656,6 +2656,11 @@ export const organizationUsers = pgTable(
     // control stays on `role`. Null = unset.
     persona: text('persona'),
     permissions: json('permissions'),
+    // The QMS approver designation (migrations/20261029f_qms_approver_designation.sql,
+    // decision D-Q of docs/design/REVIEW_ROUTING_2026-10-23.md, RR4): set and
+    // cleared together by server/services/qms/qms-approver-designation.ts only.
+    qmsApproverDesignatedAt: timestamp('qms_approver_designated_at', { withTimezone: true }),
+    qmsApproverDesignatedBy: integer('qms_approver_designated_by'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -7524,6 +7529,36 @@ export type ProjectScheduleRevision = InferSelectModel<typeof projectScheduleRev
 export type InsertProjectScheduleRevision = z.infer<typeof insertProjectScheduleRevisionSchema>;
 
 /**
+ * Review routes (migrations/20261023_review_routes.sql): the header of one
+ * named review-and-approval route on a subject (a Vault version's lifecycle
+ * record, a QMS document, an Authoring document). Its members are
+ * unified_tasks rows carrying review_route_id. The migration owns its
+ * constraints, its indexes and the composite member key; written only by
+ * server/services/review/review-route.ts, read by routeStanding there.
+ */
+export const reviewRoutes = pgTable('review_routes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: integer('organization_id').notNull(),
+  subjectType: text('subject_type').notNull(),
+  subjectId: text('subject_id').notNull(),
+  round: integer('round').notNull(),
+  senderId: integer('sender_id').notNull(),
+  senderName: text('sender_name').notNull(),
+  reviewOrder: text('review_order').notNull(),
+  reviewDueAt: timestamp('review_due_at', { withTimezone: true }),
+  reviewerStepDueAt: timestamp('reviewer_step_due_at', { withTimezone: true }).array(),
+  // Null on an Authoring route that names no approver (RR5, 2026-10-29 note in the migration).
+  approvalDueAt: timestamp('approval_due_at', { withTimezone: true }),
+  contentDigest: text('content_digest').notNull(),
+  status: text('status').default('open').notNull(),
+  statusReason: text('status_reason'),
+  statusBy: integer('status_by'),
+  statusAt: timestamp('status_at', { withTimezone: true }),
+  senderOverdueNotifiedAt: timestamp('sender_overdue_notified_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
  * Unified Tasks Table
  *
  * Central table for managing tasks across ALL modules in the ecosystem.
@@ -7629,6 +7664,19 @@ export const unifiedTasks = pgTable(
     // No FK on deletedBy: the tombstone must outlive the account.
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     deletedBy: integer('deleted_by'),
+
+    // Review route membership (migrations/20261023_review_routes.sql, RR1a of
+    // docs/design/REVIEW_ROUTING_2026-10-23.md). A row with reviewRouteId is a
+    // route member: the person's inbox entry, written only by
+    // server/services/review/review-route.ts. Every generic writer refuses it
+    // (refuseRouteTaskWrite, services/tasking/task-state-machine.ts) and the
+    // database refuses it too (unified_tasks_route_rows_guard).
+    reviewRouteId: uuid('review_route_id'),
+    reviewRole: text('review_role'), // 'reviewer' | 'approver'
+    reviewStep: integer('review_step'),
+    routeSignatureId: integer('route_signature_id'), // electronic_signatures.id
+    routeActId: text('route_act_id'), // c2c_ana_actions id of a return or hand-back
+    routeAuthoringSignatureId: uuid('route_authoring_signature_id'), // authoring_signatures.id (RR5)
   },
   table => ({
     taskIdIdx: index('unified_task_id_idx').on(table.taskId),
@@ -9208,7 +9256,7 @@ export const sharepointIntegrationRelations = relations(sharepointIntegration, (
  *
  * Phase 3 job-state wrapper for server/services/csr-builder.ts.
  * One row per CSR build request, with state transitions tracked here so
- * launchCSRBuild can run asynchronously and survive a worker restart.
+ * a CSR build (launchCSRBuildAsync) runs asynchronously and survives a worker restart.
  *
  * Design doc: docs/reports/CSR_JOB_STATE_SCHEMA_DESIGN_2026-06-28.md
  * Migration:  migrations/20260628_csr_job_state.sql
@@ -9255,6 +9303,13 @@ export const csrBuildJobs = pgTable(
     completedAt: timestamp('completed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+
+    // The retained Submission Center run that grounds the build (2026-10-29,
+    // CSR slice 3). Generated from the snapshot the runner writes at enqueue,
+    // so it cannot disagree with it; NULL when no run is bound.
+    sourceRunId: text('source_run_id').generatedAlwaysAs(
+      sql`(study_info_snapshot -> 'evidenceSource' ->> 'runId')`
+    ),
   },
   table => ({
     // Tenant-first index for status dashboards
@@ -9320,6 +9375,17 @@ export const csrSectionOutputs = pgTable(
     lineage: jsonb('lineage'), // which sources, prior section refs
 
     generatedAt: timestamp('generated_at').defaultNow().notNull(),
+
+    // Per-section review (2026-10-29, CSR slice 3; written only by
+    // server/services/csr/csr-section-review.ts). CHECKs in the SQL migration:
+    // review_status IN ('draft','in_review','approved'); a decided row carries
+    // review_decided_at and reviewed_content_hash. An approval is current only
+    // while reviewed_content_hash equals content_hash.
+    reviewStatus: text('review_status').notNull().default('draft'),
+    reviewerId: integer('reviewer_id').references(() => users.id, { onDelete: 'set null' }),
+    reviewDecidedAt: timestamp('review_decided_at', { withTimezone: true }),
+    reviewReason: text('review_reason'),
+    reviewedContentHash: text('reviewed_content_hash'),
   },
   table => ({
     // Tenant-first index for org-scoped section reads
@@ -18584,40 +18650,57 @@ export const authoringPlans = pgTable(
 
 export type AuthoringPlanRow = InferSelectModel<typeof authoringPlans>;
 
+/** A precedent search's scope hints (PrecedentEngine). */
+export type PrecedentQueryScope = {
+  deviceClass?: string;
+  productCode?: string;
+  pathway?: '510k' | 'pma' | 'cer' | 'de_novo';
+  dateFrom?: string;
+  dateTo?: string;
+  sources?: string[];
+};
+
+/** A Vault saved view's parameters, keyed by the search's own parameter names (P-46). */
+export type VaultSavedViewScope = {
+  v: 1;
+  filters: Partial<Record<'documentType' | 'classification' | 'evidenceKind' | 'folderId' | 'placementStatus' | 'ctdSection' | 'lifecycleStage', string[]>>;
+  includeSuperseded: boolean;
+};
+
 /**
- * Saved precedent queries — user-saved searches over the predicate /
- * precedent intelligence corpus. Each row stores the canonical search
- * params (query string + scope) and the most recent hit count, so the
- * PrecedentSurface "Saved queries" panel renders without re-running the
- * search on every page view. Re-running the search updates hits.
+ * The organisation's saved queries: precedent searches (surface 'precedent',
+ * PrecedentEngine) and Vault saved views (surface 'vault', P-46). A row stores
+ * search parameters only. Constraints and the project key are SQL-only
+ * (migrations/20260505_saved_precedent_queries.sql); see
+ * docs/design/VAULT_SAVED_VIEWS_2026-10-29.md. Every reader predicates on
+ * surface (saved-view-store-predicates.test.ts).
  */
 export const savedPrecedentQueries = pgTable('saved_precedent_queries', {
   id: serial('id').primaryKey(),
   organizationId: integer('organization_id').references(() => organizations.id).notNull(),
-  /** Owner — null for org-shared saved queries. */
+  /** Creator. Precedent: may be null (legacy). Vault: the owner, never null. */
   userId: integer('user_id').references(() => users.id),
-  /** Display label for the query (used in the kit's panel). */
+  surface: text('surface').$type<'precedent' | 'vault'>().default('precedent').notNull(),
+  visibility: text('visibility').$type<'private' | 'org_public'>().default('org_public').notNull(),
+  /** Vault project view: its project. Null: library view, and always for precedent. */
+  programId: uuid('program_id'),
+  /** Display label. */
   label: text('label').notNull(),
-  /** The search query string (free-text). */
+  /** The search text. */
   query: text('query').notNull(),
-  /** Optional scope hints: deviceClass, productCode, dateRange, etc. */
-  scope: json('scope').$type<{
-    deviceClass?: string;
-    productCode?: string;
-    pathway?: '510k' | 'pma' | 'cer' | 'de_novo';
-    dateFrom?: string;
-    dateTo?: string;
-    sources?: string[];
-  } | null>(),
-  /** Cached hit count from the last run; -1 means not yet run. */
+  scope: jsonb('scope').$type<PrecedentQueryScope | VaultSavedViewScope | null>(),
+  /** Precedent only: cached hit count; -1 for every Vault row. */
   hits: integer('hits').default(-1).notNull(),
-  /** When the search was last executed (for the cached hits). */
-  lastRunAt: timestamp('last_run_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  /** Precedent only: when the search last ran. */
+  lastRunAt: timestamp('last_run_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  /** Who last renamed, shared or re-parameterised a Vault view. */
+  updatedBy: integer('updated_by'),
 }, (table) => ({
   orgIdx: index('spq_org_idx').on(table.organizationId),
   userIdx: index('spq_user_idx').on(table.userId),
+  vaultListIdx: index('spq_vault_list_idx').on(table.organizationId, table.surface, table.programId),
 }));
 
 export type SavedPrecedentQuery = InferSelectModel<typeof savedPrecedentQueries>;
@@ -19918,6 +20001,10 @@ export const qmsNonconformingProducts = pgTable(
     dispositionAt:            timestamp('disposition_at', { withTimezone: true }),
     capaLinked:               boolean('capa_linked').default(false),
     metadata:                 jsonb('metadata').default('{}'),
+    // The project the record is filed under; NULL is the organization's
+    // unscoped record. Its same-organization key and project index come from
+    // migrations/20261029d_nonconforming_products_program_key.sql.
+    programId:                uuid('program_id'),
     createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },

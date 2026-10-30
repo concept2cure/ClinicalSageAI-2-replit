@@ -107,7 +107,7 @@ export async function loadApprovedCmcSourcesForProject(
       gate: 'unknown',
       sources: [],
       reason:
-        `This program's Module 3 export gate could not be evaluated, so no Module 3 was carried into the ` +
+        `This project's Module 3 export gate could not be evaluated, so no Module 3 was carried into the ` +
         `package. Nothing is known about its approval state. The failure is in the server log.`,
     };
   }
@@ -118,7 +118,7 @@ export async function loadApprovedCmcSourcesForProject(
       sources: [],
       reason:
         verdict.error ??
-        `This program's Module 3 is not cleared for export, so no Module 3 was carried into the package. ` +
+        `This project's Module 3 is not cleared for export, so no Module 3 was carried into the package. ` +
           `Approve every composed section in the CMC module and clear its findings first.`,
     };
   }
@@ -143,7 +143,7 @@ export async function loadApprovedCmcSourcesForProject(
       gate: 'unknown',
       sources: [],
       reason:
-        `Whether this program's Module 3 is within what this platform composes could not be established, so ` +
+        `Whether this project's Module 3 is within what this platform composes could not be established, so ` +
         `no Module 3 was carried into the package. The failure is in the server log.`,
     };
   }

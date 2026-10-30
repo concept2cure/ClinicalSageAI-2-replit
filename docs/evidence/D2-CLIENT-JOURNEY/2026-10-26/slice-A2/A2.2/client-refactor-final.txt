@@ -1,0 +1,28 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage at all over a FAILED portfolio read 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage while the read is still in flight 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > does render the real figures once the read succeeds 21ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on title and hides the rest 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on the program code 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > does NOT match the lead field, which can hold an email address 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > names the query in the empty state instead of blaming the filters 21ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > filters on the server before paging and can clear the selection 216ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > offers no redundant selector for one active accessible client 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > keeps a way to clear the filter after a failed read and reports the failure 79ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > does not describe an empty filtered read as an organization with no projects 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > performs the same client filter through the existing surface action 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > refuses an action for a client outside the authorized choices 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — summary over a successful empty read > states no mean readiness over zero programs 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a mixed portfolio still has a mean > averages readiness over every program shown 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > says "not measured" on its card, never "0% ready" 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > averages only the programs that were measured 21ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > says the list is the first page, and the count is a floor 84ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > a complete read says nothing extra 25ms
+
+ Test Files  4 passed (4)
+      Tests  19 passed (19)
+   Start at  16:09:08
+   Duration  5.39s (transform 797ms, setup 395ms, import 1.60s, tests 928ms, environment 1.93s)
+

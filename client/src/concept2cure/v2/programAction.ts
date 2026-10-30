@@ -29,22 +29,24 @@
  * shell being mounted.
  *
  * ── One label, one destination ───────────────────────────────────────────────
- * Both are defined once, here. Mission Control is where a program is opened AND
- * where "New program" creates one (surfaces/MissionControl.tsx), so a single
- * destination genuinely serves both halves of the label — which is why the
- * label can be a single sentence rather than a choice the panel makes on the
- * user's behalf. A second copy of either would let two empty panels disagree
- * about what the same action is called or where it goes.
+ * Both are defined once, here. Projects is where a project is opened AND where
+ * "New project" creates one (surfaces/Projects.tsx), so a single destination
+ * genuinely serves both halves of the label — which is why the label can be a
+ * single sentence rather than a choice the panel makes on the user's behalf. A
+ * second copy of either would let two empty panels disagree about what the same
+ * action is called or where it goes. It was Mission Control, which is outside
+ * the release, so every "Choose or create a project" opened a lock (slice 0 of
+ * .design/client-journey/INFORMATION_ARCHITECTURE.md).
  */
 
 /** Dispatched when a panel with no `nav` prop asks for the program picker. */
 export const OPEN_PROGRAM_EVENT = 'c2c:open-program';
 
 /** The single label for this action across the product. */
-export const OPEN_PROGRAM_LABEL = 'Choose or create a program';
+export const OPEN_PROGRAM_LABEL = 'Choose or create a project';
 
-/** The single destination: programs are both opened and created there. */
-export const OPEN_PROGRAM_SURFACE = 'mission-control';
+/** The single destination: projects are both opened and created there. */
+export const OPEN_PROGRAM_SURFACE = 'projects';
 
 /**
  * Ask the shell for the program picker. Used by components too deep to hold a

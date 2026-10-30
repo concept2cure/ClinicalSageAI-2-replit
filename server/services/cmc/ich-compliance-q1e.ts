@@ -367,7 +367,7 @@ function stageExpectation(stage: ProgramStage | null | undefined): {
     return {
       marketing: true,
       shortfall: 'fail',
-      note: 'This program files a marketing application, where Q1E governs the proposed shelf life.',
+      note: 'This project files a marketing application, where Q1E governs the proposed shelf life.',
     };
   }
   if (stage?.application === 'clinical_trial') {
@@ -375,7 +375,7 @@ function stageExpectation(stage: ProgramStage | null | undefined): {
       marketing: false,
       shortfall: 'warning',
       note:
-        'This program files a clinical-trial application, where the stability data must support the duration of the '
+        'This project files a clinical-trial application, where the stability data must support the duration of the '
         + 'proposed study rather than a registered shelf life; a claim beyond the data is a gap to justify, not a Q1E '
         + 'registration failure.',
     };
@@ -384,7 +384,7 @@ function stageExpectation(stage: ProgramStage | null | undefined): {
     marketing: false,
     shortfall: 'warning',
     note:
-      'The program records no application type, so Q1E is judged as a gap to justify rather than a registration '
+      'The project records no application type, so Q1E is judged as a gap to justify rather than a registration '
       + 'failure; record the application type to be judged at the right standard.',
   };
 }
@@ -398,9 +398,9 @@ function stageExpectation(stage: ProgramStage | null | undefined): {
 function stageNote(inp: ProjectInputs, fallback: string): string {
   const blocked = blockedInputs(inp, ['stage']);
   if (inp.stage || blocked.length === 0) return fallback;
-  return `The program's application type could not be read (${blocked.map((b) => b.reason).join('; ')}), `
+  return `The project's application type could not be read (${blocked.map((b) => b.reason).join('; ')}), `
     + 'so Q1E is judged as a gap to justify rather than a registration failure. This is not a finding that the '
-    + 'program records no type: the check could not read one.';
+    + 'project records no type: the check could not read one.';
 }
 
 /**
@@ -623,7 +623,7 @@ function judgeScope(
   const governs = stage?.application === 'marketing'
     ? ''
     : ' Q1E itself governs a registration application\u2019s proposed shelf life; what is measured here is the'
-      + ' claim against the data on file, which for this program supports the duration of the proposed study'
+      + ' claim against the data on file, which for this project supports the duration of the proposed study'
       + ' (21 CFR 312.23(a)(7)(ii)).';
   return [q1e(
     'Q1E_CLAIM_WITHIN_DATA',

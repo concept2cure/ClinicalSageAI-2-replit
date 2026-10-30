@@ -49,6 +49,9 @@ import {
 import type { CSRSummaryInput } from '../m2-summary-builders';
 import type { CSRSection } from '../csr-builder';
 import { resolveCsrScope } from './project-scope';
+import { currentPivotalDeclarations } from './study-pivotal-declaration';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable';
+import { nctNumberOf } from '../../../shared/csr-source-input';
 
 /**
  * Shape of the `studyInfoSnapshot` JSONB column on `csr_build_jobs`. Mirrors
@@ -70,6 +73,7 @@ interface StudyInfoSnapshot {
     sampleSize?: number;
     treatmentDuration?: string;
     targetAgencies?: string[];
+    nctNumber?: string;
   };
   deepResearchJobId?: number;
 }
@@ -80,7 +84,7 @@ interface StudyInfoSnapshot {
  */
 function readStudyInfo(raw: unknown): Required<Pick<NonNullable<StudyInfoSnapshot['studyInfo']>,
   'protocolNumber' | 'phase' | 'studyDesign' | 'primaryEndpoint'
->> & { sampleSize?: number } {
+>> & { sampleSize?: number; nctNumber: string | null } {
   const snap = (raw && typeof raw === 'object' ? raw : {}) as StudyInfoSnapshot;
   const info = snap.studyInfo ?? {};
   return {
@@ -89,6 +93,7 @@ function readStudyInfo(raw: unknown): Required<Pick<NonNullable<StudyInfoSnapsho
     studyDesign: info.studyDesign ?? '',
     primaryEndpoint: info.primaryEndpoint ?? '',
     sampleSize: typeof info.sampleSize === 'number' ? info.sampleSize : undefined,
+    nctNumber: nctNumberOf(info),
   };
 }
 
@@ -104,6 +109,8 @@ function rowToCSRSection(row: CsrSectionOutput): CSRSection {
     title: '', // Title is intentionally not denormalized in csr_section_outputs; downstream uses sectionNumber.
     required: true,
     description: '',
+    // A saved job output is a model-drafted heading; manual headings are never job outputs.
+    draftingMode: 'narrative',
     content: row.content,
     status: 'drafted',
   };
@@ -166,6 +173,10 @@ export async function loadCsrInputsForProject(
     return [];
   }
 
+  // Whether each study is pivotal is the sponsor's declaration, never its
+  // phase (study-pivotal-declaration.ts, founder's decision of 2026-10-29).
+  const declared = await currentPivotalDeclarations(queryableFromDrizzle(db), orgId, projectId);
+
   // ── Step 2: load per-job sections (tenant-scoped at the row level too) ──
   const inputs: CSRSummaryInput[] = [];
   for (const job of jobs) {
@@ -201,8 +212,15 @@ export async function loadCsrInputsForProject(
       primaryEndpoint: info.primaryEndpoint,
       primaryResult,
       // Unknown stays unknown: `?? 0` printed "n=0" into the Clinical Overview
-      // for a study whose size was simply never recorded.
-      sampleSize: info.sampleSize ?? null,
+      // for a study whose size was simply never recorded. And the build
+      // request's sampleSize is the PLANNED size (CSRBuildRequest.studyInfo):
+      // until 2026-10-29 it was passed as enrolled, so Module 2 wrote "600
+      // subjects enrolled" from a plan and counted it as exposure. Enrolled is
+      // not recorded here; the plan travels as itself.
+      sampleSize: null,
+      plannedSampleSize: info.sampleSize ?? null,
+      pivotal: declared.get(job.studyId)?.pivotal ?? null,
+      nctNumber: info.nctNumber,
       csrSections: sections,
     });
   }

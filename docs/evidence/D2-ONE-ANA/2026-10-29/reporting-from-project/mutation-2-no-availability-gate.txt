@@ -1,0 +1,12 @@
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx
+# trimmed: per-test results, failure headlines, the failing assertion's line, and the summary (DOM dumps removed)
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > the project header offers it, named for the job and the place 401ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > opens Reporting & analytics on this project, not on the organisation 155ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered when Reporting & analytics is not in this release 176ms
+   → expected <button type="button" …(2)>…(1)</button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered with no project open 12ms
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered when Reporting & analytics is not in this release
+AssertionError: expected <button type="button" …(2)>…(1)</button> to be null
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx:130:58
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)

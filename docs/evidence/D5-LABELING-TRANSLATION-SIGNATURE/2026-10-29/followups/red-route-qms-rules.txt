@@ -1,0 +1,93 @@
+Red, second round: the PGlite route test rewritten for the five QMS-pattern rules, run against the code as the first round left it
+(migration 20261029b in the set; mdx-labeling-approvals.ts before this round).
+npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts  (timeout 240)
+
+ ✓ the migration > is in the set after the tables it alters and before the tenant sweep
+ ✓ the migration > adds the approval stamp and the creators, nullable, keyed to users
+ ✓ 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to approved with no signature: 400, and the document is unchanged
+ ✓ 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to effective with no signature: 400, and the document is unchanged
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to superseded with no signature: 400, and the document is unchanged
+ ✓ 1. a labeling document moves to approved, effective or superseded only by a signature > a create as approved: 428, and nothing is inserted
+ ✓ 1. a labeling document moves to approved, effective or superseded only by a signature > a create as effective: 428, and nothing is inserted
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a create as superseded: 428, and nothing is inserted
+ ✓ 1. a labeling document moves to approved, effective or superseded only by a signature > a signed approval of a document in review records the signer as approver, with the ledger pair and the signature row
+ ✓ 1. a labeling document moves to approved, effective or superseded only by a signature > a signed move to effective keeps the approval it carries, and stamps the date it takes effect
+ ✓ 1. a labeling document moves to approved, effective or superseded only by a signature > a document approved before its approver was recorded, made effective today: the signer is recorded
+ ✓ 1. a labeling document moves to approved, effective or superseded only by a signature > a signed move that also edits the document: 400, the signature covers the document as it stands
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from draft: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from approved: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from effective: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from superseded: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from draft: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from review: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from effective: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed superseded from superseded: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a translation pending cannot be approved: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a translation in_progress cannot be approved: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a translation rejected cannot be approved: 409, in words, and nothing is signed
+ ✓ 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a create records who added the document and the translation
+ ✓ 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the translation's creator signing its approval: 403, and it stays in review
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a colleague of the creator approves it, and the two-person rule is recorded as enforced
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a translation that records no creator is approved, and the ledger and signature say the rule did not apply
+ ✓ 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the document's creator signing it approved: 403, and nothing is signed
+ ✓ 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the document's creator signing it effective: 403, and nothing is signed
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a document with no recorded creator is signed approved, recorded as not applicable
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a document with no recorded creator is signed effective, recorded as not applicable
+ × superseding a document is its retirement: signed, with the QMS meaning > signed APPROVED: superseded, the approval and effective date kept, no two-person rule
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning approval: 400 before the password, and nothing changes
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning responsibility: 400 before the password, and nothing changes
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning review: 400 before the password, and nothing changes
+ ✓ 3. an approval never outlives what it signed > editing an approved translation (language): 409, and it stays as signed
+ ✓ 3. an approval never outlives what it signed > editing an approved translation (translator): 409, and it stays as signed
+ ✓ 3. an approval never outlives what it signed > editing an approved translation (method): 409, and it stays as signed
+ × 3. an approval never outlives what it signed > moving an approved translation back with no reason: 400, it stays approved, and no ledger row is written
+ × 3. an approval never outlives what it signed > moving it back with a reason withdraws the approval: no stamp is left, and a transition ledger row records why
+ ✓ 3. an approval never outlives what it signed > a translation not yet approved can still be edited and moved, with no reason and no ledger row
+ ✓ 3. an approval never outlives what it signed > editing a approved document: 409, and it stays as signed
+ ✓ 3. an approval never outlives what it signed > editing a effective document: 409, and it stays as signed
+ ✓ 3. an approval never outlives what it signed > editing a superseded document: 409, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a approved document back to draft with no reason: 400, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a effective document back to draft with no reason: 400, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a superseded document back to draft with no reason: 400, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a approved document back to draft with a reason withdraws its approval (effective date kept: 2026-10-02), with a ledger row
+ × 3. an approval never outlives what it signed > moving a approved document back to review with a reason withdraws its approval (effective date kept: 2026-10-02), with a ledger row
+ × 3. an approval never outlives what it signed > moving a effective document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row
+ × 3. an approval never outlives what it signed > moving a effective document back to review with a reason withdraws its approval (effective date kept: null), with a ledger row
+ × 3. an approval never outlives what it signed > moving a superseded document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row
+ ✓ 3. an approval never outlives what it signed > a draft can still be edited and sent for review, with no reason and no ledger row
+ ✓ 3. an approval never outlives what it signed > an edit or a move of a document the organization does not hold is still a 404
+
+Why each red is red (vitest's first line per failure):
+   → expected { status: 'superseded', …(5) } to match object { status: 'review', approved_by: null }
+   → expected [ { id: 5 } ] to deeply equal []
+   → expected 201 to be 409 // Object.is equality
+   → expected 'LABELING_DOCUMENT_ALREADY_SIGNED' to be 'LABELING_DOCUMENT_NOT_IN_REVIEW' // Object.is equality
+   → expected 'LABELING_DOCUMENT_ALREADY_SIGNED' to be 'LABELING_DOCUMENT_NOT_IN_REVIEW' // Object.is equality
+   → expected 201 to be 409 // Object.is equality
+   → expected 201 to be 409 // Object.is equality
+   → expected 201 to be 409 // Object.is equality
+   → expected 'LABELING_DOCUMENT_ALREADY_SIGNED' to be 'LABELING_DOCUMENT_NOT_APPROVED' // Object.is equality
+   → expected 200 to be 409 // Object.is equality
+   → expected 201 to be 409 // Object.is equality
+   → expected 201 to be 409 // Object.is equality
+   → expected 201 to be 409 // Object.is equality
+   → expected { translationId: 6, …(6) } to match object { twoPersonRule: 'enforced', …(1) }
+   → expected 409 to be 201 // Object.is equality
+   → expected 409 to be 201 // Object.is equality
+   → expected 409 to be 201 // Object.is equality
+   → expected 200 to be 201 // Object.is equality
+   → expected 200 to be 400 // Object.is equality
+   → expected 200 to be 400 // Object.is equality
+   → expected 200 to be 400 // Object.is equality
+   → expected 200 to be 400 // Object.is equality
+   → expected [] to deeply equal [ { kind: 'ledger', …(4) } ]
+   → expected 200 to be 400 // Object.is equality
+   → expected 200 to be 400 // Object.is equality
+   → expected 200 to be 400 // Object.is equality
+   → expected [] to deeply equal [ { kind: 'ledger', …(4) } ]
+   → expected [] to deeply equal [ { kind: 'ledger', …(4) } ]
+   → expected [] to deeply equal [ { kind: 'ledger', …(4) } ]
+   → expected [] to deeply equal [ { kind: 'ledger', …(4) } ]
+   → expected { status: 'draft', …(5) } to match object { status: 'draft', …(3) }
+
+Tests  31 failed | 23 passed (54)

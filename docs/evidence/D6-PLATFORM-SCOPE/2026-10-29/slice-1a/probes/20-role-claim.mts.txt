@@ -1,0 +1,84 @@
+/**
+ * P-72 slice 1a, part 2: what a request's role string reaches at the database, through the SERVER'S OWN scope code
+ * (tenantStore.runWithTenantScope + the instrumented pool, and establishRequestTenantScope with its lazy request
+ * client), as the runtime role app_service with RLS_ENFORCE=on, on a two-tenant copy (A = p72-a, B = p72-b).
+ * Every write is undone at the end by the owner connection, so the copy can be re-used.
+ * Env: APP_DATABASE_URL (app_service), DATABASE_URL (the owner), RLS_ENFORCE=on.
+ */
+import { EventEmitter } from 'node:events';
+const REPO = process.env.REPO ?? '/home/user/ClinicalSageAI-2-replit';
+const pg = (await import('/home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/index.js')).default;
+const S = `${REPO}/server`;
+const { getPool } = await import(`${S}/db/runtime.ts`);
+await import(`${S}/db.ts`); // installs the pool instrumentation, as the server does
+const { runWithTenantScope } = await import(`${S}/db/tenantStore.ts`);
+const { establishRequestTenantScope } = await import(`${S}/middleware/establishRequestTenantScope.ts`);
+const owner = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+const [A, B] = (await owner.query(`SELECT id, uuid::text uuid FROM organizations WHERE slug IN ('p72-a','p72-b') ORDER BY slug`)).rows;
+const adminA = (await owner.query(`SELECT user_id FROM organization_users WHERE organization_id = $1 ORDER BY user_id LIMIT 1`, [A.id])).rows[0].user_id;
+const before = (await owner.query(`SELECT role FROM organization_users WHERE organization_id = $1 AND user_id = $2`, [A.id, adminA])).rows[0].role;
+
+const READS = [
+  ['B unified_tasks', `SELECT count(*)::int n FROM unified_tasks WHERE organization_id = ${B.id}`],
+  ['B audit_logs', `SELECT count(*)::int n FROM audit_logs WHERE tenant_id = ${B.id}`],
+  ['B users', `SELECT count(*)::int n FROM users u JOIN organization_users ou ON ou.user_id = u.id WHERE ou.organization_id = ${B.id}`],
+  ['B vault.legal_holds', `SELECT count(*)::int n FROM vault.legal_holds WHERE organization_id = ${B.id}`],
+] as const;
+const WRITES = [
+  ['UPDATE B unified_tasks', `UPDATE unified_tasks SET updated_at = updated_at WHERE organization_id = ${B.id}`],
+  ['A membership := app_super_admin', `UPDATE organization_users SET role = 'app_super_admin' WHERE organization_id = ${A.id} AND user_id = ${adminA}`],
+] as const;
+
+async function battery(q: (sql: string) => Promise<any>) {
+  const out: Record<string, string | number> = {};
+  for (const [k, sql] of READS) {
+    try { out[k] = (await q(sql)).rows[0].n; } catch (e: any) { out[k] = `ERR ${String(e.message).slice(0, 110)}`; }
+  }
+  for (const [k, sql] of WRITES) {
+    try { out[k] = `rowCount ${(await q(sql)).rowCount}`; } catch (e: any) { out[k] = `ERR ${String(e.message).slice(0, 110)}`; }
+  }
+  return out;
+}
+async function restore() {
+  await owner.query(`UPDATE organization_users SET role = $3 WHERE organization_id = $1 AND user_id = $2`, [A.id, adminA, before]);
+}
+
+const results: Record<string, unknown> = {};
+for (const role of ['app_super_admin', 'admin']) {
+  // (1) runWithTenantScope + the instrumented pool: what vault-ingest, moduleIntegrationRoutes, the MCP runtime and
+  // authoring.router.ts:8276 do with a request's role.
+  try {
+    results[`runWithTenantScope tenant A, role ${role}`] = await runWithTenantScope(
+      { tenantId: String(A.id), orgUuid: A.uuid, role, source: 'request', caller: 'p72-s1a:role-claim' },
+      () => battery((sql) => getPool().query(sql)),
+    );
+  } catch (e: any) {
+    results[`runWithTenantScope tenant A, role ${role}`] = `REFUSED before any statement: ${e.message}`;
+  }
+  await restore();
+
+  // (2) establishRequestTenantScope, the per-user request scope every authenticated /api request opens.
+  const req: any = { user: { organizationId: A.id, organizationUuid: A.uuid, role, userId: adminA, id: adminA }, method: 'GET', originalUrl: '/api/p72-probe', baseUrl: '', path: '/api/p72-probe', url: '/api/p72-probe', headers: {} };
+  const res: any = Object.assign(new EventEmitter(), { statusCode: 200, body: undefined as unknown, headersSent: false,
+    status(c: number) { this.statusCode = c; return this; }, json(b: unknown) { this.body = b; this.headersSent = true; this.emit('finish'); return this; } });
+  let nextRan = false;
+  const viaRequest = await new Promise<unknown>((resolve) => {
+    try {
+      establishRequestTenantScope(req, res, async () => {
+        nextRan = true;
+        const viaPool = await battery((sql) => getPool().query(sql));
+        await restore();
+        const viaRequestClient = await battery((sql) => req.dbClient.query(sql));
+        res.emit('finish');
+        resolve({ viaPool, viaRequestClient });
+      });
+      if (!nextRan) setImmediate(() => { if (!nextRan) resolve({ nextRan: false, status: res.statusCode, body: res.body }); });
+    } catch (e: any) { resolve(`THREW: ${e.message}`); }
+  });
+  results[`establishRequestTenantScope tenant A, role ${role}`] = viaRequest;
+  await restore();
+}
+console.log(JSON.stringify({ A: A.id, B: B.id, adminA, membershipRoleBefore: before, results }, null, 2));
+await owner.end();
+await getPool().end().catch(() => undefined);
+process.exit(0);

@@ -1,0 +1,46 @@
+# Item 4 applied: each path the two tests judge, its verdict now, and its caller.
+# Callers come from the walk ci:launch-scope-api runs (scripts/ci/check-launch-scope-api.ts) over the
+# working tree on 2026-10-29, confirmed by grepping client/src (tests excluded). "no caller" means no
+# client file outside tests names the path; comments are not calls.
+
+## launch-scope-api-gate.test.ts: stale "refused" cases moved to served (an admitted Projects feature's screen calls them, 62a8d5e7)
+served  /api/mdx/risk-items/1                    risk                      v2/surfaces/Risk.tsx (/api/mdx/risk-items)
+served  /API/mdx/risk-items/1, /api/mdx/Risk-Items/1  risk (any letter case)
+served  /api/mdx/clinical-studies                device-clinical-studies   mdx/hooks/useClinicalStudies.ts
+served  /api/mdx/labeling/documents              labeling                  v2/surfaces/Labeling.tsx calls /api/mdx/labeling, /:id/symbols, /:id/translations; the server answers this as GET /labeling/:id
+served  /api/mdx/vault, /api/mdx/vault/7/versions  device-vault            mdx/hooks/useVault.ts
+served  /api/510k/estar/official, /build         device-510k, pma, diagnostics  mdx/hooks/useEstarExport.ts (official eSTAR panel, 8c87144f)
+served  /api/mdx/qms/Suppliers                   quality                   quality/QmsRecords.tsx (admitted by P-48, dc9e22a1, 2026-10-29; the stale
+                                                                           example was hidden at head because the case already failed on risk-items)
+
+## launch-scope-api-gate.test.ts: refused, now true again
+refused /api/mdx/gateways                        no caller (gatewayLabels.ts and GatewayTransmittals.tsx name it only in comments)
+refused /api/mdx/gateways/fda/esg/transmit       no caller (the package transmit, refused by F12/LX-13 on 2026-10-17)
+refused /api/mdx/gateways/transmit-independence  no caller
+refused /api/programs/7/predicate-intel/defense-packet/build, /predicate-intel/render/job-1/download,
+        /se-matrix/render, /rtm/csv              no caller under /api/programs at all -> LAUNCH_EXCLUDED_API (HIDDEN APP)
+refused /api/mdx/imports, /ldt, /ivd, /risk-summary, /work-packages   no caller (new examples of the kit's other routes)
+refused /api/mdx/rbm-kris                        hidden 'rbm' only (v2/surfaces/RbmSurfacesA.tsx via rbmWrites.tsx)
+refused /api/mdx/qms/Readiness                   LAUNCH_EXCLUDED_API, DEAD (replaces the P-48-admitted Suppliers in the letter-case case)
+
+## launch-reproof-narrowing.test.ts: the 24 red cases (12 paths, each in two cases)
+served  /api/mdx/vault                           device-vault                    mdx/hooks/useVault.ts            -> moved to STILL_SERVED
+served  /api/submission-ops/blockers             device-validation, -submission  mdx/hooks/useWorkbench.ts        -> moved to STILL_SERVED
+refused /api/submission-ops/approval-bottlenecks no caller
+refused /api/submission-ops/automation           no caller
+refused /api/submission-ops/command-center       no caller
+refused /api/submission-ops/digests              no caller
+refused /api/submission-ops/due-soon             no caller
+refused /api/submission-ops/hotspots             no caller
+refused /api/submission-ops/policies             no caller
+refused /api/submission-ops/sections             no caller
+refused /api/submission-ops/unified-work         no caller
+refused /api/submission-ops/workload             no caller (TasksSurface, its last reader, was folded into Tasks in 2168fd56)
+added   /api/programs                            no caller; listed with its finding so LAUNCH_EXCLUDED_API stays honest
+
+## Left as they are (condition 5): served at launch through admitted features' claims
+/api/manufacturing  claimed by device-workstream, device-diagnostics. No client file names it. Served with no caller.
+/api/ivdr           claimed by device-workstream, device-diagnostics. Called by device-diagnostics: mdx/hooks/useIvd.ts
+                    (/api/ivdr/clinical-evidence, /api/ivdr/gspr-checklist/:id/matrix, /api/ivdr/validations).
+/api/cer            claimed by device-cer, device-workstream. No client file names /api/cer/... (the CER screen calls
+                    /api/cerv2 and /api/cerv2-sections). Served with no caller.

@@ -33,7 +33,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // The palette reads the signed-in user for one thing only: whether the viewer
 // is an org admin, which decides the unlock panel's next step. A plain member,
 // like the rail suite, so the tier branch under test is unambiguous — it offers
-// "View plans" to every role.
+// "Compare subscriptions" to every role.
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({
     user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['member'] },
@@ -74,7 +74,7 @@ function payload(over: Partial<NavEntitlementsPayload> = {}): NavEntitlementsPay
 
 const LOCKED_SUBMISSION = {
   id: 'submission-center',
-  label: 'Submission center',
+  label: 'Submission Center',
   entitled: false,
   source: 'tier' as const,
   requiredTier: 'professional',
@@ -157,11 +157,11 @@ describe('⌘K licence gating', () => {
     expect(lockedRows()).toHaveLength(0);
     // The very destination contract 2 locks: with no answer it is an ordinary
     // result that goes where it says it goes.
-    const btn = screen.getByRole('button', { name: /^Submission center/ });
+    const btn = screen.getByRole('button', { name: /^Submission Center/ });
     expect(btn.getAttribute('data-locked')).toBeNull();
     fireEvent.click(btn);
     expect(onNav).toHaveBeenCalledWith('submission-center');
-    expect(screen.queryByRole('dialog', { name: /Submission center/ })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: /Submission Center/ })).toBeNull();
   });
 
   it('renders no lock when the server answers resolved:false', async () => {
@@ -172,7 +172,7 @@ describe('⌘K licence gating', () => {
     search('submission');
 
     expect(lockedRows()).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: /^Submission center/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Submission Center/ }));
     expect(onNav).toHaveBeenCalledWith('submission-center');
   });
 
@@ -188,7 +188,7 @@ describe('⌘K licence gating', () => {
     search('submission');
 
     const btn = await screen.findByRole('button', {
-      name: 'Submission center — not included in your plan',
+      name: 'Submission Center — not included in your subscription',
     });
     expect(btn.getAttribute('data-locked')).toBe('true');
     // Exactly one result is locked — the verdict is not smeared onto the other
@@ -196,9 +196,9 @@ describe('⌘K licence gating', () => {
     expect(lockedRows()).toEqual([btn]);
     // The reason is visible on the row itself, not only in the accessible name:
     // the hint column carries it where the domain group would otherwise sit.
-    expect(btn.querySelector('.hint')?.textContent).toBe('not included in your plan');
+    expect(btn.querySelector('.hint')?.textContent).toBe('not included in your subscription');
     // Hover and screen reader are told the same sentence.
-    expect(btn.getAttribute('title')).toBe('Submission center — not included in your plan');
+    expect(btn.getAttribute('title')).toBe('Submission Center — not included in your subscription');
 
     fireEvent.click(btn);
     expect(onNav).not.toHaveBeenCalled();
@@ -215,18 +215,18 @@ describe('⌘K licence gating', () => {
     search('submission');
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Submission center — not included in your plan' }),
+      screen.getByRole('button', { name: 'Submission Center — not included in your subscription' }),
     );
 
     const dialog = await screen.findByRole('dialog');
     // The palette itself is gone: its search field no longer exists.
     expect(screen.queryByRole('textbox')).toBeNull();
-    expect(within(dialog).getByText('Submission center')).toBeTruthy();
+    expect(within(dialog).getByText('Submission Center')).toBeTruthy();
     // The minimum tier is named, and it is the tier the SERVER returned.
     expect(within(dialog).getByText('Included from Professional')).toBeTruthy();
-    expect(dialog.textContent).toMatch(/Professional plan/);
+    expect(dialog.textContent).toMatch(/Professional subscription/);
 
-    fireEvent.click(within(dialog).getByRole('button', { name: 'View plans' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Compare subscriptions' }));
     expect(onNav).toHaveBeenCalledWith('licensing');
   });
 
@@ -259,7 +259,7 @@ describe('⌘K licence gating', () => {
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(onNav).not.toHaveBeenCalled();
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText('Submission center')).toBeTruthy();
+    expect(within(dialog).getByText('Submission Center')).toBeTruthy();
   });
 
   /* CONTRACT 5 — AN ENTITLED SURFACE IS UNTOUCHED.
@@ -279,7 +279,7 @@ describe('⌘K licence gating', () => {
     const { onNav } = await mountCmdK();
     search('submission');
 
-    const btn = screen.getByRole('button', { name: /^Submission center/ });
+    const btn = screen.getByRole('button', { name: /^Submission Center/ });
     expect(btn.getAttribute('data-locked')).toBeNull();
     expect(lockedRows()).toHaveLength(0);
     fireEvent.click(btn);
@@ -312,17 +312,19 @@ describe('⌘K licence gating', () => {
     expect(lockedRows()).toHaveLength(0);
     search('submission');
     expect(lockedRows()).toHaveLength(0);
-    expect(document.body.textContent).not.toMatch(/not included in your plan/);
-    fireEvent.click(screen.getByRole('button', { name: /^Submission center/ }));
+    expect(document.body.textContent).not.toMatch(/not included in your subscription/);
+    fireEvent.click(screen.getByRole('button', { name: /^Submission Center/ }));
     expect(onNav).toHaveBeenCalledWith('submission-center');
   });
 
   /* CONTRACT 7 — THE DEFAULT LIST GATES TOO, AND AN UNKNOWN ID NEVER LOCKS.
      Two rules in one mount because they need the same payload. The empty-query
      "Jump to" list is a separate code path from a search hit and was equally
-     ungated. And Workflows carries no catalog row on purpose — absent
-     from the payload must mean unconditionally available, which is what keeps
-     the surface that RESOLVES a lock reachable from a locked palette. */
+     ungated. And a destination with no catalog row (Home, which the shell
+     synthesises) must read as unconditionally available: absent from the
+     payload is never a lock. (Until 2026-10-26 this used Plan & features, then
+     in "Jump to"; "Jump to" lists the places now, and Plan & features is an
+     administrator's account-menu entry, slice 0 of the placement map.) */
   it('gates the default list without ever locking a surface the catalog has no row for', async () => {
     mockNav(async () =>
       ok(
@@ -343,11 +345,11 @@ describe('⌘K licence gating', () => {
     // An admin switched it off; the reason is that, not a plan gap.
     expect(locked.querySelector('.hint')?.textContent).toBe('turned off for this workspace');
 
-    const apps = screen.getByRole('button', { name: /^Workflows/ });
-    expect(apps.getAttribute('data-locked')).toBeNull();
-    expect(apps.getAttribute('aria-label')).toBeNull();
-    fireEvent.click(apps);
-    expect(onNav).toHaveBeenCalledWith('apps');
+    const home = screen.getByRole('button', { name: /^Home/ });
+    expect(home.getAttribute('data-locked')).toBeNull();
+    expect(home.getAttribute('aria-label')).toBeNull();
+    fireEvent.click(home);
+    expect(onNav).toHaveBeenCalledWith('home');
   });
 
   /* CONTRACT 8 — THE REASON IN THE ACCESSIBLE NAME IS THE REAL ONE.
@@ -357,7 +359,7 @@ describe('⌘K licence gating', () => {
      would buy something that changes nothing. Each source must reach the name,
      and the hint, as itself. */
   it.each([
-    ['tier' as const, 'not included in your plan'],
+    ['tier' as const, 'not included in your subscription'],
     ['disabled' as const, 'turned off for this workspace'],
     ['industry' as const, 'not offered for this workspace'],
   ])('states the real reason for a %s lock', async (source, reason) => {
@@ -366,8 +368,8 @@ describe('⌘K licence gating', () => {
     search('submission');
 
     expect(lockedRows()).toHaveLength(1);
-    const btn = screen.getByRole('button', { name: `Submission center — ${reason}` });
-    expect(btn.getAttribute('title')).toBe(`Submission center — ${reason}`);
+    const btn = screen.getByRole('button', { name: `Submission Center — ${reason}` });
+    expect(btn.getAttribute('title')).toBe(`Submission Center — ${reason}`);
     expect(btn.querySelector('.hint')?.textContent).toBe(reason);
   });
 });

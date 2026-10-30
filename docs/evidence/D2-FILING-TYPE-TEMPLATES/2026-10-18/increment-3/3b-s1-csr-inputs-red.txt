@@ -1,0 +1,20 @@
+3b Slice 1 red, on 8973d9f46 (trunk) before the fix: server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts against a pglite database, the loader and the CSR scope not mocked.
+ × server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a v2 project (a program uuid in projectRef) is composed from 13ms
+ × server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a numeric open project is composed from, with the actor passed to the CSR scope 1525ms
+ × server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > another project named while one is open is refused, never read 6ms
+ × server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a project with no completed CSR says so 4ms
+ × server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a person who is not a member is refused as such, not as a missing project and not by a throw 4ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > no open project and none named asks for one 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { ok: false, …(3) } to match object { ok: true, projectId: 11 }
+CsrScopeError: Current project access could not be established for the CSR actor.
+Serialized Error: { code: 'CSR_PROJECT_ACCESS_DENIED', status: 403 }
+CsrScopeError: Current project access could not be established for the CSR actor.
+Serialized Error: { code: 'CSR_PROJECT_ACCESS_DENIED', status: 403 }
+CsrScopeError: Current project access could not be established for the CSR actor.
+Serialized Error: { code: 'CSR_PROJECT_ACCESS_DENIED', status: 403 }
+CsrScopeError: Current project access could not be established for the CSR actor.
+Serialized Error: { code: 'CSR_PROJECT_ACCESS_DENIED', status: 403 }
+      Tests  5 failed | 1 passed (6)
+
+And the completeness case (m2-summary-builders.test.ts), red on the same commit: expected 83 to be 67 — a caller-written rationale raised 2.5 completeness.

@@ -1,0 +1,13 @@
+Baseline at head (bbe7971e; the files below did not change through ceea6843), one file at a time under timeout 240, before any change.
+server/routes/__tests__/human-factors-read.test.ts | Test Files 1 passed (1) | Tests 4 passed (4)
+server/routes/__tests__/human-factors-files-read.test.ts | Test Files 1 passed (1) | Tests 7 passed (7)
+server/routes/__tests__/human-factors-write.test.ts | Test Files 1 passed (1) | Tests 6 passed (6)
+server/routes/__tests__/human-factors-governed-writes.test.ts | Test Files 1 passed (1) | Tests 11 passed (11)
+server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts | Test Files 1 passed (1) | Tests 4 passed (4)
+server/services/regulatory/__tests__/human-factors.test.ts | Test Files 1 passed (1) | Tests 7 passed (7)
+client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx | Test Files 1 passed (1) | Tests 9 passed (9)
+client/src/concept2cure/v2/__tests__/humanFactorsHonesty.test.tsx | Test Files 1 passed (1) | Tests 8 passed (8)
+client/src/concept2cure/v2/__tests__/humanFactorsSummativeGate.test.tsx | Test Files 1 passed (1) | Tests 7 passed (7)
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx | Test Files 1 passed (1) | Tests 26 passed (26)
+client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx | Test Files 1 passed (1) | Tests 53 passed (53)
+client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx | Test Files 1 passed (1) | Tests 28 passed (28)

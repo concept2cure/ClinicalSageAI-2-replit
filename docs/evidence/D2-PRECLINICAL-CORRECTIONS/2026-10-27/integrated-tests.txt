@@ -1,0 +1,1762 @@
+
+ RUN  v4.1.7 /workspace/scratch/dd8ef47af5ed/concept2cure-v2-audit
+
+stdout | server/routes/__tests__/preclinical-upload-guards.test.ts
+{
+  "timestamp": "2026-10-27T17:13:43.736Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-27T17:13:43.740Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-upload-guards.test.ts
+{
+  "timestamp": "2026-10-27T17:13:43.740Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/preclinical-upload-guards.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses bytes that are not a PDF under a PDF declaration (the shared byte check)
+{
+  "timestamp": "2026-10-27T17:13:45.709Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "study.pdf",
+    "declaredMime": "application/pdf",
+    "reason": "not a PDF (no %PDF prefix)"
+  }
+}
+
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses a body over the size limit with 413 instead of buffering it 1526ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses an executable named file whatever type it declares (415) 26ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses a declared type this route does not read (415, not a silent "no file") 22ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses bytes that are not a PDF under a PDF declaration (the shared byte check) 31ms
+stderr | server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > control: a real PDF passes the guard and reaches ingestStudy
+{
+  "timestamp": "2026-10-27T17:13:45.772Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > control: a real PDF passes the guard and reaches ingestStudy
+{
+  "timestamp": "2026-10-27T17:13:45.776Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study extraction retained",
+  "context": {
+    "programId": 42,
+    "studyId": 1,
+    "sourcePdfId": "pdf-d0454330-73c0-4951-a4eb-de55d2bef885",
+    "confidence": 0.9,
+    "registrationStatus": "not_requested"
+  }
+}
+
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > leaves a request with no file to the handler (its own NO_FILE code, unchanged) 31ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > control: a real PDF passes the guard and reaches ingestStudy 31ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 503 when PRECLINICAL_INGEST_ENABLED is unset
+{
+  "timestamp": "2026-10-27T17:13:46.906Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when programId is missing or not a positive integer
+{
+  "timestamp": "2026-10-27T17:13:46.967Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 503 when PRECLINICAL_INGEST_ENABLED is unset 173ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when programId is missing or not a positive integer 39ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds
+{
+  "timestamp": "2026-10-27T17:13:47.023Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds
+{
+  "timestamp": "2026-10-27T17:13:47.025Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study extraction retained",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-abc-123",
+    "confidence": 0.87,
+    "registrationStatus": "not_requested"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps Zod-style validation errors to 422
+{
+  "timestamp": "2026-10-27T17:13:47.065Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps Zod-style validation errors to 422
+{
+  "timestamp": "2026-10-27T17:13:47.068Z",
+  "level": "error",
+  "message": "[preclinical-routes] Preclinical ingest failed",
+  "context": {
+    "sourcePdfId": "pdf-70fa9353-8b80-48e4-b94d-1e0cd3d92dbf",
+    "message": "Invalid studyType: expected enum value"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 42junk instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:13:47.092Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when no file is attached 27ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds 28ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps Zod-style validation errors to 422 44ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 42junk instead of interpreting a numeric prefix 20ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 42.5 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:13:47.122Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 1e2 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:13:47.137Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID +42 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:13:47.158Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 0x2a instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:13:47.182Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 9007199254740992 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:13:47.198Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 0 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:13:47.211Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 42.5 instead of interpreting a numeric prefix 28ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 1e2 instead of interpreting a numeric prefix 16ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID +42 instead of interpreting a numeric prefix 23ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 0x2a instead of interpreting a numeric prefix 21ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 9007199254740992 instead of interpreting a numeric prefix 15ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID -1 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:13:47.221Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses requested registration {"governed":"true"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.236Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses requested registration {"submissionId":"19"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.247Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses requested registration {"iacucProtocolId":"23"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.260Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses requested registration {"governed":"true","organizationId":"7","userId":"11"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.274Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed governed flag "TRUE" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:13:47.285Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed governed flag "yes" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:13:47.294Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed governed flag "1" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:13:47.306Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed governed flag "" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:13:47.315Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID 0 instead of interpreting a numeric prefix 12ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed program ID -1 instead of interpreting a numeric prefix 10ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses requested registration {"governed":"true"} without trusted context before extraction 15ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses requested registration {"submissionId":"19"} without trusted context before extraction 12ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses requested registration {"iacucProtocolId":"23"} without trusted context before extraction 13ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses requested registration {"governed":"true","organizationId":"7","userId":"11"} without trusted context before extraction 15ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed governed flag "TRUE" instead of silently downgrading 11ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed governed flag "yes" instead of silently downgrading 9ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed governed flag "1" instead of silently downgrading 12ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses duplicate governed fields instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:13:47.325Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > accepts an explicit false governed flag as program-only extraction
+{
+  "timestamp": "2026-10-27T17:13:47.344Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > accepts an explicit false governed flag as program-only extraction
+{
+  "timestamp": "2026-10-27T17:13:47.345Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study extraction retained",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-e5430cc9-a366-4373-9105-702c929106f2",
+    "confidence": 0.87,
+    "registrationStatus": "not_requested"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":0,"userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.378Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":-7,"userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.387Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7.5,"userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.398Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":"7junk","userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.408Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7,"userId":0} before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.424Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed governed flag "" instead of silently downgrading 10ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses duplicate governed fields instead of silently downgrading 12ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > accepts an explicit false governed flag as program-only extraction 34ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":0,"userId":11} before extraction 17ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":-7,"userId":11} before extraction 8ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7.5,"userId":11} before extraction 11ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":"7junk","userId":11} before extraction 10ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7,"userId":-11} before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.433Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7,"userId":"1e2"} before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.444Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7,"userId":true} before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.453Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7,"userId":9007199254740992} before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.465Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed submissionId 19junk before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.482Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed submissionId 19.5 before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.498Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed submissionId 0 before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.511Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed submissionId -19 before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.521Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7,"userId":0} before extraction 15ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7,"userId":-11} before extraction 9ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7,"userId":"1e2"} before extraction 10ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7,"userId":true} before extraction 10ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses invalid trusted governance context {"tenantId":7,"userId":9007199254740992} before extraction 13ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed submissionId 19junk before extraction 17ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed submissionId 19.5 before extraction 15ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed submissionId 0 before extraction 13ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed submissionId -19 before extraction 10ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed submissionId 9007199254740992 before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.535Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed iacucProtocolId 23junk before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.553Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed submissionId 9007199254740992 before extraction 14ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed iacucProtocolId 23junk before extraction 36ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed iacucProtocolId 1e2 before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.648Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed iacucProtocolId 0 before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.662Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed iacucProtocolId -23 before extraction
+{
+  "timestamp": "2026-10-27T17:13:47.675Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > passes validated context to registration and reports that review is still required
+{
+  "timestamp": "2026-10-27T17:13:47.695Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > passes validated context to registration and reports that review is still required
+{
+  "timestamp": "2026-10-27T17:13:47.695Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study extraction retained",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-093fe98e-025b-4995-b149-682b3347118d",
+    "confidence": 0.87,
+    "registrationStatus": "registered"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > returns a failed requested registration with the retained study ID and safe message
+{
+  "timestamp": "2026-10-27T17:13:47.706Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > returns a failed requested registration with the retained study ID and safe message
+{
+  "timestamp": "2026-10-27T17:13:47.706Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study extraction retained",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-retained",
+    "confidence": 0.87,
+    "registrationStatus": "failed"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > maps the typed extraction refusal PRECLINICAL_NO_TEXT to a safe 422
+{
+  "timestamp": "2026-10-27T17:13:47.716Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > maps the typed extraction refusal PRECLINICAL_NO_TEXT to a safe 422
+{
+  "timestamp": "2026-10-27T17:13:47.716Z",
+  "level": "warn",
+  "message": "[preclinical-routes] Preclinical extraction input refused",
+  "context": {
+    "sourcePdfId": "pdf-01d313e7-8a1b-4090-9012-fcf9e959e15a",
+    "code": "PRECLINICAL_NO_TEXT",
+    "coverage": {
+      "pageCount": 8,
+      "pagesRead": 2,
+      "limitedBy": "time_budget"
+    }
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > maps the typed extraction refusal PRECLINICAL_INCOMPLETE_TEXT to a safe 422
+{
+  "timestamp": "2026-10-27T17:13:47.725Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > maps the typed extraction refusal PRECLINICAL_INCOMPLETE_TEXT to a safe 422
+{
+  "timestamp": "2026-10-27T17:13:47.726Z",
+  "level": "warn",
+  "message": "[preclinical-routes] Preclinical extraction input refused",
+  "context": {
+    "sourcePdfId": "pdf-d6fc94cc-81eb-464c-a8b2-67ca9ae549d8",
+    "code": "PRECLINICAL_INCOMPLETE_TEXT",
+    "coverage": {
+      "pageCount": 8,
+      "pagesRead": 2,
+      "limitedBy": "time_budget"
+    }
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > maps the typed extraction refusal PRECLINICAL_REPORT_TOO_LARGE to a safe 422
+{
+  "timestamp": "2026-10-27T17:13:47.738Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > maps the typed extraction refusal PRECLINICAL_REPORT_TOO_LARGE to a safe 422
+{
+  "timestamp": "2026-10-27T17:13:47.738Z",
+  "level": "warn",
+  "message": "[preclinical-routes] Preclinical extraction input refused",
+  "context": {
+    "sourcePdfId": "pdf-c8c3088f-91b0-469d-85fc-c47f0988bd8c",
+    "code": "PRECLINICAL_REPORT_TOO_LARGE",
+    "coverage": {
+      "pageCount": 8,
+      "pagesRead": 2,
+      "limitedBy": "time_budget"
+    }
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > contains internal error text even when it resembles validation failure
+{
+  "timestamp": "2026-10-27T17:13:47.749Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > contains internal error text even when it resembles validation failure
+{
+  "timestamp": "2026-10-27T17:13:47.750Z",
+  "level": "error",
+  "message": "[preclinical-routes] Preclinical ingest failed",
+  "context": {
+    "sourcePdfId": "pdf-d711dc73-4e35-4ceb-b58f-a4c780fdbd82",
+    "message": "Invalid database response: expected relation SENTINEL-INTERNAL-TABLE"
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed iacucProtocolId 1e2 before extraction 79ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed iacucProtocolId 0 before extraction 11ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest request admission > refuses malformed iacucProtocolId -23 before extraction 13ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > passes validated context to registration and reports that review is still required 21ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > returns a failed requested registration with the retained study ID and safe message 11ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > maps the typed extraction refusal PRECLINICAL_NO_TEXT to a safe 422 9ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > maps the typed extraction refusal PRECLINICAL_INCOMPLETE_TEXT to a safe 422 8ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > maps the typed extraction refusal PRECLINICAL_REPORT_TOO_LARGE to a safe 422 15ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > contains ordinary server failures without revealing provider or database details
+{
+  "timestamp": "2026-10-27T17:13:47.758Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > contains ordinary server failures without revealing provider or database details
+{
+  "timestamp": "2026-10-27T17:13:47.759Z",
+  "level": "error",
+  "message": "[preclinical-routes] ingesting the preclinical study failed",
+  "context": {
+    "sourcePdfId": "pdf-6eb9076a-ddac-4b06-947f-e6ab0f0adabd",
+    "err": "SENTINEL-INTERNAL-PROVIDER-SECRET",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > contains internal error text even when it resembles validation failure 10ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest registration and refusal outcomes > contains ordinary server failures without revealing provider or database details 10ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > kmForSpecies > resolves canonical species 3ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > kmForSpecies > tolerates strain prefixes and casing 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > kmForSpecies > returns null for unknown species rather than guessing 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > parses mg/kg and mg/kg/day 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses to convert a bare mg amount 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > reads the complete unambiguous numeric dose 1,000 mg/kg/day 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > reads the complete unambiguous numeric dose NOAEL: 1,250.5 mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > reads the complete unambiguous numeric dose 1e3 mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > reads the complete unambiguous numeric dose 1E-3 mg/kg/day 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > reads the complete unambiguous numeric dose +2.5e+2 mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > reads the complete unambiguous numeric dose .5 mg/kg/day 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > reads the complete unambiguous numeric dose   NOAEL = 0 mg / kg / day   0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text -10 mg/kg/day 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text −10 mg/kg/day 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text -1e-3 mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 1,5 mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 12,34 mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 1.2.3 mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 1e mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 1e999 mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 1e-999 mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 10–20 mg/kg 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text >= 10 mg/kg/day 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text NOAEL was not established at 10 mg/kg/day 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 10 mg/kg/day caused adverse effects 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 10 mg/kg/day in rats; 5 mg/kg/day in dogs 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 10 mg/kg/hour 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses ambiguous, malformed, negative, or out-of-range dose text 10 mg/kg/day (approximately) 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > scales by Km ratio (FDA 2005) 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid Km 0 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid Km -1 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid Km NaN 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid Km Infinity 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid Km -Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid Km null 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid Km 6 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid NOAEL -1 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid NOAEL NaN 4ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid NOAEL Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid NOAEL -Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid NOAEL null 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses invalid NOAEL 10 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > refuses non-finite and underflowed HED results from finite inputs 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MRSD path > selects the most sensitive species and applies SF 10 2ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MRSD path > honours a safety-factor override with rationale 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MRSD path > can force the most appropriate species away from the most sensitive 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MRSD path > does not round intermediate derivations into a higher starting dose 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MRSD path > selects the lower HED even when both would round to the same displayed value 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MRSD path > does not overflow an otherwise representable result while formatting decimals 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MABEL competes with MRSD > is MABEL-limited when MABEL is the lower derivation 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MABEL competes with MRSD > is MRSD-limited when the MRSD is the lower derivation 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MABEL competes with MRSD > applies a MABEL safety factor 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MABEL competes with MRSD > retains small positive derivations and selects MABEL before any display rounding 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MABEL competes with MRSD > preserves an explicitly supplied zero exposure instead of substituting a positive dose 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — failure modes > throws when no species are supplied 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — failure modes > skips species without a resolvable Km and warns 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — failure modes > throws when no species produce a usable HED 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — failure modes > accepts an explicit Km override for an unknown species 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid reference weight 0 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid reference weight -1 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid reference weight NaN 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid reference weight Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid reference weight -Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid reference weight null 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid reference weight 60 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid safety factor 0 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid safety factor -1 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid safety factor NaN 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid safety factor Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid safety factor -Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid safety factor null 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid safety factor 10 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid explicit Km 0 without a fallback 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid explicit Km -1 without a fallback 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid explicit Km NaN without a fallback 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid explicit Km Infinity without a fallback 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid explicit Km -Infinity without a fallback 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid explicit Km null without a fallback 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid explicit Km 6 without a fallback 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid NOAEL -1 without dropping that study 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid NOAEL NaN without dropping that study 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid NOAEL Infinity without dropping that study 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid NOAEL -Infinity without dropping that study 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid NOAEL null without dropping that study 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses invalid NOAEL 10 without dropping that study 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses an unusable explicit most-appropriate species rabbit 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses an unusable explicit most-appropriate species  0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses an unusable explicit most-appropriate species   0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > refuses an unusable explicit most-appropriate species null 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid calculation parameters > does not replace a requested unresolved species with another species 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure -1 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure NaN 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure -Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure null 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure 10 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure-per-dose factor 0 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure-per-dose factor -1 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure-per-dose factor NaN 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure-per-dose factor Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure-per-dose factor -Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure-per-dose factor null 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL exposure-per-dose factor 1 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL safety factor 0 3ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL safety factor -1 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL safety factor NaN 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL safety factor Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL safety factor -Infinity 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL safety factor null 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — invalid MABEL parameters > refuses invalid MABEL safety factor 1 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — numeric range > refuses overflowed MRSD results from finite parameters {"safetyFactor":5e-324} 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — numeric range > refuses overflowed MRSD results from finite parameters {"humanReferenceWeightKg":1.7976931348623157e+308} 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — numeric range > refuses overflowed or underflowed MABEL results from finite parameters {"minAnticipatedEffectiveExposure":1.7976931348623157e+308,"exposurePerMgDose":5e-324} 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — numeric range > refuses overflowed or underflowed MABEL results from finite parameters {"minAnticipatedEffectiveExposure":1,"exposurePerMgDose":1,"mabelSafetyFactor":5e-324} 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — numeric range > refuses overflowed or underflowed MABEL results from finite parameters {"minAnticipatedEffectiveExposure":5e-324,"exposurePerMgDose":10} 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — numeric range > refuses an underflowed MRSD instead of reporting a zero dose 0ms
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > forwards maxPixels = DEFAULT_MAX_PAGE_PIXELS (40_000_000) when the caller sets none
+{
+  "timestamp": "2026-10-27T17:13:48.792Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 2,
+    "confidence": 90,
+    "durationMs": 2,
+    "pageCount": 2,
+    "pagesSelected": 2,
+    "pagesRead": 2,
+    "limitedBy": null
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > forwards an explicit maxPixels override unchanged
+{
+  "timestamp": "2026-10-27T17:13:48.798Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 2,
+    "confidence": 90,
+    "durationMs": 0,
+    "pageCount": 2,
+    "pagesSelected": 2,
+    "pagesRead": 2,
+    "limitedBy": null
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > copies the dpi each page was actually rendered at into pageDetails
+{
+  "timestamp": "2026-10-27T17:13:48.800Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 3,
+    "confidence": 90,
+    "durationMs": 2,
+    "pageCount": 3,
+    "pagesSelected": 3,
+    "pagesRead": 3,
+    "limitedBy": null
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — rendering is streamed through visit > calls rasterizePdfDocument with a per-page visit callback
+{
+  "timestamp": "2026-10-27T17:13:48.802Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 3,
+    "confidence": 90,
+    "durationMs": 0,
+    "pageCount": 3,
+    "pagesSelected": 3,
+    "pagesRead": 3,
+    "limitedBy": null
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — rendering is streamed through visit > after the deadline passes, no further page is rendered (1 of 5)
+{
+  "timestamp": "2026-10-18T12:00:00.000Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 1,
+    "confidence": 90,
+    "durationMs": 0,
+    "pageCount": 5,
+    "pagesSelected": 5,
+    "pagesRead": 1,
+    "limitedBy": "time_budget"
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — rendering is streamed through visit > a deadline crossed after page 2 renders exactly pages 1 and 2
+{
+  "timestamp": "2026-10-18T12:00:01.200Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 2,
+    "confidence": 80,
+    "durationMs": 1200,
+    "pageCount": 6,
+    "pagesSelected": 6,
+    "pagesRead": 2,
+    "limitedBy": "time_budget"
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline already past reads exactly one page and reports time_budget
+{
+  "timestamp": "2026-10-18T12:00:00.000Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 1,
+    "confidence": 90,
+    "durationMs": 0,
+    "pageCount": 5,
+    "pagesSelected": 5,
+    "pagesRead": 1,
+    "limitedBy": "time_budget"
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline equal to now still attempts the first page and stops before the second
+{
+  "timestamp": "2026-10-18T12:00:00.000Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 1,
+    "confidence": 90,
+    "durationMs": 0,
+    "pageCount": 3,
+    "pagesSelected": 3,
+    "pagesRead": 1,
+    "limitedBy": "time_budget"
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline crossed mid-document stops after the page that crossed it
+{
+  "timestamp": "2026-10-18T12:00:01.200Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 2,
+    "confidence": 80,
+    "durationMs": 1200,
+    "pageCount": 6,
+    "pagesSelected": 6,
+    "pagesRead": 2,
+    "limitedBy": "time_budget"
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline that is never reached reads every selected page (limitedBy null)
+{
+  "timestamp": "2026-10-18T12:00:00.000Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 4,
+    "confidence": 90,
+    "durationMs": 0,
+    "pageCount": 4,
+    "pagesSelected": 4,
+    "pagesRead": 4,
+    "limitedBy": null
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages cutting the selection reports page_budget with the document page count
+{
+  "timestamp": "2026-10-27T17:13:48.833Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 4,
+    "confidence": 90,
+    "durationMs": 0,
+    "pageCount": 12,
+    "pagesSelected": 4,
+    "pagesRead": 4,
+    "limitedBy": "page_budget"
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages cutting an explicit range is still page_budget
+{
+  "timestamp": "2026-10-27T17:13:48.840Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 4,
+    "confidence": 90,
+    "durationMs": 0,
+    "pageCount": 20,
+    "pagesSelected": 4,
+    "pagesRead": 4,
+    "limitedBy": "page_budget"
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages equal to the page count cuts nothing (limitedBy null)
+{
+  "timestamp": "2026-10-27T17:13:48.842Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 4,
+    "confidence": 90,
+    "durationMs": 0,
+    "pageCount": 4,
+    "pagesSelected": 4,
+    "pagesRead": 4,
+    "limitedBy": null
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > an explicit firstPage/lastPage range smaller than the document is a request, not a limit
+{
+  "timestamp": "2026-10-27T17:13:48.844Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 3,
+    "confidence": 90,
+    "durationMs": 1,
+    "pageCount": 12,
+    "pagesSelected": 3,
+    "pagesRead": 3,
+    "limitedBy": null
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > an explicit page list with a maxPages that does not cut it is not a limit
+{
+  "timestamp": "2026-10-27T17:13:48.847Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 2,
+    "confidence": 90,
+    "durationMs": 1,
+    "pageCount": 12,
+    "pagesSelected": 2,
+    "pagesRead": 2,
+    "limitedBy": null
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > no limits: every page selected and read, limitedBy null
+{
+  "timestamp": "2026-10-27T17:13:48.850Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 3,
+    "confidence": 90,
+    "durationMs": 0,
+    "pageCount": 3,
+    "pagesSelected": 3,
+    "pagesRead": 3,
+    "limitedBy": null
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > CONTROL: text, pages and page details still carry every page read, in order
+{
+  "timestamp": "2026-10-27T17:13:48.868Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 3,
+    "confidence": 90,
+    "durationMs": 17,
+    "pageCount": 3,
+    "pagesSelected": 3,
+    "pagesRead": 3,
+    "limitedBy": null
+  }
+}
+
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > pdfRasterizer — one page-pixel cap definition > exports DEFAULT_MAX_PAGE_PIXELS = 40_000_000 7ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > forwards maxPixels = DEFAULT_MAX_PAGE_PIXELS (40_000_000) when the caller sets none 8ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > forwards an explicit maxPixels override unchanged 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > copies the dpi each page was actually rendered at into pageDetails 3ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — rendering is streamed through visit > calls rasterizePdfDocument with a per-page visit callback 3ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — rendering is streamed through visit > after the deadline passes, no further page is rendered (1 of 5) 6ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — rendering is streamed through visit > a deadline crossed after page 2 renders exactly pages 1 and 2 3ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline already past reads exactly one page and reports time_budget 3ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline equal to now still attempts the first page and stops before the second 3ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline crossed mid-document stops after the page that crossed it 6ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline that is never reached reads every selected page (limitedBy null) 7ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages cutting the selection reports page_budget with the document page count 7ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages cutting an explicit range is still page_budget 2ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages equal to the page count cuts nothing (limitedBy null) 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > an explicit firstPage/lastPage range smaller than the document is a request, not a limit 3ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > an explicit page list with a maxPages that does not cut it is not a limit 3ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > no limits: every page selected and read, limitedBy null 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > CONTROL: text, pages and page details still carry every page read, in order 24ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — the PDF OCR budget is opt-in > exports AUTOMATIC_PDF_OCR_BUDGET = { maxPages: 100, maxDurationMs: 600_000 } 1ms
+stderr | server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — OCR failure and the formats with no coverage > OCR throws with a thin text layer: pdf-text, coverage ocr_failed with the pdf-parse page count
+{
+  "timestamp": "2026-10-27T17:13:48.902Z",
+  "level": "warn",
+  "message": "[document-text] pdf OCR failed",
+  "context": {
+    "error": "synthetic OCR outage"
+  }
+}
+
+stderr | server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — OCR failure and the formats with no coverage > OCR throws and there is no text at all: none, with the same ocr_failed coverage
+{
+  "timestamp": "2026-10-27T17:13:48.905Z",
+  "level": "warn",
+  "message": "[document-text] pdf OCR failed",
+  "context": {
+    "error": "synthetic OCR outage"
+  }
+}
+
+stderr | server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — OCR failure and the formats with no coverage > OCR throws and pdf-parse gave no pages: pageCount is null
+{
+  "timestamp": "2026-10-27T17:13:48.906Z",
+  "level": "warn",
+  "message": "[document-text] pdf-parse failed",
+  "context": {
+    "error": "synthetic pdf-parse failure"
+  }
+}
+
+stderr | server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — OCR failure and the formats with no coverage > OCR throws and pdf-parse gave no pages: pageCount is null
+{
+  "timestamp": "2026-10-27T17:13:48.907Z",
+  "level": "warn",
+  "message": "[document-text] pdf OCR failed",
+  "context": {
+    "error": "synthetic OCR outage"
+  }
+}
+
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — the PDF OCR budget is opt-in > CONTROL: without options the fallback calls ocrPdfToText(buffer) with no budget, as at baseline 9ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — the PDF OCR budget is opt-in > with { pdfOcrBudget } the fallback passes { maxPages: 100, deadlineAt: now + 600_000 } 7ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — the PDF OCR budget is opt-in > the budget passed is the one used: { maxPages: 5, maxDurationMs: 1_000 } 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage whenever OCR ran, for every caller > OCR result used: method pdf-ocr and coverage copied from OCR (page_budget) 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage whenever OCR ran, for every caller > OCR result used under an explicit budget: time_budget coverage is copied 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage whenever OCR ran, for every caller > OCR result used: a complete OCR still records coverage with limitedBy null 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage whenever OCR ran, for every caller > B1: OCR hit its page_budget but returned no more text than the thin layer → pdf-text with OCR coverage 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage whenever OCR ran, for every caller > B1: OCR hit its time_budget but returned no more text than the thin layer → pdf-text with OCR coverage 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage whenever OCR ran, for every caller > OCR ran fully but its text was not used → pdf-text with coverage limitedBy null 2ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage whenever OCR ran, for every caller > OCR ran and read nothing, with no text layer either → none with OCR coverage 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — OCR failure and the formats with no coverage > OCR throws with a thin text layer: pdf-text, coverage ocr_failed with the pdf-parse page count 2ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — OCR failure and the formats with no coverage > OCR throws and there is no text at all: none, with the same ocr_failed coverage 2ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — OCR failure and the formats with no coverage > OCR throws and pdf-parse gave no pages: pageCount is null 3ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — OCR failure and the formats with no coverage > CONTROL: a text-layer PDF with >= 200 characters has no coverage and never calls OCR 5ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — OCR failure and the formats with no coverage > CONTROL: a non-PDF format has no coverage 1ms
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — structured result > returns parsed PreclinicalStudy data when the LLM output matches the schema
+{
+  "timestamp": "2026-10-27T17:13:49.419Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-123",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — structured result > records the model override on the result for provenance
+{
+  "timestamp": "2026-10-27T17:13:49.430Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-456",
+    "inputChars": 61,
+    "model": "claude-sonnet-4-6"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — structured result > throws when the LLM response fails Zod validation
+{
+  "timestamp": "2026-10-27T17:13:49.434Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-789",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — structured result > throws when extractionConfidence is out of [0, 1]
+{
+  "timestamp": "2026-10-27T17:13:49.440Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-999",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > uses the existing PDF/OCR extractor with its bounded automatic OCR budget
+{
+  "timestamp": "2026-10-27T17:13:49.442Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-common",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > accepts complete OCR and sends all returned text to structured extraction
+{
+  "timestamp": "2026-10-27T17:13:49.449Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-scan",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > sends the complete text at the budget boundary
+{
+  "timestamp": "2026-10-27T17:13:49.481Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-limit",
+    "inputChars": 60000,
+    "model": "claude-opus-4"
+  }
+}
+
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — structured result > returns parsed PreclinicalStudy data when the LLM output matches the schema 12ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — structured result > records the model override on the result for provenance 3ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — structured result > throws when the LLM response fails Zod validation 6ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — structured result > throws when extractionConfidence is out of [0, 1] 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > uses the existing PDF/OCR extractor with its bounded automatic OCR budget 6ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > accepts complete OCR and sends all returned text to structured extraction 3ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > refuses incomplete or unestablished OCR coverage {"pageCount":150,"pagesRead":100,"limitedBy":"page_budget"} before calling the model 5ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":2,"limitedBy":"time_budget"} before calling the model 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":null,"limitedBy":"ocr_failed"} before calling the model 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":2,"limitedBy":null} before calling the model 4ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > refuses incomplete or unestablished OCR coverage {"pageCount":null,"pagesRead":2,"limitedBy":null} before calling the model 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > refuses incomplete or unestablished OCR coverage {"pageCount":0,"pagesRead":0,"limitedBy":null} before calling the model 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > refuses OCR text with no coverage record 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > refuses a thin text-layer fallback when OCR left pages unread 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > reports unreadable input without making a provider request 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > refuses reports beyond the supported input budget instead of silently slicing them 13ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > sends the complete text at the budget boundary 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > rejects invalid input-budget configuration 0 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > rejects invalid input-budget configuration -1 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > rejects invalid input-budget configuration NaN 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > rejects invalid input-budget configuration Infinity 0ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf — readable and complete report input > rejects invalid input-budget configuration 1.5 0ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > retains program-only extraction and explicitly reports registration was not requested 13ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > reports unreviewed registration only after the bridge, audit and commit succeed 6ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when connect fails 4ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when begin fails 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when bridge fails 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when audit fails 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when commit fails 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > retains the extraction and discards the client when rollback also fails 3ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > does not report registration for an unconfirmed commit receipt ROLLBACK 4ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > does not report registration for an unconfirmed commit receipt undefined 5ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > does not lose the retained extraction if releasing the client throws 3ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > preserves a confirmed commit if only client release throws 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses disabled ingestion before extraction or persistence 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 0 before extraction 0ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID -1 before extraction 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 1.5 before extraction 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID NaN before extraction 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 9007199254740992 before extraction 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"userId":11} before extraction 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":0,"userId":11} before extraction 0ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":-7,"userId":11} before extraction 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7.5,"userId":11} before extraction 0ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7} before extraction 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":0} before extraction 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":-11} before extraction 3ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":null} before extraction 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":9007199254740992} before extraction 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid submissionId 0 before extraction 3ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid submissionId -2 before extraction 0ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid iacucProtocolId 1.5 before extraction 0ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid iacucProtocolId NaN before extraction 0ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > does not persist or register a study when extraction refuses with PRECLINICAL_NO_TEXT 3ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > does not persist or register a study when extraction refuses with PRECLINICAL_INCOMPLETE_TEXT 0ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > does not persist or register a study when extraction refuses with PRECLINICAL_REPORT_TOO_LARGE 1ms
+stdout | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+{
+  "timestamp": "2026-10-27T17:13:54.834Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-27T17:13:54.842Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+{
+  "timestamp": "2026-10-27T17:13:54.843Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+{
+  "timestamp": "2026-10-27T17:13:55.555Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+Created cache directory: /workspace/scratch/dd8ef47af5ed/concept2cure-v2-audit/data/cache
+
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > a full stated battery and NOAEL cannot establish readiness or a program starting dose 36ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > without a project, asks for one and claims no record was read 1ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > refuses another project while one is open 2ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > a database failure remains an error, not an empty battery 1ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > an open project with no supplied figures gets requirements and no gap determination 1ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > does not invent a clinical duration for its requirements 1ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > offers only project/context fields and tells the model not to pass figures 1ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > compute_fih_dose identifies the stated NOAEL rather than a recorded program starting dose 6ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > calculate_safety_margin identifies the stated NOAEL rather than a recorded program starting dose 90ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > a complete listed battery has a stated basis and no program adequacy verdict 4ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > classifies stated findings as a worksheet without directing their use in M2.4 18ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > labels the carcinogenicity assessment as based on stated inputs 2ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > refuses an unknown safety-margin species instead of computing zero doses 1ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > 'compute_fih_dose' describes its worksheet basis within the tool budget 0ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > 'classify_tox_findings' describes its worksheet basis within the tool budget 0ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > 'calculate_safety_margin' describes its worksheet basis within the tool budget 0ms
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > 'assess_carcinogenicity_need' describes its worksheet basis within the tool budget 0ms
+stdout | server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts
+{
+  "timestamp": "2026-10-27T17:14:15.853Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-27T17:14:15.855Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts
+{
+  "timestamp": "2026-10-27T17:14:15.856Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts
+{
+  "timestamp": "2026-10-27T17:14:16.019Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > refuses studies written in the call: none of their figures reaches the answer 58ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with no project open and figures supplied, asks for the project and uses none of them 4ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with no project open and nothing supplied, gives the outline without claiming what a project holds 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > when the named project cannot be resolved, says so with its code and claims no absence 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > refuses studies written in the call: none of their figures reaches the answer 1ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with no project open and figures supplied, asks for the project and uses none of them 1ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded 3ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with no project open and nothing supplied, gives the outline without claiming what a project holds 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > when the named project cannot be resolved, says so with its code and claims no absence 5ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_overview_m2_4' takes no studies or findings, and says not to pass them 3ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_summaries_m2_6' takes no studies or findings, and says not to pass them 1ms
+stderr | server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > reports unreadable content rather than a successful read when OCR fails
+{
+  "timestamp": "2026-10-27T17:14:21.581Z",
+  "level": "warn",
+  "message": "[document-text] image OCR failed",
+  "context": {
+    "error": "OCR unavailable"
+  }
+}
+
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > reads application/json / payload as raw UTF-8 without mapping or validating a scientific dataset 10ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > reads application/xml / payload as raw UTF-8 without mapping or validating a scientific dataset 7ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > reads application/octet-stream / define.xml as raw UTF-8 without mapping or validating a scientific dataset 3ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > reads application/octet-stream / enrollment.tsv as raw UTF-8 without mapping or validating a scientific dataset 2ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > reads text/csv / enrollment.csv as raw UTF-8 without mapping or validating a scientific dataset 1ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > does not claim a parser for admitted legacy application/msword bytes 1ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > does not claim a parser for admitted legacy application/vnd.ms-excel bytes 2ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > dispatches .png to existing OCR and reports its confidence 6ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > dispatches .jpg to existing OCR and reports its confidence 5ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > dispatches .jpeg to existing OCR and reports its confidence 1ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > dispatches .gif to existing OCR and reports its confidence 2ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > reports unreadable content rather than a successful read when OCR fails 5ms
+stdout | server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > extracts xlsx by MIME type
+{
+  "timestamp": "2026-10-27T17:14:21.856Z",
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 1,
+    "chars": 65
+  }
+}
+
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > extracts xlsx by MIME type 277ms
+stdout | server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > extracts xlsx by extension when the MIME is generic
+{
+  "timestamp": "2026-10-27T17:14:21.977Z",
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 1,
+    "chars": 65
+  }
+}
+
+stderr | server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > returns method none for an unreadable xlsx buffer
+{
+  "timestamp": "2026-10-27T17:14:21.981Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > extracts xlsx by extension when the MIME is generic 116ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > still treats markdown/CSV as utf8 text 2ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > returns method none for an unreadable xlsx buffer 2ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > pdfInspector.samplePageNumbers — census planning > returns every page for small documents 1ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > pdfInspector.samplePageNumbers — census planning > samples edges plus a uniform spread for huge documents 9ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > refuses an unknown species instead of reporting a computed zero dose 6ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > uses the same custom safety factor, body weight and rounding as computeFirstInHumanDose 3ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves minipig through the canonical minipig species without another Km table 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves micropig through the canonical micro-pig species without another Km table 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves guinea_pig through the canonical guinea pig species without another Km table 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves Gottingen through the canonical minipig species without another Km table 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves Sprague-Dawley through the canonical rat species without another Km table 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves rhesus through the canonical rhesus monkey species without another Km table 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves Beagle dog through the canonical dog species without another Km table 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > refuses a nonpositive safety factor rather than producing a non-finite dose 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > reports the applied HED/MRSD safety factor as the dose margin, not a species conversion factor 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > preserves the AUC and Cmax margins and low-exposure warnings 2ms
+stdout | server/services/preclinical/__tests__/nonclinical-workflow.integration.test.ts
+{
+  "timestamp": "2026-10-27T17:14:25.767Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-27T17:14:25.777Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/preclinical/__tests__/nonclinical-workflow.integration.test.ts
+{
+  "timestamp": "2026-10-27T17:14:25.777Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/preclinical/__tests__/nonclinical-workflow.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/preclinical/__tests__/nonclinical-workflow.integration.test.ts > nonclinical workflow: loader shapes flow through every engine > maps the program into the three engine input shapes 9ms
+ ✓ server/services/preclinical/__tests__/nonclinical-workflow.integration.test.ts > nonclinical workflow: loader shapes flow through every engine > feeds the M2.4 overview and M2.6 summaries 8ms
+ ✓ server/services/preclinical/__tests__/nonclinical-workflow.integration.test.ts > nonclinical workflow: loader shapes flow through every engine > feeds the gap engine — a complete Phase 1 battery shows no gaps 4ms
+ ✓ server/services/preclinical/__tests__/nonclinical-workflow.integration.test.ts > nonclinical workflow: loader shapes flow through every engine > feeds the FIH dose engine — the dog (lowest HED) governs 4ms
+ ✓ server/services/preclinical/__tests__/nonclinical-workflow.integration.test.ts > nonclinical workflow: loader shapes flow through every engine > composes into the integrated safety assessment with a ready verdict 4ms
+ ✓ server/services/preclinical/__tests__/nonclinical-rows-refuse-a-ctd-program-not-in-the-organization.pglite.test.ts > fetchNonclinicalRows > refuses another organization's CTD program, rather than answering it has no studies 30ms
+ ✓ server/services/preclinical/__tests__/nonclinical-rows-refuse-a-ctd-program-not-in-the-organization.pglite.test.ts > fetchNonclinicalRows > refuses a CTD program that does not exist 6ms
+ ✓ server/services/preclinical/__tests__/nonclinical-rows-refuse-a-ctd-program-not-in-the-organization.pglite.test.ts > fetchNonclinicalRows > reads the organization's own program's studies, and only its own 22ms
+ ✓ server/services/preclinical/__tests__/nonclinical-rows-refuse-a-ctd-program-not-in-the-organization.pglite.test.ts > fetchNonclinicalRows > answers a program of its own with no studies as no studies 9ms
+ ✓ server/services/preclinical/__tests__/nonclinical-rows-refuse-a-ctd-program-not-in-the-organization.pglite.test.ts > the loaders that read through it refuse the same program > loadPreclinicalIntel (the reviewer simulator) 4ms
+ ✓ server/services/preclinical/__tests__/nonclinical-rows-refuse-a-ctd-program-not-in-the-organization.pglite.test.ts > the loaders that read through it refuse the same program > loadNonclinicalProgram (load_nonclinical_program, the M2.4 inputs) 3ms
+stdout | server/routes/__tests__/preclinical-error-containment.test.ts
+{
+  "timestamp": "2026-10-27T17:14:44.295Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-27T17:14:44.300Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts
+{
+  "timestamp": "2026-10-27T17:14:44.300Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/preclinical-error-containment.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers an ingest failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-27T17:14:44.541Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers an ingest failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-27T17:14:44.543Z",
+  "level": "error",
+  "message": "[preclinical-routes] ingesting the preclinical study failed",
+  "context": {
+    "sourcePdfId": "pdf-fcb5da40-8ec2-4321-ba7e-99991f66fa47",
+    "err": "SENTINEL-DB-DETAIL: relation \"preclinical_set_b_secret\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers a disabled ingest with its code and a static sentence, never the thrown text
+{
+  "timestamp": "2026-10-27T17:14:44.590Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers a disabled ingest with its code and a static sentence, never the thrown text
+{
+  "timestamp": "2026-10-27T17:14:44.590Z",
+  "level": "warn",
+  "message": "[preclinical-routes] Preclinical ingest refused: disabled",
+  "context": {
+    "sourcePdfId": "pdf-fbb3488f-2a7f-4229-ac75-0e523b605bdf",
+    "err": "SENTINEL-ENV-DETAIL (PRECLINICAL_INGEST_ENABLED=false)"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > contains validation-shaped errors without exposing provider or database details
+{
+  "timestamp": "2026-10-27T17:14:44.613Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > contains validation-shaped errors without exposing provider or database details
+{
+  "timestamp": "2026-10-27T17:14:44.614Z",
+  "level": "error",
+  "message": "[preclinical-routes] Preclinical ingest failed",
+  "context": {
+    "sourcePdfId": "pdf-e2f630e0-0dab-457d-8f69-f531c23b5a21",
+    "message": "Invalid study: expected a dose table; SENTINEL-PROVIDER-DETAIL"
+  }
+}
+
+ ✓ server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers an ingest failure with INTERNAL_ERROR and the request id, never the thrown text 127ms
+ ✓ server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers a disabled ingest with its code and a static sentence, never the thrown text 29ms
+ ✓ server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > contains validation-shaped errors without exposing provider or database details 24ms
+ ✓ server/services/preclinical/__tests__/tox-findings-classifier.test.ts > classifyToxFinding > frames hepatocellular hypertrophy as adaptive / non-adverse 2ms
+ ✓ server/services/preclinical/__tests__/tox-findings-classifier.test.ts > classifyToxFinding > escalates hepatocellular hypertrophy to adverse when necrosis is a correlate 1ms
+ ✓ server/services/preclinical/__tests__/tox-findings-classifier.test.ts > classifyToxFinding > escalates on moderate-or-greater severity 0ms
+ ✓ server/services/preclinical/__tests__/tox-findings-classifier.test.ts > classifyToxFinding > escalates when an adverse term appears within the finding text itself 1ms
+ ✓ server/services/preclinical/__tests__/tox-findings-classifier.test.ts > classifyToxFinding > frames phospholipidosis as a finding to monitor 0ms
+ ✓ server/services/preclinical/__tests__/tox-findings-classifier.test.ts > classifyToxFinding > flags thyroid follicular hypertrophy as rodent-specific 1ms
+ ✓ server/services/preclinical/__tests__/tox-findings-classifier.test.ts > classifyToxFinding > classifies necrosis as adverse 1ms
+ ✓ server/services/preclinical/__tests__/tox-findings-classifier.test.ts > classifyToxFinding > returns indeterminate for an unrecognised finding 0ms
+ ✓ server/services/preclinical/__tests__/tox-findings-classifier.test.ts > classifyToxFindings — overview summary > separates adverse, adaptive, and monitor findings 3ms
+ ✓ server/services/preclinical/__tests__/tox-findings-classifier.test.ts > classifyToxFindings — overview summary > states when no adverse findings are present 0ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-requirements.test.ts > requiredRepeatDoseToxDuration (ICH M3(R2) Table 1) > maps clinical duration to required tox duration 3ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-requirements.test.ts > requiredNonclinicalBattery > requires the core battery before FIH and relaxes genotox under oncology 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-requirements.test.ts > requiredNonclinicalBattery > adds local tolerance for a non-oral route and carcinogenicity for chronic marketing 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-requirements.test.ts > assessNonclinicalProgram > is adequate for a 2-week Phase 1 trial with the core battery 3ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-requirements.test.ts > assessNonclinicalProgram > flags the missing in-vivo genotox assay at Phase 2 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-requirements.test.ts > assessNonclinicalProgram > flags a missing non-rodent species 0ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-requirements.test.ts > assessNonclinicalProgram > flags an insufficient repeat-dose duration for a longer trial 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-requirements.test.ts > assessNonclinicalProgram > does not gate genotox for an oncology (ICH S9) program 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-requirements.test.ts > assessNonclinicalProgram > requires EFD before Phase 3 when WOCBP are enrolled 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-safety-assessment.test.ts > assessNonclinicalSafety > rolls up FIH dose, adversity, gaps, and overview into a ready verdict 12ms
+ ✓ server/services/preclinical/__tests__/nonclinical-safety-assessment.test.ts > assessNonclinicalSafety > blocks FIH readiness when the program has gaps 2ms
+ ✓ server/services/preclinical/__tests__/nonclinical-safety-assessment.test.ts > assessNonclinicalSafety > reports insufficient input when nothing actionable is supplied 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-safety-assessment.test.ts > a dose alone is not FIH readiness > reports insufficient_input when the study battery was never assessed, and says so 2ms
+ ✓ server/services/preclinical/__tests__/nonclinical-safety-assessment.test.ts > a dose alone is not FIH readiness > is ready_for_fih only when the battery was assessed and complete 6ms
+ ✓ server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts > mapStudyTypeToM24 > maps the ingest enum onto builder categories 2ms
+ ✓ server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts > mapStudyTypeToM24 > passes through builder values and defaults unknowns to toxicology 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts > buildEnrichedM24 > produces the M2.4 overview from ingest-shaped studies 3ms
+ ✓ server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts > buildEnrichedM24 > adds the target-organ adversity profile when findings are supplied 2ms
+ ✓ server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts > buildEnrichedM24 > returns no tox profile when no findings are supplied 0ms
+stdout | server/services/preclinical/__tests__/nonclinical-program-loader.test.ts
+{
+  "timestamp": "2026-10-27T17:14:49.113Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-27T17:14:49.118Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/preclinical/__tests__/nonclinical-program-loader.test.ts
+{
+  "timestamp": "2026-10-27T17:14:49.119Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/preclinical/__tests__/nonclinical-program-loader.test.ts
+[database] Database connection successful
+
+ ✓ server/services/preclinical/__tests__/nonclinical-program-loader.test.ts > mapRowToStudyInput > maps a row to the composer study shape with the right section 4ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-loader.test.ts > deriveGenotoxComponent > classifies the genotox battery component from row text 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-loader.test.ts > mapRowToPresentStudy > carries the genotox component for the gap engine 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-loader.test.ts > mapRowToSpeciesNoael > extracts a species NOAEL when the dose is parseable 2ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-loader.test.ts > mapRowToSpeciesNoael > returns null without a parseable NOAEL or species 2ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-loader.test.ts > mapRowToSpeciesNoael > does not anchor FIH dosing on a non-tox study NOAEL 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-loader.test.ts > loadNonclinicalProgram (flag-off path) > returns undefined when PRECLINICAL_REVIEWER_ENABLED is unset 0ms
+ ✓ server/services/preclinical/__tests__/nonclinical-program-loader.test.ts > loadNonclinicalProgram (flag-off path) > returns undefined for an invalid organization id 0ms
+ ✓ server/services/preclinical/__tests__/m26-nonclinical-summaries.test.ts > buildM26NonclinicalSummaries > composes all 2.6.x subsections and per-discipline tables 9ms
+ ✓ server/services/preclinical/__tests__/m26-nonclinical-summaries.test.ts > buildM26NonclinicalSummaries > weaves the target-organ adversity profile into 2.6.6 when findings are supplied 4ms
+ ✓ server/services/preclinical/__tests__/m26-nonclinical-summaries.test.ts > buildM26NonclinicalSummaries > flags every gap and scores completeness 0 for an empty program 2ms
+
+ Test Files  19 passed (19)
+      Tests  373 passed (373)
+   Start at  11:13:09
+   Duration  100.60s (transform 45.86s, setup 1.12s, import 75.83s, tests 14.42s, environment 4ms)
+

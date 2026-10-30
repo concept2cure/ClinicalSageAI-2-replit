@@ -1,0 +1,43 @@
+{
+  "startedAt": "2026-10-26T19:08:23.711027+00:00",
+  "argv": [
+    "npx",
+    "eslint",
+    "server/routes/authoring.router.ts",
+    "server/services/ana/saved-template-review.ts",
+    "-f",
+    "json"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.771,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "baseline-source-freeze.json",
+  "sourcesBefore": {
+    "server/routes/authoring.router.ts": "ca424b13d150408d659190418dfb35c24a664e59021d590a40c1642f2e262e43",
+    "server/services/ana/saved-template-review.ts": "44e01675a2429f97bd03a9843e962ee075432e5071d2afeef342ab9694eb0ac2",
+    "server/services/authoring/authoring-template-guidance.ts": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172",
+    "shared/authoring/recorded-template-source.ts": "56c8e19a2ca0740232df86ee4e80f5ed89025bb7d4840040fa95440c4a985bb6",
+    "server/services/ana/turn-record-draft.ts": "990163b4d6571639acfbb8155d8abb15b2c856b8df5414892cf7ecbd30c9c398",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e"
+  },
+  "sourcesAfter": {
+    "server/routes/authoring.router.ts": "ca424b13d150408d659190418dfb35c24a664e59021d590a40c1642f2e262e43",
+    "server/services/ana/saved-template-review.ts": "44e01675a2429f97bd03a9843e962ee075432e5071d2afeef342ab9694eb0ac2",
+    "server/services/authoring/authoring-template-guidance.ts": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172",
+    "shared/authoring/recorded-template-source.ts": "56c8e19a2ca0740232df86ee4e80f5ed89025bb7d4840040fa95440c4a985bb6",
+    "server/services/ana/turn-record-draft.ts": "990163b4d6571639acfbb8155d8abb15b2c856b8df5414892cf7ecbd30c9c398",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e"
+  },
+  "sourceDrift": [],
+  "rawOutput": "lint-baseline.log.gz",
+  "rawGzipSha256": "0f9a3fd59e35a63b9044b1d262d5e95afd1014580cea4b3251a7ef366a50379d",
+  "testSummary": []
+}

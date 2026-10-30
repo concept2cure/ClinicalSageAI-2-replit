@@ -32,6 +32,8 @@ import {
 import { evaluateMeetingReadiness } from '../services/ha-interactions/ha-logic';
 import { recordHaInteractionCreated, recordHaCommitmentCreated } from '../services/ha-metrics';
 import { requestPgClient } from '../db/requestDb';
+import { getCurrentAccessibleProgramScope } from '../services/c2c/current-program-access';
+import { requireProjectAdmission, ProjectAdmissionRefusal } from './c2c/project-access';
 import {
   answerFulfilmentFailure,
   commitmentsForRequest,
@@ -75,6 +77,7 @@ function fail(res: Response, err: unknown): void {
   serverError(res, log, 'handling the health-authority interaction request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Give the date as YYYY-MM-DD.');
 /** A refused body, said as a sentence naming the field, so the person reads what to fix. */
 function validationRefusal(res: Response, err: z.ZodError) {
   const first = err.issues[0];
@@ -122,14 +125,51 @@ const interactionSchema = z.object({
   title: z.string().min(1).max(500),
   objective: z.string().max(4000).optional(),
   submissionId: z.number().int().positive().optional(),
-  requestedDate: z.string().optional(),
-  scheduledDate: z.string().optional(),
+  requestedDate: isoDate.optional(),
+  scheduledDate: isoDate.optional(),
   reason,
 });
+
+/**
+ * A meeting on a submission is changed only by someone who may change that
+ * submission's project (P-39 step 4, 2026-10-30): the org editor gate alone
+ * let any editor record or move a meeting on a program they cannot open.
+ * Answers the refusal and returns false; true when admitted or when the
+ * meeting names no submission.
+ */
+async function admitSubmissionWrite(req: Request, res: Response, orgId: number, submissionId: number | null | undefined, forWrite = true): Promise<boolean> {
+  if (submissionId == null) return true;
+  const { rows } = await requestPgClient(req).query(
+    `SELECT p.id FROM submissions s
+       JOIN projects p ON p.regulatory_program_id = s.program_id AND p.organization_id = s.organization_id AND p.status IS DISTINCT FROM 'deleted'
+      WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NULL LIMIT 2`, [submissionId, orgId]);
+  if (rows.length !== 1) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: forWrite ? 'That submission is not one of a project you may change. Nothing was recorded.' : 'Interaction not found for this organization.' } });
+    return false;
+  }
+  try { await requireProjectAdmission(req, String(rows[0].id), forWrite); return true; } catch (err) {
+    if (!(err instanceof ProjectAdmissionRefusal)) throw err;
+    // A read refused is a meeting this person cannot see: said as not found, never confirmed.
+    if (!forWrite) res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Interaction not found for this organization.' } });
+    else res.status(err.status).json({ error: { code: err.code, message: `${err.message} Nothing was recorded.` } });
+    return false;
+  }
+}
+
+/** Admit a read or write of meeting `id` by its submission's project; answers the refusal and returns false. */
+async function admitMeeting(req: Request, res: Response, id: number, forWrite: boolean): Promise<boolean> {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return true; // governedMutation and the reads answer the missing identity themselves
+  return meetingSubmission(req, orgId, id)
+    .then((sub) => admitSubmissionWrite(req, res, orgId, sub, forWrite))
+    .catch((err) => { fail(res, err); return false; });
+}
 
 router.post('/interactions', async (req, res) => {
   const parsed = interactionSchema.safeParse(req.body ?? {});
   if (!parsed.success) return validationRefusal(res, parsed.error);
+  const orgId = resolveOrgId(req);
+  if (orgId && !(await admitSubmissionWrite(req, res, orgId, parsed.data.submissionId).catch((err) => { fail(res, err); return false; }))) return;
   await governedMutation(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const { id } = await createInteractionTx(client, orgId, userId, parsed.data);
     recordHaInteractionCreated();
@@ -142,7 +182,10 @@ router.get('/interactions', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const submissionId = req.query.submissionId ? Number(req.query.submissionId) : undefined;
   try {
-    res.json(await listInteractions(orgId, Number.isFinite(submissionId) ? submissionId : undefined));
+    // Only meetings this reader may see: none on a program they cannot open (P-39 step 4).
+    const q = requestPgClient(req);
+    const scope = await getCurrentAccessibleProgramScope(q as never, { organizationId: orgId, userId: resolveUserId(req) ?? undefined });
+    res.json(await listInteractions(orgId, Number.isFinite(submissionId) ? submissionId : undefined, scope.programIds, q as never));
   } catch (err) {
     fail(res, err);
   }
@@ -150,17 +193,27 @@ router.get('/interactions', async (req, res) => {
 
 const statusSchema = z.object({
   status: z.enum(['planned', 'requested', 'scheduled', 'held', 'minutes_received', 'closed', 'cancelled']),
-  heldDate: z.string().optional(),
-  scheduledDate: z.string().optional(),
-  minutesReceivedDate: z.string().optional(),
+  heldDate: isoDate.optional(),
+  scheduledDate: isoDate.optional(),
+  minutesReceivedDate: isoDate.optional(),
+  /** The inbox letter (meeting minutes) that holds them; named with the move to minutes received. */
+  minutesEventId: z.string().trim().min(1).max(120).optional(),
   reason,
 });
+
+/** The submission a meeting names, for its write admission; undefined when there is no such meeting here. */
+async function meetingSubmission(req: Request, orgId: number, id: number): Promise<number | null | undefined> {
+  const { rows } = await requestPgClient(req).query(
+    `SELECT submission_id FROM ha_interactions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [id, orgId]);
+  return rows.length ? (rows[0].submission_id == null ? null : Number(rows[0].submission_id)) : undefined;
+}
 
 router.patch('/interactions/:id/status', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = statusSchema.safeParse(req.body ?? {});
   if (!parsed.success) return validationRefusal(res, parsed.error);
+  if (!(await admitMeeting(req, res, id, true))) return;
   await governedMutation(req, res, 'transition', parsed.data.reason, async (client, orgId) => {
     await updateInteractionStatusTx(client, orgId, id, parsed.data.status, parsed.data);
     return { target: `ha-interaction:${id}`, payload: { status: parsed.data.status }, body: { id, status: parsed.data.status } };
@@ -181,6 +234,7 @@ router.post('/interactions/:id/questions', async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = questionSchema.safeParse(req.body ?? {});
   if (!parsed.success) return validationRefusal(res, parsed.error);
+  if (!(await admitMeeting(req, res, id, true))) return;
   await governedMutation(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
     const { id: qid } = await addQuestionTx(client, orgId, userId, id, parsed.data);
     return { target: `ha-interaction:${id}`, payload: { questionId: qid }, body: { interactionId: id, questionId: qid } };
@@ -192,6 +246,7 @@ router.get('/interactions/:id/readiness', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  if (!(await admitMeeting(req, res, id, false))) return;
   const client = await pool.connect();
   try {
     const input = await getInteractionReadinessInput(client, orgId, id);

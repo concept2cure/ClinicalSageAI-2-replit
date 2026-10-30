@@ -1,0 +1,22 @@
+# MUTATION M1: approval-share.ts reads the share from the manifest only (the route-derived k for a stored row replaced by NULL). Expected: every stored-row case fails, the rows written now still pass.
+## unit: server/routes/__tests__/audit-trail-ledger.routes.test.ts
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an approval stored before 2026-10-29 with the final type is read from its route: the earlier one is interim, the last one approved 69ms
+   → expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a stored earlier approval stays interim when the other approver never signed 38ms
+   → expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a Vault version: an earlier approver’s signature reads k of n, written as its own type or stored before 52ms
+   → expected 'C2c Work Sign' to be 'Version approval signed, 1 of 2 requi…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 21 passed (24)
+## db: tests/db/review-route-qms-rr2.dbtest.ts
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the earlier approval is its own type, carrying k of n; only the last is the controlled-document approval 436ms
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval 711ms
+ × tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route 261ms
+   → expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+   → expected { id: 49, …(31) } to match object { status: 'in_review', …(2) }
+   → expected { id: 171, …(23) } to match object { …(3) }
+   → expected { id: 171, document_id: null, …(18) } to match object { interim_approval: true, …(2) }
+   → expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+   → expected { id: 171, …(23) } to match object { interim_approval: true, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed | 4 skipped (7)

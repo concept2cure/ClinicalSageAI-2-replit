@@ -172,3 +172,14 @@ describe('describeEditorTarget', () => {
     );
   });
 });
+
+describe('a target within a module (F3)', () => {
+  it('carries the module only when one is sent, and only through the reader', async () => {
+    const { setEditorTarget, peekEditorTarget, clearEditorTarget } = await import('../editorTarget');
+    setEditorTarget({ docType: null, docId: 'D', within: 'M2' });
+    expect(peekEditorTarget()).toMatchObject({ docId: 'D', sectionWithin: 'M2' });
+    setEditorTarget({ docType: null, docId: 'D' });
+    expect(peekEditorTarget()).not.toHaveProperty('sectionWithin');
+    clearEditorTarget();
+  });
+});

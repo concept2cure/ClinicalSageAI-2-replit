@@ -10,21 +10,25 @@ export const MDX_PROJECT_FEATURE_SURFACE_IDS = [
   'device-pma',
   'device-cer',
   'device-diagnostics',
-  'ivd-completeness',
+  // No IVD completeness: it folded into device-diagnostics (D2, fold F2, 2026-10-29).
   'device-clinical-studies',
   'device-software',
   'device-engineering',
   'device-udi',
   'device-postmarket',
   'device-presub',
-  'device-vault',
-  'device-tasks',
-  'device-validation',
-  'device-submission',
+  // No device vault: it folded into the Vault, a core service of every project
+  // (D2, fold F3, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/).
+  // No device task workbench: it folded into Tasks, a core service of every
+  // project (D2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/).
+  // No organization-wide blocker list: a blocker is its filing's readiness (D2,
+  // fold F5 item 2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/).
+  // No device submission packages: a device filing is Submission Center's, over
+  // one store, estar_submissions (D2, fold F5 item 1, 2026-10-30).
   'device-analytics',
-  'design-controls',
+  // No risk management or design controls: both folded into device-engineering
+  // (D2, fold F1c, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/).
   'human-factors',
-  'risk',
   'labeling',
 ] as const;
 

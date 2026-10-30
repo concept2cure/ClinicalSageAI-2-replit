@@ -148,7 +148,7 @@ router.post('/compile/:projectId', async (req, res) => {
       return res.status(409).json({
         success: false,
         error: 'No canonical source objects for this project — nothing to compile.',
-        hint: 'Record the program\'s CMC data in the registers (substance, product, methods, specifications, batches, stability); each record reaches Module 3 as a canonical source.',
+        hint: 'Record the project\'s CMC data in the registers (substance, product, methods, specifications, batches, stability); each record reaches Module 3 as a canonical source.',
       });
     }
 

@@ -1,0 +1,6 @@
+# Rule 2 S3 green: the broad sweep after all seven items (vitest --reporter=dot), summary lines.
+# Scope: server/services/ana/__tests__, ana/skills/__tests__, benefit-risk, biomarkers, capa-mdr, digital-health, stats, preclinical, regulatory/__tests__, market-specs/__tests__, the capa-mdr intake and cybersecurity route tests, tests/biostat.
+
+ Test Files  574 passed (574)
+      Tests  8874 passed | 1 skipped (8875)
+EXIT 0

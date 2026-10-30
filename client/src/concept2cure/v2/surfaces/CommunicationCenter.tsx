@@ -41,6 +41,8 @@ import { C2CForm } from '../C2CForm';
 import { CC_SOURCE_TYPES, CC_INTERACTION_TYPES } from '../fixtures/commcenter';
 import { AgencyInboxList, daysTo, dueInWords, draftResponseWithAna, letterSourceOptions, letterSourceRef, submissionLabel, useAgencyInbox, type LetterOpening } from './AgencyInbox';
 import { programSubmissionsPath, type MarketSubmission } from './programSequence';
+import { MoveMeetingForm, RecordMeetingForm, meetingMoves } from './HaMeetings';
+import { openLetterInCommunication } from './cmcAgencyQuestions';
 import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 import { isSourcesPage, sourcesUrl, type SourcesPage } from './projectSources';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -49,9 +51,11 @@ import '../styles/commcenter-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { CompanyLegalCommunicationLinks } from './CompanyLegalCommunicationLinks';
 import type { CompanyLegalCommunicationLink } from '@shared/company-correspondence';
+import { AGENCY_LETTER_CLASSES, AGENCY_LETTER_CLASS_LABEL } from '@shared/regulatory/agency-interaction';
 import { ApiRequestError, apiRequest, assertApiResponseOk } from '@/lib/queryClient';
 import { CommitmentFulfilDialog } from './CommitmentFulfilment';
 import { CommitmentRowView, isCommitmentsPayload, type CommitmentRow, type CommitmentsPayload } from './CommitmentRow';
+import { getSurfaceMeta } from '../registryModel';
 
 /* ── Display rows, aligned to the REAL backend columns actually returned ── */
 
@@ -73,6 +77,9 @@ interface InteractionRow {
   requested_date: string | null;
   scheduled_date: string | null;
   held_date: string | null;
+  /** The meeting's project, when its submission names exactly one; the inbox letter holding its minutes. */
+  project_id?: number | null;
+  minutes_event_id?: string | null;
 }
 
 /* The commitment row, its shape guard and its chip tone live in
@@ -258,7 +265,11 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())[0];
 
   // ── Meetings & commitments — REAL ──
-  const interState = useLiveRows<InteractionRow>('/api/ha-interactions/interactions');
+  const [meetingVersion, setMeetingVersion] = React.useState(0);
+  const interState = useLiveRows<InteractionRow>('/api/ha-interactions/interactions', [meetingVersion]);
+  /* Recording and moving a meeting (P-39 step 4): the governed ha-interactions routes, by HaMeetings.tsx. */
+  const [recordingMeeting, setRecordingMeeting] = React.useState(false);
+  const [movingMeeting, setMovingMeeting] = React.useState<InteractionRow | null>(null);
   const [commitVersion, setCommitVersion] = React.useState(0);
   /* Two doors onto the one register (2026-10-18). The organisation's own
      commitments (no project) come from /api/ha-interactions; a commitment made
@@ -440,6 +451,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       linkedArtifactIds: Number.isSafeInteger(letter) && letter > 0 ? [letterSourceRef(letter)] : [],
       ...(v.linkedSubmissionId ? { linkedSubmissionId: v.linkedSubmissionId } : {}),
       dueDate: v.dueDate || undefined,
+      ...(v.letterClass ? { letterClass: v.letterClass } : {}),
       urgency: (v.urgency || 'medium') as 'low' | 'medium' | 'high' | 'critical',
       responseRequired: v.responseRequired === 'yes',
       extractedIssues: v.issue ? [v.issue] : [],
@@ -473,8 +485,8 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     <div className="cc" style={{ maxWidth: 1200 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Submission · Communication Center</div>
-          <h1 className="sp-title">Communication center</h1>
+          <div className="sp-eyebrow">Submission · agency communications</div>
+          <h1 className="sp-title">{getSurfaceMeta('communication-center').label}</h1>
           <p className="sp-state">
             The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced
             to its filing and turned into governed action.
@@ -690,7 +702,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             onAdvance={(id) => void triage(id)}
             onAsk={onAsk}
             onOpenTask={() => nav('tasks')}
-            responses={projectId ? { projectId, fire } : undefined}
+            responses={projectId ? { projectId, fire, onNav: nav } : undefined}
             opening={opening}
           />
         </>
@@ -699,9 +711,14 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       {/* ════ TAB: Meetings & commitments — REAL ════ */}
       {tab === 'meetings' && (
         <>
-          <div className="pj-seclbl">
-            Health-authority interactions{' '}
-            <span className="s">· org-scoped</span>
+          <div className="cc-inbox-head">
+            <div className="pj-seclbl" style={{ margin: 0 }}>
+              Health-authority meetings{' '}
+              <span className="s">· those on programs you may open</span>
+            </div>
+            <button className="cc-btn sm" onClick={() => setRecordingMeeting(true)} data-testid="cc-record-meeting">
+              {I.plus} Record a meeting
+            </button>
           </div>
           <StateGuard
             loading={interState.loading}
@@ -737,6 +754,17 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                   >
                     {m.status ? m.status.replace(/_/g, ' ') : 'unknown'}
                   </span>
+                  {/* The minutes are a letter in the meeting's project inbox, opened here when that project is the open one. */}
+                  {m.minutes_event_id && m.project_id != null && String(m.project_id) === projectId && (
+                    <button className="cc-btn sm" onClick={() => openLetterInCommunication(nav, m.minutes_event_id!)} aria-label={`Open the minutes of ${m.title}`}>
+                      Minutes
+                    </button>
+                  )}
+                  {meetingMoves(m.status).length > 0 && (
+                    <button className="cc-btn sm" onClick={() => setMovingMeeting(m)} aria-label={`Move ${m.title}`} data-testid="cc-move-meeting">
+                      Move
+                    </button>
+                  )}
                   <button
                     className="cc-btn sm"
                     aria-label="Ask AnA about this interaction"
@@ -862,6 +890,23 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
         />
       )}
 
+      {recordingMeeting && (
+        <RecordMeetingForm
+          projectId={projectId}
+          fire={fire}
+          onCancel={() => setRecordingMeeting(false)}
+          onRecorded={() => { setRecordingMeeting(false); setMeetingVersion((n) => n + 1); }}
+        />
+      )}
+      {movingMeeting && (
+        <MoveMeetingForm
+          meeting={movingMeeting}
+          fire={fire}
+          onCancel={() => setMovingMeeting(null)}
+          onMoved={() => { setMovingMeeting(null); setMeetingVersion((n) => n + 1); }}
+        />
+      )}
+
       {recordingCommitment && (
         <C2CForm
           config={{
@@ -899,7 +944,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       {form && (
         <C2CForm
           config={{
-            eyebrow: 'Communication Center · agency communications',
+            eyebrow: 'Communication · agency communications',
             title: 'Log agency communication',
             /* This said saving was "not yet wired" and labelled the button
                "Add to view", while onSubmit already POSTed to the governed
@@ -969,10 +1014,19 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                 required: true,
               },
               {
+                /* The class the response clock reads (P-39 step 3, S4): with no
+                   stated due date, the clock derives one from the class's
+                   codified window and says on whose authority. */
+                key: 'letterClass',
+                label: 'Letter class (optional)',
+                type: 'select',
+                options: AGENCY_LETTER_CLASSES.map((c) => ({ value: c, label: AGENCY_LETTER_CLASS_LABEL[c] })),
+              },
+              {
                 key: 'dueDate',
                 label: 'Response due (optional)',
                 type: 'text',
-                placeholder: 'YYYY-MM-DD',
+                placeholder: 'YYYY-MM-DD; the agency’s date, when the letter states one',
               },
               {
                 key: 'issue',

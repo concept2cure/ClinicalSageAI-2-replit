@@ -23,6 +23,10 @@ import {
 } from '../fixtures/licensing';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { getSurfaceMeta } from '../registryModel';
+import { useAuthUser } from '@/services/portal/authService';
+import { canAdministerBilling } from '@shared/constants/permissions';
+import { LicensingInvoices, invoiceContext, useInvoices } from './LicensingInvoices';
 
 /* -- Inline helpers -- */
 
@@ -69,7 +73,33 @@ const billing: BillingApi = {
   },
 };
 
-/* ════ Licensing -- plans & billing surface ════ */
+/**
+ * A plan card's one control. Enterprise asks AnA, which buys nothing, so it is
+ * everyone's. Choosing any other subscription is a Stripe checkout, offered to
+ * billing administrators only, since the checkout routes refuse anyone else
+ * (fold billing into Licensing, Part 1b). The current subscription is marked by
+ * the card's own Current tag; an administrator also sees it as the disabled
+ * choice it always was.
+ */
+function PlanCta({ tier, cur, billingAdmin, label, onChoose }: {
+  tier: string;
+  cur: boolean;
+  billingAdmin: boolean;
+  label: string;
+  onChoose: () => void;
+}) {
+  if (tier === 'enterprise' && !cur) {
+    return <button className="lic-cta" onClick={onChoose}>Ask AnA about Enterprise</button>;
+  }
+  if (!billingAdmin) return null;
+  return (
+    <button className={'lic-cta' + (cur ? ' ghost' : '')} disabled={cur} onClick={onChoose}>
+      {cur ? 'Current subscription' : label}
+    </button>
+  );
+}
+
+/* ════ Compare subscriptions (id licensing) -- subscriptions & billing surface ════ */
 
 export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   const [model, setModel] = useState<'dtc' | 'b2b'>('dtc');
@@ -93,6 +123,15 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   const statusState = useLiveData<BillingStatus>('/api/billing/status');
   const status = statusState.data;
 
+  /* Billing administration: the permission the session derives from the
+     billing routes' own role list (fold billing into Licensing, 2026-10-29).
+     It decides the invoice list (Part 1) and every control that opens checkout
+     or the billing portal (Part 1b), because POST /checkout, /dtc-checkout and
+     /portal refuse anyone else. A member keeps the catalogue and the plan
+     status, and is told once who does the rest; the invoice list is not read. */
+  const billingAdmin = canAdministerBilling(useAuthUser());
+  const invoices = useInvoices(billingAdmin);
+
   const family = (LIC_ARCHETYPES.find((a) => a.id === arch) || { family: 'pharma' }).family;
   const b2bTiers: B2bTier[] = LIC_PRICING[family] || LIC_PRICING.pharma;
   const bundle = licBundle(seats);
@@ -106,7 +145,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
          routed and no one was told. No sales contact is configured in this
          product, so the button says what it does — ask AnA — and no toast
          claims more (settings/integrity audit 2026-10-17, finding 3). */
-      onAsk && onAsk('Tell me about the Enterprise plan: what it includes and how an organisation arranges it.');
+      onAsk && onAsk('Tell me about the Enterprise subscription: what it includes and how an organisation arranges it.');
       return;
     }
     const body: Record<string, unknown> =
@@ -143,67 +182,82 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
 
   /* WHAT ANA SEES HERE. On a failed status read `curTier` silently falls back
      to 'free' and the free card wears the Current tag — the error branch
-     exists so that fallback is never reported as the organization's plan.
-     Payment status is the raw value, never dunning language; choosing a plan
-     and the seats input are checkout acts and are never offered. */
+     exists so that fallback is never reported as the organization's subscription.
+     Payment status is the raw value, never dunning language; choosing a subscription
+     and the seats input are checkout acts and are never offered. The invoice
+     facts (invoiceContext, LicensingInvoices.tsx) say which state the read is
+     in, every time: not read for a member, refused, failed, not set up, or the
+     page on screen. They moved here from the billing screen with the list. */
   const anaContext = useMemo(() => {
-    const lockLead = unlock
-      ? `The user arrived here from a lock on "${unlock.label}", which ${
-          unlock.requiredTier
-            ? `needs the ${unlock.requiredTier} plan or above`
-            : 'has no plan remedy — changing plan may not resolve it on its own'
-        }. `
-      : '';
-    const view = `Viewing the ${model === 'dtc' ? 'self-service' : 'enterprise per-user'} catalog on the ${cycle} cycle.`;
-    const shared = {
-      pricingModel: model,
-      cycle,
-      ...(model === 'b2b' ? { archetype: arch } : {}),
-      arrivedFromLock: unlock ? { label: unlock.label, requiredTier: unlock.requiredTier } : null,
-    };
-    if (statusState.loading) {
-      return { summary: lockLead + 'The current plan is still loading. ' + view, facts: shared };
-    }
-    if (statusState.error) {
+    const subscriptionContext = (): { summary: string; facts: Record<string, unknown>; availableActions?: string[] } => {
+      const lockLead = unlock
+        ? `The user arrived here from a lock on "${unlock.label}", which ${
+            unlock.requiredTier
+              ? `needs the ${unlock.requiredTier} subscription or above`
+              : 'has no subscription remedy — changing subscription may not resolve it on its own'
+          }. `
+        : '';
+      const view = `Viewing the ${model === 'dtc' ? 'self-service' : 'enterprise per-user'} catalog on the ${cycle} cycle.`;
+      const shared = {
+        pricingModel: model,
+        cycle,
+        ...(model === 'b2b' ? { archetype: arch } : {}),
+        arrivedFromLock: unlock ? { label: unlock.label, requiredTier: unlock.requiredTier } : null,
+        subscriptionActions: billingAdmin
+          ? 'offered'
+          : 'for billing administrators only (admins and owners); checkout and the billing portal are not offered to this viewer',
+      };
+      if (statusState.loading) {
+        return { summary: lockLead + 'The current subscription is still loading. ' + view, facts: shared };
+      }
+      if (statusState.error) {
+        return {
+          summary:
+            lockLead +
+            'The subscription status could not be read, so no current subscription is shown — any "Current" marker on the ' +
+            'free card is the silent fallback of the failed read, NOT a finding that the organization is on the ' +
+            'free tier. ' + view,
+          facts: { ...shared, planUnavailable: true },
+        };
+      }
+      if (!status) {
+        return {
+          summary: lockLead + 'No subscription record was returned for this organization. ' + view,
+          facts: { ...shared, planUnavailable: true },
+        };
+      }
       return {
         summary:
           lockLead +
-          'The subscription status could not be read, so no current plan is shown — any "Current" marker on the ' +
-          'free card is the silent fallback of the failed read, NOT a finding that the organization is on the ' +
-          'free tier. ' + view,
-        facts: { ...shared, planUnavailable: true },
+          `Compare subscriptions: current subscription "${status.tier}", payment status "${status.paymentStatus}", ` +
+          `${status.seats} seat(s), billed ${status.billingCycle}` +
+          (status.currentPeriodEnd
+            ? `, current period ends ${new Date(status.currentPeriodEnd).toLocaleDateString()}`
+            : '') +
+          '. ' + view,
+        facts: {
+          ...shared,
+          currentTier: status.tier,
+          paymentStatus: status.paymentStatus,
+          billingCycle: status.billingCycle,
+          seats: status.seats,
+          currentPeriodEnd: status.currentPeriodEnd ?? null,
+          planUnavailable: false,
+        },
+        availableActions: [
+          'Switch between the self-service and enterprise catalogs and the monthly/annual cycle (view state only)',
+          billingAdmin
+            ? 'Choosing a subscription opens Stripe checkout; changing or cancelling runs through the billing portal — human acts'
+            : 'Choosing, changing or cancelling the subscription is for billing administrators; this viewer is not one',
+          'Billing administrators open an invoice on Stripe (hosted page or PDF) and page through older invoices — human acts',
+        ],
       };
-    }
-    if (!status) {
-      return {
-        summary: lockLead + 'No subscription record was returned for this organization. ' + view,
-        facts: { ...shared, planUnavailable: true },
-      };
-    }
-    return {
-      summary:
-        lockLead +
-        `Plans & licensing: current plan "${status.tier}", payment status "${status.paymentStatus}", ` +
-        `${status.seats} seat(s), billed ${status.billingCycle}` +
-        (status.currentPeriodEnd
-          ? `, current period ends ${new Date(status.currentPeriodEnd).toLocaleDateString()}`
-          : '') +
-        '. ' + view,
-      facts: {
-        ...shared,
-        currentTier: status.tier,
-        paymentStatus: status.paymentStatus,
-        billingCycle: status.billingCycle,
-        seats: status.seats,
-        currentPeriodEnd: status.currentPeriodEnd ?? null,
-        planUnavailable: false,
-      },
-      availableActions: [
-        'Switch between the self-service and enterprise catalogs and the monthly/annual cycle (view state only)',
-        'Choosing a plan opens Stripe checkout; changing or cancelling runs through the billing portal — human acts',
-      ],
     };
-  }, [unlock, model, cycle, arch, statusState.loading, statusState.error, status]);
+    const ctx = subscriptionContext();
+    const inv = invoiceContext(invoices.view);
+    const who = billingAdmin ? '' : ' This viewer is not a billing administrator, so no checkout or billing portal is offered.';
+    return { ...ctx, summary: ctx.summary + ' ' + inv.sentence + who, facts: { ...ctx.facts, ...inv.facts } };
+  }, [unlock, model, cycle, arch, statusState.loading, statusState.error, status, invoices.view, billingAdmin]);
   /* AnA operates the pricing CATALOG view only. The seat count is a checkout
      body field and `checkout()` opens Stripe — neither is reachable from here;
      both stay the person's own click. */
@@ -230,14 +284,14 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Admin · billing</div>
-          <h1 className="sp-title">Plans &amp; licensing</h1>
+          <h1 className="sp-title">{getSurfaceMeta('licensing').label}</h1>
           <p className="sp-state">
             Self-service monthly tiers, or enterprise per-user pricing by
             organization archetype — with seat bundle discounts and annual
             savings. Billing runs on Stripe Checkout + Customer Portal.
           </p>
         </div>
-        {status && (
+        {status && billingAdmin && (
           <button className="sp-primary" onClick={managePortal}>
             {I.creditCard || I.settings} Manage billing
           </button>
@@ -248,8 +302,8 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         /* Says the thing the customer came here to find out. Every value is the
            server's own verdict, carried across the navigation — the module's
            real name and the real minimum tier. When requiredTier is null the
-           lock has no plan remedy (an administrator disabled it, or it is
-           outside this workspace's industry mode) and this must NOT offer a plan
+           lock has no subscription remedy (an administrator disabled it, or it is
+           outside this workspace's industry mode) and this must NOT offer a subscription
            that would change nothing. */
         <div className="lic-unlock" role="note">
           <span className="lic-unlock-ic" aria-hidden="true">{I.lock}</span>
@@ -257,8 +311,8 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
             <div className="lic-unlock-t">{unlock.label}</div>
             <div className="lic-unlock-b">
               {unlock.requiredTier
-                ? `Included from the ${unlock.requiredTier.charAt(0).toUpperCase()}${unlock.requiredTier.slice(1)} plan upward. Your current plan does not include it.`
-                : 'Not included in your plan. Changing plan may not resolve this on its own — check with your administrator.'}
+                ? `Included from the ${unlock.requiredTier.charAt(0).toUpperCase()}${unlock.requiredTier.slice(1)} subscription upward. Your current subscription does not include it.`
+                : 'Not included in your subscription. Changing subscription may not resolve this on its own — check with your administrator.'}
             </div>
           </div>
         </div>
@@ -266,14 +320,14 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
 
       {statusState.loading ? (
         <div role="status" className="scaf-note" style={{ marginBottom: 16 }}>
-          Loading your current plan…
+          Loading your current subscription…
         </div>
       ) : statusState.error ? (
         <div style={{ marginBottom: 16 }}>
           <EmptyState
             tone="error"
             icon={I.alertTriangle}
-            title="Couldn't load your current plan"
+            title="Couldn't load your current subscription"
             hint="Your subscription status didn't load. This reads your organization's billing record — sign in and retry, or check the billing service is reachable."
           />
         </div>
@@ -281,7 +335,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         <div className="pj-card" style={{ marginBottom: 16 }}>
           <div className="pj-card-b lic-status">
             <div>
-              <span className="l">Current plan</span>
+              <span className="l">Current subscription</span>
               <span className="v">{status.tier}</span>
             </div>
             <div>
@@ -309,6 +363,14 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         </div>
       ) : null}
+
+      {billingAdmin ? (
+        <LicensingInvoices invoices={invoices} />
+      ) : (
+        <p className="scaf-note" style={{ margin: '0 0 16px' }}>
+          Invoices and subscription changes are for billing administrators: your organization&rsquo;s admins and owners.
+        </p>
+      )}
 
       <div className="lic-controls">
         <div className="cv-tiers">
@@ -426,23 +488,13 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
                     </li>
                   )}
                 </ul>
-                <button
-                  className={'lic-cta' + (cur ? ' ghost' : '')}
-                  disabled={cur}
-                  onClick={() =>
-                    t.tier === 'free' ? checkout('free') : checkout(t.tier)
-                  }
-                >
-                  {cur
-                    ? 'Current plan'
-                    : t.tier === 'enterprise'
-                      ? 'Ask AnA about Enterprise'
-                      : t.tier === 'free'
-                        ? 'Start free'
-                        : t.trialDays > 0
-                          ? 'Start ' + t.trialDays + '-day trial'
-                          : 'Choose'}
-                </button>
+                <PlanCta
+                  tier={t.tier}
+                  cur={cur}
+                  billingAdmin={billingAdmin}
+                  label={t.tier === 'free' ? 'Start free' : t.trialDays > 0 ? 'Start ' + t.trialDays + '-day trial' : 'Choose'}
+                  onChoose={() => checkout(t.tier)}
+                />
               </div>
             );
           })}
@@ -504,17 +556,13 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
                     <li key={i}>{I.check} {f}</li>
                   ))}
                 </ul>
-                <button
-                  className={'lic-cta' + (cur ? ' ghost' : '')}
-                  disabled={cur}
-                  onClick={() => checkout(t.tier)}
-                >
-                  {cur
-                    ? 'Current plan'
-                    : t.tier === 'enterprise'
-                      ? 'Ask AnA about Enterprise'
-                      : 'Choose ' + t.name}
-                </button>
+                <PlanCta
+                  tier={t.tier}
+                  cur={cur}
+                  billingAdmin={billingAdmin}
+                  label={'Choose ' + t.name}
+                  onChoose={() => checkout(t.tier)}
+                />
               </div>
             );
           })}
@@ -525,10 +573,9 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         <div className="lic-usage-main">
           <b>Usage-based, capped, auditable</b>
           <span>
-            Every plan meters real usage — session and weekly windows,
-            per-engine buckets, overage caps you set yourself, and credits with
-            auto-reload. Changing a cap is a governed action: admin role,
-            reason-for-change, audit entry.
+            Every subscription meters real usage — session and weekly windows,
+            per-engine buckets and overage caps you set yourself. Changing a cap
+            is a governed action: admin role, reason-for-change, audit entry.
           </span>
         </div>
         <button
@@ -545,7 +592,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         {I.shieldCheck} Prices, limits, credits and features are the product&rsquo;s fixed
         catalog, mirrored from the same config the backend charges against
         (services/billing.ts) — identical for every organization, not per-tenant data.
-        Your plan, seats and renewal above are read from your organization&rsquo;s billing
+        Your subscription, seats and renewal above are read from your organization&rsquo;s billing
         record. Checkout &amp; management run through Stripe.
       </div>
       <C2CToast msg={toast} />

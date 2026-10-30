@@ -138,7 +138,7 @@ export function useCerComplaints(programId: string | null): UseCerComplaintsResu
   const { data, loading, error, refresh } = useFetchJson<ComplaintsPayload>(url);
   const rows = data?.rows ?? null;
   return {
-    state: toDataState(rows, loading, error, { idleReason: 'Complaints are held per program' }),
+    state: toDataState(rows, loading, error, { idleReason: 'Complaints are held per project' }),
     figures: rows ? complaintFigures(rows, data?.count ?? rows.length) : null,
     refresh,
   };
@@ -157,7 +157,7 @@ export function useCerPmcfEnrollment(programId: string | null): UseCerPmcfEnroll
   const { data, loading, error, refresh } = useFetchJson<PmcfPayload>(url);
   return {
     state: toDataState(data?.records ?? null, loading, error, {
-      idleReason: 'PMCF activities are held per program',
+      idleReason: 'PMCF activities are held per project',
     }),
     summary: data?.summary ?? null,
     refresh,

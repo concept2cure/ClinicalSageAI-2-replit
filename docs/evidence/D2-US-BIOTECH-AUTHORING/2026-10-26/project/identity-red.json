@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-10-26T23:14:54.142586+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 4.578,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "project/identity-red-inputs.json",
+  "sourcesBefore": {
+    "server/routes/c2c/projects.ts": "ed10ec22773286383d8f9cb58d311db6f62292b5443ade992df3fd44a05b34d6",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts": "109f4b8905a2c3591477af0c2a73bd74967292624b95ac3dc35d2bfb38785c60"
+  },
+  "sourcesAfter": {
+    "server/routes/c2c/projects.ts": "ed10ec22773286383d8f9cb58d311db6f62292b5443ade992df3fd44a05b34d6",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts": "109f4b8905a2c3591477af0c2a73bd74967292624b95ac3dc35d2bfb38785c60"
+  },
+  "sourceDrift": [],
+  "rawOutput": "identity-red.log.gz",
+  "rawGzipSha256": "e582095dec110a0bedcd5978688986b47513d9d0d480938317f3f382d6fc1d90",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  3 failed | 9 passed (12)",
+    "Duration  4.14s (transform 2.19s, setup 74ms, import 3.76s, tests 50ms, environment 0ms)"
+  ]
+}

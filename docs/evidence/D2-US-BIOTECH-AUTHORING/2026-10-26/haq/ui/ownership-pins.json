@@ -1,0 +1,12 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/surfaces/AgencyResponseEditor.tsx": "a2add66d7880da48c73ebd2a1a14e4e0f409361519a5d84adf86ef881b6107d7",
+    "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts": "5fef8c42f1191ec19821ea866ad82ef2d0ddded513305b0280993de9ab4a7061",
+    "client/src/concept2cure/v2/surfaces/agencyResponseEditorState.ts": "150dd30d1bebc36d94672d69f88d2666d3da0e6160e625dee9528952d5dc741f",
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "0fb837df3ee39d1b13165a09af1a2e11714054a2eecb42a1b4e6d3a18910f978",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx": "2716ff9d04bd6d2e9b91ada49b34c75a84cbb90a5bfddd96a03359d765d56392",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditorState.test.ts": "79df27c65214e920aeb0b96ed37dc9a51e2001476a0dfb6a901a983405cb93b5",
+    "server/services/agency-responses/editor-response.ts": "c3f245b6b210476d38ff6b8d42a986b873375a5349cbff699694e800056089de",
+    "server/services/agency-responses/__tests__/editor-response-text.test.ts": "feee84b0833e280a48450f81d11473e3bd6678371df9f282681e77da8780643a"
+  }
+}

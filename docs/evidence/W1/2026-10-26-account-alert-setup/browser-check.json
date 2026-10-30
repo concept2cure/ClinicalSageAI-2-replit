@@ -1,0 +1,97 @@
+{
+  "basis": "Actual AccountPanel, AccountOnboardingSettings, NotificationPreferenceSettings, TaskTray, API transport and canonical CSS; synthetic auth-service adapter and API replies. Actual captured-actor header helper uses synthetic JWTs. No production account tested.",
+  "results": [
+    {
+      "width": 1440,
+      "dark": false,
+      "focusRestored": true,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/mdx/notification-subscriptions/system",
+          "body": {
+            "inAppEnabled": false
+          },
+          "actorHeadersMatched": true
+        }
+      ],
+      "storageKeys": [
+        "trialsage_access_token"
+      ],
+      "preferencePersisted": false,
+      "staleActorRefused": true,
+      "screenshot": "account-alerts-1440-light.png"
+    },
+    {
+      "width": 1440,
+      "dark": true,
+      "focusRestored": true,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/mdx/notification-subscriptions/system",
+          "body": {
+            "inAppEnabled": false
+          },
+          "actorHeadersMatched": true
+        }
+      ],
+      "storageKeys": [
+        "trialsage_access_token"
+      ],
+      "preferencePersisted": false,
+      "staleActorRefused": true,
+      "screenshot": "account-alerts-1440-dark.png"
+    },
+    {
+      "width": 390,
+      "dark": false,
+      "focusRestored": true,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/mdx/notification-subscriptions/system",
+          "body": {
+            "inAppEnabled": false
+          },
+          "actorHeadersMatched": true
+        }
+      ],
+      "storageKeys": [
+        "trialsage_access_token"
+      ],
+      "preferencePersisted": false,
+      "staleActorRefused": true,
+      "screenshot": "account-alerts-390-light.png"
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "focusRestored": true,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/mdx/notification-subscriptions/system",
+          "body": {
+            "inAppEnabled": false
+          },
+          "actorHeadersMatched": true
+        }
+      ],
+      "storageKeys": [
+        "trialsage_access_token"
+      ],
+      "preferencePersisted": false,
+      "staleActorRefused": true,
+      "screenshot": "account-alerts-390-dark.png"
+    }
+  ]
+}

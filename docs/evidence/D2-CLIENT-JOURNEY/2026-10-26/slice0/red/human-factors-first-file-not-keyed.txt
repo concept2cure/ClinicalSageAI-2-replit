@@ -1,0 +1,490 @@
+Red run against HumanFactors.tsx at HEAD (928b70996); the file had no working-tree diff when this ran.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xxxx·x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > shows none of the file's records when the read is not keyed to the project
+AssertionError: expected 'Specialist  device  human factorsHuma…' not to match /OTHER-PROJECT pump/
+
+- Expected:
+/OTHER-PROJECT pump/
+
++ Received:
+"Specialist  device  human factorsHuman factors  IEC 62366-1Organization-wide usability records. OTHER-PROJECT pump — infusion pump — use-related risk analysis and HFE/UE file completeness, the gate before summative testing. Add use scenario Whether you can run the summative usability study yet1 critical task still has no mitigation — summative testing shouldn't start until it is controlled.You've analysed 1 use scenarios; 1 is a critical task (serious or critical harm). The HFE/UE file is 20% complete against IEC 62366-1 — 8 elements still open. I'll draft the mitigation for each critical task, tie it to the risk control, and assemble the HFE/UE report — you approve each one. Mitigate Other project bolus programmingOr work the use-related risk table and HFE checklist below.Use-related risk analysis  1 critical of 1 scenarios  critical-task gate: blockedUnmitigated critical tasks1 critical task must be mitigated before summative testing (IEC 62366-1 S5.9).Other project bolus programmingCritical taskDecimal misplacedCriticalUnmitigated MitigateHFE/UE file completeness  IEC 62366-1  2/10 elements  each tick is written to the HFE/UE recordUse specificationUser profilesUse environmentsUI characteristicsKnown use problemsHazard-related use scenariosCritical tasksFormative evaluationSummative evaluationHFE/UE report"
+
+ ❯ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx:99:28
+     97|     await waitFor(() => expect(bodyText()).not.toMatch(/Loading the HF…
+     98|
+     99|     expect(bodyText()).not.toMatch(/OTHER-PROJECT pump/);
+       |                            ^
+    100|     expect(bodyText()).not.toMatch(/Other project bolus programming/);
+    101|     expect(bodyText()).not.toMatch(/complete against IEC 62366-1/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > says why the file is not shown, in one spelling
+TestingLibraryElementError: Unable to find an element by: [data-testid="hf-not-keyed"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"hf"[39m
+      [33mstyle[39m=[32m"max-width: 1140px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSpecialist [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m device [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m human factors[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mHuman factors [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m IEC 62366-1[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mOrganization-wide usability records. [0m
+            [0mOTHER-PROJECT pump — infusion pump[0m
+            [0m — use-related risk analysis and HFE/UE file completeness, the gate before summative testing.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"sp-primary"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-plus"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Add use scenario[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mWhether you can run the summative usability study yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m critical task[0m
+          [0m still [0m
+          [0mhas[0m
+          [0m no mitigation — summative testing shouldn't start until [0m
+          [0mit is[0m
+          [0m controlled.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mYou've analysed [0m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m use scenarios; [0m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m [0m
+          [0mis a[0m
+          [0m critical task[0m
+          [0m (serious or ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"hf"[39m
+      [33mstyle[39m=[32m"max-width: 1140px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSpecialist [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m device [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m human factors[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mHuman factors [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m IEC 62366-1[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mOrganization-wide usability records. [0m
+            [0mOTHER-PROJECT pump — infusion pump[0m
+            [0m — use-related risk analysis and HFE/UE file completeness, the gate before summative testing.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"sp-primary"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-plus"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Add use scenario[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mWhether you can run the summative usability study yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m critical task[0m
+          [0m still [0m
+          [0mhas[0m
+          [0m no mitigation — summative testing shouldn't start until [0m
+          [0mit is[0m
+          [0m controlled.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mYou've analysed [0m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m use scenarios; [0m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m [0m
+          [0mis a[0m
+          [0m critical task[0m
+          [0m (serious or ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx:111:31
+    109|     mount();
+    110|
+    111|     const note = await screen.findByTestId('hf-not-keyed');
+       |                               ^
+    112|     expect(note.textContent ?? '').toMatch(NOT_KEYED);
+    113|     expect(note.textContent ?? '').toMatch(/organization's first HFE\/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > offers no use-scenario write into a file it cannot tie to the project
+AssertionError: expected <button class="sp-primary">…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="sp-primary"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-plus"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M5 12h14"
+    />
+    <path
+      d="M12 5v14"
+    />
+  </svg>
+   Add use scenario
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx:122:56
+    120|     await waitFor(() => expect(bodyText()).not.toMatch(/Loading the HF…
+    121|
+    122|     expect(screen.queryByRole('button', ADD_SCENARIO)).toBeNull();
+       |                                                        ^
+    123|     expect(screen.queryByRole('button', { name: /Record a hazard-relat…
+    124|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not hand AnA the hidden file as this screen’s
+AssertionError: expected '{"surfaceId":"human-factors","summary…' not to match /OTHER-PROJECT pump/
+
+- Expected:
+/OTHER-PROJECT pump/
+
++ Received:
+"{\"surfaceId\":\"human-factors\",\"summary\":\"Human factors (IEC 62366-1) for OTHER-PROJECT pump — infusion pump: HFE/UE file 20% complete (8 element(s) still open). 1 use scenario(s), 1 critical task(s), 1 unmitigated — the critical-task gate is BLOCKED until each unmitigated critical task is controlled.\",\"facts\":{\"device\":\"OTHER-PROJECT pump — infusion pump\",\"completenessPercent\":20,\"presentElements\":[\"useSpecification\",\"userProfiles\"],\"openElements\":[\"useEnvironments\",\"userInterfaceCharacteristics\",\"knownUseProblems\",\"hazardRelatedUseScenarios\",\"criticalTasks\",\"formativeEvaluation\",\"summativeEvaluation\",\"hfeUeReport\"],\"totalScenarios\":1,\"criticalTaskCount\":1,\"unmitigatedCriticalTasks\":1,\"criticalTaskGate\":\"blocked\",\"firstUnmitigatedCriticalTask\":{\"task\":\"Other project bolus programming\",\"useError\":\"Decimal misplaced\",\"severity\":\"Critical\"},\"scenarios\":[{\"task\":\"Other project bolus programming\",\"useError\":\"Decimal misplaced\",\"severity\":\"Critical\",\"mitigated\":false}]},\"availableActions\":[\"Add a use scenario (feeds the use-related risk analysis; the write is audit-logged)\",\"Record a mitigation against a critical task (governed — requires a reason for change, and only a mitigation the HFE/UE record accepts can move the summative gate)\",\"Mark an HFE/UE file element present or absent (written to the HFE/UE record and audit-logged)\"]}"
+
+ ❯ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx:133:27
+    131|
+    132|     const published = JSON.stringify(seen);
+    133|     expect(published).not.toMatch(/OTHER-PROJECT pump/);
+       |                           ^
+    134|     expect(published).not.toMatch(/Other project bolus programming/);
+    135|     expect(seen?.facts).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not say adding a use scenario is audit-logged, which the route does not record
+AssertionError: expected 'Specialist  device  human factorsHuma…' not to match /audit-logged/
+
+- Expected:
+/audit-logged/
+
++ Received:
+"Specialist  device  human factorsHuman factors  IEC 62366-1Organization-wide usability records. OTHER-PROJECT pump — infusion pump — use-related risk analysis and HFE/UE file completeness, the gate before summative testing. Add use scenario Whether you can run the summative usability study yet1 critical task still has no mitigation — summative testing shouldn't start until it is controlled.You've analysed 1 use scenarios; 1 is a critical task (serious or critical harm). The HFE/UE file is 20% complete against IEC 62366-1 — 8 elements still open. I'll draft the mitigation for each critical task, tie it to the risk control, and assemble the HFE/UE report — you approve each one. Mitigate Other project bolus programmingOr work the use-related risk table and HFE checklist below.Use-related risk analysis  1 critical of 1 scenarios  critical-task gate: blockedUnmitigated critical tasks1 critical task must be mitigated before summative testing (IEC 62366-1 S5.9).Other project bolus programmingCritical taskDecimal misplacedCriticalUnmitigated MitigateHFE/UE file completeness  IEC 62366-1  2/10 elements  each tick is written to the HFE/UE recordUse specificationUser profilesUse environmentsUI characteristicsKnown use problemsHazard-related use scenariosCritical tasksFormative evaluationSummative evaluationHFE/UE reportUse-related risk — IEC 62366-1Add use scenarioEach scenario is a task where a use error could cause harm. Serious or critical harm makes it a critical task that must be mitigated before summative testing.Task / use step*Potential use error*Potential harm severity*Select…NegligibleMinorSeriousCriticalMitigation in place?*Select…No — not yet mitigatedYes — risk control documentedUse scenarios feed the use-related risk analysis and the HFE/UE report; changes are audit-logged.Cancel Add scenario"
+
+ ❯ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx:158:28
+    156|     const form = await screen.findByRole('button', { name: /Add scenar…
+    157|     expect(form).toBeTruthy();
+    158|     expect(bodyText()).not.toMatch(/audit-logged/);
+       |                            ^
+    159|
+    160|     const actions = (seen?.availableActions ?? []).join('\n');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  03:16:51
+   Duration  7.24s (transform 339ms, setup 153ms, import 455ms, tests 5.96s, environment 513ms)
+

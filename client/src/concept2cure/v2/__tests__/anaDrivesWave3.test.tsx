@@ -1,10 +1,15 @@
 // @vitest-environment jsdom
 /**
- * AnA drives the wave-3 screens — wiring proof against the REAL Risk,
- * TemplateLibrary, and ArtifactsCenter surfaces: registration under the
+ * AnA drives the wave-3 screens — wiring proof against the REAL risk register
+ * and TemplateLibrary surfaces (ArtifactsCenter folded into the Vault, fold F3): registration under the
  * identity-mapped ids, genuine DOM effects through the surfaces' own state,
  * honest refusals on misses and empty cells, and the retry-hold across a
  * loading read.
+ *
+ * 2026-10-29 (D2, fold F1c): the Risk screen folded into Engineering evidence,
+ * which mounts the same register for the open project and registers its matrix
+ * actions under device-engineering. The three risk cases run against the
+ * register as Engineering mounts it (./engineeringPanels.harness.tsx).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,9 +24,8 @@ vi.mock('@/utils/authToken', () => ({
   getAuthHeaders: () => ({ Authorization: 'Bearer t', 'x-organization-id': '1' }),
 }));
 
-import { Risk } from '../surfaces/Risk';
+import { EngineeringRiskPanel, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
 import { TemplateLibrary } from '../surfaces/TemplateLibrary';
-import { ArtifactsCenter } from '../surfaces/AdminSurfaces';
 import {
   __resetSurfaceActionBus,
   applySurfaceAction,
@@ -62,24 +66,24 @@ const RISK_ROWS = [
   },
 ];
 
-describe('Risk — AnA operates the real risk file', () => {
+describe('Engineering — AnA operates the real risk file', () => {
   beforeEach(() => {
     apiRequest.mockReset();
     apiRequest.mockImplementation(async (_m: string, path: string) => {
-      if (path === '/api/mdx/risk-items') return ok({ data: RISK_ROWS });
+      if (path === RISK_READ) return ok(keyedToPanelProject(RISK_ROWS));
       return ok({ data: [] });
     });
   });
 
-  it('registers under "risk"; select-hazard opens the named hazard; set-matrix-view switches bands', async () => {
-    render(<Risk {...props()} />);
+  it('registers under "device-engineering"; select-hazard opens the named hazard; set-matrix-view switches bands', async () => {
+    render(<EngineeringRiskPanel />);
     await screen.findAllByText(/Electrical shock/);
-    await waitFor(() => expect(registeredSurfaceId()).toBe('risk'));
+    await waitFor(() => expect(registeredSurfaceId()).toBe('device-engineering'));
 
     let outcome: { status: string; detail?: string } = { status: '' };
     act(() => {
       outcome = applySurfaceAction(
-        directive('risk.select-hazard', { hazard: 'software freeze' }),
+        directive('device-engineering.select-hazard', { hazard: 'software freeze' }),
         vi.fn(),
       ) as typeof outcome;
     });
@@ -88,7 +92,7 @@ describe('Risk — AnA operates the real risk file', () => {
 
     act(() => {
       outcome = applySurfaceAction(
-        directive('risk.set-matrix-view', { view: 'residual' }),
+        directive('device-engineering.set-matrix-view', { view: 'residual' }),
         vi.fn(),
       ) as typeof outcome;
     });
@@ -96,14 +100,14 @@ describe('Risk — AnA operates the real risk file', () => {
   });
 
   it('a hazard name that is not in the file is refused WITH the hazards listed, so AnA can retry with a real one', async () => {
-    render(<Risk {...props()} />);
+    render(<EngineeringRiskPanel />);
     await screen.findAllByText(/Electrical shock/);
-    await waitFor(() => expect(registeredSurfaceId()).toBe('risk'));
+    await waitFor(() => expect(registeredSurfaceId()).toBe('device-engineering'));
 
     let outcome: { status: string; detail?: string; reason?: string } = { status: '' };
     act(() => {
       outcome = applySurfaceAction(
-        directive('risk.select-hazard', { hazard: 'battery fire' }),
+        directive('device-engineering.select-hazard', { hazard: 'battery fire' }),
         vi.fn(),
       ) as typeof outcome;
     });
@@ -113,14 +117,14 @@ describe('Risk — AnA operates the real risk file', () => {
   });
 
   it('focus-cell opens the hazard sitting at a band pair, and an empty cell is an honest miss', async () => {
-    render(<Risk {...props()} />);
+    render(<EngineeringRiskPanel />);
     await screen.findAllByText(/Electrical shock/);
-    await waitFor(() => expect(registeredSurfaceId()).toBe('risk'));
+    await waitFor(() => expect(registeredSurfaceId()).toBe('device-engineering'));
 
     let outcome: { status: string; detail?: string; reason?: string } = { status: '' };
     act(() => {
       outcome = applySurfaceAction(
-        directive('risk.focus-cell', { severity: 'Critical', probability: 'Occasional' }),
+        directive('device-engineering.focus-cell', { severity: 'Critical', probability: 'Occasional' }),
         vi.fn(),
       ) as typeof outcome;
     });
@@ -130,7 +134,7 @@ describe('Risk — AnA operates the real risk file', () => {
 
     act(() => {
       outcome = applySurfaceAction(
-        directive('risk.focus-cell', { severity: 'Catastrophic', probability: 'Frequent' }),
+        directive('device-engineering.focus-cell', { severity: 'Catastrophic', probability: 'Frequent' }),
         vi.fn(),
       ) as typeof outcome;
     });
@@ -202,46 +206,7 @@ describe('TemplateLibrary — AnA operates the real library', () => {
   });
 });
 
-/* ── ArtifactsCenter ─────────────────────────────────────────────────────── */
-
-const ARTIFACTS = {
-  data: [
-    { id: 'a-1', name: 'SAP v2 draft', kind: 'document', fmt: 'docx', size: '48 KB', model: 'AnA', when: '2h ago', ver: 'v2', sig: 'unsigned', prog: 'BX-204' },
-    { id: 'a-2', name: 'CRL response memo', kind: 'document', fmt: 'pdf', size: '112 KB', model: 'AnA', when: '1d ago', ver: 'v1', sig: 'signed', prog: 'BX-204' },
-  ],
-};
-
-describe('ArtifactsCenter — AnA focuses artifacts by name', () => {
-  beforeEach(() => {
-    apiRequest.mockReset();
-    apiRequest.mockImplementation(async (_m: string, path: string) => {
-      if (path === '/api/artifacts-center') return ok(ARTIFACTS);
-      return ok({ data: [] });
-    });
-  });
-
-  it('registers under "artifacts-center"; focus drives the SAME highlight the follow-the-work hand-off drives', async () => {
-    const { container } = render(<ArtifactsCenter {...props()} />);
-    await screen.findByText('SAP v2 draft');
-    await waitFor(() => expect(registeredSurfaceId()).toBe('artifacts-center'));
-
-    let outcome: { status: string; detail?: string; reason?: string } = { status: '' };
-    act(() => {
-      outcome = applySurfaceAction(
-        directive('artifacts-center.focus-artifact', { artifact: 'crl response' }),
-        vi.fn(),
-      ) as typeof outcome;
-    });
-    expect(outcome).toEqual({ status: 'applied', detail: 'Focused CRL response memo' });
-    await waitFor(() => expect(container.querySelector('.is-focus')).not.toBeNull());
-
-    act(() => {
-      outcome = applySurfaceAction(
-        directive('artifacts-center.focus-artifact', { artifact: 'ghost doc' }),
-        vi.fn(),
-      ) as typeof outcome;
-    });
-    expect(outcome.status).toBe('failed');
-    expect(outcome.reason).toContain('No artifact named');
-  });
-});
+/* ── ArtifactsCenter: retired ─────────────────────────────────────────────
+   The gallery folded into the Vault (D2, fold F3 slice C, 2026-10-29). AnA's
+   focus there is vault.focus-document, by name or artifact id, proven against
+   the real Vault in vaultOrganizationArtifacts.test.tsx. */

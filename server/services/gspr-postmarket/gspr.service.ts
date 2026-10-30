@@ -321,7 +321,7 @@ function scopeUndeterminedFinding(req: GsprRequirement, unknown: string[]): Gspr
     title: req.title,
     message:
       `${req.regulation} Annex ${req.annex} clause ${req.clause}: scope undetermined — not recorded on the ` +
-      `program: ${unknown.join(', ')}. Record it, or record an applicability decision for this clause.`,
+      `project: ${unknown.join(', ')}. Record it, or record an applicability decision for this clause.`,
   };
 }
 
@@ -379,7 +379,7 @@ export async function computeCoverage(
         requirementId: req.id,
         clause: req.clause,
         title: req.title,
-        message: `${req.regulation} Annex ${req.annex} clause ${req.clause} is in-scope for this program but has no applicability decision.`,
+        message: `${req.regulation} Annex ${req.annex} clause ${req.clause} is in-scope for this project but has no applicability decision.`,
       });
       continue;
     }

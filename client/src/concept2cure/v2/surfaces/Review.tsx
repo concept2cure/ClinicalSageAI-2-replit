@@ -43,19 +43,24 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { useAuthUser } from '@/services/portal/authService';
 import { ceremonyOpen } from '../ceremony';
 import { ReviewDecisionDialog } from './ReviewDecisionDialog';
-import type { AuthoringReviewRow } from '@shared/authoring/peer-review';
+import { signedOnRoute, type AuthoringReviewRow } from '@shared/authoring/peer-review';
 import type { ReviewItem, ReviewComment, ReviewWorkflow, ReviewRequest } from '../fixtures/review-data';
 import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import { publishShellProject, readShellProject } from '../shellProject';
 import { setEditorTarget } from '../editorTarget';
 import { ReviewThreadsPane } from './ReviewThreads';
 import { ReviewVaultQueue, type VaultReviewItem } from './ReviewVaultQueue';
+import { openNotificationRecord } from '../notificationNavigation';
+import { NOTICE_UUID } from '@shared/types/notification-navigation';
 import { reviewStanding, REVIEW_STANDING_PILL_TONE } from './reviewStanding';
 import '../styles/project-home-v2.css';
+import { getSurfaceMeta } from '../registryModel';
 import { C2CToast, useToast } from '../toast';
 
 /** Sub-headline shared by the surface header and its honest empty/error states. */
-const REVIEW_SUB = 'Reviews requested in Authoring: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.';
+/** The registry label, so the page and its breadcrumb are one name (section 9). */
+const REVIEW_TITLE = getSurfaceMeta('review').label;
+const REVIEW_SUB = 'Reviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.';
 
 /**
  * The render contract of GET /api/review/board (server/routes/review-board-routes.ts),
@@ -110,6 +115,17 @@ function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
   return <span className={`rd-chip tone-${tone}`}>{children}</span>;
 }
 
+/**
+ * The open program as the switch names it. A program opened from a link
+ * (`?program=`) is known to the shell by its id alone; the board's own rows
+ * name it, else it is "this project". Never its id.
+ */
+function namedProgram(program: { id: string; title: string | null } | null, queue: ReviewItem[]): { id: string; title: string } | null {
+  if (!program) return null;
+  const title = program.title ?? queue.find((r) => r.programId === program.id && r.prog)?.prog ?? 'this project';
+  return { id: program.id, title };
+}
+
 /** Scope + program switch, rendered above the queue and in the empty state. */
 function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
   scope: Scope;
@@ -135,14 +151,14 @@ function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
       ))}
       {program && (
         <button
-          className="btn ghost"
+          className="btn ghost rv-scope-program"
           aria-pressed={onlyProgram}
           data-on={onlyProgram || undefined}
           style={{ marginLeft: 'auto', ...(onlyProgram ? on : {}) }}
           onClick={() => onOnlyProgram(!onlyProgram)}
-          title={onlyProgram ? 'Showing this program only' : 'Show this program only'}
+          title={onlyProgram ? 'Showing this project only' : 'Show this project only'}
         >
-          {I.gitBranch} {onlyProgram ? 'Only ' : 'All programs · '}{program.title}
+          {I.gitBranch} {onlyProgram ? 'Only ' : 'All projects · '}{program.title}
         </button>
       )}
     </div>
@@ -178,7 +194,23 @@ export function Review(props: SurfaceViewProps) {
   return <ReviewSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
 }
 
+/**
+ * Open a Vault version on the board in the Vault of its project, on its row,
+ * through the one record-opening path a notice uses (RR1b). A version with no
+ * project opens the Vault itself.
+ */
+function openVaultVersion(item: VaultReviewItem, onNav: (id: string) => void, fireToast: (text: string, tone?: 'error') => void) {
+  if (!item.programId || !NOTICE_UUID.test(item.programId) || !NOTICE_UUID.test(item.vaultId)) return onNav('vault');
+  try {
+    openNotificationRecord({ surface: 'vault', label: 'Open the version', params: { documentId: item.vaultId }, programId: item.programId }, onNav);
+  } catch (e) {
+    fireToast(e instanceof Error ? e.message : 'The version could not be opened.', 'error');
+  }
+}
+
 function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
+  const me = useAuthUser();
+  const meId = me?.id && /^\d+$/.test(me.id) ? Number(me.id) : null;
   const [queue, setQueue] = useState<ReviewItem[]>([]);
   const [sel, setSel] = useState('');
   /* The row whose thread the board should carry. Set only by an explicit
@@ -201,7 +233,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
   const program = useMemo(() => {
     const p = readShellProject();
     if (!p || !UUID_RE.test(String(p.id))) return null;
-    return { id: String(p.id), title: p.title || p.code || p.product || String(p.id) };
+    return { id: String(p.id), title: p.title || p.code || p.product || null };
   }, []);
   /* With a program open, the board starts on THAT program. It started
      org-wide, so the screen reached from BX-256's project home listed BX-204's
@@ -242,7 +274,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
 
   /** Re-read the board from the server after a confirmed write. */
   const refreshBoard = () => setBoardEpoch((e) => e + 1);
-  const decisionDialog = decisionFor && <ReviewDecisionDialog documentId={decisionFor.id} onClose={() => setDecisionFor(null)} onRecorded={(receipt) => {
+  const decisionDialog = decisionFor && <ReviewDecisionDialog documentId={decisionFor.id} programId={decisionFor.programId ?? null} onClose={() => setDecisionFor(null)} onRecorded={(receipt) => {
     refreshBoard(); fireToast(recordedNotice(receipt));
   }} />;
 
@@ -378,10 +410,10 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
 
   const scopeBar = (
     <>
-      <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={(value) => { if (!ceremonyOpen()) setOnlyProgram(value); }} />
+      <ScopeBar scope={scope} onScope={changeScope} program={namedProgram(program, queue)} onlyProgram={onlyProgram} onOnlyProgram={(value) => { if (!ceremonyOpen()) setOnlyProgram(value); }} />
       {/* Send for review on a Vault version assigns nobody, so it was in no
           queue (QA 2026-10-08, walk 2, j3). Listed here with who has it. */}
-      <ReviewVaultQueue items={board?.vaultReviews} onOpenVault={() => onNav('vault')} />
+      <ReviewVaultQueue items={board?.vaultReviews} meId={meId} onOpenVault={(item) => openVaultVersion(item, onNav, fireToast)} />
     </>
   );
   const vaultInReview = (board?.vaultReviews ?? []).length;
@@ -391,7 +423,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     return (
       <div className="page-inner">
         {decisionDialog}
-        <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        <PageHead eyebrow="Project · review" title={REVIEW_TITLE} sub={REVIEW_SUB} />
         {scopeBar}
         <EmptyState title="Loading the review board…" icon={I.clock} />
       </div>
@@ -401,7 +433,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     return (
       <div className="page-inner">
         {decisionDialog}
-        <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        <PageHead eyebrow="Project · review" title={REVIEW_TITLE} sub={REVIEW_SUB} />
         {scopeBar}
         <EmptyState
           tone="error"
@@ -421,20 +453,20 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     /* With Vault versions listed above, "nothing" would be untrue: the claim
        narrows to the Authoring queue. */
     const emptyTitle = vaultInReview > 0
-      ? 'No Authoring document is in this queue'
+      ? 'No document from the editor is in this queue'
       : scope === 'mine' ? 'Nothing awaits your review'
       : scope === 'requested' ? 'You have not requested a review'
       : 'Nothing is in review';
     const emptyHint =
       scope === 'mine'
-        ? 'When a colleague requests your review on a document in Authoring, or a document reaches your sign-off step, it appears here.'
+        ? 'When a colleague requests your review on a document in the editor, or a document reaches your sign-off step, it appears here.'
         : scope === 'requested'
-          ? 'Reviews you request from the authoring workspace appear here with each reviewer’s verdict.'
-          : 'When a review is requested on a document in Authoring, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.';
+          ? 'Reviews you request from the editor appear here with each reviewer’s verdict.'
+          : 'When a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.';
     return (
       <div className="page-inner">
         {decisionDialog}
-        <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        <PageHead eyebrow="Project · review" title={REVIEW_TITLE} sub={REVIEW_SUB} />
         {scopeBar}
         {boardRead ? (
           <EmptyState title={emptyTitle} hint={emptyHint} icon={I.shieldCheck} />
@@ -448,7 +480,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
           />
         )}
         {/* Threads can exist even when no document is on the approval board. */}
-        <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
+        <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? namedProgram(program, queue) : null} />
         <C2CToast msg={toast} />
       </div>
     );
@@ -571,7 +603,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
         {decisionDialog}
       <PageHead
         eyebrow="Project · review"
-        title="Review & approval"
+        title={REVIEW_TITLE}
         sub={REVIEW_SUB}
         actions={
           <button className="btn ghost" onClick={() => onAsk('Summarize open review comments')}>
@@ -584,7 +616,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
         tone={signState === 'assessed-with-findings' ? 'urgent' : 'calm'}
         eyebrow="What is waiting on your review right now"
         headline={signHeadline}
-        body={<>Each document carries the reviews requested in Authoring and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the authoring workspace.</>}
+        body={<>Each document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.</>}
         reassure={
           hasAnswer(signState) && signState !== 'not-assessed'
             ? "I'll surface exactly which review you own and pre-read the document so your verdict is one informed click."
@@ -620,13 +652,13 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
               <div className="dt-eyebrow">{item.prog ?? item.module ?? ''}{item.role ? ' · ' + item.role : ''}</div>
               <h3 className="dt-title">{item.doc}</h3>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="dt-acts">
               {item.awaitingMyReview
                 ? <>
                     <button className="btn ghost" onClick={() => setDecisionFor(item)}>{I.close} Request changes...</button>
                     <button className="btn primary" onClick={() => setDecisionFor(item)}>{I.shieldCheck} Record review decision</button>
                   </>
-                : item.myReviewStatus && item.myReviewStatus !== 'pending'
+                : hasRecordedReview(item)
                   ? <RecordedReviewStanding item={item} />
                   : item.atMySignOff
                     ? <button className="btn primary" onClick={openEditor} data-testid="rv-open-to-sign">{I.lock} Open the document to sign</button>
@@ -710,7 +742,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
                     {Math.round(item.conf * 100)}% confidence
                   </span>
                 )}
-                <button className="btn ghost" style={{ height: 28 }} onClick={openEditor} data-testid="rv-open-in-editor">{I.externalLink} Open in editor</button>
+                <button className="btn ghost rv-doc-open" onClick={openEditor} data-testid="rv-open-in-editor">{I.externalLink} Open in editor</button>
               </div>
             </div>
             <div className="rv-doc-page">
@@ -776,14 +808,21 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
 
       {/* Real, persisted review threads (Phase-13 backend) — assigned to the
           signed-in reviewer, with reply / request-changes / resolve in place. */}
-      <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
+      <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? namedProgram(program, queue) : null} />
 
       <C2CToast msg={toast} />
     </div>
   );
 }
 
+/** The caller recorded a decision, or signed the review on its route (RR5). */
+const hasRecordedReview = (item: ReviewItem): boolean =>
+  Boolean(item.myReviewSignedAt) || Boolean(item.myReviewStatus && item.myReviewStatus !== 'pending');
+
 function RecordedReviewStanding({ item }: { item: ReviewItem }) {
+  if (item.myReviewSignedAt) {
+    return <span className="rd-chip tone-ok">Your review signature recorded {new Date(item.myReviewSignedAt).toLocaleDateString()}</span>;
+  }
   const current = item.myReviewStanding === 'current';
   const label = REVIEW_STATUS_LABEL[item.myReviewStatus ?? ''] ?? item.myReviewStatus;
   return <span className={`rd-chip tone-${current ? item.myReviewStatus === 'approved' ? 'ok' : item.myReviewStatus === 'rejected' ? 'err' : 'warn' : 'warn'}`}>
@@ -799,7 +838,8 @@ function recordedNotice(receipt: AuthoringReviewRow): string {
 
 function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: number }) {
   const current = review.standing === 'current';
-  const approved = current && review.status === 'approved';
+  const signed = signedOnRoute(review);
+  const approved = signed || (current && review.status === 'approved');
   const tone = approved ? 'ok' : current && review.status === 'rejected' ? 'err' : 'warn';
   const state = approved ? 'approved' : review.status === 'pending' ? 'current' : 'pending';
   return <div className="rv-wf-step" data-status={state}>
@@ -807,8 +847,10 @@ function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: nu
     <div className="rv-wf-body">
       <div className="rv-wf-nm">{review.reviewer}<span className={`rv-wf-tag tone-${tone}`}>{reviewRequestWords(review)}</span></div>
       <div className="rv-wf-meta mono">
-        {review.requestedBy ? `requested by ${review.requestedBy}` : 'requested'}
-        {review.reviewedAt && ` · decided ${new Date(review.reviewedAt).toLocaleDateString()}`}
+        {review.requestedByName ? `requested by ${review.requestedByName}` : 'requested'}
+        {signed && review.routeSignedAt
+          ? ` · signed ${new Date(review.routeSignedAt).toLocaleDateString()}`
+          : review.reviewedAt && ` · decided ${new Date(review.reviewedAt).toLocaleDateString()}`}
         {review.comments && ` · ${review.comments}`}
       </div>
     </div>
@@ -816,6 +858,7 @@ function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: nu
 }
 
 function reviewRequestWords(review: ReviewRequest): string {
+  if (signedOnRoute(review)) return 'Signed';
   const label = REVIEW_STATUS_LABEL[review.status] ?? review.status;
   if (review.status === 'pending' || review.standing === 'current') return label;
   return `${label} · ${review.standing === 'stale' ? 'Earlier saved content' : 'Content binding unavailable'}`;

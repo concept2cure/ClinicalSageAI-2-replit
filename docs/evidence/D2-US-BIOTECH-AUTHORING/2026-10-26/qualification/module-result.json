@@ -1,0 +1,29 @@
+{
+  "receipts": [
+    "module-boundaries.json",
+    "module-lint.json"
+  ],
+  "passed": 20,
+  "suites": 2,
+  "skipped": 30,
+  "scope": "17 lifecycle cases requalified plus3 new module boundary/identity cases. Existing broad30 catalogue cases deliberately left to root full combined run.",
+  "sourceDrift": [],
+  "strictLint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "expandedBroadLoopExpectedModuleIds": [
+    "US_CTD_M1_REGIONAL",
+    "ICH_CTD_M2",
+    "ICH_CTD_M3",
+    "ICH_CTD_M4",
+    "ICH_CTD_M5"
+  ],
+  "unexposedGlobalModule1": "ICH_CTD_M1",
+  "changedTests": {
+    "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts": "86876e24fe956e13dfcb7bdafe3f000ff34b282de86ed2fec580211225e265ad",
+    "server/routes/__tests__/usBiotechLifecycleEditor.pglite.integration.test.ts": "595270bf185b69fad837944abd114987537e7cda9dae696203d7eba860095868"
+  },
+  "counting": "20includesprevious17; do not sum as37unique.",
+  "limits": "No production edits, provider calls, agency dispatch, nativeRLS/concurrency or human/regulatory validation."
+}

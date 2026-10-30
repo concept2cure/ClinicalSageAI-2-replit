@@ -1,4 +1,109 @@
+-- AMENDED IN PLACE 2026-10-30 — D2 fold F5 item 1: device submission packages into Submission Center (CLAUDE.md Rule 1).
+-- Decision P-61 item 1: one device-filing store, estar_submissions. The device
+-- submission-packages screen (device-submission) is folded into Submission
+-- Center, whose device filings list every tracked filing with a status filter,
+-- each draft's gate from its own readiness and each filing's history; device
+-- packages of c2c_submission_packages are migrated into it by
+-- migrations/20261030_estar_filing_one_store.sql. Removed: the id from step 1's
+-- keep-list and step 2's upsert, so a fresh database never holds the row and
+-- step 1 deprecates the existing row on every replay. The row, its metadata
+-- (its recorded tier included), module_subscriptions FKs and every tenant record
+-- stay; no DELETE, no appended DROP. A live grant carries to submission-center
+-- in the entitlement resolver (decision P-61 item 4,
+-- server/services/entitlements/folded-module-successors.ts); no grant row is
+-- written. 20260823's packaging row is removed with it.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 fold F5 item 2: the organization-wide blocker list retires (CLAUDE.md Rule 1).
+-- Decision P-61 item 2: no organization-wide blocker list. A blocker belongs to
+-- a filing, from that filing's deterministic readiness (EstarFilingPanel), and is
+-- closed by fixing it; the list's "Pass" for a low-severity blocker is not
+-- carried. Submission blockers (device-validation) retires; its address opens
+-- Submission Center. Removed: the id from step 1's keep-list and step 2's upsert,
+-- so a fresh database never holds the row and step 1 deprecates the existing row
+-- on every replay. The row, its metadata (its recorded tier included),
+-- module_subscriptions FKs and every tenant record stay; no DELETE, no appended
+-- DROP. A live grant carries to submission-center in the entitlement resolver
+-- (decision P-61 item 4, server/services/entitlements/folded-module-successors.ts);
+-- no grant row is written. 20260823's packaging row is removed with it.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 folds F1c and F2 (CLAUDE.md Rule 1).
+-- Risk management (risk) folded into Engineering evidence (device-engineering),
+-- which holds the project's ISO 14971 risk file (RiskRegister.tsx), and IVD
+-- completeness (ivd-completeness) into IVDR evidence (device-diagnostics), whose
+-- readiness panel draws the IVDR board and the assessment workbench. Removed:
+-- both ids from step 1's keep-list and step 2's upsert, so a fresh database
+-- never holds either row and step 1 deprecates the existing rows on every replay.
+-- The rows, their metadata (their recorded tier included), module_subscriptions
+-- FKs and every tenant record stay; no DELETE, no appended DROP. A live grant of
+-- either carries to its target in the entitlement resolver (decision P-61 item 4,
+-- server/services/entitlements/folded-module-successors.ts); no grant row is
+-- written. 20260823's packaging and customer-copy rows are removed with them.
+-- design-controls, folded with risk, was never on this file's lists; its writers
+-- are 20260814j and 20260823_module_catalog_mdx_registers, amended the same day.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 fold of ectd-publishing into eCTD Compile (CLAUDE.md Rule 1).
+-- The eCTD publishing reference (ectd-publishing) is folded into eCTD Compile:
+-- its spec versions sit beside the validation findings, and its version choice,
+-- FDA Regional IG OID and controlled vocabularies are eCTD Compile's eCTD
+-- reference panel (EctdCompileReference.tsx). It left the launch catalogue on
+-- 2026-10-08, so the reason step 1 kept it (the 2026-09-22 note below: "a launch
+-- module") no longer holds. Removed: the id from step 1's keep-list, and step 1b,
+-- the heal step that cleared step 1's deprecation for this one row. 20260814j,
+-- the row's only writer, no longer inserts it, so a fresh database never holds
+-- it; on a deployed database step 1 deprecates the existing row on every replay
+-- and nothing clears the flag. The row, its metadata (its recorded tier
+-- included), module_subscriptions FKs and every tenant record stay; no DELETE,
+-- no appended DROP. 20260823's packaging row is removed with it.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 fold of part11-console into Audit trail (CLAUDE.md Rule 1).
+-- The Part 11 console (part11-console) is folded into Audit trail, which states
+-- both audit chains' verdicts (audit_logs from the ledger, audit_events from
+-- GET /api/part11/audit-trail/chain-integrity) on screen and to AnA. The console
+-- was never seeded (see COMPLIANCE CONTROLS below); remove it from step 1's
+-- keep-list only, so a row any other path added is deprecated on every replay
+-- instead of staying live for a screen that no longer exists (and failing
+-- 20260823's tier guard, which skips deprecated rows). The row, its metadata,
+-- module_subscriptions FKs and every tenant record stay; no DELETE. audit-trail
+-- stays unseeded and on the keep-list. 20260823 has no part11-console row.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 fold F3: artifacts-center and device-vault into Vault (CLAUDE.md Rule 1).
+-- The Artifacts center (artifacts-center) and the device kit's document vault
+-- (device-vault) are folded into the Vault: each project's Governed artifacts
+-- branch lists every artifact of the project with its versions, audit report and
+-- governed DOCX, and the Vault's organization view lists the governed artifacts of
+-- the projects the caller can open. Remove both ids from step 1's keep-list and
+-- step 2's upsert, so step 1 deprecates the existing rows on every replay. The
+-- rows, their metadata, module_subscriptions FKs and every tenant record stay; no
+-- DELETE, and no later UPDATE this upsert could undo. 20260823's packaging rows
+-- are removed with them. The Vault is free at the same tier as artifacts-center.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 device-tasks fold into Tasks (CLAUDE.md Rule 1).
+-- The device task workbench (device-tasks) is folded into Tasks: TaskBoard.tsx
+-- reads the same submission-ops work item by item and marks another store's
+-- blocking work. Remove device-tasks from step 1's keep-list and step 2's upsert,
+-- so step 1 deprecates the existing row on every replay. The row, its metadata,
+-- module_subscriptions FKs and every tenant record stay; no DELETE, and no later
+-- UPDATE this upsert could undo. 20260823's packaging row is removed with it.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/README.md.
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10a filing-catalogue fold (Rule 1).
+-- Filing discovery, selected reference and supported build facts now reach the
+-- existing Projects wizard and project Plan. Remove the old keep-list/upsert
+-- identity so replay deprecates existing catalogue rows. Retain those rows,
+-- their metadata, subscription FKs and stored records; do not DELETE them.
+-- Evidence: docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.10a/README.md.
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10 filing catalogue fold (Rule 1).
+-- RegistryPicker, FilingReference and ProjectPlan now carry every filing
+-- discovery/reference function. Remove filings-catalog from this keep-list
+-- and upsert so step 1 deprecates it on every deploy, preserving the existing
+-- row, metadata and all tenant subscriptions. No cascading DELETE.
+-- Evidence and replay proof: slice-A2/A2.10/README.md.
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.7 dossier fold (CLAUDE.md Rule 1).
+-- Dossier artifact rollups and section tracking now live on project Author in
+-- ProjectDossier.tsx. Remove dossier/dossier-map from this writer's keep-list
+-- and upsert; step 1 deprecates existing rows on every replay. Keep rows, FKs,
+-- subscriptions and stored project data intact. No cascading DELETE or later
+-- UPDATE that this upsert could undo. Evidence: slice-A2/A2.7/README.md.
 -- eCTD REGULATORY AUDIT CONTEXT
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
@@ -17,6 +122,40 @@
 --   - Descriptions only; no module, entitlement or price changes.
 --   - Idempotent: re-runs on every deploy (CLAUDE.md Rule 1).
 -- =============================================================================
+-- ══ AMENDED IN PLACE 2026-10-26 (CLAUDE.md Rule 1) ══════════════════════════
+-- WHAT CHANGED: the `name` of fifteen rows in step 2's upsert, to the names
+-- section 9 of .design/client-journey/INFORMATION_ARCHITECTURE.md gives them
+-- (slice A.1, "Names a client reads"):
+--   tasks                 Tasks & collaboration          -> Tasks
+--   communication-center  Communication Center           -> Communication
+--   vault                 Vault (DMS)                    -> Vault
+--   quality               Quality & Assurance            -> Quality
+--   document-authoring    Document editor & authoring    -> The editor
+--   review                Review & approval              -> The review board
+--   protocol-dev          Protocol development           -> The protocol workspace
+--   ind-checklist         IND lifecycle                  -> IND forms
+--   dispatch-readiness    Dispatch readiness             -> Submission Readiness (P-33)
+--   device-cer            CER generator (EU MDR)         -> Clinical evaluation (CER)
+--   device-510k           510(k) workbench               -> 510(k) and eSTAR
+--   device-pma            PMA submissions                -> PMA
+--   device-diagnostics    Device & diagnostics workbench -> IVDR evidence
+--   device-engineering    Device engineering             -> Engineering evidence
+--   device-postmarket     Post-market vigilance          -> Post-market surveillance and CAPA
+-- WHY: Subscription & features draws each card's title from this column before
+-- the surface registry's label (`a.name || surf.label`), and the lock dialog,
+-- Compare subscriptions' unlock note and the access-request queue read it too.
+-- The registry labels changed in the same slice; left here, the old names (two
+-- of them "workbench", one a folded feature's name, "IND lifecycle") would go on
+-- reaching every deployed catalogue, because this upsert sets name =
+-- EXCLUDED.name on every deploy. Amending the upsert is the change that
+-- deploys: a later UPDATE would be undone by this file on the next run.
+-- dispatch-readiness keeps its catalogue and entitlement name, Submission
+-- Readiness (decision P-33), rather than the screen's own label.
+-- Names only: no module id, category, path, tier or entitlement changes.
+-- CHANGED BY: slice A.1, the labels cluster (client/src/concept2cure/v2/
+-- __tests__/clientNamesSlice1.test.tsx; docs/evidence/D2-CLIENT-JOURNEY/
+-- 2026-10-26/slice1/).
+-- ═════════════════════════════════════════════════════════════════════════════
 -- ══ AMENDED IN PLACE 2026-10-15 (CLAUDE.md Rule 1) ══════════════════════════
 -- WHAT CHANGED: three descriptions in step 2's upsert.
 --   - authoring-engine: "An AI system per document type (no hallucinations,
@@ -102,7 +241,8 @@
 -- Not seeding them does NOT remove the apps: both remain in the shell and fully
 -- reachable. It only means no entitlement row exists to gate them, so they are
 -- unconditionally available. They stay in the step-1 protected list below so a
--- row added by some other path is never retired either.
+-- row added by some other path is never retired either. (2026-10-29: the Part 11
+-- console folded into Audit trail and left that list; see the header.)
 --
 -- The line drawn is "is this the mechanism by which Part 11 compliance is
 -- recorded or evidenced?". 'identity-console' (enterprise SSO / SCIM) is a
@@ -185,7 +325,6 @@ UPDATE available_modules
        updated_at = now()
  WHERE module_id NOT IN (
    'agency-meetings',
-   'artifacts-center',
    'audit-trail',
    'authoring-engine',
    'batch-draft',
@@ -210,22 +349,14 @@ UPDATE available_modules
    'device-postmarket',
    'device-presub',
    'device-software',
-   'device-submission',
-   'device-tasks',
    'device-udi',
-   'device-validation',
-   'device-vault',
    'device-workstream',
    'dispatch-readiness',
    'doc-journey',
    'document-authoring',
-   'dossier',
-   'dossier-map',
    'ectd-coauthor',
-   'ectd-publishing',   -- added 2026-09-22: a launch module; see the amendment note at the top
    'ectd-compile',
    'evidence-search',
-   'filings-catalog',
    'gateway-transmittals',
    'global-ri',
    'haq-manager',
@@ -234,7 +365,6 @@ UPDATE available_modules
    'ind-checklist',
    'insights',
    'intelligence-catalog',
-   'ivd-completeness',
    'labeling',
    'labeling-pi',
    'lifecycle-mgmt',
@@ -244,7 +374,6 @@ UPDATE available_modules
    'nonclinical',
    'orchestration',
    'orphan',
-   'part11-console',
    'pdev',
    'pediatric',
    'pharmacovigilance',
@@ -262,7 +391,6 @@ UPDATE available_modules
    'report-governance',
    'research-admin',
    'review',
-   'risk',
    'safety-narrative',
    'shadow-review',
    'source-tracer',
@@ -273,15 +401,8 @@ UPDATE available_modules
    'vault'
  );
 
--- 1b) Undo step 1's earlier retirements of rows that are live app surfaces added
--- by LATER migrations (added 2026-09-22 — see the amendment note at the top).
--- Idempotent: touches the row only while the flag is present. It clears only
--- the flag, never the row's name, path or policy, which stay with 20260814j.
-UPDATE available_modules
-   SET metadata = (COALESCE(metadata::jsonb, '{}'::jsonb) - 'deprecated')::json,
-       updated_at = now()
- WHERE module_id IN ('ectd-publishing')
-   AND COALESCE(metadata::jsonb, '{}'::jsonb) ? 'deprecated';
+-- 1b) Removed 2026-10-29 (the ectd-publishing fold; see the note at the top). It
+-- cleared step 1's deprecation for ectd-publishing alone, the one row it named.
 
 -- 2) Upsert one row per real app, keyed by the surface id.
 INSERT INTO available_modules (module_id, name, description, category, path, icon, sort_order, metadata) VALUES
@@ -289,61 +410,52 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('batch-draft', 'Parallel drafting', 'AnA drafts several dossier sections in parallel. Each section arrives as its own draft for you to accept, and an accepted draft is saved through the same governed section save as an edit you make yourself.', 'Author & assemble', '/concept2cure/batch-draft', 'sparkles', 20, '{"tiers": [], "industries": []}'::json),
   ('cmc', 'CMC / Module 3', 'Module 3 operating system: blueprint, specifications, stability, batch records, convergence.', 'Author & assemble', '/concept2cure/cmc', 'beaker', 30, '{"tiers": [], "industries": []}'::json),
   ('csr-workflow', 'CSR workflow', 'ICH E3 CSR builder + intelligence library.', 'Author & assemble', '/concept2cure/csr-workflow', 'fileText', 40, '{"tiers": [], "industries": []}'::json),
-  ('device-510k', '510(k) workbench', 'eSTAR section tree · content editor · predicate/SE intelligence panel. In progress.', 'Author & assemble', '/concept2cure/device-510k', 'fileCheck', 50, '{"tiers": [], "industries": []}'::json),
-  ('device-cer', 'CER generator (EU MDR)', 'Annex XIV structure, FAERS, literature, GSPR checklist, export. Dashboard only today.', 'Author & assemble', '/concept2cure/device-cer', 'microscope', 60, '{"tiers": [], "industries": []}'::json),
-  ('device-diagnostics', 'Device & diagnostics workbench', 'Classification, performance testing, risk analysis, IVDR, CLIA, CDx, LDT. See ui_kits/risk + ui_kits/labeling.', 'Author & assemble', '/concept2cure/device-diagnostics', 'stethoscope', 70, '{"tiers": [], "industries": []}'::json),
-  ('device-pma', 'PMA submissions', 'PMA module status and trial metrics over the program read-model. Had no v2 entry point before the kit shell was retired.', 'Author & assemble', '/concept2cure/device-pma', 'shieldCheck', 80, '{"tiers": [], "industries": []}'::json),
+  ('device-510k', '510(k) and eSTAR', 'eSTAR section tree · content editor · predicate/SE intelligence panel. In progress.', 'Author & assemble', '/concept2cure/device-510k', 'fileCheck', 50, '{"tiers": [], "industries": []}'::json),
+  ('device-cer', 'Clinical evaluation (CER)', 'Annex XIV structure, FAERS, literature, GSPR checklist, export. Dashboard only today.', 'Author & assemble', '/concept2cure/device-cer', 'microscope', 60, '{"tiers": [], "industries": []}'::json),
+  ('device-diagnostics', 'IVDR evidence', 'Classification, performance testing, risk analysis, IVDR, CLIA, CDx, LDT. See ui_kits/risk + ui_kits/labeling.', 'Author & assemble', '/concept2cure/device-diagnostics', 'stethoscope', 70, '{"tiers": [], "industries": []}'::json),
+  ('device-pma', 'PMA', 'PMA module status and trial metrics over the program read-model. Had no v2 entry point before the kit shell was retired.', 'Author & assemble', '/concept2cure/device-pma', 'shieldCheck', 80, '{"tiers": [], "industries": []}'::json),
   ('device-presub', 'Pre-submission (Q-Sub)', 'Q-Sub meeting manager. Previously reachable only through a persisted localStorage value — no rail, tab or palette entry existed.', 'Author & assemble', '/concept2cure/device-presub', 'messageSquare', 90, '{"tiers": [], "industries": []}'::json),
   ('device-workstream', 'Medical Device & IVD', 'The MDX workstream — one door. Programs portfolio with classification + 510(k)/PMA/CER/De Novo pathway tabs, predicate intelligence, eSTAR/Annex XIV editors. Built in the MDX kit.', 'Author & assemble', '/concept2cure/device-workstream', 'stethoscope', 100, '{"tiers": [], "industries": []}'::json),
   ('doc-journey', 'Document journey', 'One document, ideation → submission: ideate → outline → AnA draft → revise → review → QC → approve (§11 e-sign) → assemble (eCTD leaf) → transmit (ESG). Document state visible at every stage.', 'Author & assemble', '/concept2cure/doc-journey', 'gitBranch', 110, '{"tiers": [], "industries": []}'::json),
-  ('document-authoring', 'Document editor & authoring', 'See HANDOFF_TO_DESIGN_document_authoring.md — editor + Yjs co-author + track-changes + comments + versions + approval + e-sign all have working backends, no UI.', 'Author & assemble', '/concept2cure/document-authoring', 'penLine', 120, '{"tiers": [], "industries": []}'::json),
-  ('dossier', 'Dossier', 'Document-first workspace (Artos/Weave model): eCTD folder tree · submission documents in process with status/version · the live document · Data Room of source files.', 'Author & assemble', '/concept2cure/dossier', 'folder', 130, '{"tiers": [], "industries": []}'::json),
+  ('document-authoring', 'The editor', 'See HANDOFF_TO_DESIGN_document_authoring.md — editor + Yjs co-author + track-changes + comments + versions + approval + e-sign all have working backends, no UI.', 'Author & assemble', '/concept2cure/document-authoring', 'penLine', 120, '{"tiers": [], "industries": []}'::json),
   ('ectd-coauthor', 'eCTD co-author', 'eCTD tree + section authoring. Back-half pipeline (format→assemble→validate→transmit) is production-grade.', 'Author & assemble', '/concept2cure/ectd-coauthor', 'gitBranch', 140, '{"tiers": [], "industries": []}'::json),
   ('ectd-compile', 'Compile & Export eCTD', 'eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id (/api/ectd-compile).', 'Author & assemble', '/concept2cure/ectd-compile', 'gitBranch', 150, '{"tiers": [], "industries": []}'::json),
   ('inconsistency', 'Inconsistency Intelligence', 'Change a governed value once and propagate it across every document that cites it. Draft sections update inline; approved/locked sections are flagged for re-approval with a task, on the audit trail. Matches Artos Inconsistency Intelligence / Weave content-update. Contract ref (not yet a @shared file): server/routes/assumption-decision-contradiction.ts', 'Author & assemble', '/concept2cure/inconsistency', 'gitCompare', 160, '{"tiers": [], "industries": []}'::json),
-  ('ivd-completeness', 'IVD completeness', 'IVDR technical-file completeness (validate-completeness IVDR branch) — GSPR Annex I, Performance Evaluation Report Annex XIII, analytical + clinical performance, scientific validity, PMPF/PMS. IVD-only; derives from the diagnostics IVDR spine. Answer-first CE-marking readiness, not the borrowed device checklist. Contract ref (not yet a @shared file): @shared/regulatory/ivdr', 'Author & assemble', '/concept2cure/ivd-completeness', 'microscope', 170, '{"tiers": [], "industries": []}'::json),
   ('labeling', 'Labeling', 'Labeling/IFU authoring + compliance. ui_kits/labeling prototyped.', 'Author & assemble', '/concept2cure/labeling', 'tag', 180, '{"tiers": [], "industries": []}'::json),
   ('labeling-pi', 'Prescribing information', 'USPI (PLLR / 21 CFR 201.57), EU SmPC (QRD), SPL. End-of-review agency labeling negotiation (sponsor vs FDA redline). The label as the document.', 'Author & assemble', '/concept2cure/labeling-pi', 'fileText', 190, '{"tiers": [], "industries": []}'::json),
   ('nonclinical', 'Nonclinical / Module 4', 'IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement. Structured data entry for studies.', 'Author & assemble', '/concept2cure/nonclinical', 'microscope', 200, '{"tiers": [], "industries": []}'::json),
-  ('protocol-dev', 'Protocol development', 'Protocol authoring hub (C2C-17..22): full eCTD-style section tree, SoA grid, risk register (5×5), milestones, budget/feasibility, amendments, deviations/CAPA, reviews, informed consent — deterministic completeness gate on finalize (ICH M11 / 45 CFR 46 / PHS Policy).', 'Author & assemble', '/concept2cure/protocol-dev', 'clipboardList', 210, '{"tiers": [], "industries": []}'::json),
+  ('protocol-dev', 'The protocol workspace', 'Protocol authoring hub (C2C-17..22): full eCTD-style section tree, SoA grid, risk register (5×5), milestones, budget/feasibility, amendments, deviations/CAPA, reviews, informed consent — deterministic completeness gate on finalize (ICH M11 / 45 CFR 46 / PHS Policy).', 'Author & assemble', '/concept2cure/protocol-dev', 'clipboardList', 210, '{"tiers": [], "industries": []}'::json),
   ('source-tracer', 'Source Tracer', 'Sentence-level provenance bound to sourceLinks.ts: every sentence carries a typed SourceLink (sourceType ∈ trial_data|literature|regulatory_guidance|internal_data) with a 0–1 confidence. POST /sources/analyze finds untraced claims (claimsFound). Literature citations are verified against PubMed+CrossRef via /api/citations/verify (verified|not_found|unverifiable|error) — an unconfirmed citation is flagged, never assumed. Fixture-backed with a Sample-data pill until live-wired. Contract ref (not yet a @shared file): server/routes/sourceLinks.ts + server/routes/citations.ts', 'Author & assemble', '/concept2cure/source-tracer', 'search', 220, '{"tiers": [], "industries": []}'::json),
   ('template-library', 'Template library', 'Full REST (list/extract-preview/extract+save/create-from-spec/update/render docx|pdf), org-scoped, audited. No UI yet — strongest backend without a surface.', 'Author & assemble', '/concept2cure/template-library', 'template', 230, '{"tiers": [], "industries": []}'::json),
-  ('artifacts-center', 'Artifacts Center', 'Cross-project artifact library, version chain, provenance, signature status.', 'Evidence & data', '/concept2cure/artifacts-center', 'sparkles', 240, '{"tiers": [], "industries": []}'::json),
   ('decision-lineage', 'Decision lineage', 'The immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how). Answer-first defensibility read, then the readable chain of governed decisions (5 node types), then chain-integrity verify + compliance frameworks + eCTD-compatible export. Bound to GET /api/decision-lineage/:entityType/:entityId + verify-chain. Contract ref (not yet a @shared file): @shared/types/decision-lineage', 'Evidence & data', '/concept2cure/decision-lineage', 'gitBranch', 250, '{"tiers": [], "industries": []}'::json),
   ('device-clinical-studies', 'Device clinical studies', 'Study list, detail, summaries, archetypes and RBM attention. Six endpoints; distinct from clinical-ops, which is the drug-trial operations surface.', 'Evidence & data', '/concept2cure/device-clinical-studies', 'stethoscope', 260, '{"tiers": [], "industries": []}'::json),
-  ('device-engineering', 'Device engineering', 'Program-scoped engineering rollup. Distinct from design-controls and human-factors, which are org-scoped registers.', 'Evidence & data', '/concept2cure/device-engineering', 'wrench', 270, '{"tiers": [], "industries": []}'::json),
+  ('device-engineering', 'Engineering evidence', 'Program-scoped engineering rollup. Distinct from design-controls and human-factors, which are org-scoped registers.', 'Evidence & data', '/concept2cure/device-engineering', 'wrench', 270, '{"tiers": [], "industries": []}'::json),
   ('device-software', 'Software lifecycle', 'IEC 62304 software lifecycle and completeness summary. The only implementation in the product.', 'Evidence & data', '/concept2cure/device-software', 'code', 280, '{"tiers": [], "industries": []}'::json),
-  ('device-vault', 'Device artifact vault', 'Reads the mdx_vault store with per-artifact version history. Named separately from `vault` because the two read different document stores; converging the stores is a backend decision, and until it is made two names are honest and one is not.', 'Evidence & data', '/concept2cure/device-vault', 'vault', 290, '{"tiers": [], "industries": []}'::json),
   ('evidence-search', 'Evidence search (RAG)', 'Ask a question across the corpus — 3-layer memory → gateway → cited answer traced back to source chunks.', 'Evidence & data', '/concept2cure/evidence-search', 'search', 300, '{"tiers": [], "industries": []}'::json),
   ('insights', 'Reporting & analytics', 'Conversational governed reporting — a per-segment catalog of report types and best-practice packs, assembled by AnA and traceable to source.', 'Evidence & data', '/concept2cure/insights', 'barChart', 310, '{"tiers": [], "industries": []}'::json),
-  ('vault', 'Vault (DMS)', 'Drag-drop upload, chunking/embedding progress, semantic search, version history, evidence linking.', 'Evidence & data', '/concept2cure/vault', 'vault', 320, '{"tiers": [], "industries": []}'::json),
-  ('device-submission', 'Device submission packages', 'Package readiness and milestones from submission-ops. submission-center is the eCTD sequence dispatch surface — a later lifecycle stage over different endpoints.', 'Submit & file', '/concept2cure/device-submission', 'rocket', 330, '{"tiers": [], "industries": []}'::json),
-  ('device-validation', 'Submission blockers', 'Open blockers across programs. The only blockers view in the product.', 'Submit & file', '/concept2cure/device-validation', 'shieldAlert', 340, '{"tiers": [], "industries": []}'::json),
-  ('dossier-map', 'Dossier map', 'CTD/eCTD module map with completeness + readiness overlay.', 'Submit & file', '/concept2cure/dossier-map', 'network', 350, '{"tiers": [], "industries": []}'::json),
+  ('vault', 'Vault', 'Drag-drop upload, chunking/embedding progress, semantic search, version history, evidence linking.', 'Evidence & data', '/concept2cure/vault', 'vault', 320, '{"tiers": [], "industries": []}'::json),
   ('gateway-transmittals', 'Gateway transmittals', 'Multi-region agency dispatch: gateway roster + credential status, governed transmit (§11 re-auth + reason), transmittal log, live status poll, ACK download, governed rollback (/api/mdx/gateways).', 'Submit & file', '/concept2cure/gateway-transmittals', 'rocket', 360, '{"tiers": [], "industries": []}'::json),
   ('haq-manager', 'Health authority questions', 'Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package. Contract ref (not yet a @shared file): @shared/types/haq', 'Submit & file', '/concept2cure/haq-manager', 'messageSquare', 370, '{"tiers": [], "industries": []}'::json),
   ('pyramid', 'Submission pyramid', 'Deterministic submission work breakdown — type selector (8 engine + 12 global types), dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase→task drill-down with full-metadata detail sheet (risk, CTD bindings, guidance, deps, deliverables), analytics (resources/bottlenecks, document coverage, critical path), global pyramid browser. Task status is the only client-owned state. Contract ref (not yet a @shared file): services/regulatory/SubmissionPyramidEngine.ts · globalPyramids.ts · submission-type-bridge.ts', 'Submit & file', '/concept2cure/pyramid', 'workflow', 380, '{"tiers": [], "industries": []}'::json),
   ('submission-center', 'Submission Center', 'Framework-agnostic workspace map + error catalog already in shared. Package preview, eValidator pass, ESG send vs eSTAR export picker. See SUBMISSION_CENTER_API.md.', 'Submit & file', '/concept2cure/submission-center', 'rocket', 390, '{"tiers": [], "industries": []}'::json),
   ('submission-twin', 'Submission Twin', 'Living submission intelligence — readiness/fragility, narrative-drift alerts, simulated reviewer challenges, change-impact, keyed on a numeric package id (/api/submission-twin).', 'Submit & file', '/concept2cure/submission-twin', 'layers', 400, '{"tiers": [], "industries": []}'::json),
   ('agency-meetings', 'Agency meetings', 'Agency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice. Briefing book document + questions, minutes + commitments back to the dossier.', 'Review & govern', '/concept2cure/agency-meetings', 'users', 410, '{"tiers": [], "industries": []}'::json),
-  ('device-tasks', 'Device submission workload', 'The submission-ops workload slice. Deliberately NOT called "Tasks" — task-board is the task board, and two rail entries with the same name is the defect this convergence removed.', 'Review & govern', '/concept2cure/device-tasks', 'clipboardList', 430, '{"tiers": [], "industries": []}'::json),
-  ('dispatch-readiness', 'Dispatch readiness', 'The proven, deterministic last gate before transmit (dispatch-gate.ts). Composes structural validation + unacknowledged Shadow Review criticals + external eValidator; a client cannot talk it down (every input server-computed). Flags the cleared-but-never-reviewed blind spot. Bound to GET /api/submissions/sequences/:seqId/dispatch-readiness.', 'Review & govern', '/concept2cure/dispatch-readiness', 'send', 440, '{"tiers": [], "industries": []}'::json),
+  ('dispatch-readiness', 'Submission Readiness', 'The proven, deterministic last gate before transmit (dispatch-gate.ts). Composes structural validation + unacknowledged Shadow Review criticals + external eValidator; a client cannot talk it down (every input server-computed). Flags the cleared-but-never-reviewed blind spot. Bound to GET /api/submissions/sequences/:seqId/dispatch-readiness.', 'Review & govern', '/concept2cure/dispatch-readiness', 'send', 440, '{"tiers": [], "industries": []}'::json),
   ('identity-console', 'Enterprise identity (SSO / SCIM)', 'SCIM provisioning tokens (issue-once/rotate/enable/revoke, §11.10(d) hash-only storage), SCIM IP allowlist, and the live SAML endpoint references for IdP configuration.', 'Review & govern', '/concept2cure/identity-console', 'lock', 450, '{"tiers": [], "industries": []}'::json),
   ('orchestration', 'Orchestration & readiness', 'Persisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing.', 'Review & govern', '/concept2cure/orchestration', 'workflow', 460, '{"tiers": [], "industries": []}'::json),
   ('qmp', 'Quality management plans', 'Quality-management plan lifecycle (list/create/activate) + completeness/gate-level/risk-factor dashboard (/api/quality).', 'Review & govern', '/concept2cure/qmp', 'shieldCheck', 480, '{"tiers": [], "industries": []}'::json),
-  ('quality', 'Quality & Assurance', 'Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records). Backed by /api/mdx/qms/*.', 'Review & govern', '/concept2cure/quality', 'shieldCheck', 490, '{"tiers": [], "industries": []}'::json),
+  ('quality', 'Quality', 'Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records). Backed by /api/mdx/qms/*.', 'Review & govern', '/concept2cure/quality', 'shieldCheck', 490, '{"tiers": [], "industries": []}'::json),
   ('report-governance', 'Report governance', 'Sealed-report lifecycle: list, cryptographic integrity verify, provenance/attestation counts, seal and revoke with justification (/api/intelligent-reports).', 'Review & govern', '/concept2cure/report-governance', 'scroll', 500, '{"tiers": [], "industries": []}'::json),
-  ('review', 'Review & approval', 'Review queue, threaded comments (open/resolved/outdated), reject-with-reason, e-sign manifestation (21 CFR §11.50).', 'Review & govern', '/concept2cure/review', 'checkCircle', 510, '{"tiers": [], "industries": []}'::json),
+  ('review', 'The review board', 'Review queue, threaded comments (open/resolved/outdated), reject-with-reason, e-sign manifestation (21 CFR §11.50).', 'Review & govern', '/concept2cure/review', 'checkCircle', 510, '{"tiers": [], "industries": []}'::json),
   ('shadow-review', 'Shadow review', 'AnA simulates the reviewer who will read your submission (5 real lenses: FDA filing / EMA D120 / PMDA / MDR NB / IVDR NB) and scores the two gates that kill a filing — RTF (administrative) and CRL (substantive). Findings are model_assisted; the risk aggregation is the verbatim deterministic aggregateRisk (a single critical saturates). Bound to POST /api/submissions/sequences/:seqId/shadow-review.', 'Review & govern', '/concept2cure/shadow-review', 'eye', 520, '{"tiers": [], "industries": []}'::json),
-  ('tasks', 'Tasks & collaboration', 'Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray.', 'Review & govern', '/concept2cure/tasks', 'checkSquare', 530, '{"tiers": [], "industries": []}'::json),
+  ('tasks', 'Tasks', 'Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray.', 'Review & govern', '/concept2cure/tasks', 'checkSquare', 530, '{"tiers": [], "industries": []}'::json),
   ('crl-library', 'FDA CRL library', 'Searchable view over the shared clinical-regulatory evidence graph — the same findings CSR workflow, study design and AnA read. Not a separate corpus, retrieval path or agent. Behind ENABLE_CLINICAL_REGULATORY_GRAPH.', 'Intelligence & risk', '/concept2cure/crl-library', 'gavel', 540, '{"tiers": [], "industries": []}'::json),
   ('deep-research', 'Deep research', 'Long-running multi-source research (Opus). Shares the AnA rail in deep-research mode.', 'Intelligence & risk', '/concept2cure/deep-research', 'telescope', 550, '{"tiers": [], "industries": []}'::json),
   ('device-analytics', 'Device pathway analytics', 'Pathway-scoped device analytics. insights and report-engine answer protocol and report-run questions instead.', 'Intelligence & risk', '/concept2cure/device-analytics', 'barChart3', 560, '{"tiers": [], "industries": []}'::json),
-  ('device-postmarket', 'Post-market vigilance', 'Device MDR/MAUDE vigilance and CAPA triage. A different regulatory regime from pv-cockpit, which is drug pharmacovigilance.', 'Intelligence & risk', '/concept2cure/device-postmarket', 'shieldAlert', 570, '{"tiers": [], "industries": []}'::json),
+  ('device-postmarket', 'Post-market surveillance and CAPA', 'Device MDR/MAUDE vigilance and CAPA triage. A different regulatory regime from pv-cockpit, which is drug pharmacovigilance.', 'Intelligence & risk', '/concept2cure/device-postmarket', 'shieldAlert', 570, '{"tiers": [], "industries": []}'::json),
   ('global-ri', 'Global regulatory intelligence', 'Gold-standard pattern: ~41 deterministic capabilities, 9 groups, one-call catalog drives nav + dynamic forms. See HANDOFF_TO_DESIGN_global_ri.md.', 'Intelligence & risk', '/concept2cure/global-ri', 'globe', 580, '{"tiers": [], "industries": []}'::json),
   ('intelligence-catalog', 'Intelligence catalog', 'Read-only reference: 142 deterministic_registry tools across 24 domains, with the determinism-pedigree trust system and the shared deterministic-result rendering pattern. Contract ref (not yet a @shared file): server/services/ana/tool-pedigree.ts', 'Intelligence & risk', '/concept2cure/intelligence-catalog', 'shieldCheck', 590, '{"tiers": [], "industries": []}'::json),
   ('precedent-intelligence', 'Precedent intelligence', 'Past approvals search + decision rationale. Slots into 510(k) §12 substantial equivalence.', 'Intelligence & risk', '/concept2cure/precedent-intelligence', 'scale', 600, '{"tiers": [], "industries": []}'::json),
-  ('risk', 'Risk management', 'ISO 14971 risk file, hazard analysis. ui_kits/risk prototyped.', 'Intelligence & risk', '/concept2cure/risk', 'alertTriangle', 610, '{"tiers": [], "industries": []}'::json),
   ('change-assessment', 'Change assessment', 'Change impact engine: FDA "When to Submit a 510(k) for a Change" (2017) + EU MDR significant-change (MDCG 2020-3) determinations → new submission vs document-to-file.', 'Lifecycle & access', '/concept2cure/change-assessment', 'gitBranch', 620, '{"tiers": [], "industries": []}'::json),
   ('device-udi', 'UDI & device identification', 'UDI/GUDID summary and document catalog. The only UDI surface; labeling itself lives on the labeling surface.', 'Lifecycle & access', '/concept2cure/device-udi', 'barcode', 630, '{"tiers": [], "industries": []}'::json),
   ('lifecycle-mgmt', 'Lifecycle management', 'Post-approval: supplements/variations (sBLA, Type II/IB, CBE-30), CMC change control classified against ICH Q12, and renewal cycles (PADER, 5-year, re-examination).', 'Lifecycle & access', '/concept2cure/lifecycle-mgmt', 'history', 640, '{"tiers": [], "industries": []}'::json),
@@ -353,9 +465,8 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('reg-change', 'Regulatory change intelligence', 'Portfolio horizon scan: monitors FDA guidance, ISO/IEC revisions, EU MDCG/MDR-IVDR and statutory changes; assesses impact and resolves each to an action document (gap analysis, transition plan, update task) — never a passive feed.', 'Lifecycle & access', '/concept2cure/reg-change', 'bell', 680, '{"tiers": [], "industries": []}'::json),
   ('registrations', 'Registrations', 'Global registration lifecycle: market authorization status, agency review clocks, renewals/variations, HA commitments, reliance-pathway strategy.', 'Lifecycle & access', '/concept2cure/registrations', 'globe', 690, '{"tiers": [], "industries": []}'::json),
   ('program-journey', 'Program journey', 'The end-to-end biotech/pharma spine — concept to submission to lifecycle. 9 lifecycle stages, each with its agency gate, deliverables and the deep-linked capabilities that serve it, plus program intelligence: CTD readiness, review clock, predicted HAQs, contradictions and blockers.', 'Program journey', '/concept2cure/program-journey', 'workflow', 700, '{"tiers": [], "industries": []}'::json),
-  ('communication-center', 'Communication Center', 'The regulated FDA↔client loop: agency communications (9 source types) auto-generating tasks, submission lifecycle incl. CRL/RTF/denial (rejected_or_remediation) → response → resubmit, HA interactions + PMR/PMC/REMS commitments, authority profiles.', 'Applications & filing', '/concept2cure/communication-center', 'mail', 710, '{"tiers": [], "industries": []}'::json),
-  ('filings-catalog', 'Filings catalog', 'Canonical taxonomy of 113 filing types across pharma/biotech, device, IVD, cross-cutting. Each routes into its execution workflow (IND/NDA/BLA/MAA/510k/PMA/De Novo/CER).', 'Applications & filing', '/concept2cure/filings-catalog', 'clipboardList', 720, '{"tiers": [], "industries": []}'::json),
-  ('ind-checklist', 'IND lifecycle', 'IND checklist, forms (1571/1572/3674), autodraft, master data, amendments, annual reports, safety reports.', 'Applications & filing', '/concept2cure/ind-checklist', 'clipboardList', 730, '{"tiers": [], "industries": []}'::json),
+  ('communication-center', 'Communication', 'The regulated FDA↔client loop: agency communications (9 source types) auto-generating tasks, submission lifecycle incl. CRL/RTF/denial (rejected_or_remediation) → response → resubmit, HA interactions + PMR/PMC/REMS commitments, authority profiles.', 'Applications & filing', '/concept2cure/communication-center', 'mail', 710, '{"tiers": [], "industries": []}'::json),
+  ('ind-checklist', 'IND forms', 'IND checklist, forms (1571/1572/3674), autodraft, master data, amendments, annual reports, safety reports.', 'Applications & filing', '/concept2cure/ind-checklist', 'clipboardList', 730, '{"tiers": [], "industries": []}'::json),
   ('maa-cockpit', 'MAA / non-US Module 1', 'Non-US marketing-application administrative module (eCTD Module 1) — region-accurate required-component checklist for EMA/PMDA/MHRA/TGA/HC/NMPA over the global-RI regional-module1-requirements engine.', 'Applications & filing', '/concept2cure/maa-cockpit', 'globe', 740, '{"tiers": [], "industries": []}'::json),
   ('nda-cockpit', 'NDA / BLA filing', 'NDA/BLA filing cockpit: CTD M1–5 readiness, Module 1 admin set (356h), PDUFA review clock, Refuse-to-File risk (shadow review).', 'Applications & filing', '/concept2cure/nda-cockpit', 'beaker', 750, '{"tiers": [], "industries": []}'::json),
   ('pdev', 'Product development (PDEV → IND)', 'See PDEV_IND_DESIGN_BRIEF.md. Activity → AI draft → evidence → confirm flow prototyped in ui_kits/pdev.', 'Applications & filing', '/concept2cure/pdev', 'workflow', 760, '{"tiers": [], "industries": []}'::json),

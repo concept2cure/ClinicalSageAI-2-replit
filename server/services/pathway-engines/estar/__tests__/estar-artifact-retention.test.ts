@@ -124,7 +124,7 @@ describe('retainOfficialEstar', () => {
     expect(report).toEqual({
       retained: false,
       reason:
-        'This export is anchored to a legacy 510(k) project, which has no program vault. ' +
+        'This export is anchored to a legacy 510(k) project, which has no project vault. ' +
         'The delivered file is audited by its SHA-256 but not retained.',
     });
     expect(ingestVaultDocument).not.toHaveBeenCalled();

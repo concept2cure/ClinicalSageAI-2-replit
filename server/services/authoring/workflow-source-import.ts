@@ -4,18 +4,24 @@ import { createHash } from 'node:crypto';
 import { createScopedLogger } from '../../utils/logger';
 const sourceLogger = createScopedLogger('workflow-source-import');
 import { stableStringify } from '../../../shared/canonical-json';
+import { nctNumberOf } from '../../../shared/csr-source-input';
 import type { WorkflowImportSource, WorkflowImportOrigin, WorkflowImportAssociation, WorkflowSectionOrigin } from '../../../shared/authoring/source-import';
+import { agencyResponseImportId, studyDesignImportId } from '../../../shared/authoring/source-import';
 import type { Queryable } from './authoring-evidence';
 import { requireCsrJobAccess, readCsrProjectActor, CsrScopeError } from '../csr/project-scope';
 import { canAccessReportProject } from '../report-os/project-access';
 import { readProgramAnchorRow } from '../c2c/program-project-anchor';
-import { ICH_E3_STRUCTURE, flattenICHE3Sections } from '../csr-builder';
+import { flattenICHE3Sections, getICHE3Structure, resolveCSRDraftTargets } from '../csr-builder';
 import { loadProtocolExportSnapshot, type ProtocolCompositionSnapshot } from '../protocol-export/protocol-export-service';
 import { protocolAuthoringSections } from '../protocol-export/protocol-export-logic';
 import { validateSoa } from '../protocol-soa/protocol-soa-logic';
 import { listLiveMachineSpans, hashSpanText } from '../clinical-regulatory-evidence/span-lineage.service';
 import { WORKFLOW_IMPORT_AUTHOR_ID } from './revision-ledger';
 import { verifyRetainedProtocolMatrixEndpoints } from './protocol-import-matrix';
+import { workflowCopySectionContent } from './workflow-copy-content';
+import { importedCsrSectionEvidence } from '../csr/csr-claim-receipts';
+import { csrNarrativeReferenceSection, NARRATIVES_SECTION, type NarrativeReferenceSection } from './csr-narrative-reference-import';
+import type { CsrNarrativeReference } from '../../../shared/csr-narrative-reference';
 
 export class WorkflowSourceImportError extends Error {
   constructor(readonly status: 400 | 403 | 404 | 409 | 503, readonly code: string, message: string) {
@@ -48,8 +54,20 @@ function sourceOrigin(code: string, sourceRowId: string, content: string, author
   return { code, sourceRowId, contentSha256: sha(content), originalAuthorship: authorship, model, modelEvidence: model ? 'recorded-name-only' : 'unrecorded' };
 }
 
+function validateAgencySource(source: Extract<WorkflowImportSource, { kind: 'agency-response' }>): void {
+  if (!agencyResponseImportId(source.eventId, source.questionId)) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved agency question.');
+}
+
 function validateInput(input: WorkflowMaterializationInput): void {
-  if (!positive(input.organizationId) || !positive(input.userId) || !positive(input.target.projectId) || !UUID.test(input.target.programId)) fail(400, 'WORKFLOW_SCOPE_INVALID', 'A verified organization actor and target program are required.');
+  if (!positive(input.organizationId) || !positive(input.userId) || !positive(input.target.projectId) || !UUID.test(input.target.programId)) fail(400, 'WORKFLOW_SCOPE_INVALID', 'A verified organization actor and target project are required.');
+  if (input.source.kind === 'agency-response') {
+    return validateAgencySource(input.source);
+  }
+  if (input.source.kind === 'study-design-crf') {
+    const id = input.source.studyId;
+    if (typeof id !== 'string' || studyDesignImportId(id) !== id) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved study design.');
+    return;
+  }
   const id = input.source.kind === 'csr' ? input.source.jobId : input.source.documentId;
   if (input.source.kind === 'ivd-assessment' || input.source.kind === 'ivd-document') {
     if (typeof id !== 'string' || !UUID.test(id)) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved IVD record.');
@@ -68,7 +86,7 @@ async function protocolRecordedProgram(input: WorkflowMaterializationInput, q: Q
   const designs = await q.query('SELECT program_id FROM cdisc_prm_studies WHERE study_id = $1 AND tenant_id = $2', [studyId, input.organizationId]);
   if (designs.rows.length !== 1) return fail(409, 'WORKFLOW_SOURCE_SCOPE_UNAVAILABLE', 'The protocol recorded study design is unavailable for this organization.');
   const designProgram = designs.rows[0].program_id;
-  if (stored != null && stored !== designProgram) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'The saved protocol and its bound design disagree about their program.');
+  if (stored != null && stored !== designProgram) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'The saved protocol and its bound design disagree about their project.');
   return stored ?? designProgram;
 }
 
@@ -76,11 +94,11 @@ async function protocolScope(input: WorkflowMaterializationInput, q: Queryable):
   const recorded = await protocolRecordedProgram(input, q);
   const actor = await readCsrProjectActor(q, input.organizationId, input.userId);
   if (recorded === null) return {level:'organization',programId:null,projectId:null};
-  if (typeof recorded !== 'string' || !UUID.test(recorded)) return fail(409, 'WORKFLOW_SOURCE_SCOPE_UNAVAILABLE', 'The protocol recorded program relationship is invalid.');
+  if (typeof recorded !== 'string' || !UUID.test(recorded)) return fail(409, 'WORKFLOW_SOURCE_SCOPE_UNAVAILABLE', 'The protocol’s recorded project relationship is invalid.');
   const programId = recorded.toLowerCase();
   const anchor = await readProgramAnchorRow(q, {programId,orgId:input.organizationId,context:'protocol-workflow-import',requireUnique:true});
   if (!anchor || !await canAccessReportProject(input.organizationId, actor, anchor.id, q)) return fail(403, 'WORKFLOW_SOURCE_ACCESS_DENIED', 'The saved protocol project is not accessible to this actor.');
-  if (programId !== input.target.programId.toLowerCase() || anchor.id !== input.target.projectId) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'This protocol belongs to another recorded program. Choose its recorded program.');
+  if (programId !== input.target.programId.toLowerCase() || anchor.id !== input.target.projectId) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'This protocol belongs to another recorded project. Choose its recorded project.');
   return {level:'program',programId,projectId:anchor.id};
 }
 
@@ -139,7 +157,13 @@ async function composeProtocol(input: WorkflowMaterializationInput, q: Queryable
   return {title:snapshot.document.title,version:snapshot.document.header.version,scope,sections,sectionOrigins,gaps:protocolGaps(snapshot),facts:{...snapshot.sourceRows,machineLineage,...retiredFacts}};
 }
 
-const CSR_CATALOG = flattenICHE3Sections(ICH_E3_STRUCTURE);
+// The ICH_E3_GUIDANCE tree (2026-10-29: was csr-builder's duplicate outline),
+// and the headings a CSR job writes output for: §3 and §14–16 are prepared
+// from source and bare parents are written through their children, so neither
+// is ever an expected saved output.
+const CSR_CATALOG = flattenICHE3Sections(getICHE3Structure());
+const CSR_DRAFT_TARGETS = resolveCSRDraftTargets().map(section => section.number);
+const CSR_MANUAL_TOP_LEVEL = getICHE3Structure().filter(section => section.draftingMode === 'manual').map(section => section.number);
 const CSR_CODES = new Map(CSR_CATALOG.map((section, index) => [section.number, {section,index}]));
 const selectedBy = (code: string, selections: readonly string[]) => selections.some(parent => code === parent || code.startsWith(`${parent}.`));
 
@@ -149,7 +173,7 @@ function csrSelection(source: Extract<WorkflowImportSource,{kind:'csr'}>): strin
   return [...new Set(source.sectionNumbers)].sort((a,b) => CSR_CODES.get(a)!.index - CSR_CODES.get(b)!.index);
 }
 
-function csrSections(rows: Record<string, unknown>[], selection: string[] | undefined): Pick<Composition,'sections'|'sectionOrigins'> {
+function csrSections(rows: Record<string, unknown>[], selection: string[] | undefined, studyInfo: unknown, narratives: NarrativeReferenceSection | null): Pick<Composition,'sections'|'sectionOrigins'> {
   const selected = rows.filter(row => typeof row.section_number === 'string' && (!selection || selectedBy(row.section_number, selection)));
   if (!selected.length) return fail(409, 'WORKFLOW_CSR_OUTPUT_MISSING', 'No saved output exists for the selected CSR section.');
   for (const code of selection ?? []) if (!selected.some(row => selectedBy(String(row.section_number), [code]))) return fail(409, 'WORKFLOW_CSR_OUTPUT_MISSING', `No saved output exists for selected CSR section ${code}.`);
@@ -157,7 +181,7 @@ function csrSections(rows: Record<string, unknown>[], selection: string[] | unde
   const sections: Composition['sections'] = [];
   const sectionOrigins: WorkflowSectionOrigin[] = [];
   for (const row of selected) {
-    const verified = verifiedCsrSection(row);
+    const verified = row.section_number === NARRATIVES_SECTION && narratives ? narratives : verifiedCsrSection(row, studyInfo);
     sections.push(verified.section);
     sectionOrigins.push(verified.origin);
   }
@@ -170,13 +194,18 @@ function csrAuthorship(row: Record<string,unknown>): Pick<WorkflowSectionOrigin,
   return {originalAuthorship:row.ai_generated ? 'machine' : lineage.source === 'template' ? 'template' : 'unknown',model:typeof row.model === 'string' && row.model.trim() ? row.model.trim() : null};
 }
 
-function verifiedCsrSection(row: Record<string,unknown>) {
+function verifiedCsrSection(row: Record<string,unknown>, studyInfo: unknown) {
   const code = row.section_number;
   const catalog = typeof code === 'string' ? CSR_CODES.get(code) : null;
   if (!positive(row.id) || !catalog || typeof row.content !== 'string' || !row.content.trim()) return fail(409, 'WORKFLOW_CSR_OUTPUT_INVALID', 'The selected CSR contains an invalid or empty saved section.');
   if (typeof row.content_hash !== 'string' || !HASH.test(row.content_hash) || sha(row.content) !== row.content_hash) return fail(409, 'WORKFLOW_CSR_HASH_MISMATCH', `Saved CSR section ${code} does not match its recorded content hash.`);
   const {originalAuthorship,model} = csrAuthorship(row);
-  return {section:{code:String(code),title:catalog.section.title,content:row.content},origin:sourceOrigin(String(code),`csr_section_outputs:${row.id}`,row.content,originalAuthorship,model)};
+  const origin = sourceOrigin(String(code),`csr_section_outputs:${row.id}`,row.content,originalAuthorship,model);
+  // CSR slice 5: the section's claim receipts travel into the Authoring document,
+  // bound to the copy this import stores, so a saved CSR can be re-checked.
+  const csrEvidence = importedCsrSectionEvidence({sectionNumber:String(code),content:row.content,contentHash:row.content_hash,lineage:row.lineage},
+    workflowCopySectionContent(row.content), studyInfo);
+  return {section:{code:String(code),title:catalog.section.title,content:row.content},origin:csrEvidence ? {...origin,csrEvidence:{...csrEvidence}} : origin};
 }
 
 type CsrJob = {id:number;project_id:number|null;study_id:string;status:string;sections_to_generate:string[]|null;study_info_snapshot:unknown};
@@ -189,16 +218,23 @@ function verifiedCsrJob(row: Record<string,unknown> | undefined, targetProjectId
 
 function csrGaps(job: CsrJob, sections: Composition['sections'], selection: string[] | undefined): string[] {
   const present = new Set(sections.map(s=>s.code));
-  const expected = selection ? CSR_CATALOG.filter(s => selectedBy(s.number,selection)).map(s=>s.number) : job.sections_to_generate ?? CSR_CATALOG.map(s=>s.number);
+  const scopeCodes = selection ?? job.sections_to_generate;
+  const expected = CSR_DRAFT_TARGETS.filter(code => !scopeCodes || selectedBy(code, scopeCodes));
   const gaps = expected.filter(code=>!present.has(code)).map(code=>`CSR section ${code} has no saved output in this selection.`);
+  // §3 and §14–16 are never job outputs; their absence is a gap all the same.
+  for (const code of CSR_MANUAL_TOP_LEVEL) if (!scopeCodes || selectedBy(code, scopeCodes)) gaps.push(`CSR section ${code} is prepared from source outputs and records, not drafted by a CSR job; this draft does not contain it.`);
   if (job.status !== 'complete') gaps.unshift(`The saved CSR job is ${job.status}; available output is a partial draft.`);
   for (const section of sections) if (/\[DATA TO BE INSERTED\]/i.test(section.content)) gaps.push(`CSR section ${section.code} retains a data-to-be-inserted placeholder.`);
   return gaps;
 }
 
-function csrTitle(job: CsrJob): string {
+function csrStudyInfo(job: CsrJob): Record<string,unknown> {
   const snapshot = job.study_info_snapshot && typeof job.study_info_snapshot === 'object' ? job.study_info_snapshot as Record<string,unknown> : {};
-  const study = snapshot.studyInfo && typeof snapshot.studyInfo === 'object' ? snapshot.studyInfo as Record<string,unknown> : snapshot;
+  return snapshot.studyInfo && typeof snapshot.studyInfo === 'object' ? snapshot.studyInfo as Record<string,unknown> : snapshot;
+}
+
+function csrTitle(job: CsrJob): string {
+  const study = csrStudyInfo(job);
   return typeof study.title === 'string' && study.title.trim() ? study.title : `Clinical study report for ${job.study_id}`;
 }
 
@@ -211,15 +247,20 @@ async function composeCsr(input: WorkflowMaterializationInput & { source: Extrac
   // Scope identity is checked without selecting prose from a mismatched output.
   const identities = await q.query('SELECT id, project_id FROM csr_section_outputs WHERE job_id = $1 AND organization_id = $2', [input.source.jobId,input.organizationId]);
   if (!identities.rows.every((row: Record<string,unknown>) => row.project_id === job.project_id)) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'Saved CSR output does not match its job project scope.');
-  const output = await q.query(`SELECT id, section_number, content, content_hash, ai_generated, model, lineage, generated_at
+  // §14.3.3 is never selected as text: it is imported by reference to the narrative store (csr-narrative-reference-import.ts).
+  const output = await q.query(`SELECT id, section_number, CASE WHEN section_number = '14.3.3' THEN NULL ELSE content END AS content,
+      content_hash, ai_generated, model, lineage, generated_at
     FROM csr_section_outputs WHERE job_id = $1 AND organization_id = $2 AND project_id IS NOT DISTINCT FROM $3 ORDER BY section_number, id`, [input.source.jobId,input.organizationId,job.project_id]);
-  const composed = csrSections(output.rows, selection);
+  const landed = output.rows.find((row: Record<string,unknown>) => row.section_number === NARRATIVES_SECTION && (!selection || selectedBy(NARRATIVES_SECTION, selection)));
+  const narratives = landed ? await csrNarrativeReferenceSection(q, {organizationId:input.organizationId,jobId:job.id,row:landed,
+    title:CSR_CODES.get(NARRATIVES_SECTION)!.section.title,authorship:csrAuthorship(landed),fail}) : null;
+  const composed = csrSections(output.rows, selection, csrStudyInfo(job), narratives);
   const present = new Set(composed.sections.map(s => s.code));
   const gaps = csrGaps(job,composed.sections,selection);
   const title = csrTitle(job);
   const scope: Scope = job.project_id == null ? {level:'organization',programId:null,projectId:null} : {level:'project',programId:null,projectId:job.project_id};
   const selectedOutputs = output.rows.filter((row: Record<string,unknown>) => present.has(String(row.section_number)));
-  return {...composed,title,version:null,scope,gaps,facts:{job,outputs:selectedOutputs,selection:selection ?? null}};
+  return {...composed,title,version:null,scope,gaps,facts:{job,outputs:selectedOutputs,selection:selection ?? null,...(narratives ? {narratives:narratives.origin.narrativeReference} : {})}};
 }
 
 function finish(input: WorkflowMaterializationInput & { source: Extract<WorkflowImportSource, {kind:'csr'|'protocol'}> }, composition: Composition): MaterializedWorkflowSource {
@@ -240,7 +281,7 @@ function finish(input: WorkflowMaterializationInput & { source: Extract<Workflow
   const warnings = ['This is an unbound working draft. Source completion, approval and signatures are not transferred.',
     'Original authorship and model qualification are not established by a workflow fingerprint.',
     'Verified generation document/hash/span support was not recorded by this materializer.'];
-  if (mode === 'explicit') warnings.push('The source has no recorded program association. Creation requires an explicit association reason.');
+  if (mode === 'explicit') warnings.push('The source has no recorded project association. Creation requires an explicit association reason.');
   return {origin,fingerprint,sections,gaps,warnings,association};
 }
 
@@ -249,6 +290,14 @@ function finish(input: WorkflowMaterializationInput & { source: Extract<Workflow
 export async function materializeWorkflowSource(input: WorkflowMaterializationInput, q: Queryable): Promise<MaterializedWorkflowSource> {
   validateInput(input);
   try {
+    if (input.source.kind === 'agency-response') {
+      const { materializeAgencyResponseSource } = await import('./agency-response-source');
+      return await materializeAgencyResponseSource({ ...input, source: input.source }, q);
+    }
+    if (input.source.kind === 'study-design-crf') {
+      const { materializeStudyDesignCrfSource } = await import('./study-design-crf-source');
+      return await materializeStudyDesignCrfSource({ ...input, source: input.source }, q);
+    }
     if (input.source.kind === 'ivd-assessment' || input.source.kind === 'ivd-document') {
       const { materializeIvdWorkflowSource } = await import('./ivd-workflow-source');
       return await materializeIvdWorkflowSource({ ...input, source: input.source }, q);
@@ -261,5 +310,42 @@ export async function materializeWorkflowSource(input: WorkflowMaterializationIn
     if (error instanceof CsrScopeError) throw new WorkflowSourceImportError(error.status,error.code,error.message);
     sourceLogger.error('Saved workflow source verification failed', { message: error instanceof Error ? error.message : 'Unknown read failure' });
     return fail(503,'WORKFLOW_SOURCE_UNAVAILABLE','The saved workflow source could not be verified. Nothing was imported.');
+  }
+}
+
+/** CSR slice 8 (2026-10-29): what the CSR assembler (csr/csr-assembly-source.ts)
+ * composes from. The same verified sections, gaps and title an import into
+ * Authoring produces, with every access, scope and hash check of that import,
+ * plus the job's study and the retained run it was drafted from. Read-only. */
+export interface CsrAssemblySource {
+  jobId: number; studyId: string; sourceRunId: string | null; title: string; fingerprint: string;
+  /** The inline sections; §14.3.3, when landed, is not among them but in `narratives`. */
+  sections: MaterializedWorkflowSource['sections']; gaps: string[];
+  /** §14.3.3 by reference: the assembler reads the landed text and the store themselves (csr-assembly-source.ts). */
+  narratives: CsrNarrativeReference | null;
+  /** When the newest saved section was generated: the assembled PDFs are stamped from content, never the clock. */
+  lastGeneratedAt: Date | null;
+  /** The study's ClinicalTrials.gov registration, as the job's approved source stated it; null when it stated none. */
+  nctNumber: string | null;
+}
+export async function materializeCsrAssemblySource(input: WorkflowMaterializationInput, q: Queryable): Promise<CsrAssemblySource> {
+  if (input.source.kind !== 'csr') return fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact CSR job.');
+  const jobId = input.source.jobId;
+  const materialized = await materializeWorkflowSource(input, q);
+  try {
+    const { rows } = await q.query(`SELECT j.study_id, j.source_run_id, j.study_info_snapshot, (SELECT max(o.generated_at) FROM csr_section_outputs o
+      WHERE o.job_id = j.id AND o.organization_id = j.organization_id) AS last_generated_at
+      FROM csr_build_jobs j WHERE j.id = $1 AND j.organization_id = $2`, [jobId, input.organizationId]);
+    const row = rows[0] as Record<string, unknown> | undefined;
+    if (!row || typeof row.study_id !== 'string' || (row.source_run_id != null && typeof row.source_run_id !== 'string')) return fail(409, 'WORKFLOW_SOURCE_INVALID', 'The saved CSR job identification is invalid.');
+    const last = row.last_generated_at == null ? null : new Date(row.last_generated_at as string);
+    const narratives = materialized.origin.sectionOrigins.find(o => o.narrativeReference)?.narrativeReference ?? null;
+    return { jobId, studyId: row.study_id, sourceRunId: (row.source_run_id as string | null) ?? null, title: materialized.origin.title,
+      fingerprint: materialized.fingerprint, sections: materialized.sections.filter(s => !narratives || s.code !== NARRATIVES_SECTION), gaps: materialized.gaps, narratives, lastGeneratedAt: last && !Number.isNaN(last.getTime()) ? last : null,
+      nctNumber: nctNumberOf(csrStudyInfo({ study_info_snapshot: row.study_info_snapshot } as CsrJob)) };
+  } catch (error) {
+    if (error instanceof WorkflowSourceImportError) throw error;
+    sourceLogger.error('Saved CSR assembly source read failed', { message: error instanceof Error ? error.message : 'Unknown read failure' });
+    return fail(503, 'WORKFLOW_SOURCE_UNAVAILABLE', 'The saved CSR job could not be verified. Nothing was assembled.');
   }
 }

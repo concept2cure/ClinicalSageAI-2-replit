@@ -27,7 +27,7 @@ import { CmQuality } from '../surfaces/CmcQuality';
 
 const PROJECT = 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab';
 const REFUSAL =
-  'This program’s drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.';
+  'This project’s drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.';
 
 beforeEach(() => {
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROJECT };
@@ -45,7 +45,7 @@ describe('CmQuality — the QbD read', () => {
       return { ok: true, status: 200, json: async () => ({ success: true, data: null }) } as Response;
     });
     render(<CmQuality ask={() => {}} />);
-    expect(await screen.findByText('Quality attributes are not derived here for this program')).toBeTruthy();
+    expect(await screen.findByText('Quality attributes are not derived here for this project')).toBeTruthy();
     expect(screen.getByText(REFUSAL)).toBeTruthy();
     expect(screen.queryByText('Couldn’t derive the quality attributes')).toBeNull();
   });

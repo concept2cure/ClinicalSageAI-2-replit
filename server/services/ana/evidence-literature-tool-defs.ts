@@ -278,7 +278,9 @@ export const NARRATE_STATISTICAL_RESULT: AnaTool = {
     'values) into correctly-hedged ICH-E3-style prose — determines significance from the confidence ' +
     'interval (preferred) or p-value, distinguishes statistical from clinical significance, and flags ' +
     'exploratory/post-hoc and multiplicity-uncontrolled analyses. Use when writing efficacy/safety ' +
-    'results so the language never overstates beyond the data.',
+    'results so the language never overstates beyond the data. It narrates the figures you pass, ' +
+    'as given: it reads none from a retained analysis run and computes none. For a CSR, read each ' +
+    'figure first from the retained run with get_csr_section_evidence.',
   input_schema: {
     type: 'object',
     properties: {
@@ -516,7 +518,7 @@ export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
           properties: {
             section_id: {
               type: 'string',
-              description: 'Which template section the fact belongs in (e.g. overview_efficacy, summary_clinical_safety).',
+              description: 'Which template section the fact belongs in: its CTD code (e.g. 2.5.4, 2.7.4) or a code below one (e.g. 2.7.4.2.1.2 goes in 2.7.4). The earlier ids (e.g. overview_efficacy, summary_clinical_safety) are still accepted. A fact that names no section is reported in honesty.unplacedFacts, not planned.',
             },
             label: { type: 'string', description: 'Human label for the fact (e.g. "Primary endpoint response rate").' },
             value: {
@@ -1006,7 +1008,9 @@ export const DRAFT_SAFETY_NARRATIVE: AnaTool = {
     'discontinuation): subject → relevant history & concomitant meds → study-drug exposure → event ' +
     '(severity, seriousness, onset) → action taken & treatment → dechallenge/rechallenge → outcome → ' +
     'investigator causality. Drafts ONLY from the supplied facts and reports any missing required ' +
-    'fields for QC — never invents clinical detail.',
+    'fields for QC — never invents clinical detail. The facts are as given in the call: none is ' +
+    'read from the study\'s ADaM data. A CSR\'s patient narratives are composed from the ADaM data ' +
+    'by the CSR build\'s narrative job, which sources every fact.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1095,6 +1099,12 @@ export const MEDICAL_WRITING_GUIDANCE: AnaTool = {
         type: 'string',
         description: 'Optional: pharma, biotech, device, ivd, or cro (informational).',
       },
+      section: {
+        type: 'string',
+        description:
+          'For document_type csr: the ICH E3 heading (e.g. 11.4.1, 12.2.2) whose writing rules — tense, voice, ' +
+          'standard sentences, display model — to return with the CSR writing standard.',
+      },
     },
     required: ['document_type'],
   },
@@ -1145,7 +1155,10 @@ export const MEDICAL_WRITING_REVIEW: AnaTool = {
     'review checklist and up to three focused client clarification prompts. Read project sources ' +
     'and prior answers first; ask only unresolved material questions outside the formal document. ' +
     'Heading coverage never establishes scientific completeness, compliance, approval or filing readiness; ' +
-    'this deterministic tool does not read or verify source evidence.',
+    'with draft_text this deterministic tool does not read or verify source evidence. ' +
+    'For a saved CSR in Authoring, pass document_id and section instead of draft_text: the saved section is reviewed and ' +
+    'its figures are checked against the retained-run cells its import receipts name (csrSectionEvidence: the exact cell, ' +
+    'claim or figure that failed). That is transcription agreement only, never scientific review or approval.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1156,6 +1169,14 @@ export const MEDICAL_WRITING_REVIEW: AnaTool = {
       draft_text: {
         type: 'string',
         description: 'Optional draft text — checks actual headings against the indexed outline, not narrative keyword mentions or substantive evidence completeness.',
+      },
+      document_id: {
+        type: 'string',
+        description: 'Optional saved Authoring document id (UUID) of a CSR in the open project. Use with section and without draft_text.',
+      },
+      section: {
+        type: 'string',
+        description: 'With document_id: the saved section\'s E3 number (e.g. 11.4) or its section id.',
       },
     },
     required: ['document_type'],

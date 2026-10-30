@@ -58,6 +58,11 @@ import { renderLeafPdf } from './leaf-pdf-renderer';
 import { renderComposedSectionLeafPdf } from './typeset-leaf-pdf';
 import { isModule3PlacementSnapshot } from '../cmc/module3-placement-marker';
 import { externalDocumentTableReason } from './leaf-document-tables';
+import { leafFileName, leafSourceKey } from './leaf-file-name';
+// The leaf file-name rules live in leaf-file-name.ts (pure, so a caller that
+// must know a leaf's shipped name need not load this resolver); re-exported
+// here for every existing importer.
+export { leafFileName, leafFileCarriesKey, leafSourceKey } from './leaf-file-name';
 import type { LeafLineage, ResolvedFile } from './core-to-packager';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
@@ -288,54 +293,27 @@ export function notFinalizedStatus(
   return status ?? whenMissing;
 }
 
+/**
+ * Whether a file this server rendered may be released (P-22: only approved
+ * documents are released). 2026-10-30, the CSR path sweep: an assembled clinical
+ * study report ('csr_assembly', csr-assembly-run.ts) is rendered from the build
+ * job's sections, not from an approved, signed document, and nothing binds an
+ * assembly to one. The CSR's approval is the Authoring document's. Until a
+ * binding exists, its files read as not approved here, in Validation and
+ * Dispatch (leaf-document-resolver) and at freeze and transmit (the assembler
+ * below). The server's own rendered forms and reports keep their own rules.
+ */
+export function renderedLeafNotTransmittable(renderedFrom: string | null | undefined): string | null {
+  return renderedFrom === 'csr_assembly'
+    ? 'an assembled clinical study report, not bound to an approved and signed CSR'
+    : null;
+}
+
 /** Rows of a `db.execute` result across drivers (node-postgres QueryResult / PGlite Results / bare array). */
 function rowsOf(result: unknown): Array<Record<string, unknown>> {
   if (Array.isArray(result)) return result as Array<Record<string, unknown>>;
   const rows = (result as { rows?: unknown } | null)?.rows;
   return Array.isArray(rows) ? (rows as Array<Record<string, unknown>>) : [];
-}
-
-function safeName(s: string, max = 40): string {
-  return (
-    (s || 'leaf').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, max).replace(/-+$/g, '') || 'leaf'
-  );
-}
-
-/**
- * The shipped leaf file name: `<label>-<source key>.pdf`, within the eCTD
- * 64-character rule (FILENAME_PATTERN). The key is the unique part and is
- * kept whole; the label gives way. The label alone was capped at 40 and the
- * key never was, so `coauthor_documents:123` shipped a 68-character name that
- * the agency validator refuses and nothing on this path checked.
- */
-export function leafFileName(label: string, key: string): string {
-  const ext = '.pdf';
-  const keyPart = leafFileKeyPart(key);
-  const budget = 64 - ext.length - 1 - keyPart.length;
-  const labelPart = budget >= 1 ? safeName(label, Math.min(40, budget)) : '';
-  const name = labelPart ? `${labelPart}-${keyPart}${ext}` : `${keyPart}${ext}`;
-  return name.slice(0, 64);
-}
-
-/** The unique, source-key part of a leaf file name (see leafFileName). */
-function leafFileKeyPart(key: string): string {
-  return key.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'leaf';
-}
-
-/**
- * Whether a file name was derived by leafFileName from this source key, under
- * ANY label — the label (module_number or title) can change after filing, the
- * key cannot. It is the document's identity in a filed leaf name.
- *
- * 2026-09-23 (W5/D7, round-2 skeptic, second pass): package-from-core binds a
- * named withdrawal through this. It used to fall back to the section's only
- * filed leaf when the current derived name matched nothing, which withdrew a
- * different, still-current document whenever the named one was never filed in
- * that section or had already been withdrawn.
- */
-export function leafFileCarriesKey(fileName: string, key: string): boolean {
-  const keyPart = leafFileKeyPart(key);
-  return fileName === `${keyPart}.pdf`.slice(0, 64) || fileName.endsWith(`-${keyPart}.pdf`);
 }
 
 /**
@@ -362,24 +340,6 @@ async function coauthorLineage(organizationId: number, documentId: number): Prom
     canonicalId: canonical.canonicalId,
     source: authoring ? { store: authoring.store, nativeId: authoring.nativeId } : null,
   };
-}
-
-/**
- * Stable key for a leaf's polymorphic document reference.
- *
- * The reference spans TWO key spaces: integer-keyed stores use `documentId`,
- * and uuid-keyed ones (vault.documents) use `documentUuid`. The uuid is the
- * unique part when present — without it every vault leaf collapses onto the key
- * `vault_documents:` and the first document resolved would be staged for all of
- * them, which is a wrong file in a submission rather than a missing one.
- */
-export function leafSourceKey(
-  documentTable: string | null | undefined,
-  documentId: number | null | undefined,
-  documentUuid?: string | null,
-): string {
-  if (documentUuid) return `${documentTable ?? ''}:${documentUuid}`;
-  return `${documentTable ?? ''}:${documentId ?? ''}`;
 }
 
 /**
@@ -788,6 +748,7 @@ export async function materializeLeafSources(
           md5: renderedLeafFiles.md5,
           mime: renderedLeafFiles.mime,
           fileName: renderedLeafFiles.fileName,
+          renderedFrom: renderedLeafFiles.renderedFrom,
         })
         .from(renderedLeafFiles)
         .where(and(eq(renderedLeafFiles.id, documentId), eq(renderedLeafFiles.organizationId, organizationId)))
@@ -830,6 +791,8 @@ export async function materializeLeafSources(
       await fs.writeFile(sourcePath, bytes);
       byKey.set(key, { fileName, sourcePath, md5: row.md5, sha256: row.sha256 });
       materialized++;
+      const renderedUnfinalized = renderedLeafNotTransmittable(row.renderedFrom);
+      if (renderedUnfinalized) noteUnfinalized(row.fileName || `rendered_leaf_files:${documentId}`, renderedUnfinalized);
       continue;
     }
 

@@ -78,7 +78,7 @@ function certifiedTranslationRefusal(requirement: CompanyLegalRequirement, docum
   const workflow = document.workflow;
   if (!workflow?.translationOfId || !workflow.certifiedTranslationEvidence) return 'A linked legal original and certified-translation evidence are required.';
   const original = input.documents.find(item => item.id === workflow.translationOfId);
-  if (!original) return 'The linked translation original is unavailable in this filing program.';
+  if (!original) return 'The linked translation original is unavailable in this project.';
   const refusal = companyLegalDocumentRefusal({ ...original, active: true }, { ...input.target, today: input.today });
   return refusal ? `The linked translation original cannot support this filing. ${refusal}` : null;
 }
@@ -101,7 +101,7 @@ function assessRequirement(requirement: CompanyLegalRequirement, input: Readines
     row.findings.push('Applicability has not been resolved by a recorded legal review.'); return row;
   }
   if (requirement.applicability === 'not_applicable') { row.status = 'not_applicable'; return row; }
-  if (!visibleIds.length) { row.status = 'missing'; row.findings.push('Map an exact legal-library version from this filing program to this requirement.'); return row; }
+  if (!visibleIds.length) { row.status = 'missing'; row.findings.push('Map an exact legal-library version from this project to this requirement.'); return row; }
   for (const id of visibleIds) {
     const document = input.documents.find(item => item.id === id)!;
     const refusal = documentRequirementRefusal(requirement, document, input);

@@ -174,7 +174,8 @@ describe('advertisedScreenActions — the new actions are discoverable at runtim
       'master-licensing': ['master-licensing.open-tab', 'master-licensing.filter-modules', 'master-licensing.search-modules'],
       'pdev-cmc': ['pdev-cmc.filter-activities', 'pdev-cmc.set-view'],
       pyramid: ['pyramid.select-type', 'pyramid.open-tab', 'pyramid.focus-phase', 'pyramid.open-task'],
-      'ectd-publishing': ['ectd-publishing.set-version', 'ectd-publishing.open-list', 'ectd-publishing.filter-codes'],
+      // Re-keyed under eCTD Compile when the publishing reference folded into it (D2, 2026-10-29).
+      'ectd-compile': ['ectd-compile.set-reference-version', 'ectd-compile.open-code-list', 'ectd-compile.filter-codes'],
       licensing: ['licensing.set-pricing-model', 'licensing.set-cycle'],
       'admin-console': ['admin-console.open-tab', 'admin-console.filter-members'],
     };

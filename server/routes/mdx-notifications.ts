@@ -55,8 +55,9 @@ const listQuery = z.object({
 const createBody = z.object({
   recipientUserId:  z.number().int().positive().optional().nullable(),
   recipientRole:    z.string().max(60).optional().nullable(),
-  // Not a platform-only category ('ana_turn'): a notice in one is the
-  // platform's to write, never a member's (DT3 review, DP-84).
+  // Not a platform-only category ('ana_turn', and since RR1b the task_*
+  // categories): a notice in one is the platform's to write, never a
+  // member's (DT3 review, DP-84; REVIEW_ROUTING §2.11, M4).
   category:         z.enum(CATEGORIES).refine(
     (c): boolean => (CREATABLE_NOTIFICATION_CATEGORIES as readonly string[]).includes(c),
     { message: 'This category is written by the platform only.' },

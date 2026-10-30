@@ -41,7 +41,10 @@ const phase1: CSRSummaryInput = {
   sampleSize: 40,
   saeCount: 0,
   deathCount: 0,
+  pivotal: false,
 };
+// 2026-10-29: pivotal is the sponsor's declaration, never the phase
+// (csr/study-pivotal-declaration.ts); this study is declared pivotal.
 const phase3: CSRSummaryInput = {
   studyId: 'S3',
   protocolNumber: 'X-301',
@@ -52,6 +55,7 @@ const phase3: CSRSummaryInput = {
   sampleSize: 300,
   saeCount: 4,
   deathCount: 1,
+  pivotal: true,
 };
 /** The common-adverse-event table, never the SAE/deaths table that sits beside it. */
 const aeTable = (r: { tables: Array<{ title: string; rows: string[][] }> }) =>
@@ -105,7 +109,7 @@ describe('2.5 states efficacy only from a recorded primary-endpoint outcome', ()
 
   it('a recorded "met" outcome supports "efficacy was demonstrated"; a recorded "not met" does not', () => {
     const met = buildM25ClinicalOverview({ csrs: [{ ...phase3, primaryEndpointMet: true }], indication: 'NSCLC', investigationalProduct: 'X' });
-    expect(met.narrative).toMatch(/Efficacy was demonstrated in 1 of 1 pivotal \(Phase 3\) study\/ies/);
+    expect(met.narrative).toMatch(/Efficacy was demonstrated in 1 of 1 pivotal study\/ies/);
     expect(met.narrative).toMatch(/Primary endpoint outcome: met\./);
 
     const notMet = buildM25ClinicalOverview({ csrs: [{ ...phase3, primaryEndpointMet: false }], indication: 'NSCLC', investigationalProduct: 'X' });
@@ -130,7 +134,7 @@ describe('2.5 states efficacy only from a recorded primary-endpoint outcome', ()
       investigationalProduct: 'X',
       developmentRationale: 'Unmet need.',
     });
-    expect(r.completeness).toBe(83); // 5 of 6: 2.5.2 has no recorded input
+    expect(r.completeness).toBe(67); // 4 of 6: 2.5.2 has no recorded input, and 2.5.1 is caller text (3b Slice 1)
     expect(r.gaps).toContain('biopharmaceutics (2.5.2): no biopharmaceutic data recorded');
   });
 });

@@ -93,7 +93,7 @@ describe('Projects — the summary line stays honest when the read fails', () =>
     render(<Projects {...props()} />);
 
     expect(document.body.textContent).not.toMatch(/\d+%/);
-    expect(screen.getByText(/Loading programs/i)).toBeTruthy();
+    expect(screen.getByText(/Loading projects/i)).toBeTruthy();
 
     release(null);
     await waitFor(() => expect(document.body.textContent).toContain('60%'));
@@ -146,7 +146,7 @@ describe('Projects — search', () => {
        that card on screen and confirm the address exists. */
     fireEvent.change(screen.getByLabelText(/Search projects/i), { target: { value: 'dana@' } });
     expect(screen.queryByText('First-in-Human ZX-9')).toBeNull();
-    expect(screen.getByText(/No programs match/i)).toBeTruthy();
+    expect(screen.getByText(/No projects match/i)).toBeTruthy();
   });
 
   it('names the query in the empty state instead of blaming the filters', async () => {
@@ -155,6 +155,6 @@ describe('Projects — search', () => {
     await waitFor(() => expect(screen.getByText('Companion assay')).toBeTruthy());
 
     fireEvent.change(screen.getByLabelText(/Search projects/i), { target: { value: 'zzzz' } });
-    expect(screen.getByText(/No programs match .zzzz./i)).toBeTruthy();
+    expect(screen.getByText(/No projects match .zzzz./i)).toBeTruthy();
   });
 });

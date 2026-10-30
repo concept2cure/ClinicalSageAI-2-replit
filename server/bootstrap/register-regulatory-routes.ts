@@ -311,6 +311,16 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount Pharmacovigilance Board route:', error);
   }
 
+  // ── The sponsor's per-study pivotal declaration (D5, 2026-10-29), beside the
+  //    CSR board. Mounted first so the board's router does not see /pivotal. ──
+  try {
+    const csrStudyPivotalModule = await import('../routes/csr-study-pivotal');
+    app.use('/api/csr-workflow/pivotal', authenticateToken, csrStudyPivotalModule.default());
+    console.info('✅ CSR study pivotal declaration route mounted (GET/POST /api/csr-workflow/pivotal)');
+  } catch (error) {
+    console.error('❌ Failed to mount CSR study pivotal declaration route:', error);
+  }
+
   // ── CSR Workflow board (ICH E3 section readiness read-model) ──
   try {
     const csrWorkflowModule = await import('../routes/csr-workflow-routes');

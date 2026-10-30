@@ -18,6 +18,11 @@ import { getRegistryDocumentTemplate, type TemplateSection } from '../../market-
 const LIFECYCLE_IDS = [
   'US_NDA_SUPP', 'US_BLA_SUPP', 'US_CBE', 'US_IND_ANNUAL', 'US_NDA_ANNUAL',
   'US_TYPE_A_MEETING', 'US_TYPE_B_MEETING', 'US_TYPE_C_MEETING',
+  // 2026-10-29: the US biotech filing completion identities, each from its own record.
+  'US_TYPE_D_MEETING', 'US_INTERACT',
+  'US_EXPANDED_ACCESS_INDIVIDUAL', 'US_EXPANDED_ACCESS_INTERMEDIATE', 'US_EXPANDED_ACCESS_TREATMENT',
+  'US_BLA_ANNUAL', 'US_BLA_PEDIATRIC_ANNUAL', 'US_BLA_PMR_ANNUAL', 'US_BLA_DISTRIBUTION', 'US_BPDR', 'US_BLA_PAE_REPORT',
+  'US_BLA_CBE30', 'US_BLA_CBE0', 'US_CBER_MASTER_FILE', 'US_CBER_LOT_RELEASE', 'US_EUA_THERAPEUTIC',
 ];
 
 function every(sections: TemplateSection[]): TemplateSection[] {
@@ -70,11 +75,25 @@ describe('a lifecycle-record outline is drafted from its own record', () => {
     expect(resolveDraftingRequirements('US_CBE', '3.2.P Drug Product (name, manufacturer)').requirementsSource).toMatch(/^record:ctd-section:3\.2\.P/);
   });
 
-  it('an sBLA section says which BLA rule to cite, and names the record it is read from', () => {
-    const r = resolveDraftingRequirements('US_BLA_SUPP', 'PAS-COVER Cover Letter').requirements ?? '';
-    expect(r).toContain('cite 21 CFR 601.12(b) (a manufacturing change) or 601.12(f)(1)');
-    expect(r).toContain('lifecycle record LIFECYCLE_DOCUMENT_TYPES:nda_pas');
-    expect(resolveDraftingRequirements('US_NDA_SUPP', 'PAS-COVER Cover Letter').requirements).not.toContain('601.12(b) (a manufacturing');
+  // 2026-10-29: the sBLA reads its own 601.12(b) record, so no line has to tell
+  // AnA to swap the NDA rule for the BLA one.
+  it('an sBLA section is drafted from the BLA PAS record, never the NDA PAS record', () => {
+    const cover = resolveDraftingRequirements('US_BLA_SUPP', 'bla_pas.cover Cover Letter');
+    expect(cover.requirementsSource).toBe('record:lifecycle:LIFECYCLE_DOCUMENT_TYPES:us_bla_pas:bla_pas.cover');
+    expect(cover.requirements).toContain('601.12');
+    expect(cover.requirements).not.toContain('nda_pas');
+    expect(cover.requirements).not.toContain('314.70');
+    // The NDA PAS part is not a section of the sBLA outline.
+    expect(resolveDraftingRequirements('US_BLA_SUPP', 'PAS-COVER Cover Letter').requirementsSource).not.toContain('nda_pas');
+  });
+
+  it('a Type D package section is drafted from the Type D record, with its own scope part', () => {
+    const r = resolveDraftingRequirements('US_TYPE_D_MEETING', 'MTG-D-SCOPE');
+    expect(r.requirementsSource).toBe('record:lifecycle:LIFECYCLE_DOCUMENT_TYPES:us_type_d_meeting:MTG-D-SCOPE');
+    expect(resolveDraftingRequirements('US_INTERACT', 'MTG-INTERACT-NOVEL').requirementsSource)
+      .toBe('record:lifecycle:LIFECYCLE_DOCUMENT_TYPES:us_interact_meeting:MTG-INTERACT-NOVEL');
+    // Neither carries the generic core-plus-support outline A/B/C read.
+    expect(resolveDraftingRequirements('US_TYPE_D_MEETING', 'MTG-SUPPORT').requirementsSource).toBe('record:lifecycle:not-in-outline');
   });
 
   // Review critic, 2026-10-18.

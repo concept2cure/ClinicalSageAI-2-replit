@@ -64,21 +64,40 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // surfaces here; keep every feature's existing commercial verdict. This
     // list is pinned against MDX_PROJECT_FEATURE_SURFACE_IDS by the scope test.
     // Literal ids are required by ci:launch-scope's structural parser.
+    // 2026-10-29 (D2): the device task workbench folded into Tasks, which this
+    // app already holds; its old address resolves there (DEEP_LINK_ALIASES).
+    // 2026-10-29 (D2, fold F3): the device vault folded into the Vault app's
+    // Vault; its old address resolves there too.
+    // 2026-10-29 (D2, folds F1c and F2): the risk file and the design-control
+    // trace folded into Engineering evidence, and the IVDR readiness board into
+    // IVDR evidence, both already here; their old addresses resolve there, and a
+    // subscription to either carries (P-61 item 4, folded-module-successors.ts).
+    // 2026-10-29 (D2, fold F5 item 2): the organization-wide blocker list
+    // retired; a blocker is its filing's readiness (P-61 item 2). Its address
+    // opens Submission Center, and a subscription carries there.
+    // 2026-10-30 (D2, fold F5 item 1): the device submission packages folded into
+    // Submission Center's device filings, over one store (P-61 item 1); the old
+    // address opens it, and a subscription carries there.
     surfaces: [
       'projects', 'project-home', 'tasks', 'communication-center',
       'device-workstream', 'device-510k', 'device-pma', 'device-cer',
-      'device-diagnostics', 'ivd-completeness', 'device-clinical-studies', 'device-software',
+      'device-diagnostics', 'device-clinical-studies', 'device-software',
       'device-engineering', 'device-udi', 'device-postmarket', 'device-presub',
-      'device-vault', 'device-tasks', 'device-validation', 'device-submission',
-      'device-analytics', 'design-controls', 'human-factors', 'risk', 'labeling',
+      'device-analytics', 'human-factors', 'labeling',
     ],
     modules: ['projects', 'tasks'],
   },
   {
     id: 'vault',
     label: 'Vault',
-    surfaces: ['vault', 'artifacts-center'],
-    modules: ['vault', 'artifacts-center'],
+    // 2026-10-29 (D2, fold F3 slice C): the Artifacts center folded into the
+    // Vault as its organization view (DEEP_LINK_ALIASES). Its module is no
+    // longer granted to a new organisation, and an existing grant is kept: the
+    // catalogue row is deprecated, never deleted (CLAUDE.md Rule 1;
+    // db/migrations/20260810_reconcile_module_catalog.sql). The Vault is free at
+    // the same tier, so no organisation loses a function.
+    surfaces: ['vault'],
+    modules: ['vault'],
   },
   {
     id: 'authoring',
@@ -216,12 +235,12 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   apps: 'the Apps catalog — where a locked destination explains itself',
   'conversation-thread': 'AnA conversation; the product is chat-first',
   'audit-trail': '21 CFR §11.10(e): the audit trail is never switchable',
-  'part11-console': 'how Part 11 compliance is evidenced; never switchable',
+  // part11-console folded into audit-trail (D2, 2026-10-29): both chain verdicts are stated there.
   'admin-console': 'organisation administration',
-  setup: 'first-run configuration',
+  // setup folded into admin-console (D2, 2026-10-29): its settings are on Admin and access → Settings.
   onboarding: 'first-run flow',
   'onboarding-ingest': 'step within the onboarding flow',
-  billing: 'account administration',
+  // billing folded into licensing (D2, 2026-10-29): the invoices are on Licensing, for billing administrators.
   usage: 'account administration',
   licensing: 'account administration — grants catalog entries',
   'master-licensing': 'platform-owner administration',

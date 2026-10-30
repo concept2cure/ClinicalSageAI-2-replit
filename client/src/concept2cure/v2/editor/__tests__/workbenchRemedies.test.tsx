@@ -63,9 +63,15 @@ function stream(text: string, turnRecord: AnaTurnRecordStatus) {
   } });
 }
 
-async function prepareFix(base = AT, qualified = true) {
+async function prepareFix(base = AT, qualified = true, amendment?: { proposal: Record<string, unknown>; empty?: boolean }) {
+  if (amendment?.empty) {
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, input: unknown) => url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`
+      ? Promise.resolve(ok({ sections: [{ ...section, content: '<p></p>' }] })) : normal(method, url, input));
+  }
+  const responseText = amendment ? `A source-supported addition is proposed.\n\n\`\`\`authoring-remedy\n${JSON.stringify(amendment.proposal)}\n\`\`\`` : answer(base);
   const fetchMock = vi.fn(async (url: string, _init?: Parameters<typeof globalThis.fetch>[1]) => url.includes('/api/ana-ri/stream')
-    ? { ok: true, status: 200, body: stream(answer(base), recorded(qualified)) }
+    ? { ok: true, status: 200, body: stream(responseText, recorded(qualified)) }
     : { ok: false, status: 503, json: async () => ({}) });
   vi.stubGlobal('fetch', fetchMock);
   const Flow = () => {
@@ -76,14 +82,20 @@ async function prepareFix(base = AT, qualified = true) {
   };
   render(<Flow />);
   await screen.findAllByText('Stability Summary');
-  await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('18 months'));
+  await waitFor(() => {
+    expect(document.querySelector('.tiptap')).toBeTruthy();
+    if (amendment?.empty) expect(document.querySelector('.tiptap')?.textContent).toBe('');
+    else expect(document.querySelector('.tiptap')?.textContent).toContain('18 months');
+  });
   fireEvent.click(screen.getByText('Review with AnA'));
   fireEvent.click(screen.getByRole('button', { name: 'Prepare targeted fixes' }));
   const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' });
   await waitFor(() => expect((screen.getByRole('button', { name: 'Send message to AnA' }) as HTMLButtonElement).disabled).toBe(false));
   expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/ana-ri/stream'))).toBe(false);
   fireEvent.keyDown(composer, { key: 'Enter' });
-  const apply = await screen.findByRole('button', { name: 'Apply as tracked suggestion' });
+  await screen.findByLabelText('AnA proposed fixes');
+  const apply = screen.queryByRole('button', { name: 'Apply as tracked suggestion' }) as HTMLButtonElement;
+  expect(apply, 'A complete versioned amendment must reach the existing remedy card and bridge.').toBeTruthy();
   if (qualified) await waitFor(() => expect((apply as HTMLButtonElement).disabled).toBe(false));
   return { apply, fetchMock };
 }
@@ -219,6 +231,80 @@ describe('tracked remedy review lifecycle', () => {
     expect(screen.getByText(/tracked change has been reviewed in the editor/)).toBeTruthy();
     expect((screen.getByRole('button', { name: 'Added as tracked suggestion' }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.queryByRole('button', { name: 'Apply as tracked suggestion' })).toBeNull();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+});
+
+const additions = [
+  { operation: 'insert-before', quote: '18 months', replacement: 'at least ',
+    expected: 'The product is stable for at least 18 months.' },
+  { operation: 'insert-after', quote: '18 months', replacement: ', pending annual review',
+    expected: 'The product is stable for 18 months, pending annual review.' },
+  { operation: 'insert-empty', quote: '', replacement: 'Source-supported stability narrative.',
+    expected: 'Source-supported stability narrative.' },
+] as const;
+const insertion = (item: typeof additions[number], base = AT) => ({ ...remedy(base),
+  operation: item.operation, quote: item.quote, replacement: item.replacement,
+  reason: 'Add only the source-supported statement at the verified saved location.' });
+
+describe('versioned AnA additions use the same actual conversation and editor', () => {
+  it.each(additions)('applies $operation without striking the anchor, and permits a new receipt only after rejection', async item => {
+    const { apply } = await prepareFix(AT, true, { proposal: insertion(item), empty: item.operation === 'insert-empty' });
+    const card = document.querySelector('.authoring-remedy');
+    expect(card?.textContent).toContain(item.operation === 'insert-empty' ? 'Empty section' : 'Anchor:');
+    expect(card?.textContent).toContain(item.operation === 'insert-empty' ? 'Addition:'
+      : `Addition ${item.operation === 'insert-before' ? 'before' : 'after'} anchor:`);
+    expect(card?.querySelector('del')).toBeNull();
+    fireEvent.click(apply);
+    await screen.findByRole('button', { name: 'Added as tracked suggestion' });
+    const added = document.querySelector('.tiptap ins[data-author-id="ana"]');
+    expect(added?.textContent).toBe(item.replacement);
+    expect(added?.getAttribute('data-source-record')).toBe(TURN);
+    const firstApplication = added?.getAttribute('data-application-id');
+    expect(firstApplication).toBeTruthy();
+    expect(document.querySelector('.tiptap del')).toBeNull();
+    expect(document.querySelector('.tiptap')?.textContent).toBe(item.expected);
+    expect((screen.getByRole('button', { name: 'Added as tracked suggestion' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: /suggested edit/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reject all' }));
+    await waitFor(() => expect(document.querySelector('.tiptap ins, .tiptap del')).toBeNull());
+    expect(document.querySelector('.tiptap')?.textContent).toBe(item.operation === 'insert-empty' ? '' : 'The product is stable for 18 months.');
+    const retry = await screen.findByRole('button', { name: 'Apply as tracked suggestion' });
+    expect((retry as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(retry);
+    await waitFor(() => expect(document.querySelector('.tiptap ins[data-author-id="ana"]')?.textContent).toBe(item.replacement));
+    expect(document.querySelector('.tiptap ins')?.getAttribute('data-application-id')).not.toBe(firstApplication);
+    expect(document.querySelector('.tiptap ins')?.getAttribute('data-source-record')).toBe(TURN);
+    expect(document.querySelector('.tiptap del')).toBeNull();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+
+  it('refuses an empty-section addition after unsaved local text appears', async () => {
+    const { apply } = await prepareFix(AT, true, { proposal: insertion(additions[2]), empty: true });
+    const editor = (document.querySelector('.tiptap') as unknown as { editor: Editor }).editor;
+    act(() => { editor.commands.insertContent('Unsaved author note.'); });
+    fireEvent.click(apply);
+    await waitFor(() => expect(document.querySelector('.authoring-remedy-note')?.getAttribute('role')).toBe('alert'));
+    expect(document.querySelector('.tiptap')?.textContent).toBe('Unsaved author note.');
+    expect(document.querySelector('.tiptap ins[data-author-id="ana"], .tiptap del[data-author-id="ana"]')).toBeNull();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+
+  it('uses the existing saved-base refusal for a stale anchored addition', async () => {
+    const { apply } = await prepareFix(AT, true, { proposal: insertion(additions[1], '2026-10-12T10:00:00Z') });
+    fireEvent.click(apply);
+    await screen.findByText(/saved section changed since AnA read it/);
+    expect(document.querySelector('.tiptap')?.textContent).toBe('The product is stable for 18 months.');
+    expect(document.querySelector('.tiptap ins, .tiptap del')).toBeNull();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+
+  it('keeps an unqualified insertion answer behind the same model gate', async () => {
+    const { apply } = await prepareFix(AT, false, { proposal: insertion(additions[0]) });
+    expect(apply.disabled).toBe(true);
+    fireEvent.click(apply);
+    expect(document.querySelector('.tiptap ins, .tiptap del')).toBeNull();
+    expect(screen.getByText(/not approved for regulatory drafting/)).toBeTruthy();
     expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
   });
 });

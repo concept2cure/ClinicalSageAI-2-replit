@@ -57,7 +57,12 @@ describe('Respond answers the agency (F15)', () => {
     expect(screen.getByRole('button', { name: /Start a response sequence/ })).toBeTruthy();
     // Each inbox letter holds its questions and signed responses (2026-10-18).
     expect(screen.getByTestId('pj-coming-later').textContent).not.toMatch(/Question-by-question tracking/);
-    expect(screen.getByTestId('pj-coming-later').textContent).toMatch(/Agency meetings and precedent responses/);
+    /* Slice A.1: agency meetings fold into Communication, whose Meetings and recorded commitments work
+       today; the line names what Respond will hold, precedent responses and FDA's Pre-Sub feedback. */
+    expect(screen.getByTestId('pj-coming-later').textContent).toBe(
+      'Coming later: Precedent responses, showing how the agency answered similar questions before; for a US ' +
+      'device filing, FDA’s written feedback on its Pre-Sub.',
+    );
     // The editor with no letter is no longer offered.
     expect(screen.queryByRole('button', { name: /Response authoring/ })).toBeNull();
   });

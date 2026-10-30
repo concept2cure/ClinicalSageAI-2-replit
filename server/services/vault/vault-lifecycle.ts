@@ -25,6 +25,10 @@ import { readPredecessorIds, supersededSql } from './vault-version-family';
 import { companyLegalVersionDateRefusal, companyLegalVersionTargetRefusal, type LegalDocumentContext } from '../../../shared/company-documents';
 import { companyLegalRegistryDocuments, readCompanyLegalRegistryForVault } from '../company-documents/legal-registry';
 import { companyLegalCopySourceRefusal } from '../company-documents/company-copy-lineage';
+import { readRouteRounds, type RouteRole, type RouteRound } from '../review/review-route-standing';
+import { createScopedLogger } from '../../utils/logger';
+
+const log = createScopedLogger('vault-lifecycle');
 
 export interface LifecycleQueryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -236,6 +240,31 @@ export interface VaultVersionLifecycle {
   creatorId: number | null;
   review: SignOffManifestation | null;
   approval: SignOffManifestation | null;
+  /**
+   * RR2 records (§2.12): on a routed version whose review sign-off was made on
+   * its round, every reviewer who signed on that round, oldest first. Null on
+   * a version with no route (legacy or carried from Authoring), whose line is
+   * `review`. `review` is review_signature, which the append-only guard admits
+   * once per round, so it names only the signature that completed the review.
+   */
+  reviewSignOffs: SignOffManifestation[] | null;
+  /** The same for the approval: every approver who signed, once the version is approved on its round. */
+  approvalSignOffs: SignOffManifestation[] | null;
+  /**
+   * The version's latest review route (RR1a, §2.12): its state, every named
+   * member with the printed name at naming, and each verified signature's
+   * printed name, meaning and UTC time, read from this organization's
+   * electronic_signatures rows only. Null when the version has none (a legacy
+   * or carried round), and when the read failed: then `roundUnread` says so.
+   */
+  round: RouteRound | null;
+  /**
+   * True when the route could not be read (RR1b, §2.13). The version's stage
+   * and sign-offs still show; its reviewers render as "could not be read",
+   * never as "no reviewers". Until RR1b a failed route read failed the whole
+   * version list.
+   */
+  roundUnread: boolean;
 }
 
 interface StoredSignOff {
@@ -258,6 +287,27 @@ const authoringSigId = (ref: string | undefined): string | null => {
 
 /** Authoring meanings, in the words the Vault's sign-offs use. */
 const AUTHORING_MEANING: Record<string, string> = { REVIEWER: 'REVIEWED', APPROVER: 'APPROVED', AUTHOR: 'AUTHORED' };
+
+/**
+ * A routed version's sign-off line for `role`, read from its round (RR2
+ * records, §2.12): every member in that role with a verified signature, each
+ * with the printed name, meaning and UTC time the signature holds, oldest
+ * first. Only when the version's stored sign-off is one of those signatures,
+ * that is, the sign-off was made on this round; otherwise null and the line
+ * stays the stored one (a version with no route, or one carried from Authoring).
+ */
+export function roundSignOffs(round: RouteRound | null, role: RouteRole, stored: StoredSignOff | null | undefined): SignOffManifestation[] | null {
+  const ref = esigId(stored?.signatureRef);
+  if (!round || ref === null) return null;
+  const signed = round.members.flatMap((m) => (m.role === role && m.signature ? [{ userId: m.userId, signature: m.signature }] : []));
+  if (!signed.some((m) => m.signature.id === ref)) return null;
+  return signed
+    .sort((a, b) => a.signature.signedAt.localeCompare(b.signature.signedAt) || Number(a.signature.id) - Number(b.signature.id))
+    .map(({ userId, signature }) => ({
+      printedName: signature.printedName, meaning: signature.meaning, signedAt: signature.signedAt,
+      signatureRef: `esig:${signature.id}`, signerId: userId,
+    }));
+}
 
 /**
  * The lifecycle of each of `vaultIds` that has one, keyed by version id. A
@@ -324,13 +374,26 @@ export async function readVaultLifecycles(
       ...(carried ? { carriedFrom: 'authoring' as const } : {}),
     };
   };
+  // The route is read on its own: a failure leaves each version's stage and
+  // sign-offs standing, and marks its reviewers unread (never "none").
+  const rounds = await readRouteRounds(q, {
+    organizationId, subjectType: 'canonical_document', subjectIds: rows.map((r) => String(r.canonical_id)),
+  }).catch((err: unknown) => {
+    log.warn('review route read failed; the versions show their reviewers as unread', { err: err instanceof Error ? err.message : String(err) });
+    return null;
+  });
   for (const r of rows) {
+    const round = rounds?.get(String(r.canonical_id)) ?? null;
     out.set(r.vault_id, {
       canonicalId: r.canonical_id,
       stage: r.stage,
       creatorId: r.created_by == null ? null : Number(r.created_by),
       review: manifest(r.review_signature),
       approval: manifest(r.approval_signature),
+      reviewSignOffs: roundSignOffs(round, 'reviewer', r.review_signature),
+      approvalSignOffs: roundSignOffs(round, 'approver', r.approval_signature),
+      round,
+      roundUnread: rounds === null,
     });
   }
   return out;

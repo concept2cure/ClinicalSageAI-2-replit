@@ -1,0 +1,19 @@
+{
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/lumen-context/__tests__/section-scope.test.ts",
+    "server/services/ana-ri/__tests__/chat-context-latency.test.ts",
+    "server/routes/ana-ri/__tests__/stream-context-latency.test.ts",
+    "server/services/__tests__/lumen-context-builder-assumes-no-project-facts.test.ts",
+    "tests/regulatory/ana-ctd-section-truth.test.ts",
+    "tests/regulatory/csr-e3-overlay.test.ts"
+  ],
+  "startedUtc": "2026-10-26T18:20:00.872041+00:00",
+  "elapsedSeconds": 16.437,
+  "exitCode": 0,
+  "pinnedInputsStillMatch": true
+}

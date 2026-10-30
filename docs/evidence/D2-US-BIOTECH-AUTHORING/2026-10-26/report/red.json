@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-10-26T23:10:42.513428+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 4.169,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "report/red-inputs.json",
+  "sourcesBefore": {
+    "scripts/regulatory-coverage-report.ts": "327b8c344210b2a1ae94aab1da269ca3c47ef5369f87781cb5a0f776d4b99809",
+    "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts": "236b26f11215aae5ddbc6f5f51fbfbeaf67cf4b4b960d0b5c39016298ff678ec"
+  },
+  "sourcesAfter": {
+    "scripts/regulatory-coverage-report.ts": "327b8c344210b2a1ae94aab1da269ca3c47ef5369f87781cb5a0f776d4b99809",
+    "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts": "236b26f11215aae5ddbc6f5f51fbfbeaf67cf4b4b960d0b5c39016298ff678ec"
+  },
+  "sourceDrift": [],
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "3fce0ee31320b6c1078d7773dbad349b20fb1f96aeda3cb722861c8c204bc748",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  3 failed | 3 passed (6)",
+    "Duration  3.74s (transform 68ms, setup 70ms, import 13ms, tests 3.44s, environment 0ms)"
+  ]
+}

@@ -51,7 +51,7 @@ describe('DataGate — idle offers the one action that fixes it', () => {
           {child}
         </DataGate>,
       );
-      const btn = screen.getByRole('button', { name: 'Choose or create a program' });
+      const btn = screen.getByRole('button', { name: 'Choose or create a project' });
       fireEvent.click(btn);
       /* The gate holds no `nav` prop and never will — it is a leaf. The event
          is the whole reason the CTA can exist here at all. */
@@ -73,10 +73,10 @@ describe('DataGate — idle offers the one action that fixes it', () => {
     );
     const panel = screen.getByRole('status');
     expect(panel.textContent).toContain('No UDI records requested');
-    expect(panel.textContent).toContain('UDI records are held per program');
+    expect(panel.textContent).toContain('UDI records are held per project');
     expect(panel.textContent).toContain('Serves the UDI record (21 CFR 830)');
-    /* The retired phrase, in any casing. */
-    expect(panel.textContent).not.toMatch(/select a program/i);
+    /* The retired phrase, in any casing, and in either noun (decision 12). */
+    expect(panel.textContent).not.toMatch(/select a pro(gram|ject)\b/i);
   });
 
   it("honours a hook's own reason, and still renders the button beside it", () => {
@@ -89,7 +89,7 @@ describe('DataGate — idle offers the one action that fixes it', () => {
       </DataGate>,
     );
     expect(screen.getByText('The engineering record is held per program.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Choose or create a program' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Choose or create a project' })).toBeTruthy();
   });
 
   it('takes a surface override, and stands down entirely only when told to', () => {
@@ -134,7 +134,7 @@ describe('DataGate — empty never renders a dead end', () => {
     );
     /* A program IS open here, so "choose or create a program" would be wrong
        advice — the surface's own action wins over both it and the refresh. */
-    expect(screen.queryByRole('button', { name: 'Choose or create a program' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Choose or create a project' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Categorize this test' }));
     expect(onAct).toHaveBeenCalledTimes(1);
   });
@@ -279,7 +279,7 @@ describe('the synthesized Part 11 record is gone, and cannot be reintroduced', (
       'surfaces/cer/EquivalenceTab.tsx',
       'surfaces/EstarFilingPanel.tsx',
       'presub/PreSubManager.tsx',
-      'workbench/Workbench.tsx',
+      // No workbench/Workbench.tsx: its last screen folded into Submission Center (D2, fold F5 item 1, 2026-10-30).
       'MdxSurfaceHost.tsx',
     ];
     const offenders: string[] = [];

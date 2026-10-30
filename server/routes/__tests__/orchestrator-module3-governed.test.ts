@@ -320,7 +320,7 @@ describe('Mode A carries Module 3 only when the program’s export gate is open'
      existed passes it, and its Module 3 was composed and signed into the
      package (2026-10-22). */
   it('carries NO Module 3 for a program outside the composition boundary, though the gate opened, and says why', async () => {
-    const MAB = "This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.";
+    const MAB = "This project's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.";
     h.assessProgramCompositionScope.mockResolvedValue({ code: 'CMC_MODALITY_OUT_OF_SCOPE', modality: 'biologic', message: MAB });
 
     const res = await request(app()).post('/api/submission-orchestrator/runs').send(modeABody());

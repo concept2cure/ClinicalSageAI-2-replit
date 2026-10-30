@@ -37,6 +37,7 @@
  */
 
 import { useEffect, useSyncExternalStore } from 'react';
+import { PJ_LIFECYCLE } from './fixtures/project-home-data';
 
 export interface ShellProject {
   id: string | number;
@@ -50,6 +51,13 @@ export interface ShellProject {
    *  model has loaded. The shell's segment label follows it — see
    *  segmentForShellProject. */
   productType?: string;
+  /** The chosen lifecycle step in this tab; never a filing status. */
+  step?: string;
+}
+
+/** Persist only current step ids, not removed-tab aliases or malformed storage. */
+export function projectStepId(value: unknown): string | null {
+  return typeof value === 'string' && PJ_LIFECYCLE.some(stage => stage.id === value) ? value : null;
 }
 
 const KEY = 'c2c.shell-project';
@@ -92,19 +100,39 @@ function projectVisitIdentity(project: ShellProject | null = readShellProject())
 
 /** Set the open program: the live global plus its per-tab mirror. */
 export function publishShellProject(project: ShellProject): void {
-  if (projectVisitIdentity() !== projectVisitIdentity(project)) projectRevision += 1;
+  const live = readShellProject();
+  const sameProject = projectVisitIdentity(live) === projectVisitIdentity(project);
+  if (!sameProject) projectRevision += 1;
+  // A card or header can re-publish this same project without knowing its
+  // current step. Keep that choice, but never carry it into another project.
+  const step = projectStepId(project.step) ?? (sameProject ? projectStepId(live?.step) : null);
+  const published: ShellProject = { ...project };
+  if (step) published.step = step;
+  else delete published.step;
   try {
-    writeGlobal(project);
+    writeGlobal(published);
   } catch {
     /* no window (SSR/test teardown) — nothing to publish to */
   }
   try {
-    sessionStorage.setItem(KEY, JSON.stringify(project));
+    sessionStorage.setItem(KEY, JSON.stringify(published));
   } catch {
     /* storage unavailable (private mode quota, disabled) — the live global
        still works for this page's lifetime; only reload-survival is lost */
   }
   notify();
+}
+
+/**
+ * Open a program's Project home: publish it as the open program, then go there.
+ * The Projects portfolio and Home's project list open a project this one way.
+ */
+export function openProjectHome(project: ShellProject & { title: string }, onNav: (id: string) => void): void {
+  try {
+    publishShellProject(project);
+    if (window.C2C?.setSurface) window.C2C.setSurface('project-home', project.title);
+  } catch { /* noop */ }
+  onNav('project-home');
 }
 
 /** A tenant-boundary switch retires all pending handoffs and the previous selection. */
@@ -173,13 +201,17 @@ function readMirror(): ShellProject | null {
     const raw = sessionStorage.getItem(KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
-    return parsed &&
+    const valid = parsed &&
       typeof parsed === 'object' &&
       !Array.isArray(parsed) &&
       (parsed as ShellProject).id != null &&
       String((parsed as ShellProject).id).trim() !== ''
       ? (parsed as ShellProject)
       : null;
+    if (!valid) return null;
+    const { step: rawStep, ...identity } = valid;
+    const step = projectStepId(rawStep);
+    return { ...identity, ...(step ? { step } : {}) };
   } catch {
     return null;
   }

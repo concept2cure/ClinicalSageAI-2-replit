@@ -24,9 +24,12 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+/* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
+   no AuthProvider mounted, the real useAuth throws before Project home renders. */
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
@@ -88,6 +91,16 @@ afterEach(() => {
 });
 
 describe('project home — Dossier readiness', () => {
+  it('offers the existing choose-or-create door when no project is selected', async () => {
+    delete (window as any).C2C_PROJECT;
+    mockProgram(program());
+    const p = props();
+    render(<ProjectHome {...p} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose or create a project' }));
+    expect(p.onNav).toHaveBeenCalledWith('projects');
+    expect(apiRequest.mock.calls.some(([, url]) => String(url).includes('/dossier'))).toBe(false);
+  });
+
   it('draws the dossier read’s figure, and ignores a stale progress_percent and the detail row', async () => {
     // A server that predates the fix would still send progress_percent: 0.
     mockProgram(program({ readiness: 10, progress_percent: 0 }), dossier(measured(62, 50)));
@@ -121,14 +134,14 @@ describe('project home — Dossier readiness', () => {
     expect(card.textContent).toContain('0 of 40 sections approved or locked.');
   });
 
-  it('a program with nothing to measure is stated as "not measured", never left out or drawn as 0', async () => {
+  it('a program with nothing to measure is stated as "Not recorded", never left out or drawn as 0', async () => {
     mockProgram(program({ readiness: null, progress_percent: 0 }), dossier({ state: 'no_sections', pct: null }));
     const seen: { ctx: SurfaceContext | null } = { ctx: null };
     render(<><ProjectHome {...props()} /><Probe onCtx={(c) => { seen.ctx = c; }} /></>);
-    await waitFor(() => expect(seen.ctx?.summary).toContain('dossier readiness not measured'));
+    await waitFor(() => expect(seen.ctx?.summary).toContain('dossier readiness Not recorded'));
     // The card is there, under the name the Projects card uses, and says what it is.
     const card = await readinessCard();
-    expect(card.textContent).toMatch(/not measured/i);
+    expect(card.textContent).toMatch(/Not recorded/i);
     expect(card.textContent).not.toMatch(/\d+%/);
     expect(card.textContent).not.toMatch(/Measured/);
     expect(seen.ctx?.summary).not.toMatch(/\d+% complete|readiness \d+%/);
@@ -136,6 +149,15 @@ describe('project home — Dossier readiness', () => {
 });
 
 describe('project home — one dossier read for the card and the module rows (F23)', () => {
+  it('Author hands the critical-path question through the project’s existing AnA callback', async () => {
+    mockProgram(program());
+    const p = props();
+    render(<ProjectHome {...p} />);
+    fireEvent.click(await screen.findByRole('button', { name: /critical path to filing/i }));
+    expect(p.onAsk).toHaveBeenCalledWith('What is the critical path to filing?');
+    expect(p.onNav).not.toHaveBeenCalled();
+  });
+
   it('every section in review reads 0% on the card and on its rows, with the review counted', async () => {
     const zero = measured(0, 12);
     mockProgram(program(), dossier(zero, { rows: [row('2', 'Module 2 · Summaries', zero, { inReview: 12 })] }));
@@ -149,12 +171,12 @@ describe('project home — one dossier read for the card and the module rows (F2
     expect(apiRequest.mock.calls.some(([, u]) => String(u).includes('/workstreams'))).toBe(false);
   });
 
-  it('while the dossier is read the card says so, never "not measured"', async () => {
+  it('while the dossier is read the card says so, never "Not recorded"', async () => {
     mockProgram(program(), () => new Promise<Response>(() => {}));
     render(<ProjectHome {...props()} />);
     const card = await readinessCard();
     expect(card.textContent).toContain('Reading…');
-    expect(card.textContent).not.toMatch(/not measured|\d+%/);
+    expect(card.textContent).not.toMatch(/Not recorded|\d+%/);
     expect(await screen.findByText('Loading module completion…')).toBeTruthy();
   });
 

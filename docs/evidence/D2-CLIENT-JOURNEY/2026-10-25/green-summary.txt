@@ -1,0 +1,14 @@
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > the conversation thread renders AnA’s actions as controls > a navigate chip in a thread turn is a button that navigates
+ FAIL  client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > the conversation thread renders AnA’s actions as controls > a start_demo chip in an ordinary thread turn is a button that starts the demo
+ FAIL  client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > the conversation's engine pill > names the popup it opens, and holds the same engine radio group
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot
+ FAIL  client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > registers on mount, and vault.search drives the SAME search state the surface renders
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically
+ FAIL  client/src/concept2cure/v2/__tests__/navTargets.test.tsx > v2 navigation targets all resolve to a real destination > every literal nav target is a real surface, alias, hub, or modal mode
+ Test Files  6 failed | 104 passed (110)
+      Tests  11 failed | 1695 passed (1706)

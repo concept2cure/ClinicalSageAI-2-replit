@@ -1,0 +1,32 @@
+{
+  "base": "ef8d6e8b132818d952d3dff0ea3a70e2a4ac2d74",
+  "originalPacket": "docs/evidence/D2-US-BIOTECH-AUTHORING/2026-10-26",
+  "existingUsInventory": 34,
+  "sourceFindings": [
+    "generic16-part351K/505B2/accelerated/rolling",
+    "PMRprotocol mis-scope",
+    "NDAannualplanner on biologics",
+    "D/INTERACT partial reach",
+    "3926missing exact asset/form",
+    "ordinary editor missing published company-format binding"
+  ],
+  "newRegistryIds": [
+    "US_TYPE_D_MEETING",
+    "US_INTERACT",
+    "US_EXPANDED_ACCESS_INDIVIDUAL",
+    "US_EXPANDED_ACCESS_INTERMEDIATE",
+    "US_EXPANDED_ACCESS_TREATMENT",
+    "US_BLA_ANNUAL",
+    "US_BLA_PEDIATRIC_ANNUAL",
+    "US_BLA_PMR_ANNUAL",
+    "US_BLA_DISTRIBUTION",
+    "US_BPDR",
+    "US_EUA_THERAPEUTIC",
+    "US_BLA_CBE30",
+    "US_BLA_CBE0",
+    "US_CBER_MASTER_FILE",
+    "US_CBER_LOT_RELEASE",
+    "US_BLA_PAE_REPORT"
+  ],
+  "deletedNameSearch": "git log --all --diff-filter=D -- *Expanded* *3926* *Lifecycle* *Rfd* *Eua* *Template*; retired editors/templates are not restored"
+}

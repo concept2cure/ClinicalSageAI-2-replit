@@ -195,7 +195,7 @@ const pinoLogger = pino({
     ],
     remove: false,
   },
-});
+}, process.env.C2C_CLI_LOG_STDERR === '1' ? pino.destination({ dest: 2, sync: true }) : undefined);
 
 const logger: Logger = {
   info: (message: string, context?: unknown) =>

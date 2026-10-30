@@ -10,9 +10,12 @@
  *   c2c_rule_packs           → the required-section spec tree for each build
  *   c2c_document_sections    → LIVE section status / version / owner / timestamp
  *   users                    → real owner attribution (section & document owner_id)
- *   concept2cure_artifacts   → the "Module 3 (CMC)" branch: governed §3.x
- *                              artifacts the CMC compile bridge files, via the
- *                              program→project anchor
+ *   concept2cure_artifacts   → the "Governed artifacts" branch: every
+ *                              non-archived artifact of the project, across
+ *                              CTD sections, grouped by CTD module, via the
+ *                              program→project anchor (fold F3 slice A,
+ *                              2026-10-29; until then §3.x only, as
+ *                              "Module 3 (CMC)")
  *   vault.documents          → the "Uploaded files" branch: what this surface's
  *                              own Upload button ingests
  *
@@ -44,8 +47,8 @@
 
 import { Router, type Request, type Response } from 'express';
 import path from 'node:path';
-import { promises as fs } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createReadStream, promises as fs } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
 
 import { pool } from '../../db.js';
 import type { PoolClient } from 'pg';
@@ -81,16 +84,35 @@ import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSq
 import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { hasVaultFilters, parseLibrarySearchFilters, parseProgramSearchFilters, readVaultSearchPaging, vaultFiltersAsked, vaultLifecycleStageSql, vaultSuggestedSql, vaultUnfiledSql, wantsFacets } from '../../services/vault/vault-document-filter.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
-import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
+import { GOVERNED_WRITE_ROLES, governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
+import { signedActAttempts, signGovernedAct } from '../governed-signed-act.js';
+import { DECISION_ACT_MEANINGS } from '../../services/part11/signature-meanings.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
 import { StorageIntegrityError } from '../../services/storage/storage-provider.js';
 /* The one translation from a CMC TEXT project id to the integer the
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
+import {
+  artifactCtdSection,
+  artifactGovernance,
+  artifactRegistryStatus,
+  formatContentBytes,
+  readArtifactRegistry,
+  type ArtifactRegistryRow,
+} from '../../services/artifact-registry-read.js';
+import { ARTIFACT_ORIGIN_LABELS, type ArtifactOrigin, type ArtifactSignatureState } from '../../../shared/artifact-governance.js';
 import { programInOrganization } from '../../services/c2c/program-access';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
-import { ProgramReadAccessError, getCurrentAccessibleProgramScope } from '../../services/c2c/current-program-access';
+import {
+  ProgramReadAccessError, getCurrentAccessibleProgramScope, readCurrentProgramActor, requireCurrentProgramAccess,
+  type CurrentProgramAccess,
+} from '../../services/c2c/current-program-access';
+import { requestConnectable, requestPgClient } from '../../db/requestDb';
+import {
+  SavedViewRefusal, changeSavedView, createSavedViewSchema, deleteSavedView, insertSavedView, listSavedViews,
+  lockSavedView, patchSavedViewSchema, validateViewParameters,
+} from '../../services/vault/vault-saved-views.js';
 import { projectVaultRelationshipHistory, VaultHistoryAccessError } from '../../services/vault/vault-history-access';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
@@ -112,12 +134,16 @@ interface VaultDoc {
   preview: string;
   blocker?: boolean;
   flag?: string;
-  /** Discriminator: an authored section vs an uploaded vault.documents row. */
-  src?: 'authored' | 'upload';
+  /** Discriminator: an authored section, an uploaded vault.documents row, or a
+   *  governed artifact (concept2cure_artifacts). */
+  src?: 'authored' | 'upload' | 'artifact';
+  /** Artifact-only: what the registry records of its governance. */
+  artifact?: ArtifactLeafFacts;
   /** Upload-only extras (all projected from real columns). */
   docId?: string;
   originalFileAvailable?: boolean;
   disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
+  /** An upload's stored file size; on an artifact, its stored content's size (formatContentBytes). */
   sizeLabel?: string;
   hash?: string;
   /** vault.documents.mime_type, verified against the magic bytes at ingest.
@@ -136,6 +162,33 @@ interface VaultDoc {
   lifecycleStage?: string | null;
 }
 
+/**
+ * A governed artifact's facts on its leaf, from the registry's one read
+ * (services/artifact-registry-read.ts): what the Artifacts center shows of it,
+ * plus its author, recorded hash and the origin the row records.
+ */
+interface ArtifactLeafFacts {
+  artifactId: string;
+  kind: string;
+  format: string;
+  /** The model the writer recorded; null when none was (never invented). */
+  model: string | null;
+  /** Read from a column its writer sets; null when the row records none. */
+  origin: ArtifactOrigin | null;
+  author: string | null;
+  /**
+   * The hash the writer recorded. Not offered as `hash`, which on an upload is
+   * the SHA-256 of the stored bytes: the CMC composer hashes its inputs and an
+   * import records the source file's hash beside empty content.
+   */
+  contentHash: string | null;
+  ctdSection: string | null;
+  signature: ArtifactSignatureState;
+  signedVersion: number | null;
+  reviewed: boolean;
+  sourceCount: number;
+}
+
 /** The placement block for an uploaded document — mirrors vault-ingest. */
 interface UploadFiling {
   folderId: string | null;
@@ -145,6 +198,15 @@ interface UploadFiling {
   placementStatus: string;
   confidence: string | null;
   rationale: string | null;
+  /**
+   * The person whose filing decision this is, and when (placed_by, placed_at;
+   * Part 11 review F4). Null for a suggestion, which names nobody. `placedBy`
+   * is null with `placedByRecorded` true when a person is recorded but their
+   * name cannot be read in this organisation.
+   */
+  placedBy: string | null;
+  placedByRecorded: boolean;
+  placedAt: string | null;
 }
 
 interface VaultFolder {
@@ -198,6 +260,16 @@ interface DataRoomBlock {
  *  window can say it is full without a second query. */
 const DATA_ROOM_WINDOW = 200;
 
+interface GovernedArtifactsBlock {
+  total: number;
+  /** Keyed by the leaf's status vocabulary (draft, review, approved, final, …). */
+  byStatus: Record<string, number>;
+  signatures: Record<ArtifactSignatureState, number>;
+  /** Artifacts whose current version has a recorded human review. */
+  reviewed: number;
+  window: { shown: number; total: number; truncated: boolean };
+}
+
 interface VaultDisplayShape {
   program: string;
   spine: string;
@@ -213,12 +285,20 @@ interface VaultDisplayShape {
   documentCounts?: {
     /** Authored documents — one each, however many rule-pack sections. */
     authored: number;
-    /** Governed Module 3 (CMC) artifacts filed for the programme. */
-    cmcArtifacts: number | null;
+    /** Governed artifacts of the project, every CTD section (the whole
+     *  project, not the window the tree carries). */
+    artifacts: number | null;
     /** Uploads in the whole programme, not the page the tree carries. */
     uploads: number | null;
   };
   tree: VaultFolder[];
+  /**
+   * The "Governed artifacts" branch's breakdown. `total` is the project's;
+   * the other counts cover the artifacts the window lists, which is all of
+   * them unless `window.truncated`. Absent when the branch could not be read
+   * (`unavailable` says why), so an absent block is never a zero.
+   */
+  artifacts?: GovernedArtifactsBlock;
   /**
    * What the Vault holds against the program's required sections (VR-15):
    * counts of confirmed filings from the one resolver, with where the list
@@ -235,6 +315,10 @@ interface VaultDisplayShape {
    *  Counted over the whole program, like `unfiledCount`. Absent when the
    *  uploads store could not be read. */
   awaitingConfirmationCount?: number;
+  /** The active legal holds covering this program or a version in it
+   *  (MR-08 Stage 5): reference and date, never the reason. Absent, with an
+   *  `unavailable` entry, when the holds could not be read. */
+  legalHolds?: import('../../services/vault/vault-hold-notice.js').VaultHoldNotice[];
   /**
    * How much of the filing cabinet the tree above actually carries. The vault
    * is unbounded and the tree read is capped (VAULT_TREE_MAX_DOCS), so a
@@ -376,6 +460,65 @@ export async function recordVaultDownload(
   }
 }
 
+/**
+ * Record a seal's closing archive BEFORE it is sent, with the SHA-256 of the
+ * exact file that will leave (VR-20), as a download is recorded
+ * (recordVaultDownload). False when it could not be recorded; the caller then
+ * sends nothing.
+ */
+export async function recordVaultArchive(
+  req: Request,
+  d: { orgId: number; userId: number | undefined; action: 'vault.data_room.archive' | 'vault.folder.export';
+    resourceType: string; resourceId: string; details: Record<string, unknown> },
+): Promise<boolean> {
+  let client: PoolClient | undefined;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    await setTenantContextTx(client, d.orgId);
+    await writeChainedAuditRow(client, {
+      tenantId: d.orgId, userId: d.userId, action: d.action,
+      resourceType: d.resourceType, resourceId: d.resourceId,
+      ipAddress: req.ip, userAgent: req.headers['user-agent'],
+      details: d.details,
+    });
+    await client.query('COMMIT');
+    return true;
+  } catch (auditErr) {
+    await client?.query('ROLLBACK').catch(() => undefined);
+    logger.error('vault archive refused: audit write failed', {
+      action: d.action, resourceId: d.resourceId, err: auditErr instanceof Error ? auditErr.message : String(auditErr),
+    });
+    return false;
+  } finally {
+    client?.release();
+  }
+}
+
+/** Why a sealed document's file is not in its closing archive: the single download refuses it too. */
+const WITHHELD_BY_DISPOSITION = 'Its original file was removed under a data disposition; the record and its data are kept.';
+
+/** Stream a finished archive with its recorded SHA-256, then remove its staging directory. */
+function sendStagedArchive(
+  res: Response,
+  built: { path: string; size: number; sha256: string },
+  stage: { cleanup(): Promise<void> },
+  fileName: string,
+): void {
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Length', String(built.size));
+  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+  res.setHeader('X-Content-SHA256', built.sha256);
+  res.setHeader('Cache-Control', 'no-store');
+  const stream = createReadStream(built.path);
+  res.on('close', () => { stream.destroy(); void stage.cleanup(); });
+  stream.on('error', (err) => {
+    logger.error('vault closing archive stream failed', { fileName, err: err.message });
+    res.destroy(err);
+  });
+  stream.pipe(res);
+}
+
 /** The four shapes a `folderId` can arrive in, mapped to what the service reads. */
 function normalizeFolderId(raw: unknown): string | null | undefined {
   if (raw === undefined) return undefined;
@@ -389,6 +532,20 @@ const UUID_RE =
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Org id from tenant/user context (integer — c2c tables key on numeric org). */
+/** The program's active hold notices, or an `unavailable` entry saying they could not be read. */
+async function readHoldNoticesOrUnavailable(
+  programId: string, organizationId: number, unavailable: Array<{ branch: string; reason: string }>,
+) {
+  try {
+    const { readActiveHoldNotices } = await import('../../services/vault/vault-hold-notice.js');
+    return await readActiveHoldNotices(pool, { organizationId, programId });
+  } catch (err) {
+    logger.error('vault read: legal holds could not be read', { programId, err: err instanceof Error ? err.message : String(err) });
+    unavailable.push({ branch: 'legalHolds', reason: 'The legal holds could not be read, so whether a document is held is not known.' });
+    return undefined;
+  }
+}
+
 function resolveOrgId(req: Request): number | null {
   const r = req as any;
   const raw = r.tenantId ?? r.organizationId ?? r.user?.organizationId;
@@ -468,6 +625,10 @@ export interface UploadRow {
   placement_rationale: string | null;
   updated_at: string | Date | null;
   owner_name: string | null;
+  /** Who made the filing decision and when; NULL for a suggestion (F4). */
+  placed_by?: number | string | null;
+  placed_by_name?: string | null;
+  placed_at?: string | Date | null;
   /** Versions back through valid predecessors, this one included (VR-09). */
   version_count?: number | null;
   /** This version's lifecycle stage; null when it has no record: not reviewed (VR-13). */
@@ -497,6 +658,16 @@ function uploadTypeLabel(row: UploadRow): string {
   }
   if (row.evidence_kind) return KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind;
   return 'File';
+}
+
+/** Who decided the filing, and when (Part 11 review F4); a suggestion names nobody. */
+function filingDecision(row: UploadRow): Pick<UploadFiling, 'placedBy' | 'placedByRecorded' | 'placedAt'> {
+  const at = row.placed_at ? new Date(row.placed_at) : null;
+  return {
+    placedBy: row.placed_by_name ?? null,
+    placedByRecorded: row.placed_by != null,
+    placedAt: at && !Number.isNaN(at.getTime()) ? at.toISOString() : null,
+  };
 }
 
 /** Where the leaf sits among its document's versions (VR-09) and in review (VR-13). */
@@ -549,6 +720,7 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
       placementStatus,
       confidence: row.placement_confidence,
       rationale: row.placement_rationale,
+      ...filingDecision(row),
     },
     details: {
       documentTitle: row.document_title,
@@ -650,7 +822,7 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
       children: otherView.map(u => ({
         ...uploadLeaf(view, u),
         num: '—',
-        flag: `Filed to ${whereFiled(u.folder_id!)}, which is not a folder in this program's current view. Move it to a folder here, or check the program's product type.`,
+        flag: `Filed to ${whereFiled(u.folder_id!)}, which is not a folder in this project's current view. Move it to a folder here, or check the project's product type.`,
       })),
     });
   }
@@ -791,16 +963,6 @@ function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolde
 function isMissingStore(err: unknown): boolean {
   const code = (err as { code?: string } | null)?.code;
   return code === '42P01' || code === '42703';
-}
-
-interface M3ArtifactRow {
-  id: string | number;
-  artifact_id: string;
-  title: string | null;
-  ctd_section: string;
-  status: string | null;
-  version: number | null;
-  updated_at: string | Date | null;
 }
 
 /**
@@ -986,75 +1148,144 @@ export async function readVerifiedVaultBytes(
   return { ok: true, bytes };
 }
 
+/** The branch's name, in the tree and in `unavailable`. */
+const ARTIFACTS_BRANCH = 'Governed artifacts';
+
+/** Said when the project has no PM-spine anchor. The resolver's own sentence is
+ *  the CMC module's ("its governed Module 3 artifacts…"); this branch lists
+ *  every artifact, so it says so. */
+const ARTIFACTS_UNANCHORED =
+  'This project is not linked to your organization’s artifact registry yet, so its governed artifacts ' +
+  'are not listed here. To have them listed, ask your organization administrator to link the project.';
+
 /**
- * The Module 3 (CMC) branch: governed §3.x artifacts the CMC compile bridge
- * files into concept2cure_artifacts, reached through the program→project
- * anchor (the same EXISTS idiom mdx-vault.ts uses — org predicate repeated on
- * projects so a mis-anchored row can never pull another tenant's data in).
- * These rows were invisible in this surface even though the CMC module's
- * "vault" affordances pointed here — the data room now lists what the
- * pipeline files, organized by CTD section.
- */
-/**
- * What the Module 3 branch read found — three answers, not two.
+ * The "Governed artifacts" branch (fold F3 slice A, D2, 2026-10-29): every
+ * non-archived concept2cure_artifacts row of the project, across CTD sections,
+ * grouped by CTD module, each leaf carrying the governance the Artifacts
+ * center computes for it.
  *
- * `null` used to carry both "this program is anchored and nothing has been
- * filed yet" and "this program has no PM-spine anchor, so the artifact
- * registry cannot be asked about it at all", and the surface rendered them
- * identically: no Module 3 section. The second is a state the user has to be
- * told about — the artifact query below joins through
- * `projects.regulatory_program_id`, so with no anchor it CANNOT match however
- * much has been compiled and approved. CLAUDE.md's working agreement: an error
- * is never rendered as an empty result.
+ * It replaced the "Module 3 (CMC)" branch, which listed only ctd_section
+ * LIKE '3.%' with no signature, review, author or hash, so a clinical overview
+ * AnA drafted for the project was in the registry and not in its Vault. §3
+ * artifacts are the "Module 3" group here, listed once.
+ *
+ * What the read found — three answers, not two. `empty` (anchored, nothing
+ * filed) and `unaddressable` (no PM-spine anchor, so the registry cannot be
+ * asked: its query joins through projects.regulatory_program_id) used to render
+ * identically; the second is said. CLAUDE.md: an error is never rendered as an
+ * empty result.
  */
-type Module3BranchResult =
-  | { kind: 'branch'; folder: VaultFolder }
-  /** Addressable, and nothing filed. The honest empty state. */
-  | { kind: 'empty' }
-  /** The registry cannot be addressed for this program. Carries the reason. */
+type ArtifactsBranchResult =
+  | { kind: 'branch'; folder: VaultFolder; block: GovernedArtifactsBlock }
+  | { kind: 'empty'; block: GovernedArtifactsBlock }
   | { kind: 'unaddressable'; reason: string };
 
-async function module3Branch(programId: string, orgId: number): Promise<Module3BranchResult> {
+/* The registry's status in the Vault chip's vocabulary is artifactRegistryStatus
+   in the shared read, where it moved (slice B, 2026-10-29) so the Artifacts
+   center's rows say it the same way in the shared manifest. */
+
+export function artifactLeaf(row: ArtifactRegistryRow): VaultDoc {
+  const g = artifactGovernance(row);
+  const section = artifactCtdSection(row.ctd_section);
+  const title = row.title || section || 'Untitled artifact';
+  const author = row.author_name ?? null;
+  const version = row.version == null ? null : Number(row.version);
+  const origin = g.origin ? ARTIFACT_ORIGIN_LABELS[g.origin] : null;
+  return {
+    id: `art-${row.id}`,
+    num: section ?? '—',
+    title,
+    type: g.kind,
+    status: artifactRegistryStatus(row.status),
+    // The one completion definition the rest of this read uses (approved or
+    // locked is 100, anything else 0).
+    pct: sectionCompletionPct(row.status),
+    owner: author ?? '—',
+    ver: version != null && Number.isFinite(version) ? `v${version}` : '—',
+    updated: relativeTime(row.updated_at),
+    preview: [title, section ? `CTD §${section}` : null, origin].filter(Boolean).join(' · '),
+    src: 'artifact',
+    // The stored content's size, as the Artifacts center states it (slice B: the
+    // two screens share one manifest). Not a rendered file's size: none is stored.
+    sizeLabel: formatContentBytes(Number(row.content_bytes)),
+    artifact: {
+      artifactId: row.artifact_id,
+      kind: g.kind,
+      format: g.fmt,
+      model: g.model,
+      origin: g.origin,
+      author,
+      contentHash: row.content_hash ?? null,
+      ctdSection: section,
+      signature: g.signature,
+      signedVersion: g.sigVersion,
+      reviewed: g.reviewed,
+      sourceCount: g.sourceCount,
+    },
+  };
+}
+
+/** Group leaves by CTD module, Modules 1–5 in order and the rows with no CTD
+ *  section last. Within a module, section order (3.2.S before 3.2.P), not text order. */
+export function artifactsFolder(leaves: VaultDoc[]): VaultFolder {
+  const groups = new Map<string, VaultDoc[]>();
+  for (const leaf of leaves) {
+    const code = normalizeCtdCode(leaf.artifact?.ctdSection ?? null);
+    const key = code ? code.charAt(0) : 'none';
+    const list = groups.get(key) ?? [];
+    list.push(leaf);
+    groups.set(key, list);
+  }
+  const children: VaultFolder[] = [];
+  for (const key of ['1', '2', '3', '4', '5', 'none']) {
+    const list = groups.get(key);
+    if (!list) continue;
+    const ordered = key === 'none'
+      ? list
+      : [...list].sort((a, b) => compareSectionCode(a.num, b.num) || a.title.localeCompare(b.title));
+    children.push({
+      id: key === 'none' ? 'art-none' : `art-m${key}`,
+      code: '',
+      label: key === 'none' ? 'No CTD section' : `Module ${key}`,
+      children: ordered,
+    });
+  }
+  return { id: 'artifacts', code: '', label: ARTIFACTS_BRANCH, children };
+}
+
+function artifactsBlock(leaves: VaultDoc[], total: number, truncated: boolean): GovernedArtifactsBlock {
+  const byStatus: Record<string, number> = {};
+  const signatures: Record<ArtifactSignatureState, number> = { none: 0, current: 0, stale: 0, unknown: 0 };
+  let reviewed = 0;
+  for (const leaf of leaves) {
+    byStatus[leaf.status] = (byStatus[leaf.status] ?? 0) + 1;
+    if (leaf.artifact) {
+      signatures[leaf.artifact.signature] += 1;
+      if (leaf.artifact.reviewed) reviewed += 1;
+    }
+  }
+  return { total, byStatus, signatures, reviewed, window: { shown: leaves.length, total, truncated } };
+}
+
+async function governedArtifactsBranch(programId: string, orgId: number, cap: number): Promise<ArtifactsBranchResult> {
   /* Ask the spine resolver BEFORE the artifact query, through the one module
      that owns the translation (services/cmc/resolve-cmc-artifact-project.ts).
-     Its own contract requires callers to "skip the registry query and say why,
-     never substitute the raw id, and never render the absence as a plain empty
-     result" — which is exactly what this branch was doing. */
+     Its contract: skip the registry query and say why, never substitute the
+     raw id, and never render the absence as a plain empty result. */
   const spine = await resolveCmcArtifactProject(orgId, programId);
   if (spine.state !== 'linked') {
-    return { kind: 'unaddressable', reason: spine.detail };
+    return { kind: 'unaddressable', reason: spine.state === 'unanchored' ? ARTIFACTS_UNANCHORED : spine.detail };
   }
-
-  const artRes = await pool.query(
-    `SELECT a.id, a.artifact_id, a.title, a.ctd_section, a.status, a.version, a.updated_at
-       FROM concept2cure_artifacts a
-      WHERE a.organization_id = $2
-        AND a.status != 'archived'
-        AND a.ctd_section LIKE '3.%'
-        AND EXISTS (SELECT 1 FROM projects p
-                     WHERE p.id = a.project_id
-                       AND p.organization_id = a.organization_id
-                       AND p.regulatory_program_id = $1::uuid)
-      ORDER BY a.ctd_section, a.version DESC`,
-    [programId, orgId],
-  );
-  if (artRes.rows.length === 0) return { kind: 'empty' };
-  const children: VaultDoc[] = (artRes.rows as M3ArtifactRow[]).map((a) => ({
-    id: `m3art-${a.id}`,
-    num: a.ctd_section,
-    title: a.title || a.ctd_section,
-    type: 'Governed artifact',
-    // The same status vocabulary the artifact registry stores, mapped through
-    // the one normalizer; completion is the section-approval definition the
-    // rest of this read-model uses (approved/locked = 100, else 0).
-    status: normalizeStatus(a.status === 'draft' ? 'drafted' : a.status, true),
-    pct: sectionCompletionPct(a.status),
-    owner: '—',
-    ver: a.version != null ? `v${a.version}` : '—',
-    updated: relativeTime(a.updated_at),
-    preview: `${a.title || a.ctd_section} · CTD §${a.ctd_section} · compiled from CMC canonical sources`,
-  }));
-  return { kind: 'branch', folder: { id: 'm3-cmc', code: 'M3', label: 'Module 3 (CMC)', children } };
+  // One past the window, so a full window can say it is full.
+  const rows = await readArtifactRegistry({ organizationId: orgId, programId, limit: cap + 1 });
+  const truncated = rows.length > cap;
+  const listed = truncated ? rows.slice(0, cap) : rows;
+  const counted = Number(rows[0]?.total_rows);
+  const total = Number.isFinite(counted) && counted >= listed.length ? counted : listed.length;
+  const leaves = listed.map(artifactLeaf);
+  const block = artifactsBlock(leaves, total, truncated);
+  if (leaves.length === 0) return { kind: 'empty', block };
+  return { kind: 'branch', folder: artifactsFolder(leaves), block };
 }
 
 /* The Uploaded-files branch is the filing cabinet (uploadLeaf / filingCabinet
@@ -1139,6 +1370,127 @@ export default function createProjectVaultRoutes(): Router {
    * for a project id. An empty query is not "match everything"; an error is
    * never an empty result.
    */
+  /* ── Saved views (D2, P-46; docs/design/VAULT_SAVED_VIEWS_2026-10-29.md R2) ──
+     A view is a search remembered, stored in the one saved-query store
+     (server/services/vault/vault-saved-views.ts). It is never run here: applying
+     one sets the find view's state and the search routes above run it under the
+     reader's current access. The view id is `viewId`, never `id`, so project
+     admission (router.param('id')) runs only on the list route. */
+  const savedViewFailure = (res: Response, err: unknown, opts: { what: 'read' | 'save'; projectScoped: boolean }) => {
+    if (err instanceof SavedViewRefusal) return res.status(err.status).json({ success: false, error: err.code, message: err.message, ...err.body });
+    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err, opts.projectScoped);
+    logger.error('vault saved view failed', { what: opts.what, err: err instanceof Error ? err.name : 'unknown' });
+    return opts.what === 'read'
+      ? res.status(500).json({ success: false, error: 'SAVED_VIEWS_UNAVAILABLE', message: 'Saved views could not be read. This is not an empty list.' })
+      : res.status(500).json({ success: false, error: 'SAVED_VIEW_NOT_SAVED', message: 'The view was not saved. Nothing was changed.' });
+  };
+  const viewIdOf = (raw: unknown): number | null => {
+    const s = String(raw ?? '');
+    return /^[1-9]\d{0,9}$/.test(s) && Number(s) <= 2147483647 ? Number(s) : null;
+  };
+
+  /** GET /:id/saved-views: this project's views and the library views the reader may see. */
+  router.get('/:id/saved-views', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const access = res.locals.currentProgramAccess as CurrentProgramAccess;
+    try {
+      const q = requestPgClient(req);
+      const views = await listSavedViews(q, {
+        organizationId: orgId, actor: access.actor, programId: access.programId,
+        resolveView: () => resolveVaultView(access.programId, orgId, q),
+      });
+      return res.json({ success: true, data: { programId: access.programId, views } });
+    } catch (err) {
+      return savedViewFailure(res, err, { what: 'read', projectScoped: true });
+    }
+  });
+
+  /** POST /saved-views: save the current search as a personal or organisation view. */
+  router.post('/saved-views', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const parsed = createSavedViewSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(422).json({ success: false, error: 'VALIDATION_FAILED', message: 'The view is not in the expected shape. Nothing was saved.', details: parsed.error.flatten().fieldErrors });
+    }
+    const body = parsed.data;
+    const userId = governedActorId(req) ?? undefined;
+    try {
+      const q = requestPgClient(req);
+      const actor = body.programId
+        ? (await requireCurrentProgramAccess(q, { organizationId: orgId, userId, programId: body.programId })).actor
+        : await readCurrentProgramActor(q, { organizationId: orgId, userId });
+      if (body.visibility === 'org_public' && !GOVERNED_WRITE_ROLES.has(actor.role)) {
+        throw new SavedViewRefusal(403, 'SAVED_VIEW_PUBLISH_DENIED', 'Your role can save views for yourself only. Nothing was saved.');
+      }
+      const filters = await validateViewParameters({
+        programId: body.programId, q: body.q, filters: body.filters,
+        resolveView: () => resolveVaultView(body.programId as string, orgId, q),
+      });
+      const id = await insertSavedView(q, { organizationId: orgId, actor, body, filters });
+      logger.info('vault saved view created', { orgId, actorId: actor.userId, viewId: id, action: 'create', visibility: body.visibility });
+      const [view] = await listSavedViews(q, {
+        organizationId: orgId, actor, programId: body.programId, viewId: id,
+        resolveView: () => resolveVaultView(body.programId as string, orgId, q),
+      });
+      return res.status(201).json({ success: true, data: view ?? { id } });
+    } catch (err) {
+      return savedViewFailure(res, err, { what: 'save', projectScoped: body.programId !== null });
+    }
+  });
+
+  /**
+   * PATCH and DELETE /saved-views/:viewId: one transaction. The row the reader may
+   * see is locked, its project re-admitted, authority checked and repeated in
+   * the statement.
+   */
+  const changeView = (kind: 'patch' | 'delete') => async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const viewId = viewIdOf(req.params.viewId);
+    if (viewId === null) return res.status(404).json({ success: false, error: 'SAVED_VIEW_NOT_FOUND', message: 'No such saved view.' });
+    const parsed = kind === 'patch' ? patchSavedViewSchema.safeParse(req.body ?? {}) : null;
+    if (parsed && !parsed.success) {
+      return res.status(422).json({ success: false, error: 'VALIDATION_FAILED', message: 'Change one thing at a time: the name, who can see it, or what it searches. Nothing was changed.', details: parsed.error.flatten().fieldErrors });
+    }
+    const userId = governedActorId(req) ?? undefined;
+    const client = await requestConnectable(req).connect();
+    let projectScoped = false;
+    try {
+      await client.query('BEGIN');
+      const actor = await readCurrentProgramActor(client, { organizationId: orgId, userId, forShare: true });
+      const row = await lockSavedView(client, { organizationId: orgId, actor, viewId });
+      projectScoped = row.programId !== null;
+      if (row.programId) await requireCurrentProgramAccess(client, { organizationId: orgId, userId, programId: row.programId, forShare: true });
+      if (kind === 'delete') {
+        await deleteSavedView(client, { organizationId: orgId, actor, row });
+        await client.query('COMMIT');
+        logger.info('vault saved view deleted', { orgId, actorId: actor.userId, viewId, action: 'delete', visibility: row.visibility });
+        return res.json({ success: true, data: { id: viewId } });
+      }
+      const body = parsed!.data!;
+      const filters = 'q' in body
+        ? await validateViewParameters({ programId: row.programId, q: body.q, filters: body.filters, resolveView: () => resolveVaultView(row.programId as string, orgId, client) })
+        : undefined;
+      const action = await changeSavedView(client, { organizationId: orgId, actor, row, body, filters });
+      await client.query('COMMIT');
+      logger.info('vault saved view changed', { orgId, actorId: actor.userId, viewId, action, visibility: 'visibility' in body ? body.visibility : row.visibility });
+      const [view] = await listSavedViews(client, {
+        organizationId: orgId, actor, programId: row.programId, viewId,
+        resolveView: () => resolveVaultView(row.programId as string, orgId, client),
+      });
+      return res.json({ success: true, data: view ?? { id: viewId } });
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      return savedViewFailure(res, err, { what: 'save', projectScoped });
+    } finally {
+      client.release();
+    }
+  };
+  router.patch('/saved-views/:viewId', changeView('patch'));
+  router.delete('/saved-views/:viewId', changeView('delete'));
+
   router.get('/search', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
@@ -1276,25 +1628,30 @@ export default function createProjectVaultRoutes(): Router {
       //    empty branch (which would read as "no documents"); any other
       //    failure is a real error and 500s.
       const unavailable: Array<{ branch: string; reason: string }> = [];
-      let cmcArtifacts: number | null = null;
+      /** The tree's windows (governed artifacts, uploads): one cap, VAULT_TREE_MAX_DOCS. */
+      const treeCap = Math.min(
+        Math.max(parseInt(String(process.env.VAULT_TREE_MAX_DOCS ?? '2000'), 10) || 2000, 1),
+        20000,
+      );
+      let artifactsCount: number | null = null;
+      let artifacts: GovernedArtifactsBlock | undefined;
       try {
-        const m3 = await module3Branch(id, orgId);
-        if (m3.kind === 'branch') {
-          tree.push(m3.folder);
-          cmcArtifacts = m3.folder.children.length;
-        } else if (m3.kind === 'empty') {
-          cmcArtifacts = 0;
-        } else if (m3.kind === 'unaddressable') {
+        const branch = await governedArtifactsBranch(id, orgId, treeCap);
+        if (branch.kind === 'branch') tree.push(branch.folder);
+        if (branch.kind === 'unaddressable') {
           // Not an empty branch: the registry cannot be asked about this
-          // program at all, and the resolver's own sentence says why and what
-          // to do. Reported through the same contract a missing store uses.
-          unavailable.push({ branch: 'Module 3 (CMC)', reason: m3.reason });
+          // project at all. Reported through the same contract a missing
+          // store uses.
+          unavailable.push({ branch: ARTIFACTS_BRANCH, reason: branch.reason });
+        } else {
+          artifacts = branch.block;
+          artifactsCount = branch.block.total;
         }
       } catch (err) {
         if (!isMissingStore(err)) throw err;
         unavailable.push({
-          branch: 'Module 3 (CMC)',
-          reason: 'The governed artifact registry (or its program anchor) is not provisioned in this environment.',
+          branch: ARTIFACTS_BRANCH,
+          reason: 'The governed artifact registry (or its link to this project) is not provisioned in this environment.',
         });
       }
 
@@ -1321,10 +1678,6 @@ export default function createProjectVaultRoutes(): Router {
       //
       //    The window itself is reported so the surface can say it is showing
       //    part of a larger cabinet instead of implying it is the whole of it.
-      const uploadsCap = Math.min(
-        Math.max(parseInt(String(process.env.VAULT_TREE_MAX_DOCS ?? '2000'), 10) || 2000, 1),
-        20000,
-      );
       /** The program+tenant predicate, shared by the page and its aggregates so
        *  a count can never be taken over a different set than the rows. */
       const uploadsWhere = `d.program_id = $1 AND d.organization_id=$2 AND d.deleted_at IS NULL
@@ -1351,6 +1704,7 @@ export default function createProjectVaultRoutes(): Router {
                   d.version, d.file_name, d.file_size, d.mime_type, d.content_hash,
                   d.folder_id, d.evidence_kind, d.ctd_section,
                   d.placement_status, d.placement_confidence, d.placement_rationale,
+                  d.placed_by, d.placed_at, COALESCE(pb.name, pb.email) AS placed_by_name,
                   d.updated_at,
                   ${vaultBinaryAvailableSql('d')} AS original_file_available,
                   ${vaultDispositionChoiceSql('d')} AS disposition,
@@ -1359,14 +1713,15 @@ export default function createProjectVaultRoutes(): Router {
                   ${vaultLifecycleStageSql('d')} AS lifecycle_stage
              FROM vault.documents d
              LEFT JOIN LATERAL public.actor_name(d.created_by) u ON TRUE
+             LEFT JOIN LATERAL public.actor_name(d.placed_by) pb ON TRUE
              ${versionCountLateral('d')}
             WHERE ${headsWhere}
             ORDER BY d.updated_at DESC
             LIMIT $3`,
-          [id, orgId, uploadsCap + 1],
+          [id, orgId, treeCap + 1],
         );
-        const truncated = upRes.rows.length > uploadsCap;
-        uploads = (upRes.rows as UploadRow[]).slice(0, uploadsCap);
+        const truncated = upRes.rows.length > treeCap;
+        uploads = (upRes.rows as UploadRow[]).slice(0, treeCap);
 
         // Program-wide totals. Always taken, so `unfiledCount` means the same
         // thing whether or not the page was truncated.
@@ -1499,7 +1854,7 @@ export default function createProjectVaultRoutes(): Router {
          programme's uploads — beside a note saying the page was partial. */
       const documentCounts = {
         authored: docsRes.rows.length,
-        cmcArtifacts,
+        artifacts: artifactsCount,
         uploads: uploadsWindow ? uploadsWindow.total : null,
       };
       // 8) Vault coverage (VR-15): never throws; a store it cannot read is
@@ -1511,17 +1866,21 @@ export default function createProjectVaultRoutes(): Router {
         programId: id,
         organizationId: orgId,
       });
+      // 9) Legal holds (MR-08 Stage 5): an unread hold is reported, never shown as none.
+      const legalHolds = await readHoldNoticesOrUnavailable(id, orgId, unavailable);
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
         spine: vaultSpineLabel(view, project.program_type),
         standard: view,
         documentCount:
-          documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),
+          documentCounts.authored + (documentCounts.artifacts ?? 0) + (documentCounts.uploads ?? 0),
         documentCounts,
         tree,
+        ...(artifacts ? { artifacts } : {}),
         coverage,
         unfiledCount,
         ...(awaitingConfirmationCount !== undefined ? { awaitingConfirmationCount } : {}),
+        ...(legalHolds ? { legalHolds } : {}),
         ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),
         ...(unavailable.length ? { unavailable } : {}),
@@ -1649,6 +2008,7 @@ export default function createProjectVaultRoutes(): Router {
           filters,
           facets: found.facets,
           total: found.total,
+          pendingCount: found.pendingCount,
           limit,
           offset,
           includeSuperseded,
@@ -1718,13 +2078,16 @@ export default function createProjectVaultRoutes(): Router {
       // Where each version is placed (VR-14a): the live submission leaves that
       // name it. An unreadable placement list fails the read, as the stage does:
       // "placed nowhere" would be a claim about leaves not read.
-      const { readVaultPlacements, readVaultEstarUses, readVaultCmcEvidenceUses } = await import('../../services/vault/vault-where-used.js');
+      const { readVaultPlacements, readVaultEstarUses, readVaultCmcEvidenceUses, readVaultSectionCitations } = await import('../../services/vault/vault-where-used.js');
       const ids = family.map((v) => v.id);
       const actor = { userId: governedActorId(req) ?? undefined };
       const placements = await readVaultPlacements(pool, orgId, ids, actor);
       const estarUses = await readVaultEstarUses(pool, orgId, ids, actor);
       // The CMC records that cite each version as their source (row D2).
       const cmcEvidence = await readVaultCmcEvidenceUses(pool, orgId, ids, actor);
+      // The editor sections whose live lineage cites each version (slice G7), so
+      // a new version lists the sections that still cite its predecessor.
+      const sectionCitations = await readVaultSectionCitations(pool, orgId, ids, actor);
       // Why each version would not be transmitted, in the words the transmit
       // refusal prints (VR-14's one rule, read for display), or null. Placement
       // is not refused on it; freeze, dispatch and transmit are. An unreadable
@@ -1736,6 +2099,7 @@ export default function createProjectVaultRoutes(): Router {
         placements: placements.get(v.id) ?? [],
         estarUses: estarUses.get(v.id) ?? [],
         cmcEvidence: cmcEvidence.get(v.id) ?? [],
+        sectionCitations: sectionCitations.get(v.id) ?? [],
         transmitRefusal: refusals[i],
       }));
       // Who may sign a review or an approval here (QA 2026-10-08, walk 2, j3):
@@ -1753,6 +2117,36 @@ export default function createProjectVaultRoutes(): Router {
       logger.error('vault versions read failed', { documentId, err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({ success: false, error: 'VERSIONS_UNAVAILABLE',
         message: "This document's versions could not be read. Nothing is shown rather than an incomplete list." });
+    }
+  });
+
+  /* ── POST /:id/documents/:documentId/versions/:versionId/restore ─────────
+     Restore an earlier version as the next version (MR-08 Stage 5): its
+     verified bytes are checked in again through the one ingest, with the
+     person's reason in the chained audit row (vault-version-restore.ts). A
+     version is never rewritten; v1 restored after v2 is v3. Editors only;
+     refusals are the service's, verbatim. */
+  router.post('/:id/documents/:documentId/versions/:versionId/restore', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { restoreVaultVersion } = await import('../../services/vault/vault-version-restore.js');
+      const outcome = await restoreVaultVersion({
+        organizationId: orgId,
+        userId: governedActorId(req),
+        programId: String(req.params.id),
+        documentId: String(req.params.documentId),
+        versionId: String(req.params.versionId),
+        reason: (req.body ?? {}).reason,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      return res.status(201).json({ success: true, data: { document: outcome.document, filing: outcome.filing } });
+    } catch (err: unknown) {
+      logger.error('vault version restore failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'RESTORE_FAILED',
+        message: 'The version could not be restored. Check the document\'s versions before trying again.' });
     }
   });
 
@@ -2423,6 +2817,248 @@ export default function createProjectVaultRoutes(): Router {
       return annotationFailure(res, err, 'write');
     }
   });
+
+  /* ── Seals (VR-19, docs/design/VAULT_DATA_ROOM_SEAL_2026-10-29.md) ──────────
+     A seal is an e-signed record of every current document as it stood. It is
+     sealed through the one signing ceremony (signGovernedAct), whose signature
+     binds the seal's manifest hash (the `vault-data-room-seal` binder), and is
+     read and verified by anyone the project admits. */
+
+  /** The index number the tree gives each document (VR-15), by version id. */
+  const cabinetNumbers = (view: VaultViewId, rows: Array<Record<string, unknown>>): Map<string, string | null> => {
+    const numbers = new Map<string, string | null>();
+    const walk = (nodes: Array<VaultFolder | VaultDoc>) => {
+      for (const n of nodes) {
+        if ('children' in n) walk(n.children);
+        else if (n.docId) numbers.set(n.docId, n.num && n.num !== '—' ? n.num : null);
+      }
+    };
+    walk([filingCabinet(view, rows as unknown as UploadRow[])]);
+    return numbers;
+  };
+
+  /** The organisation, project and seal a seal route names, or null once the refusal is sent. */
+  const readSealRequest = (req: Request, res: Response): { orgId: number; id: string; sealId: string } | null => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) { res.status(403).json({ success: false, error: 'FORBIDDEN' }); return null; }
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    const sealId = String(req.params.sealId ?? '');
+    if (!UUID_RE.test(id) || !UUID_RE.test(sealId)) { res.status(404).json({ success: false, error: 'NOT_FOUND' }); return null; }
+    return { orgId, id, sealId };
+  };
+
+  /** A sealed version's stored file, through the one verified reader, against its recorded hash. */
+  const readSealedBytes = async (orgId: number, documentId: string, row: Record<string, unknown>):
+    Promise<{ ok: true; bytes: Buffer } | { ok: false; why: string }> => {
+    const read = await readVerifiedVaultBytes({
+      storageVersionId: typeof row.storage_version_id === 'string' ? row.storage_version_id : null,
+      storageKey: typeof row.s3_key === 'string' ? row.s3_key : null,
+      storageProvider: typeof row.storage_provider === 'string' ? row.storage_provider : null,
+      organizationId: orgId,
+    }, typeof row.content_hash === 'string' ? row.content_hash : null, documentId);
+    return read.ok ? { ok: true, bytes: read.bytes } : { ok: false, why: read.message ?? 'The stored file could not be read.' };
+  };
+
+  router.get('/:id/seals', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    try {
+      const { listSeals } = await import('../../services/vault/vault-seal.service.js');
+      return res.json({ success: true, data: { seals: await listSeals(pool, orgId, id) } });
+    } catch (err) {
+      logger.error('vault seal list failed', { programId: id, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'SEALS_UNAVAILABLE', message: 'The seals could not be read. This is not an empty list.' });
+    }
+  });
+
+  router.post('/:id/seals', requireEditorAccess, signedActAttempts, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    const { readSealDocumentRows, sealManifest, recordSeal } = await import('../../services/vault/vault-seal.service.js');
+    const sealId = randomUUID();
+    const target = `vault-data-room-seal:${sealId}`;
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : '';
+    await signGovernedAct(req, res, {
+      domain: 'vault',
+      target,
+      // A seal is a decision on the record, as a freeze is: the signer approves
+      // it as the Vault's state, or answers for it (DECISION_ACT_MEANINGS).
+      meanings: DECISION_ACT_MEANINGS,
+      codeStatus: { SEAL_PROGRAM_NOT_FOUND: 404, SEAL_REASON_REQUIRED: 400 },
+      run: async (client, signingOrg, userId) => {
+        const rows = await readSealDocumentRows(client, signingOrg, id);
+        const numbers = cabinetNumbers(await resolveVaultView(id, signingOrg), rows);
+        const manifest = sealManifest(id, rows, (docId) => numbers.get(docId) ?? null);
+        const seal = await recordSeal(client, { id: sealId, organizationId: signingOrg, programId: id, userId, reason, manifest });
+        return { target, payload: { sealId, programId: id, manifestSha256: seal.manifestSha256, documentCount: seal.documentCount },
+          body: { data: { seal } } };
+      },
+    });
+  });
+
+  router.get('/:id/seals/:sealId/verify', async (req: Request, res: Response) => {
+    const sealReq = readSealRequest(req, res);
+    if (!sealReq) return undefined;
+    const { orgId, id, sealId } = sealReq;
+    const { verifySeal, VaultSealError } = await import('../../services/vault/vault-seal.service.js');
+    try {
+      // With ?bytes=1 each sealed file is re-read through the one verified reader.
+      const checkBytes = req.query.bytes === '1'
+        ? async (doc: { id: string }, row: Record<string, unknown>) => {
+          const read = await readSealedBytes(orgId, doc.id, row);
+          return read.ok ? null : read.why;
+        }
+        : undefined;
+      const { seal, verification } = await verifySeal(pool, { organizationId: orgId, programId: id, sealId, checkBytes });
+      return res.json({ success: true, data: { seal, verification } });
+    } catch (err) {
+      if (err instanceof VaultSealError) return res.status(404).json({ success: false, error: err.code, message: err.message });
+      logger.error('vault seal verify failed', { sealId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'SEAL_VERIFY_UNAVAILABLE', message: 'The seal could not be verified. This is not a verdict.' });
+    }
+  });
+
+  /* The seal's closing archive (VR-20, docs/design/VAULT_CLOSING_ARCHIVE_2026-10-29.md).
+     The seal is verified with its files re-read, and the bytes that made the
+     verdict are staged as they are read; an archive is built only for an intact
+     seal. A chained row carrying the archive's SHA-256 is committed before a
+     byte is sent, and a failed write sends nothing. */
+  router.get('/:id/seals/:sealId/archive', async (req: Request, res: Response) => {
+    const sealReq = readSealRequest(req, res);
+    if (!sealReq) return undefined;
+    const { orgId, id, sealId } = sealReq;
+    const { verifySeal, VaultSealError } = await import('../../services/vault/vault-seal.service.js');
+    const { openVaultArchive } = await import('../../services/vault/vault-archive-builder.js');
+    const { buildSealArchiveContents, SealArchiveError } = await import('../../services/vault/vault-seal-archive.js');
+    let stage: Awaited<ReturnType<typeof openVaultArchive>> | undefined;
+    let sending = false;
+    // A sealed document whose original file a data disposition removed is
+    // listed as withheld; its file is not read, as the download refuses it.
+    const withheld: Array<{ id: string; title: string | null; sha256: string | null; why: string }> = [];
+    try {
+      stage = await openVaultArchive();
+      const staging = stage;
+      const { seal, manifest, verification } = await verifySeal(pool, {
+        organizationId: orgId, programId: id, sealId,
+        checkBytes: async (doc, row) => {
+          if (row.binary_available === false) {
+            withheld.push({ id: doc.id, title: doc.title, sha256: doc.contentHash, why: WITHHELD_BY_DISPOSITION });
+            return null;
+          }
+          const read = await readSealedBytes(orgId, doc.id, row);
+          if (!read.ok) return read.why;
+          return staging.put({ id: doc.id, title: doc.title, fileName: typeof row.file_name === 'string' ? row.file_name : null,
+            indexNumber: doc.indexNumber, sha256: doc.contentHash }, read.bytes);
+        },
+      });
+      if (verification.verdict !== 'intact') {
+        return res.status(409).json({ success: false, error: 'SEAL_NOT_INTACT', verification,
+          message: 'This seal does not verify intact, so no closing archive was built. Nothing was sent.' });
+      }
+      const actorId = governedActorId(req) ?? undefined;
+      const contents = await buildSealArchiveContents(pool, { organizationId: orgId, userId: actorId, seal, manifest, withheld });
+      const built = await stage.finish(contents);
+      const recorded = await recordVaultArchive(req, {
+        orgId, userId: actorId, action: 'vault.data_room.archive', resourceType: 'vault_data_room_seal', resourceId: seal.id,
+        details: { programId: id, manifestSha256: seal.manifestSha256, archiveSha256: built.sha256, archiveSize: built.size,
+          documentCount: built.files.length, withheldCount: withheld.length },
+      });
+      if (!recorded) {
+        return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
+          message: 'The archive could not be recorded in the audit trail, so it was not sent.' });
+      }
+      sending = true;
+      res.setHeader('X-Archive-Withheld', String(withheld.length));
+      sendStagedArchive(res, built, stage, `vault-seal-${seal.id.slice(0, 8)}-closing-archive.zip`);
+      return undefined;
+    } catch (err) {
+      if (err instanceof VaultSealError) return res.status(404).json({ success: false, error: err.code, message: err.message });
+      if (err instanceof SealArchiveError) return res.status(err.status).json({ success: false, error: err.code, message: err.message });
+      logger.error('vault closing archive failed', { sealId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'ARCHIVE_UNAVAILABLE',
+        message: 'The closing archive could not be built. Nothing was sent.' });
+    } finally {
+      if (!sending) await stage?.cleanup().catch(() => undefined);
+    }
+  });
+
+  /* ── GET /:id/folders/:folderId/export (MR-08 Stage 6 step 3) ──────────────
+     The current version of every document a folder shows, by the tree's own
+     rows, each read through the one verified reader and staged by the seal's
+     archive builder, with manifest.json, INDEX.txt, SHA256SUMS and the
+     documents' audit trail (vault-folder-export.ts). One file that fails its
+     hash refuses the whole export. A withdrawn file is listed as withheld. A
+     chained row carrying the archive's SHA-256 is committed before a byte is
+     sent, and a failed write sends nothing. Anyone the project admits may
+     export, as they may download each file. */
+  router.get('/:id/folders/:folderId/export', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    const { planFolderExport, folderExportDocument, buildFolderExportContents } = await import('../../services/vault/vault-folder-export.js');
+    const { openVaultArchive } = await import('../../services/vault/vault-archive-builder.js');
+    const { SealArchiveError } = await import('../../services/vault/vault-seal-archive.js');
+    let stage: Awaited<ReturnType<typeof openVaultArchive>> | undefined;
+    let sending = false;
+    try {
+      const plan = await planFolderExport(pool, { organizationId: orgId, programId: id, folderId: String(req.params.folderId ?? '') });
+      if (!plan.ok) return res.status(plan.status).json({ success: false, error: plan.code, message: plan.message });
+      stage = await openVaultArchive();
+      const staged = await stageFolderFiles(orgId, plan, cabinetNumbers(plan.view, plan.programRows), stage, folderExportDocument);
+      if (!staged.ok) return res.status(409).json({ success: false, error: 'EXPORT_FILE_UNVERIFIED', message: staged.message });
+      const actorId = governedActorId(req) ?? undefined;
+      const contents = await buildFolderExportContents(pool, { organizationId: orgId, userId: actorId, programId: id,
+        programName: plan.programName, folder: plan.folder, documents: staged.documents, withheld: staged.withheld });
+      const built = await stage.finish(contents);
+      const recorded = await recordVaultArchive(req, {
+        orgId, userId: actorId, action: 'vault.folder.export', resourceType: 'vault_folder', resourceId: `${id}:${plan.folder.id}`,
+        details: { programId: id, folderId: plan.folder.id, folderLabel: plan.folder.label, archiveSha256: built.sha256, archiveSize: built.size,
+          documentCount: built.files.length, withheldCount: staged.withheld.length, documentIds: built.files.map((f) => f.id) },
+      });
+      if (!recorded) {
+        return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
+          message: 'The export could not be recorded in the audit trail, so it was not sent.' });
+      }
+      sending = true;
+      res.setHeader('X-Archive-Withheld', String(staged.withheld.length));
+      sendStagedArchive(res, built, stage, `vault-${plan.folder.id}-export-${built.sha256.slice(0, 8)}.zip`);
+      return undefined;
+    } catch (err) {
+      if (err instanceof SealArchiveError) return res.status(err.status).json({ success: false, error: err.code, message: err.message });
+      logger.error('vault folder export failed', { programId: id, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'EXPORT_UNAVAILABLE', message: 'The folder could not be exported. Nothing was sent.' });
+    } finally {
+      if (!sending) await stage?.cleanup().catch(() => undefined);
+    }
+  });
+
+  /** Read and stage each file the plan names; the first that fails its hash refuses them all. */
+  async function stageFolderFiles(
+    orgId: number,
+    plan: Extract<Awaited<ReturnType<typeof import('../../services/vault/vault-folder-export.js').planFolderExport>>, { ok: true }>,
+    numbers: Map<string, string | null>,
+    stage: { put: (doc: { id: string; title: string | null; fileName: string | null; indexNumber: string | null; sha256: string | null }, bytes: Buffer) => Promise<string | null> },
+    describe: typeof import('../../services/vault/vault-folder-export.js').folderExportDocument,
+  ) {
+    const documents: ReturnType<typeof describe>[] = [];
+    const withheld: Array<{ id: string; title: string | null; sha256: string | null; why: string }> = [];
+    for (const { row, file } of plan.inFolder) {
+      const doc = describe(row, numbers.get(String(row.id)) ?? null);
+      if (file.binary_available === false) { withheld.push({ id: doc.id, title: doc.title, sha256: doc.sha256, why: WITHHELD_BY_DISPOSITION }); continue; }
+      const read = await readSealedBytes(orgId, doc.id, file);
+      const refused = read.ok
+        ? await stage.put({ id: doc.id, title: doc.title, fileName: typeof file.file_name === 'string' ? file.file_name : null, indexNumber: doc.indexNumber, sha256: doc.sha256 }, read.bytes)
+        : read.why;
+      if (refused) return { ok: false as const, message: `${doc.title ?? doc.id} could not be exported: ${refused} Nothing was sent.` };
+      documents.push(doc);
+    }
+    return { ok: true as const, documents, withheld };
+  }
 
   return router;
 }

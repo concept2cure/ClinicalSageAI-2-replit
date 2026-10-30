@@ -1,0 +1,52 @@
+# M1: the approval skips the ceremony (the HEAD stamp in the plain PATCH, no signGovernedAct)
+# file: server/routes/mdx-labeling.ts  (sha256 before: 87cb1dee7780d171856383913174240dda0aaa8a06288b23266c229cba4fa563)
+# mutation:
+#   -   if (parsed.data.status === 'approved') return approveTranslationSigned(req, res, transId, parsed.data);
+#     
+#   + (deleted)
+#   -   if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
+#       setFrags.push(`updated_at = NOW()`);
+#       args.push(transId, orgId);
+#   +   if (parsed.data.status === 'approved') {
+#         args.push((req as { user?: { id?: number } }).user?.id ?? null);
+#         setFrags.push(`approved_by = $${args.length}`);
+#         setFrags.push(`approved_at = NOW()`);
+#       }
+#       if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
+#       setFrags.push(`updated_at = NOW()`);
+#       args.push(transId, orgId);
+
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts 2>&1 | grep -E "^ +(✓|×)|Tests  " 
+(exit 0)
+ × approving a translation without a signature > is refused: no password, meaning or reason means 400 and nothing written 28ms
+ × approving a translation without a signature > names a missing password, and writes nothing 5ms
+ × approving a translation without a signature > names a missing meaning, and writes nothing 4ms
+ × approving a translation without a signature > names a missing reason, and writes nothing 3ms
+ × the ceremony refuses, and nothing is approved > a wrong password: 401, said as the ceremony says it, and no transaction opened 4ms
+ × the ceremony refuses, and nothing is approved > a meaning an approval cannot carry (review): 400 before the password is asked 3ms
+ × the ceremony refuses, and nothing is approved > a meaning an approval cannot carry (authorship): 400 before the password is asked 3ms
+ × the ceremony refuses, and nothing is approved > a meaning an approval cannot carry (release): 400 before the password is asked 3ms
+ × the ceremony refuses, and nothing is approved > an editor whose role carries no signing authority: 403 before the password is asked 5ms
+ × the ceremony refuses, and nothing is approved > signing authority that cannot be read: 503, and the password is not asked 3ms
+ × the ceremony refuses, and nothing is approved > a translation already approved: 409, rolled back, no second signature 3ms
+ × the ceremony refuses, and nothing is approved > a translation the organization does not hold, or whose document is deleted: 404, rolled back 3ms
+ × the ceremony refuses, and nothing is approved > the signature row cannot be written: the approval rolls back with it 3ms
+ × the ceremony refuses, and nothing is approved > an approval that also edits the translation: 400, the signature covers the translation as it stands 3ms
+ × the signed approval > re-verifies the signer, then stamps, records the sign ledger pair and the signature row, then commits 3ms
+ × the signed approval > stamps the signer as the approver, on the organization's row only 3ms
+ × the signed approval > records what was approved, under the declared meaning, on the ledger and the signature row 3ms
+ × the signed approval > answers with the approved row and the signature 3ms
+      Tests  18 failed | 5 passed (23)
+
+$ timeout 240 npm run -s ci:sign-ceremony 2>&1
+(exit 1)
+[ci:sign-ceremony] FAIL — a `sign` ledger write, or an approval stamp, without the signature ceremony:
+  ✗ server/routes/mdx-labeling.ts:419  (approval stamp with no signature-row write in its handler)
+
+  A `sign` row is read as an electronic signature. Route the act through the
+  canonical ceremony (POST /api/c2c/actions/sign, or verifyReauth + the ledger
+  pair + persistGovernedSignSignature on one transaction, as
+  server/services/protocol-development/protocol-signature.ts does), or record
+  it under a command that does not claim a signature.
+
+# restored: sha256 after = 87cb1dee7780d171856383913174240dda0aaa8a06288b23266c229cba4fa563  (MATCH)

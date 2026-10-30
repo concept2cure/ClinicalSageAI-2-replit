@@ -1,0 +1,3 @@
+dossier|true
+dossier-map|true
+dossier-mapping|f

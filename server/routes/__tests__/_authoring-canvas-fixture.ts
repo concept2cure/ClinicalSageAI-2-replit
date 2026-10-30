@@ -56,6 +56,7 @@ export const PREREQ = `
     program_type TEXT,
     primary_agency TEXT,
     product_type TEXT,
+    metadata JSON,
     deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
   );
@@ -114,6 +115,8 @@ export const VAULT_DDL = `
     content_hash TEXT NOT NULL,
     classification TEXT DEFAULT 'INTERNAL',
     retention_policy TEXT, parent_document_id UUID, supersedes_id UUID,
+    -- The version a restore holds the bytes of (migrations/20261029_vault_documents_restored_from.sql).
+    restored_from_id UUID,
     -- The retention clock the ingest starts at admission (P1-22; ADR-0014 §6):
     -- the organisation's period, else 25 years, never earlier than a named policy.
     retention_until DATE,
@@ -161,9 +164,16 @@ export async function mint(u: { id: string; organizationId?: number; email: stri
     .sign(new TextEncoder().encode(JWT_SECRET));
 }
 
-export function makeApp(router: express.Router, opts: { role?: string } = {}): express.Express {
+export function makeApp(router: express.Router, opts: { role?: string; dbClient?: { query: (...args: never[]) => unknown } } = {}): express.Express {
   const app = express();
   app.use(express.json({ limit: '5mb' }));
+  /* The request's database client, as production binds it (requestDbLease.ts
+     bindRequestDbClient). Routes that read through requestPgClient refuse
+     without one, so a test that reaches them passes its database here. */
+  if (opts.dbClient) {
+    const dbClient = opts.dbClient;
+    app.use((req, _res, next) => { (req as unknown as { dbClient: unknown }).dbClient = dbClient; next(); });
+  }
   /* The request's tenant scope, as production opens it: the global /api gate
      (server/bootstrap/register-platform-routes.ts) runs authMiddleware ahead of
      this router, which scopes the request with the caller's organization_users

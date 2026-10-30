@@ -1,0 +1,11 @@
+# M22: the card claims DHF completion again
+# file: client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+# command: npx vitest run client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx
+# exit: 1
+# original sha256 061d782f0b2e623671e6e8d67d86d2ef829f9e52d5b3467d3f1b66850f5319ab; restored byte for byte: True
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > counts the project's mandatory sections approved, and does not call it DHF completion 44ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > counts the project's mandatory sections approved, and does not call it DHF completion

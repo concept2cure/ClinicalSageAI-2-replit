@@ -1,0 +1,5 @@
+{
+  "originalReceipt": "full-red.json",
+  "actualFallbackFailures": 3,
+  "fixtureCorrection": "The synchronous full-builder deliberately retains empty provider content as empty, so use provider refusal to exercise its actual template fallback. The first synchronous empty!=needs_data failure is not evidence against ethics fallback. No production change before corrected RED."
+}

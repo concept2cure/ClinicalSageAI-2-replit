@@ -1,0 +1,32 @@
+# Mutations on the final fold (recordFiledAct), 2026-10-29T05:13:41Z. Each is applied alone, run (unit, the card, and the route on real PostgreSQL 16), and reverted.
+
+## MUTATION 1: a replacement under a new name does not carry the acts of the leaf it took off file
+ × server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > a replacement under a new name takes the history with it; the old name filed again starts its own
+   → expected [ [ '0001', 'replace', …(1) ] ] to deeply equal [ …(2) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent
+   → expected [ …(2) ] to deeply equal [ …(2) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)
+
+## MUTATION 2: a leaf keeps only its last act
+ × server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > a replace under the same name keeps both acts, oldest first
+   → expected [ [ '0001', 'replace', 'd' ] ] to deeply equal [ [ '0000', 'new', 'a' ], …(1) ]
+ × server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > a document withdrawn and filed again says so
+   → expected [ [ '0002', 'new' ] ] to deeply equal [ [ '0000', 'new' ], …(2) ]
+ × server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > a replacement under a new name takes the history with it; the old name filed again starts its own
+   → expected [ [ '0001', 'replace', …(1) ] ] to deeply equal [ …(2) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 7 passed (10)
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent
+   → expected [ …(2) ] to deeply equal [ …(2) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)
+
+## MUTATION 3 (added after review): a replacement under a new name leaves its acts behind on the old name
+ × server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > a replacement under a new name takes the history with it; the old name filed again starts its own
+   → expected [ Array(2) ] to deeply equal [ [ '0002', 'new' ] ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)
+      Tests  3 passed (3)

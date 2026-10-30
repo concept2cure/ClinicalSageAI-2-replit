@@ -1,6 +1,6 @@
 /**
  * Core surface family — kit app/Surfaces.jsx ported:
- *   Home            — AnA-first landing (centered composer, segment context)
+ *   Home            — where a client starts: projects, tasks, AnA, conversations
  *   (GlobalRiBrowser moved to ./GlobalRiBrowser.tsx on 2026-09-29, so the
  *    shell no longer imports a hidden app's API calls.)
  *   KitSurfaceScaffold — the kit's honest "ready to install" state for
@@ -16,7 +16,6 @@ import { useAuth } from '@/services/portal/authService';
 
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 import { I } from '../icons';
-import { useLiveRows } from '../dataConnect';
 import {
   ANA_MODES,
   NAV_TIERS_V2,
@@ -28,78 +27,14 @@ import '../styles/surfaces-v2.css';
 import { useChatUpload, composeTurn, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import type { OnboardingWelcome } from '../onboardingWelcome';
-import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
+import { HomeConversations, HomeProjects, HomeTasks, type HomeProgram } from './HomeSections';
+import { HomeSetup } from './HomeSetup';
+import { useLiveRows } from '../dataConnect';
+import { openNewProject } from '../surfaceActions';
 
-/* ════════════ Home — AnA-first landing (centered composer) ════════════ */
-
-/**
- * One row of the real programme portfolio, as GET /api/c2c/projects projects it
- * from `regulatory_programs` (server/routes/c2c/projects.ts). Home only needs
- * the identity fields; the Projects surface reads the same route for the full
- * card. Declared here rather than imported so Home does not pull the whole
- * Projects module (and its New-Project wizard) into the landing chunk.
- */
-interface HomeProgram {
-  id: string;
-  title: string;
-  code: string;
-  status: string;
-  ws: string;
-}
-
-/**
- * The lead-programme line under the greeting.
- *
- * This block used to render `SEGMENT_CONTEXT[segment].program` — a constant. For
- * a biotech tenant that constant read 'BX-301 — BLA · 351(a)', so the FIRST
- * authenticated screen named a drug programme the organization had never
- * created, while Projects (one click away, reading the same database) correctly
- * reported none. Fabricated programme identity is a data-integrity defect in a
- * regulated tool, so the constant is gone and this reads the real portfolio.
- *
- * Four honest states, no fixture: loading, the real lead programme, "No programs
- * yet", or a failed read said plainly. An active programme is preferred as the
- * lead (that is what "what am I working on" means); if none is active the first
- * row still beats showing nothing.
- */
-function HomeLeadProgram({ onNav }: { onNav: (id: string) => void }) {
-  const { rows, loading, error, empty } = useLiveRows<HomeProgram>('/api/c2c/projects');
-
-  if (loading) {
-    return <div role="status" className="landing-segctx-prog">Loading your programs…</div>;
-  }
-  if (error) {
-    return (
-      <div className="landing-segctx-prog">
-        <span className="ico">{I.alertTriangle}</span>
-        Couldn&rsquo;t load your programs
-      </div>
-    );
-  }
-  if (empty) {
-    return (
-      <div className="landing-segctx-prog">
-        <span className="ico">{I.gitBranch}</span>
-        No programs yet
-      </div>
-    );
-  }
-
-  const lead = rows.find((p) => p.status === 'active') ?? rows[0];
-  const others = rows.length - 1;
-  return (
-    <button
-      type="button"
-      className="landing-segctx-prog"
-      onClick={() => onNav('projects')}
-      title="Open the project portfolio"
-    >
-      <span className="ico">{I.gitBranch}</span>
-      {lead.code ? `${lead.code} — ${lead.title}` : lead.title}
-      {others > 0 && <span className="landing-segctx-tag">+{others} more</span>}
-    </button>
-  );
-}
+/* ════════════ Home — where a client starts ════════════
+   docs/design/CLIENT_JOURNEY_2026-10-25.md. Its sections, in the order a
+   client reads them, are in ./HomeSections.tsx; Home adds the composer. */
 
 /**
  * The engine the next turn runs on, as a pair or not at all. V2App passes
@@ -124,13 +59,17 @@ export function Home({
   onAsk: (text: string) => void;
   segment: string;
   /** First-run AnA welcome. It lived in the right rail, which is gone
-   *  (docs/design/ONE_ANA_ONE_CANVAS.md, slices 6 and 9); Home is where a new
-   *  client starts. Null once dismissed or once a conversation exists. */
+   *  (docs/design/ONE_ANA_ONE_CANVAS.md, slices 6 and 9). Home offers it while
+   *  the organization has no project (HomeProjects). Null once dismissed or
+   *  once a conversation exists. */
   welcome?: OnboardingWelcome | null;
   onDismissWelcome?: () => void;
 } & HomeModeBinding) {
-  const { verdictFor } = useNavEntitlements();
   const { user } = useAuth();
+  /* One read of the person's projects: "Your projects" lists them and the setup checklist's "first project" step
+     reads the same rows (CLIENT_JOURNEY pass 5). */
+  const [projectsEpoch, setProjectsEpoch] = React.useState(0);
+  const projects = useLiveRows<HomeProgram>('/api/c2c/projects', [projectsEpoch]);
   const [draft, setDraft] = React.useState('');
   const [modeOpen, setModeOpen] = React.useState(false);
   /* The engine pill used to live here alone — `useState('standard')`, never
@@ -146,6 +85,12 @@ export function Home({
   const mode = bound ? boundMode : localMode;
   const setMode = bound ? setBoundMode : setLocalMode;
   const [plusOpen, setPlusOpen] = React.useState(false);
+  /* AnA's run controls — "AnA drives", "Between steps" and what Auto does —
+     sat open in the composer's foot, with a paragraph of ceilings, as the first
+     thing a new client read. They are settings, not the next step: one button
+     shows them, and they work as before. */
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const settingsId = React.useId();
 
   /* Both landing popovers opened on click and closed on nothing but a second
      click on their own trigger: no Escape, no outside dismissal, and the
@@ -221,64 +166,36 @@ export function Home({
     upload.clear();
     onNav('conversation-thread');
   };
-  /* Open the wizard, not the (empty) portfolio behind it. Projects.tsx:675
-     already reads this flag on mount and opens the wizard; nothing in the repo
-     wrote it, so every "Start a new … project" hero CTA landed the user on a
-     list with no programs and no obvious next step. */
-  const newProject = () => {
-    try { (window as any).__C2C_NEW_PROJECT = true; } catch { /* noop */ }
-    onNav('projects');
-  };
-
-
-  const quickActions =
-    ctx?.actions ??
-    ([
-      { id: 'author', label: 'Author', icon: 'penLine', surface: 'document-authoring' },
-      { id: 'projects', label: 'Projects', icon: 'folder', surface: 'projects' },
-      { id: 'evidence', label: 'Search evidence', icon: 'search', surface: 'evidence-search' },
-      { id: 'intelligence', label: 'Intelligence', icon: 'globe', surface: 'global-ri' },
-      { id: 'vault', label: 'From vault', icon: 'vault', surface: 'vault' },
-    ] as { id: string; label: string; icon: string; surface: string }[]);
+  // The existing action bus carries the wizard opener across navigation/mount.
+  const newProject = () => { openNewProject(onNav); };
 
   return (
-    <div className="landing">
+    <div className="landing home-start">
       <div className="landing-center">
         <div className="landing-greet">
           <span className="landing-mark">✻</span>
           <h1>
             {greeting}, {userName}
           </h1>
+          {ctx && <span className="landing-segctx-cat">{ctx.label}</span>}
         </div>
-        {ctx && (
-          <div className="landing-segctx">
-            <div className="landing-segctx-top">
-              <span className="landing-segctx-cat">{ctx.label}</span>
-            </div>
-            <HomeLeadProgram onNav={onNav} />
-            {/* The tagline and the pathway chip strip (ctx.pathways — "510(k),
-                De Novo, PMA, EU MDR") were removed here on 2026-09-07. Both are
-                static segment copy, not this tenant's state: they described the
-                category the user already picked, above a lead programme that
-                reads their real portfolio. `ctx.pathways` is still rendered by
-                the segment picker (Shell.tsx:415), where the pathways describe
-                the category you are choosing between — which is the one place
-                that copy answers a question the user is actually asking. */}
-            <button type="button" className="landing-newproj" onClick={newProject}>
-              <span className="ico">{I.plus}</span>Start a new {ctx.label} project
-            </button>
-          </div>
-        )}
+        <HomeSetup onNav={onNav} onNewProject={newProject} projects={projects} />
+        <HomeProjects onNav={onNav} onNewProject={newProject} welcome={welcome} onDismissWelcome={onDismissWelcome}
+          read={projects} onRetry={() => setProjectsEpoch((n) => n + 1)} />
+        <HomeTasks onNav={onNav} />
+        <section className="home-sec" aria-labelledby="home-ask-h">
+          <h2 id="home-ask-h" className="home-sec-h">Ask AnA</h2>
         <div className="landing-composer">
           <textarea
             ref={draftRef}
             className="landing-input"
             rows={3}
-            placeholder="How can I help you today? Type @ to name an app."
+            placeholder="Ask AnA to draft, check or find something. Type @ to name a place."
             value={draft}
             aria-autocomplete="list"
             aria-controls={mentions.open ? 'landing-mentions' : undefined}
             aria-expanded={mentions.open}
+            aria-labelledby="home-ask-h"
             onChange={(e) => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
             onSelect={(e) => mentions.sync(e.currentTarget)}
             onBlur={() => mentions.close()}
@@ -326,8 +243,6 @@ export function Home({
           <span className="sr-only" aria-live="polite">{upload.statusMessage}</span>
           <div className="landing-crow">
             <div className="landing-crow-l">
-              <LiveDriveSwitch />
-              <RunPolicySwitch variant="foot" />
               <button
                 type="button"
                 className="landing-tool"
@@ -369,6 +284,17 @@ export function Home({
                   </button>
                 </div>
               )}
+              <button
+                type="button"
+                className="landing-tool"
+                title="AnA settings" aria-label="AnA settings"
+                aria-expanded={settingsOpen}
+                aria-controls={settingsOpen ? settingsId : undefined}
+                data-on={settingsOpen || undefined}
+                onClick={() => setSettingsOpen((o) => !o)}
+              >
+                {I.sliders}
+              </button>
             </div>
             <div className="landing-crow-r">
               <button type="button" className="landing-engine" aria-haspopup="dialog" aria-expanded={modeOpen}
@@ -407,53 +333,15 @@ export function Home({
               </button>
             </div>
           </div>
-        </div>
-        {welcome && (
-          <div className="ana-welcome landing-welcome" data-testid="home-welcome">
-            <div className="ana-welcome-sub">{welcome.subline}</div>
-            <div className="ana-welcome-starters">
-              {welcome.starters.map((s) => (
-                <button
-                  key={s.label}
-                  type="button"
-                  className="ana-welcome-starter"
-                  onClick={() => {
-                    if (s.navTo) {
-                      onNav(s.navTo);
-                      return;
-                    }
-                    /* The same front door as this composer: a new conversation,
-                       seeded with the starter, sent there. */
-                    (window as any).C2C_CONVO = { id: 'new', seed: s.prompt };
-                    onNav('conversation-thread');
-                  }}
-                >
-                  {s.label}
-                </button>
-              ))}
+          {settingsOpen && (
+            <div className="landing-settings" id={settingsId} role="group" aria-label="AnA settings">
+              <LiveDriveSwitch />
+              <RunPolicySwitch variant="foot" />
             </div>
-            {onDismissWelcome && (
-              <button type="button" className="ana-welcome-dismiss" onClick={onDismissWelcome}>
-                Dismiss
-              </button>
-            )}
-          </div>
-        )}
-        <div className="landing-actions">
-          {/* Not offered when the release does not carry the destination: a
-              shortcut that opens "not in this release" is not a shortcut
-              (decision record 2026-10-08; the same rule as Project home). */}
-          {quickActions.filter((a) => !isLaunchScopeLocked(verdictFor(a.surface))).map((a) => (
-            <button key={a.id} type="button" className="landing-action" onClick={() => onNav(a.surface)}>
-              <span className="ico">{I[a.icon] ?? I.grid}</span>
-              <span>{a.label}</span>
-            </button>
-          ))}
+          )}
         </div>
-        {/* One discovery path: the existing live, entitlement-aware catalog. */}
-        <button type="button" className="landing-browse" onClick={() => onNav('apps')}>
-          Explore workflows
-        </button>
+        </section>
+        <HomeConversations onNav={onNav} />
       </div>
     </div>
   );

@@ -136,7 +136,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
       console.warn(`[predicate-intel] IDOR blocked: org=${orgId} tried program=${programId}`);
       return res.status(403).json({
         error: 'Access denied',
-        detail: 'You do not have access to this program',
+        detail: 'You do not have access to this project',
       });
     }
 
@@ -144,7 +144,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
   } catch (err: any) {
     console.error('[predicate-intel] program access check failed:', err.message);
     return res.status(500).json({
-      error: 'Program access check failed',
+      error: 'Project access check failed',
       detail: 'Service unavailable',
     });
   }

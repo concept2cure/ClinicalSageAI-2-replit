@@ -1,0 +1,11 @@
+client/src/concept2cure/v2/Shell.tsx
+  HEAD:    0 errors, 5 warnings
+  working: 0 errors, 5 warnings
+client/src/concept2cure/v2/registryModel.ts
+  HEAD:    0 errors, 1 warnings
+  working: 0 errors, 1 warnings
+client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx
+  HEAD:    0 errors, 0 warnings
+  working: 0 errors, 0 warnings
+client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx (new)
+  working: 0 errors, 0 warnings

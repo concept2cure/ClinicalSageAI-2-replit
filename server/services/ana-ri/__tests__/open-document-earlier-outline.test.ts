@@ -15,17 +15,19 @@ vi.mock('../../../db.js', () => ({ pool: { query: vi.fn() } }));
 import { renderOpenDocumentBlock, resolveOpenDocument } from '../open-document';
 import { builtinTemplateSource } from '../../authoring/authoring-template-sections';
 import { builtinAuthoringTemplateId, getBuiltinAuthoringTemplate } from '../../authoring/builtin-authoring-templates';
+import { pg, DOCUMENT, PROGRAM } from '../../ana/__tests__/_saved-document-critique-fixture';
 
-const DOC = '6a1f0e2b-9c4d-4e1a-8b7f-1d2c3e4f5a6b';
 const EARLIER = /built from an earlier version of its template/;
 
 async function opened(sha256: (current: string) => string) {
   const id = builtinAuthoringTemplateId('registry:US_NDA_SUPP');
   const source = builtinTemplateSource(await getBuiltinAuthoringTemplate(id))!;
   const provenance = { templateSource: { ...source, sha256: sha256(source.sha256) } };
+  await pg.query('UPDATE authoring_documents SET template_id=$1,provenance=$2 WHERE id=$3', [id, provenance, DOCUMENT]);
   const result = await resolveOpenDocument({
-    authoringContext: { artifactId: DOC }, organizationId: 7,
-    read: async () => ({ templateId: id, provenance }),
+    authoringContext: { artifactId: DOCUMENT }, organizationId: 7,
+    access: { getClient: () => ({ query: (sql, params) => pg.query(sql, params) }), userId: 7,
+      project: { programId: PROGRAM, projectRef: PROGRAM, projectId: 11 } },
   });
   return { result, block: renderOpenDocumentBlock(result) };
 }

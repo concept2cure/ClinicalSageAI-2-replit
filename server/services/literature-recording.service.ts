@@ -104,8 +104,8 @@ export const SCREENING_RECORDED_SEPARATELY =
  * binding it cannot store.
  */
 export const PROGRAM_BINDING_NOTE =
-  'entries are recorded to the organization corpus; the program corpus chart matches them ' +
-  'by product name in title/abstract (literature_entries has no program column)';
+  'entries are recorded to the organization corpus; the project corpus chart matches them ' +
+  'by product name in title/abstract (literature_entries has no project column)';
 
 const PMID_RE = /^\d{1,10}$/;
 

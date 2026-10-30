@@ -79,7 +79,7 @@ export const FULFILMENT_CODE_STATUS: Readonly<Record<string, number>> = Object.f
 const SEQUENCE_NOT_HERE = 'That sequence is not one this commitment can name. Nothing was recorded.';
 const VERSION_NOT_HERE = 'That Vault version is not one this commitment can name. Nothing was recorded.';
 const ACCESS_UNAVAILABLE = 'Your access to what met this commitment could not be verified. Nothing was recorded.';
-const NOT_LINKED = 'This project is not linked to a program, so no sequence or Vault document of it can be named. Nothing was recorded.';
+const NOT_LINKED = 'This tracking record is not linked to a project, so no sequence or Vault document of it can be named. Nothing was recorded.';
 const SEQUENCE_ROW_LIMIT = 200;
 
 export interface ResolvedSequence {

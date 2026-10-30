@@ -90,14 +90,14 @@ function LinkForm({ source, docs, write, onDone }: {
     const ok = await write('', { sourceKey: source.sourceKey, documentId, reason: reason.trim() }, `Linked to ${source.label}.`);
     if (ok) onDone();
   };
-  if (docs.loading) return <div role="status" className="cm-meta">Loading the program’s Vault documents…</div>;
-  if (docs.error) return <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the program’s Vault documents" hint={docs.error} />;
+  if (docs.loading) return <div role="status" className="cm-meta">Loading the project’s Vault documents…</div>;
+  if (docs.error) return <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the project’s Vault documents" hint={docs.error} />;
   if (choices.length === 0) {
     return (
       <EmptyState
         icon={I.folder}
         title="No current Vault document to link"
-        hint="File the certificate, report or record into this program’s Vault first — from the Data Room’s File into Vault, or an upload on the Vault page."
+        hint="File the certificate, report or record into this project’s Vault first — from the Data Room’s File into Vault, or an upload on the Vault page."
       />
     );
   }

@@ -151,12 +151,37 @@ function catalogPage(rows: unknown[], offset: number, limit: number, key: string
     'The catalog page exceeds the response budget. Request a shorter preparation separately.');
 }
 
+/**
+ * One page of an outline. The template's metadata and the preparation brief go on
+ * the first page only; a later page names the template and carries its headings
+ * (3a review, 2026-10-25: repeated on every page, the two left no room for the
+ * Clinical Summary's 2.7.4, a PAS's CTD part or the NDA annual report's first
+ * part, and AnA's default call failed). When the brief does not fit beside the
+ * metadata and the first section, the first page holds that section alone and
+ * says the brief is on the page at offset 1.
+ */
 function outlinePage(template: DocumentTemplateStructure, offset: number, limit: number, preparation: Preparation | undefined): string {
-  return boundedPage(template.sections.length, offset, limit,
-    (count, nextOffset) => JSON.stringify({
-      ok: true, outlineAvailable: true, template: { ...template, sections: template.sections.slice(offset, offset + count) },
-      sectionsTotal: template.sections.length, nextOffset, ...(preparation ? { preparation } : {}),
-      note: 'Outline page only. Follow nextOffset to read the remaining headings before drafting; no evidence or filing readiness has been assessed.',
-    }),
+  const total = template.sections.length;
+  const named = {
+    id: template.id, title: template.title,
+    ...(template.ctdSection ? { ctdSection: template.ctdSection } : {}),
+    ...(template.outlineSource ? { outlineSource: template.outlineSource } : {}),
+    metadata: 'basis, limitations and front matter are on the page at offset 0',
+  };
+  const render = (from: number, count: number, nextOffset: number | null, withPrep: boolean, extra: Record<string, unknown> = {}) => JSON.stringify({
+    ok: true, outlineAvailable: true,
+    template: from === 0 ? { ...template, sections: template.sections.slice(0, count) } : { ...named, sections: template.sections.slice(from, from + count) },
+    sectionsTotal: total, nextOffset, ...(withPrep ? { preparation } : {}), ...extra,
+    note: 'Outline page only. Follow nextOffset to read the remaining headings before drafting; no evidence or filing readiness has been assessed.',
+  });
+  const deferred = preparation !== undefined && render(0, Math.min(1, total), total > 1 ? 1 : null, true).length > RESULT_LIMIT;
+  if (deferred && offset === 0) {
+    const first = render(0, Math.min(1, total), 1, false, { preparationAt: 1 });
+    if (first.length > RESULT_LIMIT) throw new Error('The outline exceeds the response budget.');
+    return first;
+  }
+  const withPrep = preparation !== undefined && offset === (deferred ? 1 : 0);
+  return boundedPage(total, offset, limit,
+    (count, nextOffset) => render(offset, count, nextOffset, withPrep),
     'The outline and preparation exceed the response budget. Request the outline without prepare, then request its preparation separately.');
 }

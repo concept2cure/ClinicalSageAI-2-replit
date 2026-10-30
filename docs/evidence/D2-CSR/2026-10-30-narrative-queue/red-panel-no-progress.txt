@@ -1,0 +1,13 @@
+# Red: the new panel test against the HEAD panel (POST awaited a result; no status polling).
+ × client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > queues the build, shows subjects done of total while it runs, then the outcome and the QC list 5270ms
+   → Unable to find an element with the text: Composing narratives: 37 of 80 subjects.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows a failed build by its recorded refusal, naming the rows 5042ms
+   → Unable to find role="alert"
+ × client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > says a stalled build stopped, and building again resumes it 5009ms
+   → Unable to find role="alert"
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows the server refusal as stated 38ms
+ × client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > says so when the build status cannot be read, rather than showing nothing 5010ms
+   → Unable to find role="alert"
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job 67ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 2 passed (6)

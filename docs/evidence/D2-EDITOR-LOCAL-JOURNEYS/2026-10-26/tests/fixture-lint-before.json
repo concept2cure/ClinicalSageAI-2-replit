@@ -1,0 +1,37 @@
+{
+  "startedAt": "2026-10-26T15:12:45.103600+00:00",
+  "argv": [
+    "npx",
+    "eslint",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx",
+    "--max-warnings=0"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.816,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "fixture-before-freeze.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "dda4527875c56a24ed3f08920c8e6b2e7295de9439878ce7f3307075f4890378",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx": "1c65d71893cb62a2e1980206aae557e38ca8e0963d80dd67389ade60e05503ef",
+    "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx": "a4db4737b18707fb101893ed5b8cf6c9080754a383d35f392dee9cf44cfe21b1",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx": "9545a571acaf9aed3bbb81bab5457aedc046e35adc0b77f9d53c3f8f545a1e6f",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx": "1e2838ea4e6e63ff37b68c49ea6d57606ec3526b00ab5c7cad74cab89d0f724a"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "dda4527875c56a24ed3f08920c8e6b2e7295de9439878ce7f3307075f4890378",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx": "1c65d71893cb62a2e1980206aae557e38ca8e0963d80dd67389ade60e05503ef",
+    "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx": "a4db4737b18707fb101893ed5b8cf6c9080754a383d35f392dee9cf44cfe21b1",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx": "9545a571acaf9aed3bbb81bab5457aedc046e35adc0b77f9d53c3f8f545a1e6f",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx": "1e2838ea4e6e63ff37b68c49ea6d57606ec3526b00ab5c7cad74cab89d0f724a"
+  },
+  "sourceDrift": [],
+  "rawOutput": "fixture-lint-before.log.gz",
+  "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "testSummary": []
+}

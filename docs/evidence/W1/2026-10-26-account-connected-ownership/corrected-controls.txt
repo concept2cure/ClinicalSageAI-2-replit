@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > lists actual memberships, requires a calm confirmation, and can cancel without rotating the session 214ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > adopts the server-verified scoped session, clears predecessor context and opens a fresh shell without a program deep link 39ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > keeps a membership refusal visible and keeps the existing session 38ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > ends the spent session and offers sign-in if the replacement session cannot be verified 38ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not store a replacement token whose verified user or organization differs from the requested membership 31ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not retain a new session if fresh-shell navigation fails 31ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > refuses dirty preflight without rotating, purging drafts or asking a second confirmation 249ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > holds editing while SELECT waits and restores it after a definite membership refusal 123ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > keeps the old editor held after assign returns until the current document unloads 115ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > holds the raw source textarea without rewriting the device recovery cache 70ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching waits for an existing editor write to settle > refuses preflight during a save even when typing returns the buffer to its old baseline 190ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > rechecks after select, expires the spent bearer and preserves only the original account recovery cache 153ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > rechecks after probe, expires the spent bearer and preserves only the original account recovery cache 188ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > does not end an unrelated new sign-in while select was pending 102ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > does not end an unrelated new sign-in while probe was pending 156ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > preserves a replacement sign-in for the same account and organization while SELECT waits 103ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > ends an expired access-token session rather than allowing another switch attempt 27ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > requires sign-in when the select request has an unknown outcome after a network failure 28ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > prevents duplicate session rotations while a switch request is pending 26ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > shows a membership read error with retry rather than pretending there are no organizations 16ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > renders the organization identifier when the backend has no name 13ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > refuses a stale account identity before dispatching an organization change 20ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > reads the signed-in person’s inbox and reporting role; no fixture or invented organization name 222ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > accepts an invitation through the self-only endpoint, re-reads pending rows and keeps the current tenant 103ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing member role instead of requiring the invitation’s suggested role 76ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing admin role instead of requiring the invitation’s suggested role 67ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing owner role instead of requiring the invitation’s suggested role 65ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > confirms a decline calmly and allows cancellation before the server mutation 78ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > shows quota or authorization refusals without claiming the invitation was accepted 57ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > keeps an inbox read error distinct from no pending invitations and retries it 31ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > refuses malformed pending rows instead of offering a mutation against a guessed organization 32ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > does not accept an invitation until the inviting organization is identified by name 22ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > retains a pending named invitation when the server does not confirm acceptance 52ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":null} without refreshing membership or announcing acceptance 39ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":""} without refreshing membership or announcing acceptance 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":"  "} without refreshing membership or announcing acceptance 38ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":["owner"]} without refreshing membership or announcing acceptance 38ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"invitationId":53} without refreshing membership or announcing acceptance 40ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"organizationId":72} without refreshing membership or announcing acceptance 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"userId":34} without refreshing membership or announcing acceptance 37ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"status":"pending"} without refreshing membership or announcing acceptance 38ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > can clear the reporting role without changing the membership role 33ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > does not offer persona controls if membership is refused or the server vocabulary is unknown 24ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > refuses all reads and writes after a session identity change 5ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > requires an authenticated access token even if the backend permits development fallbacks 5ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > Account reaches existing in-app alert setup > loads on request, saves the current recipient preference and refreshes the existing inbox badge 203ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > defaults the role filter from the self-only API without granting report execution 256ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > preserves a person’s explicit All filter when a slow profile read finishes 69ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > applies an Account save to an open catalog using the same identity-scoped query cache 211ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > resets the old account’s override and loads the new session’s own role 119ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > reports an unreadable persona honestly and retries without blocking the governed catalog 85ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > keeps All when a canonical saved persona is absent from this catalog’s report types 31ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > does not fetch an account persona without an authenticated session 23ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > pins profile reads to the expected source organization 52ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > pins memberships reads to the expected source organization 138ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > refuses profile preflight when bearer claims differ from the retained auth context 8ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > refuses memberships preflight when bearer claims differ from the retained auth context 16ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > withholds a late profile read after bearer replacement 6ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > withholds a late memberships read after bearer replacement 6ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > does not cache an unmounted persona request 4ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > withholds a cached persona immediately when current bearer claims belong to another account 6ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > rechecks persona ownership after JSON decoding 5ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > refuses a stale source bearer before spending a workspace session 56ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > pins workspace rotation to the source organization 39ms
+
+ Test Files  4 passed (4)
+      Tests  65 passed (65)
+   Start at  23:02:26
+   Duration  8.70s (transform 960ms, setup 324ms, import 1.72s, tests 4.55s, environment 1.66s)

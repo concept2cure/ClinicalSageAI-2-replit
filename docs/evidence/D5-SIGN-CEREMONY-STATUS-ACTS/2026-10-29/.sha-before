@@ -1,0 +1,3 @@
+ced51d03828be10c8fd48c10a5140daf1deeb6833bc6d745f124c0a5d95e2880  scripts/ci/check-sign-ceremony.mjs
+5079a2325301bbc8b04ed5408ea2ed39547af295c0585fbb9a81d89c8c9025e7  scripts/ci/check-sign-ceremony.selftest.mjs
+82a8c008a528aa7b4925499504ffcb8d5080febff76f24a89699dcd759630995  scripts/ci/sign-ceremony-baseline.json

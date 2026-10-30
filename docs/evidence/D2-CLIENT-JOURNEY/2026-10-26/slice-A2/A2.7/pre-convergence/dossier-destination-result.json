@@ -1,0 +1,15 @@
+{
+  "noProjectDestination": "projects",
+  "legacyDestinations": [
+    "dossier",
+    "dossier-map"
+  ],
+  "canonicalStage": "author",
+  "artifactCount": 1,
+  "artifactSectionUpdatedAt": "2026-10-26T20:14:02.092Z",
+  "trackedModules": 1,
+  "governedFigureUnchanged": true,
+  "reloadPreservedEvidence": true,
+  "trackingFixture": "two synthetic rows in local concept_handoff only; served through native app_service",
+  "otherOrganizationStatus": 404
+}

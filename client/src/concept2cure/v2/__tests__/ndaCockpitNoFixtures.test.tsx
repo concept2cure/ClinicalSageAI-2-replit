@@ -202,7 +202,7 @@ describe('NdaCockpit — no fabricated filing identity or review clock', () => {
     const sent = String(p.onAsk.mock.calls[0][0]);
     expect(sent).not.toContain('212345');
     expect(sent).not.toContain('BX-204');
-    expect(sent).toContain('this NDA program');
+    expect(sent).toContain('this NDA project');
   });
 
   it('names the REAL open program (window.C2C_PROJECT) when one is open', async () => {

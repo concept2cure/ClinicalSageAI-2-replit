@@ -91,21 +91,21 @@ describe("the stream's section playbook names the section ICH M4 / FDA Module 1 
     ['1.14.4.1', "Investigator's Brochure", /^$/],
     ['5.2', 'Tabular Listing', /per ICH E3/i],
   ])('%s carries %s', (code, expected, wrong) => {
-    const prompt = buildSectionSpecificPrompt(code);
+    const prompt = buildSectionSpecificPrompt(code, 'US_IND');
     expect(prompt, `no playbook for ${code}`).toBeTruthy();
     expect(prompt!).toContain(expected);
     if (String(wrong) !== '/^$/') expect(prompt!).not.toMatch(wrong);
   });
 
   it('5.3.5.1 holds the reports of controlled clinical studies, not a protocol playbook', () => {
-    const prompt = buildSectionSpecificPrompt('5.3.5.1')!;
+    const prompt = buildSectionSpecificPrompt('5.3.5.1', 'US_IND')!;
     expect(prompt).toContain(CTD_AUTHORING_GUIDANCE['5.3.5.1'].title);
     expect(prompt).not.toMatch(/Clinical Protocol/);
   });
 
   it('opens with the canonical code and title for every registered code', () => {
     for (const g of CANONICAL) {
-      const prompt = buildSectionSpecificPrompt(g.code);
+      const prompt = buildSectionSpecificPrompt(g.code, 'US_IND');
       expect(prompt, `no playbook for ${g.code}`).toBeTruthy();
       const firstLine = prompt!.split('\n')[0];
       expect(firstLine, g.code).toContain(`${g.code} — ${g.title}`);
@@ -113,8 +113,8 @@ describe("the stream's section playbook names the section ICH M4 / FDA Module 1 
   });
 
   it('keeps the module playbooks the overlay does not model', () => {
-    expect(buildSectionSpecificPrompt('2.7')).toContain('**2.7.3**: Summary of Clinical Efficacy');
-    expect(buildSectionSpecificPrompt('SAP')).toContain('Statistical Analysis Plan');
+    expect(buildSectionSpecificPrompt('2.7', 'US_IND')).toContain('**2.7.3**: Summary of Clinical Efficacy');
+    expect(buildSectionSpecificPrompt('SAP', 'US_IND')).toContain('Statistical Analysis Plan');
   });
 });
 

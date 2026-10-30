@@ -32,7 +32,7 @@ export async function assertDeviceAttachmentAccess(input: DeviceAttachmentAccess
     throw new ProgramReadAccessError(403, 'ESTAR_ATTACHMENT_ACTOR_REQUIRED', 'A current authenticated actor is required to attach project documents.');
   }
   if (!input.programUuid) throw new ProgramReadAccessError(409, 'ESTAR_ATTACHMENT_PROGRAM_REQUIRED',
-    'This export has no regulatory program, so no governed document or program Vault can be attached.');
+    'This export has no project, so no governed document or project Vault can be attached.');
   const access = await requireCurrentProgramAccess(attachmentSourceExecutor(input), {
     organizationId: input.organizationId, userId: input.userId, programId: input.programUuid,
   });
@@ -51,7 +51,7 @@ export async function admitVaultAttachmentSource(input: DeviceAttachmentAccessIn
     FROM vault.documents d WHERE d.id=$1::uuid AND d.program_id=$2::uuid AND d.organization_id=$3
       AND d.deleted_at IS NULL`, [documentId,input.programUuid,input.organizationId]);
   const row = rows[0];
-  if (!row) throw new ProgramReadAccessError(404, 'ESTAR_ATTACHMENT_SOURCE_UNAVAILABLE', 'The selected Vault version is not available in this program.');
+  if (!row) throw new ProgramReadAccessError(404, 'ESTAR_ATTACHMENT_SOURCE_UNAVAILABLE', 'The selected Vault version is not available in this project.');
   if (row.binary_available !== true) throw new ProgramReadAccessError(409, 'ESTAR_ATTACHMENT_BYTES_WITHDRAWN', 'The selected Vault version’s original bytes have been withdrawn.');
   const hash = String(row.content_hash ?? '').trim().toLowerCase();
   if (!/^[a-f0-9]{64}$/.test(hash) || expectedHash !== undefined && expectedHash !== hash) {

@@ -1,0 +1,12 @@
+# H4: the home line says a market's words
+# file: client/src/concept2cure/v2/surfaces/ProjectDossier.tsx
+# replaced: '<MarketCopy name="the home filing" forMarket={false}'
+# with:     '<MarketCopy name="the home filing" forMarket'
+# test: client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx
+# vitest exit: 1
+ × Author — the project's documents > with no editing copy the row says so and has nothing to click; a market's says where one is made 48ms
+ × Author — the readiness card's home line > with no editing copy it says so in the home rows' words, and has nothing to click 5024ms
+      Tests  2 failed | 30 passed (32)
+TestingLibraryElementError: Found multiple elements with the text: /No editing copy of this market.s documents yet\. Create one from the filing list in the editor\./
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.No…' to contain 'No editing copy of this filing yet.'
+# restored: sha256 matches (ed20cd2989f0b397)

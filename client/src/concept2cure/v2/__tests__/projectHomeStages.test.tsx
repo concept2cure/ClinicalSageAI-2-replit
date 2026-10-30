@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The project is the filing: five tabs, and the start box above them.
+ * The project is the filing: six steps, and the start box beside them.
  *
  * docs/design/FILING_SPINE.md §1, §2 and slice F2. The project page had seven
  * tabs. Two of them, Plan and Lifecycle, held nothing this release can open:
@@ -9,14 +9,20 @@
  * from Projects. The start box sat inside Author, so leaving Author unmounted
  * a half-typed message.
  *
+ * Plan returned on 2026-10-25 (CLIENT_JOURNEY_2026-10-25.md, pass 3) with
+ * something to open: what the filing needs, the team and the tasks.
+ *
  * Now:
- *   - the tabs are exactly Evidence, Author, Review, Submit and Respond;
- *   - no tab says "Not in this release"; what Plan and Lifecycle promised is
- *     one line of words on Submit, with no button;
- *   - AnA's `project-home.set-stage` still accepts 'plan' and 'lifecycle', and
- *     both open Submit, which holds market choice and follow-up sequences;
- *   - the start box and the Conversations list sit above the tabs, outside
- *     the tab switch, so what is typed survives a change of tab.
+ *   - the steps are exactly Plan, Evidence, Author, Review, Submit and Respond;
+ *   - no step says "Not in this release"; what Submit will hold once it works
+ *     is one line of words, with no button, rewritten in slice A.1 to name
+ *     only what is not yet shown (it named IND annual-report tracking, which
+ *     IND forms files today, and regulatory intelligence and agency meetings);
+ *   - AnA's `project-home.set-stage` opens Plan by name, and still accepts
+ *     'lifecycle', which opens Submit (follow-up sequences);
+ *   - the steps come first; the start box and the Conversations list sit in
+ *     the side column beside every step (CLIENT_JOURNEY pass 4), outside the
+ *     step switch, so what is typed survives a change of step.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -87,11 +93,23 @@ afterEach(() => {
   delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
 });
 
-describe('Project home — five tabs follow the work', () => {
-  it('the tabs are exactly Evidence, Author, Review, Submit and Respond, in that order', async () => {
+describe('Project home — six steps follow the work', () => {
+  it('names the owning client rather than calling the CRO organization the sponsor', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => url === `/api/c2c/projects/${PID}`
+      ? ok({ id: PID, name: 'BX-410', product_name: 'Torvanib', program_type: 'IND', status: 'active',
+          sponsor_name: 'CRO organization', client_workspace_id: 11, client_name: 'Client Alpha' })
+      : ok({}));
+    render(<ProjectHome {...props()} />);
+    await waitFor(() => expect(screen.getByText('Client Alpha')).toBeTruthy());
+    const client = screen.getByText('Client Alpha').closest('dl');
+    expect(client?.querySelector('dt')?.textContent).toBe('Client');
+    expect(document.querySelector('dl.pj-fact')?.textContent).not.toContain('CRO organization');
+  });
+
+  it('the steps are exactly Plan, Evidence, Author, Review, Submit and Respond, in that order', async () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(tabs().length).toBeGreaterThan(0));
-    expect(tabs().map((b) => b.textContent?.trim())).toEqual(['Evidence', 'Author', 'Review', 'Submit', 'Respond']);
+    expect(tabs().map((b) => b.textContent?.trim())).toEqual(['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond']);
   });
 
   it('no tab says "Not in this release"', async () => {
@@ -105,27 +123,27 @@ describe('Project home — five tabs follow the work', () => {
     }
   });
 
-  it('what Plan and Lifecycle promised is named on Submit as coming later, with no button', async () => {
+  it('what Submit will hold is named as coming later, in words, with no button', async () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(tab('Submit')).toBeTruthy());
     fireEvent.click(tab('Submit')!);
     const line = await screen.findByTestId('pj-coming-later');
-    expect(line.textContent).toMatch(/^Coming later:/);
-    for (const promised of ['Registrations', 'market access', 'pharmacovigilance', 'regulatory intelligence', 'precedent', 'agency meetings']) {
-      expect(line.textContent, `Submit does not name "${promised}"`).toContain(promised);
-    }
+    expect(line.textContent).toBe(
+      'Coming later: Each approved market’s registration status and renewal date; renewals and post-approval ' +
+      'obligations tracked as they fall due; safety reports with their reporting clock.',
+    );
     expect(within(line).queryByRole('button'), 'a coming-later line offers nothing to click').toBeNull();
   });
 });
 
-describe('Project home — AnA can still name the removed tabs', () => {
-  it('set-stage "plan" opens Submit, and says so', async () => {
+describe('Project home — AnA names each step, and the removed one', () => {
+  it('set-stage "plan" opens Plan, a step again', async () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(registeredSurfaceId()).toBe('project-home'));
     const out = setStage('plan');
     expect(out.status).toBe('applied');
-    await waitFor(() => expect(activeLabel()).toBe('Submit'));
-    expect(out.detail).toMatch(/submit/i);
+    await waitFor(() => expect(activeLabel()).toBe('Plan'));
+    expect(out.detail).toMatch(/plan/i);
   });
 
   it('set-stage "lifecycle" opens Submit too', async () => {
@@ -138,13 +156,13 @@ describe('Project home — AnA can still name the removed tabs', () => {
   });
 });
 
-describe('Project home — the start box sits above the tabs', () => {
+describe('Project home — the start box sits beside every step', () => {
   it('a message typed in the start box survives switching tabs', async () => {
     render(<ProjectHome {...props()} />);
     const box = await screen.findByRole('textbox', { name: /Start a conversation in/ });
     fireEvent.change(box, { target: { value: 'Draft the 2.5 clinical overview from the CSR' } });
 
-    for (const label of ['Review', 'Submit', 'Evidence', 'Respond', 'Author']) {
+    for (const label of ['Plan', 'Review', 'Submit', 'Evidence', 'Respond', 'Author']) {
       fireEvent.click(tab(label)!);
       await waitFor(() => expect(activeLabel()).toBe(label));
       const now = screen.getByRole('textbox', { name: /Start a conversation in/ }) as HTMLTextAreaElement;
@@ -152,7 +170,7 @@ describe('Project home — the start box sits above the tabs', () => {
     }
   });
 
-  it('the start box and the conversations come before the tabs and stay on every tab', async () => {
+  it('the steps come first; the start box and the conversations sit beside the step and stay on every step', async () => {
     render(<ProjectHome {...props()} />);
     const region = await screen.findByRole('region', { name: /Start a conversation in/ });
     await screen.findByText(THREAD.title);
@@ -160,9 +178,11 @@ describe('Project home — the start box sits above the tabs', () => {
     // The open stage is told to a screen reader, not only drawn (WCAG 4.1.2).
     expect(within(tablist).getAllByRole('button').filter((b) => b.getAttribute('aria-current') === 'step')).toHaveLength(1);
     expect(tablist.querySelector('[aria-selected]')).toBeNull();
-    expect(region.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'start box above the tabs').toBeTruthy();
+    /* CLIENT_JOURNEY pass 4 (decision 5): the steps first, then the open step, AnA beside it. */
+    expect(tablist.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING, 'steps before the start box').toBeTruthy();
+    expect(region.closest('aside'), 'start box in the side column').toBeTruthy();
     const threads = screen.getByTestId('pj-threads');
-    expect(threads.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'conversations above the tabs').toBeTruthy();
+    expect(threads.closest('aside'), 'conversations in the side column').toBeTruthy();
 
     fireEvent.click(tab('Submit')!);
     await waitFor(() => expect(activeLabel()).toBe('Submit'));

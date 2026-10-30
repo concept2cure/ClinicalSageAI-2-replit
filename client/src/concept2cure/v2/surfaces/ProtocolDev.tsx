@@ -78,9 +78,9 @@ function anaContextFor(
   }
   if (state.empty || !doc) {
     return {
-      summary: 'Protocol development: no protocol is available in the selected scope, so no document is open for authoring.',
+      summary: 'The protocol workspace: no protocol is available in the selected scope, so no document is open for authoring.',
       ...(program ? { facts: { programme: program } } : {}),
-      availableActions: ['Start a clinical protocol', 'Draft a protocol synopsis for the open programme'],
+      availableActions: ['Start a clinical protocol', 'Draft a protocol synopsis for the open project'],
     };
   }
   const secs = Array.isArray(doc.sections) ? doc.sections : [];
@@ -100,7 +100,7 @@ function anaContextFor(
   return {
     documentType: protocolRegistryType(doc.kind),
     summary:
-      `Protocol development: "${doc.shortTitle}" (${doc.title}) v${doc.version}, status ` +
+      `The protocol workspace: "${doc.shortTitle}" (${doc.title}) v${doc.version}, status ` +
       `${doc.status}, ${doc.completeness}% complete — ${done} of ${secs.length} ` +
       `section(s) complete. ${len(doc.risks)} risk(s), ${len(doc.amendments)} amendment(s), ` +
       `${len(doc.deviations)} deviation(s), ${len(doc.completenessFindings)} completeness finding(s). ` +
@@ -164,8 +164,8 @@ function ProtocolEmptyState({ onAsk }: { onAsk: (msg: string) => void }) {
      programme name is text any member can set (periodic review 2026-09-28,
      SEC-C-4). */
   const draftPrompt = program
-    ? 'Draft a protocol synopsis for the programme open in this workspace: the study objectives, design, population and primary endpoint, from the evidence already in this programme.'
-    : 'Draft a protocol synopsis: the study objectives, design, population and primary endpoint, from the evidence already in this programme.';
+    ? 'Draft a protocol synopsis for the project open in this workspace: the study objectives, design, population and primary endpoint, from the evidence already in this project.'
+    : 'Draft a protocol synopsis: the study objectives, design, population and primary endpoint, from the evidence already in this project.';
   return (
     <div className="pd-wrap" style={{ padding: 16 }}>
       <div className="pde-empty">

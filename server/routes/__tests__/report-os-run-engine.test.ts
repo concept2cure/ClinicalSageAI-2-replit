@@ -216,7 +216,7 @@ describe('a register', () => {
     const res = await post({ scopeType: 'project', scopeId: '11', reportTypeId: SEND.typeId });
     expect(res.status, JSON.stringify(res.body)).toBe(422);
     expect(res.body.code).toBe('REPORT_TYPE_NOT_APPLICABLE');
-    expect(res.body.error).toMatch(/applies to pharma \/ biotech programs; this program is recorded as device/);
+    expect(res.body.error).toMatch(/applies to pharma \/ biotech projects; this project is recorded as device/);
     expect(x.segments).toHaveBeenCalledWith(7, 11);
     expect(x.domain).not.toHaveBeenCalled();
     expect(h.statements).toEqual([]);

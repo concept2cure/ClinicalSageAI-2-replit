@@ -143,7 +143,7 @@ md.push('| Document ID | TM-001 |');
 md.push(`| Version | generated ${generatedAt} |`);
 md.push('| Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |');
 md.push(`| Generator | \`scripts/validation/build-traceability.mjs\` (\`npm run validation:traceability\`) |`);
-md.push(`| Sources | URS-001…006 requirement tables · RA-001 rows · docs/evidence/W3/${RUN_DATE}/OQ-*/result.json · IQ/iq-results.json |`);
+md.push(`| Sources | URS-00* requirement tables · RA-001 rows · docs/evidence/W3/${RUN_DATE}/OQ-*/result.json · IQ/iq-results.json |`);
 md.push('');
 md.push('> This file is regenerated from the URS documents and the executed OQ results. Hand edits are overwritten. A requirement with no executed step reads **uncovered**; a requirement with any failed step reads **fail**; pass with deviations reads **partial**. Nothing here is a pass unless a step recorded a pass.');
 md.push('');

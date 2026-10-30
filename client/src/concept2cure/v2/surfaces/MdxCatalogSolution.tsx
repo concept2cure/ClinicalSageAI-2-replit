@@ -23,7 +23,7 @@ export function MdxCatalogSolution({
     <section className="sec" aria-label="MDX solutions" data-testid="mdx-catalog-solution">
       <div className="sec-hdr">
         <div className="sec-title">MDX solutions</div>
-        <div className="sec-sub">Medical devices and diagnostics · project workflows</div>
+        <div className="sec-sub">Medical devices and diagnostics · inside a project</div>
       </div>
       <div className="launch">
         <div className="launch-title">Medical devices and diagnostics</div>

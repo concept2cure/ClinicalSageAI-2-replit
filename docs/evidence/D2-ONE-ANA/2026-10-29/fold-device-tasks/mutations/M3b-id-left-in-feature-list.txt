@@ -1,0 +1,17 @@
+# mutation M3b-id-left-in-feature-list: shared/constants/mdx-project-features.ts
+# replaced:   'device-vault',
+
+# with:       'device-vault',
+  'device-tasks',
+
+
+== server/services/entitlements/__tests__/launch-scope.test.ts
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > reaches MDX as project features without adding app or module grants 8ms
+   → expected [ 'projects', 'project-home', …(22) ] to include 'device-tasks'
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the folded device task workbench > is in neither project scope list: Tasks holds it (D2, 2026-10-29) 0ms
+   → expected [ 'device-workstream', …(20) ] to not include 'device-tasks'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'projects', 'project-home', …(22) ] to include 'device-tasks'
+AssertionError: expected [ 'device-workstream', …(20) ] to not include 'device-tasks'
+      Tests  2 failed | 34 passed (36)
+# restored byte-for-byte (cmp)

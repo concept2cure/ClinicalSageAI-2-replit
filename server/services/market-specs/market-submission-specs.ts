@@ -3,8 +3,8 @@
  * datasheet of submission GOVERNANCE + FORMATTING requirements.
  *
  * WHY THIS EXISTS: the concrete "what does market X require to file in format Y"
- * facts were scattered across global-regulatory-authorities.json (authorities),
- * regional-ctd-templates.ts (forms/templates), region-profiles (Module 1),
+ * facts were scattered across a global-regulatory-authorities.json (authorities;
+ * unread since 2026-10-15, deleted 2026-10-26), regional-ctd-templates.ts (forms/templates), region-profiles (Module 1),
  * ectd-regional-rules.ts (eCTD package validators), and validation-rule-corpus.ts
  * (named rules). Nothing answered, in ONE queryable place: which file formats /
  * PDF versions / naming + size + path limits / language + translation rules /
@@ -112,7 +112,7 @@ export interface MarketSubmissionSpec {
   market: string;
   /** Authority short name. */
   authority: string;
-  /** Key into server/data/global-regulatory-authorities.json. */
+  /** The authority's stable id (the key the deleted global-regulatory-authorities.json used). */
   authorityId: string;
   /** The system's region code, where the format maps to one (fda|eu|jp). */
   region?: 'fda' | 'eu' | 'jp';

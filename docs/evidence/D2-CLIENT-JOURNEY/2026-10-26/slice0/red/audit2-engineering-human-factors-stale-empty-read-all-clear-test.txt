@@ -1,0 +1,45 @@
+RED (audit2 engineering-human-factors #5): with EngineeringSurface.tsx mutated so an empty read gives the all-clear again (`const nothingRecorded = false`), the stale test "still gives the all-clear when the sources genuinely read empty" still PASSES (it checks only the shared `eng-no-blockers` testid), while its replacement "says an empty read has nothing to check" FAILS. Source was backed up, restored byte-for-byte and confirmed with cmp after this run.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not claim nothing is blocking when the blocker sources failed 90ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > still gives the all-clear when the sources genuinely read empty 24ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > says an empty read has nothing to check 29ms
+   → expected 'No blockers in the records read for t…' to match /No risk records for this project yet/
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not draw an all-zero ISO 14971 matrix over a failed risk read 41ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > draws the heatmap when the risk file read cleanly 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not report "0 of 0 shown" over a risk file it could not read 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not print "Documents in flight 0" when the documents read failed 13ms
+ ↓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no review-pending count over a risk file it could not read
+ ↓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no hard-blocker count over sources it could not read, once every source is keyed
+ ↓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no counts while the sources are still loading
+ ↓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints the counts once the sources have been read
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > says an empty read has nothing to check
+AssertionError: expected 'No blockers in the records read for t…' to match /No risk records for this project yet/
+
+- Expected:
+/No risk records for this project yet/
+
++ Received:
+"No blockers in the records read for this projectNo unverified risks were found. DHF sections, change requests and non-conformances are left out until this screen reads this project's records."
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx:127:38
+    125|     const state = container.querySelector('[data-testid="eng-no-blocke…
+    126|     expect(state).not.toBeNull();
+    127|     expect(state?.textContent ?? '').toMatch(/No risk records for this…
+       |                                      ^
+    128|     expect(state?.textContent ?? '').toMatch(/so there is nothing to c…
+    129|     expect(state?.textContent ?? '').not.toMatch(/Nothing is blocking …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed | 4 skipped (11)
+   Start at  07:53:41
+   Duration  1.58s (transform 330ms, setup 204ms, import 457ms, tests 262ms, environment 509ms)
+

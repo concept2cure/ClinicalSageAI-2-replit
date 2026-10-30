@@ -75,10 +75,11 @@ import { LaunchScopeGate } from './LaunchScopeGate';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
-import { getAction, getSegment, resolveSegmentId,
+import { getAction, getSegment, resolveSegmentId, shellSegment,
   effortForMode,
 } from './registryModel';
-import { locationForSurface, surfaceIdFromLocation } from './routing';
+import { destinationFor, locationForSurface, surfaceSegmentFromLocation } from './routing';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { OPEN_PROGRAM_EVENT, OPEN_PROGRAM_SURFACE } from './programAction';
 import './styles/app-v2.css';
 // Shared surface stylesheets — the kit loads these globally (they carry the
@@ -135,7 +136,7 @@ import './styles/device-v2.css';
    GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
    ci:surface-text-ramp. See GA ledger L102. */
 import './styles/surface-text-ramp.css';
-import { restoreShellProject, useShellProjectInUrl } from './shellProject';
+import { readShellProject, restoreShellProject, useShellProject, useShellProjectInUrl } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
@@ -150,6 +151,8 @@ interface Prefs {
    */
   anaRunPolicy: AnaRunPolicy;
   segment: string;
+  /** True once the person chose a lane; until then the lane follows the organisation's client type. */
+  segmentChosen?: boolean;
   /** Set once the client dismisses (or outgrows) the first-run AnA welcome. */
   welcomeDismissed: boolean;
   /** AnA Live Drive toggle — while on, turns opt in to applied navigation. */
@@ -161,6 +164,25 @@ interface Prefs {
    * switched AnA's hands off. See `loadPrefs`.
    */
   liveDriveDefault?: 2;
+  /**
+   * Which rail default this stored pref was written under. Absent on prefs
+   * saved while the rail started collapsed: those carry `railCollapsed: true`
+   * because every pref write persisted the whole object. See `loadPrefs`.
+   */
+  railDefault?: 2;
+}
+
+/* The rail starts open, with its labels, wherever there is room for it. It
+   started as a 56px strip of twelve unlabelled icons, two pairs of them the
+   same glyph, and a client testing the product could not tell the places apart
+   (docs/design/CLIENT_JOURNEY_2026-10-25.md). At phone width the open rail
+   paints over the page, so there it still starts collapsed. */
+function railStartsCollapsed(): boolean {
+  try {
+    return window.matchMedia('(max-width: 640px)').matches;
+  } catch {
+    return false;
+  }
 }
 
 /* Live Drive is ON by default. Asking AnA to take you somewhere, open a
@@ -173,13 +195,14 @@ interface Prefs {
    sign/approve/submit/lock outright, and those stay a person's signature. */
 const DEFAULT_PREFS: Prefs = {
   dark: false,
-  railCollapsed: true,
+  railCollapsed: false,
   anaMode: 'standard',
   anaRunPolicy: 'auto',
   segment: 'biopharma',
   welcomeDismissed: false,
   liveDrive: true,
   liveDriveDefault: 2,
+  railDefault: 2,
 };
 
 function loadPrefs(): Prefs {
@@ -203,12 +226,19 @@ function loadPrefs(): Prefs {
       /* A policy this build does not know (an older or hand-edited pref) is
          not sent as-is; it reads as the default. */
       if (!isAnaRunPolicy(stored.anaRunPolicy)) delete stored.anaRunPolicy;
+      /* The same for the rail: a pref written while it started collapsed is
+         re-read under the open default once. A collapse made after this point
+         is kept. */
+      if (stored.railDefault !== 2) {
+        stored.railCollapsed = railStartsCollapsed();
+        stored.railDefault = 2;
+      }
       return { ...DEFAULT_PREFS, ...stored };
     }
   } catch {
     /* default */
   }
-  return DEFAULT_PREFS;
+  return { ...DEFAULT_PREFS, railCollapsed: railStartsCollapsed() };
 }
 
 /**
@@ -280,7 +310,10 @@ export function V2App() {
       return next;
     });
 
-  const activeId = surfaceIdFromLocation(location);
+  const openProject = useShellProject();
+  const requestedId = surfaceSegmentFromLocation(location);
+  const destination = destinationFor(requestedId, Boolean(openProject));
+  const activeId = destination.surfaceId;
   /* Demonstration mode — 'demo' while a started demonstration is live. It
      rides every opted-in turn (so a question asked mid-demo and the resumed
      stops keep the demo budgets), and drops on take-over, toggle-off, or
@@ -309,10 +342,25 @@ export function V2App() {
      click does, never a second router. */
   const nav = React.useCallback(
     (id: string) => {
-      setLocation(locationForSurface(id));
+      const next = destinationFor(id, Boolean(readShellProject()));
+      const resolved = next.applies ? resolveSurfaceAction(next.applies.actionId, next.applies.params) : null;
+      // The validated bus stashes or performs first; this single canonical
+      // write handles both outcomes without recursively resolving the alias.
+      if (resolved?.ok) applySurfaceAction(resolved.directive, () => {});
+      setLocation(locationForSurface(next.surfaceId));
     },
     [setLocation]
   );
+  React.useEffect(() => {
+    if (requestedId === activeId || surfaceSegmentFromLocation(window.location.pathname) !== requestedId) return;
+    const requested = destinationFor(requestedId, Boolean(readShellProject()));
+    const resolved = requested.applies ? resolveSurfaceAction(requested.applies.actionId, requested.applies.params) : null;
+    if (resolved?.ok) applySurfaceAction(resolved.directive, () => {});
+    // Preserve copied-link parameters and fragments. The canonical address is
+    // the one-shot marker, so a data refresh cannot reset a later chosen step.
+    const canonical = locationForSurface(activeId) + window.location.search + window.location.hash;
+    setLocation(canonical, { replace: true });
+  }, [location, requestedId, activeId, setLocation]);
   /* True from a drive_state{enabled} until the person takes over — read by the
      follow-the-work effect below, which fires AFTER turn_end has already
      released the reducer's `active` (drafts persist post-`done`). */
@@ -642,9 +690,13 @@ export function V2App() {
      The point of Live Drive is WATCHING AnA work — and her biggest work
      product is a persisted draft (`artifact_version_saved` → onArtifactSaved,
      fired by EVERY chat instance: the shell's and each owned dock's via the
-     bridge). When a driven turn lands one, take the subscriber to the
-     Artifacts Center with that artifact focused, so the document appears in
-     front of them instead of behind a nav item. */
+     bridge). When a driven turn lands one, take the subscriber to the Vault
+     with that artifact selected, so the document appears in front of them
+     instead of behind a nav item. It rides vault.focus-document by the
+     artifact's id: the project's leaf when a project is open (read again once
+     if the tree predates the save), else its row in the organization view.
+     It was the Artifacts center's, which folded into the Vault (D2, fold F3
+     slice C, 2026-10-29). */
   const followedArtifactsRef = React.useRef<Set<string>>(new Set());
   const followWork = React.useCallback(
     (artifactId: string) => {
@@ -656,8 +708,8 @@ export function V2App() {
       if (!artifactId || !prefs.liveDrive || !droveThisTurnRef.current) return;
       if (followedArtifactsRef.current.has(artifactId)) return;
       followedArtifactsRef.current.add(artifactId);
-      stashNavParamsForTarget('artifacts-center', { artifactId });
-      nav('artifacts-center');
+      const focus = resolveSurfaceAction('vault.focus-document', { artifactId });
+      if (focus.ok) applySurfaceAction(focus.directive, nav);
     },
     [nav, prefs.liveDrive]
   );
@@ -927,8 +979,10 @@ export function V2App() {
      handler — lands on that type's default screen, which is always in the
      launch scope (registryModel SEGMENTS; shellNav.test.tsx). The account
      menu's choice used to go Home and the top bar's to the default screen. */
+  const segment = shellSegment(prefs.segment, prefs.segmentChosen === true, tenantClientType);
   const chooseSegment = (id: string) => {
     set('segment', id);
+    set('segmentChosen', true);
     nav(getSegment(id)?.defaultSurface ?? 'home');
   };
 
@@ -1106,7 +1160,7 @@ export function V2App() {
   const firstName = (user?.firstName || user?.displayName || '').trim().split(/\s+/)[0] || '';
   const welcome =
     anaChat.messages.length === 0 && !prefs.welcomeDismissed
-      ? welcomeFor(tenantClientType ?? prefs.segment, firstName)
+      ? welcomeFor(tenantClientType ?? segment, firstName)
       : null;
 
   let body: React.ReactNode;
@@ -1115,7 +1169,7 @@ export function V2App() {
       <Home
         onNav={nav}
         onAsk={ask}
-        segment={prefs.segment}
+        segment={segment}
         mode={prefs.anaMode}
         setMode={(m) => set('anaMode', m)}
         welcome={welcome}
@@ -1131,7 +1185,7 @@ export function V2App() {
         key={bodyKey}
         surface={ctxSurface}
         onNav={nav}
-        segment={prefs.segment}
+        segment={segment}
         liveDrive={liveDriveBridge}
         shellChat={anaChat}
         engine={{ mode: prefs.anaMode, setMode: (m) => set('anaMode', m) }}
@@ -1139,7 +1193,7 @@ export function V2App() {
     );
   } else if (view) {
     const V = view.component;
-    body = <V key={bodyKey} surface={ctxSurface} onAsk={ask} onNav={nav} segment={prefs.segment} />;
+    body = <V key={bodyKey} surface={ctxSurface} onAsk={ask} onNav={nav} segment={segment} />;
   } else {
     body = <KitSurfaceScaffold surface={ctxSurface} onAsk={ask} />;
   }
@@ -1236,7 +1290,7 @@ export function V2App() {
         onNav={nav}
         collapsed={prefs.railCollapsed}
         setCollapsed={(v) => set('railCollapsed', v)}
-        segment={prefs.segment}
+        segment={segment}
         setSegment={chooseSegment}
       />
       {/* Phone-width scrim: at <=640px the EXPANDED rail paints over the
@@ -1252,7 +1306,7 @@ export function V2App() {
         <TopBar
           surface={activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface}
           onPalette={() => setCmdkOpen(true)}
-          segment={prefs.segment}
+          segment={segment}
           onSegment={chooseSegment}
           onNav={nav}
           onAsk={ask}

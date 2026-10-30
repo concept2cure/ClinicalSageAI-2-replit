@@ -1,0 +1,16 @@
+# engineering-risk-design-controls-gate.test.ts before the registry change (device-engineering claims only /api/mdx/engineering). Trimmed.
+ ✓ server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts > the risk register and design-control trace in device-engineering, under module enforcement > reads the panels' calls from the screens that mount them 3ms
+ × server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts > the risk register and design-control trace in device-engineering, under module enforcement > serves them to an organization entitled to device-engineering only 11ms
+ ✓ server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts > the risk register and design-control trace in device-engineering, under module enforcement > a risk-only organization keeps the risk register, as before 2ms
+ ✓ server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts > the risk register and design-control trace in device-engineering, under module enforcement > a design-controls-only organization keeps the design-control register, as before 1ms
+ ✓ server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts > the risk register and design-control trace in device-engineering, under module enforcement > refuses them to an organization entitled to none of the three 3ms
+ ✓ server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts > the risk register and design-control trace in device-engineering, under module enforcement > leaves the risk and design-controls claims whole: moving them is founder decision 4 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+
+## Received for org 401 (device-engineering only):
++   "/api/design-controls": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/risk-items": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/risk-items/7": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/risk-items/7/controls": "403 MODULE_NOT_LICENSED",

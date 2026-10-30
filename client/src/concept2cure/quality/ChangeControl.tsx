@@ -35,6 +35,7 @@ import * as React from 'react';
 import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
+import { Kpi } from './Kpi';
 import {
   CHANGE_FORM_TEMPLATE_KEYS,
   STATE_LABEL,
@@ -63,7 +64,9 @@ import { useSopTemplates } from './hooks';
 import { NewControlledDocumentForm } from './NewControlledDocumentForm';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
 import { createQmsChange, transitionQmsChange, linkQmsChange } from './qmsWrites';
-import type { ChangeType, Classification, LinkType, Relationship } from './changeData';
+import { ChangeLinkForm } from './ChangeLinkForm';
+import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
+import type { ChangeType, Classification, Relationship } from './changeData';
 
 export interface ChangeControlProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -93,17 +96,6 @@ const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
    resolves to 0px and the row's last columns are clipped away. */
 const ROW_MIN = registerRowMinWidth(GRID);
 
-function Kpi({
-  label, val, sub, tone,
-}: { label: string; val: string; sub: string; tone?: 'ok' | 'warn' | 'err' }) {
-  return (
-    <div className="qms-kpi" data-tone={tone === 'ok' ? '' : tone || ''}>
-      <div className="lbl">{label}</div>
-      <div className="val">{val}</div>
-      <div className="sub">{sub}</div>
-    </div>
-  );
-}
 
 const errText = (err: unknown) => (err instanceof Error ? err.message : String(err));
 const optionsOf = <K extends string>(labels: Record<K, string>) =>
@@ -111,6 +103,9 @@ const optionsOf = <K extends string>(labels: Record<K, string>) =>
 /** The moves a row may take here: the server's list, less approval (the signed route). */
 const unsignedMovesOf = (c: ChangeControlRow): Exclude<ChangeState, 'approved'>[] =>
   (c.nextStates ?? []).filter((s): s is Exclude<ChangeState, 'approved'> => s !== 'approved');
+
+/** The open project as the change form names it. */
+const projectName = (p: ShellProject | null) => (p?.code && p.title ? `${p.code} · ${p.title}` : p?.title ?? 'The open project');
 
 /** Icon element for a link type (from the shared `I` set). */
 function linkIcon(iconKey: string): React.ReactNode {
@@ -137,6 +132,10 @@ function ChangeControlSession({
 }: ChangeControlProps) {
   const sum = useChangeSummary();
   const user = useAuthUser(); // display only; the server resolves the signer
+  /* P-60: a change may be filed under the open project, which that project's
+     Engineering screen reads; the server admits it before writing. */
+  const shell = useShellProject();
+  const openProgram = shellProgramId(shell);
   /** The change being approved, while the signature dialog is open. */
   const [approving, setApproving] = React.useState<ChangeControlRow | null>(null);
   /** The open write drawer, if any: raise, advance a row, or link to a row. */
@@ -541,6 +540,8 @@ function ChangeControlSession({
               { key: 'classification', label: 'Classification', type: 'seg', half: true, options: optionsOf(CLASSIFICATION_LABEL) },
               { key: 'description', label: 'Current state → proposed state', type: 'textarea', rows: 3 },
               { key: 'reason', label: 'Reason for the change', type: 'textarea', rows: 3, required: true },
+              ...(openProgram ? [{ key: 'programId', label: 'Project', type: 'seg' as const, options: [{ value: '', label: 'Organisation-wide' }, { value: openProgram, label: projectName(shell) }],
+                desc: "A change filed under the open project is shown on that project's Engineering screen." }] : []),
             ],
           }}
           onCancel={() => setDrawer(null)}
@@ -551,6 +552,7 @@ function ChangeControlSession({
               changeType: (v.changeType || undefined) as ChangeType | undefined,
               classification: (v.classification || undefined) as Classification | undefined,
               targetImplementationDate: v.targetImplementationDate || undefined,
+              programId: v.programId || undefined,
             });
             return `${row.change_number} was raised as a proposed change.`;
           })}
@@ -595,31 +597,15 @@ function ChangeControlSession({
         );
       })()}
       {drawer?.kind === 'link' && (
-        <C2CForm
-          config={{
-            eyebrow: 'Change control',
-            title: `Link a record to ${drawer.change.changeNumber}`,
-            governed: 'The link is written to the audit trail under your name.',
-            submitLabel: 'Link record',
-            ...(refusal ? { notice: refusal } : {}),
-            fields: [
-              { key: 'linkType', label: 'Record type', type: 'select', required: true, half: true, options: optionsOf(LINK_TYPE_LABEL) },
-              { key: 'relationship', label: 'How it relates', type: 'select', half: true, options: optionsOf(RELATIONSHIP_LABEL) },
-              { key: 'linkedRef', label: 'Reference', type: 'text', required: true, placeholder: 'DEV-2026-041', desc: 'The record’s number as it appears in its own register.' },
-              { key: 'linkedLabel', label: 'Short description', type: 'text' },
-            ],
-          }}
+        <ChangeLinkForm
+          changeNumber={drawer.change.changeNumber}
+          refusal={refusal}
           onCancel={() => setDrawer(null)}
           onSubmit={(v) => {
             const c = drawer.change;
             void runWrite(async () => {
-              await linkQmsChange(c.id, {
-                linkType: v.linkType as LinkType,
-                linkedRef: v.linkedRef.trim(),
-                linkedLabel: v.linkedLabel.trim() || undefined,
-                relationship: (v.relationship || undefined) as Relationship | undefined,
-              });
-              return `${v.linkedRef.trim()} was linked to ${c.changeNumber}.`;
+              await linkQmsChange(c.id, { ...v, relationship: v.relationship as Relationship | undefined });
+              return `${v.linkedRef} was linked to ${c.changeNumber}.`;
             });
           }}
         />

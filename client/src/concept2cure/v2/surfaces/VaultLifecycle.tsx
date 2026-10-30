@@ -8,9 +8,20 @@
  * record holds them. A confirmed filing is not an approval.
  *
  * The current version offers the next step:
- *   - Send for review: confirmed first, because it names who started the
+ *   - Send for review: since RR1b (docs/design/REVIEW_ROUTING_2026-10-23.md)
+ *     the route form (VaultReviewRoute.tsx) names the reviewers, the approver,
+ *     the due dates and the reason; it says that whoever sends starts the
  *     record (an author, who then neither reviews nor approves it). The server
- *     takes the title, type and hash from the stored version;
+ *     takes the title, type and hash from the stored version and refuses a send
+ *     without a route (REVIEW_ROUTE_REQUIRED);
+ *   - on a named route only a named member whose turn it is signs, and the
+ *     approver approves by signing on the route (POST …/sign, meaning
+ *     approved); the sender, or an administrator, withdraws; the sender or a
+ *     member whose turn it is returns it for revision. Since RR3 the sender or
+ *     an administrator reassigns a member who has not signed, and a named
+ *     member hands their own assignment back to the sender. A version in
+ *     review with no route (it entered review before the cutover) keeps the
+ *     steps below and offers Name reviewers;
  *   - Sign review and Approve: the shared Part 11 EsignModal (meaning, reason,
  *     password, and the authenticator code when one is enrolled), forwarded to
  *     the route, which re-verifies the signer in the transaction that records
@@ -27,11 +38,22 @@
  * not new ones.
  */
 import React, { useRef, useState } from 'react';
-import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import { useAuthUser, type AuthUser } from '@/services/portal/authService';
 import { isAnnotationsShape, openAnnotationsSentence } from './VaultAnnotations';
 import { withExtendingRoles } from '@shared/constants/org-roles';
+import { lifecyclePost } from './vaultLifecyclePost';
+import {
+  RouteActDialog,
+  RouteForm,
+  RouteRoundPanel,
+  routeView,
+  type RouteAct,
+  type RouteFormMode,
+  type RouteView,
+} from './VaultReviewRoute';
+import { approvalShare, type RouteRoundView } from '../reviewRoute/routeRound';
 
 export interface VaultSignOff {
   printedName: string | null;
@@ -49,6 +71,17 @@ export interface VaultVersionLifecycle {
   creatorId?: number | null;
   review: VaultSignOff | null;
   approval: VaultSignOff | null;
+  /**
+   * RR2 records: on a routed version, every reviewer (and, once approved, every
+   * approver) who signed on its round, oldest first. Absent or null on a
+   * version with no route, whose line is `review` / `approval`.
+   */
+  reviewSignOffs?: VaultSignOff[] | null;
+  approvalSignOffs?: VaultSignOff[] | null;
+  /** The version's latest review route (RR1a's round read); null when it has none. */
+  round?: RouteRoundView | null;
+  /** The route could not be read: its reviewers are unknown, never "none" (RR1b). */
+  roundUnread?: boolean;
 }
 
 /**
@@ -109,63 +142,27 @@ function signOffLine(kind: 'Review' | 'Approval', s: VaultSignOff, retired: bool
   );
 }
 
+/** Who signed a sign-off: on a routed version everyone on its round, otherwise the one stored sign-off. */
+function signersOf(round: VaultSignOff[] | null | undefined, stored: VaultSignOff | null | undefined): VaultSignOff[] {
+  if (round?.length) return round;
+  return stored ? [stored] : [];
+}
+
 /** The stage and the sign-offs of one version, as the signature records hold them. */
 export function LifecycleSummary({ lifecycle }: { lifecycle: VaultVersionLifecycle | null | undefined }) {
   const retired = lifecycle?.stage === 'superseded';
+  const lines = (kind: 'Review' | 'Approval', signers: VaultSignOff[]) =>
+    signers.map((s) => <span key={`${kind}-${s.signatureRef}`} className="vd-ver-lc">{signOffLine(kind, s, retired)}</span>);
   return (
     <span className="vd-ver-lc" data-testid="vault-version-stage">
       {stageLabel(lifecycle?.stage)}
-      {lifecycle?.review ? <span className="vd-ver-lc">{signOffLine('Review', lifecycle.review, retired)}</span> : null}
-      {lifecycle?.approval ? <span className="vd-ver-lc">{signOffLine('Approval', lifecycle.approval, retired)}</span> : null}
+      {lines('Review', signersOf(lifecycle?.reviewSignOffs, lifecycle?.review))}
+      {lines('Approval', signersOf(lifecycle?.approvalSignOffs, lifecycle?.approval))}
     </span>
   );
 }
 
 // ── Writes: the one lifecycle route ─────────────────────────────────────────
-
-const GATE_TEXT: Record<string, string> = {
-  REVIEW_SIGNOFF_REQUIRED: "Approval needs a review sign-off on this version's current content. A reviewer signs the review first.",
-  CONTENT_REQUIRED: 'This version has no stored content to review. Upload the file as a new version.',
-  ILLEGAL_TRANSITION: "That step does not apply at this version's current stage. Reload to see its stage.",
-};
-
-const UNKNOWN_OUTCOME =
-  "The connection dropped, so it is not known whether this was recorded. Reload the Vault and check the version's history before trying again.";
-
-/** What a refusal says: the gate in words, else the server's own message. */
-function refusalText(payload: unknown, fallback: string, failed: string): string {
-  const blocked = (payload as { blockedBy?: unknown } | null)?.blockedBy;
-  const gate = Array.isArray(blocked) ? blocked.map((c) => GATE_TEXT[String(c).split(':')[0]]).find(Boolean) : undefined;
-  return gate ?? `${failed} ${redactInternals(serverMessage(payload), fallback)}`;
-}
-
-/** POST to the lifecycle route (named in full at each call, so the launch-scope gate sees it). */
-async function lifecyclePost(url: string, body: Record<string, unknown>, failed: string): Promise<Record<string, unknown>> {
-  let res: Response;
-  try {
-    res = await apiRequest('POST', url, body);
-  } catch (e) {
-    // apiRequest throws on every refusal but a 401; only a thrown non-API error is a dropped connection.
-    if (e instanceof ApiRequestError) throw new Error(refusalText(e.payload, e.message, failed), { cause: e });
-    throw new Error(UNKNOWN_OUTCOME, { cause: e });
-  }
-  const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!res.ok || !json || json.ok === false) {
-    throw new Error(refusalText(json, 'No reason was returned. Reload and try again.', failed));
-  }
-  return json;
-}
-
-/** Start the version's record (or find the one started) and send it for review. */
-async function sendForReview(vaultId: string): Promise<void> {
-  const failed = 'The version was not sent for review.';
-  const started = await lifecyclePost(
-    '/api/regulatory/documents',
-    { sources: { vault_documents: { nativeId: vaultId, role: 'artifact' } } },
-    failed,
-  );
-  await lifecyclePost(`/api/regulatory/documents/${encodeURIComponent(String(started.canonicalId))}/advance`, { to: 'in_review' }, failed);
-}
 
 type SignInput = { reason: string; password: string; totp?: string };
 
@@ -180,6 +177,14 @@ const approve = (canonicalId: string, input: SignInput) =>
   lifecyclePost(
     `/api/regulatory/documents/${encodeURIComponent(canonicalId)}/advance`,
     { to: 'approved', reason: input.reason, password: input.password, mfaToken: input.totp },
+    'The version was not approved.',
+  );
+
+/** On a named route the approver approves by signing on it; the server advances the version (RR1a, B8). */
+const approveOnRoute = (canonicalId: string, input: SignInput) =>
+  lifecyclePost(
+    `/api/regulatory/documents/${encodeURIComponent(canonicalId)}/sign`,
+    { meaning: 'approved', reason: input.reason, password: input.password, mfaToken: input.totp },
     'The version was not approved.',
   );
 
@@ -207,6 +212,8 @@ interface Actor {
   id: number | null;
   /** Known roles carry no authoring grant (unknown roles are left to the server). */
   cannotAuthor: boolean;
+  /** An organization admin may withdraw a route they did not send (the server decides). */
+  admin?: boolean;
 }
 
 function stepOf(lifecycle: VaultVersionLifecycle | null | undefined): Step {
@@ -274,47 +281,35 @@ export function whoMaySign(
   return `Not assigned to one person. Can ${act}: ${list}.`;
 }
 
+/** The signed-in account's id, as the round names it. */
+const accountIdOf = (authUser: AuthUser | null): number | null => (authUser?.id && /^\d+$/.test(authUser.id) ? Number(authUser.id) : null);
+
 function useActor(): { actor: Actor; authUser: AuthUser | null } {
   const authUser = useAuthUser();
   return {
     authUser,
     actor: {
-      id: authUser?.id && /^\d+$/.test(authUser.id) ? Number(authUser.id) : null,
+      id: accountIdOf(authUser),
       cannotAuthor: rolesCannotAuthor(authUser?.roles ?? []),
+      admin: (authUser?.roles ?? []).some((r) => String(r).toLowerCase() === 'admin'),
     },
   };
 }
 
 // ── The actions on the current version ──────────────────────────────────────
 
-/** Sending for review, confirmed: what it covers and what it means for who sent it. */
-function SendForReviewConfirm({ versionLabel, hashPrefix, busy, onConfirm, onCancel }: {
-  versionLabel: string;
-  hashPrefix: string | null;
-  busy: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
+/**
+ * What the approval dialog says about the file and the versions it supersedes.
+ * On a route with more approvers (RR2, NEW-4), which approval the reader's is:
+ * the version is approved by the last one.
+ */
+function approveMeta(supersedes: string[], share: { k: number; n: number } | null): string {
+  const when = share && share.k < share.n ? 'once every named approver has signed' : 'when you sign';
   return (
-    <span className="vd-ver-lc" role="group" aria-label="Confirm sending for review">
-      <span className="vd-ver-m">
-        {`Send ${versionLabel || 'this version'} for review? The review covers this version's stored file as it is now` +
-          `${hashPrefix ? ` (SHA-256 ${hashPrefix}…)` : ''}. Because you start its review record, a different person reviews and approves it.`}
-      </span>
-      <span className="vd-ver-acts">
-        <button className="sp-ask" disabled={busy} onClick={onConfirm}>Send for review</button>
-        <button className="sp-ask" disabled={busy} onClick={onCancel}>Cancel</button>
-      </span>
-    </span>
-  );
-}
-
-/** What the approval dialog says about the file and the versions it supersedes. */
-function approveMeta(supersedes: string[]): string {
-  return (
+    (share && share.n > 1 ? `Your approval is ${share.k} of ${share.n} required: the version is approved once every named approver has signed. ` : '') +
     "Your approval applies to this version's stored file as it is now. " +
     (supersedes.length > 0
-      ? `${supersedes.join(', ')} ${supersedes.length === 1 ? 'becomes' : 'become'} superseded when you sign.`
+      ? `${supersedes.join(', ')} ${supersedes.length === 1 ? 'becomes' : 'become'} superseded ${when}.`
       : 'No earlier version of this document is approved, so none is superseded.')
   );
 }
@@ -332,7 +327,8 @@ function SignOffDialog({ signing, p, authUser, onClose, annotationNote }: {
   const review = signing === 'review';
   const onSign = async (input: { meaning: string; reason: string; password: string; totp?: string }): Promise<EsigSignedManifest> => {
     const canonicalId = p.lifecycle!.canonicalId;
-    const result = review ? await signReview(canonicalId, input) : await approve(canonicalId, input);
+    const result = review ? await signReview(canonicalId, input)
+      : p.routed ? await approveOnRoute(canonicalId, input) : await approve(canonicalId, input);
     signed.current = true;
     const at = (result.signature as { signedAt?: string } | undefined)?.signedAt ?? (result.auditEvent as { at?: string } | undefined)?.at ?? '';
     return { meaning: input.meaning as EsigSignedManifest['meaning'], reason: input.reason, signedAt: at };
@@ -345,7 +341,7 @@ function SignOffDialog({ signing, p, authUser, onClose, annotationNote }: {
       targetMeta={
         (review
           ? "Your review applies to this version's stored file as it is now. A changed file is a new version and needs its own review."
-          : approveMeta(p.supersedes)) +
+          : approveMeta(p.supersedes, p.lifecycle?.round ? approvalShare(p.lifecycle.round, accountIdOf(authUser)) : null)) +
         (annotationNote ? ` When this dialog opened: ${annotationNote} Signing does not resolve annotations; they stay on each version's record.` : '')
       }
       meanings={review ? ['review'] : ['approval']}
@@ -377,6 +373,8 @@ interface ActionProps {
   projectId?: string;
   /** Who may sign here, as the server read it with the versions. */
   signing?: VaultSigningPosture | null;
+  /** Set by the actions: the step is on a named route (the approver signs on it). */
+  routed?: boolean;
 }
 
 /** The open annotations on every version of the document, as a sentence; null when they could not be read. */
@@ -391,16 +389,155 @@ async function readOpenAnnotations(projectId: string, vaultId: string): Promise<
   }
 }
 
+/** What a version on a named route offers this reader (RR1b). */
+interface RoutedPlan {
+  step: Step;
+  blocked: string | null;
+  form: RouteFormMode | null;
+  acts: RouteAct[];
+}
+
+/**
+ * The route acts this reader is offered: the sender (or an admin) withdraws;
+ * the sender, or a member whose turn it is, returns it; and (RR3) a named
+ * member who has not signed hands their own assignment back, whether or not
+ * their step is open. The server decides each again.
+ */
+function routeActsFor(round: RouteRoundView, me: Actor, myTurn: boolean): RouteAct[] {
+  if (me.cannotAuthor) return [];
+  const sender = me.id !== null && round.route.senderId === me.id;
+  const acts: RouteAct[] = [];
+  if (sender || me.admin) acts.push('withdraw');
+  if (sender || myTurn) acts.push('return');
+  if (round.members.some((m) => m.userId === me.id && m.outcome === 'pending')) acts.push('hand-back');
+  return acts;
+}
+
+/**
+ * The plan for a version in review on its route: a named member whose turn it
+ * is signs; the sender (or an admin) withdraws; the sender, or a member whose
+ * turn it is, returns it. A withdrawn route signs nothing and is sent again;
+ * a version in review with no route offers Name reviewers beside today's steps.
+ */
+function routedPlan(view: RouteView, me: Actor, signing: VaultSigningPosture | null | undefined): RoutedPlan | null {
+  if (view.kind === 'withdrawn') return { step: null, blocked: null, form: me.cannotAuthor ? null : 'resend', acts: [] };
+  if (view.kind !== 'live') return null;
+  const { round } = view;
+  const mine = round.members.find((m) => m.userId === me.id && m.stepOpen && m.outcome === 'pending') ?? null;
+  const acts = routeActsFor(round, me, mine !== null);
+  if (!mine) return { step: null, blocked: null, form: null, acts };
+  const step = mine.role === 'reviewer' ? 'review' : 'approve';
+  return { step, blocked: signingRefusal(step, signing), form: null, acts };
+}
+
+const FORM_LABEL: Record<RouteFormMode, string> = { send: 'Send for review', resend: 'Send again', name: 'Name reviewers' };
+const ACT_LABEL: Record<RouteAct, string> = { withdraw: 'Withdraw', return: 'Return for revision', 'hand-back': 'Hand back' };
+
+/**
+ * The version's route, as it stands: every member and what each has done, or
+ * that its reviewers could not be read, and its naming history. On any
+ * version with a round; reminders and reassignment (RR3) only on the current
+ * one, when the page can re-read it.
+ */
+export function VersionRoute({ lifecycle, title, current, vaultId, onChanged }: {
+  lifecycle: VaultVersionLifecycle | null | undefined;
+  title: string;
+  current: boolean;
+  vaultId?: string;
+  /** Re-read the Vault after a reassignment. */
+  onChanged?: () => void;
+}) {
+  const { actor } = useActor();
+  const reassign = current && vaultId && onChanged && lifecycle?.canonicalId && !actor.cannotAuthor
+    ? { vaultId, canonicalId: lifecycle.canonicalId, admin: Boolean(actor.admin), onChanged }
+    : undefined;
+  return <RouteRoundPanel view={routeView(lifecycle)} meId={actor.id} title={title} canRemind={current} reassign={reassign} />;
+}
+
+/** Everything the current version offers this reader, decided before anything renders. */
+interface ActionPlan {
+  view: RouteView;
+  step: Step;
+  blocked: string | null;
+  /** Send again (a withdrawn route) or Name reviewers (in review with none). */
+  secondaryForm: RouteFormMode | null;
+  acts: RouteAct[];
+  /** "Not assigned to one person": a version in review with no route only. */
+  who: string | null;
+  routed: boolean;
+  reviewComplete: boolean;
+}
+
+/** The steps of a version with no live or withdrawn route: today's, and Name reviewers when it is in review with none. */
+function unroutedPlan(view: RouteView, p: ActionProps, actor: Actor): RoutedPlan {
+  const legacy = nextStep(p.lifecycle, actor, p.uploaderId, p.signing);
+  // A version in review whose reviewers could not be read offers no step: the server decides who is named.
+  const unreadInReview = view.kind === 'unread' && p.lifecycle?.stage === 'in_review';
+  return {
+    step: unreadInReview ? null : legacy.step,
+    blocked: legacy.blocked,
+    form: view.kind === 'legacy' && !actor.cannotAuthor ? 'name' : null,
+    acts: [],
+  };
+}
+
+function actionPlan(p: ActionProps, actor: Actor): ActionPlan {
+  const view = routeView(p.lifecycle);
+  const routed = routedPlan(view, actor, p.signing);
+  const plan = routed ?? unroutedPlan(view, p, actor);
+  const step: Step = plan.step;
+  return {
+    view,
+    step,
+    blocked: plan.blocked,
+    secondaryForm: plan.form,
+    acts: plan.acts,
+    who: view.kind === 'legacy' && step ? whoMaySign(step, p.lifecycle, p.uploaderId, p.signing) : null,
+    routed: routed !== null,
+    reviewComplete: (view.kind === 'live' || view.kind === 'withdrawn') && view.round.reviewComplete,
+  };
+}
+
+function ActionButtons({ plan, p, onStep, onForm, onAct }: {
+  plan: ActionPlan;
+  p: ActionProps;
+  onStep: (step: Exclude<Step, null>) => void;
+  onForm: (mode: RouteFormMode) => void;
+  onAct: (act: RouteAct) => void;
+}) {
+  const { step, secondaryForm } = plan;
+  const label = step === 'send' ? 'Send for review' : step === 'review' ? 'Sign review' : 'Approve';
+  const named = `${p.title} ${p.versionLabel}`;
+  return (
+    <>
+      {step && (
+        <button className="sp-ask" disabled={plan.blocked !== null} onClick={() => onStep(step)} aria-label={`${label}: ${named}`}>
+          {label}
+        </button>
+      )}
+      {secondaryForm && (
+        <button className="sp-ask" onClick={() => onForm(secondaryForm)} aria-label={`${FORM_LABEL[secondaryForm]}: ${named}`}>
+          {FORM_LABEL[secondaryForm]}
+        </button>
+      )}
+      {plan.acts.map((a) => (
+        <button key={a} className="sp-ask" onClick={() => onAct(a)} aria-label={`${ACT_LABEL[a]}: ${named}`}>
+          {ACT_LABEL[a]}
+        </button>
+      ))}
+    </>
+  );
+}
+
 export function VersionLifecycleActions(p: ActionProps) {
   const { actor, authUser } = useActor();
   const [signing, setSigning] = useState<'review' | 'approve' | null>(null);
-  const [confirming, setConfirming] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState<RouteFormMode | null>(null);
+  const [act, setAct] = useState<RouteAct | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [annotationNote, setAnnotationNote] = useState<string | undefined>(undefined);
-  const { step, blocked } = nextStep(p.lifecycle, actor, p.uploaderId, p.signing);
-  if (!step) return null;
-  const who = whoMaySign(step, p.lifecycle, p.uploaderId, p.signing);
+  const plan = actionPlan(p, actor);
+  if (!plan.step && !plan.secondaryForm && plan.acts.length === 0) return null;
 
   /* What is open is read when the dialog is asked for, and said in it. It
      never blocks signing: no decision makes open annotations a refusal (FD13). */
@@ -412,48 +549,29 @@ export function VersionLifecycleActions(p: ActionProps) {
     }
     setSigning(which);
   };
-
-  const send = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await sendForReview(p.vaultId);
-      setConfirming(false);
-      p.onChanged();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'The version was not sent for review.');
-    } finally {
-      setBusy(false);
-    }
+  const changed = () => {
+    setForm(null);
+    setAct(null);
+    p.onChanged();
   };
-
-  const label = step === 'send' ? 'Send for review' : step === 'review' ? 'Sign review' : 'Approve';
   return (
     <span className="vd-ver-acts">
-      {!confirming && (
-        <button
-          className="sp-ask"
-          disabled={busy || blocked !== null}
-          onClick={() => (step === 'send' ? setConfirming(true) : void openSignOff(step))}
-          aria-label={`${label}: ${p.title} ${p.versionLabel}`}
-        >
-          {label}
-        </button>
-      )}
-      {confirming && (
-        <SendForReviewConfirm
-          versionLabel={p.versionLabel}
-          hashPrefix={p.contentHash ? p.contentHash.slice(0, 12) : null}
-          busy={busy}
-          onConfirm={() => void send()}
-          onCancel={() => setConfirming(false)}
-        />
-      )}
-      {blocked ? <span className="vd-ver-m">{blocked}</span> : null}
-      {who ? <span className="vd-ver-m" data-testid="vault-who-may-sign">{who}</span> : null}
+      <ActionButtons plan={plan} p={p} onForm={setForm} onAct={setAct}
+        onStep={(step) => (step === 'send' ? setForm('send') : void openSignOff(step))} />
+      {plan.blocked ? <span className="vd-ver-m">{plan.blocked}</span> : null}
+      {plan.who ? <span className="vd-ver-m" data-testid="vault-who-may-sign">{plan.who}</span> : null}
+      {plan.view.kind === 'withdrawn' ? <span className="vd-ver-m">This route was withdrawn: nothing is signed on this version until a new route is sent.</span> : null}
       {error ? <span className="vd-dr-err" role="alert">{error}</span> : null}
       {signing && (
-        <SignOffDialog signing={signing} p={p} authUser={authUser} annotationNote={annotationNote} onClose={() => setSigning(null)} />
+        <SignOffDialog signing={signing} p={{ ...p, routed: plan.routed }} authUser={authUser} annotationNote={annotationNote} onClose={() => setSigning(null)} />
+      )}
+      {form && (
+        <RouteForm mode={form} vaultId={p.vaultId} canonicalId={p.lifecycle?.canonicalId ?? null} title={p.title} versionLabel={p.versionLabel}
+          hashPrefix={p.contentHash ? p.contentHash.slice(0, 12) : null} onClose={() => setForm(null)} onSent={changed} />
+      )}
+      {act && p.lifecycle && (
+        <RouteActDialog act={act} canonicalId={p.lifecycle.canonicalId} title={`${p.title} ${p.versionLabel}`.trim()}
+          reviewComplete={plan.reviewComplete} onClose={() => setAct(null)} onDone={changed} />
       )}
     </span>
   );

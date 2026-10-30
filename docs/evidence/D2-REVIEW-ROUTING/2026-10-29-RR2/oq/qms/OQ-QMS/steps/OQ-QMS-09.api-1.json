@@ -1,0 +1,711 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5202/api/mdx/qms/documents/review-due?within=30",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 25,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": 42,
+          "organization_id": 6,
+          "doc_number": "SOP-OQ-B-20261029183044",
+          "title": "OQ-006 Second SOP 20261029183044",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "1.0",
+          "status": "effective",
+          "effective_date": "2026-10-29T00:00:00.000Z",
+          "next_review_date": "2026-11-03T00:00:00.000Z",
+          "author_id": 6,
+          "approver_id": 7,
+          "approved_at": "2026-10-29T18:32:30.551Z",
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "approval": {
+              "at": "2026-10-29T18:32:30.551+00:00",
+              "by": 7,
+              "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "7a42b010b1f7d723b6eac430e44b448957c68009f22a3ca7beb22a063bf8226f",
+              "twoPersonRule": "enforced"
+            },
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+            "templateKey": "sop"
+          },
+          "created_at": "2026-10-29T18:31:31.970Z",
+          "updated_at": "2026-10-29T18:32:30.527Z",
+          "deleted_at": null,
+          "authoring_document_id": "65440ba3-13b4-4f5f-b2c5-c0f92def0296",
+          "in_force": null,
+          "periodic_review": null,
+          "next_review_due": "2026-11-03",
+          "overdue": false
+        },
+        {
+          "id": 20,
+          "organization_id": 6,
+          "doc_number": "SOP-OQ-20261029143718",
+          "title": "OQ-006 Document control SOP 20261029143718",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-11-08T00:00:00.000Z",
+          "author_id": 6,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+            "templateKey": "sop",
+            "lastRevision": {
+              "by": 6,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference",
+              "sourceDocumentId": "50c751f7-795e-46b0-9c04-dc55f03f263f"
+            },
+            "retainedAuthoringDocuments": [
+              "50c751f7-795e-46b0-9c04-dc55f03f263f"
+            ]
+          },
+          "created_at": "2026-10-29T14:37:19.693Z",
+          "updated_at": "2026-10-29T14:39:01.500Z",
+          "deleted_at": null,
+          "authoring_document_id": "688e96bf-5d56-4804-9c4b-ef04e577cd9a",
+          "in_force": {
+            "version": "1.0",
+            "effectiveDate": "2026-10-29T00:00:00.000Z",
+            "approvedAt": "2026-10-29T14:37:30.511Z",
+            "approverId": 7
+          },
+          "periodic_review": null,
+          "next_review_due": "2026-11-08",
+          "overdue": false
+        },
+        {
+          "id": 24,
+          "organization_id": 6,
+          "doc_number": "SOP-OQ-20261029144026",
+          "title": "OQ-006 Document control SOP 20261029144026",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-11-08T00:00:00.000Z",
+          "author_id": 6,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+            "templateKey": "sop",
+            "lastRevision": {
+              "by": 6,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference",
+              "sourceDocumentId": "0a34eb86-49bb-4b6c-94cb-6e0e62dc02c3"
+            },
+            "retainedAuthoringDocuments": [
+              "0a34eb86-49bb-4b6c-94cb-6e0e62dc02c3"
+            ]
+          },
+          "created_at": "2026-10-29T14:40:27.671Z",
+          "updated_at": "2026-10-29T14:42:01.474Z",
+          "deleted_at": null,
+          "authoring_document_id": "f69ecea3-adec-4aee-9fb2-03fa1e2cad61",
+          "in_force": {
+            "version": "1.0",
+            "effectiveDate": "2026-10-29T00:00:00.000Z",
+            "approvedAt": "2026-10-29T14:40:32.451Z",
+            "approverId": 7
+          },
+          "periodic_review": null,
+          "next_review_due": "2026-11-08",
+          "overdue": false
+        },
+        {
+          "id": 28,
+          "organization_id": 6,
+          "doc_number": "SOP-OQ-20261029144434",
+          "title": "OQ-006 Document control SOP 20261029144434",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-11-08T00:00:00.000Z",
+          "author_id": 6,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+            "templateKey": "sop",
+            "lastRevision": {
+              "by": 6,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference",
+              "sourceDocumentId": "e5ddb8de-82a7-4b6e-8d53-5282dd5faa2c"
+            },
+            "retainedAuthoringDocuments": [
+              "e5ddb8de-82a7-4b6e-8d53-5282dd5faa2c"
+            ]
+          },
+          "created_at": "2026-10-29T14:44:35.345Z",
+          "updated_at": "2026-10-29T14:46:31.432Z",
+          "deleted_at": null,
+          "authoring_document_id": "af25c1f7-613c-494e-a17b-536c294cf3bc",
+          "in_force": {
+            "version": "1.0",
+            "effectiveDate": "2026-10-29T00:00:00.000Z",
+            "approvedAt": "2026-10-29T14:45:00.466Z",
+            "approverId": 7
+          },
+          "periodic_review": null,
+          "next_review_due": "2026-11-08",
+          "overdue": false
+        },
+        {
+          "id": 32,
+          "organization_id": 6,
+          "doc_number": "SOP-OQ-20261029145843",
+          "title": "OQ-006 Document control SOP 20261029145843",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-11-08T00:00:00.000Z",
+          "author_id": 6,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+            "templateKey": "sop",
+            "lastRevision": {
+              "by": 6,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference",
+              "sourceDocumentId": "1bb380ac-8db0-4712-a2da-2cb7f4193320"
+            },
+            "retainedAuthoringDocuments": [
+              "1bb380ac-8db0-4712-a2da-2cb7f4193320"
+            ]
+          },
+          "created_at": "2026-10-29T14:58:44.980Z",
+          "updated_at": "2026-10-29T15:00:31.455Z",
+          "deleted_at": null,
+          "authoring_document_id": "2100bf1f-a880-4d1b-9439-5780b7218448",
+          "in_force": {
+            "version": "1.0",
+            "effectiveDate": "2026-10-29T00:00:00.000Z",
+            "approvedAt": "2026-10-29T14:59:00.474Z",
+            "approverId": 7
+          },
+          "periodic_review": null,
+          "next_review_due": "2026-11-08",
+          "overdue": false
+        },
+        {
+          "id": 36,
+          "organization_id": 6,
+          "doc_number": "SOP-OQ-20261029153957",
+          "title": "OQ-006 Document control SOP 20261029153957",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-11-08T00:00:00.000Z",
+          "author_id": 6,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+            "templateKey": "sop",
+            "lastRevision": {
+              "by": 6,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference",
+              "sourceDocumentId": "de4f6fe2-5435-4ff6-9285-602219254744"
+            },
+            "retainedAuthoringDocuments": [
+              "de4f6fe2-5435-4ff6-9285-602219254744"
+            ]
+          },
+          "created_at": "2026-10-29T15:39:58.374Z",
+          "updated_at": "2026-10-29T15:42:01.520Z",
+          "deleted_at": null,
+          "authoring_document_id": "dced874b-3a3e-422d-a05e-94c2dc679bff",
+          "in_force": {
+            "version": "1.0",
+            "effectiveDate": "2026-10-29T00:00:00.000Z",
+            "approvedAt": "2026-10-29T15:40:30.503Z",
+            "approverId": 7
+          },
+          "periodic_review": null,
+          "next_review_due": "2026-11-08",
+          "overdue": false
+        },
+        {
+          "id": 40,
+          "organization_id": 6,
+          "doc_number": "SOP-OQ-20261029183044",
+          "title": "OQ-006 Document control SOP 20261029183044",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-11-08T00:00:00.000Z",
+          "author_id": 6,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+            "templateKey": "sop",
+            "lastRevision": {
+              "by": 6,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference",
+              "sourceDocumentId": "20095b44-f7eb-4b49-8fde-ae0154a1ff8e"
+            },
+            "retainedAuthoringDocuments": [
+              "20095b44-f7eb-4b49-8fde-ae0154a1ff8e"
+            ]
+          },
+          "created_at": "2026-10-29T18:30:45.425Z",
+          "updated_at": "2026-10-29T18:32:31.466Z",
+          "deleted_at": null,
+          "authoring_document_id": "2beb0b7c-1c55-4998-8578-4f3b189c5a39",
+          "in_force": {
+            "version": "1.0",
+            "effectiveDate": "2026-10-29T00:00:00.000Z",
+            "approvedAt": "2026-10-29T18:31:00.463Z",
+            "approverId": 7
+          },
+          "periodic_review": null,
+          "next_review_due": "2026-11-08",
+          "overdue": false
+        }
+      ],
+      "meta": {
+        "count": 7,
+        "withinDays": 30
+      }
+    }
+  }
+}

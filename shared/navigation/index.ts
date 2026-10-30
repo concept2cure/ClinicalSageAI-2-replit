@@ -86,28 +86,31 @@ export type NavigationResolution =
 
 export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Global destinations (no active project required) ──
-  { id: 'projects', label: 'Projects', description: 'The projects list / workspace home — pick or create a regulatory program.', scope: 'global', group: 'global' },
-  { id: 'mdx', label: 'MDX (Medical Device & Diagnostics)', description: 'The MDX module home (510(k), PMA, CER, IVD surfaces).', scope: 'global', group: 'global' },
+  { id: 'projects', label: 'Projects', description: 'The projects list / workspace home — pick or create a project.', scope: 'global', group: 'global' },
+  { id: 'mdx', label: 'MDX (Medical Device & Diagnostics)', description: 'Projects filtered to medical device and diagnostics projects. Open a project for its recorded pathway and workflow.', scope: 'global', group: 'global' },
   { id: 'biopharma', label: 'Biopharma', description: 'The biopharma module (IND, pathway, lifecycle, meetings).', scope: 'global', group: 'global' },
   { id: 'pdev', label: 'Program Development (PDEV→IND)', description: 'The PDEV → IND workflow surface. May be feature-gated.', scope: 'global', group: 'global' },
   { id: 'deep-research', label: 'Deep Research', description: 'The full-screen deep-research chat surface.', scope: 'global', group: 'global' },
-  { id: 'apps', label: 'Workflows', description: 'A guide to when and how to use the existing work areas and their features, with workspace access details.', scope: 'global', group: 'global' },
+  { id: 'apps', label: 'Subscription & features', description: 'What the organization\'s subscription includes, with the reason any feature is unavailable; administrators turn features on and off here. Features themselves open from inside a project.', scope: 'global', group: 'global' },
   // The two Part 11 surfaces the catalog never gates (21 CFR §11.10(e)) —
   // shell surfaces in shared/constants/launch-scope.ts. Registered here so a
   // demonstration can end where a regulator would start: at the record of
   // every governed act. Read-only screens; nothing here signs or changes.
   { id: 'audit-trail', label: 'Audit trail', description: 'The tenant audit trail — the hash-chained record of every governed act, with the server verdict on the chain.', scope: 'global', group: 'global' },
-  { id: 'part11-console', label: 'Part 11 console', description: 'How 21 CFR Part 11 compliance is evidenced: signer modes, signature manifestations and the audit-chain verifier.', scope: 'global', group: 'global' },
+  /* The Part 11 console folded into the audit trail (D2, 2026-10-29): this
+     handle is kept so an old conversation's move still lands, and
+     DEEP_LINK_ALIASES takes it to audit-trail. */
+  { id: 'part11-console', label: 'Part 11 console', description: 'The audit trail, whose banner states both audit hash chains\' verdicts as the server re-computes them (the Part 11 console folded into it).', scope: 'global', group: 'global' },
   // Reporting & analytics, a launch app since 2026-09-30 (founder decision of 2026-09-26).
-  { id: 'insights', label: 'Reporting & analytics', description: 'The Reporting canvas: governed reports over the program records, each with its confidence, gaps and blockers stated.', scope: 'global', group: 'global' },
+  { id: 'insights', label: 'Reporting & analytics', description: 'The Reporting canvas: governed reports over the project records, each with its confidence, gaps and blockers stated.', scope: 'global', group: 'global' },
   { id: 'compliance-reports', label: 'Audit & compliance reports', description: 'Reports an auditor or inspector asks for — user access review, sign-in events, administrative changes, the e-signature register, audit trail integrity, retention and legal holds, controlled documents — each sealed and recorded on the audit trail when run.', scope: 'global', group: 'global' },
   {
-    id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global',
-    // Declared because it is already CONSUMED (the surface focuses/scrolls to
-    // this artifact on mount) and PRODUCED (the shell's follow-the-work stash
-    // on artifact_version_saved) — an undeclared param the channel carries is
-    // a contract gap, not a feature.
-    params: [{ name: 'artifactId', required: false, description: 'Artifact to focus and scroll into view on arrival.' }],
+    /* The Artifacts center folded into the Vault (D2, fold F3 slice C,
+       2026-10-29): this handle is kept so an old conversation's move still
+       lands, and DEEP_LINK_ALIASES takes it to the Vault. Its artifactId param
+       went with the gallery that read it; the follow-the-work hand-off and AnA
+       focus an artifact with vault.focus-document now, which takes the id. */
+    id: 'artifacts-center', label: 'Governed artifacts', description: 'The Vault, which lists the governed artifacts of every project the user can open when no project is open (the Artifacts center folded into it). To select one artifact, use vault.focus-document.', scope: 'global', group: 'global',
   },
 
   // ── Project-scoped tabs (require an active project) ──
@@ -117,21 +120,20 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'review', label: 'Review', description: 'The review / readiness surface for the project.', scope: 'project', group: 'project' },
   { id: 'submissions', label: 'Submissions', description: 'The project submissions surface.', scope: 'project', group: 'project' },
   { id: 'vault', label: 'Vault', description: 'The project document vault.', scope: 'project', group: 'project' },
-  { id: 'dossier-map', label: 'Dossier Map', description: 'The CTD/dossier structure map for the project.', scope: 'project', group: 'project' },
   { id: 'section-workspace', label: 'Section Workspace', description: 'The CTD section authoring workspace.', scope: 'project', group: 'project', params: [{ name: 'sectionCode', required: false, description: 'CTD section code to open, e.g. "3.2.P.8".' }] },
   { id: 'csr-workflow', label: 'CSR Workflow', description: 'The clinical study report workflow.', scope: 'project', group: 'project' },
-  { id: 'ind-checklist', label: 'IND Checklist', description: 'The IND submission checklist.', scope: 'project', group: 'project' },
+  { id: 'ind-checklist', label: 'IND forms', description: 'The IND checklist and Forms 1571, 1572 and 3674.', scope: 'project', group: 'project' },
   { id: 'template-library', label: 'Template Library', description: 'The project template library.', scope: 'project', group: 'project' },
   { id: 'review-readiness', label: 'Review Readiness', description: 'The submission review-readiness assessment.', scope: 'project', group: 'project' },
   { id: 'report-engine', label: 'Protocol analysis', description: 'Analyze protocol text and draft design recommendations, statistical insights and IND-readiness notes for Authoring.', scope: 'project', group: 'project' },
 
   // ── Module workstreams (project-scoped) ──
   { id: 'cmc', label: 'CMC / Quality (Module 3)', description: 'The CMC workstream (specifications, stability, batch, etc.).', scope: 'project', group: 'module' },
-  { id: 'protocol-dev', label: 'Protocol development', description: 'The clinical protocol authoring workspace — sections, objectives, risk/milestone/amendment/deviation registers, and completeness findings.', scope: 'global', group: 'module' },
+  { id: 'protocol-dev', label: 'Protocol workspace', description: 'The clinical protocol authoring workspace — sections, objectives, risk/milestone/amendment/deviation registers, and completeness findings.', scope: 'global', group: 'module' },
   { id: 'labeling', label: 'Labeling', description: 'The labeling workstream (documents, symbols, translations).', scope: 'project', group: 'module' },
   { id: 'risk', label: 'Risk Management', description: 'The risk workstream (register, matrix, controls).', scope: 'project', group: 'module' },
   { id: 'shadow-review', label: 'Shadow review', description: 'The simulated-reviewer surface — predicts Refuse-to-File / Complete-Response risk under a chosen regulator lens (FDA, EMA, PMDA, MDR/IVDR notified body) before filing.', scope: 'project', group: 'module' },
-  { id: 'tasking', label: 'Tasking', description: 'The task board / list / kanban.', scope: 'project', group: 'module' },
+  { id: 'tasking', label: 'Tasks', description: 'The task board / list / kanban.', scope: 'project', group: 'module' },
   { id: 'submission-gateway', label: 'Submission Gateway', description: 'The submission gateway (transmittals, validation).', scope: 'project', group: 'module' },
   // A launch-catalog Submission Center screen that no target reached, so AnA
   // could not get to it at all; its compile controls are wave 7 actions.
@@ -159,7 +161,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
       ],
     }],
   },
-  { id: 'quality', label: 'Quality (SOP / Controlled Docs)', description: 'The quality management surface (SOP register, controlled documents).', scope: 'project', group: 'module' },
+  { id: 'quality', label: 'Quality', description: 'The quality management surface (SOP register, controlled documents).', scope: 'project', group: 'module' },
   {
     id: 'authoring', label: 'Authoring', description: 'The unified document authoring editor.', scope: 'project', group: 'module',
     params: [{ name: 'authoringDocType', required: false, description: 'Document type to author (drives the editor template).' }],
@@ -177,7 +179,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // The Communication Center is not a rail item (product decision, 2026-07-28);
   // it is reached from the project home, ⌘K and deep link — and, from here,
   // by AnA. It was the one project surface `navigate_to` could not reach.
-  { id: 'communication-center', label: 'Communication Center', description: 'The agency-communication hub for the project — the FDA loop, the agency inbox, meetings and commitments, and authority profiles.', scope: 'project', group: 'module' },
+  { id: 'communication-center', label: 'Communication', description: 'The agency-communication hub for the project — the FDA loop, the agency inbox, meetings and commitments, and authority profiles.', scope: 'project', group: 'module' },
   { id: 'mission-control', label: 'Mission control', description: 'The portfolio mission-control board — every program and its cross-program status.', scope: 'global', group: 'global' },
   { id: 'biostat-workbench', label: 'Biostatistics workbench', description: 'The biostatistics workbench — reviewer-risk assessment plus the deterministic design engines (assurance, group-sequential, sample size, multiplicity, and more).', scope: 'global', group: 'module' },
   { id: 'filing-strategy', label: 'Filing strategy', description: 'The filing-strategy workspace — filing-sequence optimization, agency divergence, and prediction calibration.', scope: 'project', group: 'module' },
@@ -185,27 +187,30 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'crl-library', label: 'FDA CRL library', description: 'The FDA Complete-Response-Letter evidence library — deficiency findings by discipline and severity across the corpus.', scope: 'global', group: 'module' },
   { id: 'registrations', label: 'Registrations', description: 'The registrations & lifecycle workspace — marketing authorizations by market, the approvals tracker, renewals & variations, HA commitments, and submission strategy.', scope: 'project', group: 'module' },
   { id: 'cro-portfolio', label: 'CRO portfolio', description: 'The CRO sponsor portfolio — the org’s sponsor roster and their program engagements.', scope: 'global', group: 'module' },
-  { id: 'agency-meetings', label: 'Agency meetings', description: 'The agency-meetings workspace — Type A/B/C and scientific-advice meetings with briefing books and minutes.', scope: 'global', group: 'module' },
+  { id: 'agency-meetings', label: 'Agency meetings', description: "Agency meetings, in Communication since 2026-10-30: each meeting is recorded, moved and given its minutes letter on Communication's Meetings tab; its briefing book is the meeting package in the editor, on the IND screen.", scope: 'global', group: 'module' },
   { id: 'source-tracer', label: 'Source tracer', description: 'The source-tracer — every authored section with where each sentence came from: the cited sources and their verification state.', scope: 'global', group: 'module' },
   { id: 'decision-lineage', label: 'Decision lineage', description: 'The decision-lineage graph — how a governed artifact was reached, node by node, with live hash-chain integrity.', scope: 'global', group: 'module' },
 
   // ── Device & diagnostics workstream (all render via MdxSurfaceHost; program
   // scope comes from the project in context when one is open) ──
-  { id: 'device-workstream', label: 'Device portfolio', description: 'The device portfolio overview — program cards and portfolio health KPIs.', scope: 'global', group: 'module' },
-  { id: 'device-510k', label: '510(k) pathway', description: 'The 510(k) pathway workspace — predicate intelligence, the substantial-equivalence matrix, and eSTAR sections.', scope: 'global', group: 'module' },
-  { id: 'device-pma', label: 'PMA pathway', description: 'The PMA pathway workspace — premarket-approval modules for the program in context.', scope: 'global', group: 'module' },
-  { id: 'device-cer', label: 'Clinical Evaluation Report', description: 'The CER pathway workspace for clinical evaluation under EU MDR.', scope: 'global', group: 'module' },
-  { id: 'device-diagnostics', label: 'IVD pathway', description: 'The IVD pathway workspace for in-vitro diagnostic programs.', scope: 'global', group: 'module' },
-  { id: 'device-clinical-studies', label: 'Device clinical studies', description: 'The clinical studies register for device programs.', scope: 'global', group: 'module' },
-  { id: 'device-software', label: 'Device software lifecycle', description: 'Software documentation completeness for the device program in context.', scope: 'global', group: 'module' },
-  { id: 'device-engineering', label: 'Device engineering', description: 'The engineering and design-controls workspace.', scope: 'global', group: 'module' },
+  { id: 'device-workstream', label: 'Device portfolio', description: 'The device portfolio overview — project cards and portfolio health KPIs.', scope: 'global', group: 'module' },
+  { id: 'device-510k', label: '510(k) and eSTAR', description: 'The 510(k) pathway workspace — predicate intelligence, the substantial-equivalence matrix, and eSTAR sections.', scope: 'global', group: 'module' },
+  { id: 'device-pma', label: 'PMA', description: 'The PMA pathway workspace — premarket-approval modules for the project in context.', scope: 'global', group: 'module' },
+  { id: 'device-cer', label: 'Clinical evaluation (CER)', description: 'The CER pathway workspace for clinical evaluation under EU MDR.', scope: 'global', group: 'module' },
+  { id: 'device-diagnostics', label: 'IVDR evidence', description: 'The IVD pathway workspace for in-vitro diagnostic projects.', scope: 'global', group: 'module' },
+  { id: 'device-clinical-studies', label: 'Device clinical studies', description: 'The clinical studies register for device projects.', scope: 'global', group: 'module' },
+  { id: 'device-software', label: 'Device software lifecycle', description: 'Software documentation completeness for the device project in context.', scope: 'global', group: 'module' },
+  { id: 'device-engineering', label: 'Engineering evidence', description: 'The engineering and design-controls workspace.', scope: 'global', group: 'module' },
   { id: 'device-udi', label: 'UDI and labeling', description: 'The device UDI register.', scope: 'global', group: 'module' },
-  { id: 'device-postmarket', label: 'Post-market vigilance', description: 'Postmarket surveillance with its triage queue.', scope: 'global', group: 'module' },
+  { id: 'device-postmarket', label: 'Post-market surveillance and CAPA', description: 'Postmarket surveillance with its triage queue.', scope: 'global', group: 'module' },
   { id: 'device-presub', label: 'Pre-Sub manager', description: 'The device pre-submission manager.', scope: 'global', group: 'module' },
-  { id: 'device-vault', label: 'Device vault', description: 'Device vault artifacts with versions and audit.', scope: 'global', group: 'module' },
+  /* The device vault folded into the Vault (D2, fold F3, 2026-10-29); the handle resolves there (DEEP_LINK_ALIASES). */
+  { id: 'device-vault', label: 'Device vault', description: 'The Vault: the open project\'s governed artifacts with versions and audit (the device vault folded into it).', scope: 'global', group: 'module' },
   { id: 'device-tasks', label: 'Device tasks', description: 'The device task workbench.', scope: 'global', group: 'module' },
-  { id: 'device-validation', label: 'Validation center', description: 'The device validation workbench.', scope: 'global', group: 'module' },
-  { id: 'device-submission', label: 'Device submissions', description: 'The device submission-packages workbench.', scope: 'global', group: 'module' },
+  /* The organization-wide blocker list retired (D2, fold F5 item 2, 2026-10-29; P-61 item 2); the handle resolves to Submission Center (DEEP_LINK_ALIASES). */
+  { id: 'device-validation', label: 'Device filing readiness', description: 'Submission Center: every tracked device filing. A filing\'s blockers are its own eSTAR filing readiness, on its pathway screen (the organization-wide blocker list retired).', scope: 'global', group: 'module' },
+  /* The device submission packages folded into Submission Center (D2, fold F5 item 1, 2026-10-30; P-61 item 1); the handle resolves there (DEEP_LINK_ALIASES). */
+  { id: 'device-submission', label: 'Device filings', description: 'Submission Center: every tracked device filing, with each draft\'s readiness and each filing\'s history (the device submission-packages screen folded into it).', scope: 'global', group: 'module' },
   { id: 'device-analytics', label: 'Device analytics', description: 'Device analytics panels.', scope: 'global', group: 'module' },
 
   // ── Pharmaceutical development (the PDEV kit; `pdev` itself is above) ──
@@ -229,26 +234,28 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   },
   { id: 'change-assessment', label: 'Change assessment', description: 'The 510(k)-change / MDR significant-change worklist with FDA and EU determinations.', scope: 'global', group: 'module' },
   { id: 'doc-journey', label: 'Document journey', description: 'A document’s lifecycle rail — the read-only reconstruction of its real audit trail.', scope: 'global', group: 'module' },
-  { id: 'dispatch-readiness', label: 'Dispatch readiness', description: 'The deterministic dispatch gate for each market of the open program: its newest sequence’s validation errors, unacknowledged shadow-review criticals and release signature, each a named blocker until it is cleared, and a way to where each is fixed.', scope: 'project', group: 'module' },
-  { id: 'ectd-publishing', label: 'eCTD publishing reference', description: 'Spec versions and controlled vocabularies — read-only; nothing here publishes, transmits, or freezes a sequence.', scope: 'global', group: 'module' },
+  { id: 'dispatch-readiness', label: 'Readiness', description: 'The deterministic dispatch gate for each market of the open project: its newest sequence’s validation errors, unacknowledged shadow-review criticals and release signature, each a named blocker until it is cleared, and a way to where each is fixed.', scope: 'project', group: 'module' },
+  /* The publishing reference folded into eCTD Compile (D2, 2026-10-29); the handle resolves there (DEEP_LINK_ALIASES). */
+  { id: 'ectd-publishing', label: 'eCTD reference', description: 'eCTD Compile\'s eCTD reference: the spec versions each eCTD version is qualified against, the FDA Regional IG OID and the controlled vocabularies, read-only, with or without a project open (the publishing reference folded into it). Nothing there publishes, transmits or freezes a sequence.', scope: 'global', group: 'module' },
   { id: 'inconsistency', label: 'Inconsistency board', description: 'The cross-document inconsistency submission gate for the project in context (fails closed).', scope: 'project', group: 'module' },
   { id: 'intelligence-catalog', label: 'Capability catalog', description: 'The catalog of AnA’s deterministic tools, filterable by name.', scope: 'global', group: 'module' },
   { id: 'labeling-pi', label: 'Prescribing information', description: 'The USPI / EU SmPC / SPL labeling workspace.', scope: 'global', group: 'module' },
   { id: 'precedent-intelligence', label: 'Precedent intelligence', description: 'The precedent search board — clearances, cycles, and risk analysis (runs only when a person searches).', scope: 'global', group: 'module' },
-  { id: 'program-journey', label: 'Program journey', description: 'The end-to-end program arc — nine stages with readiness and blockers.', scope: 'global', group: 'module' },
+  { id: 'program-journey', label: 'Project journey', description: 'The end-to-end project arc — nine stages with readiness and blockers.', scope: 'global', group: 'module' },
   { id: 'pyramid', label: 'Submission pyramid', description: 'The submission work-breakdown pyramid — phases, tasks and critical path per submission type.', scope: 'global', group: 'module' },
   { id: 'authoring-engine', label: 'Authoring engine', description: 'What the authoring engine is built to do per document type — capability reference, no program data.', scope: 'global', group: 'module' },
   { id: 'orchestration', label: 'Orchestration', description: 'Workflow runs and human-in-the-loop approval gates.', scope: 'global', group: 'module' },
   { id: 'usage', label: 'Usage', description: 'The org\'s real-time usage metering — API calls, storage, seats, against plan limits.', scope: 'global', group: 'module' },
-  { id: 'billing', label: 'Billing', description: 'The org\'s billing and invoices — plan, payment method, and invoice history.', scope: 'global', group: 'module' },
+  // Kept for AnA after the fold (D2, 2026-10-29): `billing` is an alias of `licensing`, where the invoices are.
+  { id: 'billing', label: 'Billing', description: 'The organization\'s invoices, checkout and Stripe billing portal, on Licensing under the plan status — for billing administrators (admins and owners).', scope: 'global', group: 'module' },
   { id: 'report-governance', label: 'Report governance', description: 'The sealed-report lifecycle — integrity verification, provenance, seal and revoke ceremonies.', scope: 'global', group: 'module' },
   { id: 'research-admin', label: 'Research administration', description: 'Research administration — the CITI training matrix (other sections connect later).', scope: 'global', group: 'module' },
 
   // ── Administration & platform ──
   { id: 'admin-console', label: 'Admin & access', description: 'Organization administration — members, roles, SSO, API keys, and settings.', scope: 'global', group: 'global' },
   { id: 'access-requests', label: 'Access requests', description: 'The organization’s module access-request queue.', scope: 'global', group: 'global' },
-  { id: 'licensing', label: 'Plans & licensing', description: 'The organization’s current plan and the pricing catalog.', scope: 'global', group: 'global' },
-  { id: 'master-licensing', label: 'Master licensing', description: 'Platform-owner licensing control — packaging, tenants, flags, enforcement.', scope: 'global', group: 'global' },
+  { id: 'licensing', label: 'Compare subscriptions', description: 'The organization’s current subscription and the pricing catalog.', scope: 'global', group: 'global' },
+  { id: 'master-licensing', label: 'Platform licensing', description: 'Platform-owner licensing control — packaging, tenants, flags, enforcement.', scope: 'global', group: 'global' },
   { id: 'identity-console', label: 'Enterprise identity', description: 'SCIM provisioning tokens, the IdP allowlist, and SAML endpoints (platform administrators).', scope: 'global', group: 'global' },
   { id: 'onboarding', label: 'Workspace setup', description: 'The workspace setup wizard — nothing is created until Activate.', scope: 'global', group: 'global' },
   { id: 'onboarding-ingest', label: 'Set up from a document', description: 'Upload a document; AnA proposes provenance-verified values; a human reviews and applies.', scope: 'global', group: 'global' },

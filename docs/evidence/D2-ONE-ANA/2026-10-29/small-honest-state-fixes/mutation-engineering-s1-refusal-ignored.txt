@@ -1,0 +1,7 @@
+# mutation s1-refusal-ignored: 'if (!(await admitProject(res, log, programId, orgId))) return;' -> 'await admitProject(res, log, programId, orgId);'
+# file: server/routes/mdx-engineering.ts; test: server/routes/__tests__/mdx-engineering.contract.test.ts; restored after, sha256sum -c OK
+ × GET /api/mdx/engineering/:programId — the project ownership refusal > answers 503 VERIFICATION_UNAVAILABLE when the ownership check cannot run, and reads nothing 7ms
+   → expected [ [ …(2) ], [ …(2) ], [ …(2) ], …(5) ] to have a length of +0 but got 8
+ × GET /api/mdx/engineering/:programId — the project ownership refusal > refuses a project the organization does not own with 404 "Project not found", and reads nothing 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 17 passed (19)

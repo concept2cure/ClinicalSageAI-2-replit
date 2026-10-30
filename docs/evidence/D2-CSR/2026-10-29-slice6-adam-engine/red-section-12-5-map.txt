@@ -1,0 +1,9 @@
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §10.1 reports the death and the loss to follow-up, and "not recorded" for what ADSL cannot establish 0ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.2 / §12.3 count TEAE subjects, the SAE and the fatal event against the safety population 0ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.1 exposure, §12.4 lab shifts and the Bayesian primary result come through 1ms
+ × server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.5 finally has evidence: change from baseline to the last on-treatment value 8ms
+   → expected [] to deeply equal [ 'vitalSigns' ]
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §11.2 concomitant medications count subjects, and say when a class was not coded 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.5 finally has evidence: change from baseline to the last on-treatment value
+      Tests  1 failed | 19 passed (20)

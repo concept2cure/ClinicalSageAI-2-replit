@@ -1,0 +1,14 @@
+{
+  "client/src/concept2cure/v2/surfaces/ProjectDossier.tsx": "1e136a095b75cf388b1a0bb1c16663241306f6aa783cfef3ca962e175f159c1f",
+  "client/src/concept2cure/v2/surfaces/ProjectSectionTracking.tsx": "13dfcb807fea9f49c66a51585de94580ec0febc1f4e3aff2b74a7b9dcbb39c8f",
+  "client/src/concept2cure/v2/routing.ts": "0cb87e4603f45168ddcb727adf84ca57ed08e82d1b2c34422c122f9266f2c8f1",
+  "client/src/concept2cure/v2/Shell.tsx": "da09762e2efd0dc2828b73a5fed3aa91f15fb2f7eb25afb8c63155547a1bcb41",
+  "server/routes/c2c/projects.ts": "7558d3d7a8621d643b3a979a19102866f4b84d64feaf5050ae36831f0b08492d",
+  "server/services/c2c/dossier-read.ts": "61b00b8fc197e27d8bb57aee8e007b9cc2d25b1fce1c4da23a3ea9d0e041bb5e",
+  "server/services/c2c/dossier-artifact-read.ts": "1d166f615aa2bd6f431efd1400999a358172d5a22a338c35010f14f4a8385e0c",
+  "server/services/dossier/dossier-map-view-assembler.ts": "c2fec4ecd4c1072a7fd61ad2b4ac8a7fd461eacf12776b37600174fd60e0c371",
+  "shared/types/dossier-section-tracking.ts": "02a6f2aac279d318d72d5c575c7830d22888879712f894c6b094b1a74ca129aa",
+  "tests/e2e/dossierTrackingFixture.ts": "dd6ab286e1919fed899d07edd56c8228fb7f68d53fdc91ac6270cf5e96b443fc",
+  "tests/e2e/project-dossier-details.e2e.ts": "bc8a1a11aadeb490f9795faabe1cdcd3684ba147676565f379e4f83a2bcf93a3",
+  "tests/e2e/project-dossier-destinations.e2e.ts": "c596d9da7919d4f6cae08585ddc2863691301e46a822409de2d53c56123552c4"
+}

@@ -82,7 +82,7 @@ describe('executeCommands — central RBAC gate', () => {
     rbac.hasRole.mockResolvedValue(false); // read-only reviewer
 
     const res = await executeCommands(
-      [{ command: 'create_project', params: { name: 'Backdoor Program' } }] as any,
+      [{ command: 'update_project', params: { projectId: 77, updates: { name: 'Backdoor Program' } } }] as any,
       ctx(),
     );
 
@@ -97,22 +97,20 @@ describe('executeCommands — central RBAC gate', () => {
     rbac.hasRole.mockResolvedValue(true);
     dbState.query.mockImplementation(async (sql: string) => {
       if (SETTINGS_SQL.test(sql)) return { rows: [], rowCount: 0 };
-      // create_project resolves the organization's one client workspace (2026-10-15).
-      if (/FROM client_workspaces/.test(sql)) return { rows: [{ workspace_count: 1, first_workspace_id: 3 }], rowCount: 1 };
       return { rows: [{ id: 77, name: 'Legit Program', status: 'active' }], rowCount: 1 };
     });
 
     // A person confirmed the proposal (P0-12: every write is a proposal; the
     // confirm tier is the governed-action route's, the only writer of this flag).
     const res = await executeCommands(
-      [{ command: 'create_project', params: { name: 'Legit Program' } }] as any,
+      [{ command: 'update_project', params: { projectId: 77, updates: { name: 'Legit Program' } } }] as any,
       ctx({ humanConfirmed: true }),
     );
 
     expect(res[0].error).toBeUndefined();
     expect(res[0].success).toBe(true);
     expect((res[0].data as any)?.projectId).toBe(77);
-    expect(handlerWrites().join(' ')).toMatch(/INSERT INTO projects/i);
+    expect(handlerWrites().join(' ')).toMatch(/UPDATE projects/i);
     expect(rbac.hasRole).toHaveBeenCalledWith(42, 'member', 9);
   });
 
@@ -141,7 +139,7 @@ describe('executeCommands — central RBAC gate', () => {
 
   it('DENIES a mutation dispatched without a provable user/organization identity', async () => {
     const res = await executeCommands(
-      [{ command: 'create_project', params: { name: 'No Identity' } }] as any,
+      [{ command: 'update_project', params: { projectId: 77, updates: { name: 'No Identity' } } }] as any,
       { organizationId: 9 } as CommandContext,
     );
 
@@ -200,7 +198,7 @@ describe('executeCommands — fail-CLOSED governance configuration', () => {
     });
 
     const res = await executeCommands(
-      [{ command: 'create_project', params: { name: 'Outage Program' } }] as any,
+      [{ command: 'update_project', params: { projectId: 77, updates: { name: 'Outage Program' } } }] as any,
       ctx(),
     );
 
@@ -249,13 +247,11 @@ describe('executeCommands — fail-CLOSED governance configuration', () => {
     rbac.hasRole.mockResolvedValue(true);
     dbState.query.mockImplementation(async (sql: string) => {
       if (SETTINGS_SQL.test(sql)) return { rows: [{ settings: null }], rowCount: 1 };
-      // create_project resolves the organization's one client workspace (2026-10-15).
-      if (/FROM client_workspaces/.test(sql)) return { rows: [{ workspace_count: 1, first_workspace_id: 3 }], rowCount: 1 };
       return { rows: [{ id: 5, name: 'Default Tenant Program', status: 'active' }], rowCount: 1 };
     });
 
     const res = await executeCommands(
-      [{ command: 'create_project', params: { name: 'Default Tenant Program' } }] as any,
+      [{ command: 'update_project', params: { projectId: 5, updates: { name: 'Default Tenant Program' } } }] as any,
       ctx({ humanConfirmed: true }), // the person confirmed the proposal (P0-12)
     );
 

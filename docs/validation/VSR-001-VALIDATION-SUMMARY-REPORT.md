@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | VSR-001 |
-| Version | 0.1 |
+| Version | 0.3 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Execution reported | IQ-001 and OQ-001…006 against the local installation, 2026-09-21 00:22–00:33 UTC (evidence folder `docs/evidence/W3/2026-09-20/`) |
@@ -14,6 +14,7 @@
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.3 | 2026-10-26 | D2 A2.10 | Appended filing-catalog fold impact and current qualification limit. The historical executions below are unchanged; revised URS-PROJ-007a/OQ-PROJ-12 v0.10 have not been formally executed or signed. |
 | 0.1 | 2026-09-21 | W3a | First summary from the local baseline execution. |
 | 0.2 | 2026-09-21 | WD | §8 appended: IQ-DEV-001 corrected in the product's provisioning; IQ-001 and OQ-001/002/003/005/006 re-executed locally; TM-001 regenerated. Sections 1–7 are unchanged and describe the baseline run. |
 
@@ -1583,3 +1584,72 @@ OQ-008 as a whole is unexecuted (§3 of the protocol). RA-001 is not amended: no
 make the other twenty-nine look assessed by omission. The matrix builder (`scripts/validation/build-traceability.mjs`)
 therefore still stops on the URS-CMC rows that have no RA-001 row, now thirty, as it did before this change; TM-001 is
 not regenerated here. This package claims nothing for URS-CMC-030 until OQ-008 executes.
+
+## D2 A2.7 change impact (2026-10-26)
+
+The standalone dossier/map reads are folded into project Author through the
+canonical UUID dossier endpoint. Governed document readiness, artifact section
+rollups (counts, weakest status and section dates) and project section tracking
+(module completeness and labels) remain separate. Exact accepted project, anchor
+and client scope is revalidated before returning. Legacy URLs reach Author or
+the project chooser; no stored project/section/artifact records are deleted.
+
+URS-SUBC-009 remains historical. Revised URS-SUBC-009a is qualified by the
+updated OQ-SUBC-10 in OQ-004 v0.7; that formal protocol has **not been executed**
+at this revision. Earlier OQ-SUBC-10 passes do not qualify the revised path.
+Focused red/green SQL, route and browser evidence lives in
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7/` and is supplemental,
+not a signed OQ execution. TM-001 was regenerated against the explicitly
+selected historical 2026-09-27 result set, retaining its 69 pass / 2 partial
+verdicts and marking all 45 requirements without an execution **uncovered**.
+
+Regeneration exposed 31 pre-existing missing assessment rows. RA-001 now
+transcribes their risks and activities from existing URS-004/OQ-004 and
+URS-007/OQ-008; credential dependencies and unexecuted status are preserved.
+No CMC launch/commercial boundary, signature, approval, dispatch gate or
+validation result is changed by this documentation reconciliation.
+
+## D2 A2.10 change impact (2026-10-26)
+
+The standalone filing catalog folds into the existing Projects New-project
+wizard and the recorded project's Plan. The former bookmark opens that wizard
+through the shared alias/action while retaining query and hash. Filing facts,
+browsing/search, the server's offer/build limits and clearly authored lifecycle
+reference remain in the core workflow. A recorded project receives a guide only
+from its exact filing identity with matching program type and agency; missing
+or conflicting identity states unavailability. These authored stages, timing
+examples and return loops create no project deadline, task, readiness verdict
+or platform offer. An offer-read failure remains explicit and offers Retry.
+
+The unchanged Journey clause in URS-PROJ-007 remains in force; its former
+standalone-catalog clause and earlier OQ-PROJ-12 results remain historical.
+New URS-PROJ-007a and revised OQ-PROJ-12 in OQ-001 v0.10 are **not formally
+executed and unsigned**. The revised scripted procedure records the legacy URL and no-write discovery,
+selected wizard reference, an exact US IND/FDA Plan guide and the existing
+generic IND Plan's explicit missing-identity state. An actual offer-read
+failure records the unreached positive observations as a deviation. A reviewer
+must assess these observations in a future formal execution; no historical
+catalog-render pass qualifies the revised workflow.
+
+Focused unit, route and native-browser evidence is maintained in
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.10a/` as supplemental
+engineering evidence, not a signed OQ execution. The other four A2.10 fold
+candidates retain their existing parity and stored-record prerequisites.
+No launch admission, regulated approval, signature, dispatch gate or historical
+execution result changes with this filing-reference destination change.
+
+TM-001 is regenerated through its existing builder using the explicitly selected
+historical 2026-09-27 evidence set: **117 requirements — 69 pass, 2 partial,
+46 uncovered**. Historical step totals remain 101 pass and 2 deviations across
+103 steps. URS-PROJ-007a has no executed step and is **uncovered**; the prior
+Journey/catalog requirement retains its historical OQ-PROJ-11/12 attribution.
+
+The merged A2.10 continuation also preserves supplemental engineering evidence in
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.10/`. It corrects CRO
+company-type labels and clarifies already in-scope project-command metadata;
+their handlers, executable scope arrays, access policy and audit behavior remain
+unchanged. No client-store unification or completed CRO/device fold is claimed.
+The conservative medium/scripted 007a assessment is retained because incorrect
+identity, offer or clock presentation can misdirect recoverable filing work.
+The incoming stronger Plan/reference checks and the local no-write observation
+are one revised OQ-PROJ-12 v0.10, still unexecuted and unsigned.

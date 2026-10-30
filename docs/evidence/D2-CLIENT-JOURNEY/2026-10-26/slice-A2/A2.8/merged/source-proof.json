@@ -1,0 +1,38 @@
+{
+  "mergeParents": [
+    "771cb93e654ee212700772d66b593a8784595670",
+    "1f6a8bf7c65017749aae7f685f07918f2a75aa7f"
+  ],
+  "sha256": {
+    "client/src/concept2cure/v2/registryModel.ts": "b821da0f87395243b7aa4a5f9e02bb81a786aff7ada62d9b7f2adb784a442522",
+    "shared/navigation/index.ts": "b1aae015bfb8390d0df28abdd787ece4a240abe33bcbacfe610a5d29525449bb",
+    "client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts": "9060a2203876d7b2015379793cfdf4ea398268bd3eb7621f94436cb9a9e9e893",
+    "client/src/concept2cure/v2/__tests__/projectDestination.test.ts": "51756f0c55471e006bcf72089df4daca7c7c85e80029c48c2ff2c5269d10c226",
+    "client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx": "a9b46ec1617f69f41713a56775fc07718a744a83ab5294618cb2c9e822c70e01",
+    "client/src/concept2cure/v2/__tests__/navigationReachability.test.ts": "fc9b0c0752e27edbd9edd471c5c1bfff79bf4455fb8f458fd57f37b766d93906",
+    "tests/e2e/projects-pathway-counts.e2e.ts": "41ec0a4a4fd2c87f5fa3fa31d4444d548cfa40a91ebd58b1830d33aec9196660",
+    "tests/e2e/projects-mdx-destination.e2e.ts": "650fc00bece1f1e664d2c3a1f91c567be1c7a79cefb8017e71abbabd3bf87d16"
+  },
+  "gitBlobs": {
+    "client/src/concept2cure/v2/registryModel.ts": "6316ed42709baaa70efdddd39d6bd6ee70dc5d2f",
+    "shared/navigation/index.ts": "64dc0581125adbb7ec7ff982a25d23272249d431",
+    "client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts": "acf504054be5b61b73bc75b5359304adc2f85212",
+    "client/src/concept2cure/v2/__tests__/projectDestination.test.ts": "ecb99b334e92edca89bd1d0633724478a4e26d28",
+    "client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx": "9f5ba5142fb5adeb2dded2f1118d7352bdf0498e",
+    "client/src/concept2cure/v2/__tests__/navigationReachability.test.ts": "e1181a5785095d0221d6cdd8ba742baef74af39c",
+    "tests/e2e/projects-pathway-counts.e2e.ts": "c42d913c8cf3bbeee7a583e9fea5ec33213f7329",
+    "tests/e2e/projects-mdx-destination.e2e.ts": "64264630982bb3bf4b995ff43489f7c4219123cb"
+  },
+  "regression": {
+    "tests": 398,
+    "suites": 30,
+    "durationSeconds": 72.52
+  },
+  "native": {
+    "passed": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "durationSeconds": 21.98
+  },
+  "build": "passed; frontend26.27s"
+}

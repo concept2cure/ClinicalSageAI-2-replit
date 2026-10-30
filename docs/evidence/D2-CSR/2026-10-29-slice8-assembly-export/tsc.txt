@@ -1,0 +1,3 @@
+NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p .
+(first run: 3 errors in this slice's files — TableRow.subjectId cast, scale fixture status type — fixed)
+second run: no diagnostics, EXIT 0

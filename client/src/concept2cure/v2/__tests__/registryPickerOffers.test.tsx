@@ -57,8 +57,8 @@ function serverAnswer(_m: string, raw: unknown) {
 const typeOf = (e: { id: string; pathwayKey?: string | null }) =>
   programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, 'biotech');
 
-function renderPicker(onChange = vi.fn(), value = '') {
-  return render(<RegistryPicker value={value} onChange={onChange} applicationTypeOf={typeOf} initialSegment="pharma_biotech" />);
+function renderPicker(onChange = vi.fn(), value = '', onAsk?: (text: string) => void) {
+  return render(<RegistryPicker value={value} onChange={onChange} onAsk={onAsk} applicationTypeOf={typeOf} initialSegment="pharma_biotech" />);
 }
 
 const tiles = () => Array.from(document.querySelectorAll('button.rpk-type')).map((b) => ({
@@ -71,6 +71,92 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(serverAnswer);
 });
+
+describe('RegistryPicker selected filing reference and build facts', () => {
+  it('shows the catalog description and the selected market facts as visible text', async () => {
+    renderPicker(vi.fn(), 'us_ind');
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    const entry = GLOBAL_REGISTRY.find(e => e.id === 'us_ind')!;
+    const support = marketSupport({ applicationType: 'ind', market: entry.agency }, packs, ASOF);
+    expect(within(note).getByText(/Catalog reference/)).toBeTruthy();
+    expect(note.textContent).toContain(entry.description);
+    const build = within(note).getByTestId('rpk-chosen-build');
+    expect(build.textContent).toContain(support.outline.pack!.label);
+    expect(build.textContent).toContain(support.module1.detail);
+    expect(build.textContent).toContain(support.channel.detail);
+  });
+
+  it('asks the catalog question about the chosen filing without changing the selection', async () => {
+    const onAsk = vi.fn();
+    const onChange = vi.fn();
+    renderPicker(onChange, 'us_ind', onAsk);
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    const reads = apiRequest.mock.calls.length;
+    fireEvent.click(within(note).getByRole('button', { name: 'Ask AnA' }));
+    expect(onAsk).toHaveBeenCalledExactlyOnceWith("Tell me about the Investigational New Drug Application — when it's required, what it contains, and what evidence I need.");
+    expect(onChange).not.toHaveBeenCalled();
+    expect(apiRequest.mock.calls).toHaveLength(reads);
+  });
+
+  it('keeps author-only limits in the details instead of claiming a sequence or transmit', async () => {
+    renderPicker(vi.fn(), 'us_510k');
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    const build = within(note).getByTestId('rpk-chosen-build');
+    expect(build.textContent).toContain('k510:fda');
+    expect(build.textContent).toContain('a device filing is not eCTD, so it has no Module 1');
+    expect(build.textContent).toContain('the platform transmits no device filing yet');
+    expect(build.textContent).not.toMatch(/validation gates|built and sequenced/i);
+  });
+
+  it('does not present parent-application build facts as facts about an unclaimed filing', async () => {
+    renderPicker(vi.fn(), 'us_pre_ind');
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    const build = within(note).getByTestId('rpk-chosen-build');
+    expect(build.textContent).toMatch(/No build details are stated for this filing/);
+    expect(build.textContent).not.toContain('ind:fda');
+    expect(note.textContent).toContain(GLOBAL_REGISTRY.find(e => e.id === 'us_pre_ind')!.description);
+  });
+
+  it('reports missing build fields without discarding the existing offer or inventing facts', async () => {
+    apiRequest.mockImplementation(async (method: string, raw: unknown) => {
+      const response = await serverAnswer(method, raw);
+      const body = await response.json();
+      body.markets.forEach((m: { outline?: unknown }) => { delete m.outline; });
+      return ok(body);
+    });
+    renderPicker(vi.fn(), 'us_ind');
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    expect(note.textContent).toMatch(/^Build and sequence\./);
+    expect(within(note).getByTestId('rpk-chosen-build').textContent).toContain('Build details could not be read');
+    expect(within(note).getByTestId('rpk-chosen-build').textContent).not.toContain('ind:fda');
+  });
+
+  it('keeps Ask AnA absent for callers with no question callback', async () => {
+    renderPicker(vi.fn(), 'us_ind');
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    expect(within(note).queryByRole('button', { name: 'Ask AnA' })).toBeNull();
+  });
+});
+
+describe('RegistryPicker description search', () => {
+  it('finds an offered filing using wording present only in its description', async () => {
+    renderPicker();
+    await screen.findByRole('textbox', { name: 'Search filing types' });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search filing types' }), { target: { value: '30 days before trial start' } });
+    expect(tiles().map(t => t.name)).toContain('Investigational New Drug Application');
+  });
+
+  it('uses the same description rule for refused filings and retains the refusal reason', async () => {
+    const refused = GLOBAL_REGISTRY.find(e => e.description &&
+      marketSupport({ applicationType: typeOf(e), market: e.agency }, packs, ASOF).offer.tier === 'not_offered')!;
+    renderPicker();
+    await screen.findByRole('textbox', { name: 'Search filing types' });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search filing types' }), { target: { value: refused.description } });
+    const section = screen.getByTestId('rpk-not-offered');
+    expect(within(section).getByText(`${refused.displayName} · ${refused.agency}.`)).toBeTruthy();
+    expect(section.textContent).toContain(marketSupport({ applicationType: typeOf(refused), market: refused.agency }, packs, ASOF).offer.reason);
+  });
+});
 afterEach(() => cleanup());
 
 describe('RegistryPicker offers what the market verdict offers', () => {
@@ -80,6 +166,14 @@ describe('RegistryPicker offers what the market verdict offers', () => {
     let seen = 0;
     for (const seg of Object.keys(REG_SEGMENTS)) {
       fireEvent.click(screen.getByRole('button', { name: new RegExp(REG_SEGMENTS[seg].label) }));
+      /* A tab leads with what the platform builds end to end; the rest are
+         one press away (CLIENT_JOURNEY_2026-10-25). */
+      const first = tiles();
+      const reveal = screen.queryByRole('button', { name: /^Show \d+ more filing type/ });
+      if (reveal) {
+        expect(first.filter((t) => t.authorOnly), `${seg} leads with what is built here`).toEqual([]);
+        fireEvent.click(reveal);
+      }
       const shown = tiles();
       const want = GLOBAL_REGISTRY.filter((e) => e.segment === seg).map((e) => ({
         e, offer: marketSupport({ applicationType: typeOf(e), market: e.agency }, packs, ASOF).offer,
@@ -136,6 +230,47 @@ describe('RegistryPicker offers what the market verdict offers', () => {
     apiRequest.mockImplementation(serverAnswer);
     fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
     await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
+  });
+});
+
+// ── Added 2026-10-25 (docs/design/CLIENT_JOURNEY_2026-10-25.md) ─────────────
+describe('RegistryPicker leads with what is built here', () => {
+  /* Pharma & Biotech listed 43 filings in one wall of identical grey cards,
+     and a client testing the wizard read the documents-only ones as disabled. */
+  it('a tab shows the filings built and validated here first; the rest are one press away', async () => {
+    renderPicker();
+    await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
+    // "Built and validated", not "submitted": transmission is not proven (D7).
+    expect(screen.getByTestId('rpk-full-heading').textContent).toMatch(/^Built and validated here/);
+    expect(screen.getByTestId('rpk-full-heading').textContent).not.toMatch(/submitted/i);
+    const first = tiles();
+    expect(first.some((t) => t.name === 'Investigational New Drug Application')).toBe(true);
+    expect(first.filter((t) => t.authorOnly)).toEqual([]);
+    // A Pre-IND meeting creates the IND it is about without being it: no tier
+    // is stated for it, so it is not presented as built here.
+    expect(first.some((t) => t.name === 'Pre-IND Meeting Request')).toBe(false);
+    const reveal = screen.getByRole('button', { name: /^Show \d+ more filing types?$/ });
+    expect(reveal.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(reveal);
+    const all = tiles();
+    expect(all.length).toBeGreaterThan(first.length);
+    expect(all.some((t) => t.authorOnly)).toBe(true);
+    expect(all.some((t) => t.name === 'Pre-IND Meeting Request')).toBe(true);
+  });
+
+  it('a chosen filing among the rest is never hidden behind the press', async () => {
+    renderPicker(vi.fn(), 'eu_maa');
+    await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
+    expect(document.querySelector('button.rpk-type[data-on]')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: /^Show \d+ more filing/ })).toBeNull();
+  });
+
+  it('a search lists everything it matches, built here or not, with no press', async () => {
+    renderPicker();
+    await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
+    fireEvent.change(screen.getByRole('textbox', { name: /search filing types/i }), { target: { value: 'Drug Master File' } });
+    expect(tiles().some((t) => t.name === 'Drug Master File' && t.authorOnly)).toBe(true);
+    expect(screen.queryByRole('button', { name: /^Show \d+ more filing/ })).toBeNull();
   });
 });
 
@@ -213,6 +348,33 @@ describe('RegistryPicker states only what the verdict states for that filing', (
     expect(document.activeElement).toBe(within(screen.getByRole('alert')).getByRole('button'));
     release();
     await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
-    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: /search filing types/i }));
+    // List visibility can precede the passive effect that transfers focus.
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('textbox', { name: /search filing types/i })));
+  });
+});
+
+// A2.10a: the former catalogue functions reach the existing selection flow.
+describe('catalogue functions carried into the Projects picker', () => {
+  it('shows the selected filing lifecycle as a clearly labelled reference', async () => {
+    renderPicker(vi.fn(), 'us_ind');
+    const guide = await screen.findByRole('region', { name: 'Filing lifecycle reference' });
+    expect(guide.textContent).toContain('Reference guide');
+    expect(guide.textContent).toContain('Assemble IND/IDE');
+    expect(guide.textContent).toContain('Clinical Hold');
+    expect(guide.textContent).toContain('Authored filing-family guidance');
+  });
+
+  it('keeps the segment visible on a search result across all segments', async () => {
+    renderPicker();
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Search filing types' }), { target: { value: 'Investigational New Drug Application' } });
+    const card = await screen.findByRole('button', { name: /^Investigational New Drug Application/ });
+    expect(within(card).getByText('Pharma & Biotech')).toBeTruthy();
+  });
+
+  it('finds a filing by the existing workflow label', async () => {
+    renderPicker();
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Search filing types' }), { target: { value: 'Biosimilar 351(k)' } });
+    const entry = GLOBAL_REGISTRY.find(e => e.id === 'us_351k')!;
+    expect(await screen.findByText(entry.displayName, { exact: false })).toBeTruthy();
   });
 });

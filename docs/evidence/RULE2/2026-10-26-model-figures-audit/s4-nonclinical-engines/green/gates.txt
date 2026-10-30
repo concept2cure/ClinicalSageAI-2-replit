@@ -1,0 +1,57 @@
+## TypeScript
+
+
+> concept2cure-riai@1.0.0 ci:typecheck:no-regression
+> node scripts/ci/typecheck-no-regression.mjs --incremental
+
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+
+## Changed-file ESLint ratchet
+
+
+> concept2cure-riai@1.0.0 ci:eslint-ratchet
+> node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD --gate
+
+[ci:eslint-warning-ratchet] --since HEAD (2a9b968c2) -- 17 lintable file(s) changed; linting both versions of each...
+
+    -1  server/services/labeling/labeling-intelligence-knowledge.ts  (13 -> 12)
+    -2  server/services/toxicology/toxicology-knowledge.ts  (16 -> 14)
+
+[ci:eslint-warning-ratchet] net -3 warning(s) across the files changed since HEAD.
+
+
+## AnA manifest regeneration
+
+
+> concept2cure-riai@1.0.0 manifest:ana
+> tsx scripts/generate-ana-capability-manifest.ts
+
+{"level":40,"time":"2026-10-26T16:12:48.577Z","pid":9959,"hostname":"21cc6ae857bb","context":{},"msg":"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable"}
+Wrote 791 tools to docs/ana-capability-manifest.json
+By category: {
+  'Authoring & rendering': 28,
+  Biostatistics: 12,
+  'Clinical (M5 / M2)': 30,
+  'Clinical pharmacology': 8,
+  'CMC / Quality (M3)': 30,
+  'Device / IVD': 24,
+  'Evidence & intelligence': 52,
+  'Governance & data': 13,
+  'Nonclinical (M4)': 13,
+  Other: 525,
+  'Platform control': 2,
+  'Quality management': 17,
+  'Submission / eCTD': 37
+}
+
+
+## Validation traceability
+
+
+> concept2cure-riai@1.0.0 ci:validation-traceability
+> node scripts/ci/check-validation-traceability.mjs
+
+✓ validation traceability: every file cited by 7 URS document(s) resolves; every OQ step carries its protocol's kind

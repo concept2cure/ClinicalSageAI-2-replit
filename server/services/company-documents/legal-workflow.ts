@@ -40,7 +40,7 @@ export const legalRequirementUpdateSchema = z.object({ expectedRevision: z.numbe
 function linkedDocument(profile: CompanyDocumentProfile, document: CompanyLegalDocument, id: string | null, relation: string): CompanyLegalDocument | null {
   if (!id) return null;
   const linked = profile.legalDocuments.find(item => item.id === id && item.programId === document.programId && item.active && !item.workflow?.revokedAt);
-  if (!linked || linked.id === document.id) throw new CompanyDocumentsError(409, 'LEGAL_RELATION_UNAVAILABLE', `Select another active legal version in the same program for ${relation}.`);
+  if (!linked || linked.id === document.id) throw new CompanyDocumentsError(409, 'LEGAL_RELATION_UNAVAILABLE', `Select another active legal version in the same project for ${relation}.`);
   return linked;
 }
 function assertNoRelationCycle(profile: CompanyDocumentProfile, document: CompanyLegalDocument, replacementId: string | null, translationOfId: string | null) {
@@ -88,7 +88,7 @@ export async function notifyCompanyLegalRenewal(q: RequestSqlClient, organizatio
   if (sent.rows.length) return null;
   return createNotification({ organizationId, recipientUserId: recipient, category: 'task_update',
     severity: renewal.status === 'expired' ? 'critical' : 'warning', title: renewal.status === 'expired' ? 'A company legal document has expired' : 'A company legal document needs renewal',
-    body: 'Review the assigned legal renewal in the program work queue. Open Company documents to check the current version and affected filings.',
+    body: 'Review the assigned legal renewal in the project work queue. Open Company documents to check the current version and affected filings.',
     resourceType: 'regulatory_program', resourceId: document.programId,
     actionUrl: `/concept2cure/project-home?program=${document.programId}`,
     metadata: { companyLegalReminderKey: key, legalDocumentId: document.id, vaultDocumentId: document.vaultDocumentId, contentHash: document.contentHash, threshold },
@@ -273,7 +273,7 @@ async function readMappedDocuments(req: Request, ids: string[], admitted: Requir
   const documents: CompanyLegalDocument[] = [];
   for (const documentId of ids) {
     const source = await readCompanyLegalDocument(req, documentId);
-    if (admitted && source.document.programId !== admitted.programId) throw new CompanyDocumentsError(409, 'REQUIREMENT_DOCUMENT_PROGRAM_MISMATCH', 'Map legal versions from the admitted filing program.');
+    if (admitted && source.document.programId !== admitted.programId) throw new CompanyDocumentsError(409, 'REQUIREMENT_DOCUMENT_PROGRAM_MISMATCH', 'Map legal versions from the admitted project.');
     documents.push(source.document);
   }
   return documents;

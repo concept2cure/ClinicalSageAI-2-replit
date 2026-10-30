@@ -1,0 +1,15 @@
+# D1: the unreferenced-modules gate on 6e26742eb (trunk), before the deletions
+Unreferenced modules: 78 (baseline 78)
+
+OK: no new unreachable modules.
+
+# After the deletions, baseline NOT yet updated (the gate must say the baseline names files that are gone, or still pass and shrink)
+Unreferenced modules: 75 (baseline 78)
+
+3 baselined module(s) no longer unreferenced — regenerate the baseline:
+  - server/api/ectd/routes.ts
+  - server/templates/regulatory_templates.js
+  - server/utils/templateRegistry.js
+
+OK: no new unreachable modules.
+exit=0

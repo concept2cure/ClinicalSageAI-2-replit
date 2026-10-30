@@ -90,6 +90,31 @@ describe('parseAppMentions', () => {
     }
   });
 
+  it('a message written with an app\'s name from before slice A.1 still names the same app', () => {
+    // .design/client-journey/INFORMATION_ARCHITECTURE.md section 9 renamed these
+    // labels; a mention typed with the old name (in a saved prompt, a habit) must
+    // not turn into ordinary text.
+    for (const [old, id, now] of [
+      ['Communication Center', 'communication-center', 'Communication'],
+      ['Protocol development', 'protocol-dev', 'Protocol workspace'],
+      ['Tasking', 'tasking', 'Tasks'],
+      ['Quality (SOP / Controlled Docs)', 'quality', 'Quality'],
+      ['510(k) pathway', 'device-510k', '510(k) and eSTAR'],
+      ['PMA pathway', 'device-pma', 'PMA'],
+      ['Clinical Evaluation Report', 'device-cer', 'Clinical evaluation (CER)'],
+      ['IVD pathway', 'device-diagnostics', 'IVDR evidence'],
+      ['Device engineering', 'device-engineering', 'Engineering evidence'],
+      ['Post-market vigilance', 'device-postmarket', 'Post-market surveillance and CAPA'],
+      ['Dispatch readiness', 'dispatch-readiness', 'Readiness'],
+    ] as const) {
+      expect(findCallableApp(id)?.label, id).toBe(now);
+      expect(findCallableApp(old)?.id, old).toBe(id);
+      const m = parseAppMentions(`@${old} please`);
+      expect(m.map((x) => x.app.id), `@${old}`).toEqual([id]);
+      expect(m[0].length).toBe(old.length + 1);
+    }
+  });
+
   it('a longer handle wins over a shorter one it starts with', () => {
     expect(parseAppMentions('@biostatistics workbench now')[0].app.id).toBe('biostat-workbench');
     expect(parseAppMentions('@biostatistics now')[0].app.id).toBe('biostatistics');

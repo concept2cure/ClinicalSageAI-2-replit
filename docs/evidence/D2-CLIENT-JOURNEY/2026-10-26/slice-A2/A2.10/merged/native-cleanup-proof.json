@@ -1,0 +1,26 @@
+{
+  "baseline": "37f2ed240",
+  "path": "tests/db/project-client-workspace-intake.dbtest.ts",
+  "functional_cases_byte_identical": true,
+  "functional_body_sha256": "df5787a6b183491ccba4a95d88aa8e9d7432e3718a1aada06011a836ef5d7de6",
+  "disposable_drop_uses_force": false,
+  "cleanup": "pool.end plus public client end acknowledgements; no ignored errors",
+  "runs": [
+    {
+      "log": "native-cleanup-green.log.gz",
+      "unique_cases": 16,
+      "exit_code": 0,
+      "seconds": 6.88,
+      "unhandled_errors": 0
+    },
+    {
+      "log": "native-cleanup-confirm.log.gz",
+      "unique_cases": 16,
+      "exit_code": 0,
+      "seconds": 7.31,
+      "unhandled_errors": 0
+    }
+  ],
+  "native_file_sha256": "3db724171575eb96e44f636e1ec256656464b73523cbca4106363db8c58631ee",
+  "eslint_diagnostics": 0
+}

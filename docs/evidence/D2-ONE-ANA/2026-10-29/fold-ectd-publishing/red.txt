@@ -1,0 +1,105 @@
+# Red: the new suite before any product change (HEAD a254c975a, 2026-10-29)
+# npx vitest run client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx --reporter=verbose
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > the eCTD reference is on eCTD Compile > opens at v3.2.2, the version this compile assembles, with its specifications and coded-attribute lists 5074ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > the eCTD reference is on eCTD Compile > says the reference changes nothing the compile assembles 5029ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > the eCTD reference is on eCTD Compile > places the specifications beside the validation findings, ahead of the compilation history 5033ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > v4.0 in the reference panel > shows the Regional IG OID, the v4.0 specifications, and browses and filters a code list 5022ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > v4.0 in the reference panel > reads only a code list the listing supplied 5022ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a failed reference read is an error with Try again, never an empty list, and Try again reads again 5022ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > the spec table has its own Try again 5022ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a failed code-list read has its own Try again, which reads that list again 5018ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a body in the wrong shape is a failed read, not a crashed surface 5021ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > the first frame and an in-flight read never render an empty verdict 17ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > an empty answer says it is what the service returned, not a failed read 5018ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > with no project open > the reference is still there, and nothing project-scoped is read 5012ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's view of the reference, in eCTD Compile's own context > names the version, the specifications and the lists it shows 5020ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's view of the reference, in eCTD Compile's own context > a failed read reaches AnA as a failed read, with no counts 5017ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > moved, not copied > one client module reads the reference routes 38ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > the eCTD reference is on eCTD Compile > opens at v3.2.2, the version this compile assembles, with its specifications and coded-attribute lists
+AssertionError: expected [] to have a length of 5 but got +0
+- Expected
++ Received
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > the eCTD reference is on eCTD Compile > says the reference changes nothing the compile assembles
+AssertionError: expected [] to have a length of 5 but got +0
+- Expected
++ Received
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > the eCTD reference is on eCTD Compile > places the specifications beside the validation findings, ahead of the compilation history
+AssertionError: expected [] to have a length of 5 but got +0
+- Expected
++ Received
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > v4.0 in the reference panel > shows the Regional IG OID, the v4.0 specifications, and browses and filters a code list
+AssertionError: expected [] to have a length of 5 but got +0
+- Expected
++ Received
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > v4.0 in the reference panel > reads only a code list the listing supplied
+AssertionError: expected [] to have a length of 5 but got +0
+- Expected
++ Received
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a failed reference read is an error with Try again, never an empty list, and Try again reads again
+AssertionError: expected 'Compile & Export eCTDABC-123 · IND-42…' to match /Couldn’t load spec versions/
+- Expected:
++ Received:
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > the spec table has its own Try again
+AssertionError: expected 'Compile & Export eCTDABC-123 · IND-42…' to match /Couldn’t load spec versions/
+- Expected:
++ Received:
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a failed code-list read has its own Try again, which reads that list again
+AssertionError: expected [] to have a length of 5 but got +0
+- Expected
++ Received
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > a body in the wrong shape is a failed read, not a crashed surface
+AssertionError: expected 'Compile & Export eCTDABC-123 · IND-42…' to match /Couldn’t load spec versions/
+- Expected:
++ Received:
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > the first frame and an in-flight read never render an empty verdict
+AssertionError: expected 'Compile & Export eCTDABC-123 · IND-42…' to match /Loading spec versions/
+- Expected:
++ Received:
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > honest reads > an empty answer says it is what the service returned, not a failed read
+AssertionError: expected 'Compile & Export eCTDABC-123 · IND-42…' to match /No spec versions/
+- Expected:
++ Received:
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > with no project open > the reference is still there, and nothing project-scoped is read
+AssertionError: expected [] to have a length of 5 but got +0
+- Expected
++ Received
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's view of the reference, in eCTD Compile's own context > names the version, the specifications and the lists it shows
+AssertionError: expected undefined to be 'ready' // Object.is equality
+- Expected:
++ Received:
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's view of the reference, in eCTD Compile's own context > a failed read reaches AnA as a failed read, with no counts
+AssertionError: expected undefined to be 'error' // Object.is equality
+- Expected:
++ Received:
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > moved, not copied > one client module reads the reference routes
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+- Expected
++ Received
+ Test Files  1 failed (1)
+      Tests  15 failed (15)
+
+# Red, the 16th case (added after the run above), with HEAD's EctdCompile.tsx swapped in and then restored
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > v4.0 in the reference panel > a slower answer for an earlier pick never paints over the list now picked 5070ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 15 skipped (16)
+restored, hash identical 66bd3143cf5b4be48e9847f2350bdf9478aae81efa62069f72cb9b649e1d4b3b
+
+# ===================== Part 2 =====================
+# Red: the fold guard, the action cases, the catalogue replay cases, the launch-scope guard and the narrowing move, before any Part 2 product change (HEAD e455afe16, 2026-10-29T17:02:00Z)
+ × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > a fresh database replaying the whole catalogue set twice holds the row only deprecated, and eCTD Compile stays offered 1355ms
+ × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > keeps a deployed row, its tier and its subscription, deprecated, across catalogue and packaging replay 16ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's hands on the reference: the three view-only actions, under ectd-compile > switches the reference version, and the menu a person reads really moved; the detail says what the compile builds 27ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's hands on the reference: the three view-only actions, under ectd-compile > opens a code list by its id, held while the listing loads, then the browser shows it 13ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's hands on the reference: the three view-only actions, under ectd-compile > refuses honestly: under v3.2.2, on a name no list has, and when the listing could not be read 24ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx > AnA's hands on the reference: the three view-only actions, under ectd-compile > filters the open code list by text, and clears it 22ms
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/ectd/controlled-vocab 5ms
+ × server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/ectd/qualification/spec-versions 4ms
+ × client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > resolves ectd-publishing to eCTD Compile from a link, an in-app move and AnA's target, with or without a project open 5ms
+ × client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > lands on eCTD Compile, which shows the reference and claims exactly its two reads 2ms
+ × client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > the three view-only actions are eCTD Compile's, registered by its handler map, and none is left on the retired id 3ms
+ × client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > keeps no screen of its own: no view, no registry entry for ⌘K, no inventory row, no component, no suites 1ms
+ × client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts > ectd-publishing is folded into eCTD Compile > both catalogue writers stop keeping it: off 20260810's keep-list and heal step, off 20260823's packaging 6ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed | 1 passed (5)
+      Tests  13 failed | 280 passed (293)

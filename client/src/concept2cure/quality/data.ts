@@ -1,3 +1,4 @@
+import type { RouteRoundView } from '../v2/reviewRoute/routeRound';
 /**
  * Quality / SOP register — typed model, the Quality system template family, and
  * fixtures.
@@ -59,6 +60,29 @@ export interface QmsDoc {
   lastReview?: PeriodicReviewSummary | null;
   /** The next review date the approval signed. `nextReviewDate` is when it is due, after any review. */
   signedReviewDate?: string | null;
+  /** The latest review route and its round (RR4, server review-route-standing.ts readRouteRounds); null when none was sent. */
+  reviewRoute?: RouteRoundView | null;
+  /** The route could not be read: never "no route". */
+  reviewRouteUnread?: boolean;
+  /** §11.50: the approval of the version in force; null when nothing is in force (server register-signatures.ts). */
+  approvalSignature?: RegisterSignature | null;
+  /** §11.50: who retired a retired document; null for any other. */
+  retirementSignature?: RegisterSignature | null;
+}
+
+/**
+ * A signature as the register shows it. `state` is the server's verdict:
+ * an approval is valid, withdrawn, changed (the content no longer matches),
+ * unverified or unavailable; a retirement is signed, withdrawn, unsigned
+ * (recorded before retirement was signed) or unavailable.
+ */
+export interface RegisterSignature {
+  state: string;
+  version?: string;
+  signerName: string | null;
+  signedAt: string | null;
+  meaning: string | null;
+  reason?: string | null;
 }
 
 /** A signed periodic review, as the register shows it. */
@@ -97,9 +121,35 @@ export interface TrainingRow {
   eligible?: boolean;
   unavailableReason?: string | null;
   doc: string;
-  current: number;
-  of: number;
+  /**
+   * Whether the document is assigned (P-49): to nobody, to people none of whom
+   * is active, or assigned. Only an assigned document has a figure.
+   */
+  assignment?: 'assigned' | 'not_assigned' | 'no_active_assignees';
+  /** People assigned with a current acknowledgement of the version in force; null when there is no figure. */
+  current: number | null;
+  /** People assigned; null when there is no figure. */
+  of: number | null;
   lastCycle: string;
+  /** The reader's own line: whether they are assigned, and whether their acknowledgement counts now. */
+  me?: { assigned: boolean; countsNow: boolean } | null;
+}
+
+/** The register's training figure, as the server computes it (GET /qms/training/compliance meta.summary). */
+export interface TrainingSummary {
+  documents: number; assigned: number; notAssigned: number; noActiveAssignees: number; unavailable: number;
+  /** null: nothing assessed, never 0%. */
+  averageCurrentPct: number | null;
+}
+
+/** The coverage KPI: the server's average, or what stands in its way. The client computes no percentage. */
+export function coverageKpiOf(rows: readonly TrainingRow[], summary: TrainingSummary | null): { pct: number | null; sub: string } {
+  if (rows.length === 0) return { pct: null, sub: 'No training-controlled documents yet' };
+  if (!summary) return { pct: null, sub: 'The coverage summary could not be read' };
+  if (summary.averageCurrentPct !== null) return { pct: summary.averageCurrentPct, sub: 'Average of assigned people, version in force' };
+  if (summary.assigned === 0) return { pct: null, sub: summary.noActiveAssignees > 0 ? 'No one assigned is an active member' : 'No document is assigned yet' };
+  if (summary.unavailable === summary.assigned) return { pct: null, sub: 'Verified released text is unavailable' };
+  return { pct: null, sub: 'No one assigned is an active member' };
 }
 
 /* ─── Labels + tone maps ───────────────────────────────────────── */
@@ -132,13 +182,16 @@ export const STATUS_TONE: Record<DocStatus, StatusTone> = {
   retired: 'muted',
 };
 
-/** Today, as an ISO date — kept as a constant so fixtures + overdue logic agree
- *  in the absence of live data. Live rows carry a server-computed `overdue`. */
-const TODAY = '2026-06-04';
+/** Today, as the UTC day (YYYY-MM-DD) the server's review-due read also uses.
+ *  Until 2026-10-29 this was the constant '2026-06-04', left from the removed
+ *  fixtures, so every review that fell due after that day showed as not
+ *  overdue in the register and in the Record review drawer (CAT2-22). Live
+ *  review-due rows carry the server's own `overdue`. */
+export const todayUtc = (): string => new Date().toISOString().slice(0, 10);
 
 export function isReviewOverdue(
   nextReviewDate: string | null | undefined,
-  today: string = TODAY,
+  today: string = todayUtc(),
 ): boolean {
   if (!nextReviewDate) return false;
   return String(nextReviewDate).slice(0, 10) < today;
@@ -171,7 +224,7 @@ export const STANDARD_SECTIONS: SopSection[] = [
 
 /** Derive the review-due list from a document set — used when
  *  /api/mdx/qms/documents/review-due has not answered. */
-export function deriveReviewDue(docs: QmsDoc[], today: string = TODAY): ReviewDueRow[] {
+export function deriveReviewDue(docs: QmsDoc[], today: string = todayUtc()): ReviewDueRow[] {
   return docs
     .filter((d) => (d.status === 'effective' || d.status === 'in_review') && d.nextReviewDate)
     .map((d) => reviewRowOf(d, today))
@@ -179,7 +232,7 @@ export function deriveReviewDue(docs: QmsDoc[], today: string = TODAY): ReviewDu
 }
 
 /** A register document as a periodic review row: what Record review needs, from the panel or the register. */
-export function reviewRowOf(d: QmsDoc, today: string = TODAY): ReviewDueRow {
+export function reviewRowOf(d: QmsDoc, today: string = todayUtc()): ReviewDueRow {
   return {
     id: d.id,
     docNumber: d.docNumber,

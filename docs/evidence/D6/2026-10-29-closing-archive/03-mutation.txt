@@ -1,0 +1,49 @@
+# Mutations: each applied alone, the named suite run, the source restored
+
+## M1 the builder stages bytes whose hash does not match
+[unit]
+ × server/services/vault/__tests__/vault-archive-builder.test.ts > building an archive > refuses bytes that do not match, bytes with no recorded hash, and the same document twice 13ms
+   → .toMatch() expects to receive a string, but got object
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M2 SHA256SUMS leaves out manifest, index and attachments
+[unit]
+ × server/services/vault/__tests__/vault-archive-builder.test.ts > building an archive > holds each document, the manifest, the index, attachments and SHA256SUMS over every other file 62ms
+   → expected [ 'documents/001-b.txt', …(1) ] to deeply equal [ 'INDEX.txt', …(4) ]
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+[db]
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > holds every sealed file, the manifest as signed, an index, SHA256SUMS and the audit trail, and records its own hash before sending 229ms
+   → expected [ 'documents/001-record.txt', …(2) ] to deeply equal [ 'INDEX.txt', …(5) ]
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M3 an archive is built for a seal that is not intact
+[db]
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal says when the Vault no longer matches it > builds no archive for a seal that does not verify, sends nothing and records nothing 85ms
+   → {}: expected 200 to be 409 // Object.is equality
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M4 no archive audit row before the send
+[db]
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > holds every sealed file, the manifest as signed, an index, SHA256SUMS and the audit trail, and records its own hash before sending 221ms
+   → expected [] to have a length of 1 but got +0
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M5 the audit row carries the seal hash, not the archive hash
+[db]
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > holds every sealed file, the manifest as signed, an index, SHA256SUMS and the audit trail, and records its own hash before sending 260ms
+   → expected { …(5) } to match object { …(2) }
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M6 a failed archive audit write is logged and the archive is sent anyway
+[db]
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > sends nothing when the archive cannot be recorded in the audit trail 58ms
+   → expected 200 to be 500 // Object.is equality
+      Tests  1 failed | 13 passed (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+

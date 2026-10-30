@@ -1,0 +1,231 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a valid token yields an active scope for the downstream handler
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > no token → 401 and the handler never runs (no scope)
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope)
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:12:30.620Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:12:30.621Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:12:30.621Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:12:30.660Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:12:30.675Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:12:30.679Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:12:30.681Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:12:30.684Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:12:30.687Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:12:30.696Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:12:30.698Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ × server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in warn mode 170ms
+   → Request-scoped database context is required
+ × server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in warn mode 4ms
+   → Request-scoped database context is required
+ × server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in warn mode 5ms
+   → Request-scoped database context is required
+ × server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in enforce mode 3ms
+   → Request-scoped database context is required
+ × server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in enforce mode 2ms
+   → Request-scoped database context is required
+ × server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in enforce mode 11ms
+   → Request-scoped database context is required
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a suspended account, before a scope opens
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a suspended account, before a scope opens
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a inactive account, before a scope opens
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a inactive account, before a scope opens
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > both answer 503, never a pass, when the standing cannot be read
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authenticateToken
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware (global /api gate)
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware behind authenticateToken leaves the published context carrying it
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > a valid token yields an active scope for the downstream handler
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > no token → 401 and the handler never runs (no scope)
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > a past-due organization still reaches the handler on a safe verb
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authenticateToken
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authMiddleware (the global /api gate)
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > admits an upload that fits, with the scope still open for the handler
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > does not evaluate storage on a small JSON write
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk
+ ↓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in warn mode
+ FAIL  server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in warn mode
+MissingRequestDbContextError: Request-scoped database context is required
+ ❯ Module.requestPgClient server/db/requestDb.ts:82:11
+     80|   const client = (req as Request & { dbClient?: { query?: unknown } })…
+     81|   if (!client || typeof client.query !== 'function') {
+     82|     throw new MissingRequestDbContextError();
+       |           ^
+     83|   }
+     84|   return client as unknown as RequestSqlClient;
+ ❯ Object.inspect server/middleware/__tests__/auth-establishes-scope.integration.test.ts:336:26
+ ❯ next server/middleware/__tests__/auth-establishes-scope.integration.test.ts:220:35
+ ❯ server/middleware/__tests__/auth-establishes-scope.integration.test.ts:329:14
+ ❯ establishRequestTenantScope server/middleware/establishRequestTenantScope.ts:221:5
+ ❯ continueWithTenantExecutionContext server/middleware/authBoundary.ts:137:3
+ ❯ server/middleware/authBoundary.ts:218:7
+ ❯ enforceStorageQuota server/middleware/storageQuotaGuard.ts:175:5
+ ❯ server/middleware/auth.ts:297:46
+ ❯ server/middleware/tenantLifecycleGuard.ts:304:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'REQUEST_DB_CONTEXT_REQUIRED', statusCode: 500 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in warn mode
+ FAIL  server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in enforce mode
+MissingRequestDbContextError: Request-scoped database context is required
+ ❯ Module.requestPgClient server/db/requestDb.ts:82:11
+     80|   const client = (req as Request & { dbClient?: { query?: unknown } })…
+     81|   if (!client || typeof client.query !== 'function') {
+     82|     throw new MissingRequestDbContextError();
+       |           ^
+     83|   }
+     84|   return client as unknown as RequestSqlClient;
+ ❯ Object.inspect server/middleware/__tests__/auth-establishes-scope.integration.test.ts:336:26
+ ❯ next server/middleware/__tests__/auth-establishes-scope.integration.test.ts:220:35
+ ❯ enforceStorageQuota server/middleware/storageQuotaGuard.ts:175:5
+ ❯ server/middleware/auth.ts:297:46
+ ❯ enforceTenantLifecycle server/middleware/tenantLifecycleGuard.ts:234:5
+ ❯ server/middleware/auth.ts:297:7
+ ❯ establishRequestTenantScope server/middleware/establishRequestTenantScope.ts:221:5
+ ❯ server/middleware/auth.ts:296:5
+ ❯ enforceOrgMembership server/middleware/orgMembership.ts:386:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'REQUEST_DB_CONTEXT_REQUIRED', statusCode: 500 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in enforce mode
+ FAIL  server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in enforce mode
+MissingRequestDbContextError: Request-scoped database context is required
+ ❯ Module.requestPgClient server/db/requestDb.ts:82:11
+     80|   const client = (req as Request & { dbClient?: { query?: unknown } })…
+     81|   if (!client || typeof client.query !== 'function') {
+     82|     throw new MissingRequestDbContextError();
+       |           ^
+     83|   }
+     84|   return client as unknown as RequestSqlClient;
+ ❯ Object.inspect server/middleware/__tests__/auth-establishes-scope.integration.test.ts:336:26
+ ❯ next server/middleware/__tests__/auth-establishes-scope.integration.test.ts:220:35
+ ❯ server/middleware/__tests__/auth-establishes-scope.integration.test.ts:329:14
+ ❯ establishRequestTenantScope server/middleware/establishRequestTenantScope.ts:221:5
+ ❯ continueWithTenantExecutionContext server/middleware/authBoundary.ts:137:3
+ ❯ server/middleware/authBoundary.ts:173:43
+ ❯ enforceStorageQuota server/middleware/storageQuotaGuard.ts:175:5
+ ❯ server/middleware/auth.ts:297:46
+ ❯ server/middleware/tenantLifecycleGuard.ts:304:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'REQUEST_DB_CONTEXT_REQUIRED', statusCode: 500 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 23 skipped (29)
+   Start at  15:12:28
+   Duration  2.03s (transform 934ms, setup 60ms, import 1.51s, tests 200ms, environment 0ms)
+

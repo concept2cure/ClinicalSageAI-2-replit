@@ -6,6 +6,8 @@ import { useTenant } from '@/contexts/TenantContext';
 import { capturedActorHeaders } from '@/utils/authToken';
 import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake-workspace';
 import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
+import { ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
+import { ProjectPortfolioFilters, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices } from './ProjectPortfolioFilters';
 import { useDialog } from '../useDialog';
 import {
   productTypeForFilingType,
@@ -22,15 +24,16 @@ import {
   productTypeFixedByFiling,
 } from '@shared/regulatory/filing-document-classes';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { publishShellProject } from '../shellProject';
+import { openProjectHome, publishShellProject } from '../shellProject';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue, isMeasuredReadiness, type DossierFigureState } from '../dossierReadiness';
 import {
   listedChoices,
   notifySurfaceActionReady,
+  openNewProject,
   useSurfaceActionHandlers,
   type DirectiveProgram,
 } from '../surfaceActions';
-import { usePublishSurfaceContext } from '../surfaceContext';
+import { usePublishSurfaceContext, type SurfaceContext } from '../surfaceContext';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
 // rather than depending on window globals that another surface may or may not
@@ -38,7 +41,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 // wizard's first step hung on "Loading registry…" and could never complete).
 // Importing RegistryBridge also runs its side effects, which populate the
 // window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
-import { RegistryPicker } from './AnaVerbs';
+import { RegistryPicker, type FilingBrowseState } from './AnaVerbs';
 import { MarketSupportLine } from '../MarketSupportLine';
 import { getSubmissionTypeContext } from './RegistryBridge';
 import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
@@ -48,16 +51,9 @@ import {
 } from '../../../../../shared/constants/domain/device-classification';
 import { MDR_DECLARED_CLASSES, IVDR_CLASSES } from '@shared/regulatory/device-class';
 import { deviceClassScopeForFiling, regionalDeviceApplicationClassForFiling } from '@shared/regulatory/filing-catalog';
+import { filingLifecycleReferenceFor, filingReferenceFactsFor } from '@shared/regulatory/filing-lifecycle-reference';
+import { getSegment } from '../registryModel';
 import '../styles/project-home-v2.css';
-
-/* ── Window global owned by this surface (the app shell sets it to auto-open
-   the wizard on navigation). C2C_PROJECT / __C2C_SEGMENT / C2C are declared by
-   sibling surfaces and merge into the global Window type. ── */
-declare global {
-  interface Window {
-    __C2C_NEW_PROJECT?: boolean;
-  }
-}
 
 /* ════ New Project Wizard (registry-driven, persists to regulatory_programs) ══ */
 
@@ -193,12 +189,32 @@ function documentClassLabel(programType: string): string | null {
  *  stay stale in another. */
 const STEP_LABELS = ['Choose filing type', 'Configure project', 'Review & create'] as const;
 
+type WizardScreenContext = Omit<SurfaceContext, 'surfaceId'>;
+function wizardScreenContext(step: number, filing: SelTpl | null, applicationType: string, unavailable = false, browser: { segment: string | null; searchTerm: string; inspectedReference?: FilingBrowseState['inspectedReference'] } = { segment: null, searchTerm: '', inspectedReference: null }): WizardScreenContext {
+  if (unavailable) return {
+    summary: 'The new-project wizard cannot continue because the signed-in account or organization changed. Reopen New project before continuing.',
+    facts: { wizardState: 'unavailable', selectedFiling: null },
+  };
+  const catalog = filing ? filingReferenceFactsFor(filing.id) : null;
+  return {
+    summary: `The new-project wizard is on step ${step + 1} of ${STEP_LABELS.length}: ${STEP_LABELS[step]}. ` +
+      (filing ? `Selected filing: ${filing.label} (${filing.agency ?? 'agency not recorded'}, ${filing.region ?? 'region not recorded'}).` : 'No filing type is selected.'),
+    facts: { wizardState: 'open', filingLifecycleReference: filingLifecycleReferenceFor(filing?.id), filingBrowser: { ...browser, inspectedReference: browser.inspectedReference ?? null }, wizardStep: { number: step + 1, label: STEP_LABELS[step] },
+      selectedFiling: filing ? { id: filing.id, name: filing.label, applicationType, agency: filing.agency ?? null, region: filing.region ?? null,
+        ...(catalog ? { description: catalog.entry.description, submissionFormat: catalog.entry.submissionFormat, ctdModule: catalog.entry.ctdModule,
+          workflowLabel: catalog.workflowLabel } : {}) } : null },
+    availableActions: [filing ? 'Explain what the selected filing contains and which evidence it needs' : 'Explain the filing choices'],
+  };
+}
+
 /** Exported for the failure-path test: the wizard's error surface is an
  *  acceptance criterion in its own right (a failed write must be visible and
  *  must offer a way out), and driving it through the whole Projects surface
  *  would test the registry loader rather than the banner. */
-type NewProjectWizardProps = { onClose: () => void; onNav: (id: string) => void; segment?: string };
+type NewProjectWizardProps = { onClose: () => void; onNav: (id: string) => void; segment?: string;
+  onAsk?: (text: string) => void; onContext?: (context: WizardScreenContext | null) => void };
 export function NewProjectWizard(props: NewProjectWizardProps) {
+  const { onContext } = props;
   const user = useAuthUser();
   const { currentOrganization } = useTenant();
   const actorUserId = projectIntakeId(user?.id);
@@ -207,6 +223,11 @@ export function NewProjectWizard(props: NewProjectWizardProps) {
   const key = actorUserId && organizationId && tenantOrganizationId === organizationId ? `${actorUserId}:${organizationId}` : 'unavailable';
   const current = useRef(key);
   current.current = key;
+  useEffect(() => {
+    if (key !== 'unavailable') return undefined;
+    onContext?.(wizardScreenContext(0, null, '', true));
+    return () => onContext?.(null);
+  }, [key, onContext]);
   if (!actorUserId || !organizationId || tenantOrganizationId !== organizationId) return (
     <section className="npw" aria-label="New project">
       <div className="npw-inner"><h1>New project</h1><p>The signed-in account or organization changed. Reopen New project after selecting your organization.</p><button className="btn ghost" onClick={props.onClose}>Back to projects</button></div>
@@ -215,7 +236,7 @@ export function NewProjectWizard(props: NewProjectWizardProps) {
   return <NewProjectWizardSession key={key} {...props} actor={{ actorUserId, organizationId }} isCurrent={() => current.current === key} />;
 }
 
-function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: NewProjectWizardProps & { actor: ProjectIntakeActor; isCurrent: () => boolean }) {
+function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, actor, isCurrent }: NewProjectWizardProps & { actor: ProjectIntakeActor; isCurrent: () => boolean }) {
   const { setCurrentClientWorkspace } = useTenant();
   const capturedActor = useMemo(() => ({ actorUserId: actor.actorUserId, organizationId: actor.organizationId }), [actor.actorUserId, actor.organizationId]);
   // Retain the pending outcome in this view. A ref also protects an Escape or
@@ -324,14 +345,18 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
   /* The tab the user is LOOKING at, which is the lane they arrived in until
      they switch. The banner reads this, not the arrival lane. */
   const [tabSeg, setTabSeg] = useState<string | null>(null);
+  const [filingBrowser, setFilingBrowser] = useState<FilingBrowseState | null>(null);
   const uiSeg = tabSeg ?? arrivedSeg;
   const regSeg = SEG2REG[uiSeg];
-  const segLabel = SEG_LABELS[uiSeg] || uiSeg;
-  const ctx = tpl ? getSubmissionTypeContext(tpl) : null;
-  const selTpl: SelTpl | null = ctx
+  const segLabel = SEG_LABELS[uiSeg] || getSegment(uiSeg)?.label || uiSeg;
+  const ctx = useMemo(() => tpl ? getSubmissionTypeContext(tpl) : null, [tpl]);
+  const selTpl = useMemo<SelTpl | null>(() => ctx
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
-    : null;
+    : null, [ctx]);
   const programType = programTypeFor(selTpl, uiSeg);
+  const screenContext = useMemo(() => wizardScreenContext(step, selTpl, programType, retired, filingBrowser ?? { segment: regSeg ?? null, searchTerm: '', inspectedReference: null }), [step, selTpl, programType, retired, filingBrowser, regSeg]);
+  useEffect(() => { onContext?.(screenContext); }, [onContext, screenContext]);
+  useEffect(() => () => onContext?.(null), [onContext]);
   /* The filing fixes the family when known; the person states any unresolved class. */
   // A filing document class asks, unless the filing names its class itself (an
   // sBLA is a biologics licence supplement): filing-document-classes.ts.
@@ -505,8 +530,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
           <div className="ph-eyebrow">Workspace</div>
           <h1 className="ph-title" id="new-project-title">New project</h1>
           <p className="ph-sub">
-            Choose the filing type, describe the product, then review what will be recorded.
-            The filing type decides the dossier outline this programme is built against.
+            What are you filing? Choose the filing, describe the product, then review what will be recorded.
+            The filing decides the dossier outline the project is built against.
           </p>
         </div>
       </header>
@@ -555,7 +580,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
                 <span className="ico" aria-hidden="true">{I.sparkles}</span>
                 <div>
                   <div className="npw-seg-t">Tailored for {segLabel}</div>
-                  <div className="npw-seg-s">Showing the filing types that fit your client type. Switch the tab to browse other segments.</div>
+                  <div className="npw-seg-s">The filings for your client type come first. Use the tabs for other kinds of product, or search by name.</div>
                 </div>
               </div>
               {/* No inner scroll pane. The picker was capped at 440px inside an
@@ -570,6 +595,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
                 applicationTypeOf={(e) => programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, uiSeg)}
                 initialSegment={regSeg || undefined}
                 onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
+                onAsk={onAsk}
+                onBrowseChange={setFilingBrowser}
               />
             </div>
           )}
@@ -626,7 +653,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
                     aria-describedby="npw-name-help"
                   />
                   <span className="npw-field-help" id="npw-name-help">
-                    Required. The program is listed under this name.
+                    Required. The project is listed under this name.
                   </span>
                 </label>
 
@@ -689,7 +716,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
                       {productChoices.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
                     <span className="npw-field-help" id="npw-class-help">
-                      {canRefine ? 'The filing default is selected. Choose the product type this project will record.' : <>Required. {filingTypeInSentence(programType)} covers drugs and biologics; the program records which.</>}
+                      {canRefine ? 'The filing default is selected. Choose the product type this project will record.' : <>Required. {filingTypeInSentence(programType)} covers drugs and biologics; the project records which.</>}
                     </span>
                   </label>
                 )}
@@ -1046,11 +1073,11 @@ function countFloor(n: number, paged: boolean): string {
   return paged ? `${n}+` : String(n);
 }
 
-function PortfolioPagedNote({ paged, settled, count }: { paged: boolean; settled: boolean; count: number }) {
+function PortfolioPagedNote({ paged, settled, count, scopedCounts }: { paged: boolean; settled: boolean; count: number; scopedCounts: boolean }) {
   if (!paged || !settled) return null;
   return (
     <div role="status" className="scaf-note" style={{ marginBottom: 12 }}>
-      Showing the first {count} programs. The totals, the average readiness and search cover these only.
+      Showing the first {count} projects. {scopedCounts ? 'The average readiness, status filter and search cover these only. Counts cover all projects matching the selected filters.' : 'The totals, the average readiness, status filter and search cover these only.'}
     </div>
   );
 }
@@ -1068,6 +1095,7 @@ interface ProjPortfolioEntry {
   id: string;
   title: string;
   ws: string;
+  pathway?: string;
   code: string;
   stage: string;
   /** Share of the home filing's sections approved or locked; null with no
@@ -1083,6 +1111,8 @@ interface ProjPortfolioEntry {
   /** target_submission_date as YYYY-MM-DD, or null when none is set. */
   due_date?: string | null;
   activity: string;
+  client_workspace_id?: number | null;
+  client_name?: string | null;
 }
 
 /**
@@ -1094,7 +1124,8 @@ interface ProjPortfolioEntry {
  */
 function portfolioMean(projects: ProjPortfolioEntry[], settled: boolean): { mean: string; cover: string } {
   const measured = projects.filter((p): p is ProjPortfolioEntry & { readiness: number } => isMeasuredReadiness(p.readiness, p.readinessState));
-  const mean = measured.length ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%' : '—';
+  const missing = projects.some(project => project.readinessState === 'unavailable') ? 'unavailable' : 'Not recorded';
+  const mean = measured.length ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%' : missing;
   const partial = settled && measured.length > 0 && measured.length < projects.length;
   return { mean, cover: partial ? `${measured.length} of ${projects.length} measured` : '' };
 }
@@ -1117,17 +1148,17 @@ const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'war
    routes); a `blocked` row comes from data loaded some other way, and the list
    does not assess blockers. The card states the gap instead of a bare red chip. */
 const BLOCKED_NO_CAUSE = 'No cause recorded';
-const BLOCKED_NO_CAUSE_TITLE = 'This program’s status is recorded as blocked, and no blocker is recorded against it.';
+const BLOCKED_NO_CAUSE_TITLE = 'This project’s status is recorded as blocked, and no blocker is recorded against it.';
 
 export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [ws, setWs] = useState('all');
+  const [pathway, setPathway] = useState('all');
   const [status, setStatus] = useState('all');
+  const [clientWorkspaceId, setClientWorkspaceId] = useState('all');
   const [view, setView] = useState('grid');
   const [q, setQ] = useState('');
-  const [wizardOpen, setWizardOpen] = useState(() => {
-    if (window.__C2C_NEW_PROJECT) { window.__C2C_NEW_PROJECT = false; return true; }
-    return false;
-  });
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardContext, setWizardContext] = useState<WizardScreenContext | null>(null);
 
   // Real program portfolio — GET /api/c2c/projects projects one field per real
   // regulatory_programs column (server/routes/c2c/projects.ts). Fixture-free:
@@ -1136,13 +1167,19 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      its own, so the retry the failed-load panel offers is a nonce in that list.
      The panel's copy promised a retry it did not have. */
   const [reloadNonce, setReloadNonce] = useState(0);
-  const live = useLiveRows<ProjPortfolioEntry>('/api/c2c/projects', [reloadNonce]);
+  const portfolioUrl = portfolioFilterUrl(clientWorkspaceId, ws, pathway);
+  const live = useLiveRows<ProjPortfolioEntry>(portfolioUrl, [reloadNonce, clientWorkspaceId, ws, pathway]);
   const projects = live.rows;
-  /* The read is one page (50 by default) and the route says when there is
-     more (`meta.hasMore`). Ignored, an org with 80 programs read "50 active
-     programs", the mean covered 50 and search could not find the 51st. The
-     count is a floor then, and the screen and AnA are told so. */
+  // Options come from accessible program anchors, not an organization-wide
+  // client directory. The server applies this filter before it pages the list.
+  const clients = useMemo(() => portfolioClients(live.meta), [live.meta]);
+  const clientContext = useMemo(() => portfolioClientContext(clientWorkspaceId, clients, live.meta),
+    [clientWorkspaceId, clients, live.meta]);
+  // Readiness, status and search cover the page. Counts from the server cover
+  // the complete admitted set; older responses retain honest page floors.
   const truncated = readIsPaged(live.meta);
+  const counts = portfolioCounts(live.meta);
+  const unfilteredEmpty = portfolioIsUnfilteredEmpty(live.empty, ws, pathway);
 
   /* Search matches the two things a person actually knows a programme by — its
      title and its code. Deliberately NOT `lead`: the server projects that as
@@ -1152,7 +1189,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const needle = q.trim().toLowerCase();
   const list = projects.filter(
     p =>
-      (ws === 'all' || p.ws === ws) &&
       (status === 'all' || p.status === status) &&
       (!needle ||
         p.title.toLowerCase().includes(needle) ||
@@ -1164,7 +1200,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      divisor turned what would at least have been a visible NaN into a clean
      "0%", a portfolio-mean readiness computed over no programs. A director
      reading the header learned they run nothing and have nothing blocked. */
-  const kv = (v: string) => (live.loading || live.error ? '—' : v);
   const { mean: meanReadiness, cover: measuredCover } = portfolioMean(projects, !live.loading && !live.error);
   /* No "Blocked" figure. A program's status is only ever written as active or
      archived (POST and the close-out routes in server/routes/c2c/projects.ts),
@@ -1175,17 +1210,19 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     const d = daysUntil(p.due_date);
     return d != null && d >= 0 && d < 60;
   }).length;
-  const health = [
-    { l: 'Active programs', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
+  const health = useMemo(() => {
+    const kv = (value: string) => (live.loading || live.error ? '—' : value);
+    return [
+    { l: 'Active projects', n: kv(counts ? String(counts.total) : countFloor(projects.length, truncated)), m: 'matching the selected server filters', t: '' },
     // A mean over some of the programs says how many it covers (`q`).
     { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '', q: measuredCover },
-    { l: 'Filing < 60 days', n: kv(countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
-  ];
+    { l: 'Filing < 60 days', n: kv(counts ? String(counts.filingWithin60Days) : countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
+    ];
+  }, [live.loading, live.error, counts, projects.length, truncated, meanReadiness, measuredCover, filingSoon]);
   /* The status filter offers the statuses the portfolio actually holds. It
      offered Blocked and Complete, which nothing writes, so both always showed
      an empty list. One status (or none) needs no filter. */
-  const statuses = ['all', ...Array.from(new Set(projects.map(p => p.status).filter(Boolean)))];
-  const wss = ['all', 'MDX', 'Biotech', 'Pharma'];
+  const statusChoices = portfolioStatusChoices(projects.map(project => project.status), status);
 
   /* What AnA can see of this screen.
      The portfolio is the screen a user is most likely to ask a general question
@@ -1205,14 +1242,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
        screen that is not there — the same class of untruth as reporting an
        empty portfolio over a failed read, two branches down. */
     if (wizardOpen) {
-      return {
+      return wizardContext ?? {
         summary:
-          'The new-project wizard has the screen; the portfolio list is not visible. It walks ' +
-          `three steps — ${STEP_LABELS.join(', ')} — and the step the person is on is the ` +
-          'wizard\'s own state, which this surface does not hold.',
+          'The new-project wizard is opening; its current step has not been reported yet. The portfolio is not visible.',
         availableActions: [
-          'Explain what a filing type commits the programme to',
-          'Cancel the wizard and go back to the portfolio',
+          'Explain what a filing type commits the project to',
         ],
       };
     }
@@ -1222,7 +1256,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     if (live.error) {
       return {
         summary:
-          'The project portfolio could not be read, so this screen is showing no programs because of a ' +
+          'The project portfolio could not be read, so this screen is showing no projects because of a ' +
           'failure, not because there are none.',
         availableActions: ['Retry the portfolio read'],
       };
@@ -1232,26 +1266,34 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
        by workstream and status" while a search term was also hiding rows would
        describe a screen the user is not looking at, and AnA would answer "which
        programs are at risk?" over a set it had been told was complete. */
-    const filtered = ws !== 'all' || status !== 'all' || needle !== '';
+    const filtered = ws !== 'all' || pathway !== 'all' || status !== 'all' || clientContext.active || needle !== '';
     const by = [
       ws !== 'all' ? `workstream "${ws}"` : null,
+      pathway !== 'all' ? `pathway "${pathway}"` : null,
       status !== 'all' ? `status "${status}"` : null,
+      clientContext.description,
       needle ? `a search for "${q.trim()}"` : null,
     ].filter(Boolean);
     return {
       summary:
-        `Projects portfolio: ${projects.length} regulatory program(s)` +
-        (truncated ? ` — the first ${projects.length} only; more exist, and every figure here covers the first ${projects.length}` : '') +
+        `Projects portfolio: ${counts?.total ?? projects.length} regulatory project(s)` +
+        (truncated ? ` — showing the first ${projects.length} only; more exist. Readiness, status and search cover this page${counts ? '; total and filing counts cover all matching projects' : '; counts are page floors'}` : '') +
         (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
         `. Average readiness ${health[1].n}${measuredCover ? ` (${measuredCover})` : ''}; ${health[2].n} with a target filing date in the next 60 days. ` +
-        'Blockers are not assessed on this list; each program\'s readiness is on its project home. ' +
+        'Blockers are not assessed on this list; each project\'s readiness is on its project home. ' +
         `Shown as a ${view}.`,
       facts: {
-        totalPrograms: projects.length,
+        totalPrograms: counts?.total ?? projects.length,
+        countsScope: counts ? 'selected client, workstream and pathway before paging' : 'returned page only',
+        readinessPageCount: projects.length,
+        pathwayFilter: pathway,
+        byWorkstream: counts?.byWorkstream ?? null,
+        byPathway: counts?.byPathway ?? null,
         portfolioTruncated: truncated,
         shownInList: list.length,
         workstreamFilter: ws,
         statusFilter: status,
+        ...clientContext.facts,
         searchQuery: q.trim() || null,
         averageReadiness: health[1].n,
         filingWithin60Days: health[2].n,
@@ -1263,31 +1305,25 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         // card (where the person reads it); the sibling ProjectHome publisher
         // drops the team member's email for the same reason.
         programs: list.slice(0, 12).map(p => ({
-          id: p.id, code: p.code, title: p.title, workstream: p.ws, stage: p.stage,
+          id: p.id, code: p.code, title: p.title, workstream: p.ws, pathway: p.pathway ?? null, stage: p.stage,
           status: p.status, readiness: p.readiness, readinessState: p.readinessState ?? null, due: p.due,
           blocker: p.blocker ?? null,
         })),
       },
       availableActions: [
-        'Open a program to enter its project home',
-        'Filter the portfolio by workstream (MDX, Biotech, Pharma) or by status',
-        'Search the portfolio by program title or code',
+        'Open a project to enter its project home',
+        'Filter the portfolio by workstream (MDX, Biotech, Pharma), pathway or client; filter the loaded page by status',
+        'Search the portfolio by project title or code',
         'Switch between the grid and list views',
         'Create a new project through the new-project wizard',
       ],
     };
-  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, q, needle, view, health, measuredCover, truncated]);
+  }, [wizardOpen, wizardContext, live.loading, live.error, projects, list, ws, pathway, status, clientContext, q, needle, view, health, measuredCover, truncated, counts]);
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (
     pr: Pick<ProjPortfolioEntry, 'id' | 'title' | 'code'> & Partial<Pick<ProjPortfolioEntry, 'ws' | 'status'>>,
-  ) => {
-    try {
-      publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
-      if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
-    } catch { /* noop */ }
-    onNav('project-home');
-  };
+  ) => openProjectHome({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status }, onNav);
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
      projects.*). Every handler drives the SAME state the human's own controls
@@ -1313,6 +1349,12 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const wizardGuard = () =>
     wizardOpen ? { ok: false as const, reason: 'The new-project wizard is open — close it first.' } : null;
   useSurfaceActionHandlers('projects', {
+    'projects.new-project': () => {
+      if (wizardOpen) return { ok: true, detail: 'The new-project wizard is already open.' };
+      setWizardContext(null);
+      setWizardOpen(true);
+      return { ok: true, detail: 'Opened the new-project wizard.' };
+    },
     'projects.open-program': (params, { program }) => {
       const guarded = wizardGuard();
       if (guarded) return guarded;
@@ -1324,8 +1366,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         return { ok: false, reason: 'The portfolio is still loading.', retry: true };
       if (live.error) return { ok: false, reason: 'The portfolio could not be read.' };
       const programName = (p: (typeof projects)[number]) => `${p.code} — ${p.title}`;
-      const listed = () => listedChoices(projects.map(programName), 'Programs listed');
-      if (!wanted) return { ok: false, reason: `No program named.${listed()}` };
+      const listed = () => listedChoices(projects.map(programName), 'Projects listed');
+      if (!wanted) return { ok: false, reason: `No project named.${listed()}` };
       /* Exact first, on the keys the server resolves a reference by
          (drive-context.ts resolveProgramRef): the id, the trimmed code, the
          title. The id was not one of them here. AnA is handed each program's
@@ -1350,11 +1392,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           ok: false,
           reason:
             contains.length > 1
-              ? `"${params.program}" matches ${contains.length} programs — name one exactly.${listedChoices(
+              ? `"${params.program}" matches ${contains.length} projects — name one exactly.${listedChoices(
                   contains.map(programName),
                   'Matches',
                 )}`
-              : `No program named "${params.program}" in this portfolio.${listed()}`,
+              : `No project named "${params.program}" in this portfolio.${listed()}`,
         };
       }
       openProj(match);
@@ -1363,9 +1405,18 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     'projects.filter': (params) => {
       const guarded = wizardGuard();
       if (guarded) return guarded;
+      if (params.clientWorkspaceId && params.clientWorkspaceId !== 'all'
+        && !clients.some(client => String(client.id) === params.clientWorkspaceId)) {
+        return { ok: false, reason: 'That client is not available in this portfolio’s client choices.' };
+      }
       const applied: string[] = [];
       if (params.workstream) { setWs(params.workstream); applied.push(`workstream ${params.workstream}`); }
+      if (params.pathway) { setPathway(params.pathway); applied.push(`pathway ${params.pathway}`); }
       if (params.status) { setStatus(params.status); applied.push(`status ${params.status}`); }
+      if (params.clientWorkspaceId) {
+        setClientWorkspaceId(params.clientWorkspaceId);
+        applied.push(params.clientWorkspaceId === 'all' ? 'all clients' : `client ${clients.find(client => String(client.id) === params.clientWorkspaceId)?.name}`);
+      }
       if (applied.length === 0) return { ok: false, reason: 'No filter named.' };
       return { ok: true, detail: `Filtered to ${applied.join(', ')}` };
     },
@@ -1391,7 +1442,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      the shell persists, and backing out of a half-filled form would then have to
      unwind that too. */
   if (wizardOpen) {
-    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} segment={segment} />;
+    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} segment={segment} onAsk={onAsk} onContext={setWizardContext} />;
   }
 
   return (
@@ -1404,11 +1455,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         <div>
           <div className="ph-eyebrow">Workspace</div>
           <h1 className="ph-title">Projects</h1>
-          <div className="ph-sub">Every regulatory program across all workstreams. Open one to enter its project home.</div>
+          <div className="ph-sub">Every regulatory project across all workstreams. Open one to enter its project home.</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn ghost" onClick={() => onAsk('Which programs are at risk this week?')}>{I.sparkles} Ask AnA</button>
-          <button className="btn primary" onClick={() => setWizardOpen(true)}>{I.plus} New project</button>
+          <button className="btn ghost" onClick={() => onAsk('Which projects are at risk this week?')}>{I.sparkles} Ask AnA</button>
+          <button className="btn primary" onClick={() => openNewProject(onNav)}>{I.plus} New project</button>
         </div>
       </div>
 
@@ -1427,7 +1478,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           </span>
         ))}
       </div>
-      <PortfolioPagedNote paged={truncated} settled={!live.loading && !live.error} count={projects.length} />
+      <PortfolioPagedNote paged={truncated} settled={!live.loading && !live.error} count={projects.length} scopedCounts={counts !== null} />
 
       <div className="pj-toolbar">
         <div className="pj-search">
@@ -1441,6 +1492,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
             aria-label="Search projects by title or code"
           />
         </div>
+        <ProjectClientFilter value={clientWorkspaceId} clients={clients} hasMore={clientContext.hasMore} onChange={setClientWorkspaceId} />
         <span style={{ flex: 1 }} />
         <div className="seg">
           <button className={`seg-b${view === 'grid' ? ' on' : ''}`} onClick={() => setView('grid')}>Grid</button>
@@ -1448,13 +1500,12 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         </div>
       </div>
 
-      <div className="ws-switch" style={{ marginBottom: 8 }}>
-        {wss.map(w => <button key={w} className={`ws-btn${ws === w ? ' on' : ''}`} onClick={() => setWs(w)}>{w === 'all' ? 'All workstreams' : w}</button>)}
-      </div>
+      <ProjectPortfolioFilters workstream={ws} pathway={pathway} counts={counts}
+        hasDeviceRows={projects.some(project => project.ws === 'MDX')} onWorkstream={setWs} onPathway={setPathway} />
 
-      {statuses.length > 2 && (
+      {statusChoices.visible && (
         <div className="seg" style={{ marginBottom: 18 }}>
-          {statuses.map(s => (
+          {statusChoices.choices.map(s => (
             <button key={s} className={`seg-b${status === s ? ' on' : ''}`} onClick={() => setStatus(s)}>
               {s[0].toUpperCase() + s.slice(1)}
             </button>
@@ -1463,7 +1514,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       )}
 
       {live.loading ? (
-        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading projects…</div>
       ) : live.error ? (
         // The hint used to read "…(projected from regulatory_programs)…",
         // naming a governed store's table on screen: an information-disclosure
@@ -1477,20 +1528,20 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           hint={live.error || "Couldn't load your projects. Try again, or sign in if your session has expired."}
           retry={() => setReloadNonce(n => n + 1)}
         />
-      ) : live.empty ? (
+      ) : unfilteredEmpty ? (
         <EmptyState
           icon={I.folder}
-          title="No programs yet"
-          hint="Create a regulatory program and it appears here — every workstream across MDX, Biotech, and Pharma."
+          title={clientContext.empty.title}
+          hint={clientContext.empty.hint}
         />
       ) : list.length === 0 ? (
         <EmptyState
           icon={I.filter}
-          title={needle ? `No programs match “${q.trim()}”` : 'No programs match these filters'}
+          title={needle ? `No projects match “${q.trim()}”` : 'No projects match these filters'}
           hint={
             needle
-              ? 'Search matches a program’s title or code. Clear the search, or adjust the workstream or status filter.'
-              : 'Adjust the workstream or status filter to see more.'
+              ? 'Search matches a project’s title or code on the loaded page. Clear the search, or adjust the filters.'
+              : 'Adjust the client, workstream, pathway or status filter to see more.'
           }
         />
       ) : view === 'grid' ? (
@@ -1532,7 +1583,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       ) : (
         <div className="ctable">
           <div className="ct-head" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }}>
-            <div>Program</div><div>WS</div><div>Stage / readiness</div><div>Blocker</div><div>Lead</div><div>Due</div>
+            <div>Project</div><div>WS</div><div>Stage / readiness</div><div>Blocker</div><div>Lead</div><div>Due</div>
           </div>
           {list.map(p => (
             <button key={p.id} className="ct-row" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }} onClick={() => openProj(p)}>

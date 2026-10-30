@@ -1,0 +1,28 @@
+# Rule 2 S3 red, item biomarker-validation: its new test on trunk 3e06155de, before the item's edits.
+
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > refuses a table with no diseased subjects instead of returning sensitivity 0 16ms
+   → expected [Function] to throw an error
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > refuses a table with no non-diseased subjects instead of returning specificity 0 2ms
+   → expected [Function] to throw an error
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > refuses an empty table instead of reporting every metric as 0 1ms
+   → expected [Function] to throw an error
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > reports the sensitivity, specificity and exact intervals computeDiagnosticAccuracy gives 6ms
+   → expected undefined to deeply equal { lower: 0.7819, upper: 0.9667 }
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > reports PPV as undefined (null), not 0, when no subject tested positive 1ms
+   → expected +0 to be null
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > a null intended-use prevalence is not stated, not 0: no re-projection and no low-prevalence caution 1ms
+   → expected +0 to be undefined
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > no diseased subjects: needs_parameters, never a computed 0% sensitivity 6ms
+   → expected 'computed' to be 'needs_parameters' // Object.is equality
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > no non-diseased subjects: needs_parameters, never a computed 0% specificity 2ms
+   → expected 'computed' to be 'needs_parameters' // Object.is equality
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > an all-zero table: no computed metrics, and the reply names the empty table 2ms
+   → expected 'computed' not to be 'computed' // Object.is equality
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > a negative count: needs_parameters, not clamped to 0 1ms
+   → expected 'computed' to be 'needs_parameters' // Object.is equality
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > an intended-use prevalence outside [0, 1]: needs_parameters, not clamped 1ms
+   → expected 'computed' to be 'needs_parameters' // Object.is equality
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > a complete table is computed, with exact intervals on both metrics 1ms
+   → Cannot read properties of undefined (reading 'lower')
+ Test Files  1 failed (1)
+      Tests  12 failed (12)

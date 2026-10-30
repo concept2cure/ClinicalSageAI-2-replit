@@ -1,0 +1,64 @@
+{
+  "capturedUtc": "2026-10-26T17:09:21.697292+00:00",
+  "inputs": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx",
+      "sha256": "29eb64a8bc40358096de0e2df28e578c185ab5da32ed9789e7e7143cf1dcdea1",
+      "snapshot": "red-source-authoringDraftInputs.test.tsx.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringDraftTransport.ts",
+      "sha256": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+      "snapshot": "red-source-authoringDraftTransport.ts.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts",
+      "sha256": "c01804b5dfbf2d32fbdbbf9b50cfc84a9c6a8e9a0bbac66f1d849b7d764153f3",
+      "snapshot": "red-source-assemblyDraftQueue.ts.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+      "sha256": "3795636afc671773b677e92d61b8ccba2a45476c5bf965d9733dda12119dc735",
+      "snapshot": "red-source-useAuthoringDraftReview.ts.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx",
+      "sha256": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c",
+      "snapshot": "red-source-AuthoringAiDraft.tsx.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts",
+      "sha256": "c517b0d50a2b2128ef3ca91d03390c9c8ec9b632b93673f499afc997dc82b249",
+      "snapshot": "red-source-useAuthoringAssemblyBuild.ts.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "sha256": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
+      "snapshot": "red-source-shellProject.ts.txt.gz"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "snapshot": "red-source-vitest.config.ts.txt.gz"
+    },
+    {
+      "path": "tests/setup.ts",
+      "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+      "snapshot": "red-source-setup.ts.txt.gz"
+    },
+    {
+      "path": "package.json",
+      "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+      "snapshot": "red-source-package.json.txt.gz"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+    },
+    {
+      "path": "docs/design/EDITOR_REGIONAL_REDRAFT_2026-10-26.md",
+      "sha256": "61c6c9ddf76afffb1017ab73ca96cbea3c907a2ddccaafe11bf4b63f805f8417",
+      "snapshot": "red-source-EDITOR_REGIONAL_REDRAFT_2026-10-26.md.txt.gz"
+    }
+  ]
+}

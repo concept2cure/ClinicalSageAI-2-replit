@@ -1,0 +1,665 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a valid token yields an active scope for the downstream handler
+{
+  "timestamp": "2026-10-26T15:16:50.709Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:16:50.710Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a valid token yields an active scope for the downstream handler
+{
+  "timestamp": "2026-10-26T15:16:50.710Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope)
+{
+  "timestamp": "2026-10-26T15:16:50.740Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)",
+  "context": {
+    "userId": 7,
+    "organizationId": 2
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:16:50.743Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a valid token yields an active scope for the downstream handler 161ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > no token → 401 and the handler never runs (no scope) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope) 2ms
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:16:50.798Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:16:50.852Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:16:50.853Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in warn mode 56ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in warn mode 54ms
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:16:50.905Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:16:50.965Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in warn mode 53ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in enforce mode 60ms
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:16:51.018Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:16:51.019Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > both answer 503, never a pass, when the standing cannot be read
+{
+  "timestamp": "2026-10-26T15:16:51.094Z",
+  "level": "error",
+  "message": "[auth] Account standing could not be read",
+  "context": {}
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization
+{
+  "timestamp": "2026-10-26T15:16:51.101Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization
+{
+  "timestamp": "2026-10-26T15:16:51.101Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization
+{
+  "timestamp": "2026-10-26T15:16:51.102Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization
+{
+  "timestamp": "2026-10-26T15:16:51.102Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+{
+  "timestamp": "2026-10-26T15:16:51.104Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle] Tenant posture requested for an organization that does not exist",
+  "context": {
+    "organizationId": 2
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+{
+  "timestamp": "2026-10-26T15:16:51.104Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+{
+  "timestamp": "2026-10-26T15:16:51.104Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "purged",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authenticateToken
+{
+  "timestamp": "2026-10-26T15:16:51.105Z",
+  "level": "warn",
+  "message": "[storage-quota-guard] Storage quota exceeded — refusing upload",
+  "context": {
+    "organizationId": 2,
+    "path": "/probe",
+    "usedBytes": 5368709120,
+    "limitBytes": 5368709120,
+    "incomingBytes": 10485760
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in enforce mode 53ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in enforce mode 55ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a suspended account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a suspended account, before a scope opens 19ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a inactive account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a inactive account, before a scope opens 0ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > both answer 503, never a pass, when the standing cannot be read 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authenticateToken 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware (global /api gate) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware behind authenticateToken leaves the published context carrying it 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > a valid token yields an active scope for the downstream handler 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > no token → 401 and the handler never runs (no scope) 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > a past-due organization still reaches the handler on a safe verb 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read 1ms
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authMiddleware (the global /api gate)
+{
+  "timestamp": "2026-10-26T15:16:51.106Z",
+  "level": "warn",
+  "message": "[storage-quota-guard] Storage quota exceeded — refusing upload",
+  "context": {
+    "organizationId": 2,
+    "path": "/probe",
+    "usedBytes": 5368709120,
+    "limitBytes": 5368709120,
+    "incomingBytes": 10485760
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk
+{
+  "timestamp": "2026-10-26T15:16:51.108Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk
+{
+  "timestamp": "2026-10-26T15:16:51.108Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/probe"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb
+{
+  "timestamp": "2026-10-26T15:16:51.109Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb
+{
+  "timestamp": "2026-10-26T15:16:51.109Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "past_due",
+    "decision": "read_only",
+    "method": "POST",
+    "path": "/probe"
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authenticateToken 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authMiddleware (the global /api gate) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > admits an upload that fits, with the scope still open for the handler 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > does not evaluate storage on a small JSON write 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb 1ms
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts
+{
+  "timestamp": "2026-10-26T15:16:52.189Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > training-ack requires document in tenant
+{
+  "timestamp": "2026-10-26T15:16:55.474Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle] Unrecognized payment_status — allowing access, review the Stripe status mapping",
+  "context": {
+    "organizationId": 99,
+    "paymentStatus": "paid"
+  }
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > NC disposition 200
+{
+  "timestamp": "2026-10-26T15:16:55.481Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Request-scoped post-commit audit unavailable",
+  "context": {
+    "action": "mdx.qms.nonconforming.disposition",
+    "resourceType": "qms_nonconforming_product",
+    "resourceId": 1,
+    "code": null
+  }
+}
+
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/qms/documents returns 403 without org context 19ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > POST /api/mdx/qms/documents returns 403 without org context 9ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/qms/suppliers returns 403 without org context 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/labeling returns 403 without org context 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > POST /api/mdx/labeling returns 403 without org context 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/search?q=foo returns 403 without org context 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/analytics/portfolio returns 403 without org context 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document rejects unknown doc_type 12ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document 201 on valid 10ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document 409 on duplicate docNumber 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > approve flips in_review → effective 6ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > approve 409 when not in_review 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > training-ack requires document in tenant 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > supplier criticality required 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > NC disposition 200 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST rejects unknown doc_kind 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST 201 with default language en 3ms
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > clinical roll-up reports unavailable schema rather than no clinical activity
+{
+  "timestamp": "2026-10-26T15:16:55.515Z",
+  "level": "error",
+  "message": "[mdx-analytics] Analytics data could not be run",
+  "context": {
+    "reason": "Analytics data could not be run: 42P01",
+    "correlationId": null
+  }
+}
+
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST translation 404 when document not in tenant 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST translation 409 on duplicate language 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > coverage returns counts 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > add symbol requires symbol_code 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Global search > rejects q shorter than 2 chars 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Global search > returns grouped envelope 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Global search > survives missing optional tables (42P01) 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > portfolio returns programs + byPathway + submissions 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > submissions cycle-times converts seconds to hours 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > clinical roll-up reports unavailable schema rather than no clinical activity 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > blockers returns 3 sub-aggregates 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident 12 org-scoped 23ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident proj_12 org-scoped 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > never truncates a regulatory_programs UUID to its leading digits 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 400s any digit-prefixed junk ident before a single query is issued 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 404s a project outside the caller org without revealing it exists 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the schedule of the project the program is anchored to 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the unified work of the anchored project 33ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > answers an unresolved program with a named 409 and reads nothing 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > never generates a schedule for an unanchored program 11ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > unavailable canonical admission is a 503, never "no project record" 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > forwards the trimmed caller reason after the existing organization gate 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from undefined 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from "" 1ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from "   " 2ms
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: false)
+{
+  "timestamp": "2026-10-26T15:16:56.618Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Unexpected storage failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: true)
+{
+  "timestamp": "2026-10-26T15:16:56.621Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Unexpected storage failure",
+    "correlationId": null,
+    "code": "SCHEDULE_REVIEW_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps an unexpected project-type storage failure internal instead of inventing an absent project
+{
+  "timestamp": "2026-10-26T15:16:56.627Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "project type lookup lost its connection",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses missing organization context before invoking generation
+{
+  "timestamp": "2026-10-26T15:16:56.629Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Organization context required",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from 42 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > returns the actionable preservation conflict as 409 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: false) 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: true) 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps an unexpected project-type storage failure internal instead of inventing an absent project 6ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses missing organization context before invoking generation 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses a project outside the organization before invoking generation 2ms
+stdout | server/middleware/__tests__/authBoundary.test.ts
+{
+  "timestamp": "2026-10-26T15:16:57.436Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:16:57.437Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/middleware/__tests__/authBoundary.test.ts
+{
+  "timestamp": "2026-10-26T15:16:57.437Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/middleware/__tests__/authBoundary.test.ts
+[database] Database connection successful
+
+stderr | server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > resolves an explicit warn to enforce in production (a single variable cannot turn default-deny off)
+[authBoundary] AUTH_BOUNDARY_MODE=warn ignored in production: the /api boundary enforces.
+
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > matches an exact entry only for itself, not sub-paths 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > matches a prefix entry for the path and its sub-paths 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > does not let a lookalike ride on a prefix entry 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > defaults to deny for protected surfaces 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > resolves an explicit warn to enforce in production (a single variable cannot turn default-deny off) 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > enforces in production by default 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > warns in staging and dev/test by default (soak, never silent-open in prod) 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > honours an explicit AUTH_BOUNDARY_MODE override outside production, and enforce anywhere 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > passes CORS preflight without authenticating 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > passes an allowlisted public path without authenticating 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > passes a request already authenticated upstream (idempotent) 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > rejects an authenticated request that carries no resolvable tenant (AUTH_011) 2ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > and lets the same request through when RLS is not enforcing 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > enforce mode delegates a protected unauthenticated request to the canonical 401 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > installs tenant execution context only after authentication succeeds 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > warn mode lets an unauthenticated protected request through and logs once per route 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > warn mode ALSO installs tenant execution context after a successful auth 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > opens a per-user scope and attaches a request DB client 3ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent when a scope is already active (does not clobber) 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent when req.dbClient is already set 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > does NOT fabricate a scope for a tenant-less identity 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > rejects a non-integer org id rather than scoping to a garbage tenant 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > routes a SYSTEM-prefixed path to the system scope, not the caller org 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > REPLACES a pre-auth placeholder scope with the caller org once authenticated 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > leaves the pre-auth placeholder untouched when there is no verified tenant yet 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > forces the system scope on a system path even when a per-user scope opened first 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent on a system path already under the system scope 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestSystemScope > opens the cross-tenant system scope and attaches a client 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > isSystemScopedPath > matches exact and sub-path, not sibling prefixes 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > isSystemScopedPath > every declared prefix is recognized 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > survives the response closing, still answers queries, and is released by its holder 3ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > a release that comes before the response ends leaves the response to release it 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > a request DB client retained past the response (retainRequestDbClient) > nothing to retain once the response already released it, or on a request with no bound client 0ms
+stderr | tests/mdx-notifications-clinical-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-notifications-clinical-routes.test.ts
+{
+  "timestamp": "2026-10-26T15:16:58.829Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/notifications returns 403/401 without org context 34ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/notifications/unread-count returns 403/401 without org context 4ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > POST /api/mdx/notifications returns 403/401 without org context 10ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/clinical-studies returns 403/401 without org context 3ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > POST /api/mdx/clinical-studies returns 403/401 without org context 3ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/ana/memory returns 403/401 without org context 3ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/ana/threads returns 403/401 without org context 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > external notification channels refuse enabling instead of promising delivery 4ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > subscription capability metadata states which channel is implemented 5ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > organization preference upserts preserve omitted settings 4ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > list returns canonical envelope 3ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > rejects invalid severity filter 3ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > POST rejects invalid category 3ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > POST 201 with id 8ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > unread-count returns { unread } 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST rejects missing title 2ms
+stderr | tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list says the store is missing rather than answering an empty list
+{
+  "timestamp": "2026-10-26T15:16:59.025Z",
+  "level": "error",
+  "message": "[mdx-ana-memory] list-threads: conversation store not provisioned",
+  "context": {
+    "code": "42703"
+  }
+}
+
+stdout | tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned
+{
+  "timestamp": "2026-10-26T15:16:59.028Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] mdx.conversation.pin chat_thread",
+  "context": {
+    "userId": 777,
+    "tenantId": 99,
+    "resourceId": "t-1"
+  }
+}
+
+stderr | tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned
+{
+  "timestamp": "2026-10-26T15:16:59.029Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned
+{
+  "timestamp": "2026-10-26T15:16:59.030Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned
+{
+  "timestamp": "2026-10-26T15:16:59.030Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "mdx.conversation.pin",
+    "resourceType": "chat_thread",
+    "resourceId": "t-1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST 201 on valid 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST deviation 404s when study not in tenant 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST AE with unanticipated flag 3ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > summary returns enrollment + safety aggregates 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > PATCH endpoint with p_value > 1 rejected 3ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > memory list survives missing table (42P01) 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > memory verify rejects when not found 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > memory supersede requires supersededById 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list returns canonical envelope 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list by program reads program_id, the key bound at mint (PF-10 S2) 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list refuses a program id that is not a UUID 2ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list says the store is missing rather than answering an empty list 3ms
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned 5ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > carries the organisation uuid when the request has one 3ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > falls back to the uuid on tenantContext when req.user has none 1ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > writes the EMPTY STRING when neither carries one — the FORCE precondition 0ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > sets all three session vars on one acquisition, not lazily per read 1ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > org membership → tenant scope → app.current_org_id > carries the uuid the membership lookup resolved 799ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > org membership → tenant scope → app.current_org_id > carries the empty string when the lookup resolves no uuid 1ms
+ ✓ server/bootstrap/__tests__/mdx-prefix-gate.test.ts > the shape that caused BP-02 > gates a route owned by a different router — this is the defect 18ms
+ ✓ server/bootstrap/__tests__/mdx-prefix-gate.test.ts > the shape in use now > leaves an unauthenticated route unauthenticated 5ms
+ ✓ server/bootstrap/__tests__/mdx-prefix-gate.test.ts > the shape in use now > still refuses the gated sub-tree without tenant context 3ms
+ ✓ server/bootstrap/__tests__/mdx-prefix-gate.test.ts > the shape in use now > admits the gated sub-tree once tenant context is present 3ms
+ ✓ server/bootstrap/__tests__/mdx-prefix-gate.test.ts > the real bootstrap keeps the gate off the shared prefix > binds requireTenantContext to sub-trees, never to bare /api/mdx 2ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Find or start a document in the editor 2ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Review documents on the review board 1ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Build the risk file and design-control trace 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Check the software and cybersecurity documentation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Run post-market surveillance and CAPA 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Write the clinical evaluation (CER) 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Record the clinical studies behind this filing 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Record analytical and clinical performance (IVDR) 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Choose predicates and build the SE comparison 1ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Assemble the eSTAR 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button See which PMA modules are written 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Export the PMA package 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Gather literature and map the GSPRs 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Export the CER 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Record classification and performance evidence 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > includes the navigation button Assemble the technical documentation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > keeps the already covered door Add or find files in Vault 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > keeps the already covered door Write the protocol in the protocol workspace 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > keeps the already covered door See your tasks in Tasks 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > keeps the already covered door Build the IND · FDA (US) sequence in Submission Center 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Run validation into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Export the PMA package now into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Export the CER to Vault into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Download the CER into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Create a document in the editor into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Approve documents on the review board into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Save changes to Vault into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Assign work in Tasks into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action Your tasks into navigation 0ms
+ ✓ tests/launch-walk-doors.test.ts > the launch walk follows the renamed project doors > does not turn the nearby action  into navigation 0ms
+
+ Test Files  9 passed (9)
+      Tests  181 passed (181)
+   Start at  15:16:48
+   Duration  11.94s (transform 3.73s, setup 226ms, import 8.57s, tests 1.82s, environment 1ms)
+

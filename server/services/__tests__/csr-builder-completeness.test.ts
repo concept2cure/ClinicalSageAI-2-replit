@@ -22,15 +22,12 @@
  * output is fully controlled by the test, not a live model. The quota /
  * usage-metering envelope is mocked so the test never touches a real DB.
  *
- * Note on `sectionsToGenerate`: the existing (unmodified) filter in
- * `generateCSRSections` skips a whole top-level entry — including its
- * children — when the *parent's* number is not itself in the filter list.
- * Tests below that use `sectionsToGenerate` therefore restrict to
- * top-level, childless section numbers (e.g. '1', '5', '7') so the filter
- * behaves simply; tests that need a nested section (e.g. '11.4', '12.3')
- * run a full, unfiltered build instead. This is a pre-existing quirk of the
- * filter, out of scope for this fix, and is worked around rather than
- * exercised here.
+ * Nested section selection is supported: selecting a child does not require
+ * selecting its parent, and an invalid section code cannot produce 100%.
+ *
+ * 2026-10-29: the tree is ICH_E3_GUIDANCE (the builder's ICH_E3_STRUCTURE copy
+ * was deleted), so section numbers here are E3's own: ethics is drafted as
+ * §5.1–5.3, efficacy results as §11.4.1–11.4.7, deaths and SAEs as §12.3.x.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -46,7 +43,7 @@ vi.mock('../../lib/unified-ai-client.js', () => ({
   default: { complete: completeMock },
 }));
 
-// ── Mock quota/usage-metering so launchCSRBuild never touches a real DB ────
+// ── Mock quota/usage-metering so the build launch never touches a real DB ──
 const { checkQuotaMock, recordUsageMock } = vi.hoisted(() => ({
   checkQuotaMock: vi.fn(async () => ({ allowed: true, remaining: 10, limit: 10 })),
   recordUsageMock: vi.fn(async () => undefined),
@@ -57,12 +54,11 @@ vi.mock('../usage-metering.js', () => ({
 }));
 
 import {
-  launchCSRBuild,
+  launchCSRBuildAsync,
   generateCSRSections,
   hasUnresolvedPlaceholders,
   flattenICHE3Sections,
-  ICH_E3_STRUCTURE,
-  type CSRSection,
+  getICHE3Structure,
   type CSRBuildRequest,
 } from '../csr-builder';
 
@@ -83,6 +79,9 @@ function makeRequest(overrides: Partial<CSRBuildRequest> = {}): CSRBuildRequest 
     ...overrides,
   };
 }
+
+/** The build's execution context, as POST /api/csr/jobs passes it. */
+const CTX = { organizationId: 1, requestedBy: 1 };
 
 beforeEach(() => {
   completeMock.mockReset();
@@ -138,10 +137,10 @@ describe('generateCSRSections — section status', () => {
     completeMock.mockResolvedValue(
       '[DATA TO BE INSERTED]\n\nThe primary endpoint was met/not met (p=[value]).'
     );
-    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+    const sections = getICHE3Structure();
     const generated = await generateCSRSections(sections, makeRequest());
 
-    const s114 = flattenICHE3Sections(generated).find(s => s.number === '11.4')!;
+    const s114 = flattenICHE3Sections(generated).find(s => s.number === '11.4.1')!;
     expect(s114.status).toBe('needs_data');
     expect(s114.needsData).toBe(true);
     expect(s114.status).not.toBe('drafted');
@@ -151,10 +150,10 @@ describe('generateCSRSections — section status', () => {
     completeMock.mockResolvedValue(
       'The study was conducted in accordance with the Declaration of Helsinki and ICH GCP.'
     );
-    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+    const sections = getICHE3Structure();
     const generated = await generateCSRSections(sections, makeRequest());
 
-    const s5 = flattenICHE3Sections(generated).find(s => s.number === '5')!;
+    const s5 = flattenICHE3Sections(generated).find(s => s.number === '5.2')!;
     expect(s5.status).toBe('drafted');
     expect(s5.needsData).toBeFalsy();
   });
@@ -168,96 +167,81 @@ describe('generateCSRSections — section status', () => {
     completeMock.mockResolvedValue(
       'A total of 312 deaths occurred during the study. 47 serious adverse events were reported.'
     );
-    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+    const sections = getICHE3Structure();
     const generated = await generateCSRSections(sections, makeRequest());
 
-    const s123 = flattenICHE3Sections(generated).find(s => s.number === '12.3')!;
+    const s123 = flattenICHE3Sections(generated).find(s => s.number === '12.3.3')!;
     expect(s123.content).not.toContain('312');
     expect(s123.status).toBe('needs_data');
   });
 
   it('marks a section with no content "empty" (unchanged behavior)', async () => {
     completeMock.mockResolvedValue('');
-    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+    const sections = getICHE3Structure();
     const generated = await generateCSRSections(sections, makeRequest());
 
-    const s5 = generated.find(s => s.number === '5')!;
+    const s5 = flattenICHE3Sections(generated).find(s => s.number === '5.2')!;
     expect(s5.status).toBe('empty');
   });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// launchCSRBuild — job-level status/progress must fail closed
+// Section selection is refused by the one build path, before billing
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('launchCSRBuild — job status/progress (fail closed)', () => {
-  it('does NOT report complete/100 when generated sections still carry data placeholders', async () => {
-    // Simulate the exact bug scenario: every section drafts with the
-    // documented [DATA TO BE INSERTED]-style placeholder convention, as
-    // §11.4/§12.3 do by default even in the template fallback.
-    completeMock.mockResolvedValue(
-      '[DATA TO BE INSERTED]\n\nIn the ITT population, the primary endpoint showed [result] (p=[value]).'
-    );
-
-    const job = await launchCSRBuild(makeRequest());
-
-    // The old buggy behavior was an UNCONDITIONAL status:'complete',
-    // progress:100 — assert the opposite so this test fails against it.
-    expect(job.status).not.toBe('complete');
-    expect(job.progress).toBeLessThan(100);
-    expect(job.status).toBe('needs_data');
-
-    // And the underlying section-level signal is present too, so a caller
-    // inspecting individual sections gets the same honest answer.
-    const flat = flattenICHE3Sections(job.sections);
-    const nonEmpty = flat.filter(s => s.content && s.content.length > 0);
-    expect(nonEmpty.length).toBeGreaterThan(0);
-    for (const s of nonEmpty) {
-      expect(s.status).toBe('needs_data');
-      expect(s.needsData).toBe(true);
-    }
+describe('targeted ICH E3 subsection drafting', () => {
+  it('drafts a selected nested section without drafting its parent', async () => {
+    completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
+    const sections = getICHE3Structure();
+    const generated = await generateCSRSections(sections, makeRequest({ sectionsToGenerate: ['11.4.1'] }));
+    const flat = flattenICHE3Sections(generated);
+    expect(flat.find(s => s.number === '11.4.1')?.content).toBeTruthy();
+    expect(flat.find(s => s.number === '11.4')?.content).toBeFalsy();
+    expect(flat.find(s => s.number === '11')?.content).toBeFalsy();
+    expect(flat.find(s => s.number === '12.3.3')?.content).toBeFalsy();
   });
 
-  it('reports complete/100 when generated sections have no residual placeholders', async () => {
-    completeMock.mockResolvedValue(
-      'This section reports finalized study data with no missing values pending.'
-    );
-
-    // Restrict to top-level, childless section numbers so the
-    // sectionsToGenerate filter behaves simply (see file header note).
-    const request = makeRequest({ sectionsToGenerate: ['1', '5', '7'] });
-    const job = await launchCSRBuild(request);
-
-    expect(job.status).toBe('complete');
-    expect(job.progress).toBe(100);
-
-    const targeted = flattenICHE3Sections(job.sections).filter(s =>
-      request.sectionsToGenerate!.includes(s.number)
-    );
-    expect(targeted).toHaveLength(3);
-    for (const s of targeted) {
-      expect(s.status).toBe('drafted');
-      expect(hasUnresolvedPlaceholders(s.content)).toBe(false);
-    }
+  it('drafts a selected bare parent through its children, never itself', async () => {
+    completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
+    const flat = flattenICHE3Sections(await generateCSRSections(getICHE3Structure(), makeRequest({ sectionsToGenerate: ['5'] })));
+    expect(flat.find(s => s.number === '5')?.content).toBeFalsy();
+    for (const n of ['5.1', '5.2', '5.3']) expect(flat.find(s => s.number === n)?.content).toBeTruthy();
   });
 
-  it('reports partial progress (0 < progress < 100) when only some targeted sections are data-complete', async () => {
-    completeMock.mockImplementation(async (messages: unknown) => {
-      const msgs = messages as Array<{ role: string; content: string }>;
-      const userMsg = msgs.find(m => m.role === 'user')?.content ?? '';
-      // §5 (Ethics) drafts clean; §7 (Introduction) still needs real
-      // numbers — mirrors a realistic partially-complete CSR.
-      if (userMsg.includes('Section 5:')) {
-        return 'This study was conducted in accordance with ICH/GCP; IRB approval was obtained at all sites.';
-      }
-      return '[DATA TO BE INSERTED]\n\n[N] deaths occurred during the study.';
-    });
+  it('refuses a manual heading by name before billing', async () => {
+    await expect(launchCSRBuildAsync(makeRequest({ sectionsToGenerate: ['16'] }), CTX))
+      .rejects.toThrow('CSR_SECTION_MANUAL');
+    expect(checkQuotaMock).not.toHaveBeenCalled();
+  });
 
-    const request = makeRequest({ sectionsToGenerate: ['5', '7'] });
-    const job = await launchCSRBuild(request);
+  it('does not call a nonexistent section complete', async () => {
+    completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
+    await expect(launchCSRBuildAsync(makeRequest({ sectionsToGenerate: ['99.99'] }), CTX))
+      .rejects.toThrow('CSR_SECTION_SELECTION_INVALID');
+    expect(checkQuotaMock).not.toHaveBeenCalled();
+  });
 
-    expect(job.status).toBe('needs_data');
-    expect(job.progress).toBeGreaterThan(0);
-    expect(job.progress).toBeLessThan(100);
+  it('rejects duplicate targets before billing', async () => {
+    await expect(launchCSRBuildAsync(makeRequest({ sectionsToGenerate: ['5', '5'] }), CTX))
+      .rejects.toThrow('CSR_SECTION_SELECTION_INVALID');
+    expect(checkQuotaMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects an explicit empty selection before billing', async () => {
+    await expect(launchCSRBuildAsync(makeRequest({ sectionsToGenerate: [] }), CTX))
+      .rejects.toThrow('CSR_SECTION_SELECTION_INVALID');
+    expect(checkQuotaMock).not.toHaveBeenCalled();
+  });
+
+  it('does not mark a partly invalid section selection complete', async () => {
+    completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
+    await expect(launchCSRBuildAsync(makeRequest({ sectionsToGenerate: ['5', '99.99'] }), CTX))
+      .rejects.toThrow('CSR_SECTION_SELECTION_INVALID');
+    expect(recordUsageMock).not.toHaveBeenCalled();
   });
 });
+
+// The job-level fail-closed status rule (a CSR with an unresolved placeholder,
+// a missing output or a changed checksum is never 'complete'/100) belongs to
+// the one build path's runner since 2026-10-30, when the synchronous
+// launchCSRBuild was deleted: csr/__tests__/csr-job-runner.placeholder-gate.test.ts.

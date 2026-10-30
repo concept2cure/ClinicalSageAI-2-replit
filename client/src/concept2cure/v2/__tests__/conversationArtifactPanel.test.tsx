@@ -68,6 +68,13 @@ vi.mock('../../components/ana/useAnaChat', () => ({
   }),
 }));
 
+/* useDocumentList reads the signed-in session (editor/CanvasDocumentList.tsx);
+   with no AuthProvider mounted, the real useAuth throws before the thread renders. */
+vi.mock('@/services/portal/authService', async original => ({
+  ...await original<typeof import('@/services/portal/authService')>(),
+  useAuth: () => ({ user: { id: '1', organizationId: '1', displayName: 'Test Author', email: 'author@test.co' } }),
+}));
+
 import { ConversationThread, conversationArtifacts } from '../surfaces/ConversationThread';
 
 const DRAFT_BODY = '# Clinical Overview\n\nThe objective response rate was 42.1%.';
@@ -231,6 +238,6 @@ describe('ConversationThread artifact panel — the controls complete their chai
     mount();
     const btn = screen.getByText(/Route to review/).closest('button') as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
-    expect(screen.getByText(/Open a program first/i)).toBeTruthy();
+    expect(screen.getByText('Open a project first — the review workflow is scoped to one.')).toBeTruthy();
   });
 });

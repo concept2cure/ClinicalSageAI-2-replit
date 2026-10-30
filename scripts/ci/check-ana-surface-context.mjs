@@ -94,7 +94,43 @@ const SCAN_ROOT = 'client/src/concept2cure';
  * wired and this number was not raised with it. Both are failures — see (3) in
  * the header. Raise it in the same commit that wires the surface.
  */
-const ID_BASELINE = 116; // 116: conversation-thread, grounded since 2026-10-01 through the DocumentWorkbench it embeds (cf4aa7800, 4c8b5534d)
+// 2026-10-26 A2.7: dossier and dossier-map are aliases to project-home, whose
+// ProjectDossier now publishes all three reads. Their two retired IDs are no
+// longer routable publishers (projectDossierParity/projectDestinationShell).
+// 2026-10-26 A2.10a: filings-catalog folds into the existing Projects wizard.
+// Its reference facts are published through Projects/ProjectHome, not a new id.
+// 2026-10-29 D2: device-tasks folds into Tasks, which publishes as 'tasks'. The
+// retired id is an alias, no longer a routable publisher (foldDeviceTasks.test.ts).
+// 2026-10-29 D2 fold F3: artifacts-center and device-vault fold into the Vault,
+// which publishes as 'vault'. Both retired ids are aliases, no longer routable
+// publishers (foldVaultArtifactsCenter.test.ts).
+// 2026-10-29 D2: part11-console folds into Audit trail, which publishes as
+// 'audit-trail' with the audit_events chain verdict in its facts. The retired id
+// is an alias, no longer a routable publisher (foldPart11Console.test.ts).
+// 2026-10-29 D2: setup folds into Admin and access, which publishes as
+// 'admin-console' with the Profile card's configuration in its facts while the
+// Settings tab shows it. The retired id is an alias, no longer a routable
+// publisher (foldSetup.test.ts).
+// 2026-10-29 D2: ectd-publishing folds into eCTD Compile, which publishes the
+// eCTD reference as 'ectd-compile' (facts.reference). The retired id is an
+// alias, no longer a routable publisher (foldEctdPublishing.test.ts).
+// 2026-10-29 D2: billing folds into Licensing, which publishes the invoice facts
+// as 'licensing'; usage keeps its own context. The retired id is an alias, no
+// longer a routable publisher (foldBilling.test.ts).
+// 2026-10-29 D2: risk and design-controls fold into Engineering evidence (fold
+// F1c), whose host publish carries the register's and the trace's context as
+// 'device-engineering'; ivd-completeness folds into IVDR evidence (fold F2),
+// whose host publish carries the readiness board's as 'device-diagnostics'. The
+// retired ids are aliases, no longer routable publishers
+// (foldRiskDesignControls.test.ts, foldIvdCompleteness.test.ts).
+// 2026-10-29 D2 fold F5 item 2: device-validation, the organization-wide blocker
+// list, retires (decision P-61 item 2); a blocker is its filing's readiness. The
+// retired id is an alias for Submission Center, which already publishes, so no
+// id is added (foldDeviceValidation.test.ts).
+// 2026-10-30 D2 fold F5 item 1: device-submission folds into Submission Center
+// (decision P-61 item 1), whose own publish states the device filings. The
+// retired id is an alias, no longer a routable publisher (foldDeviceSubmission.test.ts).
+const ID_BASELINE = 101;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.
@@ -111,7 +147,7 @@ const ID_BASELINE = 116; // 116: conversation-thread, grounded since 2026-10-01 
 const NO_CONTEXT_NEEDED = {
   'client-portal': 'external-participant surface that deliberately offers no assistant',
   'ana-command': 'AnA rail surface; its subject is AnA, not a screen under discussion',
-  'ana-memory': 'AnA rail surface; renders what AnA already holds',
+  // ana-memory folded into conversation-thread on 2026-10-29 (D2); it is no longer a routable id.
   coverage: 'engineering diagnostic, not a customer capability',
   /* Owns the rail's column and runs NO assistant on it. Its middle pane is a
      client-side intent router ("Report builder") that composes text locally —

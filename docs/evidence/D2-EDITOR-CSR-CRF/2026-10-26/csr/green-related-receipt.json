@@ -1,0 +1,31 @@
+{
+  "startedUtc": "2026-10-26T20:10:55.200452+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts",
+    "server/services/authoring/__tests__/assembly-template-guidance.test.ts",
+    "server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts",
+    "server/services/ana/__tests__/document-template-preparation.test.ts",
+    "server/services/market-specs/__tests__/document-template-library.test.ts",
+    "--reporter=verbose"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "exitCode": 1,
+  "elapsedSeconds": 47.513,
+  "sourceDrift": [],
+  "testSummary": [
+    "Test Files  1 failed | 8 passed (9)",
+    "Tests  2 failed | 256 passed (258)",
+    "Duration  46.88s (transform 10.54s, setup 346ms, import 12.91s, tests 31.18s, environment 1.12s)"
+  ],
+  "rawOutput": "green-related.log.gz",
+  "rawGzipSha256": "f4a33eb80c2e87cf272c9b0899bf1ee269100d5afc5750716868731cd6cb0767"
+}

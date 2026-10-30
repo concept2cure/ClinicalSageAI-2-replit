@@ -283,19 +283,19 @@ export function programmeProfileFields(): string[] {
  * it. A caller holding one of these facts reports it rather than dropping it.
  */
 export const PROFILE_WRITE_REFUSALS: Readonly<Record<string, string>> = {
-  status: 'The programme lifecycle is transitionProgram’s, with its own guard and audit row.',
+  status: 'The project lifecycle is changed by its own action, with its own guard and audit row.',
   phase:
     'The workflow phase (planning … post_market) is not the development phase (preclinical, phase 1 …). They share words and mean different things, so this write sets neither.',
   programType:
-    'The filing type decides the document scaffold, the rule pack and the submission spine, all written in the create’s transaction. Changing it here would leave those describing a filing the programme no longer is.',
+    'The filing type decides the document scaffold, the rule pack and the submission spine, all written in the create’s transaction. Changing it here would leave those describing a filing the project no longer is.',
   productType:
     'The product class decides the client type and is refused by the create where it contradicts the filing type. It cannot be re-decided without re-running the scaffold.',
   primaryAgency:
     'The primary agency keys the Module 1 backbone, the validation profile and the gateway. targetAgencies is settable; the primary one is not.',
   name: 'A rename is its own governed action, with its own audit of the field that changed.',
-  code: 'The programme code is unique per organization and has its own disambiguation in the create.',
+  code: 'The project code is unique per organization and has its own disambiguation in the create.',
   leadUserId:
-    'The lead is permanently authorized to mutate the programme’s evidence, so the lead is an authorization fact rather than a profile field.',
+    'The lead is permanently authorized to mutate the project’s evidence, so the lead is an authorization fact rather than a profile field.',
   metadata: 'mergeProgramMetadata already merges metadata, with delete semantics this patch cannot express.',
 };
 
@@ -401,7 +401,7 @@ export async function applyProgrammeProfilePatch(
   if (forbidden.length > 0) {
     throw new ProgrammeProfileWriteRefused(
       'FIELD_NOT_SETTABLE',
-      `Not a settable programme-profile column: ${forbidden.join(', ')}. ` +
+      `Not a settable project-profile column: ${forbidden.join(', ')}. ` +
         `${Object.keys(PROFILE_WRITE_REFUSALS).includes(forbidden[0]!) ? PROFILE_WRITE_REFUSALS[forbidden[0]!] : ''}`.trim(),
     );
   }
@@ -434,7 +434,7 @@ export async function applyProgrammeProfilePatch(
   if (!before) {
     throw new ProgrammeProfileWriteRefused(
       'PROGRAMME_NOT_FOUND',
-      'No such programme in this organization, or it has been deleted.',
+      'No such project in this organization, or it has been deleted.',
     );
   }
 
@@ -448,7 +448,7 @@ export async function applyProgrammeProfilePatch(
   if (updated.length === 0) {
     throw new ProgrammeProfileWriteRefused(
       'PROGRAMME_NOT_FOUND',
-      'The programme was not updated: it is no longer in this organization, or it has been deleted.',
+      'The project was not updated: it is no longer in this organization, or it has been deleted.',
     );
   }
 

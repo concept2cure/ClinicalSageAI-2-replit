@@ -21,7 +21,10 @@ export * as cortex from './cortex';
 // certificate check behind "FDA credentials validated successfully"). All three
 // were deleted 2026-10-15. FDAFormGenerator is exported below.
 export * as cer from './cer';
-export * as csr from './csr';
+// A `csr` namespace re-export of the services/csr barrel was here. Its index (an
+// UnifiedCSRService wrapping csr-search-service, extract() a throw) had no
+// importer but this file; deleted 2026-10-29 (CSR slice 9), with the
+// csrKnowledgeExtractor re-export below it.
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI SERVICES
@@ -52,7 +55,6 @@ export { RegulatoryIntelligenceService } from './regulatory-intelligence-service
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { csrSearchService } from './csr-search-service';
-export { csrKnowledgeExtractor } from './csr-knowledge-extractor';
 export { clinicalIntelligenceService } from './clinical-intelligence-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -91,10 +93,9 @@ export { MultiAgentCouncilService } from './multi-agent-council';
 // PHASE 6 SERVICES - eCTD Co-Author + Document Drafting
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export {
-  ArtifactSkeletonGenerator,
-  artifactSkeletonGenerator,
-} from './documents/ArtifactSkeletonGenerator';
+// ArtifactSkeletonGenerator was re-exported here, its only importer; deleted
+// 2026-10-26 with no caller (D2 cleanup S06). Skeletons are the Authoring
+// picker's outlines (authoring/builtin-authoring-templates.ts).
 
 // ECTDScaffoldingService was re-exported here, its only importer; it was deleted
 // 2026-10-15 with no caller (no route, tool or job reached it).
@@ -146,7 +147,7 @@ export const SERVICE_REGISTRY = {
   'infra.notify': 'notify',
 
   // Phase 6 - eCTD Co-Author + Document Drafting
-  'documents.skeleton': 'documents/ArtifactSkeletonGenerator',
+  // 'documents.skeleton': removed 2026-10-26 with ArtifactSkeletonGenerator (deleted).
   // 'ectd.scaffolding': removed 2026-10-15 with ECTDScaffoldingService (deleted).
   'export.hash': 'export/ReleaseHashGenerator',
   'collaboration.council': 'multi-agent-council',

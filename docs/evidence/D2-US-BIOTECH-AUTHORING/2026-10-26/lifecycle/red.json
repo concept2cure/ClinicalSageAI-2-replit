@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-10-26T23:02:42.697899+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.073,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "lifecycle/red-inputs.json",
+  "sourcesBefore": {
+    "server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts": "551ef74f26b9d05dc9ec445ba8e10ed70e83dede01050fba22919567e08c9eb8",
+    "server/services/ind/ctd/lifecycle-document-types.ts": "ead028d233d4f780c0a3e56cbd053bf58b947a7472ab9a46a8c1286ea41efacb"
+  },
+  "sourcesAfter": {
+    "server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts": "551ef74f26b9d05dc9ec445ba8e10ed70e83dede01050fba22919567e08c9eb8",
+    "server/services/ind/ctd/lifecycle-document-types.ts": "ead028d233d4f780c0a3e56cbd053bf58b947a7472ab9a46a8c1286ea41efacb"
+  },
+  "sourceDrift": [],
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "5452139aae14217efac8918eb96ea311967aeb9d02db0cdb1e9adc476c878299",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  13 failed (13)",
+    "Duration  1.66s (transform 765ms, setup 70ms, import 855ms, tests 519ms, environment 0ms)"
+  ]
+}

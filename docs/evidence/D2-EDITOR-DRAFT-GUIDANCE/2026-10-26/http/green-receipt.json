@@ -1,0 +1,23 @@
+{
+  "startedUtc": "2026-10-26T19:14:25.317278+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+    "--reporter=verbose"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "exitCode": 0,
+  "elapsedSeconds": 8.919,
+  "sourceDrift": [],
+  "testSummary": [
+    "Test Files  1 passed (1)",
+    "Tests  33 passed (33)",
+    "Duration  8.50s (transform 3.50s, setup 91ms, import 1.43s, tests 6.76s, environment 0ms)"
+  ],
+  "rawOutput": "green.log.gz",
+  "rawGzipSha256": "5318ece9eadfbc0aecf8cb7499ac669ccb7423ffd3e67913779d66c151402747"
+}

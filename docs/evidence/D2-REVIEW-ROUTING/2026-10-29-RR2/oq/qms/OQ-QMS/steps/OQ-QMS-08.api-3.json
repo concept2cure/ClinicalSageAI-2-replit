@@ -1,0 +1,106 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5202/api/mdx/qms/training/compliance",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 71,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": 20,
+          "doc_number": "SOP-OQ-20261029143718",
+          "title": "OQ-006 Document control SOP 20261029143718",
+          "document_version": "1.0",
+          "content_digest": "da7287a082317f0bda64341c89ca0e44ef4a9ff2f804b1c26c9e2284a8bcbb7a",
+          "eligible": true,
+          "unavailable_reason": null,
+          "current": 0,
+          "of": 2,
+          "last_cycle": null
+        },
+        {
+          "id": 24,
+          "doc_number": "SOP-OQ-20261029144026",
+          "title": "OQ-006 Document control SOP 20261029144026",
+          "document_version": "1.0",
+          "content_digest": "6f194f056048c71451954aaca969a9b48670c8ce6d2c21a1f4fa128d8be4f895",
+          "eligible": true,
+          "unavailable_reason": null,
+          "current": 0,
+          "of": 2,
+          "last_cycle": null
+        },
+        {
+          "id": 28,
+          "doc_number": "SOP-OQ-20261029144434",
+          "title": "OQ-006 Document control SOP 20261029144434",
+          "document_version": "1.0",
+          "content_digest": "5405e1714aac31f30bf3c3eb43ac5a87fb45348bfb26a7a0bdc435d52b3271ab",
+          "eligible": true,
+          "unavailable_reason": null,
+          "current": 0,
+          "of": 2,
+          "last_cycle": null
+        },
+        {
+          "id": 32,
+          "doc_number": "SOP-OQ-20261029145843",
+          "title": "OQ-006 Document control SOP 20261029145843",
+          "document_version": "1.0",
+          "content_digest": "9e7e7d300c800828cd0f3b280103e489483fc1d4844af4ed7fd957568813f9dc",
+          "eligible": true,
+          "unavailable_reason": null,
+          "current": 0,
+          "of": 2,
+          "last_cycle": null
+        },
+        {
+          "id": 36,
+          "doc_number": "SOP-OQ-20261029153957",
+          "title": "OQ-006 Document control SOP 20261029153957",
+          "document_version": "1.0",
+          "content_digest": "bde162766f3e681732e45f1b78b6392a035c759c4b2ecfa7fe469dded6515f8a",
+          "eligible": true,
+          "unavailable_reason": null,
+          "current": 0,
+          "of": 2,
+          "last_cycle": null
+        },
+        {
+          "id": 40,
+          "doc_number": "SOP-OQ-20261029183044",
+          "title": "OQ-006 Document control SOP 20261029183044",
+          "document_version": "1.0",
+          "content_digest": "d83ddc65ef742ba26c2c86a22aeed4c03d0e7d43a8eb59adddb4148f861465f2",
+          "eligible": true,
+          "unavailable_reason": null,
+          "current": 0,
+          "of": 2,
+          "last_cycle": null
+        },
+        {
+          "id": 42,
+          "doc_number": "SOP-OQ-B-20261029183044",
+          "title": "OQ-006 Second SOP 20261029183044",
+          "document_version": "1.0",
+          "content_digest": "7a42b010b1f7d723b6eac430e44b448957c68009f22a3ca7beb22a063bf8226f",
+          "eligible": true,
+          "unavailable_reason": null,
+          "current": 1,
+          "of": 2,
+          "last_cycle": "2026-10-29T18:32:32.145Z"
+        }
+      ],
+      "meta": {
+        "count": 7
+      }
+    }
+  }
+}

@@ -269,16 +269,12 @@ function lazyOwnedSurface(
 }
 
 const CapabilityIndex = lazySurface(() => import('./intelligence/Intelligence').then((m) => ({ default: m.CapabilityIndex })));
-const Setup = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.Setup })));
 const Apps = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.Apps })));
-const ArtifactsCenter = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.ArtifactsCenter })));
 const AuditTrail = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.AuditTrail })));
 const AdminAccess = lazySurface(() => import('./surfaces/AdminAccess').then((m) => ({ default: m.AdminAccess })));
 const MasterLicensing = lazySurface(() => import('./surfaces/MasterLicensing').then((m) => ({ default: m.MasterLicensing })));
 const AccessRequests = lazySurface(() => import('./surfaces/AccessRequests').then((m) => ({ default: m.AccessRequests })));
-const AgencyMeetings = lazySurface(() => import('./surfaces/AgencyMeetings').then((m) => ({ default: m.AgencyMeetings })));
 const AnaCommand = lazySurface(() => import('./surfaces/AnaCommand').then((m) => ({ default: m.AnaCommand })));
-const AnaMemory = lazySurface(() => import('./surfaces/AnaMemory').then((m) => ({ default: m.AnaMemory })));
 const AuthoringEngine = lazySurface(() => import('./surfaces/AuthoringEngine').then((m) => ({ default: m.AuthoringEngine })));
 const BatchDraft = lazySurface(() => import('./surfaces/BatchDraft').then((m) => ({ default: m.BatchDraft })));
 const BiopharmaJourney = lazySurface(() => import('./surfaces/BiopharmaJourney').then((m) => ({ default: m.BiopharmaJourney })));
@@ -305,25 +301,19 @@ const ComplianceReports = lazySurface(() => import('./surfaces/ComplianceReports
 const CodebaseCoverage = lazySurface(() => import('./surfaces/Coverage').then((m) => ({ default: m.CodebaseCoverage })));
 const DecisionLineage = lazySurface(() => import('./surfaces/DecisionLineage').then((m) => ({ default: m.DecisionLineage })));
 const DeepResearch = lazySurface(() => import('./surfaces/DeepResearch').then((m) => ({ default: m.DeepResearch })));
-const DesignControls = lazySurface(() => import('./surfaces/DesignControls').then((m) => ({ default: m.DesignControls })));
 const DispatchReadiness = lazySurface(() => import('./surfaces/DispatchReadiness').then((m) => ({ default: m.DispatchReadiness })));
 const DocJourney = lazySurface(() => import('./surfaces/DocJourney').then((m) => ({ default: m.DocJourney })));
 const DocumentAuthoring = lazyOwnedSurface(() => import('./surfaces/DocumentAuthoring').then((m) => ({ default: m.DocumentAuthoring })));
-const Dossier = lazySurface(() => import('./surfaces/Dossier').then((m) => ({ default: m.Dossier })));
-const DossierMap = lazySurface(() => import('./surfaces/DossierMap').then((m) => ({ default: m.DossierMap })));
 const EctdCoauthor = lazyOwnedSurface(() => import('./surfaces/EctdCoauthor').then((m) => ({ default: m.EctdCoauthor })));
 const EctdCompile = lazySurface(() => import('./surfaces/EctdCompile').then((m) => ({ default: m.EctdCompile })));
-const PublishingCenter = lazySurface(() => import('./surfaces/PublishingCenter').then((m) => ({ default: m.PublishingCenter })));
 const Etmf = lazySurface(() => import('./surfaces/Etmf').then((m) => ({ default: m.Etmf })));
 const Evidence = lazySurface(() => import('./surfaces/Evidence').then((m) => ({ default: m.Evidence })));
-const FilingsCatalog = lazySurface(() => import('./surfaces/FilingsCatalog').then((m) => ({ default: m.FilingsCatalog })));
 const HaqManager = lazySurface(() => import('./surfaces/HaqManager').then((m) => ({ default: m.HaqManager })));
 const HumanFactors = lazySurface(() => import('./surfaces/HumanFactors').then((m) => ({ default: m.HumanFactors })));
 const Inconsistency = lazySurface(() => import('./surfaces/Inconsistency').then((m) => ({ default: m.Inconsistency })));
 const IndLifecycle = lazySurface(() => import('./surfaces/IndLifecycle').then((m) => ({ default: m.IndLifecycle })));
 const InvestigatorBrochure = lazySurface(() => import('./surfaces/InvestigatorBrochure').then((m) => ({ default: m.InvestigatorBrochure })));
 const InsightsCanvas = lazyOwnedSurface(() => import('./surfaces/Insights').then((m) => ({ default: m.InsightsCanvas })));
-const IvdCompleteness = lazySurface(() => import('./surfaces/IvdCompleteness').then((m) => ({ default: m.IvdCompleteness })));
 const Labeling = lazySurface(() => import('./surfaces/Labeling').then((m) => ({ default: m.Labeling })));
 const LabelingPI = lazySurface(() => import('./surfaces/LabelingPi').then((m) => ({ default: m.LabelingPI })));
 const SmpcLabeling = lazySurface(() => import('./surfaces/SmpcLabeling').then((m) => ({ default: m.SmpcLabeling })));
@@ -346,14 +336,12 @@ const Registrations = lazySurface(() => import('./surfaces/Registrations').then(
 const ReportEngine = lazySurface(() => import('./surfaces/ReportEngine').then((m) => ({ default: m.ReportEngine })));
 const ResearchAdmin = lazySurface(() => import('./surfaces/ResearchAdmin').then((m) => ({ default: m.ResearchAdmin })));
 const Review = lazySurface(() => import('./surfaces/Review').then((m) => ({ default: m.Review })));
-const Risk = lazySurface(() => import('./surfaces/Risk').then((m) => ({ default: m.Risk })));
 const SafetyNarrative = lazySurface(() => import('./surfaces/SafetyNarrative').then((m) => ({ default: m.SafetyNarrative })));
 const ShadowReview = lazySurface(() => import('./surfaces/ShadowReview').then((m) => ({ default: m.ShadowReview })));
 const SourceTracer = lazySurface(() => import('./surfaces/SourceTracer').then((m) => ({ default: m.SourceTracer })));
 const SubmissionCenter = lazySurface(() => import('./surfaces/SubmissionCenter').then((m) => ({ default: m.SubmissionCenter })));
 const QmpWorkspace = lazySurface(() => import('./surfaces/QmpWorkspace').then((m) => ({ default: m.QmpWorkspace })));
 const QualityModule = lazySurface(() => import('./surfaces/QualityModule').then((m) => ({ default: m.QualityModule })));
-const Part11Console = lazySurface(() => import('./surfaces/Part11Console').then((m) => ({ default: m.Part11Console })));
 const IdentityConsole = lazySurface(() => import('./surfaces/IdentityConsole').then((m) => ({ default: m.IdentityConsole })));
 const ReportGovernance = lazySurface(() => import('./surfaces/ReportGovernance').then((m) => ({ default: m.ReportGovernance })));
 const SubmissionTwin = lazySurface(() => import('./surfaces/SubmissionTwin').then((m) => ({ default: m.SubmissionTwin })));
@@ -389,11 +377,9 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // place the tier can be un-set.
   'master-licensing': { component: MasterLicensing, full: true },
   'access-requests': { component: AccessRequests },
-  'agency-meetings': { component: AgencyMeetings },
   'ana-command': { component: AnaCommand },
-  'ana-memory': { component: AnaMemory },
+  // ana-memory folded into conversation-thread (D2, 2026-10-29): DEEP_LINK_ALIASES takes it there.
   apps: { component: Apps },
-  'artifacts-center': { component: ArtifactsCenter },
   'audit-trail': { component: AuditTrail },
   'authoring-engine': { component: AuthoringEngine },
   'batch-draft': { component: BatchDraft, full: true },
@@ -432,7 +418,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'csr-workflow': { component: CsrWorkflow, full: true },
   'decision-lineage': { component: DecisionLineage, full: true },
   'deep-research': { component: DeepResearch },
-  'design-controls': { component: DesignControls },
+  // 'design-controls' folded into device-engineering (D2, fold F1c, 2026-10-29): an alias now (registryModel.ts).
   // ── Device & diagnostics ──
   // One entry per surface, each rendering only its own canvas. These used to be
   // five aliases for the whole MDX application, which drew a second Rail,
@@ -450,11 +436,10 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'device-postmarket': { component: DeviceSurfaces['device-postmarket'], full: true },
   'device-presub': { component: DeviceSurfaces['device-presub'], full: true },
   'device-software': { component: DeviceSurfaces['device-software'], full: true },
-  'device-submission': { component: DeviceSurfaces['device-submission'], full: true },
-  'device-tasks': { component: DeviceSurfaces['device-tasks'], full: true },
+  // No device-submission: it folded into Submission Center (D2, fold F5 item 1, 2026-10-30).
   'device-udi': { component: DeviceSurfaces['device-udi'], full: true },
-  'device-validation': { component: DeviceSurfaces['device-validation'], full: true },
-  'device-vault': { component: DeviceSurfaces['device-vault'], full: true },
+  // No device-validation: the organization-wide blocker list retired (D2, fold F5
+  // item 2, 2026-10-29); its address opens Submission Center (DEEP_LINK_ALIASES).
   'device-workstream': { component: DeviceSurfaces['device-workstream'], full: true },
   'dispatch-readiness': { component: DispatchReadiness, full: true },
   'doc-journey': { component: DocJourney },
@@ -463,18 +448,15 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // conversation and reopen this same editor in DocumentCanvas. The flag
   // retains the full-width host contract; it does not create a private chat.
   'document-authoring': { component: DocumentAuthoring, full: true, ownsConversation: true },
-  dossier: { component: Dossier },
-  'dossier-map': { component: DossierMap },
   // Owns its conversation in its middle intelligence pane. The pane was already
   // drawn and already had a composer; it just had nowhere to put an answer —
   // it appended the user's turn to a local array and forwarded the question to
   // a rail this surface hides. It runs the real assistant now.
   'ectd-coauthor': { component: EctdCoauthor, full: true, ownsConversation: true },
   'ectd-compile': { component: EctdCompile },
-  'ectd-publishing': { component: PublishingCenter },
+  // 'ectd-publishing' folded into eCTD Compile (D2, 2026-10-29): an alias now (registryModel.ts).
   etmf: { component: Etmf },
   'evidence-search': { component: Evidence },
-  'filings-catalog': { component: FilingsCatalog },
   'global-ri': { component: GlobalRiBrowser, full: true },
   'haq-manager': { component: HaqManager },
   'human-factors': { component: HumanFactors },
@@ -494,7 +476,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // answers only the report-generation intents it can actually satisfy.
   insights: { component: InsightsCanvas, full: true, ownsConversation: true },
   'intelligence-catalog': { component: CapabilityIndex },
-  'ivd-completeness': { component: IvdCompleteness, full: true },
+  // 'ivd-completeness' folded into device-diagnostics (D2, fold F2, 2026-10-29): an alias now (registryModel.ts).
   labeling: { component: Labeling },
   'labeling-pi': { component: LabelingPI },
   'labeling-smpc': { component: SmpcLabeling },
@@ -563,14 +545,13 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'report-engine': { component: ReportEngine },
   'research-admin': { component: ResearchAdmin },
   review: { component: Review },
-  risk: { component: Risk },
+  // risk folded into device-engineering (D2, fold F1c, 2026-10-29): an alias now (registryModel.ts).
   'safety-narrative': { component: SafetyNarrative },
-  setup: { component: Setup },
   'shadow-review': { component: ShadowReview, full: true },
   'source-tracer': { component: SourceTracer },
   qmp: { component: QmpWorkspace },
   quality: { component: QualityModule, full: true },
-  'part11-console': { component: Part11Console },
+  // part11-console folded into audit-trail (D2, 2026-10-29): DEEP_LINK_ALIASES takes it there.
   'identity-console': { component: IdentityConsole },
   'report-governance': { component: ReportGovernance },
   'submission-center': { component: SubmissionCenter },
@@ -580,7 +561,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   tasks: { component: TaskBoard },
   'template-library': { component: TemplateLibrary },
   training: { component: Training },
-  billing: { component: UsageBilling },
+  // No `billing`: folded into Licensing (D2, 2026-10-29; fold-billing). An alias of `licensing` now.
   usage: { component: UsageBilling },
   vault: { component: Vault, full: true },
 };

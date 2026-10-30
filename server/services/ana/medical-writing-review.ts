@@ -3,6 +3,8 @@
  * compliance, approval or filing readiness. No project sources are read here.
  */
 import { getDocumentTypeStandard, listMedicalWritingCatalog, type DocumentTypeStandard } from './medical-writing.js';
+import { reconcileCsrClaims, type CsrClaimReceipt, type CsrEvidenceFact, type CsrClaimFinding } from './csr-claim-reconciliation.js';
+import { verifyCsrSectionEvidenceBinding, type CsrSectionSnapshot, type CsrSectionEvidenceBinding, type CsrBindingIssue } from './csr-section-evidence-binding.js';
 import { extractHeadingOutline } from './document-search-core.js';
 import { getDocumentPreparationQuestion, type PreparationQuestion, type PreparationTopic } from '../market-specs/document-preparation.js';
 
@@ -164,5 +166,71 @@ export function reviewMedicalWriting(documentType: string, draftText?: string, k
     structureCoverage, missingSections, checklist, readiness: headingReadiness(doc, hasDraft, missingSections),
     inquiryScope: doc.segment === 'drug' ? 'medicinal_document' : 'writing_standard',
     clarificationQuestions: clarificationQuestions(doc, text),
+  };
+}
+
+/**
+ * Source-aware CSR review companion for the existing AnA medical-writing path.
+ * Never upgrades the structural review to regulatory approval or a completed
+ * scientific review. The evidence ledger must come from governed, qualified
+ * source and biostatistics records, not public exemplar CSRs.
+ */
+export interface CsrEvidenceReview {
+  writing: MedicalWritingReview;
+  claims: {
+    status: 'not_assessed' | 'blocked' | 'reconciled_pending_human_review';
+    checkedClaims: number;
+    findings: CsrClaimFinding[];
+  };
+  readyForApproval: false;
+}
+export function reviewCsrWithEvidence(
+  draftText: string,
+  claims?: readonly CsrClaimReceipt[],
+  evidence?: readonly CsrEvidenceFact[],
+  knownHeadings: string[] = [],
+): CsrEvidenceReview {
+  const writing = reviewMedicalWriting('csr', draftText, knownHeadings);
+  if (!claims || !evidence || claims.length === 0) {
+    return { writing, claims: { status: 'not_assessed', checkedClaims: 0, findings: [] },
+      readyForApproval: false };
+  }
+  const result = reconcileCsrClaims(claims, evidence);
+  return {
+    writing,
+    claims: {
+      status: result.accepted ? 'reconciled_pending_human_review' : 'blocked',
+      checkedClaims: result.checkedClaims,
+      findings: result.findings,
+    },
+    readyForApproval: false,
+  };
+}
+
+/** Version-aware CSR section review for the existing governed editor's
+ * future approval preflight. This remains read-only and never signs a document.
+ */
+export function reviewCsrSectionWithEvidence(
+  snapshot: CsrSectionSnapshot,
+  binding: CsrSectionEvidenceBinding | null | undefined,
+  claims: readonly CsrClaimReceipt[],
+  evidence: readonly CsrEvidenceFact[],
+): {
+  writing: MedicalWritingReview;
+  evidence: { status: 'blocked' | 'reconciled_pending_human_review'; issues: CsrBindingIssue[]; checkedClaims: number; findings: CsrClaimFinding[] };
+  readyForApproval: false;
+} {
+  const writing = reviewMedicalWriting('csr', snapshot.savedContent);
+  const checked = verifyCsrSectionEvidenceBinding(snapshot, binding, claims, evidence);
+  return {
+    writing,
+    evidence: {
+      status: checked.accepted ? 'reconciled_pending_human_review' : 'blocked',
+      issues: checked.issues,
+      checkedClaims: checked.checkedClaims,
+      // 2026-10-30 (medical_writing_review with a document reference): the claim-level findings name the cell.
+      findings: checked.findings,
+    },
+    readyForApproval: false,
   };
 }

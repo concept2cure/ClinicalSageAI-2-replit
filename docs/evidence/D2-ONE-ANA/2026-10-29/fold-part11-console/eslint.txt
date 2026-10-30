@@ -1,0 +1,9 @@
+# ESLINT — node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD (18ecfe003); the tree also held another
+# agent's uncommitted route-gate files, so the per-file lines are the record: no file of this fold gained a warning.
+[ci:eslint-warning-ratchet] --since HEAD (18ecfe003) -- 43 lintable file(s) changed; linting both versions of each...
+    -1  client/src/concept2cure/v2/__tests__/part11ConsoleHonesty.test.tsx  (1 -> 0)
+    -3  client/src/concept2cure/v2/surfaces/Part11Console.tsx  (3 -> 0)
+[ci:eslint-warning-ratchet] net -4 warning(s) across the files changed since HEAD.
+
+# npx eslint --no-ignore on the 22 changed files: 0 errors (warnings are pre-existing: AdminSurfaces length/complexity, etc.)
+✖ 28 problems (0 errors, 28 warnings)

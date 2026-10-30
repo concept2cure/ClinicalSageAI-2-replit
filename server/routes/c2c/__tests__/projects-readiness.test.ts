@@ -85,6 +85,7 @@ const section = (project: string, status: string, scope: 'home' | 'market' = 'ho
 function serve(sections: unknown[] | Error) {
   queryMock.mockImplementation(async (sql: string) => {
     if (isList(sql)) return { rows: listRows() };
+    if (/AS portfolio_counts/.test(sql)) return {rows:[{portfolio_counts:{total:2,byWorkstream:{Biotech:1,MDX:1},byPathway:{other:2},filingWithin60Days:0}}]};
     if (isDetail(sql)) return { rows: [detailRow()] };
     if (isSections(sql)) {
       if (sections instanceof Error) throw sections;

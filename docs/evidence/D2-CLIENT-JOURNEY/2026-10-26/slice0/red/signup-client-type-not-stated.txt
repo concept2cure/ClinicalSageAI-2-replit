@@ -1,0 +1,2151 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/walkhead
+
+xxxxxxxxxxx·
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > medtech (undefined) → medtech
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > medtech (medical_device) → medtech
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > medtech (ivd_diagnostics) → diagnostics
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > biotech (undefined) → biotech
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > pharma (undefined) → pharma
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > cro (undefined) → cro
+TypeError: clientTypeForSignup is not a function
+ ❯ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts:26:12
+     24|     ['cro', undefined, 'cro'],
+     25|   ] as const)('%s (%s) → %s', (industry, spec, want) => {
+     26|     expect(clientTypeForSignup(industry, spec)).toBe(want);
+       |            ^
+     27|   });
+     28|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > an industry that serves every category states none, so the column keeps its default
+TypeError: clientTypeForSignup is not a function
+ ❯ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts:30:86
+     28|
+     29|   it('an industry that serves every category states none, so the colum…
+     30|     for (const industry of ['regulatory', 'academic', 'medical_writing…
+       |                                                                                      ^
+     31|   });
+     32|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > the sign-up route writes it on the new organisation
+AssertionError: expected 'router.post(\'/signup\', signupLimite…' to match /const signupClientType = clientTypeFo…/
+
+- Expected:
+/const signupClientType = clientTypeForSignup\(industryMode, mdxSpecialization\)/
+
++ Received:
+"router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
+  try {
+    const parsed = signupSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Invalid signup data', details: parsed.error.errors },
+      });
+    }
+
+    const {
+      password,
+      companyName,
+      industryMode,
+      firstName,
+      lastName,
+      mdxSpecialization,
+      primaryUseCases,
+      defaultMarkets,
+    } = parsed.data;
+    const email = parsed.data.email.trim().toLowerCase();
+
+    // Enforce enterprise password policy (NIST 800-63B), against what the
+    // account will be: this address, this name, this organisation.
+    const policyResult = validatePasswordPolicy(password, {
+      email,
+      name: [firstName, lastName].filter(Boolean).join(' '),
+      organizationName: companyName,
+    });
+    if (!policyResult.valid) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'AUTH_001',
+          message: policyResult.errors[0],
+          details: { errors: policyResult.errors },
+        },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    // Security audit 2026-09-24, IAM-17: the account cannot act until its
+    // address is confirmed by the link mailed to it (services/email-verification.ts).
+    // Only a development server with dev auth allowed skips that. A deployment
+    // that cannot mail the link, or has no public origin to build it on,
+    // refuses the sign-up rather than create an account nobody can activate;
+    // resolved before the address lookup, so the refusal is the same for every
+    // address.
+    const verificationRequired = !isDevAuthAllowed();
+    let verifyBaseUrl = '';
+    if (verificationRequired) {
+      if (!isEmailConfigured()) {
+        logger.error('Sign-up refused: e-mail is not configured, so the verification link cannot be sent');
+        return res.status(503).json({
+          success: false,
+          error: { code: 'AUTH_SIGNUP_UNAVAILABLE', message: 'Sign-up is not available right now. Try again later.' },
+        });
+      }
+      try {
+        verifyBaseUrl = resolveAppBaseUrl(req);
+      } catch (err) {
+        if (!(err instanceof PublicOriginNotConfiguredError)) throw err;
+        logger.error('Sign-up refused: no public origin configured for the verification link', { err: err.message });
+        return res.status(503).json({
+          success: false,
+          error: { code: 'AUTH_SIGNUP_UNAVAILABLE', message: 'Sign-up is not available right now. Try again later.' },
+        });
+      }
+    }
+
+    if ((await accountIdForEmail(email)) !== null) {
+      // SECURITY: Return generic message to prevent email enumeration
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'AUTH_002',
+          message: 'Unable to create account. Please try a different email or contact support.',
+        },
+      });
+    }
+
+    const baseSlug = companyName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    let slug = baseSlug || `tenant-${Date.now()}`;
+
+    const existingSlug = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.slug, slug))
+      .limit(1);
+    if (existingSlug.length) {
+      slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+
+    let stripeCustomerId: string | null = null;
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
+    if (stripeSecretKey && !config.billing.stripeDisabled) {
+      const Stripe = (await import('stripe')).default;
+      // Pin the runtime Stripe API version; the SDK's type only admits its
+      // newest literal, so cast as the rest of the billing code does.
+      const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' as any });
+      const customer = await stripe.customers.create({
+        email,
+        name: companyName,
+        metadata: { industryMode },
+      });
+      stripeCustomerId = customer.id;
+    }
+
+    // Tenant isolation posture: refuse to make this deployment multi-tenant while
+    // Postgres RLS is not filtering rows. No-ops locally and for the founding
+    // organization. See server/db/tenantAdmission.ts.
+    await assertCanAdmitNewTenant();
+
+    // The new account's id, bound before the transaction opens (D3, 2026-10-04):
+    // the pre-auth scope reaches only its bound account, RETURNING included.
+    const newUserId = await bindNewAccountId();
+
+    const result = await db.transaction(async tx => {
+      const [org] = await tx
+        .insert(organizations)
+        // `tier` is set EXPLICITLY. The column default is 'standard'
+        // (shared/schema.ts) — the $499/mo tier — so omitting it here granted
+        // every self-serve signup a paid tier permanently and for nothing.
+        // Fixed here rather than by changing the column default: that is a
+        // migration against existing rows, and it wants the same sign-off as
+        // the other held migrations.
+        .values({ name: companyName, slug, industryMode, stripeCustomerId, tier: 'free' })
+        .returning();
+
+      const passwordHash = await bcrypt.hash(password, PASSWORD_HASH_COST);
+      const fullName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
+      const [user] = await tx
+        .insert(users)
+        .values({
+          id: newUserId,
+          email,
+          passwordHash,
+          name: fullName,
+          defaultOrganizationId: org.id,
+          // Waits on the e-mail link (IAM-17); a development server skips it.
+          status: verificationRequired ? ACCOUNT_STATUS_PENDING_VERIFICATION : ACCOUNT_STATUS_ACTIVE,
+        })
+        .returning();
+
+      // Enter the new organisation's tenant before its first membership row.
+      // organization_users is written only in the membership's own
+      // organisation (or the platform scope), and signup runs in the pre-auth
+      // scope, so without this every sign-up answered 500 (D3, 2026-09-26;
+      // docs/evidence/D3/2026-09-26-memberships/). The same transaction-local
+      // switch the workspace step below makes, through the same binding; it
+      // stays set for the rest of this transaction.
+      const workspaceStore = drizzleWorkspaceStore(tx);
+      await workspaceStore.enterOrganizationScope(org.id);
+      await tx.insert(organizationUsers).values({
+        organizationId: org.id,
+        userId: user.id,
+        role: 'admin',
+      });
+
+      // The organisation's own client workspace, SAME transaction.
+      // `projects.client_workspace_id` is NOT NULL, so without this row
+      // `ensureProgramProjectAnchor` skips with NO_CLIENT_WORKSPACE for every
+      // program this tenant ever creates, and its governed artifacts can never
+      // reach the registry (services/c2c/organization-default-workspace.ts).
+      // Inside the transaction, unlike provisionLaunchModules below: a module
+      // grant an administrator can re-run is not the same as the PM spine's
+      // NOT NULL parent, which every later write assumes.
+      await ensureOrganizationDefaultWorkspace(workspaceStore, {
+        orgId: org.id,
+        orgName: org.name,
+        orgSlug: org.slug,
+        userId: user.id,
+      });
+
+      return { org, user };
+    });
+
+    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2), and
+    // the governed industry profile — both under the NEW organisation's own
+    // tenant scope.
+    //
+    // Until 2026-09-22 both ran under the pre-auth scope every /api/auth request
+    // carries (tenant '0', no role). module_subscriptions and
+    // organization_industry_profiles are RLS-enabled and FORCED, so the policy's
+    // WITH CHECK refused every row: a self-serve organisation started with 0 of
+    // 21 launch modules and no industry profile, the failures were logged per
+    // module and as a warn, and signup answered 201. Proven on a deploy-shaped
+    // database as the non-superuser runtime role by
+    // tests/db/signup-launch-catalog.dbtest.ts, which drives this handler.
+    //
+    // The scope is the one establishRequestTenantScope would build for this
+    // organisation's admin on their next request — least privilege, never the
+    // system scope: nothing here needs to reach any other tenant.
+    //
+    // Outside the transaction on purpose: the grant writer holds its own
+    // connection, and an organisation that fails to provision must still exist
+    // so an administrator can provision it by hand. A failure does not fail the
+    // signup; provisionLaunchModules logs it as one error-level line with the
+    // remediation command.
+    await runWithTenantScope(
+      {
+        tenantId: String(result.org.id),
+        orgUuid: result.org.uuid ?? null,
+        role: 'admin',
+        source: 'request',
+        caller: 'POST /api/auth/signup (new-organisation provisioning)',
+      },
+      async () => {
+        await provisionLaunchModules(result.org.id, { actorEmail: null });
+
+        // Seed the governed org industry profile from the signup signals so the
+        // effective-context resolver has a real organization layer from day one.
+        // Best-effort: a failure here must never fail signup. Without the
+        // profile row the resolver (server/services/industry-context/resolver.ts)
+        // leaves the vertical unset (null, source 'none'); it no longer falls
+        // back to biopharma defaults (2026-10-15).
+        try {
+          await db
+            .insert(organizationIndustryProfiles)
+            .values({
+              organizationId: result.org.id,
+              primaryIndustry: primaryIndustryForIndustryMode(industryMode),
+              mdxSpecialization: mdxSpecialization ?? null,
+              defaultMarkets: defaultMarkets ?? [],
+              defaultPathways: pathwaysForUseCases(primaryUseCases),
+              // default_approval_rigor left null — the resolver derives a
+              // per-industry default (see defaultRigorForPrimaryIndustry).
+              updatedBy: result.user.id,
+            })
+            .onConflictDoNothing({ target: organizationIndustryProfiles.organizationId });
+        } catch (err) {
+          logger.warn('Org industry profile seed failed (non-fatal)', {
+            organizationId: result.org.id,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        }
+      },
+    );
+
+    const userName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
+    const created = {
+      organization: {
+        id: result.org.id,
+        name: result.org.name,
+        uuid: result.org.uuid,
+        industryMode: result.org.industryMode,
+      },
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+      },
+    };
+
+    if (verificationRequired) {
+      // The account waits on its link; no session is handed out here. The
+      // mail is not awaited: the account exists whether or not the first
+      // attempt delivers, and POST /resend-verification sends it again.
+      const verifyUrl = emailVerificationUrl(verifyBaseUrl, mintEmailVerificationToken(result.user.id, email));
+      sendVerificationEmail(email, firstName || userName, verifyUrl).catch(err =>
+        logger.error('Sign-up verification email failed', { err: err instanceof Error ? err.message : String(err) })
+      );
+      await recordAuthEvent({
+        action: 'user_signup',
+        userId: result.user.id,
+        tenantId: result.org.id,
+        email,
+        outcome: 'success',
+        reason: 'verification_sent',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(201).json({ success: true, verification: { required: true, email }, ...created });
+    }
+
+    const signupSession = await openSession(result.user.id);
+    const token = jwt.sign(
+      {
+        userId: result.user.id.toString(),
+        email: result.user.email,
+        organizationId: result.org.id.toString(),
+        organizationUuid: result.org.uuid,
+        role: 'admin',
+        type: 'access',
+        ...signupSession,
+      },
+      config.jwt.secret,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+    sendWelcomeEmail(email, userName).catch(err =>
+      logger.error('Welcome email failed (non-blocking)', { err: err instanceof Error ? err.message : String(err) })
+    );
+    await recordAuthEvent({
+      action: 'user_signup',
+      userId: result.user.id,
+      tenantId: result.org.id,
+      email,
+      outcome: 'success',
+      reason: 'dev_no_verification',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
+    return res.status(201).json({ success: true, token, verification: { required: false }, ...created });
+  } catch (error: any) {
+    logger.error('Signup error', { err: error?.message ?? String(error) });
+    return res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Internal server error' },
+    });
+  }
+});
+
+// Durable token revocation — Redis-backed with in-memory fallback.
+// See: server/services/token-revocation.ts
+// Legacy in-memory set removed; all revocation now goes through the service.
+
+/** Check if a token has been blacklisted (logout) — sync check for backward compat */
+export function isTokenBlacklisted(token: string): boolean {
+  // Sync check uses memory fallback only. The async isTokenRevoked() is preferred.
+  const { isTokenRevokedSync } = require('../services/token-revocation');
+  return isTokenRevokedSync(token);
+}
+
+/**
+ * POST /api/auth/verify-email  { token }
+ *
+ * The sign-up link's landing (security audit 2026-09-24, IAM-17). The token
+ * names the account and the address it was created with; the account moves
+ * from `pending_verification` to `active`, and only from there, so a link used
+ * twice does nothing the second time and a suspended account is not revived.
+ * The welcome mail goes out now, not at sign-up. No session is minted: the
+ * link proves the address, the password and second factor prove the person.
+ */
+router.post('/verify-email', verificationLimiter, async (req: Request, res: Response) => {
+  try {
+    const subject = readEmailVerificationToken(req.body?.token);
+    if (!subject) {
+      return res.status(400).json({ success: false, error: { code: 'AUTH_VERIFY_INVALID', message: VERIFICATION_LINK_INVALID_MESSAGE } });
+    }
+    if (!requireDb(res)) return;
+    // The link is server-signed: its subject is the account (D3, 2026-10-04).
+    bindPreAuthAccount(subject.userId);
+    const activated = await db
+      .update(users)
+      .set({ status: ACCOUNT_STATUS_ACTIVE })
+      .where(and(eq(users.id, subject.userId), eq(users.email, subject.email), eq(users.status, ACCOUNT_STATUS_PENDING_VERIFICATION)))
+      .returning({ id: users.id, name: users.name, defaultOrganizationId: users.defaultOrganizationId });
+    if (activated.length === 0) {
+      // Already confirmed: the same answer, nothing written. Anything else
+      // (no such account, another status) is the one refusal.
+      const [current] = await db.select({ status: users.status }).from(users).where(and(eq(users.id, subject.userId), eq(users.email, subject.email))).limit(1);
+      if (current && isActiveAccountStatus(current.status)) {
+        return res.json({ success: true, alreadyVerified: true });
+      }
+      return res.status(400).json({ success: false, error: { code: 'AUTH_VERIFY_INVALID', message: VERIFICATION_LINK_INVALID_MESSAGE } });
+    }
+    const [account] = activated;
+    await recordAuthEvent({
+      action: 'email_verified',
+      userId: account.id,
+      tenantId: await auditOrganizationOf(account),
+      email: subject.email,
+      outcome: 'success',
+      reason: 'link',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+    sendWelcomeEmail(subject.email, account.name || subject.email.split('@')[0]).catch(err =>
+      logger.error('Welcome email failed (non-blocking)', { err: err instanceof Error ? err.message : String(err) })
+    );
+    return res.json({ success: true });
+  } catch (error) {
+    logger.error('E-mail verification failed', { err: error instanceof Error ? error.message : String(error) });
+    return res.status(500).json({ success: false, error: { code: 'AUTH_010', message: 'Internal server error' } });
+  }
+});
+
+/**
+ * POST /api/auth/resend-verification  { email }
+ *
+ * Sends the sign-up link again to an account that is still waiting on it.
+ * Answers 202 whatever the address names (no account, an active one, a
+ * pending one), so it tells nobody which addresses are registered; the
+ * origin is resolved first for the same reason.
+ */
+router.post('/resend-verification', verificationLimiter, async (req: Request, res: Response) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!email || email.length > 320) {
+    return res.status(400).json({ success: false, error: { code: 'AUTH_001', message: 'Email is required' } });
+  }
+  if (!requireDb(res)) return;
+  try {
+    const baseUrl = resolveAppBaseUrl(req);
+    const accountId = await bindAccountByEmail(email);
+    const [account] =
+      accountId === null
+        ? []
+        : await db
+            .select({ id: users.id, name: users.name, status: users.status })
+            .from(users)
+            .where(eq(users.id, accountId))
+            .limit(1);
+    if (account && isPendingVerificationStatus(account.status) && isEmailConfigured()) {
+      const verifyUrl = emailVerificationUrl(baseUrl, mintEmailVerificationToken(account.id, email));
+      sendVerificationEmail(email, account.name || email.split('@')[0], verifyUrl).catch(err =>
+        logger.error('Sign-up verification email failed', { err: err instanceof Error ? err.message : String(err) })
+      );
+    }
+  } catch (err) {
+    logger.error('Resend of the sign-up verification link failed', { err: err instanceof Error ? err.message : String(err) });
+  }
+  return res.status(202).json({ success: true });
+});
+
+/** What verifyLiveToken throws for a token that opens nothing: a 401, never a 5xx. */
+const TOKEN_REFUSAL_NAMES = new Set(['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError', 'SessionEndedError']);
+const isTokenRefusal = (error: unknown): boolean =>
+  error instanceof Error && TOKEN_REFUSAL_NAMES.has(error.name);
+
+/**
+ * POST /api/auth/logout with `terminateAllSessions: true` — sign out of every
+ * session the account holds (security audit 2026-09-24, IAM-04 (b); plan
+ * P0-4b; 21 CFR 11.300(c)). The client sends the flag
+ * (client/src/services/portal/authService.tsx logout(true)); until 2026-10-01
+ * nothing read it, the route revoked the pair it was handed, answered \"Tokens
+ * invalidated.\", and every other session of the account carried on.
+ *
+ * Only a live access token may end the account's sessions: verified as every
+ * authenticator verifies (verifyLiveToken), so a token already signed out,
+ * idle, superseded or ended answers 401 and ends nothing, rather than a
+ * success it did not earn. The account's users.sessions_ended_at is stamped
+ * (endEverySessionOf), and every session that began before it is refused at
+ * its next request by the gates, verifyLiveToken and the refresh
+ * (sessionEndedByStanding). The presented pair is also revoked and its slot
+ * freed, as a plain logout does. The stamp is the first whole second after the
+ * request (endingStampOf), and the answer waits for that second (at most one),
+ * so every session begun before the sign-out is ended and the sign-in that
+ * follows it is not (plan P0-4b R3).
+ */
+async function signOutEverywhere(req: Request, res: Response): Promise<void> {
+  const { revokeToken } = await import('../services/token-revocation.js');
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const refuse = (): void => {
+    res.status(401).json({ success: false, error: { code: 'AUTH_006', message: 'This session has ended. Sign in again.' } });
+  };
+  if (!token) return refuse();
+  let claims: Record<string, unknown>;
+  try {
+    claims = await verifyLiveToken<Record<string, unknown>>(token, undefined, { activity: false });
+  } catch (error) {
+    if (isTokenRefusal(error)) return refuse();
+    throw error;
+  }
+  const accountId = accountIdOfClaims(claims);
+  if (requireAccessTokenReason(claims) || accountId === null) return refuse();
+  const endedAt = new Date();
+  if (!(await endEverySessionOf(accountId, endedAt))) return refuse();
+  await unregisterSession(accountId, claims.sid);
+  await revokeToken(token);
+  if (req.body?.refreshToken) await revokeToken(req.body.refreshToken);
+  await recordAuthEvent({
+    action: 'user_logout',
+    userId: accountId,
+    tenantId: claims.organizationId as string | undefined,
+    email: claims.email as string | undefined,
+    outcome: 'success',
+    reason: 'signed out of every session',
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+  // The stamp is the first whole second after now (R3); answered once it has
+  // begun, so a sign-in that follows this answer is not one it ended.
+  await untilStampHasBegun(endingStampOf(endedAt.getTime()));
+  res.json({ success: true, message: 'Signed out of every session.' });
+}
+
+/**
+ * The account and session of a LIVE access token, or null: the same test
+ * signOutEverywhere applies before it acts on an account — verifyLiveToken
+ * (signature, expiry, revocation, the account's standing, the idle, lifetime
+ * and superseded windows; not the person acting) and the access-token class
+ * (requireAccessTokenReason, which refuses a refresh, mfa_challenge,
+ * mfa-partial, connector or delegated token). A token it refuses, or a check
+ * that cannot be read, is null: the sign-out then revokes the token and
+ * changes nothing else (IAM-34).
+ */
+async function liveAccessSessionOf(token: string): Promise<{ accountId: number; sessionId: string | null } | null> {
+  try {
+    const claims = await verifyLiveToken<Record<string, unknown>>(token, undefined, { activity: false });
+    if (requireAccessTokenReason(claims)) return null;
+    const accountId = accountIdOfClaims(claims);
+    if (accountId === null) return null;
+    return { accountId, sessionId: typeof claims.sid === 'string' && claims.sid ? claims.sid : null };
+  } catch (error) {
+    if (!isTokenRefusal(error)) logger.warn('Logout: the session could not be checked; it stops no AnA turn', { err: String(error) });
+    return null;
+  }
+}
+
+/**
+ * POST /api/auth/logout
+ * Logout and invalidate tokens. With `terminateAllSessions: true`, every
+ * session of the account (signOutEverywhere).
+ */
+router.post('/logout', async (req: Request, res: Response) => {
+  try {
+    if (req.body?.terminateAllSessions === true) return await signOutEverywhere(req, res);
+    const { revokeToken } = await import('../services/token-revocation.js');
+
+    // Extract token from Authorization header and revoke it. The logout audit
+    // event is attributed to the user and tenant whose session ended, read from
+    // the token only when the server signed it. Expiry is ignored, since a logout
+    // from an expired session still means something to an inspector. Claims
+    // from a token that does not verify are not attributed: the audit row is
+    // written in the scope of the tenant it names (recordAuthEvent), so a
+    // forged token would otherwise write into any organisation's audit chain.
+    const authHeader = req.headers.authorization;
+    let auditUserId: string | number | undefined;
+    let auditOrgId: string | number | undefined;
+    let auditEmail: string | undefined;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      // Decided BEFORE the token is revoked below: is this a live access
+      // session? Only one may change anything about the account beyond its own
+      // token (IAM-34, a regression of IAM-23's intent): an mfa_challenge
+      // token, a refresh, connector or delegated token, an expired one or one
+      // already revoked stops nothing.
+      const liveSession = await liveAccessSessionOf(token);
+      try {
+        // token-class: attribution only. Read for the audit row and the session's slot, never for a state change on the account: expired and unclassed tokens are attributed here, and liveAccessSessionOf above decides what the sign-out may stop.
+        const verified = verifyJwtWithRotation<Record<string, unknown>>(token, { ignoreExpiration: true });
+        auditUserId = (verified?.userId as string) ?? (verified?.sub as string);
+        auditOrgId = verified?.organizationId as string | undefined;
+        auditEmail = verified?.email as string | undefined;
+        // The session's slot under the account's concurrent-session limit is free again (P1-1).
+        await unregisterSession(auditUserId, verified?.sid);
+      } catch {
+        /* not a token this server signed: record an anonymous logout */
+      }
+      await revokeToken(token);
+      // The session ended, so the AnA turns THIS session started stop — not
+      // the person's turns on their other devices, whose sessions stand (AnA
+      // detach §2.9; DT3 review: \"the session that started this turn ended\"
+      // must be true of every turn it is said of). A token with no sid has
+      // no runs to name; such a run stops at its next round boundary.
+      if (liveSession?.sessionId) {
+        await stopPersonsRuns(
+          liveSession.accountId,
+          { cause: 'sign_out', byUserId: liveSession.accountId },
+          { sessionId: liveSession.sessionId },
+        );
+      }
+    }
+
+    // Also revoke any refresh token sent in body
+    if (req.body?.refreshToken) {
+      await revokeToken(req.body.refreshToken);
+    }
+
+    // Audit: session termination. Recorded regardless of whether the
+    // token was valid — a logout request from an expired session is
+    // still a meaningful event for inspectors (e.g. shows the user
+    // explicitly ended the session vs. just walking away).
+    await recordAuthEvent({
+      action: 'user_logout',
+      userId: auditUserId,
+      tenantId: auditOrgId,
+      email: auditEmail,
+      outcome: 'success',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
+    res.json({ success: true, message: 'Logged out successfully. Tokens invalidated.' });
+  } catch (error: any) {
+    logger.error('Logout error', { err: error?.message ?? String(error) });
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Logout failed' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/refresh
+ * Refresh access token using refresh token
+ */
+router.post('/refresh', async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Refresh token required' },
+      });
+    }
+
+    // SECURITY: Check if refresh token has been revoked (via logout or previous rotation)
+    const { isTokenRevoked } = await import('../services/token-revocation.js');
+    if (await isTokenRevoked(refreshToken)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Refresh token has been revoked' },
+      });
+    }
+
+    // Refresh tokens use a separate refresh-token secret with its
+    // own lifecycle; not part of the JWT_SECRET rotation window.
+    // See getRefreshTokenSecret.
+    // security-allow: refresh-token-secret
+    const decoded = jwt.verify(refreshToken, getRefreshTokenSecret(), { algorithms: [\"HS256\"] }) as {
+      userId: string;
+      email: string;
+      type: string;
+      iat?: number;
+      sid?: string;
+      sst?: number;
+      idl?: number;
+    };
+
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid refresh token' },
+      });
+    }
+
+    // SECURITY FIX: Look up the user's actual organization from the database
+    // instead of hardcoding organizationId: '2'. This prevents a refresh token
+    // from granting access to an arbitrary tenant.
+    if (!requireDb(res)) return;
+    // The refresh token is server-signed: its subject is the account the
+    // request is bound to (D3, 2026-10-04).
+    const refreshAccountId = Number.parseInt(String(decoded.userId), 10);
+    if (!Number.isInteger(refreshAccountId) || refreshAccountId <= 0) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid refresh token' },
+      });
+    }
+    bindPreAuthAccount(refreshAccountId);
+    const refreshUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, refreshAccountId))
+      .limit(1);
+
+    if (!refreshUser.length) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'User not found' },
+      });
+    }
+
+    const refreshUserData = refreshUser[0];
+    // The organisation the new pair is for: the account's default, else its
+    // first membership. Chosen before the standing is read, so the standing
+    // carries when that membership began (plan P0-4b R1).
+    const refreshMemberships = await db
+      .select({ organizationId: organizationUsers.organizationId, role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, refreshUserData.id))
+      .limit(25);
+
+    let refreshOrgId = refreshUserData.defaultOrganizationId;
+    if (!refreshOrgId || !refreshMemberships.some(m => m.organizationId === refreshOrgId)) {
+      refreshOrgId = refreshMemberships[0]?.organizationId || null;
+    }
+    // The account's standing, read as every authenticator reads it
+    // (account-standing.ts): one statement, so the refresh and the gate cannot
+    // disagree about whether this session is over. Until 2026-10-01 the refresh
+    // compared this row's own status and password_changed_at, a second reading
+    // that knew nothing of a sign-out everywhere (plan P0-4b), and nothing here
+    // knew a membership removed and added back since the session began (R1).
+    const refreshStanding = await readAccountStanding(refreshUserData.id, refreshOrgId ?? null);
+    // A refresh token outlives the access token it came with; an account taken
+    // out of use gets no new session from it (VSR-001 F-29).
+    if (!refreshStanding.active) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
+      });
+    }
+    // Security audit 2026-09-24, IAM-04: a refresh token whose session began
+    // before the account's last password change, sign-out everywhere,
+    // suspension or deprovisioning, or before its membership in the organisation
+    // it would mint for (R1), mints nothing. The gate refuses the access
+    // tokens it minted for the same reason (middleware/auth.ts, verifyLiveToken);
+    // without this the client's next 401 would refresh and carry on, and the
+    // change would have ended no session at all.
+    if (sessionEndedByStanding(decoded, refreshStanding)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'This session has ended. Sign in again.' },
+      });
+    }
+    // Security audit 2026-09-24, IAM-06 (P1-1): a refresh is not activity. A
+    // session idle past its window, or older than its lifetime, mints nothing
+    // here either; without this the client's answer to the gate's refusal
+    // would have been a refresh, and the idle session would have carried on.
+    const inactivity = await refreshInactivityReason(decoded);
+    if (inactivity) {
+      const { revokeToken: revokeEndedRefresh } = await import('../services/token-revocation.js');
+      await revokeEndedRefresh(refreshToken, inactivity);
+      return res.status(401).json({
+        success: false,
+        error: { code: sessionEndCodeOf(inactivity), message: sessionEndMessageOf(inactivity) },
+      });
+    }
+    // The session continues: its id, start and window travel into the new pair.
+    const session = continuedSessionClaims(decoded);
+
+    if (!refreshOrgId) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_011', message: 'No organization assigned' },
+      });
+    }
+
+    // Get the user's role for the specific org in scope.
+    const refreshMembershipRole =
+      refreshMemberships.find(m => m.organizationId === refreshOrgId) || null;
+
+    if (!refreshMembershipRole) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_011', message: 'Invalid tenant membership' },
+      });
+    }
+
+    const accessToken = jwt.sign(
+      {
+        userId: decoded.userId,
+        email: decoded.email,
+        organizationId: refreshOrgId.toString(),
+        role: refreshMembershipRole.role,
+        type: 'access',
+        ...session,
+      },
+      config.jwt.secret,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    const newRefreshToken = jwt.sign(
+      { userId: decoded.userId, email: decoded.email, type: 'refresh', ...session },
+      getRefreshTokenSecret(),
+      { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+    );
+
+    // SECURITY: Revoke the old refresh token to prevent reuse (token rotation)
+    const { revokeToken: revokeOldToken } = await import('../services/token-revocation.js');
+    await revokeOldToken(refreshToken);
+
+    res.json({
+      success: true,
+      accessToken,
+      refreshToken: newRefreshToken,
+      expiresIn: 86400,
+    });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_005', message: 'Refresh token expired' },
+      });
+    }
+
+    logger.error('Token refresh error', { err: error?.message ?? String(error) });
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Token refresh failed' },
+    });
+  }
+});
+
+/**
+ * GET /api/auth/me
+ * Get current user profile
+ */
+router.get('/me', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    // CRIT-02e FIX: Removed GET /me dev-mode bypass
+
+    if (!token) {
+      return res.status(401).json({
+        error: { code: 'AUTH_006', message: 'No token provided' },
+      });
+    }
+
+    const decoded = (await verifyLiveToken(token)) as {
+      userId: string;
+      email: string;
+      organizationId?: string;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
+    };
+
+    // SECURITY: reject pre-MFA / refresh token classes — a password-only session
+    // must not resolve a full user profile via a partial token.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        error: { code: 'AUTH_006', message: 'Invalid token class' },
+      });
+    }
+
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, parseInt(decoded.userId)))
+      .limit(1);
+
+    if (!user.length) {
+      return res.status(404).json({
+        error: { code: 'AUTH_006', message: 'User not found' },
+      });
+    }
+
+    const userData = user[0];
+
+    // Extract name parts from name column
+    const meParts = (userData.name || '').trim().split(/\\s+/);
+    const meFirstName = meParts[0] || '';
+    const meLastName = meParts.slice(1).join(' ') || '';
+    const meDisplayName = (userData.name || '').trim() || userData.email;
+
+    // Get role
+    const [meMembership] = await db
+      .select({ role: organizationUsers.role, organizationId: organizationUsers.organizationId })
+      .from(organizationUsers)
+      .where(
+        decoded.organizationId
+          ? and(
+              eq(organizationUsers.userId, userData.id),
+              eq(organizationUsers.organizationId, parseInt(decoded.organizationId, 10))
+            )
+          : eq(organizationUsers.userId, userData.id)
+      )
+      .limit(1);
+    if (decoded.organizationId && !meMembership) {
+      return res.status(401).json({
+        error: { code: 'AUTH_006', message: 'Invalid tenant membership' },
+      });
+    }
+    const meRole = meMembership?.role || 'user';
+    const meRoles = sessionRolesOf(meRole);
+    const meOrgId = decoded.organizationId || meMembership?.organizationId?.toString();
+
+    // The organisation as recorded, or none (P-25).
+    const meOrgName = await recordedOrganizationName(meOrgId);
+
+    res.json({
+      id: userData.id.toString(),
+      email: userData.email,
+      firstName: meFirstName,
+      lastName: meLastName,
+      displayName: meDisplayName,
+      roles: meRoles,
+      permissions: sessionPermissions(meRole),
+      organizationId: meOrgId,
+      organizationName: meOrgName,
+      signing: signingPostureOf(userData),
+    });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
+      return res.status(401).json({
+        error: { code: 'AUTH_005', message: 'Session expired' },
+      });
+    }
+
+    logger.error('Get user error', { err: error?.message ?? String(error) });
+
+    // CRIT-02f FIX: Removed error-path dev bypass for GET /me
+
+    res.status(500).json({
+      error: { code: 'AUTH_010', message: 'Failed to get user profile' },
+    });
+  }
+});
+
+type MfaChallenge = NonNullable<ReturnType<typeof mfaService.verifyMfaChallengeToken>>;
+
+/**
+ * A challenge issued before the account was suspended or deprovisioned (VSR-001
+ * F-29), or locked, does not become a session after it. Checked before the code,
+ * so neither spends one. Answers whether it refused.
+ *
+ * Nor does a sign-in begun before the account's sessions were ended (plan
+ * P0-4b R3): the first factor was shown at the challenge's issue, so a
+ * challenge from before a password change, a sign-out everywhere or a removal
+ * from the organisation is a session begun before it, and is asked the one
+ * question every door asks (sessionEndedByStanding). Until 2026-10-01 a
+ * challenge won with the old password became a session for five minutes after
+ * the change.
+ */
+async function refuseAccountAtSecondFactor(
+  req: Request,
+  res: Response,
+  challenge: MfaChallenge,
+  userId: number,
+  challengeId: string,
+) {
+  const standing = await readAccountStanding(userId, organizationIdOfClaims(challenge));
+  const inactive = !standing.active;
+  if (!inactive && sessionEndedByStanding(jwt.decode(challengeId), standing)) {
+    await recordAuthEvent({ action: 'user_login', userId, tenantId: challenge.organizationId, email: challenge.email, outcome: 'failure', reason: 'sign_in_begun_before_sessions_ended', ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+    res.status(401).json({ success: false, error: { code: 'MFA_002', message: 'This sign-in has ended. Sign in again.' } });
+    return true;
+  }
+  if (!inactive && !(await isAccountLocked(userId)).locked) return false;
+  const reason = inactive ? 'account_inactive' : 'account_locked';
+  await recordAuthEvent({ action: 'user_login', userId, tenantId: challenge.organizationId, email: challenge.email, outcome: 'failure', reason, ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+  if (inactive) res.status(403).json({ success: false, error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE } });
+  else res.status(423).json(ACCOUNT_LOCKED_BODY);
+  return true;
+}
+
+/**
+ * A wrong authenticator or recovery code counts toward the password step's
+ * lockout, in the users row, so every API task sees it (U17). An emailed code
+ * keeps its own cap (emailOtpService).
+ */
+async function refuseWrongSecondFactor(req: Request, res: Response, challenge: MfaChallenge, userId: number, counts: boolean) {
+  const locked = counts && (await recordFailedLogin(userId)).locked;
+  const reason = locked ? 'invalid_code_threshold_exceeded' : 'invalid_code';
+  await recordAuthEvent({ action: 'user_login_mfa_failed', userId, tenantId: challenge.organizationId, email: challenge.email, outcome: 'failure', reason, ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+  res.status(401).json({
+    success: false,
+    error: { code: 'AUTH_004', message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.' },
+  });
+}
+
+/**
+ * POST /api/auth/mfa/verify
+ * Complete MFA verification during login.
+ * Accepts the challenge token (from login response) + TOTP code,
+ * and returns the real JWT access/refresh tokens.
+ */
+router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: Response) => {
+  try {
+    const { challengeId, code, method } = req.body;
+
+    if (!challengeId || !code) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MFA_001', message: 'Challenge token and verification code are required' },
+      });
+    }
+
+    // Verify the challenge token
+    const challenge = mfaService.verifyMfaChallengeToken(challengeId);
+    if (!challenge) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        outcome: 'failure',
+        reason: 'invalid_or_expired_challenge',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'MFA_002',
+          message: 'Invalid or expired MFA challenge. Please log in again.',
+        },
+      });
+    }
+
+    const userId = parseInt(challenge.userId);
+    // The challenge is server-signed: its subject is the account (D3, 2026-10-04).
+    if (Number.isInteger(userId) && userId > 0) bindPreAuthAccount(userId);
+    if (await refuseAccountAtSecondFactor(req, res, challenge, userId, challengeId)) return;
+
+    // The factor this account signs in with (mfa-enrolment.ts). An account with
+    // an authenticator never completes sign-in with an emailed code: the emailed
+    // code is the factor of accounts WITHOUT one, and /mfa/resend mints none for
+    // an authenticator account (audit IAM-08, P1-2).
+    const [enrolmentRow] = await db
+      .select({ mfaEnabled: users.mfaEnabled, mfaMethod: users.mfaMethod })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    const authenticatorAccount = mfaEnrolmentOf(enrolmentRow ?? {}).signInFactor === 'totp';
+    const verificationMethod = method || 'email';
+    let isValid = false;
+
+    if (verificationMethod === 'email' && !authenticatorAccount) {
+      isValid = await emailOtpService.verifyEmailOtp(userId, code);
+    }
+
+    // The authenticator, or one of the recovery codes the enrolment issued
+    // (redeemable here and nowhere else; each once).
+    if (!isValid) {
+      isValid = (await mfaService.verifyLoginSecondFactor(userId, code)) !== null;
+    }
+
+    if (!isValid) return await refuseWrongSecondFactor(req, res, challenge, userId, authenticatorAccount);
+
+    // Sign-in complete: clear the lockout count and stamp last login.
+    if (!requireDb(res)) return;
+
+    await resetFailedLogins(userId);
+
+    const [userData] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!userData) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'User not found' },
+      });
+    }
+
+    // The session's idle window is the organisation's setting, fixed now (P1-1).
+    const sessionOrgId = parseInt(String(challenge.organizationId ?? ''), 10);
+    const [sessionOrg] = Number.isFinite(sessionOrgId)
+      ? await db.select({ settings: organizations.settings }).from(organizations).where(eq(organizations.id, sessionOrgId)).limit(1)
+      : [];
+    const session = await openSession(challenge.userId, sessionOrg?.settings);
+    const accessToken = jwt.sign(
+      {
+        userId: challenge.userId,
+        email: challenge.email,
+        organizationId: challenge.organizationId,
+        organizationUuid: challenge.organizationUuid,
+        role: challenge.role,
+        type: 'access',
+        ...(challenge.provider === 'saml' ? { provider: 'saml', sessionIndex: challenge.sessionIndex } : {}),
+        ...session,
+      },
+      config.jwt.secret,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    const refreshToken = jwt.sign(
+      { userId: challenge.userId, email: challenge.email, type: 'refresh', ...session },
+      getRefreshTokenSecret(),
+      { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+    );
+
+    // Build user response object
+    const mfaNameParts = (userData.name || '').trim().split(/\\s+/);
+    const mfaFirstName = mfaNameParts[0] || '';
+    const mfaLastName = mfaNameParts.slice(1).join(' ') || '';
+    const mfaDisplayName = (userData.name || '').trim() || userData.email;
+    const mfaRole = challenge.role;
+    const mfaRoles = sessionRolesOf(mfaRole);
+
+    // The organisation as recorded, or none (P-25).
+    const mfaOrgName = await recordedOrganizationName(challenge.organizationId);
+
+    // Audit: the session is created here, not at /login, which recorded only the
+    // challenge. Every sign-in outside development ends on this route.
+    await recordAuthEvent({
+      action: 'user_login',
+      userId,
+      tenantId: challenge.organizationId,
+      email: userData.email,
+      outcome: 'success',
+      reason: 'mfa_verified',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
+    res.json({
+      success: true,
+      accessToken,
+      refreshToken,
+      expiresIn: 86400,
+      user: {
+        id: challenge.userId,
+        email: challenge.email,
+        firstName: mfaFirstName,
+        lastName: mfaLastName,
+        displayName: mfaDisplayName,
+        roles: mfaRoles,
+        permissions: sessionPermissions(mfaRole),
+        organizationId: challenge.organizationId,
+        organizationName: mfaOrgName,
+        organizationUuid: challenge.organizationUuid,
+        // The account's enrolment, not the request's claim: this said true for
+        // every account and echoed the `method` the request named.
+        ...sessionMfaFields(userData),
+        signing: signingPostureOf(userData),
+        mustChangePassword: userData.mustChangePassword === true,
+      },
+      mfaRequired: false,
+    });
+  } catch (error: any) {
+    logger.error('MFA verify error', { err: error?.message ?? String(error) });
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'MFA verification failed' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/resend
+ * Re-issue the email OTP code. Requires the active challenge token.
+ * Rate limited per IP, and at most emailOtpService.MAX_RESENDS re-issued codes
+ * per challenge (429 MFA_RESEND_LIMIT beyond it; a new sign-in starts again).
+ */
+router.post('/mfa/resend', signInLimits.secondFactor, async (req: Request, res: Response) => {
+  try {
+    const { challengeId } = req.body;
+
+    if (!challengeId) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MFA_001', message: 'Challenge token is required' },
+      });
+    }
+
+    const challenge = mfaService.verifyMfaChallengeToken(challengeId);
+    if (!challenge) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'MFA_002', message: 'Invalid or expired challenge. Please log in again.' },
+      });
+    }
+
+    const userId = parseInt(challenge.userId);
+    // The challenge is server-signed: its subject is the account (D3, 2026-10-04).
+    if (Number.isInteger(userId) && userId > 0) bindPreAuthAccount(userId);
+
+    // An authenticator account has no emailed code to resend: minting one here
+    // was the fallback that let such an account finish sign-in without the
+    // authenticator (audit IAM-08, P1-2). Recovery codes are its way back in.
+    const [enrolmentRow] = await db
+      .select({ mfaEnabled: users.mfaEnabled, mfaMethod: users.mfaMethod })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (mfaEnrolmentOf(enrolmentRow ?? {}).signInFactor === 'totp') {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'MFA_AUTHENTICATOR_REQUIRED',
+          message: 'This account signs in with an authenticator app. Enter a code from it, or one of your recovery codes.',
+        },
+      });
+    }
+
+    // Re-issue the challenge's code — at most MAX_RESENDS per challenge, counted
+    // on the users row by one conditional UPDATE (IAM-09, plan P1-3). A fresh
+    // budget of codes costs the password: createEmailOtp, at /login, is the
+    // only thing that starts the count again. Refused, the pending code and its
+    // expiry stand and nothing is mailed; the refusal is recorded against the
+    // account, in the organisation the server signed into the challenge.
+    /* Nothing is reissued that cannot be delivered. This route answered
+       `success: true` with the sentence \"A new verification code has been sent
+       to your email.\" — a statement of fact about something that provably did
+       not happen — and spent one of the challenge's limited resends doing it. */
+    if (!canDeliverLoginCode()) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_challenge',
+        userId,
+        tenantId: challenge.organizationId,
+        email: challenge.email,
+        outcome: 'failure',
+        reason: LOGIN_CODE_UNDELIVERABLE_REASON,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      logger.error('Code resend refused: e-mail is not configured, so the sign-in code cannot be sent');
+      return res.status(503).json({
+        success: false,
+        error: { code: LOGIN_CODE_UNDELIVERABLE_CODE, message: LOGIN_CODE_UNDELIVERABLE_MESSAGE },
+      });
+    }
+
+    const otp = await emailOtpService.reissueEmailOtp(userId);
+    if (otp === null) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_challenge',
+        userId,
+        tenantId: challenge.organizationId,
+        email: challenge.email,
+        outcome: 'failure',
+        reason: 'resend_limit',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(429).json({
+        success: false,
+        error: {
+          code: 'MFA_RESEND_LIMIT',
+          message: 'This sign-in has already received its limit of emailed codes. Sign in again to request a new one.',
+        },
+      });
+    }
+    const maskedEmail = maskEmail(challenge.email);
+
+    sendLoginOtpEmail(challenge.email, otp).catch(err => {
+      logger.error('Failed to resend login OTP email', { err: err?.message ?? String(err) });
+    });
+
+    res.json({
+      success: true,
+      message: 'A new verification code has been sent to your email.',
+      maskedEmail,
+    });
+  } catch (error: any) {
+    logger.error('MFA resend error', { err: error?.message ?? String(error) });
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Failed to resend code' },
+    });
+  }
+});
+
+/**
+ * A change to the account's second factor, recorded against the account
+ * (§11.10(e), §11.300): an enrolment started or refused, the factor switched on
+ * or off, a wrong code at either. None of the three routes below recorded
+ * anything, so an attempt to replace a factor left no trace (VSR-001 F-26).
+ * The tenant is the organisation in the server-signed access token.
+ */
+function recordSecondFactorChange(
+  req: Request,
+  account: { userId: string; email: string; organizationId?: string | number | null },
+  action: 'user_mfa_setup' | 'user_mfa_enable' | 'user_mfa_disable',
+  outcome: 'success' | 'failure',
+  reason?: string,
+): Promise<void> {
+  return recordAuthEvent({
+    action,
+    userId: Number(account.userId),
+    tenantId: account.organizationId ?? null,
+    email: account.email,
+    outcome,
+    reason,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+}
+
+/**
+ * POST /api/auth/mfa/setup
+ * Generate a TOTP secret and QR code URL for the authenticated user.
+ * Requires a valid JWT (user must be logged in).
+ */
+router.post('/mfa/setup', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Authentication required' },
+      });
+    }
+
+    const decoded = (await verifyLiveToken(token)) as {
+      userId: string;
+      email: string;
+      organizationId?: string | number | null;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
+    };
+
+    // SECURITY: reject pre-MFA / refresh token classes — MFA enrollment is an
+    // access-privileged action that a partial (password-only) token must not reach.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    let result: mfaService.MfaSetupResult;
+    try {
+      result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
+    } catch (err) {
+      if (!(err instanceof mfaService.MfaAlreadyEnabledError)) throw err;
+      // Replacing an enrolled factor is the owner's act, with a current code:
+      // /mfa/disable, then enrol again. A session alone is not the owner.
+      await recordSecondFactorChange(req, decoded, 'user_mfa_setup', 'failure', 'already_enrolled');
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'MFA_ALREADY_ENABLED',
+          message:
+            'Two-step verification is already on for this account. To use a different authenticator, turn it off with a current code first.',
+        },
+      });
+    }
+    await recordSecondFactorChange(req, decoded, 'user_mfa_setup', 'success', 'secret_issued');
+
+    res.json({
+      success: true,
+      secret: result.secret,
+      otpauthUrl: result.otpauthUrl,
+      qrCode: result.qrCodeDataUrl,
+    });
+  } catch (error: any) {
+    logger.error('MFA setup error', { err: error?.message ?? String(error) });
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'MFA setup failed' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/enable
+ * Confirm MFA setup by verifying the initial TOTP code from the authenticator app.
+ * Returns backup codes on success. A wrong code counts against the account's
+ * second-factor allowance, the one /mfa/verify spends (P-25).
+ */
+router.post('/mfa/enable', signInLimits.authenticatorChange, async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Authentication required' },
+      });
+    }
+
+    const decoded = (await verifyLiveToken(token)) as {
+      userId: string;
+      email: string;
+      organizationId?: string | number | null;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
+    };
+
+    // SECURITY: reject pre-MFA / refresh token classes — a partial (password-only)
+    // token must not be able to enable MFA on the account.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
+
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MFA_001', message: 'Verification code is required' },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    const result = await mfaService.enableMfa(parseInt(decoded.userId), code);
+
+    if (!result.success) {
+      await recordSecondFactorChange(req, decoded, 'user_mfa_enable', 'failure', 'invalid_code');
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTH_004',
+          message: 'Invalid verification code. Ensure your authenticator app is synced; each code works once, so if you just used it, wait for the next.',
+        },
+      });
+    }
+
+    await recordSecondFactorChange(req, decoded, 'user_mfa_enable', 'success');
+
+    res.json({
+      success: true,
+      message: 'MFA has been enabled successfully',
+      backupCodes: result.backupCodes,
+    });
+  } catch (error: any) {
+    logger.error('MFA enable error', { err: error?.message ?? String(error) });
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Failed to enable MFA' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/disable
+ * Disable MFA for the authenticated user. Requires current TOTP code. A wrong
+ * code counts against the account's second-factor allowance, as at /mfa/verify (P-25).
+ */
+router.post('/mfa/disable', signInLimits.authenticatorChange, async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Authentication required' },
+      });
+    }
+
+    const decoded = (await verifyLiveToken(token)) as {
+      userId: string;
+      email: string;
+      organizationId?: string | number | null;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
+    };
+
+    // SECURITY: reject pre-MFA / refresh token classes — a partial (password-only)
+    // token must not be able to disable MFA on the account.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
+
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MFA_001', message: 'Current verification code is required to disable MFA' },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    const disabled = await mfaService.disableMfa(parseInt(decoded.userId), code);
+
+    if (!disabled) {
+      await recordSecondFactorChange(req, decoded, 'user_mfa_disable', 'failure', 'invalid_code');
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_004', message: 'Invalid verification code' },
+      });
+    }
+
+    await recordSecondFactorChange(req, decoded, 'user_mfa_disable', 'success');
+
+    res.json({
+      success: true,
+      message: 'MFA has been disabled',
+    });
+  } catch (error: any) {
+    logger.error('MFA disable error', { err: error?.message ?? String(error) });
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Failed to disable MFA' },
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Password Reset Flow
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/auth/forgot-password
+ * Also mounted at /api/auth/password/reset-request for v2 client compat
+ *
+ * Generates a reset token, stores it on the user row, and sends an email.
+ */
+async function handleForgotPassword(req: Request, res: Response) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Email is required' },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    // The origin the reset link is built on, resolved BEFORE the account
+    // lookup: in production it is APP_URL or nothing, never the Host header
+    // (password-reset poisoning), and a deployment without it refuses every
+    // address the same way, which reveals nothing about which exist.
+    let appBaseUrl: string;
+    try {
+      appBaseUrl = resolveAppBaseUrl(req);
+    } catch (err) {
+      if (!(err instanceof PublicOriginNotConfiguredError)) throw err;
+      logger.error('Password reset refused: no public origin configured', { err: err.message });
+      return res.status(503).json({
+        success: false,
+        error: {
+          code: 'AUTH_011',
+          message: 'Password reset is unavailable: this deployment has no public address configured.',
+        },
+      });
+    }
+
+    // Always return the same response to prevent email enumeration
+    const successResponse = {
+      success: true,
+      message: 'If the email exists, a password reset link will be sent',
+    };
+
+    const resetAccountId = await bindAccountByEmail(email.toLowerCase());
+    const user =
+      resetAccountId === null
+        ? []
+        : await db
+            .select({ id: users.id, email: users.email, defaultOrganizationId: users.defaultOrganizationId })
+            .from(users)
+            .where(eq(users.id, resetAccountId))
+            .limit(1);
+
+    if (!user.length) {
+      /* Audited even though no account matched. §11.10(e) wants the ATTEMPT —
+         a burst of reset requests against addresses that do not exist is the
+         signal an investigator is looking for, and it is exactly the record
+         that does not exist if only successes are logged. The RESPONSE is
+         unchanged, so this leaks nothing: enumeration protection is a property
+         of what we return, not of what we record. */
+      await recordAuthEvent({
+        action: 'user_password_reset_requested',
+        email: String(email).toLowerCase(),
+        outcome: 'failure',
+        reason: 'no account for this address',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+      // Don't reveal whether the email exists
+      return res.json(successResponse);
+    }
+
+    // Generate secure reset token (the same token an invitation mints —
+    // server/services/password-setup-token.ts — so one redeem path serves both)
+    const { token: resetToken, tokenHash: resetTokenHash, expiresAt } =
+      mintPasswordSetupToken(PASSWORD_RESET_TTL_MS);
+
+    // Store hashed token on the user row
+    await db
+      .update(users)
+      .set({
+        resetToken: resetTokenHash,
+        resetTokenExpiresAt: expiresAt,
+      })
+      .where(eq(users.id, user[0].id));
+
+    // Build the reset URL (frontend route)
+    const resetUrl = passwordSetupUrl(appBaseUrl, resetToken);
+
+    /* The reset email states \"This request is logged per FDA 21 CFR Part
+       11.10(e)\". Until this call existed that sentence was false — the flow
+       wrote no audit row of any kind, only a logger line on failure. The claim
+       is the right one to make about a credential-changing event, so it is made
+       true here rather than deleted from the email. */
+    await recordAuthEvent({
+      action: 'user_password_reset_requested',
+      userId: user[0].id,
+      tenantId: await auditOrganizationOf(user[0]),
+      email: user[0].email,
+      outcome: 'success',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+
+    // Send the email (or log in dev)
+    await sendPasswordResetEmail(user[0].email, resetToken, resetUrl);
+
+    return res.json(successResponse);
+  } catch (error: any) {
+    logger.error('Forgot password error', { err: error?.message ?? String(error) });
+    return res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Password reset request failed' },
+    });
+  }
+}
+
+/**
+ * POST /api/auth/reset-password
+ * Also mounted at /api/auth/password/reset-confirm for v2 client compat
+ *
+ * Validates the reset token and updates the user's password.
+ */
+async function handleResetPassword(req: Request, res: Response) {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      markResetLinkRefused(res);
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Reset token and new password are required' },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    // Hash the incoming token to compare against stored hash
+    const tokenHash = hashPasswordSetupToken(token);
+
+    // The account that holds this token, bound to the request (D3, 2026-10-04).
+    const resetAccountId = await bindAccountByResetToken(tokenHash);
+    const user = resetAccountId === null ? [] : await db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        resetToken: users.resetToken,
+        resetTokenExpiresAt: users.resetTokenExpiresAt,
+        defaultOrganizationId: users.defaultOrganizationId,
+      })
+      .from(users)
+      .where(and(eq(users.id, resetAccountId), eq(users.resetToken, tokenHash)))
+      .limit(1);
+
+    if (!user.length) {
+      /* A presented token that matches nothing. Recorded because repeated
+         attempts are how a stolen or guessed reset link shows up, and nothing
+         else in this flow would preserve that. No email is known here — the
+         token is all the caller supplied — so the row is attributed to the
+         token attempt rather than to a user we cannot identify. */
+      await recordAuthEvent({
+        action: 'user_password_reset_failed',
+        outcome: 'failure',
+        reason: 'reset token matched no account',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+      markResetLinkRefused(res);
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
+      });
+    }
+
+    const userData = user[0];
+    // Every event below names the account, so its organisation's ledger shows it (F-41).
+    const auditOrganizationId = await auditOrganizationOf(userData);
+
+    // Check expiry
+    if (!userData.resetTokenExpiresAt || new Date() > userData.resetTokenExpiresAt) {
+      // Clear the expired token
+      await db
+        .update(users)
+        .set({ resetToken: null, resetTokenExpiresAt: null })
+        .where(eq(users.id, userData.id));
+
+      await recordAuthEvent({
+        action: 'user_password_reset_failed',
+        userId: userData.id,
+        tenantId: auditOrganizationId,
+        outcome: 'failure',
+        reason: 'reset token had expired',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+      markResetLinkRefused(res);
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Reset token has expired. Please request a new one.' },
+      });
+    }
+
+    // Hash new password and clear reset token
+    // Enforce enterprise password policy (NIST 800-63B), against the account
+    // the token names, once the token has proved it: a bad token is refused
+    // before a bad password is discussed.
+    const resetPolicyResult = validatePasswordPolicy(newPassword, { email: userData.email, name: userData.name });
+    if (!resetPolicyResult.valid) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'AUTH_001',
+          message: resetPolicyResult.errors[0],
+          details: { errors: resetPolicyResult.errors },
+        },
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, PASSWORD_HASH_COST);
+
+    // Set the password only if the token is STILL this account's and unexpired,
+    // in the same statement that clears it: a reset token is used once. Until
+    // 2026-09-23 the row was read above and then written by id alone, so two
+    // requests carrying one token — both past the read during the bcrypt hash —
+    // both reported success and the later password silently won (D6, the class
+    // of VSR-001 §13.3 item 1).
+    // The first whole second after the reset (R3, account-standing.ts
+    // endingStampOf): every session begun before it, in its own second too, is
+    // over; the answer waits for that second, so the sign-in that follows is not.
+    const resetStamp = endingStampOf();
+    const reset = await db
+      .update(users)
+      .set({
+        passwordHash,
+        resetToken: null,
+        resetTokenExpiresAt: null,
+        passwordChangedAt: resetStamp,
+        mustChangePassword: false,
+      })
+      .where(
+        and(
+          eq(users.id, userData.id),
+          eq(users.resetToken, tokenHash),
+          gt(users.resetTokenExpiresAt, new Date())
+        )
+      )
+      .returning({ id: users.id });
+    // The reset ended every session begun before it; the AnA turns those
+    // sessions started stop too (AnA detach §2.9).
+    if (reset.length === 1) await stopPersonsRuns(userData.id, { cause: 'password_reset', byUserId: userData.id });
+
+    if (reset.length !== 1) {
+      await recordAuthEvent({
+        action: 'user_password_reset_failed',
+        userId: userData.id,
+        tenantId: auditOrganizationId,
+        outcome: 'failure',
+        reason: 'reset token was used or expired before this request completed',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+      markResetLinkRefused(res);
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
+      });
+    }
+
+    /* THE CREDENTIAL CHANGE ITSELF. This was a `logger.info` and nothing more
+       — a line in an application log, which is not an audit trail: not
+       tamper-evident, not retained to record-retention rules, and not
+       queryable as one. §11.10(e) wants an independent, tamper-evident trail
+       for exactly this event, and this helper's own docstring names
+       \"credential-changing event\" as a case it exists to cover. It was simply
+       never called here.
+
+       The logger line stays: operators read logs, inspectors read audit
+       trails, and they are not substitutes for one another. */
+    await recordAuthEvent({
+      action: 'user_password_changed',
+      userId: userData.id,
+      tenantId: auditOrganizationId,
+      outcome: 'success',
+      reason: 'password reset via emailed token',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+
+    logger.info('Password reset completed', { userId: userData.id });
+
+    await untilStampHasBegun(resetStamp);
+    return res.json({
+      success: true,
+      message: 'Password reset successfully',
+    });
+  } catch (error: any) {
+    logger.error('Reset password error', { err: error?.message ?? String(error) });
+    return res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Password reset failed' },
+    });
+  }
+}
+
+// Register both legacy and v2 paths (rate-limited)
+router.post('/forgot-password', passwordResetLimits.request, handleForgotPassword);
+router.post('/password/reset-request', passwordResetLimits.request, handleForgotPassword);
+
+router.post('/reset-password', passwordResetLimits.confirm, handleResetPassword);
+router.post('/password/reset-confirm', passwordResetLimits.confirm, handleResetPassword);
+
+// ---------------------------------------------------------------------------
+// Password Change (Authenticated)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/auth/password/change
+ * Change password for the currently authenticated user.
+ * Requires current password + new password (enforced by policy).
+ */
+router.post('/password/change', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Authentication required' },
+      });
+    }
+
+    const decoded = (await verifyLiveToken(token)) as {
+      userId: string;
+      email: string;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
+    };
+
+    // SECURITY: reject pre-MFA / refresh token classes — changing a password is
+    // an access-privileged action that a partial (password-only) token must not reach.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
+
+    // `terminateOtherSessions` is not read, and is not an opt-out: a password
+    // change ends every session that began before it, this one included, at
+    // its next request (sessionEndedByStanding). A holder who changed the
+    // password because it was stolen must not be able to leave the thief's
+    // session running (IAM-04).
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Current password and new password are required' },
+      });
+    }
+
+    // Enforce enterprise password policy
+    const changePolicyResult = validatePasswordPolicy(newPassword, { email: decoded.email });
+    if (!changePolicyResult.valid) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'AUTH_001',
+          message: changePolicyResult.errors[0],
+          details: { errors: changePolicyResult.errors },
+        },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    const [userData] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, parseInt(decoded.userId)))
+      .limit(1);
+
+    if (!userData) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'User not found' },
+      });
+    }
+
+    // Verify current password
+    if (!userData.passwordHash) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Current password is incorrect' },
+      });
+    }
+
+    const currentValid = await bcrypt.compare(currentPassword, userData.passwordHash);
+    if (!currentValid) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Current password is incorrect' },
+      });
+    }
+
+    // Prevent reusing the same password (string compare avoids redundant bcrypt call)
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'AUTH_001',
+          message: 'New password must be different from current password',
+        },
+      });
+    }
+
+    // Check password history (pass plaintext for bcrypt.compare)
+    const historyOk = await checkPasswordHistory(userData.id, newPassword);
+    if (!historyOk) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'AUTH_001',
+          message: 'This password was used recently. Please choose a different password.',
+        },
+      });
+    }
+
+    // Hash and store new password
+    const newHash = await bcrypt.hash(newPassword, PASSWORD_HASH_COST);
+
+    // Maintain password history (last 5)
+    const history = ((userData.passwordHistory as string[]) || []).slice(0, 4);
+    history.unshift(userData.passwordHash);
+
+    // The first whole second after the change (R3, account-standing.ts
+    // endingStampOf): every session begun before it, in its own second too, is
+    // over; the answer waits for that second, so the sign-in that follows is not.
+    const changeStamp = endingStampOf();
+    await db
+      .update(users)
+      .set({
+        passwordHash: newHash,
+        passwordChangedAt: changeStamp,
+        passwordHistory: history,
+        mustChangePassword: false,
+      })
+      .where(eq(users.id, userData.id));
+    // The change ended every session begun before it; the AnA turns those
+    // sessions started stop too (AnA detach §2.9).
+    await stopPersonsRuns(userData.id, { cause: 'password_change', byUserId: userData.id });
+
+    // The credential-changing event, in the account's tenant (21 CFR Part 11
+    // §11.10(e); security audit 2026-09-24, IAM-17): until 2026-09-26 this
+    // was a log line, while the reset path already wrote the event.
+    await recordAuthEvent({
+      action: 'user_password_changed',
+      userId: userData.id,
+      tenantId: await auditOrganizationOf(userData),
+      email: userData.email,
+      outcome: 'success',
+      reason: 'changed by the account holder',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
+    await untilStampHasBegun(changeStamp);
+    return res.json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_005', message: 'Session expired' },
+      });
+    }
+
+    logger.error('Password change error', { err: error?.message ?? String(error) });
+    return res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Password change failed' },
+    });
+  }
+});
+
+// ─── License Request ────────────────────────────────────────────────────────
+// Public endpoint: accepts a license / demo request from unauthenticated users.
+// Stores in DB (license_requests table). It notifies no one: the platform owner
+// reads stored requests on Master Licensing → Enterprise requests
+// (server/routes/admin/master-enterprise-requests.ts). There is no email.
+
+const licenseRequestLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { success: false, error: { message: 'Too many requests. Please try again later.' } },
+});
+
+const licenseRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+  email: z.string().email().max(254),
+  organization: z.string().min(1).max(300),
+  message: z.string().max(2000).optional().default(''),
+});
+
+router.post('/license-request', licenseRequestLimiter, async (req: Request, res: Response) => {
+  try {
+    const parsed = licenseRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: { message: parsed.error.issues[0]?.message || 'Invalid request data.' },
+      });
+    }
+
+    const { name, email, organization, message } = parsed.data;
+
+    // Persist. The table is created by migrations/20260924_license_requests.sql,
+    // on the applier — never here.
+    //
+    // Until 2026-09-24 this block caught 42P01 and ran CREATE TABLE IF NOT
+    // EXISTS at request time. That succeeds only for a role that can CREATE in
+    // public: a superuser dev server, never production's runtime role, which is
+    // refused (\"permission denied for schema public\"). So in production every
+    // enterprise onboarding request answered 500 and was lost, and nothing on a
+    // developer machine could show it. It also carried an `else` that answered
+    // `success: true` without storing anything (unreachable through Drizzle,
+    // whose error text always names the table — but an error rendered as
+    // success all the same). Both are gone: stored, or an honest 500.
+    //
+    // On failure the prospect's contact is logged — the same two fields the
+    // success line below already logs — so a request that could not be stored
+    // is still recoverable by the team rather than lost. The response carries
+    // no database text; Onboarding.tsx tells the prospect it was NOT recorded.
+    try {
+      await db.execute(sql`INSERT INTO license_requests (name, email, organization, message, status, created_at)
+              VALUES (${name}, ${email}, ${organization}, ${message}, 'pending', NOW())`);
+    } catch (dbErr) {
+      // Drizzle wraps the driver error as \"Failed query: <sql>\" and keeps
+      // PostgreSQL's reason and SQLSTATE on `.cause`; log those, not the SQL.
+      const cause = (dbErr as { cause?: unknown })?.cause ?? dbErr;
+      return serverError(res, logger, 'recording your enterprise onboarding request', cause, {
+        email,
+        organization,
+      });
+    }
+
+    logger.info('License request received', { email, organization });
+
+    return res.json({ success: true, message: 'License request submitted.' });
+  } catch (error) {
+    logger.error('License request error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      success: false,
+      error: { message: 'Unable to submit request. Please try again.' },
+    });
+  }
+});
+
+export default router;
+"
+
+ ❯ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts:36:21
+     34|     const src = readFileSync(path.resolve(__dirname, '../../../../../s…
+     35|     const handler = src.slice(src.indexOf("router.post('/signup'"));
+     36|     expect(handler).toMatch(/const signupClientType = clientTypeForSig…
+       |                     ^
+     37|     expect(handler.slice(0, handler.indexOf('stripeCustomerId,\n'))).t…
+     38|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > the shell's lane follows the organisation until the person chooses one > a medtech or diagnostics organisation opens on its own lane, not the stored default
+TypeError: shellSegment is not a function
+ ❯ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts:43:12
+     41| describe("the shell's lane follows the organisation until the person c…
+     42|   it('a medtech or diagnostics organisation opens on its own lane, not…
+     43|     expect(shellSegment('biopharma', false, 'medtech')).toBe('medtech'…
+       |            ^
+     44|     expect(shellSegment('biopharma', false, 'diagnostics')).toBe('diag…
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > the shell's lane follows the organisation until the person chooses one > biotech and pharma are the one biopharma lane
+TypeError: shellSegment is not a function
+ ❯ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts:48:12
+     46|
+     47|   it('biotech and pharma are the one biopharma lane', () => {
+     48|     expect(shellSegment('medtech', false, 'pharma')).toBe('biopharma');
+       |            ^
+     49|     expect(shellSegment('medtech', false, 'biotech')).toBe('biopharma'…
+     50|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > the shell's lane follows the organisation until the person chooses one > a lane the person chose wins; an unknown or unread client type keeps the stored lane
+TypeError: shellSegment is not a function
+ ❯ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts:53:12
+     51|
+     52|   it("a lane the person chose wins; an unknown or unread client type k…
+     53|     expect(shellSegment('biopharma', true, 'medtech')).toBe('biopharma…
+       |            ^
+     54|     expect(shellSegment('biopharma', false, null)).toBe('biopharma');
+     55|     expect(shellSegment('biopharma', false, 'no-such-type')).toBe('bio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 1 passed (12)
+   Start at  13:35:54
+   Duration  909ms (transform 341ms, setup 129ms, import 271ms, tests 19ms, environment 0ms)
+

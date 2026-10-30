@@ -75,8 +75,6 @@ const SUMMARIES: Record<string, string> = {
   'POST /api/ind-lifecycle/authorized-persons': 'Assemble the List of Authorized Persons (m1.4.3)',
   'POST /api/ind-lifecycle/authorized-persons/pdf': 'Render the List of Authorized Persons to PDF',
   'POST /api/ind-lifecycle/cross-reference-register': 'Cross-reference register + LOA-coverage QC (m1.4)',
-  'POST /api/ind-lifecycle/briefing-book': 'Assemble an FDA meeting briefing book',
-  'POST /api/ind-lifecycle/briefing-book/pdf': 'Render the briefing book to PDF',
   'POST /api/ind-lifecycle/envelope': 'Build the us-regional eCTD envelope XML',
   'POST /api/ind-lifecycle/sequence/validate': 'Validate leaves vs the section map (pure)',
   'POST /api/ind-lifecycle/sequence/lifecycle-validate': 'Validate a proposed sequence type vs the submission history (pure)',

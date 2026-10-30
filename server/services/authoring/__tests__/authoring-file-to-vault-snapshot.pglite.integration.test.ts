@@ -113,9 +113,12 @@ async function workingDraft(): Promise<WorkingDraft> {
     { id: randomUUID(), code: '12', title: 'Efficacy', content: '<p>Original endpoint result.</p>' },
     { id: randomUUID(), code: '13', title: 'Safety', content: '<p>Original safety result.</p>' },
   ];
+  // Not a CSR: a CSR's filing also needs its scientific-review receipt
+  // (csr-scientific-review.ts), which workflow-import-governance.pglite.test.ts
+  // holds to its refusal. This suite is about the filed snapshot.
   await f.pg.query(`INSERT INTO authoring_documents
     (id,tenant_id,status,title,module,client_program_id,version,created_by,provenance)
-    VALUES ($1,$2,'draft','Working CSR','M5',$3,'1.0','author@example.test',$4)`,
+    VALUES ($1,$2,'draft','Working clinical overview','M2',$3,'1.0','author@example.test',$4)`,
   [docId, f.org, f.program, JSON.stringify({ source: 'ana', moduleDefaulted: true })]);
   for (let i = 0; i < sections.length; i++) {
     const s = sections[i];
@@ -131,7 +134,7 @@ function admit(d: WorkingDraft, mutate?: () => Promise<unknown>, admission: unkn
     // Vault row and the ensuing authoring queries are real PostgreSQL rows.
     await d.f.pg.query(`INSERT INTO vault.documents
       (id,organization_id,program_id,document_title,content_hash,processing_status,extracted_text,document_code,version,mime_type)
-      VALUES ($1,$2,$3,'Working CSR',$4,'INDEXED','Rendered working draft',$5,$6,$7)`,
+      VALUES ($1,$2,$3,'Working clinical overview',$4,'INDEXED','Rendered working draft',$5,$6,$7)`,
     [d.admittedId, d.f.org, d.f.program, createHash('sha256').update(args.fileBuffer).digest('hex'), args.documentCode, args.version, args.mimeType]);
     await mutate?.();
     return { ok: true, ...(admission === 'missing' ? {} : { admission }), document: { id: d.admittedId, version: args.version }, filing: {

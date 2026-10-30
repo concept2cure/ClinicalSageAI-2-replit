@@ -1,0 +1,29 @@
+# Green: both test files after this change, product unchanged
+# $ npx vitest run client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx \
+#                  client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx
+
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > renders disambiguated identities and publishes identity/source facts to AnA without contact details 471ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'wrong program' as unavailable, never an empty roster or identity facts 198ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'legacy shape' as unavailable, never an empty roster or identity facts 164ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'invalid identity' as unavailable, never an empty roster or identity facts 129ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'null response' as unavailable, never an empty roster or identity facts 84ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'missing store' as unavailable, never an empty roster or identity facts 84ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > distinguishes a verified empty roster from a failed read 79ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > hides the previous program roster immediately while its replacement loads 316ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > ignores a late successful roster from an abandoned program 137ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > keeps email-bearing account names, legacy names and display labels outside AnA facts 82ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > states the total and truncation when AnA receives a roster excerpt 90ms
+ ✓ projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > retries the actual scoped GET after an unavailable read 117ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders the catalog authority label for saved Health_Canada 165ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders the catalog authority label for saved Registered_Certification_Body 116ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders client, product, indication and the IND number from GET /api/c2c/projects/:id 340ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > takes product from the row, not from the navigation handoff 133ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > labels the number by program type 138ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not assigned" when the agency has not numbered the program — never a placeholder 126ms
+ ✓ projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not recorded" for client, product or indication the row lacks 89ms
+ Test Files  2 passed (2)
+      Tests  19 passed (19)
+
+# eslint per file, at HEAD and after this change: 0 errors, 0 warnings for both files
+# $ npx eslint client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx         -> no output, exit 0
+# $ npx eslint client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx  -> no output, exit 0

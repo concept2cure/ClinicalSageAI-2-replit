@@ -1,0 +1,10 @@
+{
+  "file": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+  "generator": "scripts/design/generate-surface-text-ramp.mjs",
+  "cause": "Concurrent canonical merge duplicated two source-list comment lines in generated sheet.",
+  "beforeSha256": "3e68989f5c04acb7d26ce26f8dc94c97255a3ce7f9a33598131ff4fb479c0180",
+  "afterSha256": "18d398ba05c3becfc52de20ccabeb0d2c12463e516ecf05e26839da4a2e3f3bb",
+  "cssRulesIdenticalAfterRemovingComments": true,
+  "failedReceipt": "merged-gates.json",
+  "runtimeScope": "No CSS rule changed; existing generator restored its source-list metadata."
+}

@@ -22,6 +22,7 @@ import {
   MEDICINAL_PRODUCT_TYPES,
 } from '../../../shared/constants/domain/product-types.js';
 import {
+  filingDocumentClassForFiling,
   filingDocumentClassOf,
   filingDocumentClassTypes,
   filingTypeInSentence,
@@ -181,6 +182,19 @@ export async function ensureSubmissionSpine(params: {
   return { id: Number(row.id), created: true };
 }
 
+/**
+ * A filing that is its own document class is created as that class and nothing
+ * else (2026-10-29, US biotech filing completion). A BLA CBE-30, a Type D
+ * meeting package or an individual expanded-access submission sent with the
+ * parent's program type ('bla', 'ind') would be scaffolded as the initial BLA or
+ * IND and get its submission spine; that is refused, never silently corrected.
+ */
+function documentClassIdentityDecision(programType: string, submissionTypeId?: string | null): { refusal: string } | null {
+  const selected = filingDocumentClassForFiling(submissionTypeId);
+  if (!selected || selected.docType === programType) return null;
+  return { refusal: `The selected filing is ${filingTypeInSentence(selected.docType, true)}; create it as that filing, not as "${programType}".` };
+}
+
 /** Exact regional identities fix a bounded device family, independently of lane. */
 function regionalIntakeDecision(programType: string, stated: string, submissionTypeId?: string | null): { productType: string } | { refusal: string } | null {
   const regional = regionalDeviceApplicationClassOf(programType);
@@ -213,7 +227,8 @@ export function productTypeForIntake(
   stated: string,
   submissionTypeId?: string | null,
 ): { productType: string } | { refusal: string } {
-  return regionalIntakeDecision(programType, stated, submissionTypeId)
+  return documentClassIdentityDecision(programType, submissionTypeId)
+    ?? regionalIntakeDecision(programType, stated, submissionTypeId)
     ?? deviceIntakeDecision(programType, stated, submissionTypeId)
     ?? nonRegionalProductTypeForIntake(programType, stated, submissionTypeId);
 }
@@ -243,7 +258,7 @@ function nonRegionalProductTypeForIntake(
     return {
       refusal:
         `State whether the product is a drug or a biologic: ${filingTypeInSentence(programType).replace(/^A/, 'a')} filing ` +
-        'covers both, and the class is recorded on the program.',
+        'covers both, and the class is recorded on the project.',
     };
   }
   if (!VALID_PRODUCT_TYPES.has(productType)) {

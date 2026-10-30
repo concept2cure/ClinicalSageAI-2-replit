@@ -1,0 +1,21 @@
+== probe 63 on a copy of the green database, as the superuser
+CREATE FUNCTION
+ALTER FUNCTION
+            oid             | pg_get_userbyid |                           proconfig                            
+----------------------------+-----------------+----------------------------------------------------------------
+ p72_probe_sets_a_setting() | c2c_rds_master  | {search_path=pg_catalog,app.current_user_role=app_super_admin}
+(1 row)
+
+
+== then deploy-migrate as the RDS master (non-superuser), the lane's tree
+2:▶ 1/5 Preflight — database already provisioned?
+5:▶ 2/5 Acquire migration lock
+8:▶ 3/5 Apply migrations
+598:  ✗ failed:  migrations/20261030b_platform_scope_role.sql — P-72: a function's SET clause names a custom setting: function p72_probe_sets_a_setting() sets app.current_user_role
+600:❌ Deploy migration failed: migration halted at migrations/20261030b_platform_scope_role.sql — P-72: a function's SET clause names a custom setting: function p72_probe_sets_a_setting() sets app.current_user_role (453/457 applied before the failure)
+
+❌ Deploy migration failed: migration halted at migrations/20261030b_platform_scope_role.sql — P-72: a function's SET clause names a custom setting: function p72_probe_sets_a_setting() sets app.current_user_role (453/457 applied before the failure)
+   Services were NOT rolled. The database is unchanged past the last
+   successfully committed file; this script is idempotent, so fix the
+   cause and re-run it.
+deploy-migrate exit 1

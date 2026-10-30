@@ -22,15 +22,19 @@ afterEach(() => { cleanup(); delete window.C2C_PROJECT; sessionStorage.clear(); 
 describe('MDX starts inside the verified client project', () => {
   it('reaches the workflow compiler from Project home and keeps work in the project', async () => {
     const p = props(); render(<ProjectHome {...p} />);
+    /* The workflow is the device project's Plan (CLIENT_JOURNEY_2026-10-25.md, pass 3). */
+    fireEvent.click(await screen.findByRole('button', { name: 'Plan' }));
     const workflow = await screen.findByTestId('pj-mdx-workflow');
-    expect(workflow.textContent).toContain('510(k) · Diagnostic project workflow');
+    /* Slice A.1: headed "510(k) · Diagnostic project workflow" until section 9 took "workflow" out of client copy. */
+    expect(workflow.querySelector('h2')?.textContent).toBe('What this 510(k) needs');
     const analytical = workflow.querySelector('[data-work-package="analytical-performance"]')! as HTMLElement;
-    fireEvent.click(within(analytical).getByRole('button', { name: 'Open project evidence' }));
+    fireEvent.click(within(analytical).getByRole('button', { name: 'Add this work’s sources on Evidence' }));
     expect(document.querySelector('.pj-lc-stage[data-status="active"]')?.textContent).toContain('Evidence');
     expect(p.onNav).not.toHaveBeenCalled();
     expect(window.C2C_PROJECT?.id).toBe(A);
-    const writing = workflow.querySelector('[data-work-package="medical-writing"]')! as HTMLElement;
-    fireEvent.click(within(writing).getByRole('button', { name: 'Open project documents' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
+    const writing = (await screen.findByTestId('pj-mdx-workflow')).querySelector('[data-work-package="medical-writing"]')! as HTMLElement;
+    fireEvent.click(within(writing).getByRole('button', { name: 'Write this work’s documents on Author' }));
     expect(document.querySelector('.pj-lc-stage[data-status="active"]')?.textContent).toContain('Author');
     expect(document.querySelector('.pj-stageband-blurb')?.textContent).not.toContain('eCTD');
   });
@@ -41,6 +45,7 @@ describe('MDX starts inside the verified client project', () => {
     request.mockImplementation(async (_method: string, path: string) => path === `/api/c2c/projects/${A}` ? ok(project)
       : path === `/api/c2c/projects/${B}` ? pending : ok({ data: [] }));
     const p = props(); const view = render(<ProjectHome {...p} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Plan' }));
     await screen.findByTestId('pj-mdx-workflow');
     window.C2C_PROJECT = { id: B, title: 'Client medicine' };
     view.rerender(<ProjectHome {...p} />);

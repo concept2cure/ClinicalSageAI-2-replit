@@ -1,0 +1,12 @@
+{
+  "setupFailuresNotCountedAsBoundaryRed": ["red.json", "corrected-red.json"],
+  "genuinePrepatchBoundaryRed": "admitted-red.json",
+  "setupAdditions": [
+    "Real Communication project admission requires client_workspaces and project description/metadata/created_at/updated_at.",
+    "Its project member reader also requires invited_by_id and accepted_at."
+  ],
+  "firstGreenRealProductionRefusals": "Five existing typed ACL/source/state/lineage refusals surfaced as 500. Parent added explicit known-domain error normalization; unknown failures remain 500.",
+  "contextSectionCalibration": "An inaccessible/wrong response-section identity intentionally returns 404, so its original 409-only expectation was corrected.",
+  "secondGreenHelperCalibration": "A refusal after two prior successful writes must leave captured payload count unchanged, not assert that total historical count is zero.",
+  "governanceLimit": "Ledger sealing and signing-authority checks are scripted. Actual HTTP/JWT/current admission/Authoring writes/source verification/response SQL/revisions/readback/package refusal remain real; no sealed pair, ceremony, provider or agency submission is claimed."
+}

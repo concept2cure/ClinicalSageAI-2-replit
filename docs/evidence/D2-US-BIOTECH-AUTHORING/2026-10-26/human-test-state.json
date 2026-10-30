@@ -1,0 +1,10 @@
+{
+  "worksheet": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+  "cases": 163,
+  "notRun": 163,
+  "pass": 0,
+  "fail": 0,
+  "blocked": 0,
+  "newCaseRange": "147\u2013163",
+  "meaning": "Preparation worksheet only; no human pass is inferred from automated fixtures."
+}

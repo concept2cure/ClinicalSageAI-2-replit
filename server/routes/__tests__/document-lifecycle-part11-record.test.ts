@@ -20,6 +20,10 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
 import { createDocumentLifecycleRouter } from '../document-lifecycle';
+import { loadProjectionInput, persistState } from '../../services/regulatory/canonicalDocumentStore';
+import { advanceDocument, projectCanonicalDocument } from '../../services/regulatory/documentLifecycleOrchestrator';
+import { buildLifecycleBindings } from '../../services/regulatory/lifecycleBindings';
+import { drizzleSignatureClient } from '../../services/part11/signature-persistence';
 
 // P-27 (2026-10-08): signing authority is the platform's one policy
 // (checkSigningAuthority), which reads the signer's membership role through
@@ -109,9 +113,32 @@ async function vaultDocument(extra: Record<string, unknown> = {}): Promise<strin
   return res.body.canonicalId;
 }
 
+/**
+ * A Vault version in review as it entered review before named review routes
+ * (REVIEW_ROUTING §2.13). Since RR1b the route handler sends a Vault version
+ * only with a route (REVIEW_ROUTE_REQUIRED, tests/db/review-route-vault-rr1b),
+ * so the record steps authoring → in_review through the one orchestrator, as
+ * the handler did before the cutover and the FD5(c) carry-over still does. The
+ * signing these tests pin is the legacy path such a record keeps.
+ */
+async function enteredReviewBeforeRoutes(id: string): Promise<void> {
+  await harness.db.transaction(async (tx) => {
+    const current = (await loadProjectionInput(tx as never, id, ORG, { forUpdate: true }))!;
+    const projected = projectCanonicalDocument(current);
+    const actor = String(AUTHOR);
+    const bindings = buildLifecycleBindings({ organizationId: ORG, actor, client: drizzleSignatureClient(tx as never) });
+    const result = await advanceDocument(projected.state, 'in_review',
+      { actor, at: new Date().toISOString(), reason: 'Sent for review before named routes', contentHash: current.contentHash }, bindings, projected.document);
+    expect(result.ok, JSON.stringify(result.blockedBy)).toBe(true);
+    await persistState(tx as never, id, ORG, result.state, result.auditEvent!);
+  });
+}
+
 async function inReview(): Promise<string> {
   const id = await vaultDocument();
-  expect((await advance(AUTHOR, id, 'in_review')).status).toBe(200);
+  // RR1b: the handler refuses a Vault version without a route.
+  expect((await advance(AUTHOR, id, 'in_review')).body.error).toBe('REVIEW_ROUTE_REQUIRED');
+  await enteredReviewBeforeRoutes(id);
   return id;
 }
 
@@ -248,10 +275,12 @@ describe('the content hash is the server reading, never the request', () => {
   });
 
   it('ignores a body contentHash on a transition: the trail records the stored one', async () => {
-    const id = await vaultDocument();
-    expect((await advance(AUTHOR, id, 'in_review', { contentHash: 'forged' })).status).toBe(200);
+    // The revision transition (a Vault version enters review only on a route since RR1b).
+    const id = await inReview();
+    expect((await advance(AUTHOR, id, 'authoring', { contentHash: 'forged', reason: 'Revise section 2' })).status).toBe(200);
     const [row] = await q('SELECT audit FROM canonical_documents WHERE canonical_id = $1', [id]);
-    expect(row.audit[0].contentHash).toBe(VAULT_HASH);
+    expect(row.audit.at(-1).to).toBe('authoring');
+    expect(row.audit.at(-1).contentHash).toBe(VAULT_HASH);
   });
 
   it('refuses a Vault source that is not this organization\'s, and records nothing', async () => {
@@ -267,10 +296,10 @@ describe('the content hash is the server reading, never the request', () => {
 
 describe('signature, audit row and stage change commit together or not at all', () => {
   it('an audit INSERT that fails rolls the transition back', async () => {
-    const id = await vaultDocument();
-    const res = await refusingInserts('audit_logs', () => advance(AUTHOR, id, 'in_review'));
+    const id = await inReview();
+    const res = await refusingInserts('audit_logs', () => advance(AUTHOR, id, 'authoring', { reason: 'Revise section 2' }));
     expect(res.status).toBe(500);
-    expect(await stageOf(id)).toBe('authoring');
+    expect(await stageOf(id)).toBe('in_review');
   });
 
   it('a signature INSERT that fails rolls the approval back', async () => {

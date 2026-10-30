@@ -1,0 +1,9 @@
+server/routes/billing.ts
+server/routes/__tests__/billing-checkout-portal-admin-gate.test.ts
+server/services/__tests__/billing-free-tier-activation.test.ts
+client/src/concept2cure/v2/surfaces/LicensingSurface.tsx
+client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx
+client/src/concept2cure/v2/surfaces/Onboarding.tsx
+client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx
+client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx
+client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx

@@ -1,0 +1,19 @@
+{
+  "classification": "Exploratory developer run; not formal qualification",
+  "command": [
+    "npx",
+    "vitest",
+    "run",
+    "open-document-section.pglite.test.ts",
+    "open-document-earlier-outline.test.ts",
+    "open-document-turn.test.ts",
+    "authoring-draft-template.test.ts"
+  ],
+  "summary": {
+    "passed": 49,
+    "failed": 3
+  },
+  "failures": "Old prefetch saved-document cases while routeworker had not yet threaded new openDocumentAccess; subsequent formal green56/56 and settled131/131 include those cases.",
+  "rawRetained": false,
+  "record": "Summary retained honestly; original developer terminal output was not archived. Formal RED/GREEN/settled runs retain full raw gzip output and source pins."
+}

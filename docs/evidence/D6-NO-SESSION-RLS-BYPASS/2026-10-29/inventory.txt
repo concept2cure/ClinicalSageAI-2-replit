@@ -1,0 +1,136 @@
+## The live catalog of a database built at the base commit by install-fresh + deploy-migrate (PostgreSQL 16.15)
+== policies in the catalog
+1231
+== custom settings read directly in policy expressions: setting | policies
+app.rls_enforce | 1025
+app.current_user_role | 973
+app.current_org_id | 970
+app.current_tenant_id | 934
+app.bypass_rls | 16
+app.current_program_id | 10
+app.current_account_id | 7
+app.current_organization_id | 6
+app.current_user_id | 6
+app.organization_id | 4
+app.is_admin | 3
+== values app.current_user_role is compared to in policies
+app_super_admin
+== policies whose rls_enforce arm admits every row when enforcement is not on
+1020
+== functions (outside pg_catalog) whose body reads a custom setting: function | definer | settings
+audit.apply_signature(p_entity_type text, p_entity_id uuid, p_entity_description text, p_meaning audit.part11_meaning, p_reason text, p_auth_method text, p_document_hash text) | t | app.current_user_id
+audit.log_event(p_category audit.event_category, p_entity_type text, p_entity_id uuid, p_entity_name text, p_description text, p_previous_values jsonb, p_new_values jsonb, p_changed_fields text[], p_related_submission_id uuid, p_related_document_id uuid, p_metadata jsonb) | t | app.current_user_id,app.ip_address,app.session_id
+audit.store_idempotency_key(p_key text, p_program_id uuid, p_route text, p_response_status integer, p_response_body jsonb, p_request_hash text, p_ttl_hours integer) | f | app.request_id,app.user
+fhir.upsert_resource(p_org_id uuid, p_resource_type fhir.resource_type, p_fhir_json jsonb, p_profile_url text, p_validate boolean) | t | app.current_user_id
+identity.can_access_org(target_org_id uuid) | t | app.bypass_rls
+identity.can_access_program(p_program_id uuid) | t | app.bypass_rls
+identity.can_write_org(target_org_id uuid) | t | app.bypass_rls
+identity.can_write_program(p_program_id uuid) | t | app.bypass_rls
+identity.current_org_id() | t | app.current_org_id
+identity.current_user_id() | f | app.current_user_id
+prose.tg_smart_fragments_after_versioning() | f | app.reason,app.request_id,app.user
+prose.tg_smart_fragments_before_versioning() | f | app.reason,app.request_id,app.user
+public.actor_name(p_user_id integer) | t | app.current_tenant_id,app.current_user_role,app.rls_enforce
+public.audit_logs_chain_position() | f | app.audit_chain_tenant
+public.c2c_snapshot_section_version() | f | app.actor_id,app.ana_action_id,app.reason
+public.expire_orphaned_run_events(p_org integer, p_older_than timestamp with time zone) | t | app.current_tenant_id,app.rls_enforce
+public.guard_company_document_design() | f | app.current_user_role,app.rls_enforce
+public.guard_company_document_revision() | f | app.current_user_role,app.rls_enforce
+public.guard_company_legal_registry() | f | app.current_user_role,app.rls_enforce
+public.invitations_for_member(p_user_id integer) | t | app.current_tenant_id
+public.log_section_status_change() | f | app.user_id
+public.organization_users_staff_role_platform_only() | f | app.current_user_role,app.rls_enforce
+public.purge_tenant_artifact_records(p_org integer) | t | app.current_user_role,app.rls_enforce
+public.purge_tenant_run_events(p_org integer) | t | app.current_user_role,app.rls_enforce
+public.purge_tenant_source_read_receipts(p_org integer) | t | app.current_user_role
+public.purge_tenant_turn_records(p_org integer) | t | app.current_user_role,app.rls_enforce
+public.purge_tenant_vault_records(p_org integer) | t | app.current_org_id,app.current_user_role,app.rls_enforce
+public.purge_tenant_vault_seals(p_org integer) | t | app.current_user_role,app.rls_enforce
+public.release_sealed_run_events(p_org integer, p_run text) | t | app.current_tenant_id,app.rls_enforce
+public.unified_tasks_route_rows_guard() | f | c2c.review_route_writer
+regulatory_harmonization.create_export_job(p_tenant_id uuid, p_source_entity_type text, p_source_entity_ids uuid[], p_target_format regulatory_harmonization.regulatory_format, p_target_jurisdiction text, p_created_by text) | t | app.current_user_id
+== functions that reach app.bypass_rls / app.is_admin, transitively: function | depth
+identity.can_access_org | 0
+identity.can_access_program | 0
+identity.can_write_org | 0
+identity.can_write_program | 0
+core.can_access_program | 1
+core.can_write_program | 1
+== policies deciding through those helpers, by schema: schema | tables | policies
+ai | 4 | 5
+discovery | 3 | 6
+ectd_v4 | 6 | 15
+fhir | 6 | 6
+identity | 1 | 1
+innovation | 22 | 23
+labeling | 5 | 20
+product_master | 4 | 4
+registry | 5 | 10
+signing | 3 | 12
+site_intel | 4 | 16
+vault | 6 | 28
+ | 68 | 146
+== of those, how many also have an rls_enforce arm, an app_super_admin arm, or read any setting directly
+0 | 0 | 4
+== (the 4 that read a setting directly: an own-user arm, app.current_user_id)
+identity.users | rls_users_select
+ai.search_queries | queries_access
+ai.rag_conversations | conversations_access
+ai.rag_messages | messages_access
+== policies reading app.bypass_rls or app.is_admin directly: table | policy | cmd | expression
+innovation.guidance_documents | guidance_docs_admin | * | (current_setting('app.is_admin'::text, true) = 'true'::text) | 
+innovation.workspace_analytics | workspace_analytics_policy | r | (((user_id)::text = current_setting('app.current_user_id'::text, true)) OR (current_setting('app.is_admin'::text, true) = 'true'::text)) | 
+cortex.federated_learning_state | federated_admin | * | ((current_setting('app.is_admin'::text, true))::boolean = true) | 
+intelligent_docs.source_documents | source_docs_org_policy | * | (((organization_id)::text = current_setting('app.current_organization_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+intelligent_docs.traceability_links | trace_links_org_policy | * | (((organization_id)::text = current_setting('app.current_organization_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+intelligent_docs.change_propagation_events | propagation_org_policy | * | (((organization_id)::text = current_setting('app.current_organization_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+intelligent_docs.compliance_scores | compliance_scores_org_policy | * | (((organization_id)::text = current_setting('app.current_organization_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+intelligent_docs.compliance_rules | compliance_rules_org_policy | * | ((organization_id IS NULL) OR ((organization_id)::text = current_setting('app.current_organization_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+intelligent_docs.auto_generated_tables | auto_tables_org_policy | * | (((organization_id)::text = current_setting('app.current_organization_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+evidence.contradiction_scans | contradiction_scans_rls | * | (((program_id)::text = current_setting('app.current_program_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+evidence.claims | evidence_claims_program_isolation | * | (((program_id)::text = current_setting('app.current_program_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+evidence.sources | evidence_sources_program_isolation | * | (((program_id)::text = current_setting('app.current_program_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+evidence.support | evidence_support_program_isolation | * | (((program_id)::text = current_setting('app.current_program_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+evidence.derivations | evidence_derivations_program_isolation | * | (((program_id)::text = current_setting('app.current_program_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+evidence.provenance | evidence_provenance_program_isolation | * | (((program_id)::text = current_setting('app.current_program_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+evidence.hash_ledger | evidence_hash_ledger_program_isolation | * | (((program_id)::text = current_setting('app.current_program_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+predicate.candidates | candidates_program_isolation | * | (((program_id)::text = current_setting('app.current_program_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+predicate.se_matrix_rows | se_matrix_program_isolation | * | (((program_id)::text = current_setting('app.current_program_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+predicate.defense_previews | defense_preview_program_isolation | * | (((program_id)::text = current_setting('app.current_program_id'::text, true)) OR (current_setting('app.bypass_rls'::text, true) = 'true'::text)) | 
+== the Vault policies (none has a platform arm)
+vault.document_archives | vault_document_archives_delete_policy | d | core.can_write_program(program_id) | 
+vault.document_archives | vault_document_archives_insert_policy | a |  | core.can_write_program(program_id)
+vault.document_archives | vault_document_archives_select_policy | r | core.can_access_program(program_id) | 
+vault.document_archives | vault_document_archives_update_policy | w | core.can_write_program(program_id) | 
+vault.documents | rls_vault_documents_delete | d | core.can_write_program(program_id) | 
+vault.documents | rls_vault_documents_insert | a |  | core.can_write_program(program_id)
+vault.documents | rls_vault_documents_select | r | core.can_access_program(program_id) | 
+vault.documents | rls_vault_documents_update | w | core.can_write_program(program_id) | 
+vault.documents | vault_documents_delete_policy | d | core.can_write_program(program_id) | 
+vault.documents | vault_documents_insert_policy | a |  | core.can_write_program(program_id)
+vault.documents | vault_documents_select_policy | r | core.can_access_program(program_id) | 
+vault.documents | vault_documents_update_policy | w | core.can_write_program(program_id) | core.can_write_program(program_id)
+vault.document_catalog | rls_vault_catalog_delete | d | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_catalog.document_id) AND core.can_write_program(d.program_id)))) | 
+vault.document_catalog | rls_vault_catalog_insert | a |  | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_catalog.document_id) AND core.can_write_program(d.program_id))))
+vault.document_catalog | rls_vault_catalog_select | r | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_catalog.document_id) AND core.can_access_program(d.program_id)))) | 
+vault.document_catalog | rls_vault_catalog_update | w | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_catalog.document_id) AND core.can_write_program(d.program_id)))) | 
+vault.document_read_receipts | rls_vault_receipts_delete | d | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_read_receipts.document_id) AND core.can_write_program(d.program_id)))) | 
+vault.document_read_receipts | rls_vault_receipts_insert | a |  | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_read_receipts.document_id) AND core.can_write_program(d.program_id))))
+vault.document_read_receipts | rls_vault_receipts_select | r | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_read_receipts.document_id) AND core.can_access_program(d.program_id)))) | 
+vault.document_read_receipts | rls_vault_receipts_update | w | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_read_receipts.document_id) AND core.can_write_program(d.program_id)))) | 
+vault.document_chunks | rls_vault_chunks_delete | d | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_chunks.document_id) AND core.can_write_program(d.program_id)))) | 
+vault.document_chunks | rls_vault_chunks_insert | a |  | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_chunks.document_id) AND core.can_write_program(d.program_id))))
+vault.document_chunks | rls_vault_chunks_select | r | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_chunks.document_id) AND core.can_access_program(d.program_id)))) | 
+vault.document_chunks | rls_vault_chunks_update | w | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = document_chunks.document_id) AND core.can_write_program(d.program_id)))) | 
+vault.legal_holds | tenant_isolation_policy | * | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text)) | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))
+vault.evidence_citations | rls_vault_citations_delete | d | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = evidence_citations.source_document_id) AND core.can_write_program(d.program_id)))) | 
+vault.evidence_citations | rls_vault_citations_insert | a |  | (EXISTS ( SELECT 1 FROM (vault.documents s JOIN vault.documents e ON ((e.id = evidence_citations.evidence_document_id))) WHERE ((s.id = evidence_citations.source_document_id) AND core.can_write_program(s.program_id) AND core.can_access_program(e.program_id) AND (core.get_program_org_id(e.program_id) = core.get_program_org_id(s.program_id)))))
+vault.evidence_citations | rls_vault_citations_select | r | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = evidence_citations.source_document_id) AND core.can_access_program(d.program_id)))) | 
+vault.evidence_citations | rls_vault_citations_update | w | (EXISTS ( SELECT 1 FROM vault.documents d WHERE ((d.id = evidence_citations.source_document_id) AND core.can_write_program(d.program_id)))) | (EXISTS ( SELECT 1 FROM (vault.documents s JOIN vault.documents e ON ((e.id = evidence_citations.evidence_document_id))) WHERE ((s.id = evidence_citations.source_document_id) AND core.can_write_program(s.program_id) AND core.can_access_program(e.program_id) AND (core.get_program_org_id(e.program_id) = core.get_program_org_id(s.program_id)))))
+== the purge doors: owner and their platform-scope check
+purge_tenant_turn_records(integer) | ana_record_purger | t | t
+purge_tenant_artifact_records(integer) | artifact_record_purger | t | t
+purge_tenant_run_events(integer) | ana_run_events_purger | t | t
+purge_tenant_source_read_receipts(integer) | ana_record_purger | t | t
+purge_tenant_vault_seals(integer) | postgres | t | t
+purge_tenant_vault_records(integer) | postgres | t | t

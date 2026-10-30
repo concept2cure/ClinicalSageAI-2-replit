@@ -1,0 +1,4 @@
+ × a stored narrative edited after import fails closed, naming the subject (SYNTHETIC) > an edit the landed text cannot show (a facts digest) still changes the fingerprint: the import no longer verifies, and an earlier assembly is stale 148ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '269ee6baacdc543611c320dc5ff0eb01e6800…' not to be '269ee6baacdc543611c320dc5ff0eb01e6800…' // Object.is equality
+      Tests  1 failed | 7 skipped (8)

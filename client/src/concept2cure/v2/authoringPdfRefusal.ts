@@ -11,7 +11,9 @@ function negativeBody(body: Record<string, unknown>, nested: Record<string, unkn
   if (Object.keys(body).some(key => !fields.has(key)) || body.data != null) return false;
   if (body.success !== undefined && body.success !== false) return false;
   if (nested) return Object.keys(nested).every(key => key === 'code' || key === 'message');
-  return typeof body.error === 'string' && Boolean(body.error.trim());
+  // A flat refusal names its reason in `error`: a code or a sentence, read only
+  // through the canonical envelope readers (ci:error-envelope).
+  return Boolean(errorCodeOf({ error: body.error }) ?? serverMessage({ error: body.error }));
 }
 
 function coherentCode(value: Record<string, unknown>, nested: Record<string, unknown> | null, code: string | undefined): string | null {

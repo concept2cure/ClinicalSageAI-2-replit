@@ -22,8 +22,9 @@ import {
   resolveArtifactPlacement,
 } from '../section-to-ctd';
 import { packageLeafBytes } from '../package-leaf-bytes';
+import { minimalPdf } from './support/signed-pdf-fixture';
 
-const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+const pdf = minimalPdf;
 
 describe('normalizeCtdCode (syntax only)', () => {
   it('accepts code-shaped values, with or without a leading m', () => {

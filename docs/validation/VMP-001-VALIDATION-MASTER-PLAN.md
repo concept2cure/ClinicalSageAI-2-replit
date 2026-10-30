@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | VMP-001 |
-| Version | 0.2 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | System | Concept2Cure.RI (this repository, branch `concept2cure-v2`), launch catalog only |
 | Regulatory basis | 21 CFR Part 11; FDA *Computer Software Assurance for Production and Quality System Software* (final guidance, September 2025; February 2026 update); GAMP 5 2nd ed. (risk-based, critical-thinking approach); ICH E6(R3) §4 computerised systems |
@@ -15,6 +15,8 @@
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.4 | 2026-10-26 | D2 A2.10 | Filing reference moves from the standalone catalog into Projects' New-project wizard and project Plan; the old URL opens the wizard through the shared alias/action. URS-PROJ-007a and OQ-PROJ-12 v0.10 are unexecuted and unsigned; historical results remain attributable to their original procedure. No launch or regulatory scope expands. |
+| 0.3 | 2026-10-26 | D2 A2.7 | Dossier artifact/tracking reads move into project Author. URS-SUBC-009a and OQ-SUBC-10 v0.7 supersede the standalone-map path; old results remain historical and the revised formal requirement is uncovered until executed. |
 | 0.1 | 2026-09-21 | W3a | First draft from the code base as of the evidence run. |
 | 0.2 | 2026-09-26 | D6 session | §7a: the declared time source (Amazon Time Sync, through Fargate and RDS) and the one rule for audit and signature timestamps, with the clock each store uses and the chain's independence from it (security audit 2026-09-24, DP-25; plan P1-26). Unsigned. |
 
@@ -32,10 +34,10 @@ The system under validation is exactly the launch catalog declared in `shared/co
 
 | # | App | Surface ids | URS | OQ |
 |---|---|---|---|---|
-| 1 | Projects | `projects`, `project-home`, `program-journey`, `filings-catalog`, `tasks` | URS-001 | OQ-001 |
+| 1 | Projects | `projects` (New-project filing picker), `project-home` (Plan filing reference), `program-journey`, `tasks`; former `filings-catalog` bookmark aliases the wizard | URS-001 | OQ-001 |
 | 2 | Vault | `vault`, `artifacts-center` | URS-002 | OQ-002 |
 | 3 | Authoring | `document-authoring`, `authoring-engine`, `template-library`, `review`, `regulatory-workspace` | URS-003 | OQ-003 |
-| 4 | Submission Center | `submission-center`, `dossier-map`, `ectd-compile`, `ectd-coauthor`, `ectd-publishing`, `gateway-transmittals` | URS-004 | OQ-004 |
+| 4 | Submission Center | `submission-center`, project Author's dossier details (`project-home`), `ectd-compile`, `ectd-coauthor`, `ectd-publishing`, `gateway-transmittals` | URS-004 | OQ-004 |
 | 5 | Submission Readiness | `dispatch-readiness`, `orchestration`, `inconsistency` | URS-005 | OQ-005 |
 | 6 | QMS controlled documents | `quality`, `qmp` | URS-006 | OQ-006 |
 

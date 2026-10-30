@@ -1,0 +1,45 @@
+{
+  "startedAt": "2026-10-26T23:05:43.236351+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 43.671,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "project/red-inputs.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx": "b378207764c9aac5e1feba344052a9037675c3668352cf55e8a4bf2410e3e949",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "fec3aacb866b35dfe9028f58be7b9c952a488302eba7fffad74d821dcb58f951",
+    "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx": "0d560fa2604202e79e6e066c181c1b6a6f83ca62a7d5f3c2a8741eb5ed4373d5",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "9468bd00709ee33af5828696a6a222638422eec3ff36c447a2ab792586007761",
+    "server/routes/c2c/projects.ts": "7558d3d7a8621d643b3a979a19102866f4b84d64feaf5050ae36831f0b08492d",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx": "436a29f9c3c23f0fb501bf30d1d6b670b913a26974ecfa8e2389dc0ed41f12a7",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "9af59227637cc89b23a959bb4d9fa10bbd4935d1ccdcc7cba5f0ea9008cca9b8",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts": "213358b7a564c9beebdf27e663d5f7a9efdcec98d1498455480129b11e3b4327"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx": "b378207764c9aac5e1feba344052a9037675c3668352cf55e8a4bf2410e3e949",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "fec3aacb866b35dfe9028f58be7b9c952a488302eba7fffad74d821dcb58f951",
+    "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx": "0d560fa2604202e79e6e066c181c1b6a6f83ca62a7d5f3c2a8741eb5ed4373d5",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "9468bd00709ee33af5828696a6a222638422eec3ff36c447a2ab792586007761",
+    "server/routes/c2c/projects.ts": "7558d3d7a8621d643b3a979a19102866f4b84d64feaf5050ae36831f0b08492d",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx": "436a29f9c3c23f0fb501bf30d1d6b670b913a26974ecfa8e2389dc0ed41f12a7",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "9af59227637cc89b23a959bb4d9fa10bbd4935d1ccdcc7cba5f0ea9008cca9b8",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts": "213358b7a564c9beebdf27e663d5f7a9efdcec98d1498455480129b11e3b4327"
+  },
+  "sourceDrift": [],
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "097cbed25703faf1d5a48024205d4efc8c3c6dca30f9b6c9b6cc77cd39353088",
+  "testSummary": [
+    "Test Files  3 failed (3)",
+    "Tests  14 failed | 29 passed (43)",
+    "Duration  43.18s (transform 3.04s, setup 217ms, import 5.11s, tests 36.68s, environment 785ms)"
+  ]
+}

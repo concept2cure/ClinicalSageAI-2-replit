@@ -1,0 +1,40 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5197/api/c2c/project-vault/4c6b4398-3fbc-43c9-b046-0c868ce1fd4a/documents/d3f8ae6b-aa53-4095-95d0-ac911f1ec095/relationships",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 94,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "relationships": [
+          {
+            "id": "af03c74d-812b-40ee-9bad-517305c75ed9",
+            "type": "supporting",
+            "direction": "incoming",
+            "label": "Supports",
+            "note": null,
+            "createdAt": "2026-10-29T12:13:47.343Z",
+            "createdBy": "OQ Runner",
+            "other": {
+              "documentId": "81e38548-cfae-4b30-980d-2af736b8a4a9",
+              "title": "OQ-002 Protocol 20261029121031",
+              "version": "1.0",
+              "documentType": "PROTOCOL",
+              "programId": "4c6b4398-3fbc-43c9-b046-0c868ce1fd4a",
+              "programName": "OQ-002 Vault program 20261029121031",
+              "superseded": true
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -84,7 +84,7 @@ export function companyLegalDocumentRefusal(document: CompanyLegalDocument, cont
   if (!document.active) return 'This library entry is archived.';
   if (document.effectiveOn && document.effectiveOn > today) return 'This document is not effective yet.';
   if (document.expiresOn && document.expiresOn < today) return 'This document has expired.';
-  if (context.programId && context.programId.toLowerCase() !== document.programId.toLowerCase()) return 'Copy this document into the target program Vault and review that copy before filing.';
+  if (context.programId && context.programId.toLowerCase() !== document.programId.toLowerCase()) return 'Copy this document into the target project’s Vault and review that copy before filing.';
   if (!companyScopeMatches(document.agencies, context.agency, 'agency')) return 'The selected agency is outside this document’s scope.';
   if (!companyScopeMatches(document.countries, context.country, 'country')) return 'The selected country or region is outside this document’s scope.';
   if (!companyScopeMatches(document.submissionTypes, context.submissionType, 'submissionType')) return 'The selected submission type is outside this document’s scope.';
@@ -113,7 +113,7 @@ export function companyLegalVersionTargetRefusal(records: CompanyLegalDocument[]
     const workflow = workflowRefusal(record);
     if (workflow) return workflow;
     if (!record.active) continue;
-    if (!context.programId) return 'The target program for this company legal document could not be verified.';
+    if (!context.programId) return 'The target project for this company legal document could not be verified.';
     const refusal = companyLegalDocumentRefusal({ ...record, transmitRefusal: null }, context);
     if (refusal) return refusal;
   }

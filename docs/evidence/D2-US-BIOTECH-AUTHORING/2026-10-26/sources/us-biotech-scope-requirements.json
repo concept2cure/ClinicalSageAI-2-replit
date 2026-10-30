@@ -1,0 +1,584 @@
+{
+  "title": "US human therapeutic-biotech scope requirements review",
+  "asOf": "2026-10-26",
+  "scope": "FDA-facing human therapeutic biotechnology, biologics, vaccines, biosimilars and relevant combination products, with shared study documents. This is an audit requirements checklist, not a second filing registry or exhaustive legal universe.",
+  "denominatorLimit": "32USpharma_biotech and17GLOBALmedicinal registry rows are an observed catalogue denominator only. They omit cross-segment vaccineEUA/RFD and some mechanism/product-specific obligations. They cannot prove all plausible USbiotech filings.",
+  "canonicalSnapshotIds": {
+    "usMedicinal": [
+      "US_PRE_IND",
+      "US_IND",
+      "US_IND_AMENDMENT",
+      "US_NDA",
+      "US_BLA",
+      "US_ANDA",
+      "US_505B2",
+      "US_NDA_SUPP",
+      "US_BLA_SUPP",
+      "US_DMF",
+      "US_ORPHAN",
+      "US_BTD",
+      "US_FAST_TRACK",
+      "US_RMAT",
+      "US_IND_SR",
+      "US_IND_ANNUAL",
+      "US_351K",
+      "US_ACCEL_APPROVAL",
+      "US_ROLLING",
+      "US_PSP",
+      "US_CBE",
+      "US_NDA_ANNUAL",
+      "US_REMS",
+      "US_PMR",
+      "US_SUPAC",
+      "US_ICSR_15DAY",
+      "US_PADER",
+      "US_EA",
+      "US_TYPE_A_MEETING",
+      "US_TYPE_B_MEETING",
+      "US_TYPE_C_MEETING",
+      "US_PRIORITY_REVIEW"
+    ],
+    "globalMedicinal": [
+      "ICH_DSUR",
+      "ICH_PROTOCOL",
+      "ICH_IB",
+      "ICH_ICF",
+      "ICH_CSR",
+      "ICH_SAP",
+      "ICH_M3_DS",
+      "ICH_M3_DP",
+      "ICH_QOS",
+      "ICH_COMPARABILITY",
+      "ICH_CLIN_OVERVIEW",
+      "ICH_CLIN_SUMMARY",
+      "ICH_NONCLIN_OVERVIEW",
+      "ICH_NONCLIN_SUMMARY",
+      "ICH_TABULATED_SUMMARIES",
+      "ICH_SUSAR",
+      "ICH_STABILITY_PROTOCOL"
+    ],
+    "additionalCrossSegment": [
+      "US_EUA",
+      "US_RFD"
+    ]
+  },
+  "sourceIndexes": [
+    "public-source-index.json",
+    "lifecycle-public-source-index.json"
+  ],
+  "method": "Read current publicFDA/eCFR/vendor pages and inspect existing canonical owners. Current code is changing in sibling scopes; this read-only review does not mark implementation or release readiness verified. Source fetch success alone is not application-specific regulatory verification.",
+  "rows": [
+    {
+      "requirement": "initial-ind",
+      "need": "Initial commercial/investigator IND development appropriate to actual drug/biologic/vaccine/cell-gene product.",
+      "canonicalRegistryIds": [
+        "US_IND"
+      ],
+      "sourceIds": [
+        "fda-ind",
+        "fda-bla"
+      ],
+      "existingOwners": [
+        "shared/regulatory/global-document-registry.ts",
+        "server/services/authoring/ind-authoring-templates.ts",
+        "server/services/ind/ctd/lifecycle-document-types.ts"
+      ],
+      "observedLimit": "An initial dossier scaffold and200INDstarts do not establish source completeness or validated submission. Official forms and underlying studies remain originals.",
+      "acceptanceEvidenceNeeded": [
+        "Recorded product/filing context through source intake, appropriate M1-M5 documents, manual/AnA drafting, review and export; original-form and package validation evidence separately."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "ind-amendments-hold",
+      "need": "Distinct protocol, information and CMC amendments and complete response to clinical hold.",
+      "canonicalRegistryIds": [
+        "US_IND_AMENDMENT"
+      ],
+      "sourceIds": [
+        "fda-ind"
+      ],
+      "existingOwners": [
+        "server/services/ind/ctd/lifecycle-document-types.ts",
+        "server/services/market-specs/us-biotech-lifecycle-templates.ts"
+      ],
+      "observedLimit": "Generic amendment identity previously collapsed distinct records. Twelve lifecycle starts now include these four; runtime/persistence qualification belongs to current increment, not this public-source audit.",
+      "acceptanceEvidenceNeeded": [
+        "Exact subtype/response issues retained in source and saved guidance; original1571/supporting documents protected; source drift and response revision ownership checked."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "formal-meetings",
+      "need": "Pre-IND, EOP2, pre-NDA/pre-BLA and applicable TypeA/B/C/D/INTERACT preparation.",
+      "canonicalRegistryIds": [
+        "US_PRE_IND",
+        "US_TYPE_A_MEETING",
+        "US_TYPE_B_MEETING",
+        "US_TYPE_C_MEETING"
+      ],
+      "sourceIds": [
+        "fda-formal-meetings",
+        "fda-bla"
+      ],
+      "existingOwners": [
+        "server/services/ind/ctd/lifecycle-document-types.ts",
+        "server/services/ana-ri/document-templates.ts",
+        "server/services/market-specs/us-biotech-lifecycle-templates.ts"
+      ],
+      "observedLimit": "TypeD/INTERACT references and AnA formal-meeting support exist; no separately indexed exact editor starts were found in this audit. PDUFA procedures must not be generalized to BsUFA/other programs.",
+      "acceptanceEvidenceNeeded": [
+        "Exact meeting program/subtype and questions/positions; current applicable instructions and deadlines; source-specific package start and complete editor roundtrip."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "shared-clinical-documents",
+      "need": "Protocol/amendments, IB, SAP, ICF, CSR, blankCRF/specifications and development safety documents.",
+      "canonicalRegistryIds": [
+        "ICH_PROTOCOL",
+        "ICH_IB",
+        "ICH_SAP",
+        "ICH_ICF",
+        "ICH_CSR",
+        "ICH_DSUR"
+      ],
+      "sourceIds": [
+        "fda-ind",
+        "fda-bla",
+        "weave-home"
+      ],
+      "existingOwners": [
+        "server/services/market-specs/document-template-library.ts",
+        "server/services/regulatory/templateCatalog.ts",
+        "server/services/authoring/builtin-authoring-templates.ts"
+      ],
+      "observedLimit": "Detailed outlines exist. Missing exact metadata had blocked AnA; sibling work addresses this. Blank consent/CRF drafting cannot create executed consents, patient records or validated study results.",
+      "acceptanceEvidenceNeeded": [
+        "Source-supported narrative admission and original-record manual refusal; create/reopen, source attribution and editor review/export proof for each document family."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "nonclinical",
+      "need": "Pharmacology, PK/toxicokinetic, toxicology and integrated nonclinical overviews/summaries.",
+      "canonicalRegistryIds": [
+        "ICH_NONCLIN_OVERVIEW",
+        "ICH_NONCLIN_SUMMARY",
+        "US_IND",
+        "US_NDA",
+        "US_BLA"
+      ],
+      "sourceIds": [
+        "fda-ind",
+        "fda-nda",
+        "fda-bla"
+      ],
+      "existingOwners": [
+        "services/regulatory/ind-ectd-sections.ts",
+        "server/services/authoring/ind-template-outlines-m4-m5.ts",
+        "server/services/market-specs/document-template-library.ts"
+      ],
+      "observedLimit": "Existing M4/2.4/2.6 sources and templates are credited; a source-supported summary does not substitute for actual study reports, GLP statements or validated tables.",
+      "acceptanceEvidenceNeeded": [
+        "Correct study/source version and product/stage applicability; numerical and cross-section consistency; preserve original study outputs and signatures."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "quality-cmc",
+      "need": "Quality summaries and product-specific drug-substance/drug-product, comparability, stability, facilities and manufacturing evidence.",
+      "canonicalRegistryIds": [
+        "ICH_QOS",
+        "ICH_M3_DS",
+        "ICH_M3_DP",
+        "ICH_COMPARABILITY",
+        "ICH_STABILITY_PROTOCOL",
+        "US_DMF"
+      ],
+      "sourceIds": [
+        "fda-ind",
+        "fda-bla",
+        "fda-dmf",
+        "fda-cber-master-files"
+      ],
+      "existingOwners": [
+        "server/services/market-specs/document-template-library.ts",
+        "server/services/cmc/composition-scope.ts",
+        "server/services/authoring/ind-template-outlines-m2-m3.ts"
+      ],
+      "observedLimit": "Existing CMC composition is bounded to small-molecule USIND. Broad authoring templates do not prove deterministic biologic/vaccine/CGT composition, analytical validation or manufacturing readiness.",
+      "acceptanceEvidenceNeeded": [
+        "Authoring from verified controlled sources for each modality; distinguish narrative preparation from deterministic calculations, register-derived outputs and original manufacturing records."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "nda-505b1-505b2",
+      "need": "NDA and reliance-based505(b)(2) dossier development with appropriate referenced evidence.",
+      "canonicalRegistryIds": [
+        "US_NDA",
+        "US_505B2"
+      ],
+      "sourceIds": [
+        "fda-nda",
+        "fda-ind"
+      ],
+      "existingOwners": [
+        "shared/regulatory/global-document-registry.ts",
+        "server/services/regulatory/registry/blueprints/usNdaBlueprint.ts",
+        "server/services/market-specs/document-template-library.ts"
+      ],
+      "observedLimit": "Existing registry/blueprints provide starts; an IND-like shell does not prove marketing dossier sufficiency or authorized reliance on another application.",
+      "acceptanceEvidenceNeeded": [
+        "Filing-guided projects and complete applicable components, source/reference authorization, integrated summaries, labeling and actual governed authoring/export."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "bla-351a",
+      "need": "Standalone BLA development for the actual biologic/vaccine/cell-gene modality and FDA center.",
+      "canonicalRegistryIds": [
+        "US_BLA"
+      ],
+      "sourceIds": [
+        "fda-bla",
+        "ecfr-part601"
+      ],
+      "existingOwners": [
+        "server/services/regulatory/registry/blueprints/usBlaBlueprint.ts",
+        "server/services/ind/ctd/lifecycle-document-types.ts",
+        "server/services/market-specs/document-template-library.ts"
+      ],
+      "observedLimit": "Existing BLA template does not establish modality-specific potency, comparability, immunogenicity, adventitious-agent/facility or validation evidence.",
+      "acceptanceEvidenceNeeded": [
+        "Recorded351(a)scope and modality, product/manufacturing/nonclinical/clinical/labeling source coverage, exact named working documents and human scientific review."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "biosimilar-351k",
+      "need": "Biosimilar and, where sought, interchangeability development with a specified reference product.",
+      "canonicalRegistryIds": [
+        "US_351K"
+      ],
+      "sourceIds": [
+        "fda-biosimilar"
+      ],
+      "existingOwners": [
+        "shared/regulatory/global-document-registry.ts",
+        "shared/regulatory/project-bootstrap.ts",
+        "server/services/market-specs/document-template-library.ts"
+      ],
+      "observedLimit": "Existing351(k)row/start must not be treated as an ordinary351(a)BLA or automatic interchangeability proof. FDA describes product-specific evaluation of biosimilarity/reference-product evidence.",
+      "acceptanceEvidenceNeeded": [
+        "Reference product, proposed biosimilar/interchangeable claim, applicable comparative evidence and filing-specific plan/context retained through authoring."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "integrated-summaries",
+      "need": "ISS/ISE as distinct integrated safety/effectiveness work products, not CSR aliases.",
+      "canonicalRegistryIds": [
+        "US_NDA",
+        "US_BLA"
+      ],
+      "sourceIds": [
+        "fda-nda",
+        "fda-bla"
+      ],
+      "existingOwners": [
+        "server/services/ind/ctd/lifecycle-document-types.ts",
+        "server/services/market-specs/us-biotech-lifecycle-templates.ts"
+      ],
+      "observedLimit": "Detailed records existed without exact editor starts. Current lifecycle work reaches them; validated pooled analyses and original tables remain separate from prose generation.",
+      "acceptanceEvidenceNeeded": [
+        "Pooling/estimand/source versions, source-supported narrative, original exposure/demographic tables manual, cross-document consistency and current saved-source provenance."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "designations-and-pediatrics",
+      "need": "Applicable orphan, FastTrack, breakthrough, RMAT, priority/accelerated pathways, rolling submission and pediatric requests/plans.",
+      "canonicalRegistryIds": [
+        "US_ORPHAN",
+        "US_FAST_TRACK",
+        "US_BTD",
+        "US_RMAT",
+        "US_PRIORITY_REVIEW",
+        "US_ACCEL_APPROVAL",
+        "US_ROLLING",
+        "US_PSP"
+      ],
+      "sourceIds": [
+        "fda-ind",
+        "fda-nda",
+        "fda-bla"
+      ],
+      "existingOwners": [
+        "shared/regulatory/global-document-registry.ts",
+        "shared/regulatory/project-bootstrap.ts",
+        "server/services/market-specs/document-template-library.ts"
+      ],
+      "observedLimit": "These are separate eligibility/procedure decisions, not automatic approvals. Detailed current program instructions, waiver/deferral and follow-up variants have not all been independently re-read in this audit.",
+      "acceptanceEvidenceNeeded": [
+        "Current program-specific authority/applicability, requested action and source support; distinctions among a request, designation decision and marketing application."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "postapproval-supplements",
+      "need": "Product-appropriate prior-approval, CBE30/CBE0, labeling and manufacturing change packages.",
+      "canonicalRegistryIds": [
+        "US_NDA_SUPP",
+        "US_BLA_SUPP",
+        "US_CBE",
+        "US_SUPAC"
+      ],
+      "sourceIds": [
+        "ecfr-part601",
+        "fda-nda",
+        "fda-bla"
+      ],
+      "existingOwners": [
+        "server/services/market-specs/lifecycle-record-outlines.ts",
+        "server/services/market-specs/us-biotech-lifecycle-templates.ts"
+      ],
+      "observedLimit": "Separate CBE starts read existing NDA/ANDA314.70records. Licensed biologic changes use601.12; they are not independently modeled by those NDA CBE parts. SUPAC is not a universal biologics change pathway.",
+      "acceptanceEvidenceNeeded": [
+        "Actual product/application/change category, approved baseline and affected sections, exact original forms/labeling, current regulatory classification and independent approval gates."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "annual-reports-drug-versus-biologic",
+      "need": "IND annual progress and postapproval NDA/BLA obligations must stay distinct.",
+      "canonicalRegistryIds": [
+        "US_IND_ANNUAL",
+        "US_NDA_ANNUAL",
+        "ICH_DSUR"
+      ],
+      "sourceIds": [
+        "fda-ind",
+        "ecfr-part601",
+        "ecfr-part600"
+      ],
+      "existingOwners": [
+        "server/services/market-specs/lifecycle-record-outlines.ts",
+        "server/services/ind/ctd/lifecycle-document-types.ts"
+      ],
+      "observedLimit": "US_NDA_ANNUAL is titled NDA/BLA but its source parts follow314.81(b)(2) and explicitly do not model all licensed-biologic reports. BLA minor-change601.12(d), pediatric601.28, postmarketing-study601.70 and distribution600.81 obligations are distinct;600.81 is not simply an annual NDA report.",
+      "acceptanceEvidenceNeeded": [
+        "Document subtype-specific original sources and applicable interval; separate annual/periodic obligations and current effective rules. DSUR/PBRER cannot silently substitute for a US-required report without applicable authority."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "structured-safety",
+      "need": "IND and postmarketing case safety assessments, follow-up and actual structured individual case reporting.",
+      "canonicalRegistryIds": [
+        "US_IND_SR",
+        "US_ICSR_15DAY",
+        "US_PADER",
+        "ICH_DSUR",
+        "ICH_SUSAR"
+      ],
+      "sourceIds": [
+        "fda-e2b",
+        "ecfr-part600",
+        "fda-ind"
+      ],
+      "existingOwners": [
+        "server/services/ind-lifecycle/e2b-icsr-composer.ts",
+        "server/services/ind-lifecycle/e2b-icsr-message.ts",
+        "server/services/grdhe/exportGenerators",
+        "server/services/market-specs/document-template-library.ts"
+      ],
+      "observedLimit": "E2B services exist. Narrative safety worksheets are not validated ICSRs or agency delivery. FDA current page uses AEMS, with ESGNextGen E2B(R3) postmarketing transition2026-10-01 and commercial IND electronic reporting condition from2026-04-01; SRP and BA/BE pathways differ.",
+      "acceptanceEvidenceNeeded": [
+        "Report subtype and sponsor/channel applicability; exact approved case data, message validation, current regional implementation/terminology, transmission onboarding and acknowledgment evidence separately."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "pmr-pmc",
+      "need": "Postmarketing study requirements/commitments, protocols, status/progress reports and fulfillment submissions.",
+      "canonicalRegistryIds": [
+        "US_PMR"
+      ],
+      "sourceIds": [
+        "fda-pmr-pmc",
+        "ecfr-part601"
+      ],
+      "existingOwners": [
+        "shared/regulatory/global-document-registry.ts",
+        "server/services/ind/ctd/lifecycle-document-types.ts",
+        "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx"
+      ],
+      "observedLimit": "Registry and lifecycle components are credited. An authored report or populated task does not establish fulfillment, milestones or FDA release of a commitment.",
+      "acceptanceEvidenceNeeded": [
+        "Exact obligation/source letter, current status/milestones, correct protocol/report working documents and independently supported fulfillment state."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "masterfiles-crossreferences",
+      "need": "CDER drug master files and applicable CBER master files, amendments and letters of authorization.",
+      "canonicalRegistryIds": [
+        "US_DMF"
+      ],
+      "sourceIds": [
+        "fda-dmf",
+        "fda-cber-master-files"
+      ],
+      "existingOwners": [
+        "shared/regulatory/global-document-registry.ts",
+        "server/services/market-specs/document-template-library.ts",
+        "server/services/authoring/ind-authoring-templates.ts"
+      ],
+      "observedLimit": "Master-file references/tools/templates exist. A generic DMF worksheet is not an independently approved application or universal BLA authorization to reference any restricted content.",
+      "acceptanceEvidenceNeeded": [
+        "Current MF type/center/application-specific permission, holder/applicant distinction, authorized reference and confidential-part boundaries; original LOA and source visibility retained."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "labeling-and-spl",
+      "need": "US prescribing information, patient/MedicationGuide and container/carton content plus applicable structured labeling.",
+      "canonicalRegistryIds": [
+        "US_NDA",
+        "US_BLA",
+        "US_NDA_SUPP",
+        "US_BLA_SUPP"
+      ],
+      "sourceIds": [
+        "fda-cber-labeling",
+        "fda-spl",
+        "fda-bla"
+      ],
+      "existingOwners": [
+        "server/services/labeling/spl-generator.ts",
+        "server/services/labeling/spl-generation-service.ts",
+        "server/services/labeling/labeling-intelligence-knowledge.ts"
+      ],
+      "observedLimit": "US labeling/SPL engines exist; EU SmPC is not a USPI substitute. Editor narrative/layout and a structurally valid SPL skeleton do not prove current FDA SPL validity, registration/listing or promotional submission completeness.",
+      "acceptanceEvidenceNeeded": [
+        "Retained product/version, section content and identifiers, source/editor/SPL roundtrip, current external validation and correct delivery procedure; original approved labeling/version preserved."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "expanded-access",
+      "need": "Individual-patient emergency/nonemergency, intermediate-size and treatment-use mechanisms.",
+      "canonicalRegistryIds": [
+        "US_IND"
+      ],
+      "sourceIds": [
+        "fda-expanded-access",
+        "fda-expanded-group",
+        "fda-form3926"
+      ],
+      "existingOwners": [
+        "server/services/global-ri/expanded-access.ts",
+        "server/routes/global-ri/expanded-access.routes.ts"
+      ],
+      "observedLimit": "Existing framework/recommendation routes and references are present. No exact expanded-access editor/Form3926 asset/start was found in the searched canonical registry, component library and forms registry. Form3926 is a licensed-physician individual-patient path, not a universal group/sponsor IND form.",
+      "acceptanceEvidenceNeeded": [
+        "Mechanism-specific eligibility and actual physician/manufacturer/IRB sources, correct official-form original and current follow-up/reporting; exact source-guided working document and form workflow."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "therapeutic-vaccine-eua",
+      "need": "Emergency authorization preparation for the actual drug/biologic/vaccine and currently applicable declaration.",
+      "canonicalRegistryIds": [
+        "US_EUA"
+      ],
+      "sourceIds": [
+        "fda-eua"
+      ],
+      "existingOwners": [
+        "shared/regulatory/global-document-registry.ts",
+        "shared/regulatory/device-authoring-sections.ts"
+      ],
+      "observedLimit": "US_EUA includes vaccine productClass but current row/outline is device/assay-oriented. This cannot substantiate therapeutic/vaccine EUA authoring. EUA applicability and declaration status change over time.",
+      "acceptanceEvidenceNeeded": [
+        "Product/center/declaration-specific data and authorization request, actual fact sheets and conditions, original decision/labeling and lifecycle transition; no generic device template masquerading as a vaccine application."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "combination-rfd",
+      "need": "Classification/jurisdiction and primary-mode-of-action rationale for combination products.",
+      "canonicalRegistryIds": [
+        "US_RFD"
+      ],
+      "sourceIds": [
+        "fda-rfd-guidance"
+      ],
+      "existingOwners": [
+        "shared/regulatory/global-document-registry.ts",
+        "shared/regulatory/project-bootstrap.ts"
+      ],
+      "observedLimit": "RFD exists under the device segment but resolves a generic pre-sub meeting outline, not the detailed constituent/modes-of-action/PMOA/jurisdiction reasoning described by FDA.",
+      "acceptanceEvidenceNeeded": [
+        "Product/constituent identity and intended use, each mode of action, supported PMOA or assignment rationale, sponsor classification/jurisdiction recommendation, current RFD instructions and source evidence."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "specialty-biologic-manufacturing",
+      "need": "Applicable licensed-manufacturer biological-product deviations, lot-release and establishment-related work.",
+      "canonicalRegistryIds": [
+        "US_BLA"
+      ],
+      "sourceIds": [
+        "ecfr-part600",
+        "ecfr-part601",
+        "fda-bla"
+      ],
+      "existingOwners": [
+        "server/services/cmc",
+        "server/config/FDAFormsRegistry.ts",
+        "shared/regulatory/global-document-registry.ts"
+      ],
+      "observedLimit": "Existing CMC/quality stores must be credited, but BLA/CMC headings alone do not establish every specialty reporting workflow.600.14 deviation reporting is separate; full original-form/lot-release/establishment-path coverage was not traced exhaustively here.",
+      "acceptanceEvidenceNeeded": [
+        "Trace exact current source owners and product-specific obligations before creating new templates; qualify the actual original report/form and submission channel, not a similarly named QMS document."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    },
+    {
+      "requirement": "response-review-export",
+      "need": "Authority-letter/question intake, source-grounded response, governed revision, independent review and filing-quality document/export.",
+      "canonicalRegistryIds": [
+        "US_IND",
+        "US_NDA",
+        "US_BLA"
+      ],
+      "sourceIds": [
+        "weave-home",
+        "fda-ind",
+        "fda-nda",
+        "fda-bla"
+      ],
+      "existingOwners": [
+        "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx",
+        "server/services/agency-responses/response-service.ts",
+        "server/services/authoring/authoring-source-import.ts",
+        "server/services/authoring/authoring-export.ts"
+      ],
+      "observedLimit": "Response register/revisions/signatures/package services exist. Root is completing the sole-editor bridge. Original DOCX layout/figures/form controls are not retained by current import; ordinary export has limited client-template layout support.",
+      "acceptanceEvidenceNeeded": [
+        "Actual current source letter visibility, exact saved-answer/editor revision CAS and writeback, independent signature digest, source references, accessible history, sponsor layout/TOC/table/figure/cross-reference export tests."
+      ],
+      "status": "EXISTING_PARTIAL_OR_REQUIRES_WORKFLOW_QUALIFICATION"
+    }
+  ],
+  "notExhaustive": [
+    "Product-specific rules, waivers, exceptions, manufacturing and postmarketing commitments require further applicability review.",
+    "This is not a complete inventory of veterinary, food/cosmetic, stand-alone device/IVD, state, DEA, HCT/P361, laboratory or institutional IRB obligations. Credit those existing platform owners separately if included in the product promise.",
+    "Special designation/voucher/rare-disease, advertising/promotion, inspection-response, withdrawal and other specialty documents require exact current authority and source-owner tracing; absence from these grouped rows is not an absence claim."
+  ],
+  "releaseConclusion": "No blanket completion or Weave-parity claim is supported by this audit. Each relevant workflow needs source-pinned implementation, original/structured artifacts, formatting and human acceptance evidence."
+}

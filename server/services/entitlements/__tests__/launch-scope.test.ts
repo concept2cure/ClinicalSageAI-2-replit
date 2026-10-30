@@ -142,9 +142,9 @@ describe('the scope list itself', () => {
     expect(out.entitled).toBe(false);
     expect(out.source).toBe('launch-scope');
   });
-  it('keeps the two Part 11 surfaces the catalog may never gate', () => {
+  it('keeps the Part 11 surface the catalog may never gate', () => {
+    // part11-console folded into audit-trail on 2026-10-29 (see 'the folded Part 11 console').
     expect(LAUNCH_SURFACE_IDS.has('audit-trail')).toBe(true);
-    expect(LAUNCH_SURFACE_IDS.has('part11-console')).toBe(true);
   });
   // docs/SURFACE_DECISIONS_2026-10-08.md: each was assessed and checked by a
   // skeptic, and none does what its place promises for a real organisation.
@@ -152,11 +152,11 @@ describe('the scope list itself', () => {
   // behind the flag.
   it.each([
     ['program-journey', 'projects', 'fixture-demo: empty for every program a client creates'],
-    ['filings-catalog', 'projects', 'explainer: its Start drops the choice; the New project wizard keeps it'],
+    ['filings-catalog', 'projects', 'folded identity: reference discovery and creation live in the New project wizard'],
     ['regulatory-workspace', 'authoring', 'a fixed paragraph where the editor should be'],
     ['template-library', 'authoring', 'a saved template formats no document'],
     ['ectd-coauthor', 'submission-center', 'a second editor whose checks report a fixed failure'],
-    ['dossier-map', 'submission-center', 'reads a store no program writes: always empty'],
+    ['dossier-map', 'projects', 'retired screen: its tracked records are reached in project Author'],
     ['ectd-publishing', 'submission-center', 'a reference page that publishes nothing'],
     ['qmp', 'qms', 'a plan cannot be given its gates, and nothing reads them'],
   ])('%s is out of the %s app — %s', (surface, app) => {
@@ -178,6 +178,168 @@ describe('the scope list itself', () => {
   });
   it('every app keeps a screen a client can work in', () => {
     for (const a of LAUNCH_APPS) expect(a.surfaces.length).toBeGreaterThan(0);
+  });
+});
+
+describe('the folded device task workbench', () => {
+  it('is in neither project scope list: Tasks holds it (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/. The subset pin in
+       'the scope list itself' would pass with the id left in the Projects list
+       alone, so this names it. */
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(projects.surfaces).not.toContain('device-tasks');
+    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-tasks');
+    expect(isLaunchSurface('device-tasks')).toBe(false);
+    expect(projects.surfaces).toContain('tasks');
+  });
+});
+
+describe('the folded Artifacts center and device vault', () => {
+  it('are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/. The subset pin in
+       'the scope list itself' would pass with either id left in a list, so this
+       names them. A new organisation is granted the Vault and not the retired
+       module; an existing grant is kept, deprecated, by the catalogue. */
+    const vault = LAUNCH_APPS.find((app) => app.id === 'vault')!;
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(vault.surfaces).toEqual(['vault']);
+    expect(vault.modules).toEqual(['vault']);
+    expect(projects.surfaces).not.toContain('device-vault');
+    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-vault');
+    for (const id of ['artifacts-center', 'device-vault']) {
+      expect(isLaunchSurface(id), id).toBe(false);
+      expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain(id);
+    }
+    expect(LAUNCH_MODULE_IDS).toContain('vault');
+  });
+});
+
+describe('the folded Part 11 console', () => {
+  it('is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/. It was a shell
+       surface, never a catalogue module (21 CFR §11.10(e)); its two functions,
+       the audit_events chain's live verdict and AnA reading it, are Audit
+       trail's now. Audit trail stays a shell surface the catalog cannot gate. */
+    expect(LAUNCH_SURFACE_IDS.has('part11-console')).toBe(false);
+    expect(isLaunchSurface('part11-console')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('part11-console');
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('audit-trail');
+    expect(isLaunchSurface('audit-trail')).toBe(true);
+  });
+});
+
+describe('the folded setup', () => {
+  it('is in no scope list and no grant: Admin and access → Settings holds the organisation\'s setup (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/. It was a shell surface,
+       never a catalogue module; its name and client type, and the gateway,
+       session, PDF/A, retention and legal-hold cards, are on admin-console's
+       Settings tab. admin-console stays a shell surface the catalog cannot gate. */
+    expect(LAUNCH_SURFACE_IDS.has('setup')).toBe(false);
+    expect(isLaunchSurface('setup')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('setup');
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('admin-console');
+    expect(isLaunchSurface('admin-console')).toBe(true);
+  });
+});
+
+describe('the folded eCTD publishing reference', () => {
+  it('is in no scope list and no grant: eCTD Compile holds the reference (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/. It left the
+       Submission Center app on 2026-10-08 ('is out of the submission-center app'
+       above); its spec versions, Regional IG OID and vocabularies are eCTD
+       Compile's now, which is in that app, so a bought ectd-publishing row can
+       buy nothing and the reference needs no grant of its own. */
+    const submit = LAUNCH_APPS.find((app) => app.id === 'submission-center')!;
+    expect(isLaunchSurface('ectd-publishing')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('ectd-publishing');
+    expect(submit.surfaces).toContain('ectd-compile');
+    expect(submit.modules).toContain('ectd-compile');
+  });
+});
+
+describe('the folded billing screen', () => {
+  it('is in no scope list and no grant: Licensing holds the invoices, usage keeps the limits (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-billing/. It was a shell surface
+       (account administration), never a catalogue module: the second id of the
+       usage screen, opening its invoice tab. The invoices are on Licensing for
+       billing administrators; usage keeps the session window, weekly caps and
+       the enforced rate limits (P-68). Both stay shell surfaces. */
+    expect(LAUNCH_SURFACE_IDS.has('billing')).toBe(false);
+    expect(isLaunchSurface('billing')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('billing');
+    expect(isLaunchSurface('licensing')).toBe(true);
+    expect(isLaunchSurface('usage')).toBe(true);
+  });
+});
+
+describe('the folded AnA memory', () => {
+  it('is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/. It left the shell on
+       2026-10-08 ('the shell no longer carries' above) and was never a catalogue
+       module; its two real reads are the conversation's "What AnA remembers".
+       The conversation is a launch shell surface, so a bought ana-memory row can
+       buy nothing. */
+    expect(LAUNCH_SURFACE_IDS.has('ana-memory')).toBe(false);
+    expect(isLaunchSurface('ana-memory')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('ana-memory');
+    expect(isLaunchSurface('conversation-thread')).toBe(true);
+  });
+});
+
+describe('the folded risk file, design-control trace and IVDR readiness board', () => {
+  it('are in no scope list and no new grant: Engineering and IVDR evidence hold them (D2, folds F1c and F2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/. The
+       subset pin in 'the scope list itself' would pass with an id left in one
+       list, so this names them. Each was a catalogue module; an existing grant
+       is kept, deprecated, by the catalogue, and carries to its target (P-61
+       item 4). Neither target is in the Projects app's grants: each keeps its
+       own commercial verdict, as every MDX project feature does. */
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    for (const id of ['risk', 'design-controls', 'ivd-completeness']) {
+      expect(projects.surfaces, id).not.toContain(id);
+      expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[], id).not.toContain(id);
+      expect(isLaunchSurface(id), id).toBe(false);
+      expect(LAUNCH_MODULE_IDS as readonly string[], id).not.toContain(id);
+    }
+    for (const id of ['device-engineering', 'device-diagnostics']) {
+      expect(projects.surfaces, id).toContain(id);
+      expect(isLaunchSurface(id), id).toBe(true);
+    }
+    expect(projects.modules).toEqual(['projects', 'tasks']);
+  });
+});
+
+describe('the retired organization-wide blocker list', () => {
+  it('is in no scope list and no new grant: each filing\'s readiness holds its blockers (D2, fold F5 item 2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/; decision P-61
+       item 2. The subset pin in 'the scope list itself' would pass with the id
+       left in one list, so this names it. It was a catalogue module; an existing
+       grant is kept, deprecated, by the catalogue, and carries to Submission
+       Center (P-61 item 4), which its old address opens. */
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(projects.surfaces).not.toContain('device-validation');
+    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-validation');
+    expect(isLaunchSurface('device-validation')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('device-validation');
+    expect(isLaunchSurface('submission-center')).toBe(true);
+    expect(projects.modules).toEqual(['projects', 'tasks']);
+  });
+});
+
+describe('the folded device submission packages', () => {
+  it('are in no scope list and no new grant: Submission Center holds the device filings (D2, fold F5 item 1, 2026-10-30)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/; decision P-61
+       item 1. The subset pin in 'the scope list itself' would pass with the id
+       left in one list, so this names it. It was a catalogue module; an existing
+       grant is kept, deprecated, by the catalogue, and carries to Submission
+       Center (P-61 item 4). */
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(projects.surfaces).not.toContain('device-submission');
+    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-submission');
+    expect(isLaunchSurface('device-submission')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('device-submission');
+    expect(LAUNCH_APPS.find((app) => app.id === 'submission-center')!.surfaces).toContain('submission-center');
+    expect(projects.modules).toEqual(['projects', 'tasks']);
   });
 });
 
@@ -270,7 +432,8 @@ describe('Submission Readiness is a Submission Center screen — founder decisio
   it('grants a new organisation exactly the modules it was granted before the fold', () => {
     expect([...LAUNCH_MODULE_IDS].sort()).toEqual(
       [
-        'projects', 'tasks', 'vault', 'artifacts-center', 'document-authoring', 'review', 'protocol-dev',
+        // artifacts-center left on 2026-10-29: it folded into the Vault (fold F3), which every new organisation is granted.
+        'projects', 'tasks', 'vault', 'document-authoring', 'review', 'protocol-dev',
         'submission-center', 'ectd-compile', 'gateway-transmittals', 'dispatch-readiness', 'quality', 'insights',
       ].sort(),
     );

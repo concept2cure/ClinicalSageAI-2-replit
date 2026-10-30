@@ -1,0 +1,286 @@
+# mutations.txt — each mutation applied alone, then reverted, to HEAD + this change, and the suite run
+#
+# Tree: a scratch extraction of HEAD 18ecfe003 (none of the files this change touches changed through 66efa6179)
+# with this change's files copied in, outside the shared tree. Runner: one textual edit per mutation, then
+#   npx vitest run --root <scratch> server/routes/c2c/__tests__/project-write-gates.pglite.test.ts
+# then the file restored. 22 of 22 turned the suite red. The names under each are the tests that went red.
+M1 drop the param middleware: tasks.ts: 30 failed, 661 passed
+    x POST /api/concept2cure/projects/:projectId/tasks > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks > refuses other-org and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses use-member and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses reviewer-no-edit and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses not-on-private and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses other-org and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses viewer and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses use-member and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses reviewer-no-edit and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses not-on-private and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses archived and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses other-org and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses other-org and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/assess > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/assess > refuses other-org and writes nothing
+    x GET /api/concept2cure/projects/:projectId/tasks > refuses not-on-private
+    x GET /api/concept2cure/projects/:projectId/tasks > refuses other-org
+    x GET /api/concept2cure/projects/:projectId/tasks/summary > refuses not-on-private
+    x GET /api/concept2cure/projects/:projectId/tasks/summary > refuses other-org
+M2 drop the param middleware: artifacts.ts: 77 failed, 614 passed
+    x POST /api/concept2cure/projects/:projectId/artifacts > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts > refuses other-org and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses use-member and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses reviewer-no-edit and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses not-on-private and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses other-org and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses use-member and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses reviewer-no-edit and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses not-on-private and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses other-org and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses other-org and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses not-on-private and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses other-org and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses use-member and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses reviewer-no-edit and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses not-on-private and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses other-org and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses other-org and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses other-org and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses not-on-private and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses other-org and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses other-org and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses viewer and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses use-member and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses reviewer-no-edit and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses not-on-private and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses archived and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses other-org and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses other-org and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses other-org and writes nothing
+    x the review acts > a viewer is refused PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments
+    x the review acts > a viewer is refused PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit
+    x the review acts > the same reviewer is refused a write that is not a review act (editing the artifact)
+    x approving an artifact through PUT …/status > an archived project takes no approval, even from an approver who may sign: the gate answers before the ceremony
+    x approving an artifact through PUT …/status > a viewer is refused by the gate, and nothing is signed
+M3 drop the param middleware: reviews.ts: 12 failed, 679 passed
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses other-org and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses other-org and writes nothing
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks
+    x GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export > refuses not-on-private
+    x GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export > refuses other-org
+M4 drop the param middleware: haq-sessions.ts: 6 failed, 685 passed
+    x PUT /api/concept2cure/projects/:projectId/haq-session > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/haq-session > refuses use-member and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/haq-session > refuses reviewer-no-edit and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/haq-session > refuses not-on-private and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/haq-session > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/haq-session > refuses other-org and writes nothing
+M5 drop the param middleware: governance-ops.ts: 6 failed, 685 passed
+    x POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses not-on-private and writes nothing
+    x POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses other-org and writes nothing
+M6 drop the read admission: GET collaborators (concept2cure.ts): 1 failed, 690 passed
+    x GET /api/concept2cure/projects/:projectId/collaborators > refuses not-on-private
+M7 read mode for the writes: artifacts.ts: 37 failed, 654 passed
+    x POST /api/concept2cure/projects/:projectId/artifacts > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses use-member and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses reviewer-no-edit and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses use-member and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses reviewer-no-edit and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses use-member and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses reviewer-no-edit and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses archived and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses viewer and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses use-member and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses reviewer-no-edit and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses archived and writes nothing
+    x the review acts > the same reviewer is refused a write that is not a review act (editing the artifact)
+M8 read mode for the writes: tasks.ts: 16 failed, 675 passed
+    x POST /api/concept2cure/projects/:projectId/tasks > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses use-member and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses reviewer-no-edit and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses archived and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses viewer and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses use-member and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses reviewer-no-edit and writes nothing
+    x DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses use-member and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses reviewer-no-edit and writes nothing
+    x POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses archived and writes nothing
+M9 review acts admitted in write mode: 19 failed, 672 passed
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits use-member
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits reviewer-no-edit
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits use-member
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits reviewer-no-edit
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > admits use-member
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > admits reviewer-no-edit
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits use-member
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits reviewer-no-edit
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > admits use-member
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > admits reviewer-no-edit
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > admits use-member
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > admits reviewer-no-edit
+    x the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads
+    x the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks
+    x the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments
+    x the review acts > an assigned reviewer who is not an edit member of the private project completes PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve
+    x the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit
+    x approving an artifact through PUT …/status > an organization reviewer who is not an edit member, and holds signing authority, approves: the signed act commits
+    x approving an artifact through PUT …/status > a member without signing authority is admitted by the gate and refused by the ceremony, and nothing is signed
+M10 review acts admitted in read mode: 20 failed, 671 passed
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses archived and writes nothing
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks
+    x the review acts > a viewer is refused PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments
+    x the review acts > a viewer is refused PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit
+    x approving an artifact through PUT …/status > an archived project takes no approval, even from an approver who may sign: the gate answers before the ceremony
+    x approving an artifact through PUT …/status > a viewer is refused by the gate, and nothing is signed
+M11 review mode without the archived refusal: 7 failed, 684 passed
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses archived and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses archived and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses archived and writes nothing
+    x approving an artifact through PUT …/status > an archived project takes no approval, even from an approver who may sign: the gate answers before the ceremony
+M12 review mode without the current-role gate: 13 failed, 678 passed
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses viewer and writes nothing
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses viewer and writes nothing
+    x POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses viewer and writes nothing
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks
+    x the review acts > a viewer is refused PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments
+    x the review acts > a viewer is refused PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve
+    x the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit
+    x approving an artifact through PUT …/status > a viewer is refused by the gate, and nothing is signed
+M13 drop the organization predicate on GET /artifacts' projects join: 1 failed, 690 passed
+    x GET /api/concept2cure/artifacts > its projects join is held to the caller’s organization
+M14 drop the project-access filter on GET /artifacts: 1 failed, 690 passed
+    x GET /api/concept2cure/artifacts > lists only the projects the caller may use: a member not on the private project does not see its artifact
+M15 drop the project predicate on the task PUT: 2 failed, 689 passed
+    x the admitted project is the one the row belongs to > PUT /api/concept2cure/projects/:projectId/tasks/:taskId: the private project’s task, through the open project’s URL, is not found and not changed
+    x the admitted project is the one the row belongs to > the task writes carry the organization and the project in their predicate
+M16 drop the organization predicate on the task PUT: 1 failed, 690 passed
+    x the admitted project is the one the row belongs to > the task writes carry the organization and the project in their predicate
+M17 drop the project predicate on the review-thread artifact lookup: 1 failed, 690 passed
+    x the admitted project is the one the row belongs to > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads: the private project’s artifact, through the open project’s URL, is not found
+M18 the status change admitted in write mode: 4 failed, 687 passed
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > admits use-member
+    x PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > admits reviewer-no-edit
+    x approving an artifact through PUT …/status > an organization reviewer who is not an edit member, and holds signing authority, approves: the signed act commits
+    x approving an artifact through PUT …/status > a member without signing authority is admitted by the gate and refused by the ceremony, and nothing is signed
+M19 drop the project predicate on the review-thread read: 1 failed, 690 passed
+    x the admitted project is the one the row belongs to > the review reads > GET …/review-threads: the private project’s review record, through the open project’s URL, is not readable
+M20 drop the project predicate on the review-task read: 1 failed, 690 passed
+    x the admitted project is the one the row belongs to > the review reads > GET …/review-tasks: the private project’s review record, through the open project’s URL, is not readable
+M21 drop the project predicate on the review-record export: 1 failed, 690 passed
+    x the admitted project is the one the row belongs to > the review reads > GET …/review-record/export: another project’s artifact, through this project’s URL, is not found (an audit reader)
+M22 drop the export's project admission: 1 failed, 690 passed
+    x GET /api/artifacts-center/:artifactId/export > a member who is not on the private project is not given its artifact’s file, and no export is recorded

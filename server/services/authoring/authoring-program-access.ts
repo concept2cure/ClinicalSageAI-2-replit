@@ -48,7 +48,7 @@ export async function authorizeAuthoringProgram(q: Queryable, input: {
     if (!(await programInOrganization(q, programId, tenantId))) throw new AuthoringProgramAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
     const role = await currentRole(q, userId, tenantId, input.forWrite !== false);
     const anchor = await readProgramAnchorRow(q, { programId, orgId: tenantId, context: 'authoring-program-access', requireUnique: true });
-    if (!anchor) throw new AuthoringProgramAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This program needs one verified project relationship before authoring.');
+    if (!anchor) throw new AuthoringProgramAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This project needs one verified tracking record before authoring.');
     if (!await canAccessReportProject(tenantId, { userId, role }, anchor.id, q)) {
       throw new AuthoringProgramAccessError(403, 'PROJECT_PERMISSION_DENIED', 'You cannot author this project with your current access.');
     }

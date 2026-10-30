@@ -29,7 +29,7 @@ import {
 } from '../../hooks/useProgramTabs';
 import type {
   AuditEvent as SvcAuditEvent,
-  CorrespondenceRow,
+  InboxLetterRow,
   PendingApproval,
 } from '../../services/programTabsService';
 import { PATHWAY_TABS_DATA } from '../data/pathwayTabs';
@@ -103,25 +103,34 @@ function adaptAudit(events: SvcAuditEvent[]): AuditEvent[] {
   });
 }
 
-function mapCorrStatus(s?: string | null): Correspondence['status'] {
-  const v = (s || '').toLowerCase();
-  if (['closed', 'resolved', 'complete', 'completed', 'done'].includes(v)) return 'closed';
-  if (['in_review', 'in-review', 'reviewing', 'review', 'pending_review'].includes(v)) return 'in_review';
+/**
+ * The inbox's own state, in the pane's three words. A closed letter is closed;
+ * one being worked (triaged, or its closure in progress) is in review; the rest
+ * are open.
+ */
+function letterStatus(r: InboxLetterRow): Correspondence['status'] {
+  if (r.closureStatus === 'closed') return 'closed';
+  if (r.closureStatus === 'in_progress' || r.humanReviewStatus === 'triaged' || r.humanReviewStatus === 'actioned') return 'in_review';
   return 'open';
 }
 
-function adaptCorrespondence(rows: CorrespondenceRow[]): Correspondence[] {
+/**
+ * The project inbox's letters as the device Correspondence tab shows them (P-39
+ * step 3, S2). Nothing is filled in that the record does not carry: the inbox
+ * records no sender or subject, so the letter is named by its type and its
+ * issues are the summary.
+ */
+function adaptCorrespondence(rows: InboxLetterRow[]): Correspondence[] {
   return rows.map((r) => ({
     id: String(r.id),
-    kind: r.communication_type || r.direction || 'Correspondence',
-    channel: r.source_channel || '—',
-    from: r.sender || '—',
-    received: r.received_at || r.created_at || '',
-    due: r.due_date || undefined,
-    status: mapCorrStatus(r.status),
-    subject: r.subject || '(no subject)',
-    /* The row has its own summary column; this used to repeat the subject. */
-    summary: str(r.summary) ?? r.subject ?? '',
+    kind: r.communicationType || 'Correspondence',
+    channel: r.sourceChannel || '—',
+    from: '—',
+    received: r.receivedDate || '',
+    due: r.dueDate || undefined,
+    status: letterStatus(r),
+    subject: r.communicationType || 'Agency letter',
+    summary: Array.isArray(r.extractedIssues) ? r.extractedIssues.join('; ') : '',
     refs: [],
     ai: false,
   }));
@@ -258,7 +267,7 @@ export function usePathwayTabsData(pathway: PathwayKey, programId?: string | nul
         corrQ.data ? liveCorr ?? [] : null,
         corrQ.isLoading,
         errorMessage(corrQ.error),
-        { idleReason: 'Agency and notified-body correspondence is filed per program.' },
+        { idleReason: 'Agency and notified-body correspondence is filed per project.' },
       ),
       approvals: toDataState<Approval[]>(
         apprQ.data ? liveAppr ?? [] : null,

@@ -24,7 +24,7 @@ export const DISCOVERY_OPTIONS = {
     { value: 'expert', label: 'Lead regulatory strategy and submissions' },
   ],
   businessContext: [
-    { value: 'sponsor', label: 'Developing our own product / program' },
+    { value: 'sponsor', label: 'Developing our own product / project' },
     { value: 'service_provider', label: 'Delivering services for clients' },
     { value: 'research_institution', label: 'Academic / research institution' },
     { value: 'healthcare', label: 'Healthcare organization' },
@@ -32,8 +32,8 @@ export const DISCOVERY_OPTIONS = {
   ],
   companyStage: [
     { value: 'forming', label: 'Forming the company / initiative' },
-    { value: 'early', label: 'Early stage / first programs' },
-    { value: 'growing', label: 'Growing team / multiple programs' },
+    { value: 'early', label: 'Early stage / first projects' },
+    { value: 'growing', label: 'Growing team / multiple projects' },
     { value: 'established', label: 'Established organization' },
   ],
   productModalities: [

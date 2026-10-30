@@ -1,0 +1,172 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5198/api/authoring/docs/8bfc34ba-98dc-4187-a02e-483f0e641b7c/sections",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 65,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "sections": [
+        {
+          "id": "0ef7975b-4f50-428d-be74-5cdded86ef81",
+          "doc_id": "8bfc34ba-98dc-4187-a02e-483f0e641b7c",
+          "code": "qms-purpose",
+          "title": "Purpose",
+          "content": "",
+          "order_index": 1,
+          "track_changes": false,
+          "created_at": "2026-10-29T15:41:05.068Z",
+          "updated_at": "2026-10-29T15:41:05.068Z",
+          "tenant_id": 6,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        },
+        {
+          "id": "6c062585-dcfc-4502-a516-41c469a25777",
+          "doc_id": "8bfc34ba-98dc-4187-a02e-483f0e641b7c",
+          "code": "qms-scope",
+          "title": "Scope",
+          "content": "",
+          "order_index": 2,
+          "track_changes": false,
+          "created_at": "2026-10-29T15:41:05.068Z",
+          "updated_at": "2026-10-29T15:41:05.068Z",
+          "tenant_id": 6,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        },
+        {
+          "id": "a6f8c74c-9990-44fd-87ea-3603f8ae0540",
+          "doc_id": "8bfc34ba-98dc-4187-a02e-483f0e641b7c",
+          "code": "qms-responsibilities",
+          "title": "Responsibilities",
+          "content": "",
+          "order_index": 3,
+          "track_changes": false,
+          "created_at": "2026-10-29T15:41:05.068Z",
+          "updated_at": "2026-10-29T15:41:05.068Z",
+          "tenant_id": 6,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        },
+        {
+          "id": "189132d4-f940-4744-bdb5-0ecda7b0077d",
+          "doc_id": "8bfc34ba-98dc-4187-a02e-483f0e641b7c",
+          "code": "qms-definitions",
+          "title": "Definitions",
+          "content": "",
+          "order_index": 4,
+          "track_changes": false,
+          "created_at": "2026-10-29T15:41:05.068Z",
+          "updated_at": "2026-10-29T15:41:05.068Z",
+          "tenant_id": 6,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        },
+        {
+          "id": "113d4ccf-9811-4ccb-bfdb-1ec8d1f2b8f8",
+          "doc_id": "8bfc34ba-98dc-4187-a02e-483f0e641b7c",
+          "code": "qms-procedure",
+          "title": "Procedure",
+          "content": "",
+          "order_index": 5,
+          "track_changes": false,
+          "created_at": "2026-10-29T15:41:05.068Z",
+          "updated_at": "2026-10-29T15:41:05.068Z",
+          "tenant_id": 6,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        },
+        {
+          "id": "f36d50de-2f81-451e-b53e-116b94262ffd",
+          "doc_id": "8bfc34ba-98dc-4187-a02e-483f0e641b7c",
+          "code": "qms-references",
+          "title": "References",
+          "content": "",
+          "order_index": 6,
+          "track_changes": false,
+          "created_at": "2026-10-29T15:41:05.068Z",
+          "updated_at": "2026-10-29T15:41:05.068Z",
+          "tenant_id": 6,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        },
+        {
+          "id": "7e051a2d-b3f9-4766-8170-cf7869ee1579",
+          "doc_id": "8bfc34ba-98dc-4187-a02e-483f0e641b7c",
+          "code": "qms-attachments",
+          "title": "Attachments",
+          "content": "",
+          "order_index": 7,
+          "track_changes": false,
+          "created_at": "2026-10-29T15:41:05.068Z",
+          "updated_at": "2026-10-29T15:41:05.068Z",
+          "tenant_id": 6,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        },
+        {
+          "id": "58cd0a92-b886-4562-a883-533c434431be",
+          "doc_id": "8bfc34ba-98dc-4187-a02e-483f0e641b7c",
+          "code": "qms-revision_history",
+          "title": "Revision history",
+          "content": "",
+          "order_index": 8,
+          "track_changes": false,
+          "created_at": "2026-10-29T15:41:05.068Z",
+          "updated_at": "2026-10-29T15:41:05.068Z",
+          "tenant_id": 6,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        },
+        {
+          "id": "8e1f508b-6b38-44a5-82f8-208f9e27a791",
+          "doc_id": "8bfc34ba-98dc-4187-a02e-483f0e641b7c",
+          "code": "qms-approval",
+          "title": "Approval",
+          "content": "",
+          "order_index": 9,
+          "track_changes": false,
+          "created_at": "2026-10-29T15:41:05.068Z",
+          "updated_at": "2026-10-29T15:41:05.068Z",
+          "tenant_id": 6,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        }
+      ],
+      "count": 9,
+      "structure": {
+        "duplicateCodes": [],
+        "outOfOrder": true,
+        "suggestedOrder": [
+          "qms-approval",
+          "qms-attachments",
+          "qms-definitions",
+          "qms-procedure",
+          "qms-purpose",
+          "qms-references",
+          "qms-responsibilities",
+          "qms-revision_history",
+          "qms-scope"
+        ]
+      },
+      "readScope": "document"
+    }
+  }
+}

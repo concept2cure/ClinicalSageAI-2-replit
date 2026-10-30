@@ -7,8 +7,10 @@
  * to status — never use 'k510' / 'pma' / 'cer' as a status value.
  */
 
+import type { RegulatoryPathway } from '../../../../../shared/constants/mdx';
+
 export type ProgramStatus = 'idle' | 'active' | 'blocked' | 'complete';
-export type ProgramPathway = 'k510' | 'pma' | 'cer' | 'ivdr';
+export type ProgramPathway = RegulatoryPathway;
 export type DueTone = 'ok' | 'warn' | 'err';
 
 export interface Program {
@@ -18,7 +20,9 @@ export interface Program {
   pathway: ProgramPathway;
   stage: string;
   stageIdx: number;
-  readiness: number;
+  readiness: number | null;
+  /** Raw recorded progress for the validation view; never a readiness assessment. */
+  recordedProgress?: number | null;
   status: ProgramStatus;
   lead: string;
   owners: string[];

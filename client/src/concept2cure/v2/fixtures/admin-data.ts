@@ -4,7 +4,6 @@
  * What is left, and why each earns its place:
  *   AUDIT_KINDS       the audit-kind filter taxonomy the server's deriveKind() mirrors
  *   PLATFORM_SERVICES the static platform-capability catalog
- *   ARTIFACT_FMT      a format → label display map
  *   the interfaces    the shape the real endpoints return, imported as types
  *
  * ── What was removed, and why ─────────────────────────────────────────────────
@@ -94,25 +93,6 @@ export interface PlatformService {
   desc: string;
 }
 
-export interface ArtifactEntry {
-  id: string;
-  name: string;
-  kind: string;
-  fmt: string;
-  size: string;
-  model: string;
-  when: string;
-  ver: string;
-  sig: boolean;
-  prog: string;
-}
-
-export interface ArtifactFormat {
-  label: string;
-  tone: string;
-  action: string;
-}
-
 export interface AcGrant {
   id: number;
   name: string;
@@ -139,25 +119,19 @@ export const AUDIT_KINDS: AuditKind[] = [
 /* ---- Apps catalog ---- */
 
 export const PLATFORM_SERVICES: PlatformService[] = [
-  { name: 'RIM -- Regulatory Intelligence Model', icon: 'database', desc: 'The non-LLM judgment layer that accumulates regulatory precedent over time and powers every app\'s recommendations.' },
+  { name: 'Regulatory judgment model', icon: 'database', desc: 'The non-LLM judgment layer that accumulates regulatory precedent over time and powers the product\'s recommendations.' },
   { name: 'Evidence retrieval (RAG)', icon: 'search', desc: 'Grounds answers and drafts in the corpus and returns cited source chunks. Runs inside authoring, evidence and chat.' },
   { name: 'AnA gateway & model routing', icon: 'workflow', desc: 'Risk-tiered routing of every AI call to the right model, with human-review gates on high-impact actions.' },
-  { name: 'Precedent engine', icon: 'scale', desc: 'Deterministic search over past approvals and decisions; surfaced in Precedent, 510(k) SE and drafting.' },
+  { name: 'Precedent search', icon: 'scale', desc: 'Deterministic search over past approvals and decisions; surfaced in Precedent, 510(k) SE and drafting.' },
   { name: 'Deterministic tool registry', icon: 'shieldCheck', desc: '142 pure-function regulatory tools (TTC, estimand, causality...) that AnA calls for submission-defensible output.' },
-  { name: 'Deep-research orchestrator', icon: 'telescope', desc: 'Multi-connector fan-out and grounded synthesis that drives the Deep research app.' },
-  { name: 'Template & rendering', icon: 'template', desc: 'Generates DOCX and PDF from governed templates -- produces the files in Artifacts Center and the editor.' },
-  { name: 'E-signature (21 CFR Part 11)', icon: 'lock', desc: 'Reason-for-change + identity re-assertion on governed actions across every app.' },
+  { name: 'Deep-research orchestrator', icon: 'telescope', desc: 'Multi-connector fan-out and grounded synthesis that drives Deep research.' },
+  { name: 'Template & rendering', icon: 'template', desc: 'Generates DOCX and PDF from governed templates -- produces the files in the Vault and the editor.' },
+  { name: 'E-signature (21 CFR Part 11)', icon: 'lock', desc: 'Reason-for-change + identity re-assertion on governed actions across the product.' },
   { name: 'Audit hash-chain', icon: 'scroll', desc: 'Tamper-evident ss11.10(e) ledger written by every governed mutation.' },
   { name: 'Connectors', icon: 'network', desc: 'ClinicalTrials.gov, FAERS/MAUDE, EUDAMED, EHR/FHIR, DMS -- feed evidence and deep research.' },
 ];
 
-/* ---- Artifacts Center ---- */
-
-export const ARTIFACT_FMT: Record<string, ArtifactFormat> = {
-  docx: { label: 'DOCX', tone: 'ai', action: 'Open to edit' },
-  pdf: { label: 'PDF', tone: 'err', action: 'Download' },
-  xlsx: { label: 'XLSX', tone: 'ok', action: 'Download' },
-  pptx: { label: 'PPTX', tone: 'warn', action: 'Download' },
-};
+/* No Artifacts center format map: its one reader, the gallery, folded into the
+   Vault (D2, fold F3 slice C, 2026-10-29), which labels a format as recorded. */
 
 /* ---- Admin console -- access grants ---- */

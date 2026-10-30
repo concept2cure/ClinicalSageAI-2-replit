@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-10-26T22:16:17.059226+00:00",
+  "argv": [
+    "/workspace/scratch/editor-toolchain/node_modules/.bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.205,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "csr/green-inputs.json",
+  "sourcesBefore": {
+    "server/services/csr/csr-job-runner.ts": "e68496bd8a4d3575e9ae1150252f875ec49990aa6a8ff2c557594e80df1515ca",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "46d0ff88426a5e058d9cb51877d79fe642b02e7684c245e837bd16a7c26bb06a"
+  },
+  "sourcesAfter": {
+    "server/services/csr/csr-job-runner.ts": "e68496bd8a4d3575e9ae1150252f875ec49990aa6a8ff2c557594e80df1515ca",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "46d0ff88426a5e058d9cb51877d79fe642b02e7684c245e837bd16a7c26bb06a"
+  },
+  "sourceDrift": [],
+  "rawOutput": "green.log.gz",
+  "rawGzipSha256": "011c8a99b34449cc93d01a20d39e2629aefe4b450fb29e973739797b50421b1c",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 10 passed (11)",
+    "Duration  1.75s (transform 972ms, setup 73ms, import 1.42s, tests 25ms, environment 0ms)"
+  ]
+}

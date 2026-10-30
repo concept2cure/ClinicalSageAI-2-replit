@@ -91,6 +91,12 @@ describe('Catalog record', () => {
     renderPane({ ...RECORD, state: null, documentKind: null, purpose: null, summary: null, keyData: null });
     expect((await screen.findByTestId('vault-catalog-empty')).textContent).toMatch(/No description is recorded/);
   });
+
+  it('a version whose text is still being read says so, not that it could not be read (MR-08 Stage 3)', async () => {
+    renderPane({ ...RECORD, state: null, documentKind: null, purpose: null, summary: null, keyData: null, extractionStatus: 'extraction_pending' });
+    expect((await screen.findByTestId('vault-catalog-empty')).textContent)
+      .toBe('Reading the text of this version. No description is recorded until it has been read.');
+  });
 });
 
 describe('Catalog check coverage and review receipts', () => {

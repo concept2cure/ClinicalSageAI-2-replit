@@ -1,0 +1,9 @@
+# npx vitest run server/middleware/__tests__/ivd-board-under-diagnostics.test.ts  (after the registry change)
+# trimmed: the gate's per-request warn log lines (org 103's refusals) are cut
+ ✓ reads the panel's calls from both screens that mount it 2ms
+ ✓ serves them to an organization entitled to device-diagnostics only 4ms
+ ✓ serves them to an organization entitled to ivd-completeness only, as before 3ms
+ ✓ refuses them to an organization entitled to neither 4ms
+ ✓ leaves the ivd-completeness claim whole: moving it is founder decision 4 0ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)

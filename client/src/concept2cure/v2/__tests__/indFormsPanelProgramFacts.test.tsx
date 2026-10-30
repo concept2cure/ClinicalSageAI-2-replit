@@ -92,14 +92,14 @@ describe('IndFormsPanel — the sponsor address and IND type are recorded on the
     const note = vi.fn();
     render(<IndFormsPanel note={note} />);
     await screen.findByText(/FDA 1571/);
-    const save = screen.getByRole('button', { name: 'Save to program' }) as HTMLButtonElement;
+    const save = screen.getByRole('button', { name: 'Save to project' }) as HTMLButtonElement;
     expect(save.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText('Sponsor address'), { target: { value: '1 Main St, Boston MA 02110, US' } });
     fireEvent.change(screen.getByLabelText('IND type'), { target: { value: 'Commercial IND' } });
     // Until saved, the panel says the forms read the record, not the edit.
-    expect(screen.getByText(/Not saved\. Forms and packages continue to read the recorded program facts/)).toBeTruthy();
+    expect(screen.getByText(/Not saved\. Forms and packages continue to read the recorded project facts/)).toBeTruthy();
     expect(save.disabled).toBe(true);
-    fireEvent.change(screen.getByLabelText('Reason for program facts change'), { target: { value: REASON } });
+    fireEvent.change(screen.getByLabelText('Reason for project facts change'), { target: { value: REASON } });
     expect(save.disabled).toBe(false);
     fireEvent.click(save);
     await waitFor(() => {
@@ -107,8 +107,8 @@ describe('IndFormsPanel — the sponsor address and IND type are recorded on the
       expect(put).toBeTruthy();
       expect(put![2]).toEqual({ projectIdent: PROGRAM_UUID, expectedFactsVersion: FACTS_VERSION, reason: REASON, applicationNumber: '000512', applicantSponsorId: null, sponsorAddress: '1 Main St, Boston MA 02110, US', indType: 'Commercial IND' });
     });
-    await waitFor(() => expect(note).toHaveBeenCalledWith('Program facts saved to the program record.'));
-    await waitFor(() => expect((screen.getByRole('button', { name: 'Save to program' }) as HTMLButtonElement).disabled).toBe(true));
+    await waitFor(() => expect(note).toHaveBeenCalledWith('Project facts saved to the project record.'));
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Save to project' }) as HTMLButtonElement).disabled).toBe(true));
   });
 
   it('a refused save says why, in the server\'s words, as an error', async () => {
@@ -124,10 +124,10 @@ describe('IndFormsPanel — the sponsor address and IND type are recorded on the
     render(<IndFormsPanel note={note} />);
     await screen.findByText(/FDA 1571/);
     fireEvent.change(screen.getByLabelText('Sponsor address'), { target: { value: 'x' } });
-    fireEvent.change(screen.getByLabelText('Reason for program facts change'), { target: { value: REASON } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
+    fireEvent.change(screen.getByLabelText('Reason for project facts change'), { target: { value: REASON } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
     await screen.findByText(/IND type must be one of Commercial IND/);
-    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/Program facts saved/));
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/Project facts saved/));
   });
 
   it('a program that is not an IND has no IND type to record', async () => {
@@ -136,8 +136,8 @@ describe('IndFormsPanel — the sponsor address and IND type are recorded on the
     await screen.findByText(/FDA 1571/);
     expect(screen.queryByLabelText('IND type')).toBeNull();
     fireEvent.change(screen.getByLabelText('Sponsor address'), { target: { value: '1 Main St' } });
-    fireEvent.change(screen.getByLabelText('Reason for program facts change'), { target: { value: REASON } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
+    fireEvent.change(screen.getByLabelText('Reason for project facts change'), { target: { value: REASON } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
     await waitFor(() => {
       const put = apiRequest.mock.calls.find((c) => c[0] === 'PUT' && c[1] === '/api/ind-forms/program-facts');
       expect(put![2]).toEqual({ projectIdent: PROGRAM_UUID, expectedFactsVersion: FACTS_VERSION, reason: REASON, applicationNumber: '000512', applicantSponsorId: null, sponsorAddress: '1 Main St' });

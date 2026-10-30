@@ -1,0 +1,668 @@
+
+ RUN  v4.1.7 /workspace/scratch/dd8ef47af5ed/concept2cure-v2-audit
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > returns parsed PreclinicalStudy data when the LLM output matches the schema
+{
+  "timestamp": "2026-10-27T17:05:36.028Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-123",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > records the model override on the result for provenance
+{
+  "timestamp": "2026-10-27T17:05:36.035Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-456",
+    "inputChars": 61,
+    "model": "claude-sonnet-4-6"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > throws when the LLM response fails Zod validation
+{
+  "timestamp": "2026-10-27T17:05:36.038Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-789",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > throws when extractionConfidence is out of [0, 1]
+{
+  "timestamp": "2026-10-27T17:05:36.041Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-999",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > uses the existing PDF/OCR extractor with its bounded automatic OCR budget
+{
+  "timestamp": "2026-10-27T17:05:36.044Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-common",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > accepts complete OCR and sends all returned text to structured extraction
+{
+  "timestamp": "2026-10-27T17:05:36.066Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-scan",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":150,"pagesRead":100,"limitedBy":"page_budget"} before calling the model
+{
+  "timestamp": "2026-10-27T17:05:36.071Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-partial",
+    "inputChars": 59,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":2,"limitedBy":"time_budget"} before calling the model
+{
+  "timestamp": "2026-10-27T17:05:36.080Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-partial",
+    "inputChars": 59,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":null,"limitedBy":"ocr_failed"} before calling the model
+{
+  "timestamp": "2026-10-27T17:05:36.087Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-partial",
+    "inputChars": 59,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":2,"limitedBy":null} before calling the model
+{
+  "timestamp": "2026-10-27T17:05:36.091Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-partial",
+    "inputChars": 59,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":null,"pagesRead":2,"limitedBy":null} before calling the model
+{
+  "timestamp": "2026-10-27T17:05:36.093Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-partial",
+    "inputChars": 59,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":0,"pagesRead":0,"limitedBy":null} before calling the model
+{
+  "timestamp": "2026-10-27T17:05:36.095Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-partial",
+    "inputChars": 59,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses OCR text with no coverage record
+{
+  "timestamp": "2026-10-27T17:05:36.098Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-unknown",
+    "inputChars": 29,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses a thin text-layer fallback when OCR left pages unread
+{
+  "timestamp": "2026-10-27T17:05:36.100Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-fallback",
+    "inputChars": 18,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses reports beyond the supported input budget instead of silently slicing them
+{
+  "timestamp": "2026-10-27T17:05:36.105Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-long",
+    "inputChars": 60000,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > sends the complete text at the budget boundary
+{
+  "timestamp": "2026-10-27T17:05:36.108Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-limit",
+    "inputChars": 60000,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration 0
+{
+  "timestamp": "2026-10-27T17:05:36.109Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-budget",
+    "inputChars": 0,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration -1
+{
+  "timestamp": "2026-10-27T17:05:36.112Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-budget",
+    "inputChars": 60,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration NaN
+{
+  "timestamp": "2026-10-27T17:05:36.122Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-budget",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > returns parsed PreclinicalStudy data when the LLM output matches the schema 8ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > records the model override on the result for provenance 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > throws when the LLM response fails Zod validation 4ms
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > throws when extractionConfidence is out of [0, 1] 3ms
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > uses the existing PDF/OCR extractor with its bounded automatic OCR budget 22ms
+   → expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -10,14 +10,6 @@
+        100,
+        102,
+      ],
+      "type": "Buffer",
+    },
+-   "application/pdf",
+-   "preclinical-report.pdf",
+-   {
+-     "pdfOcrBudget": {
+-       "maxDurationMs": 600000,
+-       "maxPages": 100,
+-     },
+-   },
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > accepts complete OCR and sends all returned text to structured extraction 5ms
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":150,"pagesRead":100,"limitedBy":"page_budget"} before calling the model 9ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":2,"limitedBy":"time_budget"} before calling the model 3ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":null,"limitedBy":"ocr_failed"} before calling the model 7ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":2,"limitedBy":null} before calling the model 2ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":null,"pagesRead":2,"limitedBy":null} before calling the model 3ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":0,"pagesRead":0,"limitedBy":null} before calling the model 2ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses OCR text with no coverage record 3ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses a thin text-layer fallback when OCR left pages unread 2ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > reports unreadable input without making a provider request 2ms
+   → expected Error: preclinical-extractor: PDF produce… to match object { code: 'PRECLINICAL_NO_TEXT' }
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses reports beyond the supported input budget instead of silently slicing them 2ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ ✓ server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > sends the complete text at the budget boundary 2ms
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration 0 3ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration -1 3ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration Infinity
+{
+  "timestamp": "2026-10-27T17:05:36.124Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-budget",
+    "inputChars": 61,
+    "model": "claude-opus-4"
+  }
+}
+
+stdout | server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration 1.5
+{
+  "timestamp": "2026-10-27T17:05:36.127Z",
+  "level": "info",
+  "message": "[preclinical-extractor] Extracting preclinical study",
+  "context": {
+    "sourcePdfId": "pdf-budget",
+    "inputChars": 1,
+    "model": "claude-opus-4"
+  }
+}
+
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration NaN 9ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration Infinity 2ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration 1.5 2ms
+   → promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > uses the existing PDF/OCR extractor with its bounded automatic OCR budget
+AssertionError: expected "vi.fn()" to be called with arguments: [ …(4) ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -10,14 +10,6 @@
+        100,
+        102,
+      ],
+      "type": "Buffer",
+    },
+-   "application/pdf",
+-   "preclinical-report.pdf",
+-   {
+-     "pdfOcrBudget": {
+-       "maxDurationMs": 600000,
+-       "maxPages": 100,
+-     },
+-   },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/preclinical/__tests__/preclinical-extractor.test.ts:109:30
+    107|     const buffer = Buffer.from('mock pdf');
+    108|     await extractFromPdf(buffer, { sourcePdfId: 'pdf-common' });
+    109|     expect(documentTextMock).toHaveBeenCalledWith(
+       |                              ^
+    110|       buffer, 'application/pdf', 'preclinical-report.pdf',
+    111|       { pdfOcrBudget: AUTOMATIC_PDF_OCR_BUDGET },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":150,"pagesRead":100,"limitedBy":"page_budget"} before calling the model
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":2,"limitedBy":"time_budget"} before calling the model
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":null,"limitedBy":"ocr_failed"} before calling the model
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":8,"pagesRead":2,"limitedBy":null} before calling the model
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":null,"pagesRead":2,"limitedBy":null} before calling the model
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses incomplete or unestablished OCR coverage {"pageCount":0,"pagesRead":0,"limitedBy":null} before calling the model
+AssertionError: promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "data": {
++     "carcinogenicityFindings": null,
++     "durationWeeks": 13,
++     "extractionConfidence": 0.92,
++     "genotoxicityResults": null,
++     "glpCompliant": true,
++     "keyFindings": "Mild liver enzyme elevations at 150 mg/kg.",
++     "loael": "150 mg/kg/day",
++     "mtd": null,
++     "noael": "50 mg/kg/day",
++     "reproductiveToxicity": null,
++     "routeOfAdministration": "oral gavage",
++     "safetyMargins": [
++       {
++         "basis": "AUC",
++         "multiple": 12,
++       },
++     ],
++     "species": "rat",
++     "strain": "Sprague-Dawley",
++     "studyCompletionDate": "2025-09-30",
++     "studyReportNumber": "TX-2025-013",
++     "studyTitle": "13-week oral toxicity study in rat",
++     "studyType": "repeat_dose_tox",
++     "targetOrganToxicity": [
++       {
++         "doseLevel": "150 mg/kg",
++         "organ": "liver",
++         "severity": "mild",
++       },
++     ],
++     "testingFacility": "Charles River",
++   },
++   "model": "claude-opus-4",
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-extractor.test.ts:138:85
+    136|       method: 'pdf-ocr', coverage,
+    137|     });
+    138|     await expect(extractFromPdf(Buffer.from('scan'), { sourcePdfId: 'p…
+       |                                                                                     ^
+    139|       .rejects.toMatchObject({ name: 'PreclinicalExtractionInputError'…
+    140|     expect(structuredMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses OCR text with no coverage record
+AssertionError: promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "data": {
++     "carcinogenicityFindings": null,
++     "durationWeeks": 13,
++     "extractionConfidence": 0.92,
++     "genotoxicityResults": null,
++     "glpCompliant": true,
++     "keyFindings": "Mild liver enzyme elevations at 150 mg/kg.",
++     "loael": "150 mg/kg/day",
++     "mtd": null,
++     "noael": "50 mg/kg/day",
++     "reproductiveToxicity": null,
++     "routeOfAdministration": "oral gavage",
++     "safetyMargins": [
++       {
++         "basis": "AUC",
++         "multiple": 12,
++       },
++     ],
++     "species": "rat",
++     "strain": "Sprague-Dawley",
++     "studyCompletionDate": "2025-09-30",
++     "studyReportNumber": "TX-2025-013",
++     "studyTitle": "13-week oral toxicity study in rat",
++     "studyType": "repeat_dose_tox",
++     "targetOrganToxicity": [
++       {
++         "doseLevel": "150 mg/kg",
++         "organ": "liver",
++         "severity": "mild",
++       },
++     ],
++     "testingFacility": "Charles River",
++   },
++   "model": "claude-opus-4",
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-extractor.test.ts:145:85
+    143|   it('refuses OCR text with no coverage record', async () => {
+    144|     documentTextMock.mockResolvedValue({ text: 'OCR text of unknown co…
+    145|     await expect(extractFromPdf(Buffer.from('scan'), { sourcePdfId: 'p…
+       |                                                                                     ^
+    146|       .rejects.toMatchObject({ code: 'PRECLINICAL_INCOMPLETE_TEXT' });
+    147|     expect(structuredMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses a thin text-layer fallback when OCR left pages unread
+AssertionError: promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "data": {
++     "carcinogenicityFindings": null,
++     "durationWeeks": 13,
++     "extractionConfidence": 0.92,
++     "genotoxicityResults": null,
++     "glpCompliant": true,
++     "keyFindings": "Mild liver enzyme elevations at 150 mg/kg.",
++     "loael": "150 mg/kg/day",
++     "mtd": null,
++     "noael": "50 mg/kg/day",
++     "reproductiveToxicity": null,
++     "routeOfAdministration": "oral gavage",
++     "safetyMargins": [
++       {
++         "basis": "AUC",
++         "multiple": 12,
++       },
++     ],
++     "species": "rat",
++     "strain": "Sprague-Dawley",
++     "studyCompletionDate": "2025-09-30",
++     "studyReportNumber": "TX-2025-013",
++     "studyTitle": "13-week oral toxicity study in rat",
++     "studyType": "repeat_dose_tox",
++     "targetOrganToxicity": [
++       {
++         "doseLevel": "150 mg/kg",
++         "organ": "liver",
++         "severity": "mild",
++       },
++     ],
++     "testingFacility": "Charles River",
++   },
++   "model": "claude-opus-4",
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-extractor.test.ts:155:89
+    153|       coverage: { pageCount: 30, pagesRead: 2, limitedBy: 'time_budget…
+    154|     });
+    155|     await expect(extractFromPdf(Buffer.from('partial'), { sourcePdfId:…
+       |                                                                                         ^
+    156|       .rejects.toMatchObject({ code: 'PRECLINICAL_INCOMPLETE_TEXT' });
+    157|     expect(structuredMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > reports unreadable input without making a provider request
+AssertionError: expected Error: preclinical-extractor: PDF produce… to match object { code: 'PRECLINICAL_NO_TEXT' }
+
+- Expected
++ Received
+
+- {
+-   "code": "PRECLINICAL_NO_TEXT",
++ Error {
++   "message": "preclinical-extractor: PDF produced no extractable text",
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-extractor.test.ts:162:89
+    160|   it('reports unreadable input without making a provider request', asy…
+    161|     documentTextMock.mockResolvedValue({ text: '   ', method: 'none' }…
+    162|     await expect(extractFromPdf(Buffer.from('unreadable'), { sourcePdf…
+       |                                                                                         ^
+    163|       .rejects.toMatchObject({ code: 'PRECLINICAL_NO_TEXT' });
+    164|     expect(structuredMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > refuses reports beyond the supported input budget instead of silently slicing them
+AssertionError: promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "data": {
++     "carcinogenicityFindings": null,
++     "durationWeeks": 13,
++     "extractionConfidence": 0.92,
++     "genotoxicityResults": null,
++     "glpCompliant": true,
++     "keyFindings": "Mild liver enzyme elevations at 150 mg/kg.",
++     "loael": "150 mg/kg/day",
++     "mtd": null,
++     "noael": "50 mg/kg/day",
++     "reproductiveToxicity": null,
++     "routeOfAdministration": "oral gavage",
++     "safetyMargins": [
++       {
++         "basis": "AUC",
++         "multiple": 12,
++       },
++     ],
++     "species": "rat",
++     "strain": "Sprague-Dawley",
++     "studyCompletionDate": "2025-09-30",
++     "studyReportNumber": "TX-2025-013",
++     "studyTitle": "13-week oral toxicity study in rat",
++     "studyType": "repeat_dose_tox",
++     "targetOrganToxicity": [
++       {
++         "doseLevel": "150 mg/kg",
++         "organ": "liver",
++         "severity": "mild",
++       },
++     ],
++     "testingFacility": "Charles River",
++   },
++   "model": "claude-opus-4",
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-extractor.test.ts:169:82
+    167|   it('refuses reports beyond the supported input budget instead of sil…
+    168|     documentTextMock.mockResolvedValue({ text: 'x'.repeat(60_001), met…
+    169|     await expect(extractFromPdf(Buffer.from('long'), { sourcePdfId: 'p…
+       |                                                                                  ^
+    170|       .rejects.toMatchObject({ code: 'PRECLINICAL_REPORT_TOO_LARGE' });
+    171|     expect(structuredMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration 0
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration -1
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration NaN
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration Infinity
+ FAIL  server/services/preclinical/__tests__/preclinical-extractor.test.ts > extractFromPdf > rejects invalid input-budget configuration 1.5
+AssertionError: promise resolved "{ data: { …(20) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "data": {
++     "carcinogenicityFindings": null,
++     "durationWeeks": 13,
++     "extractionConfidence": 0.92,
++     "genotoxicityResults": null,
++     "glpCompliant": true,
++     "keyFindings": "Mild liver enzyme elevations at 150 mg/kg.",
++     "loael": "150 mg/kg/day",
++     "mtd": null,
++     "noael": "50 mg/kg/day",
++     "reproductiveToxicity": null,
++     "routeOfAdministration": "oral gavage",
++     "safetyMargins": [
++       {
++         "basis": "AUC",
++         "multiple": 12,
++       },
++     ],
++     "species": "rat",
++     "strain": "Sprague-Dawley",
++     "studyCompletionDate": "2025-09-30",
++     "studyReportNumber": "TX-2025-013",
++     "studyTitle": "13-week oral toxicity study in rat",
++     "studyType": "repeat_dose_tox",
++     "targetOrganToxicity": [
++       {
++         "doseLevel": "150 mg/kg",
++         "organ": "liver",
++         "severity": "mild",
++       },
++     ],
++     "testingFacility": "Charles River",
++   },
++   "model": "claude-opus-4",
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-extractor.test.ts:182:98
+    180|
+    181|   it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY, 1.5])('rejects…
+    182|     await expect(extractFromPdf(Buffer.from('pdf'), { sourcePdfId: 'pd…
+       |                                                                                                  ^
+    183|       .rejects.toThrow(/maxInputChars/);
+    184|     expect(structuredMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed | 6 passed (22)
+   Start at  11:05:35
+   Duration  1.28s (transform 341ms, setup 244ms, import 184ms, tests 107ms, environment 0ms)
+

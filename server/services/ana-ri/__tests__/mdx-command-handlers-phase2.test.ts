@@ -114,7 +114,7 @@ describe('gspr.mapping.upsert', () => {
       applicability: 'applicable',
     });
     expect(r.error).toBe('OWNERSHIP_UNVERIFIABLE');
-    expect(r.message).toMatch(/Do not tell the user the program does not exist/);
+    expect(r.message).toMatch(/Do not tell the user the project does not exist/);
     expect(svc.upsertMapping).not.toHaveBeenCalled();
   });
 

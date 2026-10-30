@@ -113,6 +113,12 @@ const APPROVED = new Set([
   'server/services/ind-forms/ind-form-fill-service.ts',
   'server/services/ind-forms/ind-form-reconstruct.ts',
   'server/services/templates/templateExtractor.ts',
+  // original-pdf-integrity.ts — READS a filed original (PDFDocument.load with
+  //   updateMetadata:false; no save, no create) to detect embedded signature
+  //   structure so a signed original is never re-rendered. It generates no PDF,
+  //   so there is nothing to route through pdf-converter.ts. Added 2026-10-29
+  //   for 5ebfcfd2c (original-byte preservation).
+  'server/services/ectd/original-pdf-integrity.ts',
   // Data Origins report (landed 2026-08-04). Renders a provenance report for a
   // selected passage — there is no DOCX source for pdf-converter.ts to convert,
   // it is composed from lineage rows directly.
@@ -137,6 +143,15 @@ const APPROVED = new Set([
   // artefact whose hash changed on every print would be the one document in the
   // platform least able to afford it.
   'server/services/clinical-regulatory-evidence/data-origins-pdf.ts',
+  // CSR slice 8 (2026-10-29, approved 2026-10-30 in the own-the-product sweep):
+  //   csr-pdf-writer.ts    — streams an assembled CSR of thousands of pages page by page
+  //                          through pdfkit, hashing the bytes as they leave, with the fixed
+  //                          producer and content-derived dates leaf-pdf.ts pins. There is no
+  //                          DOCX for pdf-converter.ts to convert, and it buffers whole files.
+  //   csr-pdf-structure.ts — READS the assembled PDFs (pdf-lib) to verify bookmark depth and
+  //                          that every link resolves, before handover; it writes no PDF.
+  'server/services/csr/csr-pdf-writer.ts',
+  'server/services/csr/csr-pdf-structure.ts',
 ]);
 
 // See scripts/ci/lib/allowlist-paths.mjs: an entry for an absent file is a

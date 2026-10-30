@@ -1,0 +1,17 @@
+{
+  "insertion": "262/11 suites; release command65; host15; no drift",
+  "context": "113/6 suites; no drift",
+  "postMerge": "497/21 distinct suites; no drift",
+  "independentReview": {
+    "insertion": "No unresolved blocker within operation, mark ownership, placement and receipt scope.",
+    "context": "Exactly3 production callers use resolved scope or explicit null; saved-template readers and OPEN DOCUMENT remain unchanged."
+  },
+  "humanCases": {
+    "count": 124,
+    "status": "Not run"
+  },
+  "nativeBrowser": false,
+  "liveProvider": false,
+  "agencyTransmission": false,
+  "deployment": false
+}

@@ -47,7 +47,7 @@ beforeAll(async () => {
     CREATE TABLE authoring_sections (id uuid PRIMARY KEY,doc_id uuid,tenant_id integer,code text);
     CREATE TABLE doc_permissions (doc_id uuid,section_id uuid,tenant_id integer,principal_id text,email text,role text,
       valid_from timestamptz DEFAULT now(),valid_until timestamptz,revoked_at timestamptz);
-    CREATE TABLE unified_tasks (task_id text,organization_id integer,project_id integer,deleted_at timestamptz);
+    CREATE TABLE unified_tasks (task_id text,organization_id integer,project_id integer,deleted_at timestamptz,review_route_id uuid,source_entity_type text,source_entity_id text);
     CREATE TABLE submissions (id integer,organization_id integer,program_id uuid,deleted_at timestamptz);
     CREATE TABLE ectd_sequences (id integer,organization_id integer,submission_id integer,deleted_at timestamptz);
     CREATE TABLE submission_transmittals (id integer,organization_id integer,program_id uuid,package_id integer);
@@ -77,7 +77,7 @@ beforeEach(async () => {
     INSERT INTO authoring_documents VALUES ('${DOC}',7,'${PROGRAM}','DRAFT','1');
     INSERT INTO authoring_sections VALUES ('${SECTION}','${DOC}',7,'3.2.P.8');
     INSERT INTO doc_permissions (doc_id,tenant_id,principal_id,role) VALUES ('${DOC}',7,'1','VIEWER');
-    INSERT INTO unified_tasks VALUES ('TASK-real',7,11,null);
+    INSERT INTO unified_tasks VALUES ('TASK-real',7,11,null,null,null,null);
     INSERT INTO submissions VALUES (42,7,'${PROGRAM}',null); INSERT INTO ectd_sequences VALUES (6,7,42,null);
     INSERT INTO submission_transmittals VALUES (1001,7,'${PROGRAM}',null);
     INSERT INTO protocol_documents VALUES (21,7,'${PROGRAM}',null),(22,7,null,null);

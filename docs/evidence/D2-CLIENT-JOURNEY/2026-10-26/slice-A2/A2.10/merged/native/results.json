@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "test": "the old filing catalogue reaches the core selection and recorded project reference",
+      "status": "passed",
+      "durationMs": 19837
+    },
+    {
+      "test": "us_ind: legacy filing link reaches reference, canonical creation and recorded Plan",
+      "status": "passed",
+      "durationMs": 9296
+    },
+    {
+      "test": "us_510k: legacy filing link reaches reference, canonical creation and recorded Plan",
+      "status": "passed",
+      "durationMs": 9101
+    },
+    {
+      "test": "the New project action preserves intake and waits for the person to create",
+      "status": "passed",
+      "durationMs": 7304
+    }
+  ],
+  "passed": 4,
+  "runtime": "native PostgreSQL app_service; real authenticated app; RLS/launch enforcement; no mocks/provider"
+}

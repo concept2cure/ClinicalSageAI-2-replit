@@ -1,0 +1,31 @@
+# 2026-10-26T03:33:03Z HEAD 928b70996 (working tree, before the fix)
+# npx vitest run --reporter=dot client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx -t zero counts read
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+------x----
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation says only what it reads (slice 0) > zero counts read "None recorded" in a neutral tone, and no projects show no average
+AssertionError: expected 'No critical issues' to be 'None recorded' // Object.is equality
+
+Expected: "None recorded"
+Received: "No critical issues"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx:137:22
+    135|     const warns = tile(container, /Open warnings/);
+    136|     for (const t of [errs, warns]) {
+    137|       expect(t.meta).toBe('None recorded');
+       |                      ^
+    138|       expect(t.tone).not.toBe('ok');
+    139|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  03:33:03
+   Duration  1.60s (transform 431ms, setup 179ms, import 500ms, tests 90ms, environment 601ms)
+

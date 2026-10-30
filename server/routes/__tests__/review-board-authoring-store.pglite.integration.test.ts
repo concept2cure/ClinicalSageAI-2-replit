@@ -30,6 +30,19 @@ import { authoringReviewReadSchema, authoringReviewResponseSchema, type Authorin
 import type { RequestDbClient } from '../../middleware/lazyRequestDbClient';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../db/pglite-harness';
 import { runWithTenantScope } from '../../db/tenantStore';
+import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from '../../services/ana-ri/__tests__/governed-action-ledger.fixture';
+
+/**
+ * RR5 (docs/design/REVIEW_ROUTING_2026-10-23.md): a review request writes its
+ * review route on its own transaction, so it states a reason and the route's
+ * review due date, and the reviewer it names holds signing authority (the
+ * route's member validator: REVIEWER is a 'reviewer' member here). The route
+ * writes its naming row on the governed ledger (c2c_ana_actions) and reads the
+ * sender's time zone (notification_preferences), so both tables are in PREREQ.
+ */
+const REVIEW_DUE = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+const reviewBody = (reviewers: Array<Record<string, unknown> | null>) =>
+  ({ reviewers, reason: 'Ready for medical review before the pre-IND package.', route: { reviewDueDate: REVIEW_DUE } });
 
 const JWT_SECRET = randomBytes(32).toString('hex');
 process.env.JWT_SECRET = JWT_SECRET;
@@ -46,6 +59,8 @@ const PROGRAM_B = 'b0000000-0000-4000-8000-00000000000b';
 
 const PREREQ = `
   ${AUDIT_LOGS_PGLITE_DDL}
+  ${GOVERNED_ACTION_LEDGER_PGLITE_DDL}
+  CREATE TABLE notification_preferences (id SERIAL PRIMARY KEY, user_id INTEGER, timezone TEXT);
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid(),
     status TEXT NOT NULL DEFAULT 'active', payment_status TEXT NOT NULL DEFAULT 'active');
   CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT, email TEXT, status TEXT NOT NULL DEFAULT 'active');
@@ -58,7 +73,7 @@ const PREREQ = `
     ('${BYSTANDER.id}', '${BYSTANDER.name}', '${BYSTANDER.email}'),
     ('${OUTSIDER.id}', '${OUTSIDER.name}', '${OUTSIDER.email}');
   INSERT INTO organization_users (organization_id,user_id,role) VALUES
-    (1,${AUTHOR.id},'member'),(1,${REVIEWER.id},'member'),(1,${BYSTANDER.id},'member'),(2,${OUTSIDER.id},'member');
+    (1,${AUTHOR.id},'member'),(1,${REVIEWER.id},'reviewer'),(1,${BYSTANDER.id},'member'),(2,${OUTSIDER.id},'member');
   CREATE TABLE regulatory_programs (
     id UUID PRIMARY KEY, organization_id INTEGER NOT NULL, name TEXT NOT NULL, code TEXT,
     program_type TEXT, primary_agency TEXT, product_type TEXT, deleted_at TIMESTAMPTZ
@@ -176,6 +191,8 @@ beforeAll(async () => {
       'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
       'db/migrations/20260807_task_graph_org_columns.sql',
       'db/migrations/20260807_unified_tasks_soft_delete.sql',
+      // The review route columns the Drizzle model names (RR1a).
+      'migrations/20261023_review_routes.sql',
     ],
   });
   h.db = jdb.db;
@@ -215,7 +232,7 @@ describe('a review requested in Authoring reaches the Review board', () => {
 
   it('POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)', async () => {
     const rr = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docA}/request-review`))
-      .send({ reviewers: [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }] });
+      .send(reviewBody([{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }]));
     expect(rr.status).toBe(200);
 
     const mine = await board(REVIEWER, '?scope=mine');
@@ -271,7 +288,7 @@ describe('a review requested in Authoring reaches the Review board', () => {
 
   it('filters by program, and refuses a program id that is not one', async () => {
     await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docB}/request-review`))
-      .send({ reviewers: [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }] });
+      .send(reviewBody([{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }]));
     const all = queueOf(await board(REVIEWER)).map((q) => q.id);
     expect(all).toEqual(expect.arrayContaining([docA, docB]));
     const onlyA = queueOf(await board(REVIEWER, `?programId=${PROGRAM_A}`)).map((q) => q.id);
@@ -299,7 +316,7 @@ describe('a decision on the board is the authoring workflow’s own transition',
 
   it('re-requesting after changes puts it back on the reviewer’s queue; approving takes it off', async () => {
     await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docA}/request-review`))
-      .send({ reviewers: [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }] });
+      .send(reviewBody([{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }]));
     // A new request reopens the recorded verdict (wave 2D): the row is pending
     // again, so the document is back on the reviewer's queue. Until 2026-10-08
     // the upsert kept the verdict, and this test pinned that the document did
@@ -425,7 +442,7 @@ describe('peer review uses the tenant document and an atomic audit', () => {
     for (const target of [id, '00000000-0000-4000-8000-000000000099']) {
       const base = `/api/authoring/documents/${target}`;
       expect((await as(OUTSIDER)(request(app).get(`${base}/reviews`))).status).toBe(404);
-      expect((await as(OUTSIDER)(request(app).post(`${base}/request-review`)).send({ reviewers: namedReviewers })).status).toBe(404);
+      expect((await as(OUTSIDER)(request(app).post(`${base}/request-review`)).send(reviewBody(namedReviewers))).status).toBe(404);
       expect((await as(OUTSIDER)(request(app).post(`${base}/review`)).send({ review_status:'approved',expected })).status).toBe(404);
     }
     expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
@@ -434,7 +451,7 @@ describe('peer review uses the tenant document and an atomic audit', () => {
   it('rejects malformed or duplicate reviewers before any request is saved', async () => {
     const id = await newReviewDocument();
     for (const reviewers of [[...namedReviewers, null], [...namedReviewers, { id: '', email: REVIEWER.email }], [...namedReviewers, ...namedReviewers]]) {
-      expect((await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers })).status).toBe(400);
+      expect((await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send(reviewBody(reviewers))).status).toBe(400);
       expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
     }
   }, T);
@@ -444,9 +461,8 @@ describe('peer review uses the tenant document and an atomic audit', () => {
     await jdb.pool.query(`CREATE FUNCTION reject_second_reviewer() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.reviewer_id = '${BYSTANDER.id}' THEN RAISE EXCEPTION 'forced reviewer insert failure'; END IF; RETURN NEW; END $$`);
     await jdb.pool.query('CREATE TRIGGER reject_second_reviewer BEFORE INSERT ON authoring_reviews FOR EACH ROW EXECUTE FUNCTION reject_second_reviewer()');
     try {
-      const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({
-        reviewers: [...namedReviewers, { id: BYSTANDER.id, name: BYSTANDER.name, email: BYSTANDER.email }],
-      });
+      const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send(
+        reviewBody([...namedReviewers, { id: BYSTANDER.id, name: BYSTANDER.name, email: BYSTANDER.email }]));
       expect(r.status).toBe(503);
       expect(r.body).toMatchObject({ success:false,error:{ code:'REVIEW_UNAVAILABLE' } });
       expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
@@ -459,19 +475,19 @@ describe('peer review uses the tenant document and an atomic audit', () => {
   it('records the request audit with its batch and rolls back when that audit fails', async () => {
     const id = await newReviewDocument();
     await rejectPeerAudit('review_requested', async () => {
-      const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+      const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send(reviewBody(namedReviewers));
       expect(r.status).toBe(503);
       expect(r.body).toMatchObject({ success:false,error:{ code:'REVIEW_UNAVAILABLE' } });
       expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
     });
-    expect((await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers })).status).toBe(200);
+    expect((await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send(reviewBody(namedReviewers))).status).toBe(200);
     const audit = await jdb.pool.query('SELECT operation_type FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type=$2', [id, 'review_requested']);
     expect(audit.rows).toHaveLength(1);
   }, T);
 
   it('an audit failure preserves the pending review instead of saving a verdict', async () => {
     const id = await newReviewDocument();
-    await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send(reviewBody(namedReviewers));
     await rejectPeerAudit('document_reviewed', async () => {
       const r = await decide(id,{ review_status:'changes_requested',review_comments:'Clarify the IND clinical rationale.' });
       expect(r.status).toBe(503);
@@ -500,7 +516,7 @@ describe('a review request names someone other than the author and gives them th
   it('refuses the document’s author as its reviewer, and writes nothing', async () => {
     const id = await newReviewDocument();
     const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`))
-      .send({ reviewers: [{ id: AUTHOR.id, name: AUTHOR.name, email: AUTHOR.email }] });
+      .send(reviewBody([{ id: AUTHOR.id, name: AUTHOR.name, email: AUTHOR.email }]));
     expect(r.status, JSON.stringify(r.body)).toBe(409);
     expect(r.body.error?.code).toBe('REVIEWER_IS_AUTHOR');
     expect(String(r.body.error?.message)).toMatch(/author/i);
@@ -510,7 +526,7 @@ describe('a review request names someone other than the author and gives them th
 
   it('grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant', async () => {
     const id = await newReviewDocument();
-    const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send(reviewBody(namedReviewers));
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     expect(r.body.grants).toEqual([expect.objectContaining({ reviewerId: REVIEWER.id, granted: true })]);
     expect(await reviewerGrants(id, REVIEWER.id)).toEqual([{ role: 'REVIEWER', granted_by: AUTHOR.id }]);
@@ -519,9 +535,13 @@ describe('a review request names someone other than the author and gives them th
       [`%${id}%`],
     );
     expect(chained.rows).toHaveLength(1);
-    // Asking again re-requests the review; it does not stack a second grant.
-    const again = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
-    expect(again.status).toBe(200);
+    // Asking again while the reviewer is named on the document's open review
+    // route (RR5) is refused: they are already asked, by name, on the route.
+    // Until RR5 the same request re-asked them (200). Either way no second
+    // grant is stacked.
+    const again = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send(reviewBody(namedReviewers));
+    expect(again.status, JSON.stringify(again.body)).toBe(409);
+    expect(again.body.error?.code).toBe('MEMBER_ALREADY_NAMED');
     expect(await reviewerGrants(id, REVIEWER.id)).toHaveLength(1);
   }, T);
 
@@ -530,7 +550,7 @@ describe('a review request names someone other than the author and gives them th
     // An AUTHOR grant permits requesting review, while grant management stays
     // with the OWNER. Mere membership is not authority to send any document.
     await grantDocument(id,BYSTANDER,'AUTHOR');
-    const r = await as(BYSTANDER)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    const r = await as(BYSTANDER)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send(reviewBody(namedReviewers));
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     expect(r.body.grants).toEqual([expect.objectContaining({ reviewerId: REVIEWER.id, granted: false })]);
     expect(String(r.body.grants[0].reason)).toMatch(/owner or an administrator/i);

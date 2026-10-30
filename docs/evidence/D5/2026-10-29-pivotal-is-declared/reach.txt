@@ -1,0 +1,33 @@
+# Production reach (follow-up, 2026-10-29)
+
+## 1. ci:launch-scope-api with the panel on the CSR card and the endpoint unclaimed (exit 1)
+ci:launch-scope-api: 1 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+
+  [out-of-scope] /api/csr-workflow/pivotal
+    called by ectd-compile
+    in client/src/concept2cure/v2/surfaces/StudyPivotalDeclarations.tsx
+
+## 2. csr-pivotal-launch-scope.test.ts without the ectd-compile claim
+ × csr-pivotal-launch-scope.test.ts > launch scope for the CSR workflow paths > serves the pivotal declarations at launch, read and write 7ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ ✓ csr-pivotal-launch-scope.test.ts > launch scope for the CSR workflow paths > does not widen to the rest of /api/csr-workflow 1ms
+      Tests  1 failed | 1 passed (2)
+
+## 3. csrSourceInputControls.test.tsx without the mount
+ × csrSourceInputControls.test.tsx > shows the project’s pivotal declarations on the CSR card, which a launch screen shows (D5, 2026-10-29) 5009ms
+      Tests  1 failed | 14 passed (15)
+
+## Green
+ci:launch-scope-api: 566 API paths named by launch and shell screens; none refused. {"launch":515,"infrastructure":2,"never-gated":49}
+# csr-pivotal-launch-scope + launch-reproof-narrowing + csr-study-pivotal.pglite:
+ Test Files  3 passed (3)
+      Tests  217 passed (217)
+# csrSourceInputControls:
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+# the 16 client suites that render the CSR card or the panel:
+ Test Files  16 passed (16)
+      Tests  158 passed (158)

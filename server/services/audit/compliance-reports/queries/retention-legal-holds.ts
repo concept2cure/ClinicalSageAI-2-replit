@@ -159,7 +159,7 @@ export const retentionLegalHolds: ReportDefinition = {
         ['id', 'Hold id'],
         ['reference', 'Reference'],
         ['scope', 'Scope'],
-        ['program_id', 'Program'],
+        ['program_id', 'Project'],
         ['document_id', 'Document'],
         ['reason', 'Reason'],
         ['placed_at', 'Placed'],

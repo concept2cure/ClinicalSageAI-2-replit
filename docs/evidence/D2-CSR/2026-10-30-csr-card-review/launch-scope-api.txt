@@ -1,0 +1,6 @@
+
+> concept2cure-riai@1.0.0 ci:launch-scope-api
+> npx tsx scripts/ci/check-launch-scope-api.ts
+
+ci:launch-scope-api: 573 API paths named by launch and shell screens; none refused. {"launch":523,"infrastructure":2,"never-gated":48}
+exit=0

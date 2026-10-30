@@ -1,0 +1,244 @@
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked 34ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference 4ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does 4ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy 8ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > Auto is the product copy, with every ceiling from the shared constants — rounds whichever engine, and the wall clock 1ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > Manual says what she does, and the three ways a hold ends without the person 0ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > Quick ask says what Auto does to it, where the engine is chosen 0ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > menu: each radio is named by its label and described by its description 187ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > foot: each radio is named by its label and described by its description 38ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the foot shows, in words on screen, what the chosen policy does 11ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the checked option is marked by more than colour: a check mark 29ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the switch does not animate under reduced motion 3ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > says a change applies to the next message while one is running 15ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > renders nothing outside the shell 2ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > Home, beside AnA drives, behind AnA settings 79ms
+ × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot 4ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > V2App sends the preference as the shell chat’s run policy > passes runPolicy: prefs.anaRunPolicy into the shell useAnaChat 0ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > V2App sends the preference as the shell chat’s run policy > defaults the preference to Auto and provides the switch its context 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > for every catalog row, a tile is shown exactly when the server offers the filing, and author-only ones say so 1528ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > offers exact Canada device authoring while medicinal applications retain their refusal 62ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a filing whose agency the server names no market for is not offered, and its reason is the server's 58ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > the chosen filing states its offer as text 40ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > lists nothing while the verdict is pending 7ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a failed read is an error with Retry, never an empty or a full list 50ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an IND without being one (a Pre-IND meeting) states no tier; the NDA itself says Build and sequence 91ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a Type A meeting package is its own class: authored here, and says so 45ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the harmonised documents are offered for authoring under ICH, asked of the server by their own market 35ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market 58ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada) 56ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on 416ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives 58ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > renders no lock and navigates normally when the navigation fetch fails 436ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > renders no lock when the server answers resolved:false 185ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > locks a tier-gated surface, states the real reason, and does not navigate 196ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > hands a locked result to the unlock panel, which outlives the palette 209ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > keeps a locked result arrow-reachable and Enter-activatable 67ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > leaves an entitled surface completely alone 171ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > shows no locks for the master-admin owner grant 161ms
+ × client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > gates the default list without ever locking a surface the catalog has no row for 283ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a tier lock 196ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a disabled lock 158ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > states the real reason for a industry lock 155ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order 207ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading 300ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the feature catalog, Submission Center, Conversation and a second task entry are not on the rail 28ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no two entries share an icon 27ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=false) 238ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=true) 189ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release 26ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Quality is on the rail, and opens Quality 66ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > CMC / Module 3 is on the rail beside Quality, and opens CMC 77ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Home is explicitly labelled and opens Home 64ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no entry carries an AnA badge, and no section lists retired or locked screens 20ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the mark goes to Home 81ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is reached without a rail entry > ⌘K finds Conversation and opens the conversation screen 40ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the task board on everyone’s tasks 214ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > the board’s My tasks gives the person’s own, and Tasks stays the marked entry 203ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the board at its own address, not the action’s alias 176ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Artifacts center, no longer a rail entry, is reached from ⌘K > the top bar’s search opens the palette, and the result opens Artifacts center 72ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Plan & features and the client type > offers an organization administrator Plan & features, which opens the catalog 80ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Plan & features and the client type > offers every client type once, the current one checked, by more than colour 44ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Plan & features and the client type > choosing a client type sets it 63ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Plan & features and the client type > choosing the type already chosen changes nothing and closes the menu 56ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 33ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 40ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 33ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 34ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 264ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > LiveDriveSwitch > is a switch whose checked state is the shell’s, and pressing it asks for the opposite 194ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > LiveDriveSwitch > Demos opens a menu with the tour and every demonstration, and each item starts it 112ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > LiveDriveSwitch > does not offer a demonstration that walks onto a screen closed to this person 23ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > LiveDriveSwitch > under an entitlement lock shows the honest reason and no switch 4ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > LiveDriveSwitch > outside the shell (no controls provided) renders nothing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored Live Drive preference > a first visit starts with AnA’s hands on 763ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored Live Drive preference > a pref serialised under the old OFF default loads ON 91ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored Live Drive preference > a switch-off made under the current default is kept 118ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored Live Drive preference > the composer switch writes the choice so it survives a reload 123ms
+ × client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored rail preference > a first visit starts with the rail open 61ms
+ × client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored rail preference > a pref serialised while the rail started collapsed loads open 45ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored rail preference > a collapse made under the open default is kept 47ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored rail preference > at phone width a first visit starts collapsed 44ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > readDirectiveProgram > accepts a program with a string id, trimming its fields 1ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > readDirectiveProgram > accepts a numeric id as its string form 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > readDirectiveProgram > drops blank names/codes rather than publishing them 0ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > readDirectiveProgram > rejects a missing, blank or non-scalar id, and non-object inputs 0ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > medtech: no control on Home leads to the catalog, and Home invents no project or conversation 314ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > diagnostics: no control on Home leads to the catalog, and Home invents no project or conversation 88ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > biopharma: no control on Home leads to the catalog, and Home invents no project or conversation 90ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > cro: no control on Home leads to the catalog, and Home invents no project or conversation 90ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > health: no control on Home leads to the catalog, and Home invents no project or conversation 84ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > academic: no control on Home leads to the catalog, and Home invents no project or conversation 86ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > regulatory: no control on Home leads to the catalog, and Home invents no project or conversation 80ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > medical_writing: no control on Home leads to the catalog, and Home invents no project or conversation 77ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > biotech: no control on Home leads to the catalog, and Home invents no project or conversation 77ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > pharma: no control on Home leads to the catalog, and Home invents no project or conversation 76ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > nor while the portfolio read is pending 46ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > nor when the portfolio read fails, which is said and not shown as an empty portfolio 5009ms
+ × client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > the catalog is named Plan & features, at its unchanged routable id 3ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > the duplicate discovery presentation is retired > removes the overlay implementation and its Home integration 1ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > nonlicensable records keep their existing command-palette replacement > 'audit-trail' stays reachable without a subscribable catalog row 60ms
+ ✓ client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > nonlicensable records keep their existing command-palette replacement > 'part11-console' stays reachable without a subscribable catalog row 40ms
+ × client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > nests each live feature once in its existing work area and explains when, where to start and what follows 947ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > shows only work areas represented by live rows instead of inventing the missing catalog 22ms
+ × client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > finds a subordinate feature, expands its workflow and opens its original destination 605ms
+ × client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > searches original backend categories even when their features belong to different workflows 563ms
+ × client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > searches the workflow guidance as well as feature names 556ms
+ × client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > retains unknown live capabilities and their category, including search and original navigation 616ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > keeps mapped and additional release-excluded features locked even when their grant is enabled 51ms
+ × client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > uses the original module and backend group for a governed toggle after regrouping and search 621ms
+ × client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > explains a no-match search and restores the actual live features when cleared 595ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports a genuinely empty catalog without claiming a search or read failure 14ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports network failure as a failed read, never an empty catalog 13ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > reports malformed successful body as a failed read, never an empty catalog 12ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > renders no lock at all when the navigation fetch fails 365ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > renders no lock when the server answers resolved:false 95ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > locks a tier-gated module, keeps it activatable, and routes to plans 132ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > leaves an entitled module completely alone 104ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > shows no locks for the master-admin owner grant 86ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > never locks a destination the catalog has no row for 78ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a tier lock in the accessible name 87ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a disabled lock in the accessible name 75ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a industry lock in the accessible name 72ms
+ × client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > your projects, your tasks, Ask AnA, then recent conversations 5050ms
+ × client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > lists five projects and names how many there are in all 5015ms
+ × client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > New project opens the new-project wizard, not the portfolio behind it 5017ms
+ × client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > your tasks opens the task board 309ms
+ × client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > recent conversations > lists the person’s own conversations, and one reopens its thread 5012ms
+ × client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > recent conversations > with none, says where they come from 5014ms
+ × client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > recent conversations > a failed read is said, and is not shown as no conversations 5012ms
+ × client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > recent conversations > a reply without a list is a failed read, not an empty one 5012ms
+ × client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Ask AnA > keeps AnA’s run controls behind one AnA settings button 156ms
+ × client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Ask AnA > the composer is named by its heading 131ms
+ ✓ client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx > Apps catalog reaches MDX through Projects > grounds AnA in the project journey and feature access without an app-count product model 103ms
+ ✓ client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx > Apps catalog reaches MDX through Projects > groups features across catalog categories into one solution and keeps shared apps reachable 220ms
+ × client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx > Apps catalog reaches MDX through Projects > searches within the Projects MDX workflow and preserves unknown additional capabilities 346ms
+ ✓ client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx > Apps catalog reaches MDX through Projects > preserves disabled, tier and industry reasons on individual feature rows 53ms
+ ✓ client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx > Apps catalog reaches MDX through Projects > governs a feature access change using the original module id and catalog group 105ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home while there is no project > shows the client-type welcome, and a starter starts a conversation with it 265ms
+ × client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home while there is no project > is not shown once dismissed 5015ms
+ × client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home while there is no project > is not shown once the organization has a project: the project is the next step 5014ms
+ × client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home > offers no destination this release does not carry 5015ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the conversation's composer carries the engine > shows the engine its turns run on, and a choice goes to the shell 99ms
+ × client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > lists the org’s REAL projects (not a constant), each opening its Project home 5046ms
+ × client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > with no projects, says what a project is and offers one way to start — never a fixture 5012ms
+ × client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > says the read failed rather than falling back to a sample programme or an empty portfolio 5013ms
+ × client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > renders no sample programme for ANY segment 5009ms
+ ✓ client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > SEGMENT_CONTEXT is reference config, not programme data > carries no `program` field on any segment 2ms
+ ✓ client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > SEGMENT_CONTEXT is reference config, not programme data > still carries the category label and its regulatory pathways 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > starts device and diagnostic capability discovery in Projects 2ms
+ × client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > carries no per-segment Home shortcuts: Home leads with the client's projects 7ms
+ × client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > a rail entry that applies a screen action names a registered, ungoverned action on its own screen 3ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every rail entry opens Home or a registered surface 2ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every NAV_GROUP_OF / NAV_HIDDEN id resolves to a registered surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every segment-module item resolves to a registered surface 3ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every surface-scoped action key resolves (except the _default catch-all) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > deep-link aliases point at registered surfaces 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every segment defaultSurface resolves 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > client-type tier listings partition sensibly 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > CMC / Module 3 is a launch app, reachable, and a rail place beside Quality 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > Quality is a place, not a hidden surface 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > AnA modes display engine labels, never vendor/model names 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > each mode names its effort, in the words of the effort the server runs 1ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > getAnaContext derives a context for unknown surfaces without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > getAnaContext uses surface-tuned context where the kit ships one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > the e-sign meaning enum is the INSTALL §5 ten-value list 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > client categories carry icons for the account menu 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > the retired lane ids are gone from SEGMENTS — one lane, not three 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > getSegment('biotech') and getSegment('pharma') resolve to the merged lane 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > one module list serves both retired ids — the duplicate is deleted, not hidden 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > the client type list offers the merged lane once, not the two company labels 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > every rail client-category id resolves to a real segment 2ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > getAnaContext says only what is true about where the person is > no authoring surface reports a section or sends a prompt that presumes one 12ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > getAnaContext says only what is true about where the person is > the focus on an authoring surface does not change with the client type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > getAnaContext says only what is true about where the person is > no registered surface puts an internal identifier in module, here or focus 40ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > getAnaContext says only what is true about where the person is > Home is named Home, not by its raw id 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > no nav entry promises a feature that does not exist > there is no "Starred Items" entry (nothing in the product can be starred) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/registryModel.test.ts > no nav entry promises a feature that does not exist > Projects, the destination that entry opened, is on the rail 0ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 61 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx > Apps catalog reaches MDX through Projects > searches within the Projects MDX workflow and preserves unknown additional capabilities
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > medtech: no control on Home leads to the catalog, and Home invents no project or conversation
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > diagnostics: no control on Home leads to the catalog, and Home invents no project or conversation
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > biopharma: no control on Home leads to the catalog, and Home invents no project or conversation
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > cro: no control on Home leads to the catalog, and Home invents no project or conversation
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > health: no control on Home leads to the catalog, and Home invents no project or conversation
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > academic: no control on Home leads to the catalog, and Home invents no project or conversation
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > regulatory: no control on Home leads to the catalog, and Home invents no project or conversation
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > medical_writing: no control on Home leads to the catalog, and Home invents no project or conversation
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > biotech: no control on Home leads to the catalog, and Home invents no project or conversation
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > pharma: no control on Home leads to the catalog, and Home invents no project or conversation
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > nor while the portfolio read is pending
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > nor when the portfolio read fails, which is said and not shown as an empty portfolio
+ FAIL  client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx > Home does not open the feature catalog > the catalog is named Plan & features, at its unchanged routable id
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx > ⌘K licence gating > gates the default list without ever locking a surface the catalog has no row for
+ FAIL  client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > lists the org’s REAL projects (not a constant), each opening its Project home
+ FAIL  client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > with no projects, says what a project is and offers one way to start — never a fixture
+ FAIL  client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > says the read failed rather than falling back to a sample programme or an empty portfolio
+ FAIL  client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > renders no sample programme for ANY segment
+ FAIL  client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > your projects, your tasks, Ask AnA, then recent conversations
+ FAIL  client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > lists five projects and names how many there are in all
+ FAIL  client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > New project opens the new-project wizard, not the portfolio behind it
+ FAIL  client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > your tasks opens the task board
+ FAIL  client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > recent conversations > lists the person’s own conversations, and one reopens its thread
+ FAIL  client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > recent conversations > with none, says where they come from
+ FAIL  client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > recent conversations > a failed read is said, and is not shown as no conversations
+ FAIL  client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > recent conversations > a reply without a list is a failed read, not an empty one
+ FAIL  client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Ask AnA > keeps AnA’s run controls behind one AnA settings button
+ FAIL  client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Ask AnA > the composer is named by its heading
+ FAIL  client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored rail preference > a first visit starts with the rail open
+ FAIL  client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored rail preference > a pref serialised while the rail started collapsed loads open
+ FAIL  client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home while there is no project > is not shown once dismissed
+ FAIL  client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home while there is no project > is not shown once the organization has a project: the project is the next step
+ FAIL  client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home > offers no destination this release does not carry
+ FAIL  client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > carries no per-segment Home shortcuts: Home leads with the client's projects
+ FAIL  client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > a rail entry that applies a screen action names a registered, ungoverned action on its own screen
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot
+ FAIL  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > Home, beside AnA drives, behind AnA settings
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the feature catalog, Submission Center, Conversation and a second task entry are not on the rail
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no two entries share an icon
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=false)
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=true)
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the task board on everyone’s tasks
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > the board’s My tasks gives the person’s own, and Tasks stays the marked entry
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the board at its own address, not the action’s alias
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Plan & features and the client type > offers an organization administrator Plan & features, which opens the catalog
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present
+ FAIL  client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > nests each live feature once in its existing work area and explains when, where to start and what follows
+ FAIL  client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > finds a subordinate feature, expands its workflow and opens its original destination
+ FAIL  client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > searches original backend categories even when their features belong to different workflows
+ FAIL  client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > searches the workflow guidance as well as feature names
+ FAIL  client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > retains unknown live capabilities and their category, including search and original navigation
+ FAIL  client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery extends the live catalog > uses the original module and backend group for a governed toggle after regrouping and search
+ FAIL  client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx > workflow discovery distinguishes search, empty and failed reads > explains a no-match search and restores the actual live features when cleared
+ Test Files  11 failed | 2 passed (13)
+      Tests  61 failed | 119 passed (180)

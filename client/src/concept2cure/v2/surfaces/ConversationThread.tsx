@@ -41,6 +41,7 @@ const INTELLIGENCE_ANSWER_PREFIX = '[INTELLIGENCE_ANSWER]';
 import { CrlPremortemPanel } from '../../components/ana/CrlPremortemPanel';
 import { AnaGrounding } from '../AnaGrounding';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
+import { WhatAnaRemembers } from '../WhatAnaRemembers';
 import {
   CanvasDocumentList, documentListUrl, rowsOf, useDocumentList, useNarrowCanvas,
   type BuiltDocument, type ListFocus, type ListScope,
@@ -715,7 +716,7 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
         : m.streaming
           ? unstoredDraftReason(false)
           : unstoredDraftReason(true)
-            + ' AnA files a draft against the open program, and does not re-file one that is '
+            + ' AnA files a draft against the open project, and does not re-file one that is '
             + 'identical to the version already stored.',
     });
   }
@@ -872,7 +873,7 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
   const routeBlockedBecause = !art.artifactId
     ? unstoredDraftReason(saveSettled)
     : projectId == null
-      ? 'Open a program first — the review workflow is scoped to one.'
+      ? 'Open a project first — the review workflow is scoped to one.'
       : null;
 
   return (
@@ -1102,6 +1103,9 @@ export type { AskOrigin } from '../editor/askAnaToDraft';
 
 export function ConversationThread({ onNav, liveDrive, shellChat, engine }: OwnedSurfaceViewProps) {
   const [engineOpen, setEngineOpen] = useState(false);
+  /* What AnA remembers (the fold of `ana-memory`, 2026-10-29): her notes on
+     working with this person, read only, beside the conversation. */
+  const [remembersOpen, setRemembersOpen] = useState(false);
   const engineMenuId = useId();
   const [location, navigate] = useLocation();
   /* The conversation the URL names (routing.ts), read once, at mount. It is
@@ -1931,6 +1935,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
           >
             {I.plus} New conversation
           </button>
+          <button type="button" className="ct-head-open" aria-haspopup="dialog" onClick={() => setRemembersOpen(true)}>
+            {I.history} What AnA remembers
+          </button>
           {/* The canvas's Documents list: shown and hidden here while no
               document is open; an open document reaches it from its bar. */}
           {!expandedDocId && (conversationId || projectOpen) && (
@@ -2160,7 +2167,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
               <textarea ref={draftRef} rows={1}
                 disabled={adminFollowing || undefined}
                 aria-label={steering ? (manualHold ? 'Tell AnA what to do instead' : 'Steer this run') : 'Reply to AnA'}
-                placeholder={adminFollowing ? FOLLOW_LINES.adminCannotSteer : steering ? (manualHold ? 'Or tell AnA what to do instead' : 'Steer this run — AnA takes it at her next step') : 'Reply to AnA — ask, request a draft, or type @ to name an app...'}
+                placeholder={adminFollowing ? FOLLOW_LINES.adminCannotSteer : steering ? (manualHold ? 'Or tell AnA what to do instead' : 'Steer this run — AnA takes it at her next step') : 'Reply to AnA — ask, request a draft, or type @ to name a feature…'}
                 aria-invalid={(steering && steerRefused) || undefined}
                 aria-describedby={steering ? [steerRefused ? 'ct-steer-err' : '', steerHelp ? 'ct-steer-help' : ''].filter(Boolean).join(' ') || undefined : undefined}
                 value={draft}
@@ -2378,6 +2385,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
           onClose={summary.close}
           onContinue={summaryContinue}
         />
+      )}
+      {/* The project its notes are read for is the one this conversation's turns carry. */}
+      {remembersOpen && (
+        <WhatAnaRemembers projectRef={shellProjectId} projectName={shellProgramName()} onClose={() => setRemembersOpen(false)} />
       )}
       <C2CToast msg={toast} />
     </div>

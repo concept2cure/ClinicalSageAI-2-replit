@@ -16,12 +16,12 @@
  * client cannot find its results in.
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { searchEmaEpar } from '../ema-epar-client';
+import { searchEmaEpar, clearEmaEparCache } from '../ema-epar-client';
 import { searchEuCtis } from '../eu-ctis-client';
 import { searchEudamed } from '../eudamed-client';
 
 const notFound = () => ({ ok: false, status: 404, json: async () => ({}) }) as any;
-const okBody = (json: unknown) => ({ ok: true, status: 200, json: async () => json }) as any;
+const okBody = (json: unknown) => new Response(JSON.stringify(json), { headers: { 'content-type': 'application/json' } });
 
 const clients = [
   ['EMA EPAR', () => searchEmaEpar({ query: 'examplemab' })],
@@ -33,6 +33,7 @@ describe('EU registry clients: a failed read is unavailable, not zero matches', 
   const realFetch = global.fetch;
   afterEach(() => {
     global.fetch = realFetch;
+    clearEmaEparCache();
     vi.restoreAllMocks();
   });
 
@@ -44,14 +45,14 @@ describe('EU registry clients: a failed read is unavailable, not zero matches', 
   });
 
   it.each(clients)('%s: a 200 body with no results array is unavailable', async (_name, search) => {
-    global.fetch = vi.fn().mockResolvedValue(okBody({ error: 'unexpected envelope' })) as any;
+    global.fetch = vi.fn(async () => okBody({ error: 'unexpected envelope' })) as any;
     const r = await search();
     expect(r.status, 'an unrecognised body was reported as a successful zero-match search').toBe('unavailable');
     expect(r.message).toMatch(/no results array|unexpected/i);
   });
 
   it.each(clients)('%s: an explicit empty results array is still ok with zero matches', async (_name, search) => {
-    global.fetch = vi.fn().mockResolvedValue(okBody({ content: [], data: [], totalElements: 0 })) as any;
+    global.fetch = vi.fn(async () => okBody({ content: [], data: [], totalElements: 0 })) as any;
     const r = await search();
     expect(r.status).toBe('ok');
     expect(r.totalCount).toBe(0);

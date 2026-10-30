@@ -85,6 +85,11 @@ beforeAll(async () => {
     CREATE TABLE qms_text_audit_proof (organization_id integer NOT NULL, user_id integer NOT NULL, details jsonb);
     CREATE TABLE qms_approval_proof (id serial PRIMARY KEY, kind text NOT NULL, user_id integer NOT NULL, content_digest text NOT NULL);
   `);
+  // RR4: a save of a document in review first asks whether its review route is open (none here).
+  const routes = readFileSync(new URL('../../../../migrations/20261023_review_routes.sql', import.meta.url), 'utf8')
+    .match(/CREATE TABLE IF NOT EXISTS public\.review_routes \([\s\S]*?\n\);/);
+  if (!routes) throw new Error('Canonical review_routes DDL not found');
+  await database.exec(routes[0]);
   await database.exec(readFileSync(new URL('../../../../migrations/20260603_governance_permission_grants.sql', import.meta.url), 'utf8'));
 }, 60_000);
 
@@ -149,7 +154,7 @@ async function approveAs(userId: number) {
   try {
     const result = await approveQmsDocumentSigned(client, {
       orgId: 1, userId, documentId: document.id,
-      reason: 'Reviewed the controlled procedure independently.', meaning: 'APPROVED', effectiveDate: '2026-10-14',
+      reason: 'Reviewed the controlled procedure independently.', meaning: 'APPROVED', effectiveDate: new Date().toISOString().slice(0, 10),
       authenticationMethod: 'password+totp', secondFactorVerified: true, ipAddress: '127.0.0.1',
     });
     await client.query('COMMIT');

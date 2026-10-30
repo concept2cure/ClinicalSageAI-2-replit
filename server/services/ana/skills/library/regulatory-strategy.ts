@@ -387,7 +387,7 @@ The program may qualify for orphan designation in the US or EU, or owes pediatri
 2. Screen orphan eligibility with \`assess_orphan_designation\` (FDA and EMA side by side) or \`global_ri_special_designations\` for one market (FDA, EMA or PMDA). Report thresholds, criteria and missing facts as returned; a met screen is not a designation. Where a satisfactory method already exists for the condition in the EU, the application turns on showing significant benefit over it; \`advise_special_designation\` describes that case with its evidence and pitfalls.
 3. The designation request comes before the marketing application in both regions, so settle its timing against the filing plan. To draft the FDA request, run \`plan_orphan_drug_designation\` with the product and a source for every prevalence and eligibility claim; \`search_literature\` finds prevalence and natural-history sources. The draft asserts no claim without a cited source and is a draft until reviewed and signed.
 4. Orphan exclusivity and any pediatric extension come from \`global_ri_exclusivity\`. The EU pharmaceutical reform would change orphan and pediatric incentives but is proposed and not adopted; state current law.
-5. Pediatric obligations. \`assess_pediatric_requirements\` returns the FDA PREA and EU paediatric-regulation obligations, waivers, deferrals and incentives for the program; \`global_ri_pediatric_plan\` returns per market whether a plan is required, its name, its due timing and the next actions. Orphan designation affects whether PREA applies, with an exception for certain molecularly targeted oncology drugs; take the determination from the tools.
+5. Pediatric obligations. \`assess_pediatric_requirements\` returns a stated-input worksheet with FDA PREA and EU framework references; unresolved application triggers, orphan exceptions and incentives remain unassessed. \`global_ri_pediatric_plan\` supplies market plan guidance. Report each tool's basis and unknown states; obtain the missing application/exception facts rather than asserting a program mandate, waiver or reward from reference information.
 6. The regulatory position rests on the plan's outline and its waiver and deferral case, which \`design_pediatric_investigation\` returns with the iPSP or PIP structure and the studies by ICH E11(R1) age group. The plan's clinical content (study design by age group, extrapolation, formulation and dose) is clinical development work and follows the pediatric development method.
 7. Rare pediatric disease designation carries a priority review voucher program that has been subject to statutory sunset and reauthorization. Do not state its current status from memory; say it needs confirming against FDA's current information.
 
@@ -491,6 +491,8 @@ A product combines a drug, a biologic or a device, and the question is whether i
       'US_TYPE_A_MEETING',
       'US_TYPE_B_MEETING',
       'US_TYPE_C_MEETING',
+      'US_TYPE_D_MEETING',
+      'US_INTERACT',
       'US_QSUB',
       'US_IVD_QSUB',
       'EU_SCIENTIFIC_ADVICE',

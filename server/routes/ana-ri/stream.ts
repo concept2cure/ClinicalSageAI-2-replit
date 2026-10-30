@@ -189,6 +189,8 @@ import {
   buildRouteContextBlock,
   prefetchRouteIntelligenceContext,
   resolveProjectIdFromBody,
+  openDocumentPromptContexts,
+  selectAuthoringContext,
 } from '../../services/ana-ri/chat-context-builder.js';
 import { withStatedDocumentType } from '../../services/ana-ri/open-document.js';
 import { invokedAppHints, invokedAppPins } from '../../services/ana-ri/invoked-apps-block.js';
@@ -395,6 +397,11 @@ export const APPROVAL_TIMEOUT_WHY = 'nobody decided in time';
 /** Why a step a person approved as its run stopped did not finish in the turn (DT3 review, 4.3). Fixed copy. */
 export const STOPPED_AFTER_APPROVAL_WHY =
   "the run was stopped after a person approved it; the action's own audit record says whether it completed";
+/** …and one a person approved as the approval window closed, whose result never reached the turn. Fixed copy. */
+export const APPROVED_AS_WINDOW_CLOSED_WHY =
+  "a person approved it as the approval window closed and its result did not reach this turn; the action's own audit record says whether it completed";
+/** How long past the approval window a turn waits for the result of an approval its person claimed (DT3 review, 4.3). */
+export const CLAIMED_APPROVAL_GRACE_MS = 2 * 60_000;
 
 /**
  * What the model is told for a screen action refused because the page that
@@ -1487,10 +1494,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
          the program UUID remains available to program-keyed readers. */
       const streamProjectPromise: Promise<TurnProject> = Promise.resolve(admittedProject.projectId == null
         ? { status: 'none' } : { status: 'linked', id: admittedProject.projectId });
-      const streamAuthoringContext =
-        authoring_context && typeof authoring_context === 'object'
-          ? ({ ...authoring_context } as Record<string, unknown>)
-          : undefined;
+      const streamAuthoringContext = selectAuthoringContext(authoring_context, req.body.context);
 
       // Thread resolution (before private memory and server history).
       //
@@ -1641,21 +1645,20 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
         projectIdNumber: streamProjectIdNumber,
         organizationId: orgId,
         authoringContext: withStatedDocumentType(streamAuthoringContext, document_context),
+        openDocumentAccess: { getClient: () => requestPgClient(req), userId: guardUserId, project: admittedProject },
         userId: typeof userId === 'number' ? userId : Number(userId) || null,
         targetAgency:
           typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
         sessionStart: historyWindow.totalTurns === 0,
       });
       const streamDecisionContext = prefetchedStreamContext.decisionContext;
-      const streamFeedbackContext = prefetchedStreamContext.feedbackContext;
-      const streamProjectProfile = prefetchedStreamContext.projectProfile;
-      const streamRimContext = prefetchedStreamContext.rimContext;
+      const openDocumentContexts = openDocumentPromptContexts(prefetchedStreamContext, streamAuthoringContext, document_context);
       const streamOrchestratorAuthoringContext = buildOrchestratorAuthoringContext({
-        authoringContext: streamAuthoringContext,
+        authoringContext: openDocumentContexts.authoringContext,
         projectId: streamProjectId,
         organizationId: orgId,
         decisionContext: streamDecisionContext,
-        rimContext: streamRimContext,
+        rimContext: prefetchedStreamContext.rimContext,
       });
 
       // Orchestrate
@@ -1665,12 +1668,12 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
         userRole: effectiveRole,
         language: validatedLanguage,
         projectContext: project_context,
-        documentContext: document_context,
+        documentContext: openDocumentContexts.documentContext,
         submissionType: submission_type as SubmissionType | undefined,
         conversationHistory: conversationTurns,
         authoringContext: streamOrchestratorAuthoringContext,
-        _feedbackContext: streamFeedbackContext,
-        _projectIntelligenceProfile: streamProjectProfile,
+        _feedbackContext: prefetchedStreamContext.feedbackContext,
+        _projectIntelligenceProfile: prefetchedStreamContext.projectProfile,
         _relationalOverlay: prefetchedStreamContext.relationalOverlay,
         _externalIntelBlock: prefetchedStreamContext.externalIntelBlock,
         _deadlineRadarBlock: prefetchedStreamContext.deadlineRadarBlock,
@@ -1699,9 +1702,9 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       }
 
       // Inject section-specific ICH M4 guidance when drafting a CTD section
-      const sectionCode = authoring_context?.sectionCode || req.body.context?.sectionCode;
+      const sectionCode = openDocumentContexts.sectionCode;
       if (sectionCode) {
-        const sectionGuide = buildSectionSpecificPrompt(sectionCode);
+        const sectionGuide = buildSectionSpecificPrompt(sectionCode, prefetchedStreamContext.openDocumentRegistryId);
         if (sectionGuide) {
           orchestration.systemPrompt += `\n\n${sectionGuide}`;
         }
@@ -1844,9 +1847,9 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       // join below.
       const turnContextSources: EvidenceEntry[] = [{ source: 'person', content: message }];
       const projectDataGiven = [
-        streamRimContext,
+        prefetchedStreamContext.rimContext,
         Array.isArray(streamDecisionContext) && streamDecisionContext.length > 0 ? JSON.stringify(streamDecisionContext) : '',
-        streamProjectProfile ? JSON.stringify(streamProjectProfile) : '',
+        prefetchedStreamContext.projectProfile ? JSON.stringify(prefetchedStreamContext.projectProfile) : '',
         prefetchedStreamContext.externalIntelBlock,
         prefetchedStreamContext.deadlineRadarBlock,
         prefetchedStreamContext.sessionBriefingBlock,
@@ -2869,25 +2872,59 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
           // disconnectRun, which reaches this wait as the run's abort.
           const WAKE_CEILING_MS = 5_000;
           const started = Date.now();
+          // A step a person approved whose result did not reach this turn:
+          // theirs, never "nobody decided"; its own audit record says whether
+          // it completed (DT3 review, finding 4.3).
+          const approvedUnconfirmed = (why: string, when: string): SettledApproval => ({
+            ok: false,
+            stoppedAfterApproval: true,
+            why,
+            result: {
+              error: 'RUN_STOPPED_AFTER_APPROVAL',
+              action: verdict.command,
+              message: `A person approved this ${when}. The action ran outside this turn, and its own audit record says whether it completed.`,
+              retry: false,
+            },
+          });
+          let windowClosedOnClaim = false;
+          /* The approval window: null while it is open, or while the grace for
+             an approval its person claimed runs; the step's outcome once over. */
+          const windowOutcome = async (): Promise<SettledApproval | null> => {
+            const waited = Date.now() - started;
+            if (waited <= MAX_PAUSE_MS) return null;
+            if (!windowClosedOnClaim) {
+              // Timeout DENIES. The same ceiling as an abandoned pause, so
+              // there is one number for "the human is not coming back" rather
+              // than two that can drift apart.
+              const denied = await recordApprovalDecision(getPool(), runId, orgId, {
+                toolUseId: toolUse.id,
+                decided: 'denied',
+                decidedAt: new Date().toISOString(),
+                byUserId: null,
+                error: 'no decision within the approval window',
+              }).catch(() => false);
+              // …unless its person claimed it as the window closed (DT3
+              // review, 4.3): the deny matched nothing, the action is being
+              // carried out under their signature, and its decision follows.
+              windowClosedOnClaim = !denied && (await approvalClaimed(getPool(), runId, toolUse.id).catch(() => false));
+              if (!windowClosedOnClaim) {
+                return refused(
+                  APPROVAL_TIMEOUT_WHY,
+                  'Nobody authorised this within the time allowed, so it did not run. Nothing was changed.'
+                );
+              }
+            }
+            return waited > MAX_PAUSE_MS + CLAIMED_APPROVAL_GRACE_MS
+              ? approvedUnconfirmed(APPROVED_AS_WINDOW_CLOSED_WHY, 'as the approval window closed')
+              : null;
+          };
           for (;;) {
             if (runHandle!.cancelSignal.aborted) {
               // A person may have approved it as the stop landed: the
               // governed-action route claims the approval before it executes
-              // (DT3 review, finding 4.3). Then it is theirs, and its own audit
-              // record says whether it completed — never "nobody decided".
+              // (DT3 review, finding 4.3).
               if (await approvalClaimed(getPool(), runId, toolUse.id).catch(() => false)) {
-                return {
-                  ok: false,
-                  stoppedAfterApproval: true,
-                  why: STOPPED_AFTER_APPROVAL_WHY,
-                  result: {
-                    error: 'RUN_STOPPED_AFTER_APPROVAL',
-                    action: verdict.command,
-                    message:
-                      'A person approved this as the run was stopped. The action ran outside this turn, and its own audit record says whether it completed.',
-                    retry: false,
-                  },
-                };
+                return approvedUnconfirmed(STOPPED_AFTER_APPROVAL_WHY, 'as the run was stopped');
               }
               return refused(
                 'the run was stopped',
@@ -2917,22 +2954,8 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
                 decision.decided !== 'approved',
               );
             }
-            if (Date.now() - started > MAX_PAUSE_MS) {
-              // Timeout DENIES. The same ceiling as an abandoned pause, so
-              // there is one number for "the human is not coming back" rather
-              // than two that can drift apart.
-              await recordApprovalDecision(getPool(), runId, orgId, {
-                toolUseId: toolUse.id,
-                decided: 'denied',
-                decidedAt: new Date().toISOString(),
-                byUserId: null,
-                error: 'no decision within the approval window',
-              }).catch(() => false);
-              return refused(
-                APPROVAL_TIMEOUT_WHY,
-                'Nobody authorised this within the time allowed, so it did not run. Nothing was changed.'
-              );
-            }
+            const closed = await windowOutcome();
+            if (closed) return closed;
             await runHandle!.wake(WAKE_CEILING_MS);
           }
         };

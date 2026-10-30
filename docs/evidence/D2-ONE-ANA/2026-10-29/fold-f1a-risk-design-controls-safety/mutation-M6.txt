@@ -1,0 +1,17 @@
+M6: risk create and update drop admitProject (writeRefused)
+file: server/routes/mdx-risk-management.ts
+test: server/routes/__tests__/mdx-risk-program-scope.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > stores the project only after the ownership check 12ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > refuses another organization's project with 404 and inserts nothing 5ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > refuses a missing project with 404 and inserts nothing 3ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > refuses a deleted project with 404 and inserts nothing 3ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > answers 503 when the ownership check cannot run, and inserts nothing 3ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > moves a hazard to a project only after the ownership check 3ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > refuses a move to another organization's project with 404 and updates nothing 3ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > refuses a move to a missing project with 404 and updates nothing 3ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > refuses a move to a deleted project with 404 and updates nothing 3ms
+ × server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > answers 503 when the ownership check cannot run, and updates nothing 3ms
+      Tests  10 failed | 25 passed (35)

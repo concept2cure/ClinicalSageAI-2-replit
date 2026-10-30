@@ -134,16 +134,31 @@ async function readFacets(
     const where = whereFor(vaultFilterSql(vaultFiltersWithout(p.filters, dimension), params, 'd'));
     // Two fixed fragments: the dimension's value expression (a code map, no
     // request value) and the search's own predicate, whose values are bound.
+    // The tenant predicate is written here as well as inside `where`, so this
+    // statement is tenant-bound on its own text: $1 is the organisation in `base`.
     const counted = await db.query(`SELECT ${vaultFacetValueSql(dimension, 'd')} AS value, count(*)::int AS count
        FROM vault.documents d
-      WHERE ${where}
+      WHERE d.organization_id = $1 AND ${where}
       GROUP BY 1 ORDER BY 2 DESC, 1`, params);
     facets[VAULT_FILTER_PARAMETERS[dimension]] = counted.rows.map((r) => ({ value: r.value ?? null, count: Number(r.count) }));
   }
   return facets;
 }
 
-export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[]; mode: 'search' | 'browse'; facets?: VaultFacets }> {
+/**
+ * Versions in scope whose text is still being read (MR-08 Stage 3): a search
+ * cannot find them yet, and says so rather than read as complete. A scalar
+ * subquery in the count's select list, over the same organisation ($1) and
+ * permitted programs ($3). Its WHERE is inline, as a select-list subquery's
+ * is, so the statement's own WHERE is still the one that starts a line.
+ */
+function pendingInScopeSql(includeSuperseded: boolean): string {
+  return `(SELECT count(*)::int FROM vault.documents pd JOIN vault.document_catalog pc ON pc.document_id = pd.id WHERE pd.organization_id = $1
+        AND pd.deleted_at IS NULL AND pd.program_id = ANY($3::uuid[]) AND pc.catalog_status = 'extraction_pending'
+        AND ${vaultDataEligibleSql('pd')}${includeSuperseded ? '' : ` AND NOT ${supersededSql('pd')}`})`;
+}
+
+export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[]; mode: 'search' | 'browse'; facets?: VaultFacets; pendingCount: number }> {
   p = Object.freeze({ ...p, allowedProgramIds: p.allowedProgramIds ? Object.freeze([...p.allowedProgramIds]) : undefined });
   // Verify on the same executor before counting, ranking or returning prose.
   // The helper evaluates an empty accessible set; it is never a tenant-wide fallback.
@@ -173,9 +188,11 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
   const where = whereFor(filterSql);
 
   // The count and the page share `where`, each on its own line after FROM.
-  const counted = await db.query(`SELECT count(*)::int AS total
+  // Count and page each carry the tenant predicate on their own text as well as
+  // through `where` ($1 is the organisation), so neither depends on the fragment.
+  const counted = await db.query(`SELECT count(*)::int AS total, ${pendingInScopeSql(Boolean(p.includeSuperseded))} AS pending
        FROM vault.documents d
-      WHERE ${where}`, params);
+      WHERE d.organization_id = $1 AND ${where}`, params);
   const page = [...params, p.limit, p.offset];
   const rows = await db.query(
     `SELECT d.id, d.content_hash, d.document_title, d.file_name, d.document_type, d.file_size,
@@ -199,7 +216,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
                         'MaxFragments=1, MaxWords=28, MinWords=8, ShortWord=2') AS snippet
        FROM vault.documents d
        JOIN regulatory_programs prog ON prog.id = d.program_id AND prog.organization_id = $1
-      WHERE ${where}
+      WHERE d.organization_id = $1 AND ${where}
       ORDER BY rank DESC, d.created_at DESC, d.id
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,
@@ -210,6 +227,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
     ...(facets ? { facets } : {}),
     mode: browse ? 'browse' : 'search',
     total: counted.rows[0]?.total ?? 0,
+    pendingCount: Number(counted.rows[0]?.pending ?? 0),
     results: rows.rows.map((r) => ({
       originalFileAvailable: r.original_file_available ?? true,
       disposition: r.disposition ?? null,

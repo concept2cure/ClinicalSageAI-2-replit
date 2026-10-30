@@ -145,7 +145,7 @@ function renderState(
         <EmptyState
           icon={I.circle}
           title={`No ${label} requested`}
-          hint={state.reason ?? `${cap(label)} are held per program. Open one, or create your first.`}
+          hint={state.reason ?? `${cap(label)} are held per project. Open one, or create your first.`}
           action={idleAction === null ? undefined : idleAction ?? openProgramAction()}
           regulation={regulation}
           testId="data-gate-idle"

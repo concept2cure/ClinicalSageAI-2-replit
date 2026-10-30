@@ -1,0 +1,49 @@
+# Green after the last edit: the helper and its call sites
+
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a bomb DOCX with 422 ARCHIVE_LIMITS_EXCEEDED
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a "Word container" whose directory cannot be read, rather than handing it on
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > admits an ordinary DOCX
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > template extraction (extractTemplateFromFile) > refuses a bomb DOCX before it inflates
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > template extraction (extractTemplateFromFile) > still reads an ordinary DOCX
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > document text extraction (extractDocumentText) > reads no text from a bomb DOCX, and never hands it to the DOCX reader
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > document text extraction (extractDocumentText) > still reads an ordinary DOCX
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > eCTD package validation (validateEctdPackage) > refuses a caller-supplied bomb package
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > eCTD package validation (validateEctdPackage) > still validates an ordinary package, and a package this server assembled is not bounded by an upload limit
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > legacy import detection (detectArchive) > reports a bomb archive as refused, reading none of its files
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > what the directory declares > admits an ordinary archive and lists its entries without inflating them
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > what the directory declares > refuses too many entries, before reading any of them
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > what the directory declares > refuses a declared total over the limit
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > what the directory declares > refuses an entry above the size floor that claims more than the ratio
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > what the directory declares > refuses a name that is absolute, names a drive or climbs out
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > what the directory declares > refuses an encrypted entry and an unknown compression method
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > what the directory declares > refuses what it cannot read, rather than passing it on
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > what each entry actually expands to > refuses an entry that inflates past the size its header declares
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > what each entry actually expands to > counts overlapping entries that share one compressed body, the non-recursive bomb
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > ZIP64 > reads a ZIP64 directory and its entries
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > the ZIP64 extra field > reads an entry's sizes from it when the directory marks them 0xFFFFFFFF
+ ✓ server/services/archive/__tests__/safe-zip.test.ts > the defaults > are the work order’s: 10,000 entries, 512 MiB, 100:1 above 1 MiB
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+
+# Every suite that touches a changed path (83 files: upload safety, file signatures, templates, document text, eCTD validation and export, legacy import, Office-file routes)
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed | 79 passed (83)
+      Tests  24 failed | 1173 passed | 10 skipped (1207)
+Failing files, each also failing without this change (04-baseline.txt):
+      1  FAIL  server/__tests__/routes/smoke.test.ts
+     15  FAIL  server/services/report-os/pdf/__tests__/run-pdf.test.ts
+      1  FAIL  server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts [ server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts ]
+      8  FAIL  tests/lineage/founder-path-lineage.pglite.test.ts
+
+# The scanner fixture, given a readable Word container
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+
+# Real PostgreSQL 16 (RLS_ENFORCE=on, app_service): the two dbtests that upload Office files
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 10 passed (11)
+(the one failure, authoring-stability-table 'survives the hard reload', fails the same way without this change: 04-baseline.txt)
+
+# tsc --noEmit -p tsconfig.json
+EXIT 0

@@ -17,7 +17,10 @@
  *      (mdx-vault.ts:177) reads concept2cure_artifact_versions
  *      (version AS version_number, change_description AS change_summary), so a
  *      short version history is seeded per artifact.
- *   2. GET /api/mdx/ana/memory (server/routes/mdx-ana-memory.ts:56)
+ *   2. client_memory_entries, which AnA's memory services read
+ *      (server/services/client-intelligence-memory.ts). The route that listed it
+ *      for the ana-memory screen, GET /api/mdx/ana/memory, went with that screen
+ *      when it folded into the conversation (D2, 2026-10-29); the query it ran:
  *      → SELECT id, profile_id, category, subcategory, title, content,
  *               source_document_name, confidence_score, importance_level,
  *               is_verified_by_user, verified_at, verified_by, status,

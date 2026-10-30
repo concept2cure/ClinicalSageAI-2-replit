@@ -9,6 +9,9 @@ import { buildModule1Outline, indSectionOutlineRow } from './ind-template-outlin
 import { buildModule2Or3Outline } from './ind-template-outlines-m2-m3';
 import { buildModule4Or5Outline } from './ind-template-outlines-m4-m5';
 import type { IndAuthoringTemplate, IndTemplateOutlineSection } from './ind-template-types';
+import { getDocumentTemplate } from '../market-specs/document-template-library';
+import { documentTemplateOutlineSections } from './document-template-outline-sections';
+import { ctdRecordDraftingMode } from '../market-specs/ctd-component-outlines';
 
 const NAMESPACE = '721e488b710d5ee5ac52a9d8c854c453';
 const LIMITS = ['Working scaffold, not an approval, verified evidence or a filing-readiness decision.',
@@ -36,7 +39,9 @@ function outline(section: INDSection): IndTemplateOutlineSection[] {
   else if (section.children?.length) rows = getAllINDSections().filter(s => s.code === section.code || normalizeCtdCode(s.code)?.startsWith(`${normalizeCtdCode(section.code)}.`) === true)
     .flatMap(s => s.children?.length ? [indSectionOutlineRow(s)] : [indSectionOutlineRow(s), ...buildModule4Or5Outline(s)]);
   else rows = buildModule4Or5Outline(section);
-  return orderedUnique([indSectionOutlineRow(section), ...rows]);
+  const root = indSectionOutlineRow(section);
+  if (section.module === 'M3') root.guidance.drafting_mode = ctdRecordDraftingMode(normalizeCtdCode(section.code) ?? section.code);
+  return orderedUnique([root, ...rows]);
 }
 
 function template(info: { entryId: string; title: string; module: CTDModule | null; aiDraftable: boolean; mode: string; format: string; description: string }, rows: IndTemplateOutlineSection[]): IndAuthoringTemplate {
@@ -58,7 +63,18 @@ function preparationRow(d: IndDocumentCatalogDeliverable): IndTemplateOutlineSec
 
 function deliverableTemplate(d: IndDocumentCatalogDeliverable, canonical: INDSection[]): IndAuthoringTemplate {
   const bound = canonical.filter(s => d.sectionCodes.some(code => normalizeCtdCode(code) === normalizeCtdCode(s.code)));
-  const rows = bound.flatMap(s => outline({ ...s, title: d.title }));
+  let rows: IndTemplateOutlineSection[];
+  // Exact existing document starts select their document record; a broad filing
+  // container must not turn the early protocol into its descendant CSR reports.
+  if ((d.id === 'phase5.protocol_outline:deliverable:0' || d.id === 'phase5.protocol_finalize:deliverable:0') && bound[0]) {
+    const section = { ...bound[0], title: d.title };
+    rows = [indSectionOutlineRow(section), ...buildModule4Or5Outline(section)];
+  } else if (d.id === 'phase5.design:deliverable:1') {
+    const sap = getDocumentTemplate('statistical_analysis_plan');
+    if (!sap) throw new Error('The recorded SAP planning structure is unavailable.');
+    rows = documentTemplateOutlineSections(sap).map(row => ({ ...row, code: `work:sap:${row.code}`,
+      guidance: { ...row.guidance, guidance_text: `${row.guidance.guidance_text}\n\nDocument-local SAP working heading; no CTD placement is established.` } }));
+  } else rows = bound.flatMap(s => outline({ ...s, title: d.title }));
   const selected = rows.length ? rows : [preparationRow(d)];
   const mode = d.aiDraftable ? 'ai_draft' : 'manual';
   return template({ entryId: d.id, title: d.title, module: d.module as CTDModule | null, aiDraftable: d.aiDraftable, mode, format: 'source-dependent', description: d.description ?? d.taskName }, selected);

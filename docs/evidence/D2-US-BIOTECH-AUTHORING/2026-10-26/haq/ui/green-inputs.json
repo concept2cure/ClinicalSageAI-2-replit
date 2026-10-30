@@ -1,0 +1,9 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx": "9b7733927f562deb6b3611041ab09d5bcc9fc87192b2bf2df1028c77c27cab44",
+    "client/src/concept2cure/v2/surfaces/AgencyResponseEditor.tsx": "bd217bd7c2eedf1b73837d7330b25b7241be18f81db4645b2c7d11425b82e1b4",
+    "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts": "8850e9614af210effe5f1abde6be6cb65458fc77b314aea3f9810c63d0f33c04",
+    "client/src/concept2cure/v2/surfaces/agencyResponseEditorState.ts": "03ce9b63a1d12e81448b530964f20d75a62d25cd4b198f6b61a32a218d932fff",
+    "client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx": "2e1b836af661850cb69478e6484e5a0112849c9c2c9baeec87bcc91dc29d4fea"
+  }
+}

@@ -70,7 +70,7 @@ afterEach(cleanup);
 
 const settledOnProgram = () =>
   waitFor(() => {
-    expect(seen?.summary).toMatch(/program "C2C-101"/);
+    expect(seen?.summary).toMatch(/project "C2C-101"/);
   });
 
 describe('Mission Control publishes read-state, never a false clear', () => {
@@ -118,7 +118,7 @@ describe('Mission Control publishes read-state, never a false clear', () => {
       url.endsWith('/programs') ? pending() : ok([]));
     renderMc();
     await waitFor(() => expect(seen?.summary).toMatch(/still loading/i));
-    expect(seen!.summary).not.toMatch(/no program selected/i);
+    expect(seen!.summary).not.toMatch(/no project selected/i);
     // No fabricated programCount:0 while the list is in flight.
     expect(seen!.facts?.programCount).toBeUndefined();
   });
@@ -127,7 +127,7 @@ describe('Mission Control publishes read-state, never a false clear', () => {
     apiRequest.mockImplementation(async () => fail(503, 'program store down'));
     renderMc();
     await waitFor(() => expect(seen?.summary).toMatch(/could not be loaded/i));
-    expect(seen!.summary).not.toMatch(/no program selected/i);
+    expect(seen!.summary).not.toMatch(/no project selected/i);
     expect(seen!.facts?.programCount).toBeUndefined();
   });
 });

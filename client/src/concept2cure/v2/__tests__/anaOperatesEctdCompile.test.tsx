@@ -314,7 +314,7 @@ describe('with no program open — the one honest dead-end left', () => {
   it('refuses all three and says to open a program, instead of going silent', async () => {
     delete (window as any).C2C_PROJECT;
     render(<EctdCompile {...props()} />);
-    await screen.findByText(/Open a program to compile its eCTD/);
+    await screen.findByText(/Open a project to compile its eCTD/);
 
     // statusState never leaves 'idle' with no program, so holding would wait
     // out the 20 s TTL. Each of these must refuse hard instead.
@@ -325,9 +325,12 @@ describe('with no program open — the one honest dead-end left', () => {
     ] as const) {
       const outcome = send(id, params);
       await refused(outcome);
-      expect(reasonOf(outcome), id).toMatch(/No program is open/);
-      expect(reasonOf(outcome), id).toMatch(/open a program first/i);
+      expect(reasonOf(outcome), id).toMatch(/No project is open/);
+      expect(reasonOf(outcome), id).toMatch(/open a project first/i);
     }
-    expect(apiRequest, 'no program, no reads').not.toHaveBeenCalled();
+    // No program, no project-scoped reads: only the eCTD reference's two, which
+    // are not the project's (folded from ectd-publishing, D2 2026-10-29).
+    expect(apiRequest.mock.calls.map((c) => c[1]).sort(), 'no program, no project-scoped reads')
+      .toEqual(['/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions']);
   });
 });

@@ -99,7 +99,7 @@ describe('Vault — the header names what its count is made of', () => {
 
   it('an authored build with no files reads as one authored document and no uploads', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'HLV-333' };
-    vaultWith(() => vaultOf({ authored: 1, cmcArtifacts: 0, uploads: 0 }, 1));
+    vaultWith(() => vaultOf({ authored: 1, artifacts: 0, uploads: 0 }, 1));
     render(<Vault {...props()} />);
     await waitFor(() => expect(headerText()).toMatch(/1 authored document/));
     expect(headerText()).toMatch(/0 uploaded files/);
@@ -112,7 +112,7 @@ describe('Vault — the header names what its count is made of', () => {
      build's own sections that are settled — and the bare fraction said neither. */
   it('a folder count says what it counts', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'HLV-333' };
-    vaultWith(() => vaultOf({ authored: 1, cmcArtifacts: 0, uploads: 0 }, 1));
+    vaultWith(() => vaultOf({ authored: 1, artifacts: 0, uploads: 0 }, 1));
     render(<Vault {...props()} />);
     await waitFor(() => expect(document.querySelector('.vd-fcount')).not.toBeNull());
     const count = document.querySelector('.vd-fcount') as HTMLElement;
@@ -121,12 +121,12 @@ describe('Vault — the header names what its count is made of', () => {
     expect(count.getAttribute('title')).toBe(count.getAttribute('aria-label'));
   });
 
-  it('names Module 3 artifacts only when there are some, and claims no upload count it could not read', async () => {
+  it('names governed artifacts only when there are some, and claims no upload count it could not read', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'HLV-333' };
-    vaultWith(() => vaultOf({ authored: 2, cmcArtifacts: 3, uploads: null }, 5));
+    vaultWith(() => vaultOf({ authored: 2, artifacts: 3, uploads: null }, 5));
     render(<Vault {...props()} />);
     await waitFor(() => expect(headerText()).toMatch(/2 authored documents/));
-    expect(headerText()).toMatch(/3 Module 3 artifacts/);
+    expect(headerText()).toMatch(/3 governed artifacts/);
     expect(headerText()).not.toMatch(/uploaded file/);
   });
 });

@@ -166,10 +166,10 @@ async function admitProgramRecords(req: SimulatorRequest, scope: SimulatorRecord
   const unavailable = req.defensePacketId ? 'DEFENSE_PACKET_ACCESS_UNAVAILABLE' : 'REVIEWER_PROGRAM_ACCESS_UNAVAILABLE';
   const denied = req.defensePacketId ? 'DEFENSE_PACKET_ACCESS_DENIED' : 'REVIEWER_PROGRAM_ACCESS_DENIED';
   if (!scope?.executor || typeof scope.executor.query !== 'function') {
-    throw new ReviewerSimulationInputError(unavailable, 'The verified record connection is unavailable. No program records were read or written.', 503);
+    throw new ReviewerSimulationInputError(unavailable, 'The verified record connection is unavailable. No project records were read or written.', 503);
   }
   if (!Number.isSafeInteger(scope.userId) || scope.userId <= 0) {
-    throw new ReviewerSimulationInputError(denied, 'A verified current organization member is required to access program records.', 403);
+    throw new ReviewerSimulationInputError(denied, 'A verified current organization member is required to access project records.', 403);
   }
   try {
     await authorizeAuthoringProgram(scope.executor, {
@@ -178,7 +178,7 @@ async function admitProgramRecords(req: SimulatorRequest, scope: SimulatorRecord
   } catch (error) {
     if (!(error instanceof AuthoringProgramAccessError)) throw error;
     throw new ReviewerSimulationInputError(error.status === 503 ? unavailable : denied,
-      'Current access to the program could not be established. No simulation was saved.', error.status === 503 ? 503 : 403);
+      'Current access to the project could not be established. No simulation was saved.', error.status === 503 ? 503 : 403);
   }
   return scope;
 }
@@ -208,7 +208,7 @@ async function loadRecordedPacket(
       'The canonical packet store is unavailable. No packet facts were read.', 503);
   });
   const row = rows[0] as unknown as RecordedPacket | undefined;
-  if (!row) throw new ReviewerSimulationInputError('DEFENSE_PACKET_NOT_FOUND', 'The named defense packet is not on record for this program.');
+  if (!row) throw new ReviewerSimulationInputError('DEFENSE_PACKET_NOT_FOUND', 'The named defense packet is not on record for this project.');
   return {
     facts: {
       defenseReadinessScore: row.defenseReadinessScore,
@@ -267,14 +267,14 @@ const PACKET_NOT_AVAILABLE: ReviewerQuestion = {
     'No defense packet was named for this run, so the checks that read one (its defense readiness ' +
     'score and its risk codes) did not run. That they raised no question is not a finding that they pass.',
   trigger: 'packet_facts_not_available',
-  recommendedFix: "Run the simulation with defensePacketId naming the program's defense packet.",
+  recommendedFix: "Run the simulation with defensePacketId naming the project's defense packet.",
 };
 
 const CLAIM_HEALTH_NOT_ASSESSED: ReviewerQuestion = {
   category: 'completeness',
   severity: 'info',
   question:
-    "The program's records hold no unsupported-claim, contradiction or defensibility figures, so the " +
+    "The project's records hold no unsupported-claim, contradiction or defensibility figures, so the " +
     'checks that read them did not run. That they raised no question is not a finding that they pass.',
   trigger: 'claim_health_not_assessed',
 };

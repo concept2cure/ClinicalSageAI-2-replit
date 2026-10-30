@@ -23,6 +23,8 @@
  */
 
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
+import { US_BIOTECH_LIFECYCLE_METADATA } from '../market-specs/us-biotech-lifecycle-templates';
+import { MEDICINAL_WORKING_METADATA } from '../market-specs/medicinal-working-templates';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,8 +47,8 @@ const CTD_TEMPLATES: CatalogTemplateEntry[] = [
   { id: 'nonclinical_overview', title: 'Nonclinical Overview', description: 'Module 2.4 nonclinical overview per ICH M4S', sectionCode: '2.4', format: 'narrative', aiDraftable: true, category: 'nonclinical' },
   { id: 'clinical_overview', title: 'Clinical Overview', description: 'Module 2.5 clinical overview per ICH M4E', sectionCode: '2.5', format: 'narrative', aiDraftable: true, category: 'clinical' },
   { id: 'clinical_summary', title: 'Clinical Summary', description: 'Module 2.7 clinical summary', sectionCode: '2.7', format: 'mixed', aiDraftable: true, category: 'clinical' },
-  { id: 'drug_substance', title: 'Drug Substance', description: 'Module 3.2.S drug substance documentation', sectionCode: '3.2.S', format: 'mixed', aiDraftable: false, category: 'quality' },
-  { id: 'drug_product', title: 'Drug Product', description: 'Module 3.2.P drug product documentation', sectionCode: '3.2.P', format: 'mixed', aiDraftable: false, category: 'quality' },
+  { id: 'drug_substance', title: 'Drug Substance', description: 'Source-supported Module 3.2.S narrative; mixed parts and original tables retain source preparation', sectionCode: '3.2.S', format: 'mixed', aiDraftable: true, category: 'quality' },
+  { id: 'drug_product', title: 'Drug Product', description: 'Source-supported Module 3.2.P narrative; mixed parts and original tables retain source preparation', sectionCode: '3.2.P', format: 'mixed', aiDraftable: true, category: 'quality' },
 ];
 
 const DEVICE_TEMPLATES: CatalogTemplateEntry[] = [
@@ -67,6 +69,20 @@ const EU_SPECIFIC_TEMPLATES: CatalogTemplateEntry[] = [
 // ─── Catalog Registry ─────────────────────────────────────────────────────────
 
 const TEMPLATE_SETS: Record<string, CatalogTemplateEntry[]> = {
+  clinical_documents: [
+    { id: 'protocol', title: 'Clinical trial protocol', description: 'Working protocol from reviewed sources; approvals and generated schedules retain source preparation', format: 'mixed', aiDraftable: true, category: 'clinical' },
+    { id: 'investigators_brochure', title: "Investigator's brochure", description: 'Narrative synthesis of supplied nonclinical, clinical and quality sources; not original study reports', format: 'mixed', aiDraftable: true, category: 'clinical' },
+    { id: 'statistical_analysis_plan', title: 'Statistical analysis plan', description: 'Source-supported planned analyses; calculations require reviewed deterministic outputs', format: 'narrative', aiDraftable: true, category: 'clinical' },
+    { id: 'informed_consent', title: 'Specimen informed consent form', description: 'Working participant information for ethics review; executed signatures remain original site records', format: 'mixed', aiDraftable: true, category: 'clinical' },
+    { id: 'dsur', title: 'Development safety update report', description: 'Narrative assessment from reviewed safety sources; original listings, tables and appendices retain source preparation', format: 'mixed', aiDraftable: true, category: 'safety' },
+    { id: 'pbrer', title: 'Periodic benefit-risk evaluation report', description: 'Narrative from reviewed safety and efficacy outputs; confirm applicability and retain original tabulations and appendices', format: 'mixed', aiDraftable: true, category: 'safety' },
+    { id: 'clinical_study_report', title: 'Clinical Study Report', description: 'Full ICH E3 working report; original outputs and appendices require manual source preparation', sectionCode: '5.3.5.1', format: 'mixed', aiDraftable: true, category: 'clinical' },
+    { id: 'blank_crf', title: 'Blank CRF design/specification', description: 'Working design for blank case report forms; not completed subject records', format: 'mixed', aiDraftable: true, category: 'clinical' },
+    { id: 'crf_annotation_worksheet', title: 'CRF annotation worksheet', description: 'Working annotation planning from verified source specifications', format: 'mixed', aiDraftable: true, category: 'clinical' },
+  ],
+  us_biotech_lifecycle: US_BIOTECH_LIFECYCLE_METADATA,
+  medicinal_working: MEDICINAL_WORKING_METADATA,
+  nonclinical_working: MEDICINAL_WORKING_METADATA.filter(template => template.id === 'nonclinical_study_report'),
   ctd: CTD_TEMPLATES,
   device: DEVICE_TEMPLATES,
   eu_specific: EU_SPECIFIC_TEMPLATES,
@@ -77,11 +93,21 @@ const TEMPLATE_SETS: Record<string, CatalogTemplateEntry[]> = {
 };
 
 const REGISTRY_TO_TEMPLATE_SETS: Record<string, string[]> = {
-  US_IND: ['ctd'],
-  US_NDA: ['ctd'],
-  US_BLA: ['ctd'],
+  US_IND: ['ctd', 'clinical_documents', 'nonclinical_working'],
+  US_NDA: ['ctd', 'clinical_documents', 'medicinal_working'],
+  US_BLA: ['ctd', 'clinical_documents', 'medicinal_working'],
   US_ANDA: ['ctd'],
-  US_505B2: ['ctd'],
+  US_505B2: ['ctd', 'clinical_documents', 'medicinal_working'],
+  US_351K: ['ctd', 'clinical_documents', 'medicinal_working'],
+  US_IND_AMENDMENT: ['ctd', 'clinical_documents'],
+  US_NDA_SUPP: ['ctd', 'clinical_documents'],
+  US_BLA_SUPP: ['ctd', 'clinical_documents'],
+  ICH_PROTOCOL: ['clinical_documents'],
+  ICH_IB: ['clinical_documents'],
+  ICH_SAP: ['clinical_documents'],
+  ICH_ICF: ['clinical_documents'],
+  ICH_CSR: ['clinical_documents'],
+  ICH_DSUR: ['clinical_documents'],
   US_510K: ['device', 'k510_summary'],
   US_PMA: ['device'],
   US_DE_NOVO: ['device'],

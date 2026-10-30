@@ -1,0 +1,17 @@
+# mutation M3-id-left-in-projects-list: shared/constants/launch-scope.ts
+# replaced:       'device-vault', 'device-validation', 'device-submission',
+# with:           'device-vault', 'device-tasks', 'device-validation', 'device-submission',
+
+== server/services/entitlements/__tests__/launch-scope.test.ts
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the folded device task workbench > is in neither project scope list: Tasks holds it (D2, 2026-10-29) 6ms
+   → expected [ 'projects', 'project-home', …(23) ] to not include 'device-tasks'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'projects', 'project-home', …(23) ] to not include 'device-tasks'
+      Tests  1 failed | 35 passed (36)
+== client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts
+ × client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > is in neither project scope list nor the device rail, and the tour stops at Tasks 3ms
+   → expected [ 'projects', 'project-home', …(23) ] to not include 'device-tasks'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'projects', 'project-home', …(23) ] to not include 'device-tasks'
+      Tests  1 failed | 4 passed (5)
+# restored byte-for-byte (cmp)

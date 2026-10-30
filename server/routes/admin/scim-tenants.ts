@@ -9,11 +9,12 @@
  */
 
 import { Router, Request, Response } from 'express';
-import * as crypto from 'crypto';
+import { z } from 'zod';
 import { authMiddleware } from '../../auth';
 import { requirePlatformAdmin } from '../../middleware/requirePlatformAdmin';
 import { query } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
+import { writeScimToken, ScimTokenPolicyError, type ScimTokenChange } from '../../services/scim-token-policy';
 
 const logger = createScopedLogger('admin-scim-tenants');
 const router = Router();
@@ -26,13 +27,6 @@ router.use(authMiddleware);
 // requireRole was unusable here: its legacy org-'admin' bypass let every
 // customer org admin reach this cross-tenant router.
 const requireAdmin = requirePlatformAdmin;
-
-function newToken(): { token: string; tokenHash: string } {
-  // URL-safe, high-entropy bearer token. Only the hash is stored.
-  const token = `scim_${crypto.randomBytes(32).toString('base64url')}`;
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  return { token, tokenHash };
-}
 
 interface TenantRow {
   id: number;
@@ -54,31 +48,48 @@ function toTenant(row: TenantRow): Record<string, unknown> {
   };
 }
 
-// ─── Create (token returned ONCE) ────────────────────────────────────────────
+const reason = z.string().trim().min(3).max(500);
+const reasonBody = z.object({ reason }).strict();
+const createBody = z.object({ reason, organizationId: z.number().int().positive().safe(), label: z.string().trim().max(200).optional() }).strict();
+const updateBody = z.object({ reason, enabled: z.boolean() }).strict();
 
-router.post('/', requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const organizationId = Number((req.body as { organizationId?: unknown })?.organizationId);
-    const labelRaw = (req.body as { label?: unknown })?.label;
-    const label = typeof labelRaw === 'string' && labelRaw.length > 0 ? labelRaw.slice(0, 200) : null;
-    if (!Number.isFinite(organizationId)) {
-      return res.status(400).json({ error: 'organizationId (integer) is required.' });
-    }
-
-    const { token, tokenHash } = newToken();
-    const result = await query(
-      `INSERT INTO scim_tenants (organization_id, token_hash, label)
-       VALUES ($1, $2, $3)
-       RETURNING id, organization_id, label, enabled, created_at, updated_at`,
-      [organizationId, tokenHash, label]
-    );
-    // The plaintext token is shown ONCE — the admin configures the IdP with it now.
-    return res.status(201).json({ ...toTenant(result.rows[0] as TenantRow), token });
-  } catch (err) {
-    logger.error('Create SCIM tenant failed', err as Record<string, unknown>);
-    return res.status(500).json({ error: 'Failed to create SCIM tenant.' });
+type Kind = ScimTokenChange['kind'];
+function changeFrom(req: Request, kind: Kind): ScimTokenChange {
+  if (kind === 'create') {
+    const body = createBody.parse(req.body);
+    return { kind, ...body, label: body.label || null };
   }
-});
+  const id = Number(req.params.id);
+  if (kind === 'update') return { kind, id, ...updateBody.parse(req.body) };
+  return { kind, id, ...reasonBody.parse(req.body) };
+}
+
+async function mutate(req: Request, res: Response, kind: Kind) {
+  const id = Number(req.params.id);
+  if (kind !== 'create' && (!Number.isSafeInteger(id) || id < 1)) return res.status(404).json({ error: 'Not found.' });
+  try {
+    const result = await writeScimToken(req, changeFrom(req, kind));
+    if (!result) return res.status(404).json({ error: 'Organization or token not found. Nothing was changed.' });
+    if (kind === 'delete') {
+      res.setHeader('X-Audit-Row-Persisted', 'true');
+      res.setHeader('X-Audit-Row-Chained', 'true');
+      return res.status(204).send();
+    }
+    return res.status(kind === 'create' ? 201 : 200).json({
+      ...toTenant(result.row), ...(result.token ? { token: result.token } : {}),
+      auditTrail: { persisted: true, chained: true },
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: 'Provide valid permitted fields and a reason for change of 3–500 characters. Nothing was changed.' });
+    if (err instanceof ScimTokenPolicyError) return res.status(err.status).json({ error: err.message, code: err.code, recoveryUrl: err.recoveryUrl });
+    logger.error('SCIM token change failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'The SCIM token change could not be recorded.' });
+  }
+}
+
+// One-time credentials must never be cached by a browser or intermediary.
+router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
+router.post('/', requireAdmin, (req, res) => mutate(req, res, 'create'));
 
 // ─── List (never returns the hash) ───────────────────────────────────────────
 
@@ -98,62 +109,8 @@ router.get('/', requireAdmin, async (_req: Request, res: Response) => {
   }
 });
 
-// ─── Rotate (new token returned ONCE) ────────────────────────────────────────
-
-router.post('/:id/rotate', requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
-    const { token, tokenHash } = newToken();
-    const result = await query(
-      `UPDATE scim_tenants SET token_hash = $1, updated_at = now() WHERE id = $2
-       RETURNING id, organization_id, label, enabled, created_at, updated_at`,
-      [tokenHash, id]
-    );
-    if (!result.rows.length) return res.status(404).json({ error: 'Not found.' });
-    return res.json({ ...toTenant(result.rows[0] as TenantRow), token });
-  } catch (err) {
-    logger.error('Rotate SCIM tenant failed', err as Record<string, unknown>);
-    return res.status(500).json({ error: 'Failed to rotate SCIM tenant.' });
-  }
-});
-
-// ─── Enable / disable ────────────────────────────────────────────────────────
-
-router.patch('/:id', requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
-    const enabledRaw = (req.body as { enabled?: unknown })?.enabled;
-    if (typeof enabledRaw !== 'boolean') {
-      return res.status(400).json({ error: 'enabled (boolean) is required.' });
-    }
-    const result = await query(
-      `UPDATE scim_tenants SET enabled = $1, updated_at = now() WHERE id = $2
-       RETURNING id, organization_id, label, enabled, created_at, updated_at`,
-      [enabledRaw, id]
-    );
-    if (!result.rows.length) return res.status(404).json({ error: 'Not found.' });
-    return res.json(toTenant(result.rows[0] as TenantRow));
-  } catch (err) {
-    logger.error('Update SCIM tenant failed', err as Record<string, unknown>);
-    return res.status(500).json({ error: 'Failed to update SCIM tenant.' });
-  }
-});
-
-// ─── Delete (revoke) ─────────────────────────────────────────────────────────
-
-router.delete('/:id', requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
-    const result = await query('DELETE FROM scim_tenants WHERE id = $1 RETURNING id', [id]);
-    if (!result.rows.length) return res.status(404).json({ error: 'Not found.' });
-    return res.status(204).send();
-  } catch (err) {
-    logger.error('Delete SCIM tenant failed', err as Record<string, unknown>);
-    return res.status(500).json({ error: 'Failed to delete SCIM tenant.' });
-  }
-});
+router.post('/:id/rotate', requireAdmin, (req, res) => mutate(req, res, 'rotate'));
+router.patch('/:id', requireAdmin, (req, res) => mutate(req, res, 'update'));
+router.delete('/:id', requireAdmin, (req, res) => mutate(req, res, 'delete'));
 
 export default router;

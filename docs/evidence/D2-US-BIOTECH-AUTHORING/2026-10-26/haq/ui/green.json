@@ -1,0 +1,39 @@
+{
+  "startedAt": "2026-10-26T23:26:05.158792+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx",
+    "client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 6.792,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "haq/ui/green-inputs.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx": "9b7733927f562deb6b3611041ab09d5bcc9fc87192b2bf2df1028c77c27cab44",
+    "client/src/concept2cure/v2/surfaces/AgencyResponseEditor.tsx": "bd217bd7c2eedf1b73837d7330b25b7241be18f81db4645b2c7d11425b82e1b4",
+    "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts": "8850e9614af210effe5f1abde6be6cb65458fc77b314aea3f9810c63d0f33c04",
+    "client/src/concept2cure/v2/surfaces/agencyResponseEditorState.ts": "03ce9b63a1d12e81448b530964f20d75a62d25cd4b198f6b61a32a218d932fff",
+    "client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx": "2e1b836af661850cb69478e6484e5a0112849c9c2c9baeec87bcc91dc29d4fea"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx": "9b7733927f562deb6b3611041ab09d5bcc9fc87192b2bf2df1028c77c27cab44",
+    "client/src/concept2cure/v2/surfaces/AgencyResponseEditor.tsx": "bd217bd7c2eedf1b73837d7330b25b7241be18f81db4645b2c7d11425b82e1b4",
+    "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts": "8850e9614af210effe5f1abde6be6cb65458fc77b314aea3f9810c63d0f33c04",
+    "client/src/concept2cure/v2/surfaces/agencyResponseEditorState.ts": "03ce9b63a1d12e81448b530964f20d75a62d25cd4b198f6b61a32a218d932fff",
+    "client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx": "2e1b836af661850cb69478e6484e5a0112849c9c2c9baeec87bcc91dc29d4fea"
+  },
+  "sourceDrift": [],
+  "rawOutput": "green.log.gz",
+  "rawGzipSha256": "a667bb98a89bcee2d9cec9a86a16328c95156815f64f48a1d04e48bf06ab8c9b",
+  "testSummary": [
+    "Test Files  3 passed (3)",
+    "Tests  47 passed (47)",
+    "Duration  6.32s (transform 1.52s, setup 244ms, import 1.41s, tests 3.08s, environment 1.18s)"
+  ]
+}

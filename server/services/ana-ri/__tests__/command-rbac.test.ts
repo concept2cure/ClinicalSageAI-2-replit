@@ -111,7 +111,7 @@ describe('authorizeCommand — tenant tool policy applies to ALL commands', () =
     rbac.hasRole.mockResolvedValue(true);
     const decision = await authorizeCommand(
       'create_task',
-      ctx({ anaToolPolicy: { allow: ['create_project'] } }),
+      ctx({ anaToolPolicy: { allow: ['update_project'] } }),
     );
     expect(decision.ok).toBe(false);
     if (decision.ok) return;
@@ -120,18 +120,18 @@ describe('authorizeCommand — tenant tool policy applies to ALL commands', () =
 
   it('ALLOWS a command that is on the allow-list, and when no policy is set', async () => {
     rbac.hasRole.mockResolvedValue(true);
-    expect((await authorizeCommand('create_project', ctx({ anaToolPolicy: { allow: ['create_project'] } }))).ok).toBe(true);
+    expect((await authorizeCommand('update_project', ctx({ anaToolPolicy: { allow: ['update_project'] } }))).ok).toBe(true);
     // No policy configured for the tenant → the gate is transparent.
-    expect((await authorizeCommand('create_project', ctx())).ok).toBe(true);
+    expect((await authorizeCommand('update_project', ctx())).ok).toBe(true);
     // An empty allow-list is "unset", not "deny everything".
-    expect((await authorizeCommand('create_project', ctx({ anaToolPolicy: { allow: [] } }))).ok).toBe(true);
+    expect((await authorizeCommand('update_project', ctx({ anaToolPolicy: { allow: [] } }))).ok).toBe(true);
   });
 });
 
 describe('authorizeCommand — role enforcement on mutations', () => {
   it('DENIES a mutation when the caller lacks the required role (viewer)', async () => {
     rbac.hasRole.mockResolvedValue(false);
-    const decision = await authorizeCommand('create_project', ctx());
+    const decision = await authorizeCommand('update_project', ctx());
     expect(decision.ok).toBe(false);
     if (decision.ok) return;
     expect(decision.result.error).toBe('RBAC_DENIED');
@@ -141,7 +141,7 @@ describe('authorizeCommand — role enforcement on mutations', () => {
 
   it('ALLOWS a mutation when the caller holds the required role', async () => {
     rbac.hasRole.mockResolvedValue(true);
-    await expect(authorizeCommand('create_project', ctx())).resolves.toEqual({ ok: true });
+    await expect(authorizeCommand('update_project', ctx())).resolves.toEqual({ ok: true });
   });
 
   it('demands the manager tier for Part 11 record-altering commands', async () => {
@@ -152,7 +152,7 @@ describe('authorizeCommand — role enforcement on mutations', () => {
 
   it('DENIES when the RBAC lookup throws (fail closed, never fail open)', async () => {
     rbac.hasRole.mockRejectedValue(new Error('connection lost'));
-    const decision = await authorizeCommand('create_project', ctx());
+    const decision = await authorizeCommand('update_project', ctx());
     expect(decision.ok).toBe(false);
     if (decision.ok) return;
     expect(decision.result.error).toBe('RBAC_DENIED');
@@ -164,7 +164,7 @@ describe('authorizeCommand — role enforcement on mutations', () => {
     ['non-numeric userId', { userId: '7' as unknown as number }],
     ['zero organizationId', { organizationId: 0 }],
   ])('DENIES a mutation with %s (identity must come from the verified principal)', async (_l, over) => {
-    const decision = await authorizeCommand('create_project', ctx(over));
+    const decision = await authorizeCommand('update_project', ctx(over));
     expect(decision.ok).toBe(false);
     if (decision.ok) return;
     expect(decision.result.error).toBe('RBAC_CONTEXT_MISSING');
@@ -242,7 +242,7 @@ describe('authorizeCommand — audit.explain is limited to the audit-reader tier
 describe('authorizeCommand — fail-closed governance', () => {
   it('BLOCKS every mutation when tenant governance config could not be resolved', async () => {
     rbac.hasRole.mockResolvedValue(true); // role is fine; governance is not
-    const decision = await authorizeCommand('create_project', ctx({ governanceUnavailable: true }));
+    const decision = await authorizeCommand('update_project', ctx({ governanceUnavailable: true }));
     expect(decision.ok).toBe(false);
     if (decision.ok) return;
     expect(decision.result.error).toBe('GOVERNANCE_UNAVAILABLE');
@@ -390,13 +390,17 @@ describe('authorization registry — total coverage (anti-drift CI guard)', () =
    scope is enforced (production by default), reads included, before any
    tenant policy or role check. */
 describe('launch scope', () => {
-  const HIDDEN = ['pdev.program.get', 'q_sub.create', 'post_market.document.create', 'search_precedents'];
+  /* `q_sub.create` (device-presub) and `post_market.document.create`
+     (device-postmarket) moved to KEPT when the device surfaces joined the launch
+     catalog on 2026-10-23 (62a8d5e7f); `pdev.program.contradictions` and
+     `evaluate_endpoint`, whose surfaces are still outside it, take their places. */
+  const HIDDEN = ['pdev.program.get', 'pdev.program.contradictions', 'evaluate_endpoint', 'search_precedents'];
   /* `cmc_status` moved from HIDDEN to KEPT when the CMC surface joined the
      launch catalog on 2026-10-12 (decision P-28). It is the same check that
      decides either way — anaCapabilityInLaunchScope against
      LAUNCH_SURFACE_IDS — so the pair below is one assertion about one rule, and
      a command whose app leaves the catalog is refused again. */
-  const KEPT = ['list_projects', 'create_task', 'audit.explain', 'module3_build_all', 'cmc_status'];
+  const KEPT = ['list_projects', 'create_task', 'audit.explain', 'module3_build_all', 'cmc_status', 'q_sub.create', 'post_market.document.create'];
 
   it('refuses a hidden-app command in production, read or write, whatever the role', async () => {
     vi.stubEnv('NODE_ENV', 'production');

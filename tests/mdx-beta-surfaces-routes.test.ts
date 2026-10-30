@@ -42,7 +42,6 @@ vi.mock('../shared/constants/mdx', () => ({
 }));
 
 import anaDraftsRouter from '../server/routes/mdx-ana-drafts';
-import vaultRouter from '../server/routes/mdx-vault';
 import udiRouter from '../server/routes/mdx-udi';
 import riskRouter from '../server/routes/mdx-risk-management';
 import softwareRouter from '../server/routes/mdx-software';
@@ -62,7 +61,6 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
     });
   }
   app.use('/api/mdx', anaDraftsRouter);
-  app.use('/api/mdx', vaultRouter);
   app.use('/api/mdx', udiRouter);
   app.use('/api/mdx', riskRouter);
   app.use('/api/mdx', softwareRouter);
@@ -152,46 +150,10 @@ describe('GET /api/mdx/ana-drafts', () => {
   });
 });
 
-/* ─── Vault aggregator ───────────────────────────────────────────── */
-
-describe('GET /api/mdx/vault', () => {
-  // The route returns the merged list most-recently-updated first, so the two
-  // rows need distinct, ordered timestamps. With a bare `new Date()` on each
-  // they tie only while both land in the same millisecond; on a loaded runner
-  // the second lands later and sorts ahead, which is why this passed in the
-  // Test job and failed in Integration Tests on the same commit.
-  it('lists artifacts and groups by family', async () => {
-    queryFn.mockResolvedValueOnce({
-      rows: [
-        {
-          id: 1, artifact_id: 'artifact_aaa', title: 'Cover letter', type: 'markdown',
-          category: 'document', ctd_section: '1.1', status: 'draft', version: 1,
-          content_hash: null, created_by_id: null,
-          created_at: new Date('2026-09-01T09:00:00Z'), updated_at: new Date('2026-09-01T10:00:00Z'), locked_at: null,
-          metadata: null,
-        },
-        {
-          id: 2, artifact_id: 'artifact_bbb', title: 'Device description', type: 'markdown',
-          category: 'document', ctd_section: '3.2.P', status: 'approved', version: 2,
-          content_hash: 'abc123', created_by_id: 7,
-          created_at: new Date('2026-09-01T09:00:00Z'), updated_at: new Date('2026-09-01T09:30:00Z'), locked_at: null,
-          metadata: { eSig: true },
-        },
-      ],
-    });
-    const res = await request(makeApp()).get('/api/mdx/vault');
-    expect(res.status).toBe(200);
-    expect(res.body.data).toHaveLength(2);
-    expect(res.body.data[0].family).toBe('Module 1');
-    expect(res.body.data[1].family).toBe('Module 3');
-    expect(res.body.data[1].eSig).toBe(true);
-  });
-
-  it('rejects an invalid program_id UUID', async () => {
-    const res = await request(makeApp()).get('/api/mdx/vault?program_id=not-a-uuid');
-    expect(res.status).toBe(422);
-  });
-});
+/* No vault aggregator: GET /api/mdx/vault left with the device vault, which
+   folded into the Vault (D2, fold F3, 2026-10-29). The Vault's reads are
+   tested in server/routes/c2c/__tests__/project-vault-governed-artifacts*.test.ts
+   and server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts. */
 
 /* ─── UDI CRUD ───────────────────────────────────────────────────── */
 
@@ -362,22 +324,24 @@ describe('GET /api/mdx/engineering/:programId', () => {
     expect(res.body.meta.scopes.risks).toBe('program');
   });
 
-  it('derives DHF completion over required sections only', async () => {
+  /* P-60 (2026-10-29): the DHF panel reads the project's own document sections
+     (c2c_document_sections), so the figure is over their mandatory sections. */
+  it('derives DHF completion over mandatory sections only', async () => {
+    const section = (id: number, key: string, status: string, mandatory: boolean) => ({
+      id, section_key: key, label: `Section ${key}`, status, mandatory, version: 1, updated_at: null,
+      document_id: 'doc_1', document_title: 'Device 510(k)',
+    });
     queryFn
       .mockResolvedValueOnce({ rows: [{ id: PROGRAM_ID }] }) // tenancy
       .mockResolvedValueOnce({ rows: [] })                   // risks
       .mockResolvedValueOnce({ rows: [] })                   // trace
       .mockResolvedValueOnce({
-        rows: [
-          { id: 1, section_number: '01', section_title: 'Plan',   status: 'approved', is_required: true,  completion_percentage: 100, updated_at: null },
-          { id: 2, section_number: '02', section_title: 'Inputs', status: 'draft',    is_required: true,  completion_percentage: 40,  updated_at: null },
-          { id: 3, section_number: '03', section_title: 'Extra',  status: 'draft',    is_required: false, completion_percentage: 0,   updated_at: null },
-        ],
+        rows: [section(1, '01', 'approved', true), section(2, '02', 'drafted', true), section(3, '03', 'drafted', false)],
       })
       .mockResolvedValue({ rows: [] });
 
     const res = await request(makeApp()).get(`/api/mdx/engineering/${PROGRAM_ID}`);
-    /* 1 of 2 required approved; the optional row is excluded from both
+    /* 1 of 2 mandatory approved; the optional row is excluded from both
        numerator and denominator. */
     expect(res.body.data.summary.dhfCompletion).toBe(50);
   });

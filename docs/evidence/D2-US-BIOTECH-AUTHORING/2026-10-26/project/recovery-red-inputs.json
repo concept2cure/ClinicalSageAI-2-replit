@@ -1,0 +1,7 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx": "ec8a7280e3ba52d9e557ca31cc109ff44a5dd897987a9b2f51a7c24f892957b3",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx": "81dc09c3d3dc6b26e32d9b920c3d841292469286a7877b1dd6c2947417ecd6fe",
+    "client/src/concept2cure/v2/editor/useScopedDocuments.ts": "c3080749eefed1617cefdfc71443dc360ee10b1235e4f18098173d1cb6fe92a2"
+  }
+}

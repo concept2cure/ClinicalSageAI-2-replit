@@ -1,0 +1,1765 @@
+Red run of client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx (final, 15 tests)
+against EngineeringSurface.tsx at HEAD (928b70996): the HEAD file was written beside the component as
+EngineeringSurface.HEADred.tsx and a copy of the test importing it was run; both were deleted after the run.
+Command: npx vitest run --reporter=dot client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xxxxxxx·x·x·xx·
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows none of another project's DHF, trace, change-request or non-conformance rows
+AssertionError: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' not to match /Other project biocompatibility/
+
+- Expected:
+/Other project biocompatibility/
+
++ Received:
+"Workstream · ENG-1 · ENG-1 SensorDevice engineering21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software · FDA premarket cybersecurity. Ask AnADocuments in flight00 ready · 0 in review · 0 draftOpen risks1Not yet verifiedOpen change requests10 blocked · 0 awaiting signatureDHF completion0%Required sections validated · avg doc —No engineering documents yetDesign and software deliverables appear here once artifacts exist for this organization.Check againWhat's blocking your documents2 hard blockers · 1 review-pending · pulled from DHF · risk · change requests · non-conformancedhfDHF §7Other project biocompatibilityISO 10993A1dncNC-OTHER-4Other project weld defectlinked — · open—3driskR-OWN-1Own project sensor driftMissed hypoglycaemia · residual S4P2C—ecrECR-OTHER-9Other project housing changelow · noneB2dSituational awarenessDHF strip · ISO 14971 heatmap · design-controls trace · change requests · non-conformancesDesign history fileOrganization-wide§7Other project biocompatibilityv1·1dblockedResidual risk · ISO 14971Click a cell to filterP1ImprobableP2RemoteP3OccasionalP4ProbableP5FrequentS5CatastrophicS4Critical1S3SeriousS2MinorS1NegligibleRisk records1 of 1 shownR-OWN-1Own project sensor driftS4P2Missed hypoglycaemiaDesign-controls traceOrganization-wide2 traceability rows tracked · 1 verifiedChange requestsOrganization-wide1 change requests · 1 in flightNon-conformancesOrganization-wide1 non-conformances · 1 undispositioned"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:149:33
+    147|     await loadedAndExpanded(container);
+    148|
+    149|     expect(text(container)).not.toMatch(/Other project biocompatibilit…
+       |                                 ^
+    150|     expect(text(container)).not.toMatch(/traceability rows tracked/);
+    151|     expect(text(container)).not.toMatch(/ECR-OTHER-9|Other project hou…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says why each of the four panels is not shown
+AssertionError: panel dhf must say why it is not shown: expected null not to be null
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:162:68
+    160|     for (const id of ['dhf', 'trace', 'ecrs', 'issues']) {
+    161|       const note = container.querySelector(`[data-testid="eng-not-keye…
+    162|       expect(note, `panel ${id} must say why it is not shown`).not.toB…
+       |                                                                    ^
+    163|       expect(note?.textContent ?? '').toMatch(NOT_KEYED);
+    164|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps this project’s risk file in the blocker feed and the risk panel
+AssertionError: expected '2 hard blockers · 1 review-pending · …' not to match /\d+ hard blockers/
+
+- Expected:
+/\d+ hard blockers/
+
++ Received:
+"2 hard blockers · 1 review-pending · pulled from DHF · risk · change requests · non-conformance"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:178:39
+    176|     // not printed while the only sources that can raise one are left …
+    177|     expect(blockerSub(container)).toMatch(/1 review-pending/);
+    178|     expect(blockerSub(container)).not.toMatch(/\d+ hard blockers/);
+       |                                       ^
+    179|     expect(blockerSub(container)).toMatch(/hard blockers not counted: …
+    180|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not claim change requests or non-conformances were checked when they were not read for the project
+TestingLibraryElementError: Unable to find an element by: [data-testid="eng-no-blockers"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-eyebrow"[39m
+        [36m>[39m
+          [0mWorkstream[0m
+          [0m · ENG-1 · ENG-1 Sensor[0m
+        [36m</div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-title"[39m
+        [36m>[39m
+          [0mDevice engineering[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-sub"[39m
+        [36m>[39m
+          [0m21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software · FDA premarket cybersecurity.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 3v4M19 17v4M3 5h4M17 19h4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Ask AnA[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"metrics-row metrics-compact"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mDocuments in flight[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m ready · [0m
+          [0m0[0m
+          [0m in review · [0m
+          [0m0[0m
+          [0m draft[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+        [33mdata-tone[39m=[32m"err"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mOpen risks[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0mNot yet verified[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+        [33mdata-tone[39m=[32m"warn"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mOpen change requests[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m blocked · [0m
+          [0m0[0m
+          [0m awaiting signature[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mDHF completion[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"unit"[39m
+          [36m>[39m
+            [0m%[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0mRequired sections validated · avg doc [0m
+          [0m—[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"data-gate"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+        [33mdata-testid[39m=[32m"data-gate-empty"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo engineering documents yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mDesign and software deliverables appear here once artifacts exist for this organization.[0m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"c2c-empty-action"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCheck again[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"section"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"section-head"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mWhat's blocking your documents[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"section-sub"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m hard blockers ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m review-pending · pulled from DHF · risk · change requests · non-conformance[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"eng-blockers-feed"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"eng-blocker-row"[39m
+          [33mdata-kind[39m=[32m"dhf"[39m
+          [33mdata-sev[39m=[32m"err"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-dot tone-err"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-kind mono tiny"[39m
+          [36m>[39m
+            [0mdhf[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"mono small eng-blocker-ref"[39m
+          [36m>[39m
+            [0mDHF §7[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-title"[39m
+          [36m>[39m
+            [0mOther project biocompatibility[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-note"[39m
+          [36m>[39m
+            [0mISO 10993[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-owner"[39m
+          [36m>[39m
+            [0mA[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-age"[39m
+          [36m>[39m
+            [0m1d[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"eng-blocker-row"[39m
+          [33mdata-kind[39m=[32m"nc"[39m
+          [33mdata-sev[39m=[32m"err"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-dot tone-err"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-kind mono tiny"[39m
+          [36m>[39m
+            [0mnc[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"mono small eng-blocker-ref"[39m
+          [36m>[39m
+            [0mNC-OTHER-4[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-title"[39m
+          [36m>[39m
+            [0mOther project weld defect[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-note"[39m
+          [36m>[39m
+            [0mlinked — · open[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-owner"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-age"[39m
+          [36m>[39m
+            [0m3d[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"eng-blocker-row"[39m
+          [33mdata-kind[39m=[32m"ecr"[39m
+          [33mdata-sev[39m=[32m"low"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-dot tone-low"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-kind mono tiny"[39m
+          [36m>[39m
+            [0mecr[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"mono small eng-blocker-ref"[39m
+          [36m>[39m
+            [0mECR-OTHER-9[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-title"[39m
+          [36m>[39m
+            [0mOther project housing change[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-note"[39m
+          [36m>[39m
+            [0mlow · none[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-owner"[39m
+          [36m>[39m
+            [0mB[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-age"[39m
+          [36m>[39m
+            [0m2d[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"section eng-awareness"[39m
+      [33mdata-open[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-expanded[39m=[32m"false"[39m
+        [33mclass[39m=[32m"eng-awareness-head"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"eng-awareness-chev"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9 6l6 6-6 6"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<h2>[39m
+          [0mSituational awareness[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"section-sub"[39m
+        [36m>[39m
+          [0mDHF strip · ISO 14971 heatmap · design-controls trace · change requests · non-conformances[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:187:29
+    185|     await waitFor(() => expect(text(container)).not.toMatch(/Loading/i…
+    186|
+    187|     const allClear = screen.getByTestId('eng-no-blockers');
+       |                             ^
+    188|     expect(allClear.textContent ?? '').not.toMatch(/Nothing is blockin…
+    189|     expect(allClear.textContent ?? '').not.toMatch(/open change reques…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says an empty risk file has nothing to check, not that every risk is verified
+TestingLibraryElementError: Unable to find an element by: [data-testid="eng-no-blockers"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-eyebrow"[39m
+        [36m>[39m
+          [0mWorkstream[0m
+          [0m · ENG-1 · ENG-1 Sensor[0m
+        [36m</div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-title"[39m
+        [36m>[39m
+          [0mDevice engineering[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-sub"[39m
+        [36m>[39m
+          [0m21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software · FDA premarket cybersecurity.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 3v4M19 17v4M3 5h4M17 19h4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Ask AnA[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"metrics-row metrics-compact"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mDocuments in flight[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m ready · [0m
+          [0m0[0m
+          [0m in review · [0m
+          [0m0[0m
+          [0m draft[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+        [33mdata-tone[39m=[32m"err"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mOpen risks[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0mAll risks verified[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+        [33mdata-tone[39m=[32m"warn"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mOpen change requests[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m blocked · [0m
+          [0m0[0m
+          [0m awaiting signature[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mDHF completion[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"unit"[39m
+          [36m>[39m
+            [0m%[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0mRequired sections validated · avg doc [0m
+          [0m—[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"data-gate"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+        [33mdata-testid[39m=[32m"data-gate-empty"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo engineering documents yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mDesign and software deliverables appear here once artifacts exist for this organization.[0m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"c2c-empty-action"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCheck again[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"section"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"section-head"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mWhat's blocking your documents[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"section-sub"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m hard blockers ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m review-pending · pulled from DHF · risk · change requests · non-conformance[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"eng-blockers-feed"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"eng-blocker-row"[39m
+          [33mdata-kind[39m=[32m"dhf"[39m
+          [33mdata-sev[39m=[32m"err"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-dot tone-err"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-kind mono tiny"[39m
+          [36m>[39m
+            [0mdhf[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"mono small eng-blocker-ref"[39m
+          [36m>[39m
+            [0mDHF §7[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-title"[39m
+          [36m>[39m
+            [0mOther project biocompatibility[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-note"[39m
+          [36m>[39m
+            [0mISO 10993[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-owner"[39m
+          [36m>[39m
+            [0mA[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-age"[39m
+          [36m>[39m
+            [0m1d[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"eng-blocker-row"[39m
+          [33mdata-kind[39m=[32m"nc"[39m
+          [33mdata-sev[39m=[32m"err"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-dot tone-err"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-kind mono tiny"[39m
+          [36m>[39m
+            [0mnc[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"mono small eng-blocker-ref"[39m
+          [36m>[39m
+            [0mNC-OTHER-4[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-title"[39m
+          [36m>[39m
+            [0mOther project weld defect[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-note"[39m
+          [36m>[39m
+            [0mlinked — · open[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-owner"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-age"[39m
+          [36m>[39m
+            [0m3d[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"eng-blocker-row"[39m
+          [33mdata-kind[39m=[32m"ecr"[39m
+          [33mdata-sev[39m=[32m"low"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-dot tone-low"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-kind mono tiny"[39m
+          [36m>[39m
+            [0mecr[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"mono small eng-blocker-ref"[39m
+          [36m>[39m
+            [0mECR-OTHER-9[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-title"[39m
+          [36m>[39m
+            [0mOther project housing change[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-note"[39m
+          [36m>[39m
+            [0mlow · none[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-owner"[39m
+          [36m>[39m
+            [0mB[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-age"[39m
+          [36m>[39m
+            [0m2d[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"section eng-awareness"[39m
+      [33mdata-open[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-expanded[39m=[32m"false"[39m
+        [33mclass[39m=[32m"eng-awareness-head"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"eng-awareness-chev"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9 6l6 6-6 6"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<h2>[39m
+          [0mSituational awareness[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"section-sub"[39m
+        [36m>[39m
+          [0mDHF strip · ISO 14971 heatmap · design-controls trace · change requests · non-conformances[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:201:29
+    199|     await waitFor(() => expect(text(container)).not.toMatch(/Loading/i…
+    200|
+    201|     const allClear = screen.getByTestId('eng-no-blockers');
+       |                             ^
+    202|     expect(allClear.textContent ?? '').toMatch(/No risk records for th…
+    203|     expect(allClear.textContent ?? '').toMatch(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps the all-clear when the risk file has records and all are verified
+TestingLibraryElementError: Unable to find an element by: [data-testid="eng-no-blockers"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-eyebrow"[39m
+        [36m>[39m
+          [0mWorkstream[0m
+          [0m · ENG-1 · ENG-1 Sensor[0m
+        [36m</div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-title"[39m
+        [36m>[39m
+          [0mDevice engineering[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-sub"[39m
+        [36m>[39m
+          [0m21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software · FDA premarket cybersecurity.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 3v4M19 17v4M3 5h4M17 19h4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Ask AnA[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"metrics-row metrics-compact"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mDocuments in flight[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m ready · [0m
+          [0m0[0m
+          [0m in review · [0m
+          [0m0[0m
+          [0m draft[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+        [33mdata-tone[39m=[32m"err"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mOpen risks[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0mAll risks verified[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+        [33mdata-tone[39m=[32m"warn"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mOpen change requests[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m blocked · [0m
+          [0m0[0m
+          [0m awaiting signature[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mDHF completion[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"unit"[39m
+          [36m>[39m
+            [0m%[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0mRequired sections validated · avg doc [0m
+          [0m—[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"data-gate"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+        [33mdata-testid[39m=[32m"data-gate-empty"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo engineering documents yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mDesign and software deliverables appear here once artifacts exist for this organization.[0m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"c2c-empty-action"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCheck again[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"section"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"section-head"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mWhat's blocking your documents[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"section-sub"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m hard blockers ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m review-pending · pulled from DHF · risk · change requests · non-conformance[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"eng-blockers-feed"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"eng-blocker-row"[39m
+          [33mdata-kind[39m=[32m"dhf"[39m
+          [33mdata-sev[39m=[32m"err"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-dot tone-err"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-kind mono tiny"[39m
+          [36m>[39m
+            [0mdhf[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"mono small eng-blocker-ref"[39m
+          [36m>[39m
+            [0mDHF §7[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-title"[39m
+          [36m>[39m
+            [0mOther project biocompatibility[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-note"[39m
+          [36m>[39m
+            [0mISO 10993[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-owner"[39m
+          [36m>[39m
+            [0mA[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-age"[39m
+          [36m>[39m
+            [0m1d[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"eng-blocker-row"[39m
+          [33mdata-kind[39m=[32m"nc"[39m
+          [33mdata-sev[39m=[32m"err"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-dot tone-err"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-kind mono tiny"[39m
+          [36m>[39m
+            [0mnc[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"mono small eng-blocker-ref"[39m
+          [36m>[39m
+            [0mNC-OTHER-4[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-title"[39m
+          [36m>[39m
+            [0mOther project weld defect[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-note"[39m
+          [36m>[39m
+            [0mlinked — · open[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-owner"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-age"[39m
+          [36m>[39m
+            [0m3d[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"eng-blocker-row"[39m
+          [33mdata-kind[39m=[32m"ecr"[39m
+          [33mdata-sev[39m=[32m"low"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-dot tone-low"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-kind mono tiny"[39m
+          [36m>[39m
+            [0mecr[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"mono small eng-blocker-ref"[39m
+          [36m>[39m
+            [0mECR-OTHER-9[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-title"[39m
+          [36m>[39m
+            [0mOther project housing change[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-note"[39m
+          [36m>[39m
+            [0mlow · none[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-owner"[39m
+          [36m>[39m
+            [0mB[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"eng-blocker-age"[39m
+          [36m>[39m
+            [0m2d[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"section eng-awareness"[39m
+      [33mdata-open[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-expanded[39m=[32m"false"[39m
+        [33mclass[39m=[32m"eng-awareness-head"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"eng-awareness-chev"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9 6l6 6-6 6"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<h2>[39m
+          [0mSituational awareness[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"section-sub"[39m
+        [36m>[39m
+          [0mDHF strip · ISO 14971 heatmap · design-controls trace · change requests · non-conformances[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:217:29
+    215|     await waitFor(() => expect(text(container)).not.toMatch(/Loading/i…
+    216|
+    217|     const allClear = screen.getByTestId('eng-no-blockers');
+       |                             ^
+    218|     expect(allClear.textContent ?? '').toMatch(/No unverified risks we…
+    219|     expect(allClear.innerHTML).toContain(CHECK_CIRCLE_PATH);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > treats an unreported scope as not keyed (fail closed)
+AssertionError: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' not to match /Other project biocompatibility/
+
+- Expected:
+/Other project biocompatibility/
+
++ Received:
+"Workstream · ENG-1 · ENG-1 SensorDevice engineering21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software · FDA premarket cybersecurity. Ask AnADocuments in flight00 ready · 0 in review · 0 draftOpen risks1Not yet verifiedOpen change requests10 blocked · 0 awaiting signatureDHF completion0%Required sections validated · avg doc —No engineering documents yetDesign and software deliverables appear here once artifacts exist for this organization.Check againWhat's blocking your documents2 hard blockers · 1 review-pending · pulled from DHF · risk · change requests · non-conformancedhfDHF §7Other project biocompatibilityISO 10993A1dncNC-OTHER-4Other project weld defectlinked — · open—3driskR-OWN-1Own project sensor driftMissed hypoglycaemia · residual S4P2C—ecrECR-OTHER-9Other project housing changelow · noneB2dSituational awarenessDHF strip · ISO 14971 heatmap · design-controls trace · change requests · non-conformancesDesign history file§7Other project biocompatibilityv1·1dblockedResidual risk · ISO 14971Click a cell to filterP1ImprobableP2RemoteP3OccasionalP4ProbableP5FrequentS5CatastrophicS4Critical1S3SeriousS2MinorS1NegligibleRisk records1 of 1 shownR-OWN-1Own project sensor driftS4P2Missed hypoglycaemiaDesign-controls trace2 traceability rows tracked · 1 verifiedChange requests1 change requests · 1 in flightNon-conformances1 non-conformances · 1 undispositioned"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:228:33
+    226|     await loadedAndExpanded(container);
+    227|
+    228|     expect(text(container)).not.toMatch(/Other project biocompatibilit…
+       |                                 ^
+    229|     expect(text(container)).not.toMatch(/ECR-OTHER-9/);
+    230|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not print the organisation's change-request count or DHF completion as this project's
+AssertionError: expected '5' not to match /5/
+
+- Expected:
+/5/
+
++ Received:
+"5"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:257:63
+    255|     const ecr = card(container, 'Open change requests');
+    256|     const dhfCard = card(container, 'DHF completion');
+    257|     expect(ecr.querySelector('.metric-val')?.textContent).not.toMatch(…
+       |                                                               ^
+    258|     expect(dhfCard.querySelector('.metric-val')?.textContent).not.toMa…
+    259|     expect(ecr.textContent ?? '').toMatch(NOT_KEYED);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not list or count the organisation's documents as this project's
+AssertionError: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' not to match /Other project design plan/
+
+- Expected:
+/Other project design plan/
+
++ Received:
+"Workstream · ENG-1 · ENG-1 SensorDevice engineering21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software · FDA premarket cybersecurity. Ask AnADocuments in flight11 ready · 0 in review · 0 draftOpen risks1Not yet verifiedOpen change requests10 blocked · 0 awaiting signatureDHF completion0%Required sections validated · avg doc 100%Documents in flightTap any row to open in the editor · sparkle to ask AnA to draft the next sectioncfr820readyOther project design planv2·0/0 sections100%·—1dWhat's blocking your documents2 hard blockers · 1 review-pending · pulled from DHF · risk · change requests · non-conformancedhfDHF §7Other project biocompatibilityISO 10993A1dncNC-OTHER-4Other project weld defectlinked — · open—3driskR-OWN-1Own project sensor driftMissed hypoglycaemia · residual S4P2C—ecrECR-OTHER-9Other project housing changelow · noneB2dSituational awarenessDHF strip · ISO 14971 heatmap · design-controls trace · change requests · non-conformances"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:282:33
+    280|     await waitFor(() => expect(text(container)).not.toMatch(/Loading/i…
+    281|
+    282|     expect(text(container)).not.toMatch(/Other project design plan/);
+       |                                 ^
+    283|     const docs = card(container, 'Documents in flight');
+    284|     expect(docs.querySelector('.metric-val')?.textContent).not.toBe('1…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says in plain words why a panel is not shown
+TestingLibraryElementError: Unable to find an element by: [data-testid="eng-not-keyed-dhf"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-eyebrow"[39m
+        [36m>[39m
+          [0mWorkstream[0m
+          [0m · ENG-1 · ENG-1 Sensor[0m
+        [36m</div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-title"[39m
+        [36m>[39m
+          [0mDevice engineering[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-sub"[39m
+        [36m>[39m
+          [0m21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software · FDA premarket cybersecurity.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 3v4M19 17v4M3 5h4M17 19h4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Ask AnA[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"metrics-row metrics-compact"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mDocuments in flight[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m ready · [0m
+          [0m0[0m
+          [0m in review · [0m
+          [0m0[0m
+          [0m draft[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+        [33mdata-tone[39m=[32m"err"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mOpen risks[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0mNot yet verified[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+        [33mdata-tone[39m=[32m"warn"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mOpen change requests[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m blocked · [0m
+          [0m0[0m
+          [0m awaiting signature[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mDHF completion[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"unit"[39m
+          [36m>[39m
+            [0m%[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0mRequired sections validated · avg doc [0m
+          [0m—[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"data-gate"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+        [33mdata-testid[39m=[32m"data-gate-empty"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo engineering documents yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mDesign and software deliverables appear here once artifacts exist for this organization.[0m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"c2c-empty-action"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCheck again[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"section"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"section-head"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mWhat's blocking your documents[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"section-sub"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m hard blockers ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m review-pending · pulled from DHF · risk · change requests · non-conformance[0m
+      ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:307:25
+    305|     await loadedAndExpanded(container);
+    306|
+    307|     const note = screen.getByTestId('eng-not-keyed-dhf').textContent ?…
+       |                         ^
+    308|     expect(note).toMatch(
+    309|       /Shown once this screen reads this project's records\. These rec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not say the records are organization-wide when the route did not report it
+TestingLibraryElementError: Unable to find an element by: [data-testid="eng-not-keyed-dhf"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-header"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-eyebrow"[39m
+        [36m>[39m
+          [0mWorkstream[0m
+          [0m · ENG-1 · ENG-1 Sensor[0m
+        [36m</div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"page-title"[39m
+        [36m>[39m
+          [0mDevice engineering[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-sub"[39m
+        [36m>[39m
+          [0m21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software · FDA premarket cybersecurity.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 3v4M19 17v4M3 5h4M17 19h4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Ask AnA[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"metrics-row metrics-compact"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mDocuments in flight[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m ready · [0m
+          [0m0[0m
+          [0m in review · [0m
+          [0m0[0m
+          [0m draft[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+        [33mdata-tone[39m=[32m"err"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mOpen risks[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0mNot yet verified[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+        [33mdata-tone[39m=[32m"warn"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mOpen change requests[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m blocked · [0m
+          [0m0[0m
+          [0m awaiting signature[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metric-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-label"[39m
+        [36m>[39m
+          [0mDHF completion[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-val"[39m
+        [36m>[39m
+          [0m0[0m
+          [36m<span[39m
+            [33mclass[39m=[32m"unit"[39m
+          [36m>[39m
+            [0m%[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric-meta"[39m
+        [36m>[39m
+          [0mRequired sections validated · avg doc [0m
+          [0m—[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"data-gate"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+        [33mdata-testid[39m=[32m"data-gate-empty"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo engineering documents yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mDesign and software deliverables appear here once artifacts exist for this organization.[0m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"c2c-empty-action"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mCheck again[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"section"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"section-head"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mWhat's blocking your documents[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"section-sub"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m hard blockers ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m review-pending · pulled from DHF · risk · change requests · non-conformance[0m
+      ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyedHEADred.test.tsx:319:25
+    317|     await loadedAndExpanded(container);
+    318|
+    319|     const note = screen.getByTestId('eng-not-keyed-dhf').textContent ?…
+       |                         ^
+    320|     expect(note).toMatch(NOT_KEYED);
+    321|     expect(note).not.toMatch(/held for the whole organization/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 4 passed (15)
+   Start at  03:19:23
+   Duration  2.03s (transform 361ms, setup 182ms, import 531ms, tests 544ms, environment 581ms)
+

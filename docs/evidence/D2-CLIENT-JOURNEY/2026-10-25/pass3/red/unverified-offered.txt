@@ -1,0 +1,3 @@
+# Mutation: unverified-offered
+ × Assign makes a deliverable one person’s task > is not offered while the project’s id is unverified, so no task is written unscoped 119ms
+      Tests  1 failed | 12 passed (13)

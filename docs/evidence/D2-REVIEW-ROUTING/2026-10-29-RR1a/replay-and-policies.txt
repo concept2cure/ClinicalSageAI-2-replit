@@ -1,0 +1,47 @@
+# Replay (Rule 1): deploy-migrate re-run on the provisioned database, which already held the file
+      [NOTICE] vault.legal_holds ready (RLS: tenant_isolation_policy)
+      [NOTICE] [ivdr-history-rls] parent-scoped tenant_isolation_policy applied to 0 table(s)
+  ✓ applied: migrations/20261023_review_routes.sql
+      [NOTICE] [uuid-rls] tenant_isolation_policy applied to 0 non-public uuid-tenant table(s); 2 skipped (unprovisioned/drift). federated_ml.federation_participants and audit.event_log are intentionally EXEMPT (cross-tenant by design).
+      [NOTICE] [rls-sweep] tenant_isolation_policy applied to 0 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+  tenant_isolation_policy: 19/19 tables policied
+✅ Schema migration complete — safe to roll services.
+
+# pg_policies / RLS / grants / triggers / constraints after the replay
+ schemaname |   tablename   |       policyname        | cmd 
+------------+---------------+-------------------------+-----
+ public     | review_routes | tenant_isolation_policy | ALL
+(1 row)
+
+    relname    | relrowsecurity | relforcerowsecurity 
+---------------+----------------+---------------------
+ review_routes | t              | t
+(1 row)
+
+ app_service_rw 
+----------------
+ t
+(1 row)
+
+          table          |                  tgname                  
+-------------------------+------------------------------------------
+ cross_module_task_links | cross_module_task_links_route_rows_guard
+ task_dependencies       | task_dependencies_route_rows_guard
+ unified_tasks           | unified_tasks_route_rows_guard
+(3 rows)
+
+     table     |              conname              
+---------------+-----------------------------------
+ unified_tasks | unified_tasks_review_role_check
+ unified_tasks | unified_tasks_review_route_fk
+ unified_tasks | unified_tasks_review_route_pair
+ unified_tasks | unified_tasks_route_task_assignee
+ review_routes | review_routes_closed_has_actor
+ review_routes | review_routes_order_check
+ review_routes | review_routes_org_id_key
+ review_routes | review_routes_organization_fk
+ review_routes | review_routes_pkey
+ review_routes | review_routes_status_check
+ review_routes | review_routes_subject_type_check
+(11 rows)
+

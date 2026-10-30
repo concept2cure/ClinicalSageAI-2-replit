@@ -1,0 +1,188 @@
+[
+ {
+  "id": "N1",
+  "what": "risk has no alias (an old link is a 404)",
+  "file": "client/src/concept2cure/v2/registryModel.ts",
+  "old": "  risk: 'device-engineering',\n",
+  "new": "",
+  "test": [
+   "client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts",
+   "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+  ]
+ },
+ {
+  "id": "N2",
+  "what": "ivd-completeness has no alias",
+  "file": "client/src/concept2cure/v2/registryModel.ts",
+  "old": "  'ivd-completeness': 'device-diagnostics',\n",
+  "new": "",
+  "test": [
+   "client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts",
+   "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+  ]
+ },
+ {
+  "id": "N3",
+  "what": "risk keeps a view of its own",
+  "file": "client/src/concept2cure/v2/surfaceViews.ts",
+  "old": "  // risk folded into device-engineering (D2, fold F1c, 2026-10-29): an alias now (registryModel.ts).\n",
+  "new": "  risk: { component: Labeling },\n",
+  "test": "client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts"
+ },
+ {
+  "id": "N4",
+  "what": "risk left in the Projects scope list",
+  "file": "shared/constants/launch-scope.ts",
+  "old": "      'device-analytics', 'human-factors', 'labeling',\n",
+  "new": "      'device-analytics', 'human-factors', 'risk', 'labeling',\n",
+  "test": [
+   "server/services/entitlements/__tests__/launch-scope.test.ts",
+   "client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts"
+  ]
+ },
+ {
+  "id": "N5",
+  "what": "ivd-completeness left in the MDX project features",
+  "file": "shared/constants/mdx-project-features.ts",
+  "old": "  // No IVD completeness: it folded into device-diagnostics (D2, fold F2, 2026-10-29).\n",
+  "new": "  'ivd-completeness',\n",
+  "test": [
+   "server/services/entitlements/__tests__/launch-scope.test.ts",
+   "client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts"
+  ]
+ },
+ {
+  "id": "N6",
+  "what": "AnA's risk.* matrix actions registered again",
+  "file": "shared/navigation/surface-actions.ts",
+  "old": "  ...riskMatrixActions('device-engineering', \"On Engineering's risk file\"),",
+  "new": "  ...riskMatrixActions('risk' as 'device-engineering', 'On the risk file'),\n  ...riskMatrixActions('device-engineering', \"On Engineering's risk file\"),",
+  "test": "client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts"
+ },
+ {
+  "id": "N7",
+  "what": "the medtech tour navigates to risk again",
+  "file": "shared/navigation/demo-scripts.ts",
+  "old": "It lives in the project\\'s engineering evidence.',\n        navigate: { target: 'device-engineering' },",
+  "new": "It lives in the project\\'s engineering evidence.',\n        navigate: { target: 'risk' },",
+  "test": "client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts"
+ },
+ {
+  "id": "N8",
+  "what": "device-engineering drops the design-controls claim",
+  "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+  "old": "    apiPrefixes: ['/api/mdx/engineering', '/api/mdx/risk-items', '/api/design-controls'],",
+  "new": "    apiPrefixes: ['/api/mdx/engineering', '/api/mdx/risk-items'],",
+  "test": [
+   "client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts",
+   "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+  ]
+ },
+ {
+  "id": "N9",
+  "what": "device-diagnostics drops the /api/ivd-lifecycle claim",
+  "file": "shared/constants/ui-surface-registry.ts",
+  "old": "'/api/ivd-assessments', '/api/ivd-lifecycle', '/api/validate-completeness'],",
+  "new": "'/api/ivd-assessments', '/api/validate-completeness'],",
+  "test": "client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts"
+ },
+ {
+  "id": "N10",
+  "what": "assess_filing_readiness not on device-diagnostics",
+  "file": "client/src/concept2cure/v2/registryModel.ts",
+  "old": "    'assess_filing_readiness',\n    'run_validation',",
+  "new": "    'run_validation',",
+  "test": "client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts"
+ },
+ {
+  "id": "N11",
+  "what": "the host hands IvdSurface no shell navigation",
+  "file": "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+  "old": "          onNav={onNav}\n          onReadinessContext={setIvdReadiness}",
+  "new": "          onReadinessContext={setIvdReadiness}",
+  "test": "client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts"
+ },
+ {
+  "id": "N12",
+  "what": "the host publishes device-diagnostics without the board's context",
+  "file": "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+  "old": "nav === 'device-diagnostics' ? diagnosticsContext : null",
+  "new": "nav === 'device-diagnostics' ? anaContext : null",
+  "test": [
+   "client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx",
+   "client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts"
+  ]
+ },
+ {
+  "id": "N13",
+  "what": "IvdSurface reports nothing to the host",
+  "file": "client/src/concept2cure/mdx/surfaces/IvdSurface.tsx",
+  "old": "  useReportToHost(onReadinessContext, {",
+  "new": "  useReportToHost(undefined, {",
+  "test": "client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx"
+ },
+ {
+  "id": "N14",
+  "what": "the host merges a board read for another project",
+  "file": "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+  "old": "  if (!report || !program || report.programId !== String(program.id)) return base;",
+  "new": "  if (!report || !program) return base;",
+  "test": "client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx"
+ },
+ {
+  "id": "N15",
+  "what": "20260810 upserts risk again",
+  "file": "db/migrations/20260810_reconcile_module_catalog.sql",
+  "old": "  ('precedent-intelligence', 'Precedent intelligence',",
+  "new": "  ('risk', 'Risk management', 'ISO 14971 risk file, hazard analysis.', 'Intelligence & risk', '/concept2cure/risk', 'alertTriangle', 610, '{\"tiers\": [], \"industries\": []}'::json),\n  ('precedent-intelligence', 'Precedent intelligence',",
+  "test": "tests/schema-contract/catalog-module-claims.contract.test.ts"
+ },
+ {
+  "id": "N16",
+  "what": "20260810 upserts ivd-completeness again",
+  "file": "db/migrations/20260810_reconcile_module_catalog.sql",
+  "old": "  ('labeling', 'Labeling', 'Labeling/IFU",
+  "new": "  ('ivd-completeness', 'IVD completeness', 'IVDR technical-file completeness.', 'Author & assemble', '/concept2cure/ivd-completeness', 'microscope', 170, '{\"tiers\": [], \"industries\": []}'::json),\n  ('labeling', 'Labeling', 'Labeling/IFU",
+  "test": "tests/schema-contract/catalog-module-claims.contract.test.ts"
+ },
+ {
+  "id": "N17",
+  "what": "the MDX registers file upserts design-controls again",
+  "file": "db/migrations/20260823_module_catalog_mdx_registers.sql",
+  "old": "INSERT INTO available_modules (module_id, name, description, category, path, icon, sort_order, metadata) VALUES\n  ('human-factors',",
+  "new": "INSERT INTO available_modules (module_id, name, description, category, path, icon, sort_order, metadata) VALUES\n  ('design-controls', 'Design controls (DHF)', 'The design control register.', 'Evidence & data', '/concept2cure/design-controls', 'gitBranch', 255, '{\"tiers\": [\"standard\"], \"industries\": []}'::json),\n  ('human-factors',",
+  "test": "tests/schema-contract/catalog-module-claims.contract.test.ts"
+ },
+ {
+  "id": "N18",
+  "what": "20260814j inserts design-controls again",
+  "file": "migrations/20260814j_catalog_missing_product_surfaces.sql",
+  "old": "  VALUES\n    ('human-factors', 'Human factors',",
+  "new": "  VALUES\n    ('design-controls', 'Design controls', 'Design inputs.', 'Device & diagnostics', '/concept2cure/design-controls', 'shield', 210, '{\"tiers\": [], \"industries\": []}'::json),\n    ('human-factors', 'Human factors',",
+  "test": "tests/schema-contract/catalog-module-claims.contract.test.ts"
+ },
+ {
+  "id": "N19",
+  "what": "the customer copy keeps its risk row",
+  "file": "db/migrations/20260823_module_catalog_customer_copy.sql",
+  "old": "  ('tasks', 'Task board with",
+  "new": "  ('risk', 'ISO 14971 risk management.'),\n  ('tasks', 'Task board with",
+  "test": "tests/schema-contract/catalog-module-claims.contract.test.ts"
+ },
+ {
+  "id": "N20",
+  "what": "the packaging keeps its ivd-completeness row",
+  "file": "db/migrations/20260823_module_catalog_commercial_packaging.sql",
+  "old": "  ('labeling', 'standard'),",
+  "new": "  ('ivd-completeness', 'standard'),\n  ('labeling', 'standard'),",
+  "test": "tests/schema-contract/catalog-module-claims.contract.test.ts"
+ },
+ {
+  "id": "N21",
+  "what": "the mapping drops design-controls",
+  "file": "server/services/entitlements/folded-module-successors.ts",
+  "old": "  'design-controls': 'device-engineering',\n",
+  "new": "",
+  "test": "server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts"
+ }
+]

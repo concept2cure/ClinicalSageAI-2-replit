@@ -65,7 +65,7 @@ function LegalEvidencePicker({ document, workflow, change, disabled, current }: 
   const setPurpose = companySetter(current, updatePurpose), setMessage = companySetter(current, updateMessage);
   const choose = (hit: PickedVaultVersion) => {
     if (!current()) return;
-    if (hit.programId !== document.programId) { setMessage('Choose approved evidence from the same program as this legal document.'); return; }
+    if (hit.programId !== document.programId) { setMessage('Choose approved evidence from the same project as this legal document.'); return; }
     if (purpose === 'authority' && workflow.authority) change({ ...workflow, authority: { ...workflow.authority, evidenceVaultDocumentIds: [...new Set([...workflow.authority.evidenceVaultDocumentIds, hit.id])] } });
     else if (purpose === 'signature' && workflow.signatureEvidence) change({ ...workflow, signatureEvidence: { ...workflow.signatureEvidence, evidenceVaultDocumentId: hit.id } });
     else if (purpose === 'translation' && workflow.translationOfId) change({ ...workflow, certifiedTranslationEvidenceVaultDocumentId: hit.id });

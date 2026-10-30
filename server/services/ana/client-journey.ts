@@ -141,9 +141,9 @@ export function describeClientJourney(
         nextMilestone: 'A first project, configured and ready to work in.',
         anaOffer:
           `Welcome them warmly as a senior colleague would on day one — say what you are for in their terms ` +
-          `(${segmentFraming(segment)}) — then offer to set up their first project by walking them through a ` +
-          `short onboarding questionnaire. Start it with start_intelligence_flow using the project_setup flow. ` +
-          `Do not dump features; land on that one concrete first step.`,
+          `(${segmentFraming(segment)}) — then offer to open New project: use navigate_to with target projects, ` +
+          `then act_on_screen with action projects.new-project. Help them choose the filing and client in the wizard; ` +
+          `the person reviews and presses Create project. Do not dump features; land on that one concrete first step.`,
       };
     case 'onboarding':
       return {
@@ -151,11 +151,11 @@ export function describeClientJourney(
         stage,
         label: 'Onboarding — no project created yet.',
         whereYouAre: 'The client has a license but still no project configured.',
-        nextMilestone: 'A first project, created from their onboarding answers.',
+        nextMilestone: 'A first project, created through the New project wizard.',
         anaOffer:
-          'Pick up onboarding where it stands: run the project_setup flow (start_intelligence_flow) to capture ' +
-          'organization, product, and regulatory scope, answer any questions they have along the way, and get a ' +
-          'first project created. Keep it light — a few questions at a time, not a form dump.',
+          'Pick up onboarding where it stands: use navigate_to with target projects, then act_on_screen with action ' +
+          'projects.new-project to open the New project wizard. Help with the filing, product and owning client; ' +
+          'the person reviews and presses Create project. Keep it light and answer questions as they work.',
       };
     case 'project_started':
       return {

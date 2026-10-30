@@ -1,0 +1,10 @@
+# E2: a 404 is offered Try again
+# file: client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+# replaced: "  const unchecked = refusal === 'unchecked';"
+# with:     '  const unchecked = true;'
+# test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx
+# vitest exit: 1
+ × EngineeringSurface — the route refuses the project > a 404 says the project is not one this organization can see, and offers another project, not a retry 158ms
+      Tests  1 failed | 4 passed (5)
+AssertionError: a retry cannot change a 404: expected <button type="button" …(1)></button> to be null
+# restored: sha256 matches (97c5f4f420374a6d)

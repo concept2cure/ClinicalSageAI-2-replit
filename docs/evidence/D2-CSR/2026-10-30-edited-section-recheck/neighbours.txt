@@ -1,0 +1,1370 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/saved-template-oversight.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:33:49.834Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:33:49.836Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-template-oversight.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:33:49.836Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-template-oversight.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-template-oversight.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-template-oversight.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:33:50.646Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > reviews a renamed FDA form preparation worksheet with exact saved limits separate from scored prose 232ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > retains earliest recorded guidance when current references and later CREATE rows differ 100ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > isolates current guidance by exact template and tenant even when section codes are identical 46ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > uses an exact active global fallback only when saved and tenant-specific guidance are absent 55ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > recorded reference changes invalidate the saved review snapshot > invalidates continuation after source limitation drift without an authored-text timestamp change 66ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > recorded reference changes invalidate the saved review snapshot > invalidates continuation after source identity hash drift without an authored-text timestamp change 55ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > recorded reference changes invalidate the saved review snapshot > invalidates continuation after recorded guidance drift without an authored-text timestamp change 68ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > recorded reference changes invalidate the saved review snapshot > invalidates continuation after current reference drift without an authored-text timestamp change 78ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template references page completely within the model result budget > pages every long escaped Unicode reference part without omissions or broken surrogate pairs 339ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template references page completely within the model result budget > pages long document limitations without crowding out authored-section coverage 226ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > invalid saved template context fails closed > refuses a malformed or conflicting recorded source instead of computing a verdict: {"id":"33333333-2222-4333-8444-000000000002","entryId":"section:m1.1.1","version":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","kind":"preparation","aiDraftable":false,"authoringMode":"form","originalFormat":"pdf","limitations":["Keep the original sponsor-signed FDA form; this worksheet cannot replace it."]} 48ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > invalid saved template context fails closed > refuses a malformed or conflicting recorded source instead of computing a verdict: {"id":"f05db0b5-caa8-5df2-8b44-33b8d905013a","entryId":"section:m1.1.1","version":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","kind":"preparation","aiDraftable":"false","authoringMode":"form","originalFormat":"pdf","limitations":["Keep the original sponsor-signed FDA form; this worksheet cannot replace it."]} 40ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > invalid saved template context fails closed > refuses a malformed or conflicting recorded source instead of computing a verdict: {"id":"f05db0b5-caa8-5df2-8b44-33b8d905013a","entryId":"section:m1.1.1","version":1,"sha256":"not-a-snapshot","kind":"preparation","aiDraftable":false,"authoringMode":"form","originalFormat":"pdf","limitations":["Keep the original sponsor-signed FDA form; this worksheet cannot replace it."]} 47ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > invalid saved template context fails closed > refuses a malformed or conflicting recorded source instead of computing a verdict: {"id":"f05db0b5-caa8-5df2-8b44-33b8d905013a","entryId":"section:m1.1.1","version":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","kind":"preparation","aiDraftable":false,"authoringMode":"form","originalFormat":"pdf","limitations":["Valid",17]} 53ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > invalid saved template context fails closed > refuses a section CREATE guidance identity that conflicts with the saved document template 60ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > invalid saved template context fails closed > refuses a complete section CREATE source with conflicting recorded version details 57ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > invalid saved template context fails closed > refuses present malformed recorded guidance rather than silently falling back: null 65ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > invalid saved template context fails closed > refuses present malformed recorded guidance rather than silently falling back: {"guidance_text":17} 39ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > invalid saved template context fails closed > refuses present malformed recorded guidance rather than silently falling back: {"guidance_text":"Verify the retained form identity, sponsor name and current IND number against the original.","compliance_checklist":"not a list"} 40ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template guidance availability describes the saved section > reports missing exact section guidance while preserving the complete writing-only review 72ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template guidance availability describes the saved section > treats guidance availability per saved section when a current null row coexists with real guidance: false 58ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template guidance availability describes the saved section > treats guidance availability per saved section when a current null row coexists with real guidance: true 48ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template guidance availability describes the saved section > distinguishes empty current JSON references from a nonempty JSON sibling: false 57ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template guidance availability describes the saved section > distinguishes empty current JSON references from a nonempty JSON sibling: true 65ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template legacy records and bounded context retain honest scope > returns identity-only historical CREATE guidance without fabricating missing source details 56ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template legacy records and bounded context retain honest scope > refuses more than eight MiB of mandatory non-ASCII saved reference before returning a verdict 753ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template legacy records and bounded context retain honest scope > refuses excessive mandatory reference items instead of truncating original-record limits 179ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template legacy records and bounded context retain honest scope > preserves legacy review with an explicitly unrecorded template source instead of inferring builtin limits 56ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template legacy records and bounded context retain honest scope > does not infer a template from a matching document title or module when no template ID is stored 51ms
+ ✓ server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template legacy records and bounded context retain honest scope > refuses current revoked access before reading recorded template context 58ms
+stdout | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:34:04.528Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:34:04.530Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:34:04.530Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:34:04.743Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > finds conflicting subject counts across actual saved sections in one pinned transaction 122ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > does not let a saved CSR evade evidence review through a protocol override 63ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > exposes CSR evidence as unassessed rather than silently passing saved prose 41ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > keeps frozen saved documents readable for oversight without edit permission or writes 41ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > excludes unaccepted insertion text while retaining the proposed deletion in the accepted record 55ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > does not hide a cross-section conflict merely because the conflicting saved prose is marked for deletion 100ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > the executed actor-email query reads only membership in the current organization 46ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses current project revocation after a successful review 50ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a revoked document grant even while current project access remains 50ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > resolves email-only document grants from the current user record 56ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > does not allow a section-only grant to authorize a whole-document read 47ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a saved document outside the selected program: 11111111-2222-4333-8444-000000000042 31ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a saved document outside the selected program: 11111111-2222-4333-8444-000000000051 31ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":7,"userId":7,"projectRef":null} 32ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":7,"userId":null,"projectRef":"11111111-2222-4333-8444-000000000011"} 38ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":null,"userId":7,"projectRef":"11111111-2222-4333-8444-000000000011"} 20ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a foreign program even if the prompt requests a document in this organization 22ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > walks every section and finding through bounded pages including escaped saved titles 191ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > refuses continuation after the saved content changes, even without a new timestamp 54ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > refuses continuation after the saved document title changes, even without a new timestamp 58ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rechecks document permission before returning a continuation 55ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":1} before a database checkout 28ms
+stdout | server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review pre-enable workload measurement > records a realistic multi-section calculation without imposing a timing threshold
+saved-document-critique-benchmark {
+  sectionCount: 96,
+  textChars: 187392,
+  elapsedMs: 112.5,
+  serializedChars: 4932,
+  paginationTotal: 96
+}
+
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":-1} before a database checkout 26ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":"1"} before a database checkout 29ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":0.5} before a database checkout 21ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":1,"expected_snapshot":"unverified"} before a database checkout 20ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review pre-enable workload measurement > records a realistic multi-section calculation without imposing a timing threshold 140ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > resolves the registered eligible source in the current section 92ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > keeps another uploader’s unbound source unresolved for an otherwise permitted saved-document reviewer 76ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > refuses a new cited-document verdict after requester membership revocation without reading source metadata 93ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not lend a sibling section association to an unregistered pasted marker 65ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports an actual remove_data withdrawal as a high record finding 71ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports an actual supersede withdrawal as a high record finding 64ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not silently resolve a citation after source deleted 55ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not silently resolve a citation after association removed 59ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > refuses continuation of a formerly eligible source snapshot after data withdrawal 132ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > retains an eligible historical source already registered to this section 64ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not resolve a source that now belongs to another program 93ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports a registered source without printable metadata as unresolved 87ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses a saved document with no sections 34ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses malformed saved section title rather than reviewing the remaining valid section 39ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses malformed saved section updated_at rather than reviewing the remaining valid section 37ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses more than 512 saved sections before selecting their content 52ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > uses the eight MiB byte limit, including non-ASCII content, before selecting the body 506ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > rejects mixing a saved document with caller-supplied replacement sections 24ms
+stdout | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:34:18.116Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:34:18.118Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:34:18.118Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:34:18.277Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reconciles a saved CSR whose every stated figure is its claimed retained cell 283ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305 95ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails it too when the synopsis carries no receipts at all and states a figure the body contradicts 83ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > names the exact cell when the retained source no longer says what the CSR states 83ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > records an unreadable retained run as blocked, never as agreement, and still completes the review 81ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reports every number a section states without a claim, blocking only in a results section 80ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > assesses an imported CSR whose title is the study title and whose module is unset, as the real import saves it 77ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks an unclaimed number in a results section that has no table mapping (§10.2) 74ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks when a section the import carried receipts for is no longer in the document 61ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > checks a section with no code too: its numbers are listed and a contradicting n/N blocks 56ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reconciles an edit that rewords the sentence but keeps every figure, and names the section as edited and re-checked 54ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be 78ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that adds an unsourced number in §11 60ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reports a claimed figure the edit removed as CLAIM_NOT_STATED, without blocking on it 63ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > still blocks an edited section whose retained cell has since changed 48ms
+stderr | server/services/authoring/__tests__/workflow-source-import.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/workflow-source-import.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:34:27.440Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > admits an explicitly removed local visit, composes live rows, and fingerprints retained cells 136ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > admits an explicitly removed local assessment, composes live rows, and fingerprints retained cells 147ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a missing retired endpoint rather than dropping its retained cell 60ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a foreign-protocol retired endpoint rather than dropping its retained cell 56ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a foreign-organization retired endpoint rather than dropping its retained cell 59ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > preserves the full canonical structured protocol and actual matrix cells without source signing prose 52ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > holds an unverified controlled export while caller-executor content-only export excludes signature authority 55ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > discloses missing actual source data and explicit unbound association without inventing authorship 36ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > changes the fingerprint when composed SoA source facts or original scope change 75ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > denies an unassigned private-source actor before any source prose read, and permits a current project member 54ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses foreign tenant sources, mismatched recorded programs and missing recorded design relationships 40ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses a cross-protocol assessment cell rather than silently dropping it from composition 36ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > retains positive current protocol machine-span proof, including accepted drafts, without inventing model qualification 49ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > does not mistake deterministic copy lineage for proof of original AI generation 34ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > uses exact persisted ICH code/content/hash and retains null model as unknown qualification 61ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > carries a section's claim receipts bound to the copy it stores, and drops receipts made for other text 50ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > preserves partial gaps and organization source scope with explicit association, rather than completing missing output 28ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > expands a selected actual parent only into available persisted descendant codes, retaining missing gaps 35ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > refuses missing selected output and a changed or forged recorded hash 34ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > changes selected fingerprints on truthful content/provenance changes while unrelated output leaves a selected copy stable 43ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > enforces fresh actor access and source-job/output project identity before reading CSR prose 34ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > does not mutate any original source during materialization and rejects inactive actors 30ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR assembly source > returns the import’s verified sections and gaps with the job’s study, retained run and newest generation time 37ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR assembly source > refuses through the import’s own checks: another actor, a forged hash, a non-CSR source 31ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR assembly source > reports a job with no retained run as such, never inventing one 34ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > reads the exact tenant/program row and verifies its actual UUID origin through the existing Authoring source verifier 108ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > requires actual current source access, refuses a different target and a withdrawn saved source 36ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > retains unfiled scope, demands an explicit association and detects changed result snapshots at governance time 54ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > imports saved generated-document payloads as draft copies without transferring approval or transmission 44ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > refuses deferred IVD through the otherwise launch-accessible Authoring endpoint before reading a source 24ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > honors newly filed protocol scope even before its first study design and refuses binding disagreement 47ms
+stdout | server/services/csr/__tests__/csr-assembly-scale.test.ts
+{
+  "timestamp": "2026-10-29T15:34:36.330Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:34:36.332Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-scale.test.ts
+{
+  "timestamp": "2026-10-29T15:34:36.332Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-scale.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-assembly-scale.test.ts > the CSR listings are generated streaming, at several thousand pages > assembles 400 synthetic subjects with the heap under a fixed ceiling 13023ms
+stdout | server/services/ana/__tests__/csr-section-evidence-tool.test.ts
+{
+  "timestamp": "2026-10-29T15:34:51.920Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:34:51.922Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/csr-section-evidence-tool.test.ts
+{
+  "timestamp": "2026-10-29T15:34:51.922Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/csr-section-evidence-tool.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > says a failed read failed, without driver text
+{
+  "timestamp": "2026-10-29T15:34:52.057Z",
+  "level": "error",
+  "message": "[csr-section-evidence-tool] get_csr_section_evidence failed",
+  "context": {
+    "err": "relation \"submission_orchestrator_inputs\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses a run whose source receipt was revoked, typed, never as an empty pack 5ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses when the person has no access to the open project 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses a section no retained table supports (12.5 vital signs) instead of borrowing safety tables 4ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses without an open project or an identified member, and on a malformed selection 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > says a failed read failed, without driver text 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence returns engine tables bound to their digest > returns the §12.2 tables, their digest and limitations, within the result budget 4ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence returns engine tables bound to their digest > pages a large table by whole rows instead of cutting it 13ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > reports an AE count one off from aeBySOC as not reconciling, with the cell value 2ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > reconciles figures that match and flags a figure no table holds 2ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > refuses to reconcile against evidence other than the digest the draft was written from 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > refuses malformed claims rather than reporting them reconciled 1ms
+stderr | server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is offered, handled, classed read, in launch scope, engine-presented and deterministic
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is offered, handled, classed read, in launch scope, engine-presented and deterministic
+{
+  "timestamp": "2026-10-29T15:34:53.360Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is offered, handled, classed read, in launch scope, engine-presented and deterministic 8524ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is the first thing the clinical.study-report skill does for a results section 1034ms
+stdout | server/services/csr/__tests__/csr-assembly-run.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:35:03.572Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:35:03.575Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-run.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:35:03.575Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-run.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > queues, runs off the request, and retains every leaf with its page count and SHA-256 (SYNTHETIC) 501ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a stored copy that differs from the assembled file as a failure, not an assembly 195ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a build with no bound run, and a declaration without a reason 47ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a frozen sequence, a transmitted one and another project’s, before writing any leaf 319ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses placement while a blocking 16.1.x appendix is missing, naming it 370ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > places every leaf under 5.3.5.1 with its STF role once each blocking appendix is supplied or declared, and records the declarations 367ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a writer refusal part-way as a partial placement, naming what was placed 482ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place an assembly made before the build’s sections changed (its fingerprint is not the job’s now) 407ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place a body whose drafted text keeps a data placeholder, naming the section; a manual heading not supplied does not block 776ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > lets a placement claim left by a stopped worker expire: shown as interrupted, and placed again into the same sequence only 483ms
+ ✓ server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts > packages a placed CSR with every GoToR link in the body naming a file in the package (SYNTHETIC) 2188ms
+ ✓ server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts > finishes a placement refused part-way by placing again, with no second leaf for a file already placed (SYNTHETIC) 1024ms
+stdout | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:35:23.991Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:35:23.993Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:35:23.993Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts
+[database] Database connection successful
+
+stdout | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts > narrative build memory at 1,000 narratives (SYNTHETIC data) > never moves more than a page of narrative text in one statement, and lands §14.3.3 byte-identical
+[SYNTHETIC memory] narratives=1000 section14_3_3_chars=673113 maxSentChars=33934 maxReadChars=29358
+
+ ✓ server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts > narrative build memory at 1,000 narratives (SYNTHETIC data) > never moves more than a page of narrative text in one statement, and lands §14.3.3 byte-identical 2513ms
+stdout | server/services/csr/__tests__/csr-assembly.test.ts
+{
+  "timestamp": "2026-10-29T15:35:31.722Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:35:31.725Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly.test.ts
+{
+  "timestamp": "2026-10-29T15:35:31.725Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > builds the body, §14 and §16 leaves; bookmarks reach four levels and every link resolves 438ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > numbers the engine tables 14.1.x / 14.2.x / 14.3.x and bookmarks them to four levels in the §14 leaf 376ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > renders identically twice (the leaf digests a later sequence compares) 709ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > lists the protocol, sample CRF, investigators, signatures and SAP as blocking gaps when they are not supplied 312ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied document whose bytes are not the version named, or that is not a PDF 99ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied copy of a listing the source generates, and a not-applicable claim without a reason 86ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails a link to a §14 table the tables leaf does not define, a file outside the assembly and an undefined internal destination 413ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails bookmarks that stop at three levels, and a heading drawn without its bookmark 21ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > marks an assembly incomplete when its drafted body has no fourth-level heading 353ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > reports a body cross-reference that names nothing in the assembly, and does not link it 395ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > names the subject and column when the source records something else, and a source record left unlisted 406ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > holds the adverse-event listing to every source event of the subject, each used once 318ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > hand-off to Submission Center’s packager > packages the leaves into the study folder with its stf-<study-id>.xml and every cross-reference resolved 921ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > 20260628_csr_job_state.sql on the deploy path > replays over tables pushed without the 2026-10-29 columns and keeps their rows 2557ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > 20260628_csr_job_state.sql on the deploy path > records the bound evidence run from the job snapshot and refuses an unknown review state 13ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > per-section review state > moves draft → in review → approved, with the reviewer and the text the approval binds 19ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > per-section review state > refuses a send-back without a reason, then records the reason 7ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > per-section review state > never carries an approval onto redrafted text, and refuses a decision on text the reviewer did not see 17ms
+ ✓ server/services/csr/__tests__/csr-section-review.pglite.test.ts > per-section review state > refuses tampered text, a foreign tenant and a missing section 8ms
+stdout | server/services/csr/__tests__/csr-narrative-run.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:35:45.343Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:35:45.344Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-narrative-run.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:35:45.345Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-narrative-run.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a worker that dies mid-run is stalled, taken over by the next request, and resumes without recomposing verified subjects
+{
+  "timestamp": "2026-10-29T15:35:48.950Z",
+  "level": "error",
+  "message": "[csr-narrative-run] CSR narrative build failed",
+  "context": {
+    "id": 1,
+    "organizationId": 7,
+    "err": "Connection terminated unexpectedly"
+  }
+}
+
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a worker that dies mid-run is stalled, taken over by the next request, and resumes without recomposing verified subjects 449ms
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a superseded attempt cannot record an outcome 56ms
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a cancelled build stops the run, which is recorded as cancelled and lands nothing 76ms
+stdout | server/services/ana/__tests__/writing-precision-gate.test.ts
+{
+  "timestamp": "2026-10-29T15:35:50.710Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:35:50.713Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/writing-precision-gate.test.ts
+{
+  "timestamp": "2026-10-29T15:35:50.713Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/writing-precision-gate.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/writing-precision-gate.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/writing-precision-gate.test.ts
+{
+  "timestamp": "2026-10-29T15:35:51.261Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags the same document-level quantity stated with two different values 9ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag legitimately multi-valued quantities (n per arm, p per endpoint, week per visit) 5ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag a value that is stated consistently 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not treat a leading qualifier as a second expansion 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags an acronym expanded two different ways 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags US/UK spelling drift and mixed interchangeable terms 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag a single consistent spelling 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > combined report reports ok when clean 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > claims dimension (composes promotional-screening, no second lexicon) > flags absolute safety, guarantees, and causal overreach as claims findings 30ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > claims dimension (composes promotional-screening, no second lexicon) > does not flag appropriately hedged scientific prose 5ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > penalizes an ungrounded number and a self-contradiction, verdict revise 4ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > a grounded, consistent regulator paragraph passes 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > buildRevisionBrief lists findings most-severe first, or empty on pass 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > is well-formed and requires text 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > runs live and returns a score, verdict, and revision brief 4ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > rejects an empty draft as needs_parameters 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > confirms a revision that fixes the finding improved and now passes 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > detects a non-improving revision 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > tool contract requires both texts and runs live 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > catches a value stated inconsistently ACROSS sections 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > passes a coherent two-section document 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > tool accepts supplied sections as an explicit alternative to saved records 2ms
+stdout | server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:35:55.741Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:35:55.743Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:35:55.743Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:35:55.903Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'US' filing context independently of a renamed title 201ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'CA' filing context independently of a renamed title 83ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'EU' filing context independently of a renamed title 81ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'JP' filing context independently of a renamed title 85ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'GLOBAL' filing context independently of a renamed title 72ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > invalidates pinned continuation when only the recorded regional context changes 56ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses section CREATE context that conflicts with the saved document context 57ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"filingContext":null} 47ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"filingContext":[]} 43ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"filingContext":{"registryId":17,"region":"EU","agency":"EMA"}} 45ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"filingContext":{"registryId":"EU_CTA","region":"EMEA","agency":"EMA"}} 40ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"filingContext":{"registryId":"EU_CTA","region":"EU","agency":""}} 41ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"filingContext":{"region":"EU","agency":"EMA"}} 62ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses a regional source whose required filing context is missing 63ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses a recorded filing identity that disagrees with its source entry ID 65ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > preserves old recorded sources that never carried optional filing context 77ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a v2 project (a program uuid in projectRef) is composed from 441ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a numeric open project is composed from, with the actor passed to the CSR scope 16ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > another project named while one is open is refused, never read 6ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a project with no completed CSR says so 11ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a person who is not a member is refused as such, not as a missing project and not by a throw 4ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > no open project and none named asks for one 0ms
+stdout | server/services/csr/__tests__/csr-narrative-store.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:36:06.489Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:06.491Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-narrative-store.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:36:06.492Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-narrative-store.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > replays and enforces its row shape: a composed row has text and hash, a refused row has neither 15ms
+stdout | server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > SYNTHETIC scale through the database: 1,000 subjects, 200 narratives persisted one by one, then resumed
+[SYNTHETIC scale, PGlite] subjects=1000 narratives=200 firstRunMs=379 resumeMs=88
+
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > persists, resumes and lands the sections; a drafted §12.3.2 is kept 227ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > stops on a cancelled build and saves nothing for it 7ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > reads the QC list without the narrative text, organization-scoped 4ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > SYNTHETIC scale through the database: 1,000 subjects, 200 narratives persisted one by one, then resumed 470ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > persists exact partial coverage and resumes only the missing section without changing retained output 135ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs before any section read 96ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs/sections before any section read 63ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses cancellation by an unrelated member before section reads or changing the queued job 44ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > checks the current share on every retained read after an authorized member is revoked 103ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > keeps completed status and content readable to an authorized member after project archival 94ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > guards submission-summary CSR source reads and allows retained content only to a currently authorized actor 71ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows a current organization member who created the private project without an explicit share entry 52ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows the private project member with current use permission and preserves the requester 44ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > refuses a private project to an unrelated organization member before enqueue 25ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure before source access when the project share is revoked after enqueue 40ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure when the private project creator leaves the organization after enqueue 38ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > uses the current role when an organization administrator is downgraded after enqueue 38ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > fails closed and persists failure when current membership cannot be read 37ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a foreign or missing project before storing a build job 20ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses an archived project and malformed explicitly supplied project 21ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > rejects a request/context mismatch instead of changing the target or tenant 7ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > carries a real request project through when no separate context project was supplied 16ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a build with no project or program anchor before storing a job 6ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > resolves a real program through its own unique anchor and rejects a foreign program or conflicting project 17ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > checks actual workspace membership and keeps archived history readable 25ms
+ ✓ server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > uses one latest completed generation per study after tenant/project/status filtering, with deterministic ties 27ms
+ ✓ server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > retains all historical generations and their section records 15ms
+stdout | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-10-29T15:36:27.476Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:27.479Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-10-29T15:36:27.480Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-review.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the laboratory listing shows only what ADLB records > reads Baseline as not recorded when ADLB has no ABLFL, and an XPT date as a date 877ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a listing value the PDF fonts cannot draw fails the source check > records the row as drawn, so a "?" in place of a character is a disagreement, and a lossless substitution is not 373ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a run with no engine table does not claim a Section 14 document > says Section 14 is not supplied, files no tables leaf, and is incomplete 390ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > reads page count and named destinations from the cross-reference table, as a whole read does 95ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > falls back to a whole read for a leaf laid out otherwise (an xref stream), and still fails a destination it lacks 29ms
+stdout | server/services/csr/__tests__/csr-narrative-job.test.ts
+{
+  "timestamp": "2026-10-29T15:36:31.555Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:31.557Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-narrative-job.test.ts
+{
+  "timestamp": "2026-10-29T15:36:31.557Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-narrative-job.test.ts
+[database] Database connection successful
+
+stdout | server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale: 1,000 subjects, about 200 narratives, every fact reconciled, within seconds
+[SYNTHETIC scale] subjects=1000 narratives=200 facts=3660 ms=55 section14_3_3_chars=135019 counts={"death":10,"serious":110,"discontinuation":60,"aesi":40}
+
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > composes every selected subject and lands §14.3.3 and the §12.3.2 cross-reference 25ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > resumes per subject: a stopped run keeps its saved subjects and the rerun composes only the rest 17ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > never overwrites a saved narrative that fails its hash: the run fails and preserves it 8ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > lands no section while a selected subject is refused, and lists it 3ms
+stdout | server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale target: 5,000 subjects, about 1,000 narratives (design decision 5)
+[SYNTHETIC scale target] subjects=5000 narratives=1000 ms=442 section14_3_3_chars=673113
+
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale: 1,000 subjects, about 200 narratives, every fact reconciled, within seconds 125ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale target: 5,000 subjects, about 1,000 narratives (design decision 5) 444ms
+stdout | server/services/csr/__tests__/csr-assembly-source.test.ts
+{
+  "timestamp": "2026-10-29T15:36:33.917Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:33.919Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-source.test.ts
+{
+  "timestamp": "2026-10-29T15:36:33.920Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-source.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > composes from the verified job and its retained run; §3, §14 and §16 are filled here, §15 stays a gap 523ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a job that was not built from a retained run, before reading any source rows 67ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a retained source whose records do not name their subject 64ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > is accepted and reaches the §11.4 table, cell for cell as recorded 34ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > leaves a table without one byte-identical, so its scientific-review receipts still verify 19ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > never rounds a posterior up to certainty or down to impossibility 60ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > refuses reversed credible bounds, a probability outside 0–1 and a posterior with no hypothesis 75ms
+ ✓ server/services/csr/__tests__/lmn201-synthetic-tables.integration.test.ts > LMN-201-like 500-subject synthetic CSR table journey > generates and reconciles source-backed ICH E3 tables with no invented statistical inference 164ms
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an unclaimed numerator beside a claimed denominator
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a rate written in words rather than with a percent sign
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies
+[csr-job-runner] Job 42 failed on section '12.2.1': CSR_SOURCE_RECEIPT_REVOKED
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol
+[csr-job-runner] Job 42 failed on section '12.2.1': CSR_EVIDENCE_STUDY_MISMATCH
+
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell 39ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names 9ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an unclaimed numerator beside a claimed denominator 18ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a rate written in words rather than with a percent sign 8ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all 7ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a reply the gateway cannot attribute to a model 6ms
+stdout | server/services/csr/__tests__/adam-source-derivation.test.ts
+{
+  "timestamp": "2026-10-29T15:36:39.524Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:39.525Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/adam-source-derivation.test.ts
+{
+  "timestamp": "2026-10-29T15:36:39.525Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/adam-source-derivation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent ADAE row whose subject is outside the ADSL safety population 10ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an ADAE subject that ADSL does not list, and never adds it as a participant 4ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an unmapped planned treatment 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a reassigned actual treatment 4ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a subject still ongoing at the data cut 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an unknown sex 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a severity outside MILD/MODERATE/SEVERE 11ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an uncoded treatment-emergent event 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a dataset in the wrong slot 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a different STUDYID 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a safety subject without exposure 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a missing variable by name, and an efficacy file for another protocol 5ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an ADAE that cannot establish fatal outcomes or AE discontinuations, rather than counting them 0 5ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AESDTH and AEOUT both blank rather than counting it 0 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AESDTH blank and AEOUT UNKNOWN rather than counting it 0 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AEACN blank rather than counting it 0 2ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AEACN UNKNOWN rather than counting it 0 3ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > accepts AESDTH = N with no AEOUT: the event is recorded as not fatal 7ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a last on-treatment value it cannot order, and two baselines 6ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > the derived source is exactly what the datasets record > lists every ADSL subject once and no other, with populations from the flags 4ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > the derived source is exactly what the datasets record > derives the same source from SAS transport as from Dataset-JSON 19ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §10.1 reports the death and the loss to follow-up, and "not recorded" for what ADSL cannot establish 1ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.2 / §12.3 count TEAE subjects, the SAE and the fatal event against the safety population 1ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.1 exposure, §12.4 lab shifts and the Bayesian primary result come through 5ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.5 finally has evidence: change from baseline to the last on-treatment value 1ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §11.2 concomitant medications count subjects, and say when a class was not coded 0ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: §12.2 and §12.5 evidence packs reconcile every drafted figure > §12.5 is available from the vital-sign table, and its figures reconcile to their cells 4ms
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: §12.2 and §12.5 evidence packs reconcile every drafted figure > §12.2 reconciles the TEAE, SAE and fatal-event figures 2ms
+stdout | server/services/csr/__tests__/narrative-reconciliation.test.ts
+{
+  "timestamp": "2026-10-29T15:36:41.231Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:41.235Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/narrative-reconciliation.test.ts
+{
+  "timestamp": "2026-10-29T15:36:41.235Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/narrative-reconciliation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > reads the fatal SAE of subject 8 (index 7) with its onset, seriousness and source rows 14ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > converts an ADaM numeric date (SAS days since 1960-01-01) and refuses partial dates 1ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > passes the template narrative, which states each onset by study day 11ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset day differs from ADAE ASTDY, even when the wrong day is another recorded fact 5ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset date differs from ADAE ASTDT 11ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses unsourced age, grade, severity, death and omitted events 7ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that moves the onset, keeps the template, and records why 6ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that changes a number the gate has no pattern for (exposure days), or restates a date or day in another form 5ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a severity stated for an event whose rows record none 7ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > accepts a model rewrite that changes only connective prose, and names the model 6ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a subject whose ADSL death has no fatal ADAE event, by name 2ms
+stderr | server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > redrafts saved placeholder target text on resume and keeps the placeholder refusal
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 13; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > does not turn a cancelled job into failed when a late AI call rejects
+[csr-job-runner] Job 42 failed on section '13': Late model failure
+
+stderr | server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job FAILED (not complete) when a section still has an unresolved placeholder
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 13; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > does not relabel completed CSR work as failed when dependent continuation is unavailable
+[csr-job-runner] CSR completed; submission continuation is temporarily unavailable { jobId: 42, organizationId: 1 }
+
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > refuses completion when the requested draft has no usable content ("") 14ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > refuses completion when the requested draft has no usable content (" \n\t ") 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > preserves valid partial outputs and counts only requested rows through an explicit resume 13ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — requested saved-output coverage > repairs a retained blank row only on explicit resume while preserving valid saved text 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > refuses unsupported retained selection "999" without drafting or continuation 1ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > refuses unsupported retained selection "13" without drafting or continuation 1ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > redrafts saved placeholder target text on resume and keeps the placeholder refusal 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > does not let unrelated retained placeholder rows block an otherwise covered explicit subset 2ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > preserves the existing full-build meaning of an empty retained selection 14ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > drafts a duplicate supported subset only once 2ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — retained target selections and progress > resets stale progress before retrying targets when retained rows are unrelated or blank 2ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > rejects an altered retained hash without overwriting the source section 2ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > does not turn a cancelled job into failed when a late AI call rejects 2ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — terminal integrity and cancellation > cannot complete or continue a job cancelled during an AI call 2ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job FAILED (not complete) when a section still has an unresolved placeholder 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job COMPLETE when the section is placeholder-free 2ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > does not relabel completed CSR work as failed when dependent continuation is unavailable 3ms
+stdout | server/services/csr/__tests__/vault-adam-bundle.test.ts
+{
+  "timestamp": "2026-10-29T15:36:43.904Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:43.905Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/vault-adam-bundle.test.ts
+{
+  "timestamp": "2026-10-29T15:36:43.906Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/vault-adam-bundle.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > previews engine tables derived from the datasets, bound to the manifest digest, with no subject identifier 30ms
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > refuses a run while any named file is unapproved, and previews it as not approved 11ms
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > refuses a dataset whose current bytes are not the version the manifest pins 2ms
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > carries the derivation’s typed refusal out of the Vault path 4ms
+stdout | server/services/csr/__tests__/vault-source-input.test.ts
+{
+  "timestamp": "2026-10-29T15:36:45.414Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:45.416Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/vault-source-input.test.ts
+{
+  "timestamp": "2026-10-29T15:36:45.417Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/vault-source-input.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > previews actual deterministic aggregate tables with exact receipt and no participant rows 20ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > holds exact source locks until durable inputs are captured, then releases before unrelated composers 6ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > rolls back and performs no downstream work when input capture fails 5ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > previews unapproved source honestly but refuses to include it in a new run 4ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a review lifecycle for new runs 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a superseded lifecycle for new runs 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a withdrawn lifecycle for new runs 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses an approval for different bytes 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses private before publishing tables 3ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses revoked before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses foreign before publishing tables 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses withdrawn before publishing tables 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses superseded before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses stale-digest before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses corrupt-bytes before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-json before publishing tables 2ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-observations before publishing tables 3ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses oversized before publishing tables 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > allows a read-only member to preview an accessible source but not start a source-bound run 3ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not turn store errors into an empty candidate list 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > lists metadata only and requires the exact approval hash 1ms
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not echo participant cell values or unknown uploaded keys in schema validation issues 2ms
+stdout | server/services/csr/__tests__/narrative-subject-selection.test.ts
+{
+  "timestamp": "2026-10-29T15:36:46.975Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:46.977Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/narrative-subject-selection.test.ts
+{
+  "timestamp": "2026-10-29T15:36:46.977Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/narrative-subject-selection.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects exactly the subjects who died, had an SAE, withdrew for an AE or had a declared AESI 20ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > never misses an SAE subject: every AESER = Y row’s subject is selected, pre-treatment ones included 18ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > orders by treatment group (manifest order) then subject 7ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects no AESI subject when the protocol declares none, and refuses a declared flag that ADAE lacks 20ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses a blank AESER rather than reading it as not serious 1ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses an ADAE subject that ADSL does not list 1ms
+stdout | server/services/csr/__tests__/saved-clinical-tables.test.ts
+{
+  "timestamp": "2026-10-29T15:36:48.349Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:48.351Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/saved-clinical-tables.test.ts
+{
+  "timestamp": "2026-10-29T15:36:48.351Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/saved-clinical-tables.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns aggregate tables and exact provenance without exposing frozen participant rows 18ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > requires current project access before reading the private receipt 4ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses a missing/foreign run rather than reporting a successful empty history 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained observations 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained digest 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained seal 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained program 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained organization 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > honors explicit data withdrawal without erasing the original receipt or returning fake empty tables 3ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > does not require an old historical source to remain the current Vault version or retain original bytes 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns an honest empty source-receipt history for an intact run that never selected a source 1ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses an ambiguous study identity even in a correctly sealed input receipt 2ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > the retained study the CSR assembler composes from > returns the verified subject rows and their tables for the job’s study, through the same checks 3ms
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > the retained study the CSR assembler composes from > refuses a study the run does not hold, a source no longer approved, and an altered run, rather than assembling from nothing 3ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > renders statuses no record uses, and the source did not declare, as "not recorded" 3ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > keeps a recorded zero as 0: a status used in one arm is a recorded classification in every arm 0ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > keeps a declared category with no subject as a recorded 0 0ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > renders a source that records every status byte-identically to the previous builder 1ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > labels completion by the basis the source declares, and keeps the previous label when it declares none 1ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > leaves every other table unchanged by the declarations 2ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > the csr-source.v1 contract carries the disposition declarations > accepts declared categories and a basis 4ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > the csr-source.v1 contract carries the disposition declarations > refuses a disposition record whose status the declared categories omit, and a repeated category 2ms
+stdout | server/services/ana/__tests__/csr-writing-guidance-tools.test.ts
+{
+  "timestamp": "2026-10-29T15:36:50.410Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:50.412Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/csr-writing-guidance-tools.test.ts
+{
+  "timestamp": "2026-10-29T15:36:50.412Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/csr-writing-guidance-tools.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/csr-writing-guidance-tools.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/csr-writing-guidance-tools.test.ts
+{
+  "timestamp": "2026-10-29T15:36:50.575Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > get_document_section_requirements returns the E3 writing knowledge > §11.4.1 carries its writing rules, the estimand attributes and E9(R1) 4ms
+ ✓ server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > get_document_section_requirements returns the E3 writing knowledge > §10.1 names its display model, E3 Annex IVa 1ms
+ ✓ server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > get_document_section_requirements returns the E3 writing knowledge > §16.1.2, title-only until 2026-10-29, says what it carries and how it is compiled 1ms
+ ✓ server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > declares a section input 1ms
+ ✓ server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > a CSR request returns report-wide tense, voice, hedging and causality rules and the terminology standards 5ms
+ ✓ server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > with a section, returns that heading’s own rules from the E3 tree 1ms
+ ✓ server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > an E3 number that does not exist is said, never answered from another heading 1ms
+ ✓ server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > therapeutic-area vocabulary reaches the CSR: oncology, vaccines, psychiatry, endocrinology 3ms
+ ✓ server/services/ana/__tests__/csr-writing-guidance-tools.test.ts > medical_writing_guidance returns the CSR writing standard per section > a non-CSR document carries no CSR writing block 1ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > IBM floating point > decodes the published constants 1.0, 0.1 and -118.625, and SAS missing values 4ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > reads Dataset-JSON v1.1 rows by column name, numeric strings left for the derivation 6ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > reads NDJSON and v1.0 item-group files 2ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > refuses a row whose length differs from the columns, a non-dataset JSON, and a two-dataset file 1ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > decodes SAS transport v5 observations: text, IBM numerics and missing values 3ms
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > refuses a malformed transport file instead of reading past it 1ms
+stdout | server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts
+{
+  "timestamp": "2026-10-29T15:36:55.037Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:55.039Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts
+{
+  "timestamp": "2026-10-29T15:36:55.040Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts
+[database] Database connection successful
+
+ ✓ server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts > readCsrAdamDatasets (SYNTHETIC data) > returns the bundle and its subject-level datasets, ADMH included, and commits 17ms
+ ✓ server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts > readCsrAdamDatasets (SYNTHETIC data) > refuses while any dataset is not approved at its pinned version, and rolls back 5ms
+ ✓ server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts > readCsrAdamDatasets (SYNTHETIC data) > refuses a hand-built csr-source.v1 file by name 2ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > passes claimed numbers and cross-references to report parts 2ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > refuses any other number, however it is written 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let a reference word hide a percentage 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds each kind of figure a model could invent 2ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a figure the study information supplied, and a confidence level 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds a Bayesian result a model could invent: a posterior, an n/N and an unbracketed interval 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a supplied phase written n/N, a date and a posterior placeholder 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits placeholder prose 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > treats methods and results sections as statistical, and ethics as not 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not store a §11.4 model draft that states results nobody supplied 3ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > keeps a model draft of a statistical section that states nothing unsupplied 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not apply the guard to a non-statistical section 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > the §9.7 template no longer asserts an analysis population or alpha nobody supplied 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > loadCsrInputsForProject — the Module 2 primary result > quotes the pointer to §11.4, never §11.4 text, even when the section states a result 1ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > accepts an exactly matching, qualified synthetic TLF receipt 2ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses missing and duplicate source records 1ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses unreviewed or withdrawn source records 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects changed source version or missing page/table locator 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects analysis population and endpoint substitution 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects denominator, numerator and estimate drift 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses unsupported inference or changed units 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses invalid counts and duplicate claim identifiers 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > never equates no claims with a passed CSR 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > rejects invalid source-side facts even when a claim matches their invalid value 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > rejects a non-finite qualified source estimate 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects internally inconsistent observed proportions in qualified source data 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > does not recompute model-based estimates from raw counts 0ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > accepts only exactly matched, nonblank saved content 3ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > refuses a changed section even when the row exists and has prose 1ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > treats absent and blank outputs as missing 0ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > refuses duplicate target output rows 0ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > never claims completion from empty or duplicate target selection 1ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > requires a persisted hash, not an invented hash at read time 0ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > does not count an incomplete saved subset as complete coverage 0ms
+ ✓ server/services/csr/__tests__/csr-output-integrity.test.ts > CSR saved-output final integrity gate > does not allow unrelated saved sections to satisfy requested coverage 0ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > accepts an exact qualified section and source receipt without claiming approval 3ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > fails on edited saved text 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > fails on different section identity or AnA run 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > fails on missing, duplicate, extra or cross-section claim receipts 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > fails on withdrawn or changed source evidence 1ms
+ ✓ server/services/ana/__tests__/csr-section-evidence-binding.test.ts > CSR section/version evidence binding > fails closed on missing binding and empty claims 0ms
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > checks the complete manifest 3ms
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects missing sections 1ms
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects duplicate and unexpected sections 1ms
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects changed content, missing binding and withdrawn evidence 1ms
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects empty manifest and content 0ms
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects a reused claim identifier across different sections 0ms
+ ✓ server/services/ana/__tests__/csr-document-evidence-gate.test.ts > CSR document evidence gate > rejects duplicate source fact identifiers in the document ledger 0ms
+ ✓ server/services/ana/__tests__/medical-writing-csr-evidence-review.test.ts > AnA CSR medical-writing review with evidence receipts > never implies a heading-only review is scientific approval 4ms
+ ✓ server/services/ana/__tests__/medical-writing-csr-evidence-review.test.ts > AnA CSR medical-writing review with evidence receipts > reconciles qualified numerical receipts but still requires human review 2ms
+ ✓ server/services/ana/__tests__/medical-writing-csr-evidence-review.test.ts > AnA CSR medical-writing review with evidence receipts > blocks a changed denominator or source version 1ms
+ ✓ server/services/ana/__tests__/medical-writing-csr-evidence-review.test.ts > AnA CSR medical-writing review with evidence receipts > does not promote withdrawn evidence 0ms
+stdout | server/services/ana/__tests__/writing-gate-csr-evidence.test.ts
+{
+  "timestamp": "2026-10-29T15:36:59.971Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:36:59.973Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/writing-gate-csr-evidence.test.ts
+{
+  "timestamp": "2026-10-29T15:36:59.973Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/writing-gate-csr-evidence.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/writing-gate-csr-evidence.test.ts > existing AnA document critique CSR evidence integration > does not silently pass a CSR without numerical source receipts 52ms
+ ✓ server/services/ana/__tests__/writing-gate-csr-evidence.test.ts > existing AnA document critique CSR evidence integration > reconciles qualified source-bound claims without implying approval 3ms
+ ✓ server/services/ana/__tests__/writing-gate-csr-evidence.test.ts > existing AnA document critique CSR evidence integration > blocks denominator drift and withdrawn source evidence 3ms
+ ✓ server/services/ana/__tests__/writing-gate-csr-evidence.test.ts > existing AnA document critique CSR evidence integration > does not impose CSR-only evidence requirements on a protocol 2ms
+ ✓ server/services/ana/__tests__/medical-writing-csr-exemplar.test.ts > AnA CSR exemplar intelligence safeguards > distinguishes full reports from synopses and external evidence from client results 3ms
+ ✓ server/services/ana/__tests__/medical-writing-csr-exemplar.test.ts > AnA CSR exemplar intelligence safeguards > requires denominators, SAP-defined analysis and scientific uncertainty 1ms
+ ✓ server/services/ana/__tests__/medical-writing-csr-exemplar.test.ts > AnA CSR exemplar intelligence safeguards > does not instruct AnA to fabricate frequentist estimates for Bayesian studies 1ms
+ ✓ server/services/ana/__tests__/medical-writing-csr-exemplar.test.ts > AnA CSR exemplar intelligence safeguards > requires safety distinctions, error detection and evidence retention 1ms
+ ✓ server/services/ana/__tests__/medical-writing-csr-exemplar.test.ts > AnA CSR exemplar intelligence safeguards > does not apply CSR-only exemplar requirements to unrelated documents 0ms
+ ✓ server/services/ana/__tests__/medical-writing-csr-exemplar.test.ts > AnA CSR exemplar intelligence safeguards > requires structured numerical claim receipts instead of citation-only prose 0ms
+stdout | server/services/ana/__tests__/csr-template-tool.test.ts
+{
+  "timestamp": "2026-10-29T15:37:02.130Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:37:02.132Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/csr-template-tool.test.ts
+{
+  "timestamp": "2026-10-29T15:37:02.133Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/csr-template-tool.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/csr-template-tool.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/csr-template-tool.test.ts
+{
+  "timestamp": "2026-10-29T15:37:02.249Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/csr-template-tool.test.ts > get_csr_template tool definition > is registered in ALL_ANA_TOOLS 3ms
+ ✓ server/services/ana/__tests__/csr-template-tool.test.ts > get_csr_template handler > lists templates when no key is given 19ms
+ ✓ server/services/ana/__tests__/csr-template-tool.test.ts > get_csr_template handler > returns the full CSR by granule id 1ms
+ ✓ server/services/ana/__tests__/csr-template-tool.test.ts > get_csr_template handler > returns a template by section code 1ms
+ ✓ server/services/ana/__tests__/csr-template-tool.test.ts > get_csr_template handler > reports not_found with the available list for an unknown key 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > is stated when the cell is verbatim, or every number of it survives a reformat 2ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names the changed figure in the cell's shape, or an n/N with its denominator 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not take another claimed cell for a changed figure 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > gives a one-number cell no shape: a different number is left to the unclaimed check 0ms
+ ✓ server/services/csr/__tests__/csr-builder-scope-quota.test.ts > CSR refusal before quota and AI work > does not reserve or consume quota for a foreign project in either launch path 7ms
+ ✓ server/services/csr/__tests__/csr-builder-scope-quota.test.ts > CSR refusal before quota and AI work > refuses conflicting tenant, actor or malformed target before billing 2ms
+stdout | server/services/ana/__tests__/saved-document-critique.test.ts
+{
+  "timestamp": "2026-10-29T15:37:07.324Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:37:07.326Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-document-critique.test.ts
+{
+  "timestamp": "2026-10-29T15:37:07.326Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-document-critique.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-document-critique.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-document-critique.test.ts
+{
+  "timestamp": "2026-10-29T15:37:07.496Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-document-critique.test.ts > existing document critique admits exact saved records > exposes saved-record and versioned continuation inputs on the existing tool 4ms
+ ✓ server/services/ana/__tests__/saved-document-critique.test.ts > existing document critique admits exact saved records > refuses saved-document review with no authorized conversation scope 3ms
+ ✓ server/services/ana/__tests__/saved-document-critique.test.ts > existing document critique admits exact saved records > refuses a malformed supplied section instead of reviewing the filtered subset 1ms
+
+ Test Files  48 passed (48)
+      Tests  473 passed (473)
+   Start at  15:33:41
+   Duration  208.70s (transform 21.34s, setup 1.16s, import 79.43s, tests 117.28s, environment 7ms)
+

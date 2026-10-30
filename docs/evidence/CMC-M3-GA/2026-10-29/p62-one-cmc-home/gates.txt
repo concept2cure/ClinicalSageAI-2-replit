@@ -1,0 +1,151 @@
+# Gates on this change, 2026-10-29
+
+=== npx eslint --no-ignore -f stylish <the 9 changed and new files>, after
+
+server/routes/c2c/program-twin.ts
+   66:85  warning  Async arrow function has too many lines (179). Maximum allowed is 100  max-lines-per-function
+   66:85  warning  Async arrow function has a complexity of 22. Maximum allowed is 15     complexity
+  278:39  warning  Async arrow function has too many lines (210). Maximum allowed is 100  max-lines-per-function
+  278:39  warning  Async arrow function has a complexity of 30. Maximum allowed is 15     complexity
+  517:86  warning  Async arrow function has too many lines (112). Maximum allowed is 100  max-lines-per-function
+  517:86  warning  Async arrow function has a complexity of 28. Maximum allowed is 15     complexity
+  611:1   warning  File has too many lines (670). Maximum allowed is 500                  max-lines
+
+server/routes/c2c/tasks.ts
+  533:86  warning  Async arrow function has too many lines (102). Maximum allowed is 100  max-lines-per-function
+  533:86  warning  Async arrow function has a complexity of 22. Maximum allowed is 15     complexity
+  652:1   warning  File has too many lines (507). Maximum allowed is 500                  max-lines
+
+✖ 10 problems (0 errors, 10 warnings)
+
+
+=== the same, on head's version of each changed file (git show HEAD:<f> | npx eslint --stdin)
+== HEAD server/routes/c2c/tasks.ts
+
+/home/user/ClinicalSageAI-2-replit/server/routes/c2c/tasks.ts
+  530:86  warning  Async arrow function has too many lines (113). Maximum allowed is 100  max-lines-per-function
+  530:86  warning  Async arrow function has a complexity of 26. Maximum allowed is 15     complexity
+  645:1   warning  File has too many lines (517). Maximum allowed is 500                  max-lines
+
+✖ 3 problems (0 errors, 3 warnings)
+
+== HEAD server/routes/c2c/program-twin.ts
+
+/home/user/ClinicalSageAI-2-replit/server/routes/c2c/program-twin.ts
+   56:85  warning  Async arrow function has too many lines (179). Maximum allowed is 100  max-lines-per-function
+   56:85  warning  Async arrow function has a complexity of 22. Maximum allowed is 15     complexity
+  268:39  warning  Async arrow function has too many lines (210). Maximum allowed is 100  max-lines-per-function
+  268:39  warning  Async arrow function has a complexity of 30. Maximum allowed is 15     complexity
+  507:86  warning  Async arrow function has too many lines (112). Maximum allowed is 100  max-lines-per-function
+  507:86  warning  Async arrow function has a complexity of 28. Maximum allowed is 15     complexity
+  601:1   warning  File has too many lines (764). Maximum allowed is 500                  max-lines
+
+✖ 7 problems (0 errors, 7 warnings)
+
+== HEAD server/services/cmc/module3-compile.ts
+== HEAD server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts
+== HEAD server/routes/c2c/__tests__/c2c-router.parity.test.ts
+== HEAD server/routes/c2c/__tests__/support/project-write-gates-fixture.ts
+== HEAD server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+
+=== scoped tsc: npx tsc -p <scratch tsconfig extending tsconfig.json, files = the 9 changed and new files>
+# Every error below is TS7016 (no declaration file) in a file this change does not touch, which the scoped program reaches through imports. No error is in a changed or new file.
+server/routes/c2c/shared.ts(16,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. 'server/metrics.js' implicitly has an 'any' type.
+server/services/ana-ri/proposal-seal.ts(22,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/ana/AnaToolExecutor.ts(59,28): error TS7016: Could not find a declaration file for module '../../fda_maude_client.js'. 'server/fda_maude_client.js' implicitly has an 'any' type.
+server/services/ana/AnaToolExecutor.ts(181,28): error TS7016: Could not find a declaration file for module '../../fda_faers_client.js'. 'server/fda_faers_client.js' implicitly has an 'any' type.
+server/services/cmc/link-to-module3.ts(36,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. 'server/metrics.js' implicitly has an 'any' type.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. 'node_modules/qrcode/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/qrcode` if it exists or add a new declaration (.d.ts) file containing `declare module 'qrcode';`
+server/services/token-revocation.ts(20,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+
+real	1m10.635s
+user	1m14.718s
+sys	0m6.106s
+
+=== npm run ci:launch-scope-api
+ci:launch-scope-api: 564 API paths named by launch and shell screens; none refused. {"launch":514,"infrastructure":2,"never-gated":48}
+exit=0
+=== npm run ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 90 site(s), all baselined.
+exit=0
+=== npm run ci:sql-interpolation
+
+  A value in SQL TEXT is an injection waiting for an input. Pass it as a bind
+  parameter ($1, or drizzle sql`…${x}…`, which parameterizes). For a genuine
+  identifier (a table or column name), take it from a fixed allowlist in code,
+  and raise this file's count in scripts/ci/sql-interpolation-baseline.json in
+  the same change, with the reason in the commit. RLS does not contain injected
+  SQL here (docs/security/C2C_TENANT_ISOLATION_PROOF.md §0).
+
+exit=1
+=== npm run ci:tenant-isolation:no-regression
+
+  server/services/vault/vault-placement.service.ts  (1)
+    L485  tables=[documents]
+      `UPDATE vault.documents SET
+
+Total: 1 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] FAIL — 1 NEW finding(s) above baseline of 0:
+  server/services/vault/vault-placement.service.ts#faad7a0ef639:documents
+exit=1
+=== npm run ci:tenant-entry-points
+[ci:tenant-entry-points] 15 entry point(s); 9 consider tenant entitlement, 6 do not (baseline 6)
+
+[ci:tenant-entry-points] FAIL — 1 baselined entry point(s) CHANGED since justification:
+    server/routes/mdx-admin.ts  (alternative-auth-router)
+
+  Re-read the justification against the new code. If it still holds, refresh
+  the digest: npm run ci:tenant-entry-points:write-baseline
+
+exit=1
+=== npm run ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+exit=0
+=== npm run ci:check-route-collisions
+check-route-collisions: 11 prefixes carry more than one router; 58 routers read.
+✅ no route is defined twice under a shared prefix.
+exit=0
+=== npm run ci:audit-route-mounts:no-regression
+
+Owner summary (warning/error counts):
+- Platform API Gateway (server/index.ts): 0 errors, 4 warnings
+- CMC Platform (server/routes/cmc*.ts): 0 errors, 2 warnings
+- AI Platform (server/services/ai-gateway/): 0 errors, 1 warnings
+- Platform Kernel (server/routes/concept2cure.ts): 0 errors, 1 warnings
+
+Baseline delta: +0 new errors, +0 new warnings (baseline: docs/reports/route-mount-audit-baseline.json)
+exit=0
+=== npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit=0
+=== npm run ci:no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+exit=0
+=== npm run ci:fixture-fallback
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+exit=0
+=== npm run ci:json-operator-types
+[ci:json-operator-types] 960 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3525 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+exit=0
+=== npm run ci:session-scoped-rls-bypass
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 0 baselined occurrence(s) remain in 0 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+[ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (782 migration file(s) and 4340 code file(s) read), and no script writes either (P-70).
+exit=0
+=== npm run ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+exit=0
+=== npm run ci:untracked-imports
+[ci:untracked-imports] OK — every relative import in 2 file(s) resolves to a tracked file.
+exit=0

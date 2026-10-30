@@ -1,0 +1,44 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5211/api/chat/upload",
+    "anonymous": false,
+    "identity": null,
+    "body": "[multipart/form-data]"
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 1272,
+    "rateLimitRetries": 0,
+    "body": {
+      "fileId": "file_1793305382961_9f1myq",
+      "message": "File uploaded successfully",
+      "status": "ready",
+      "fileName": "oq-002-data-room-20261029202031.pdf",
+      "sourceId": 79,
+      "dataRoom": {
+        "recorded": true,
+        "readable": true,
+        "processing": {
+          "ok": true,
+          "processed": true,
+          "status": "completed"
+        }
+      },
+      "extractionMethod": "pdf-text",
+      "extractionWords": 10,
+      "extractionCoverage": {
+        "pageCount": 1,
+        "pagesRead": 1,
+        "limitedBy": null
+      },
+      "retrieval": {
+        "embeddedChars": 53,
+        "extractedChars": 53,
+        "indexedWholeFile": true,
+        "embedded": false
+      }
+    }
+  }
+}

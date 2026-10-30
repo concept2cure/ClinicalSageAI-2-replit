@@ -1,0 +1,52 @@
+{
+    "success": true,
+    "data": {
+        "studyId": 1,
+        "basis": "PhRMA CMC Statistics and Stability Expert Teams out-of-trend method \u2014 regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points; slope with 95% CI over the whole series; projected crossing of the recorded acceptance criterion where the slope heads toward it",
+        "alpha": 0.05,
+        "unassignedObservations": [],
+        "series": [
+            {
+                "parameter": "Total impurities",
+                "condition": "25C/60%RH",
+                "pointsRecorded": 5,
+                "pointsUsable": 5,
+                "criterionRecordedAs": "NMT 1.0 %",
+                "outcome": {
+                    "ok": true,
+                    "method": "PhRMA CMC Statistics and Stability Expert Teams \u2014 regression control chart (prediction interval of the line fitted to all prior points)",
+                    "alpha": 0.05,
+                    "minimumPriorPoints": 4,
+                    "pointsUsed": 5,
+                    "distinctTimePoints": 5,
+                    "evaluated": 1,
+                    "observedPeriod": 12,
+                    "outOfTrend": [],
+                    "slope": {
+                        "estimate": 0.0383,
+                        "standardError": 0.0125,
+                        "ci": [
+                            -0.0013,
+                            0.078
+                        ],
+                        "tStatistic": 3.0783,
+                        "df": 3,
+                        "significant": false
+                    },
+                    "intercept": 0.104,
+                    "criterion": {
+                        "limit": 1,
+                        "direction": "increasing",
+                        "upperLimit": null,
+                        "twoSided": false
+                    },
+                    "projection": {
+                        "bound": "upper",
+                        "limit": 1,
+                        "time": 23.37
+                    }
+                }
+            }
+        ]
+    }
+}

@@ -135,6 +135,8 @@ function scriptTransaction(row: Record<string, unknown> | null) {
     if (text.startsWith('BEGIN') || text.startsWith('COMMIT') || text.startsWith('ROLLBACK')) return { rows: [] };
     if (text.includes('FROM authoring_documents')) return { rows: [{ id: DRAFT.authoring_document_id, title: DRAFT.title, client_program_id: AUTHORED_CONTENT.programId }] };
     if (text.includes('FROM authoring_sections')) return { rows: [{ id: 'section', code: 'qms-purpose', title: 'Purpose', content: 'Controls design inputs.', order_index: 1 }] };
+    // RR4: the approval asks the document's review route; these documents have none (today's rule).
+    if (text.includes('FROM review_routes')) return { rows: [] };
     if (text.includes('FOR UPDATE')) return { rows: row ? [row] : [] };
     // The filing-agreement check (338fda664) asks first whether a filing store exists. A
     // controlled procedure is usually bound to no filing, so it answers "nothing to compare".
@@ -195,6 +197,8 @@ beforeEach(() => {
   H.failures.mockResolvedValue(undefined);
   H.recordGoverned.mockResolvedValue({ actionId: 'act_1', auditId: 'aud-1', sha256Chain: 'chain-1' });
   H.persistSignature.mockResolvedValue({ id: 501, signedAt: new Date('2026-09-21T10:00:00.000Z') });
+  // RR4: before the credential, the approval asks whether the document is on a review route (none here).
+  H.query.mockImplementation(async (sql: string) => (String(sql).includes('FROM qms_documents') ? { rows: [IN_REVIEW] } : { rows: [] }));
   scriptTransaction(IN_REVIEW);
 });
 
@@ -339,6 +343,33 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     expect(H.persistSignature).toHaveBeenCalledTimes(1);
     expect(H.persistSignature.mock.calls[0][1].extraManifest).toMatchObject({ twoPersonRule: 'enforced' });
   });
+  /* CAT2-19 (2026-10-29): the version is effective from the date the approver
+     signs, never the prior version's; a past date is refused; the date is in
+     the signature's manifest. */
+  it('is effective from the approval day when no date is given, never the prior date, and the manifest binds it', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(200);
+    const update = H.txQuery.mock.calls.find((c) => String(c[0]).startsWith('UPDATE qms_documents'))!;
+    expect(String(update[0])).toMatch(/effective_date = \$4::date,/);
+    expect((update[1] as unknown[])[3]).toBe(today);
+    const [, params] = H.persistSignature.mock.calls[0] as [unknown, Record<string, any>];
+    expect(params.extraManifest).toMatchObject({ effectiveDate: today });
+    expect((H.recordGoverned.mock.calls[0] as [unknown, Record<string, any>])[1].payload).toMatchObject({ effectiveDate: today });
+  });
+
+  it('refuses an effective date before the database day with 422, and signs nothing', async () => {
+    const scripted = H.txQuery.getMockImplementation()!;
+    H.txQuery.mockImplementation(async (sql: string, args?: unknown[]) =>
+      (String(sql).includes('< CURRENT_DATE AS backdated') ? { rows: [{ backdated: true }] } : scripted(sql, args)));
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send({ ...VALID_BODY, effectiveDate: '2020-01-01' });
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body.details.code).toBe('QMS_EFFECTIVE_DATE_BACKDATED');
+    expect(H.txQuery.mock.calls.some((c) => String(c[0]).startsWith('UPDATE qms_documents'))).toBe(false);
+    expect(H.persistSignature).not.toHaveBeenCalled();
+    expect(H.recordGoverned).not.toHaveBeenCalled();
+  });
+
   it('signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT', async () => {
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(200);
@@ -348,14 +379,18 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
 
     // The write order: read under lock, update, ledger pair, signature, commit.
     // Five reads before the first write: the fifth is the filing-agreement check (338fda664), which precedes every write.
-    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'INSERT', 'UPDATE', 'COMMIT']);
+    // The sixth SELECT is the review route's (RR4): the document has none, so today's rule approves it.
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'INSERT', 'UPDATE', 'COMMIT']);
     expect(H.recordGoverned).toHaveBeenCalledTimes(1);
     expect(H.persistSignature).toHaveBeenCalledTimes(1);
 
     const [client, params] = H.persistSignature.mock.calls[0] as [unknown, Record<string, any>];
     // Same client as the transaction — not the pool.
     expect(typeof (client as { query: unknown }).query).toBe('function');
-    expect(H.query).not.toHaveBeenCalled();
+    // Before the transaction, only the review route's precheck reads (RR4, before the credential): nothing is written there.
+    expect(H.query.mock.calls.map((c) => String(c[0]).split(/\s+/).slice(0, 4).join(' '))).toEqual([
+      'SELECT * FROM qms_documents', 'SELECT * FROM review_routes',
+    ]);
     expect(params.target).toBe('qms-document:11');
     expect(params.payload).toEqual({ meaning: 'APPROVED' });
     expect(params.reason).toBe(VALID_BODY.reason);
@@ -409,7 +444,7 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     H.persistSignature.mockRejectedValue(new Error('electronic_signatures insert failed'));
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(500);
-    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'ROLLBACK']);
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'ROLLBACK']);
     expect(H.release).not.toHaveBeenCalled(); // Response completion owns release.
   });
 });

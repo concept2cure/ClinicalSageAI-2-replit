@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+x··
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/tasking/__tests__/my-work.pglite.test.ts > readMyWork — the caller’s open tasks, each with its project’s name > two tasks with the same title are told apart by their projects
+AssertionError: expected [ [ 'T-B', null ], [ 'T-A', null ] ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    [
+      "T-B",
+-     "FS-202 — second IND",
++     null,
+    ],
+    [
+      "T-A",
+-     "FS-101 — first IND",
++     null,
+    ],
+  ]
+
+ ❯ server/services/tasking/__tests__/my-work.pglite.test.ts:69:57
+     67|     const work = await readMyWork(rdb, 1, 3, NOW);
+     68|     const named = work.items.filter((i) => i.title === 'Prepare: Targe…
+     69|     expect(named.map((i) => [i.taskId, i.projectName])).toEqual([
+       |                                                         ^
+     70|       ['T-B', 'FS-202 — second IND'],
+     71|       ['T-A', 'FS-101 — first IND'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  20:59:43
+   Duration  4.75s (transform 1.03s, setup 112ms, import 1.65s, tests 2.71s, environment 0ms)
+

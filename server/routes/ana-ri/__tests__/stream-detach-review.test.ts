@@ -106,6 +106,7 @@ import {
   detachedCount,
 } from '../../../services/ana/detach-slots.js';
 import { harness as h, resetHarness, streamApp, turn, type ToolUse } from './support/stream-route-harness.js';
+import { MAX_PAUSE_MS } from '@shared/ana/run-control-limits';
 
 const app = streamApp(router => {
   router.use((_req, res, next) => {
@@ -424,5 +425,57 @@ describe('a run stopped while its approved action was being carried out (DT3 rev
     const events = await turn(app, { message: 'Save the plan' });
     const result = events.find(e => e.type === 'tool_result' && e.name === 'save_document_to_vault');
     expect(String(result?.message)).toMatch(/did not run: it needs a person's authorisation \(the run was stopped\)\./);
+  });
+});
+
+/* DT3 review (finding 4.3, continued): the approval window closing is the
+   waiting turn's own deny. It used to win over an approval its person had
+   just claimed: the turn recorded "Nobody authorised this within the time
+   allowed, so it did not run" while the governed-action route was carrying the
+   action out under that person's signature. The deny now matches no claimed
+   approval (run-control.ts recordApprovalDecision), and the turn waits for the
+   decision the claim will write. */
+describe('the approval window closes on an approval its person has claimed (DT3 review)', () => {
+  it("the turn waits for the person's decision and takes its result; it never says nobody authorised it", async () => {
+    h.state.approvalOpens = true;
+    h.state.approvalDecisionLands = false;
+    h.state.onWake = () => {
+      // Claimed as the window was closing; the decision lands a few ticks after it closed.
+      h.state.approvalClaimed = true;
+      if (h.state.clockOffset > MAX_PAUSE_MS + 15_000) {
+        h.state.onWake = null;
+        h.state.approvalDecision = { decided: 'approved', result: { success: true, documentId: 'doc_1' } };
+      }
+    };
+    h.state.script = [[save], 'Saved.'];
+    const events = await turn(app, { message: 'Save the plan' });
+    const result = events.find(e => e.type === 'tool_result' && e.name === 'save_document_to_vault');
+    expect(result?.status).toBe('success');
+    expect(JSON.stringify(events)).not.toMatch(/Nobody authorised this within the time allowed/);
+    expect(h.state.handlerCalls.save_document_to_vault, 'the turn ran the action itself').toBeUndefined();
+  });
+
+  it('a claim whose decision never comes is said as approved and unconfirmed, never "nobody authorised", and the turn goes on', async () => {
+    h.state.approvalOpens = true;
+    h.state.approvalDecisionLands = false;
+    h.state.onWake = () => {
+      h.state.approvalClaimed = true;
+    };
+    h.state.script = [[save], 'Done.'];
+    const events = await turn(app, { message: 'Save the plan' });
+    const result = events.find(e => e.type === 'tool_result' && e.name === 'save_document_to_vault');
+    expect(String(result?.message)).toMatch(/was ended because a person approved it as the approval window closed and its result did not reach this turn; the action's own audit record says whether it completed\./);
+    expect(JSON.stringify(events)).not.toMatch(/Nobody authorised this within the time allowed/);
+    const end = events.find(e => e.type === 'timeline' && e.event?.kind === 'end');
+    expect(JSON.stringify(end ?? {})).not.toMatch(/not authorised/);
+    expect(h.state.post.stoppedReason).toBe('no_more_tools');
+  });
+
+  it('an approval nobody claimed is still denied when the window closes', async () => {
+    h.state.approvalOpens = true;
+    h.state.script = [[save], 'Not saved.'];
+    const events = await turn(app, { message: 'Save the plan' });
+    const result = events.find(e => e.type === 'tool_result' && e.name === 'save_document_to_vault');
+    expect(String(result?.message)).toMatch(/nobody decided in time/);
   });
 });

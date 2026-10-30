@@ -1,0 +1,20 @@
+# M13: the purge list deletes risk_items after regulatory_programs
+# mutation: server/services/tenant/tenant-offboarding.ts: 91 chars replaced by 91 chars
+# test: server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts
+# exit=1  Tests  2 failed (2)
+# restored byte for byte: True (sha256 d60cd14d8ccec223188e4bb55e6f56656852c145fe66aa56a75b5b2755e5e165)
+
+## replaced
+  'risk_controls',
+  'risk_items',
+  'qms_nonconforming_products',
+  'regulatory_programs',
+## with
+  'risk_controls',
+  'qms_nonconforming_products',
+  'regulatory_programs',
+  'risk_items',
+
+## failing tests
+× server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts > a tenant with a hazard filed under a project > is purged: its risk file, controls, nonconformances and projects go; the other tenant keeps all of its own 2244ms
+× server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts > a tenant with a hazard filed under a project > the list names the risk file and the nonconformance log before the projects they are filed under 1642ms

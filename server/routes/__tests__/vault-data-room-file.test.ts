@@ -126,7 +126,7 @@ describe('each source is filed on its own', () => {
 
 describe('a revised file is offered as the next version of the document it is named for (QA-2026-10-08)', () => {
   const HEAD = '44444444-4444-4444-8444-444444444444';
-  const CONFLICT = 'A different document is already recorded at code "Protocol-Stability.pdf" version "1.0" for this program. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one.';
+  const CONFLICT = 'A different document is already recorded at code "Protocol-Stability.pdf" version "1.0" for this project. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one.';
 
   it('a source the person names a version of is filed as a check-in to that document, and no other is', async () => {
     fileUploadIntoVault.mockResolvedValueOnce(filed('doc-1')).mockResolvedValueOnce(filed('doc-2'));

@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import path from 'path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import express, { type NextFunction, type Request, type Response } from 'express';
@@ -9,8 +11,10 @@ const state = vi.hoisted(() => ({
   database: null as unknown,
   queries: [] as string[],
   draft: vi.fn(),
+  continuation: vi.fn(),
 }));
 vi.mock('../../../db', () => ({ get db() { return state.database; } }));
+vi.mock('../../submission-orchestrator-continuation.js', () => ({ continueOrchestratorRunsForCsrJob: state.continuation }));
 vi.mock('../../csr-builder', async () => {
   const actual = await vi.importActual<typeof import('../../csr-builder')>('../../csr-builder');
   return { ...actual, draftCSRSectionWithProvenance: state.draft };
@@ -80,17 +84,20 @@ beforeAll(async () => {
     CREATE TABLE csr_build_jobs (id serial PRIMARY KEY, organization_id integer NOT NULL, project_id integer,
       study_id text NOT NULL, status text NOT NULL, progress integer NOT NULL,
       sections_to_generate text[], study_info_snapshot jsonb, error jsonb, requested_by integer,
-      started_at timestamp, completed_at timestamp, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now());
+      started_at timestamp, completed_at timestamp, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now(), source_run_id text GENERATED ALWAYS AS ((study_info_snapshot -> 'evidenceSource' ->> 'runId')) STORED);
     CREATE TABLE csr_section_outputs (id serial PRIMARY KEY, organization_id integer NOT NULL, project_id integer,
       job_id integer NOT NULL, section_number text NOT NULL, content text NOT NULL, content_hash text NOT NULL,
       ai_generated boolean NOT NULL DEFAULT false, model text, token_cost integer DEFAULT 0,
-      lineage jsonb, generated_at timestamp DEFAULT now(), UNIQUE(job_id,section_number));
+      lineage jsonb, generated_at timestamp DEFAULT now(), review_status text NOT NULL DEFAULT 'draft', reviewer_id integer, review_decided_at timestamptz, review_reason text, reviewed_content_hash text, UNIQUE(job_id,section_number));
     INSERT INTO client_workspaces VALUES (71,7);
   `);
+  // The CSR loader reads each study's pivotal declaration (2026-10-29).
+  await database.exec(readFileSync(path.join(process.cwd(), 'migrations/20261029e_study_pivotal_declarations.sql'), 'utf8'));
 });
 
 beforeEach(async () => {
   state.draft.mockReset();
+  state.continuation.mockReset().mockResolvedValue([]);
   state.draft.mockResolvedValue({ number: '13', content: 'Recorded discussion awaiting scientific review.',
     source: 'ai', model: 'test-drafter', tokenCost: 0, lineage: null });
   await database.exec(`
@@ -105,6 +112,39 @@ beforeEach(async () => {
   state.queries.length = 0;
 });
 afterAll(async () => { await database?.close(); });
+
+it('persists exact partial coverage and resumes only the missing section without changing retained output', async () => {
+  const { jobId } = await enqueueCSRBuildJob({ ...request(7), sectionsToGenerate: ['1', '6', '13'] },
+    { organizationId: 7, projectId: 11, requestedBy: 7 });
+  state.draft.mockImplementation(async (section: { number: string }) => ({ number: section.number,
+    content: section.number === '6' ? ' \n\t ' : `Recorded working text for section ${section.number}.`,
+    source: 'ai', model: 'synthetic-test-drafter', tokenCost: 2, lineage: { fixtureSource: section.number } }));
+
+  await runCSRBuildJob(jobId);
+
+  expect(await readJob(jobId)).toMatchObject({ status: 'failed', progress: 66,
+    error: { reason: 'missing_section_outputs', sections: ['6'] } });
+  expect(state.continuation).not.toHaveBeenCalled();
+  const retained = (await database.query<{ section_number: string; content: string; content_hash: string }>(
+    'SELECT * FROM csr_section_outputs WHERE job_id=$1 ORDER BY section_number', [jobId])).rows;
+  expect(retained.map(row => row.section_number)).toEqual(['1', '13']);
+  expect(retained.map(row => row.content)).toEqual(['Recorded working text for section 1.', 'Recorded working text for section 13.']);
+  expect(retained.every(row => /^[a-f0-9]{64}$/.test(row.content_hash))).toBe(true);
+
+  state.draft.mockClear().mockResolvedValue({ number: '6', content: 'Recorded investigator and administrative source details.',
+    source: 'template', model: null, tokenCost: 0, lineage: { fixtureSource: '6' } });
+  await runCSRBuildJob(jobId);
+
+  expect(await readJob(jobId)).toMatchObject({ status: 'complete', progress: 100, error: null });
+  expect(state.draft).toHaveBeenCalledOnce();
+  expect(state.draft.mock.calls[0][0]).toMatchObject({ number: '6' });
+  const completed = (await database.query<{ section_number: string }>(
+    'SELECT * FROM csr_section_outputs WHERE job_id=$1 ORDER BY section_number', [jobId])).rows;
+  // Compare entire saved rows, including IDs, hashes, lineage and generation metadata.
+  expect(completed.filter(row => row.section_number !== '6')).toEqual(retained);
+  expect(completed.map(row => row.section_number)).toEqual(['1', '13', '6']);
+  expect(state.continuation).toHaveBeenCalledExactlyOnceWith(jobId, 7);
+});
 
 describe('CSR job HTTP reads and cancellation enforce current private-project permission', () => {
   it.each(['', '/sections'])('refuses unrelated organization member access to retained jobs%s before any section read', async suffix => {

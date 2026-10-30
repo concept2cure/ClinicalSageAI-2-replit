@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { getPool } from '../db';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
-import { qmsAuthoringWriteRefusal, qmsAuthoringGovernanceRefusal } from '../services/qms/controlled-document-content';
+import { qmsAuthoringWriteRefusal, qmsAuthoringGovernanceRefusal, qmsControlledRenderRefusal } from '../services/qms/controlled-document-content';
 import {
   authoringPrincipalFromRequest,
   isReadOnlyAuthoringPrincipal,
@@ -185,12 +185,23 @@ async function resolveCitationScope(
  * Native review reads require whole-document view access; verdicts require
  * review access. The service independently rechecks current membership, ACL,
  * assignment, authorship and saved content on its request-pinned transaction.
+ *
+ * RR5 (docs/design/REVIEW_ROUTING_2026-10-23.md): the document's review route.
+ * Its round is read with view access, as the reviews are. Who may be named on
+ * it (route-candidates) and reassigning a member are the sender's acts, so
+ * 'edit', as the request is. Handing one's own assignment back is a
+ * reviewer's act, so 'review'. The route's own rules (the sender or an
+ * administrator; a named member) are applied again by the handler.
  */
 const DOCUMENTS_ROUTES: ReadonlyArray<{ pattern: RegExp; action: AuthoringPermissionAction }> = [
   { pattern: /^\/documents\/([^/]+)\/tracked-change-decisions(?:\/bulk)?$/i, action: 'edit' },
   { pattern: /^\/documents\/([^/]+)\/request-review$/i, action: 'edit' },
   { pattern: /^\/documents\/([^/]+)\/review$/i, action: 'review' },
   { pattern: /^\/documents\/([^/]+)\/reviews$/i, action: 'view' },
+  { pattern: /^\/documents\/([^/]+)\/review-route$/i, action: 'view' },
+  { pattern: /^\/documents\/([^/]+)\/route-candidates$/i, action: 'edit' },
+  { pattern: /^\/documents\/([^/]+)\/review-route\/reassign$/i, action: 'edit' },
+  { pattern: /^\/documents\/([^/]+)\/review-route\/hand-back$/i, action: 'review' },
 ];
 
 /** The classified /documents/:id route `path` names, with its document id, or null. */
@@ -304,7 +315,7 @@ function unavailableObjectRefusal(res: Response, decision: AuthoringPermissionDe
 
 function skipsObjectAuthorization(req: Request, path: string | null): boolean {
   if (path == null) return true;
-  if (req.method === 'GET' && /^\/documents\/[^/]+\/reviews$/i.test(path)) return false;
+  if (req.method === 'GET' && /^\/documents\/[^/]+\/(?:reviews|review-route|route-candidates)$/i.test(path)) return false;
   return SAFE_METHODS.has(req.method);
 }
 
@@ -313,6 +324,11 @@ async function controlledDocumentRefusal(res: Response, input: {
 }): Promise<Response | null> {
   const { tenantId, decision, action, path } = input;
   if (!decision.scope) return null;
+  // A controlled render of a QMS document is Quality's controlled copy (MR-12 Stage 8).
+  if (/^\/docs\/[^/]+\/(?:export|file-to-vault)$/i.test(path)) {
+    const refusal = await qmsControlledRenderRefusal(getPool(), tenantId, decision.scope.docId);
+    return refusal ? res.status(refusal.status).json({ error: { code: refusal.code, message: refusal.error } }) : null;
+  }
   const signing = action === 'approve' || /\/(?:e-sign|sign|freeze)$/i.test(path);
   if (action !== 'edit' && !signing) return null;
   const refusal = signing

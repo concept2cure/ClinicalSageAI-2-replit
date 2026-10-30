@@ -1,0 +1,11 @@
+{
+  "atUtc": "2026-10-26T19:40:17.769897+00:00",
+  "verifiedRevision": "96ac4c4a3394d6725097229d7d97b1e43160e2a2",
+  "sourceCommit": "62d1b6f5119c89923d0bb2c38b577ee07e0e063d",
+  "typeCorrectionCommit": "ee0bfd83e6ba683755f1bfa00f82bf94c62bf37e",
+  "typeCorrectionIsAncestor": true,
+  "qualifiedGitInputBlobs": 62,
+  "allQualifiedInputsMatch": true,
+  "publishedEvidenceArtifacts": null,
+  "sourceCommitIsAncestor": true
+}

@@ -18,6 +18,7 @@ import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type { PoolClient } from 'pg';
 import { db, pool } from '../../db';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import {
   submissions,
   ectdSequences,
@@ -101,8 +102,11 @@ import {
 import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import { sequenceTypeRefusal } from '../regulatory/market-support';
+import { sequenceCreationRefusal } from './filed-sequence-baseline';
+import { readCurrentFiledBaseline } from './filed-sequence-baseline-content';
 import { canonicalRegionOf, toAgency } from '../../../shared/regulatory/region-identity';
 import { regionalDeviceApplicationClassForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog';
+import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes';
 import { companyLegalVaultTargetRefusal } from '../vault/vault-lifecycle';
 import { stfFileName } from '../ectd/stf-generator';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
@@ -131,6 +135,7 @@ export type SubmissionErrorCode =
   | 'APPLICATION_NUMBER_MISMATCH'
   | 'APPLICATION_TYPE_MISMATCH'
   | 'DEVICE_PREPARATION_ONLY'
+  | 'NOT_AN_APPLICATION'
   | 'PACKAGE_IDENTITY_MISSING'
   | 'SHADOW_WAIVER_NOT_ELIGIBLE'
   | 'SHADOW_FINDING_NOT_DISPOSABLE';
@@ -166,6 +171,10 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   STALE_LEAF: 409,
   VALIDATION_FAILED: 422,
   DEVICE_PREPARATION_ONLY: 422,
+  // A filing document class (a CSR, a supplement, a meeting package) is not an
+  // application, and a project of one holds none (2026-10-29), as
+  // add-project-market.ts refuses a market for it.
+  NOT_AN_APPLICATION: 422,
   UNANCHORED_SUBMISSION: 409,
   // The status the eCTD export answers for the same contradiction (ectd-export.ts).
   APPLICATION_NUMBER_MISMATCH: 409,
@@ -255,6 +264,11 @@ async function insertSubmissionRow(
     throw new SubmissionError('DEVICE_PREPARATION_ONLY',
       'Start this filing as an authoring project. Its preparation outline does not support canonical submission creation yet. Nothing was created.');
   }
+  const requestedClass = filingDocumentClassOf(input.applicationType);
+  if (requestedClass) {
+    throw new SubmissionError('NOT_AN_APPLICATION',
+      `${filingTypeInSentence(requestedClass.docType)} is not an application, so no submission is created for it. ${classNotSequencedReason(requestedClass)} Nothing was created.`);
+  }
   const [row] = await executor
     .insert(submissions)
     .values({
@@ -292,6 +306,30 @@ async function refuseForeignProgram(
 }
 
 /**
+ * A project created for a filing document class (a CSR, a supplement, a
+ * meeting package) holds no submission spine, by design: its creation writes
+ * none, and add-project-market.ts refuses to add one. POST /api/submissions
+ * anchored an IND submission to such a project all the same (2026-10-29, CSR
+ * path review): a second IND spine beside the sponsor's real one. Refused here
+ * with the add-market sentence.
+ */
+async function refuseDocumentClassProject(
+  q: { query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }> },
+  programId: string,
+  organizationId: number,
+): Promise<void> {
+  const row = (await q.query(
+    'SELECT program_type FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL',
+    [programId, organizationId],
+  )).rows[0] as { program_type?: unknown } | undefined;
+  const own = typeof row?.program_type === 'string' ? filingDocumentClassOf(row.program_type) : null;
+  if (own) {
+    throw new SubmissionError('NOT_AN_APPLICATION',
+      `No submission is created in this project: it is ${filingTypeInSentence(own.docType, true)}. ${classNotSequencedReason(own)} Nothing was created.`);
+  }
+}
+
+/**
  * A created submission, with what happened to the 21 CFR Part 11 §11.10(e)
  * record of its creation carried on it.
  *
@@ -317,6 +355,7 @@ export async function createSubmission(
   ctx: { organizationId: number; userId: number }
 ): Promise<CreatedSubmission> {
   if (input.programId != null) await refuseForeignProgram(pool, input.programId, ctx.organizationId);
+  if (input.programId != null) await refuseDocumentClassProject(pool, input.programId, ctx.organizationId);
   const row = await insertSubmissionRow(db, input, ctx);
   // Part 11 §11.10(e). `recordAuditRow` neither throws nor rejects, and the
   // INSERT above is already committed when it runs, so the submission stands
@@ -656,6 +695,11 @@ export async function createSequence(
   // does not get one past. The reason is the market verdict's.
   const refused = sequenceTypeRefusal(input.region, input.type) ?? sequenceTypeRefusal(parent.primaryRegion, input.type);
   if (refused) throw new SubmissionError('VALIDATION', refused);
+  // Sequences declared filed outside the platform (filed-sequence-baseline.ts):
+  // their numbers are taken, and one of them opened the Original Application.
+  const baseline = await readCurrentFiledBaseline(queryableFromDrizzle(db), ctx.organizationId, input.submissionId);
+  const filedElsewhere = sequenceCreationRefusal(baseline, input.region, input);
+  if (filedElsewhere) throw new SubmissionError('INVALID_STATE', filedElsewhere);
   const [row] = await db
     .insert(ectdSequences)
     .values({
@@ -1831,7 +1875,7 @@ async function applyGovernedSequenceTransition(
         );
         if (!parent || locked.rows[0]?.submission_id !== seq.submissionId ||
           parent.programId !== verdict.recordedPackageIdentity?.identity.programId) {
-          throw new SubmissionError('INVALID_STATE', 'The sequence parent or recorded program anchor changed while this release was being checked. Nothing was recorded; refresh and sign the current content.');
+          throw new SubmissionError('INVALID_STATE', 'The sequence parent or the project’s tracking record changed while this release was being checked. Nothing was recorded; refresh and sign the current content.');
         }
         if (reauthorizing) {
           assertDispatchRenewalStillEligible(locked.rows[0], seq.dispatchStatus);
@@ -2404,7 +2448,7 @@ async function claimTransmitSlot(
     const parent = await lockSubmissionPackageIdentity(q, organizationId, expected.submissionId);
     const locked = await client.query(`SELECT id, submission_id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`, [sequenceId, organizationId]);
     if (!parent || locked.rows[0]?.submission_id !== expected.submissionId || parent.programId !== expected.programId) {
-      throw new SubmissionError('GOVERNED_REQUIRED', 'The sequence parent or recorded program anchor changed while the transmit claim was being taken. Nothing was assembled or sent; sign the current content again.');
+      throw new SubmissionError('GOVERNED_REQUIRED', 'The sequence parent or the project’s tracking record changed while the transmit claim was being taken. Nothing was assembled or sent; sign the current content again.');
     }
     // A receipt may settle while this request waits for the sequence lock.
     // Read the canonical ledger in a fresh statement after acquiring it.
@@ -2505,7 +2549,7 @@ export function transmitApplicationNumberRefusal(typed: string, recorded: string
     return new SubmissionError(
       'APPLICATION_NUMBER_MISMATCH',
       `Application number "${usable}" does not match the program's recorded application number "${recorded}". ` +
-        'The record is authoritative: transmit under the recorded number, or correct the program record first. Nothing was sent.',
+        'The record is authoritative: transmit under the recorded number, or correct the project record first. Nothing was sent.',
     );
   }
   return null;
@@ -2895,7 +2939,8 @@ async function transmitDispatchedSequence(
     throw err;
   } finally {
     // The gateway has consumed the bundle bytes (or failed); either way the
-    // staged temp package is no longer needed.
+    // staged temp package is no longer needed. A sent package's bytes were kept
+    // by the guard before the wire (result.sentPackage).
     await assembled.cleanup();
   }
 
@@ -2937,6 +2982,9 @@ async function transmitDispatchedSequence(
         // warnings, on the §11.10(e) record of the send (2026-09-22, W5/D7).
         preTransmitFailedChecks: preTransmit.failedChecks,
         preTransmitWarnings: preTransmit.warnings,
+        // Where the exact bytes sent are kept: the staged package is deleted
+        // below, and a re-assembly gives a different zip (2026-10-29, W5/D7).
+        sentPackage: result.sentPackage ?? null,
         // P-34: the waiver the send went forward on, when no review had completed.
         ...withWaiverReliedOn(assessment),
       },
@@ -3577,6 +3625,53 @@ async function editLeafStudyTagging(input: UpsertLeafInput, ctx: { organizationI
   return { ...(value.row as SubmissionLeaf), auditTrail, ...(sequenceStatusChanged ? { sequenceStatusChanged } : {}) };
 }
 
+/**
+ * The parent leaf a lifecycle act names must be one this organization owns, in
+ * this sequence or (for replace|append|delete, 2026-10-30) a current leaf of an
+ * earlier sequence of the same submission. Moved out of upsertLeaf unchanged
+ * otherwise.
+ */
+async function assertParentLeafInScope(
+  input: UpsertLeafInput & { parentLeafId: number },
+  seq: { submissionId: number; sequenceNumber: string },
+  organizationId: number,
+): Promise<void> {
+  // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
+  // parentLeafId — the GUID of the leaf it acts on. That parent MUST belong to the
+  // caller's org AND live in THIS sequence; otherwise the eCTD lifecycle chain
+  // would link a modified-file operation to a leaf the tenant doesn't own or that
+  // sits in another sequence, corrupting the index. (The document pointer above is
+  // checked the same way; parentLeafId must not be the weaker link.)
+  // 2026-10-30 (D2, CSR lifecycle): a replace|append|delete may also name a
+  // leaf of an EARLIER sequence of the same submission — the leaf actually on
+  // file that it supersedes (eCTD lifecycle). That parent must be live, in this
+  // organization, not itself a withdrawal; the packager binds the act to the
+  // file it was filed as (package-from-core readEarlierParentKeys).
+  const crossSequence = ['replace', 'append', 'delete'].includes(String(input.lifecycleOp ?? ''));
+  const [parent] = await db
+    .select({ id: submissionLeaves.id })
+    .from(submissionLeaves)
+    .where(
+      and(
+        eq(submissionLeaves.id, input.parentLeafId),
+        crossSequence
+          ? sql`(${submissionLeaves.sequenceId} = ${input.sequenceId} OR (${submissionLeaves.lifecycleOp} <> 'delete' AND ${submissionLeaves.sequenceId} IN (
+              SELECT e.id FROM ectd_sequences e WHERE e.organization_id = ${organizationId} AND e.submission_id = ${seq.submissionId}
+                AND e.deleted_at IS NULL AND e.sequence_number < ${seq.sequenceNumber})))`
+          : eq(submissionLeaves.sequenceId, input.sequenceId),
+        eq(submissionLeaves.organizationId, organizationId),
+        isNull(submissionLeaves.deletedAt)
+      )
+    )
+    .limit(1);
+  if (!parent) {
+    throw new SubmissionError(
+      'FORBIDDEN',
+      'parentLeafId must reference a leaf in this sequence, or a current leaf of an earlier sequence of this submission, owned by this organization.'
+    );
+  }
+}
+
 export async function upsertLeaf(
   input: UpsertLeafInput,
   ctx: { organizationId: number; userId: number }
@@ -3752,32 +3847,7 @@ export async function upsertLeaf(
     documentProgramId,
   };
 
-  // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
-  // parentLeafId — the GUID of the leaf it acts on. That parent MUST belong to the
-  // caller's org AND live in THIS sequence; otherwise the eCTD lifecycle chain
-  // would link a modified-file operation to a leaf the tenant doesn't own or that
-  // sits in another sequence, corrupting the index. (The document pointer above is
-  // checked the same way; parentLeafId must not be the weaker link.)
-  if (input.parentLeafId != null) {
-    const [parent] = await db
-      .select({ id: submissionLeaves.id })
-      .from(submissionLeaves)
-      .where(
-        and(
-          eq(submissionLeaves.id, input.parentLeafId),
-          eq(submissionLeaves.sequenceId, input.sequenceId),
-          eq(submissionLeaves.organizationId, ctx.organizationId),
-          isNull(submissionLeaves.deletedAt)
-        )
-      )
-      .limit(1);
-    if (!parent) {
-      throw new SubmissionError(
-        'FORBIDDEN',
-        'parentLeafId must reference a leaf in this sequence owned by this organization.'
-      );
-    }
-  }
+  if (input.parentLeafId != null) await assertParentLeafInScope({ ...input, parentLeafId: input.parentLeafId }, seq, ctx.organizationId);
 
   if (input.leafId) {
     const leafId = input.leafId;

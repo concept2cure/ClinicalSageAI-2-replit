@@ -360,7 +360,7 @@ The "no channel" labels (worded "no transmit channel" on screen since 2026-10-15
 | `submission-center` | Submit working view; cross-project index when no project is open | Opens on a market and a sequence (F10) |
 | `ectd-compile` | Submit feature, from the sequence | "Compile and download" on the Dispatch tab, carrying the sequence (F14) |
 | `gateway-transmittals` | Cross-project transmittal log | Each market's transmissions sit inside its Dispatch tab (F13). The package-transmit form is no longer linked; it is locked after LX-13 (F12) |
-| `dispatch-readiness` | Submit feature | Renders the same market list as the Submit tab (F9, F18). Kept as the Submission Readiness catalog entry |
+| `dispatch-readiness` | Submit feature | Each Submit market row draws its gate detail inline (2026-10-29); Submit no longer opens the canvas. The canvas stays reachable from the catalog, AnA and deep links, and is a fold candidate (`docs/evidence/D2-ONE-ANA/2026-10-29/f10-readiness-in-submit/`). Kept as the Submission Readiness catalog entry |
 | `quality` | Cross-project view | Rail; unchanged |
 | `insights` | Cross-project view | The composer becomes "Find a report" (F6) |
 | `compliance-reports` | Cross-project view | Reached from Reporting |
@@ -374,7 +374,7 @@ The "no channel" labels (worded "no transmit channel" on screen since 2026-10-15
 | `ectd-coauthor` (locked) | Scrapped | The Builder points to Place into filing and the Vault (F16) |
 | `haq-manager`, `agency-meetings`, `global-ri`, `precedent-intelligence` | Coming later | Named on the Respond and Submit coming-later lines |
 | `registrations`, `market-access`, `safety-narrative`, `ind-checklist`, `ind-lifecycle` | Coming later | Named on the market row's coming-later line |
-| Device surfaces (`device-510k`, …) | Coming later | The device market row says so; the 510(k) button is gated on availability (F16) |
+| Device surfaces (`device-510k`, …) | In scope under Projects since the founder's request of 2026-10-23 (`shared/constants/launch-scope.ts`) | The 510(k) button opens the surface, still gated on availability (F16; `docs/evidence/D2-ONE-ANA/2026-10-29/f16-device-door/`) |
 
 ---
 
@@ -450,7 +450,7 @@ The rows for F1 and F3 to F13 were added on 2026-10-22, from a read of the code 
 | F7: the Review tab shows this filing's reviews | `53809bada8`, `404e94efc2` | Landed 2026-10-08 | Yes | A document approved with nothing pending drops off the tab; the list stops at 100. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f7-review-tab/` |
 | F8: the open project is named in the top bar | `25d79c99c0` | Landed 2026-10-08 | Yes | Nothing on screen. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f0-f6-f8/` |
 | F9: Submit, one row per market | `ef022ef95a` | Landed 2026-10-08 | Yes | The header has no IND dates. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f9-markets/` |
-| F10 (with F11): Submission Center opens on the sequence; the assemble dry run | `8bbb310146`, `5f98ad9b54` (the Vault door) | Landed 2026-10-08; the Vault door 2026-10-22 | Yes | The Authoring door carries the market and sequence, and since `5f98ad9b54` the Vault's "Open in Submission Center" does too (break 13; F0 reads both doors). Not yet: "Open readiness" on Submit's market rows still opens `dispatch-readiness`. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f10-opens-on-sequence/`, `2026-10-22/f10-vault-door/` |
+| F10 (with F11): Submission Center opens on the sequence; the assemble dry run | `8bbb310146`, `5f98ad9b54` (the Vault door) | Landed 2026-10-08; the Vault door 2026-10-22 | Yes | The Authoring door carries the market and sequence, and since `5f98ad9b54` the Vault's "Open in Submission Center" does too (break 13; F0 reads both doors). Since 2026-10-29 each Submit market row draws its sequence's readiness itself (`MarketGateDetail`), and Submit's door to the separate canvas is gone (P-33: readiness inside Submit). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/spine-f10-opens-on-sequence/`, `2026-10-22/f10-vault-door/`, `2026-10-29/f10-readiness-in-submit/` |
 | F12: transmit from the dispatched sequence | `0e50993c5b`, `d5176f2416`, `8b75e6b5ba`, `3b61956373` (the hop left F0's baseline in `27528b7a54`) | Landed in part, under other names | Yes | The client transmits the sequence. LX-13 (the package-transmit lane) has no founder decision, and its server and AnA paths remain. Evidence: `docs/evidence/QA-2026-10-08/submission-center/`, `submission-center-2/` |
 | F13: transmissions and acknowledgements in the Dispatch tab | `d5176f2416`, `e849abe897` | Landed 2026-10-08 | Yes | The list shows only when the gateway route resolved and stops at 100; Ack1 is tinted as success. Evidence: `docs/evidence/QA-2026-10-08/submission-center-2/README.md` §4 |
 | F24: write the decision down | This commit | Landed 2026-10-15 | n/a (a record) | `SURFACE_DECISIONS_2026-10-08.md` "What the filing spine changed": compile, transmit and readiness are reached from the sequence (F12, F14, P-33); Cross-region scrapped; five tabs. `ONE_ANA_ONE_CANVAS.md`'s stage strip is marked superseded. The CLAUDE.md pointer to `ANA_DOCUMENT_CANVAS.md` is left: the working agreement names that file for its gate, which still pins the canvas path. |

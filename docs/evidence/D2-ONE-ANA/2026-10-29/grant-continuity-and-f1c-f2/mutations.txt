@@ -1,0 +1,272 @@
+# Item 1 mutations. Each applied alone to the real file, the pin run, the file restored from the bytes read before
+# (sha256 checked after each restore, and sha256sum -c over the three files after the run: all OK).
+
+M1: the licence read derives no carried grant
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (6 failed | 13 passed (19))
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+    x the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+    x the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M2: canAccessModule ignores the carried grant
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (3 failed | 16 passed (19))
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M3: the carried grant is read before the target's own revocation
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (2 failed | 17 passed (19))
+    x the module gate, MODULE_ENFORCEMENT=enforce > a revocation written on the target stands: the carried grant does not undo it
+    x the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M4: the Apps catalogue ignores the carried grant
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (2 failed | 17 passed (19))
+    x the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M5: the catalogue carries over the target's own revocation
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (2 failed | 17 passed (19))
+    x the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M6: a lapsed grant of the folded module carries
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 18 passed (19))
+    x the module gate, MODULE_ENFORCEMENT=enforce > a lapsed or revoked grant of the folded module carries nothing
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M7: the operator console ignores the carried grant
+  file: server/routes/admin/master-licensing.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 18 passed (19))
+    x the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+  restored byte for byte: yes (sha256 bd41bf1162b600b9)
+
+M8: canAccessModule consults the mapping a second time (same answer)
+  file: server/services/license-manager.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 18 passed (19))
+    x the mapping is consulted in exactly one place > only the licence read derives the carried grants, once
+  restored byte for byte: yes (sha256 520bd4ff49f34540)
+
+M9: the mapping drops ectd-publishing
+  file: server/services/entitlements/folded-module-successors.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (7 failed | 12 passed (19))
+    x the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+    x the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+    x the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+  restored byte for byte: yes (sha256 6fcdaa0090171d74)
+
+M10: the mapping carries billing, which never had a catalogue row
+  file: server/services/entitlements/folded-module-successors.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 18 passed (19))
+    x the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+  restored byte for byte: yes (sha256 6fcdaa0090171d74)
+
+
+# ════ Item 2 mutations (folds F1c and F2). Same runner (tools/mutate.py.txt), spec tools/mutation-spec-item2.json.
+# sha256sum -c over the 16 mutated files after the run: all OK.
+
+N1: risk has no alias (an old link is a 404)
+  file: client/src/concept2cure/v2/registryModel.ts
+  test: client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts
+  result: RED (1 failed | 6 passed (7))
+    x risk and design-controls are folded into device-engineering > resolves both old ids to device-engineering from a link and an in-app move
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 21 passed (22))
+    x the mapping > agrees with the screens: each folded id opens its target
+  restored byte for byte: yes (sha256 bdd625943debd21b)
+
+N2: ivd-completeness has no alias
+  file: client/src/concept2cure/v2/registryModel.ts
+  test: client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x ivd-completeness is folded into device-diagnostics > resolves the old id to device-diagnostics from a link and an in-app move, with or without a project open
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 21 passed (22))
+    x the mapping > agrees with the screens: each folded id opens its target
+  restored byte for byte: yes (sha256 bdd625943debd21b)
+
+N3: risk keeps a view of its own
+  file: client/src/concept2cure/v2/surfaceViews.ts
+  test: client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts
+  result: RED (1 failed | 6 passed (7))
+    x risk and design-controls are folded into device-engineering > keeps no screen of its own: no view, no registry entry for ⌘K, no file, no client import
+  restored byte for byte: yes (sha256 2b186aed9d179276)
+
+N4: risk left in the Projects scope list
+  file: shared/constants/launch-scope.ts
+  test: server/services/entitlements/__tests__/launch-scope.test.ts
+  result: RED (1 failed | 42 passed (43))
+    x the folded risk file, design-control trace and IVDR readiness board > are in no scope list and no new grant: Engineering and IVDR evidence hold them (D2, folds F1c and F2, 2026-10-29)
+  test: client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts
+  result: RED (1 failed | 6 passed (7))
+    x risk and design-controls are folded into device-engineering > is in neither project scope list, the rail, a focus list nor the group tables
+  restored byte for byte: yes (sha256 0e6090efe01af37c)
+
+N5: ivd-completeness left in the MDX project features
+  file: shared/constants/mdx-project-features.ts
+  test: server/services/entitlements/__tests__/launch-scope.test.ts
+  result: RED (2 failed | 41 passed (43))
+    x the scope list itself > reaches MDX as project features without adding app or module grants
+    x the folded risk file, design-control trace and IVDR readiness board > are in no scope list and no new grant: Engineering and IVDR evidence hold them (D2, folds F1c and F2, 2026-10-29)
+  test: client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x ivd-completeness is folded into device-diagnostics > is in neither project scope list, the rail nor a focus list, and its AnA actions moved to device-diagnostics
+  restored byte for byte: yes (sha256 e8c71f4bf60c73f8)
+
+N6: AnA's risk.* matrix actions registered again
+  file: shared/navigation/surface-actions.ts
+  test: client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts
+  result: GREEN (survived) (7 passed (7))
+  restored byte for byte: yes (sha256 c693af55ea48d793)
+
+N7: the medtech tour navigates to risk again
+  file: shared/navigation/demo-scripts.ts
+  test: client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts
+  result: RED (1 failed | 6 passed (7))
+    x risk and design-controls are folded into device-engineering > the guided tours stop at device-engineering and drive its matrix
+  restored byte for byte: yes (sha256 3a12cac3e27affc7)
+
+N8: device-engineering drops the design-controls claim
+  file: shared/constants/ui-surface-registry.ui-v2.ts
+  test: client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts
+  result: RED (1 failed | 6 passed (7))
+    x risk and design-controls are folded into device-engineering > claims both families of calls the panels make
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: GREEN (survived) (22 passed (22))
+  restored byte for byte: yes (sha256 28cbb7667b24e127)
+
+N9: device-diagnostics drops the /api/ivd-lifecycle claim
+  file: shared/constants/ui-surface-registry.ts
+  test: client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x ivd-completeness is folded into device-diagnostics > claims the IVD calls the old screen claimed
+  restored byte for byte: yes (sha256 0615b8f11357ad4c)
+
+N10: assess_filing_readiness not on device-diagnostics
+  file: client/src/concept2cure/v2/registryModel.ts
+  test: client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x ivd-completeness is folded into device-diagnostics > is in neither project scope list, the rail nor a focus list, and its AnA actions moved to device-diagnostics
+  restored byte for byte: yes (sha256 bdd625943debd21b)
+
+N11: the host hands IvdSurface no shell navigation
+  file: client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+  test: client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x ivd-completeness is folded into device-diagnostics > lands on device-diagnostics, which draws the readiness board and the workbench with shell navigation
+  restored byte for byte: yes (sha256 0928fae815654057)
+
+N12: the host publishes device-diagnostics without the board's context
+  file: client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+  test: client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx
+  result: RED (3 failed (3))
+    x device-diagnostics: AnA sees the open project's IVDR readiness > carries the board's facts, summary and actions in the one context
+    x device-diagnostics: AnA sees the open project's IVDR readiness > a failed read is told as a failure, never as 0%
+    x device-diagnostics: AnA sees the open project's IVDR readiness > never carries the previous project's board under the next project
+  test: client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x ivd-completeness is folded into device-diagnostics > lands on device-diagnostics, which draws the readiness board and the workbench with shell navigation
+  restored byte for byte: yes (sha256 0928fae815654057)
+
+N13: IvdSurface reports nothing to the host
+  file: client/src/concept2cure/mdx/surfaces/IvdSurface.tsx
+  test: client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx
+  result: RED (3 failed (3))
+    x device-diagnostics: AnA sees the open project's IVDR readiness > carries the board's facts, summary and actions in the one context
+    x device-diagnostics: AnA sees the open project's IVDR readiness > a failed read is told as a failure, never as 0%
+    x device-diagnostics: AnA sees the open project's IVDR readiness > never carries the previous project's board under the next project
+  restored byte for byte: yes (sha256 1415959e8e24271d)
+
+N14: the host merges a board read for another project
+  file: client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+  test: client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx
+  result: RED (1 failed | 2 passed (3))
+    x device-diagnostics: AnA sees the open project's IVDR readiness > never carries the previous project's board under the next project
+  restored byte for byte: yes (sha256 0928fae815654057)
+
+N15: 20260810 upserts risk again
+  file: db/migrations/20260810_reconcile_module_catalog.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (23 skipped (23))
+  restored byte for byte: yes (sha256 e98c6baf6822a356)
+
+N16: 20260810 upserts ivd-completeness again
+  file: db/migrations/20260810_reconcile_module_catalog.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (23 skipped (23))
+  restored byte for byte: yes (sha256 e98c6baf6822a356)
+
+N17: the MDX registers file upserts design-controls again
+  file: db/migrations/20260823_module_catalog_mdx_registers.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (2 failed | 21 passed (23))
+    x Retired risk, design-controls and ivd-completeness > a fresh database replaying the whole catalogue set twice holds none of the three, and both targets and human factors stay offered at standard
+    x Retired risk, design-controls and ivd-completeness > keeps each deployed row, its tier and its subscription, deprecated, across replay of every writer
+  restored byte for byte: yes (sha256 249235f3332ae2f1)
+
+N18: 20260814j inserts design-controls again
+  file: migrations/20260814j_catalog_missing_product_surfaces.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (1 failed | 22 passed (23))
+    x Retired risk, design-controls and ivd-completeness > a fresh database replaying the whole catalogue set twice holds none of the three, and both targets and human factors stay offered at standard
+  restored byte for byte: yes (sha256 79efc5688cf2ca52)
+
+N19: the customer copy keeps its risk row
+  file: db/migrations/20260823_module_catalog_customer_copy.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (23 skipped (23))
+  restored byte for byte: yes (sha256 d70546fb02e055b6)
+
+N20: the packaging keeps its ivd-completeness row
+  file: db/migrations/20260823_module_catalog_commercial_packaging.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (23 skipped (23))
+  restored byte for byte: yes (sha256 d6a43a71e646a881)
+
+N21: the mapping drops design-controls
+  file: server/services/entitlements/folded-module-successors.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (4 failed | 18 passed (22))
+    x the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only design-controls
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+  restored byte for byte: yes (sha256 9cdd14382a113f31)
+
+# N6 survived the first run: the guard asked resolveSurfaceAction('risk.*', {}), which fails on a missing
+# parameter whether or not the action exists. The guard now asks the registry for the id (findSurfaceAction,
+# surfaceActionIds). Rerun:
+
+N6: AnA's risk.* matrix actions registered again
+  file: shared/navigation/surface-actions.ts
+  test: client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts
+  result: RED (1 failed | 6 passed (7))
+    x risk and design-controls are folded into device-engineering > registers AnA's matrix actions on device-engineering only
+  restored byte for byte: yes (sha256 c693af55ea48d793)
+

@@ -24,8 +24,9 @@
  * @module server/services/market-specs/document-template-library
  */
 
-import { e3TopLevel, type E3Section } from '../ind/ctd/index.js';
-import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
+import type { E3Section } from '../ind/ctd/index.js';
+import { e3SectionSummary, e3SectionDraftingMode, ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
+import { CRF_AUTHORING_TEMPLATES } from './crf-authoring-templates';
 import { SMPC_QRD_SECTIONS } from '../labeling/smpc-qrd-catalog';
 import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
 import { IB_FRONT_MATTER, IB_SUBSECTIONS } from './ib-outline-detail.js';
@@ -36,10 +37,13 @@ import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
 import { ICH_E2F_DSUR_SECTIONS } from '../ind/ctd/lifecycle-document-types';
 import { lifecycleRecordOutlineFor } from './lifecycle-record-outlines';
-import { ctdComponentTemplate } from './ctd-component-outlines';
+import { ctdComponentTemplate, ctdFrontMatter } from './ctd-component-outlines';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance';
 import { ICH_M11_PROTOCOL_LIMITATIONS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11';
 import { getSectionBlueprint as getDedicatedSectionBlueprint, getSectionBlueprintContext } from '../regulatory/sectionBlueprintCatalog';
+import { clinicalSectionDraftingMode, isClinicalWorkingComponent } from '../authoring/document-template-outline-sections';
+import { US_BIOTECH_LIFECYCLE_TEMPLATES } from './us-biotech-lifecycle-templates';
+import { MEDICINAL_WORKING_TEMPLATES, canonicalCtdRegistryOutline } from './medicinal-working-templates';
 
 export interface TemplateSection {
   /** Section number within the document (e.g. "2.5.4", "4.1", "I.1"). */
@@ -48,6 +52,8 @@ export interface TemplateSection {
   /** What this section is for (concise, factual). */
   purpose: string;
   required: boolean;
+  /** Explicit section preparation policy, recorded with saved template guidance. */
+  drafting_mode?: 'narrative' | 'manual';
   /** Sub-sections, where the record names them (e.g. the IB's 4.1–4.3). */
   subsections?: TemplateSection[];
   /** Headings a correction replaced, so a document bound to an earlier outline still resolves to this section (2026-10-19). */
@@ -72,7 +78,8 @@ export interface DocumentTemplateStructure {
   /** Which existing platform record supplies the headings; distinct from evidence of an agency requirement. */
   outlineSource?:
     | { kind: 'project-blueprint' | 'dedicated-blueprint'; registryId: string; blueprintId: string }
-    | { kind: 'lifecycle-record' | 'document-outline'; registryId: string; record: string };
+    | { kind: 'lifecycle-record' | 'document-outline'; registryId: string; record: string }
+    | { kind: 'lifecycle-component' | 'source-component'; record: string };
   /** Scope/currency limitations the author must see before using an existing scaffold. */
   outlineLimitations?: string[];
   /** Unnumbered front matter (title page, table of contents …), with non-numeric codes. */
@@ -102,9 +109,9 @@ function withBasis(t: Omit<DocumentTemplateStructure, 'regulatoryBasis'> & { bas
   return { ...t, regulatoryBasis: basisLabel(t.basis) };
 }
 
-/** One ICH E3 top-level heading as a template section, its purpose the tree's own one-line summary. */
+/** Every numbered E3 heading uses the same record and source-preparation policy. */
 function e3TemplateSection(s: E3Section): TemplateSection {
-  return { number: s.number, heading: s.title, purpose: e3SectionSummary(s), required: s.applies === 'always' };
+  return { number: s.number, heading: s.title, purpose: e3SectionSummary(s), required: s.applies === 'always', drafting_mode: e3SectionDraftingMode(s.number) };
 }
 
 /**
@@ -112,6 +119,10 @@ function e3TemplateSection(s: E3Section): TemplateSection {
  * flag is a platform expectation, not proof of a present agency requirement.
  * Never turn project-bootstrap's default CTD fallback into a document outline.
  */
+/** The quality outlines are headings; composing their content is the CMC lane's (P-28). */
+const QUALITY_COMPOSITION_LIMIT =
+  'These are the CTD quality headings only. For a small-molecule US IND, Module 3 content is composed in CMC / Module 3 from its registers (P-28); elsewhere it is authored here from verified source records.';
+
 const PROJECT_OUTLINE_LIMITATIONS = [
   'The required flags describe the existing platform scaffold; they do not establish mandatory agency content.',
   'This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.',
@@ -204,8 +215,10 @@ const EXISTING_BIOTECH_COMPONENT_OUTLINES: DocumentTemplateStructure[] = [
   ...namedProjectOutline('informed_consent', 'ICH_ICF', undefined, [
     'The existing consent scaffold is US-oriented. Confirm the country, site, language and ethics-approved template. Executed participant consent forms remain site records; this outline is for a specimen form.',
   ]),
-  ...namedProjectOutline('drug_substance', 'ICH_M3_DS', '3.2.S'),
-  ...namedProjectOutline('drug_product', 'ICH_M3_DP', '3.2.P'),
+  // Module 3's drug substance and drug product: read from the ICH M2–M5 record since
+  // 2026-10-25 (D2 cleanup C2), where they were the project blueprint's copies.
+  ctdComponentTemplate({ id: 'drug_substance', registryId: 'ICH_M3_DS', root: '3.2.S', title: 'Module 3.2.S — Drug Substance', guideline: 'ICH M4Q(R1) — CTD Quality', limitations: [QUALITY_COMPOSITION_LIMIT] }),
+  ctdComponentTemplate({ id: 'drug_product', registryId: 'ICH_M3_DP', root: '3.2.P', title: 'Module 3.2.P — Drug Product', guideline: 'ICH M4Q(R1) — CTD Quality', limitations: [QUALITY_COMPOSITION_LIMIT] }),
   withBasis({
     id: 'dsur',
     title: 'Development Safety Update Report (DSUR)',
@@ -241,22 +254,16 @@ const SMPC_PURPOSE: Record<string, string> = {
   '10': 'Date the SmPC text was last revised.',
 };
 
-export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
+const CORE_DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
   // ── CTD Module 2 summaries (ICH M4) ─────────────────────────────────────────
-  {
-    id: 'quality_overall_summary',
-    title: 'Quality Overall Summary (QOS)',
-    families: ['ectd'],
-    ctdSection: '2.3',
-    regulatoryBasis: 'ICH M4Q(R1) — CTD Quality',
-    sections: [
-      { number: '2.3.Intro', heading: 'Introduction', purpose: 'Proprietary name, nonproprietary name, dosage form, strength, route, and proposed indication.', required: true },
-      { number: '2.3.S', heading: 'Drug Substance', purpose: 'Summary of general information, manufacture, characterisation, control, reference standards, container closure, and stability for each drug substance.', required: true },
-      { number: '2.3.P', heading: 'Drug Product', purpose: 'Summary of description/composition, development, manufacture, control of excipients and product, reference standards, container closure, and stability.', required: true },
-      { number: '2.3.A', heading: 'Appendices', purpose: 'Facilities and equipment, adventitious agents safety evaluation, and other appendices.', required: false },
-      { number: '2.3.R', heading: 'Regional Information', purpose: 'Region-specific quality information (e.g. process validation scheme, medical devices).', required: false },
-    ],
-  },
+  // The Quality Overall Summary is read from the ICH M2–M5 record since 2026-10-25
+  // (D2 cleanup C2): a five-heading hand copy before, with its Introduction coded
+  // 2.3.Intro while the project blueprint coded it 2.3.I.
+  ctdComponentTemplate({
+    id: 'quality_overall_summary', registryId: 'ICH_QOS', root: '2.3', title: 'Quality Overall Summary (QOS)', guideline: 'ICH M4Q(R1) — CTD Quality',
+    frontMatter: [ctdFrontMatter('2.3', '2.3.I', 'Introduction', '2.3.Introduction')],
+    limitations: [QUALITY_COMPOSITION_LIMIT],
+  }),
   // The Nonclinical Overview, Clinical Overview and Clinical Summary are read
   // from the ICH M2–M5 record to its depth (ctd-component-outlines.ts). They were
   // hand copies of their first level until 2026-10-20: a Clinical Summary had no
@@ -440,12 +447,29 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     families: ['ectd'],
     ctdSection: '5.3.5.1',
     regulatoryBasis: 'ICH E3 — Structure and Content of Clinical Study Reports (canonical tree: server/services/ind/ctd/csr-e3-guidance.ts, with a basis per section)',
-    sections: e3TopLevel().map(e3TemplateSection),
+    sections: ICH_E3_GUIDANCE.map(e3TemplateSection),
   },
+  ...CRF_AUTHORING_TEMPLATES,
   ...EXISTING_BIOTECH_COMPONENT_OUTLINES,
+  ...US_BIOTECH_LIFECYCLE_TEMPLATES,
+  ...MEDICINAL_WORKING_TEMPLATES,
 ];
 
 // ── Lookups (pure) ────────────────────────────────────────────────────────────
+
+/** Working-narrative permission never authorizes original source records. */
+function clinicalDraftingPolicy(outline: DocumentTemplateStructure): DocumentTemplateStructure {
+  if (!isClinicalWorkingComponent(outline.id)) return outline;
+  const apply = (sections: TemplateSection[]): TemplateSection[] => sections.map(section => {
+    const mode = section.drafting_mode ?? clinicalSectionDraftingMode(outline.id, section.number);
+    return { ...section, drafting_mode: mode,
+      purpose: mode === 'manual' ? `${section.purpose} Manual/source preparation: retain the actual original or generated record; do not synthesize signatures, tabulations, schedules or approvals.` : section.purpose,
+      ...(section.subsections ? { subsections: apply(section.subsections) } : {}) };
+  });
+  return { ...outline, sections: apply(outline.sections), ...(outline.frontMatter ? { frontMatter: apply(outline.frontMatter) } : {}) };
+}
+
+export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = CORE_DOCUMENT_TEMPLATES.map(clinicalDraftingPolicy);
 
 const BY_ID = new Map(DOCUMENT_TEMPLATES.map((t) => [t.id, t]));
 
@@ -496,7 +520,10 @@ export function registryOutlineRequiresReview(registryId: string): boolean {
  */
 export async function getRegistryDocumentTemplate(registryId: string): Promise<DocumentTemplateStructure | undefined> {
   const entry = getApplicationType(registryId);
+  if (registryTemplateUnavailabilityReason(registryId)) return undefined;
   if (!entry?.active || registryOutlineRequiresReview(entry.id)) return undefined;
+  const moduleOutline = canonicalCtdRegistryOutline(entry.id);
+  if (moduleOutline) return moduleOutline;
   // Existing component records win over older project heading copies
   // (lifecycle-record-outlines.ts: the annual reports, PAS/sBLA, CBE, meetings).
   const lifecycle = lifecycleRecordOutlineFor(entry.id);
@@ -512,6 +539,12 @@ export async function getRegistryDocumentTemplate(registryId: string): Promise<D
   if (dedicated) return projectOutline(entry, dedicated, entry.id, 'dedicated-blueprint');
   const shared = exactBlueprint(entry);
   return shared ? projectOutline(entry, shared) : undefined;
+}
+
+/** Module1 has a regional owner; no default or IND tree can create a GLOBAL counterpart. */
+export function registryTemplateUnavailabilityReason(registryId: string): string | undefined {
+  return registryId === 'ICH_CTD_M1'
+    ? 'Module1 is jurisdiction-specific. No harmonized GLOBAL Module1 record exists; choose the exact supported regional source.' : undefined;
 }
 
 export interface RegistryDocumentTemplateCoverage {

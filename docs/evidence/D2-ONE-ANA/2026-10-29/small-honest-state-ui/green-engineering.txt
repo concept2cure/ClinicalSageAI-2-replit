@@ -1,0 +1,8 @@
+# Fix 1, green: with the change to useEngineering.ts and EngineeringSurface.tsx.
+# timeout 240 npx vitest run --config vitest.config.ts client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx
+ ✓ EngineeringSurface — the route refuses the project > a 404 says the project is not one this organization can see, and offers another project, not a retry 150ms
+ ✓ EngineeringSurface — the route refuses the project > a 503 says the project could not be checked, so nothing was shown, and the retry reads again 40ms
+ ✓ EngineeringSurface — the route refuses the project > any other failure is still a failed read on each panel, never the ownership words 12ms
+ ✓ projectRefusalOf — the two answers admit-project.ts gives, from useFetchJson's line > reads the 404 and the 503 by their bodies 0ms
+ ✓ projectRefusalOf — the two answers admit-project.ts gives, from useFetchJson's line > is null for every other failure, including a 404 or 503 that is not the ownership answer 0ms
+      Tests  5 passed (5)

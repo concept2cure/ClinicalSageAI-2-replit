@@ -1,0 +1,20 @@
+# Red: the archive cases on real PostgreSQL 16 (RLS_ENFORCE=on, app_service), before the route existed
+
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > records every current document, hashes the record, and binds the signature and the audit row to that hash
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > lists the seal with who sealed it and why
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > verifies intact when nothing changed, its stored files included
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > refuses a seal with no reason, and writes nothing
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > refuses a wrong password, and a viewer
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > refuses another organisation's project, and shows that organisation nothing
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > the runtime role can neither change nor remove a seal
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > holds every sealed file, the manifest as signed, an index, SHA256SUMS and the audit trail, and records its own hash before sending
+   → text/html; charset=utf-8: expected 404 to be 200 // Object.is equality
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > another organisation's seal is not found, and nothing is recorded
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > a viewer the project admits may download it
+   → expected 404 to be 200 // Object.is equality
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal says when the Vault no longer matches it > could not verify, never intact, when a sealed file can no longer be read
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal says when the Vault no longer matches it > builds no archive for a seal that does not verify, sends nothing and records nothing
+   → {}: expected 404 to be 409 // Object.is equality
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > the tenant purge removes seals through its door > refuses while the organisation is not pending deletion, then removes them
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 10 passed (13)

@@ -13,14 +13,18 @@
  * Nothing Project home reads records per-stage completion, so the only state
  * the tracker may state is which stage is open.
  *
- * Since FILING_SPINE.md F2 (2026-10-08) the tracker has five stages: Plan and
- * Lifecycle were removed (projectHomeStages.test.tsx).
+ * Since FILING_SPINE.md F2 (2026-10-08) Lifecycle is gone; Plan was removed then
+ * and returned on 2026-10-25, so the tracker has six stages
+ * (projectHomeStages.test.tsx).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+/* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
+   no AuthProvider mounted, the real useAuth throws before Project home renders. */
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
@@ -54,7 +58,7 @@ describe('Project home — lifecycle tracker', () => {
   it('marks no stage done on a real project; only the open stage is marked', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
     render(<ProjectHome {...props()} />);
-    await waitFor(() => expect(stages().length).toBe(5));
+    await waitFor(() => expect(stages().length).toBe(6));
 
     const done = stages().filter((b) => b.getAttribute('data-status') === 'done');
     expect(done.map((b) => b.textContent), 'a stage is marked completed from tab position alone').toEqual([]);
@@ -65,11 +69,11 @@ describe('Project home — lifecycle tracker', () => {
   it('opening a later stage does not complete the ones before it', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
     render(<ProjectHome {...props()} />);
-    await waitFor(() => expect(stages().length).toBe(5));
+    await waitFor(() => expect(stages().length).toBe(6));
 
     fireEvent.click(stages().find((b) => b.textContent?.includes('Submit'))!);
     await waitFor(() => expect(statusOf('Submit')).toBe('active'));
-    for (const earlier of ['Evidence', 'Author', 'Review']) {
+    for (const earlier of ['Plan', 'Evidence', 'Author', 'Review']) {
       expect(statusOf(earlier), `${earlier} became "done" because Submit was opened`).toBeNull();
     }
   });

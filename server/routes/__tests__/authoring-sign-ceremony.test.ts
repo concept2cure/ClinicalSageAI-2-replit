@@ -80,6 +80,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-si
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { DOC_ID, releaseGovernanceRead } from '../../services/authoring/__tests__/release-governance-reads';
 
 const PIN = '246810';
 
@@ -128,15 +129,19 @@ beforeEach(async () => {
   h.failures = 0;
   h.connect.mockImplementation(async () => ({ query: h.clientQuery, release: () => undefined }));
   h.clientQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
     const s = String(sql);
     if (/^BEGIN|^COMMIT|^ROLLBACK/i.test(s)) return {};
     if (/FROM authoring_audit_trail/i.test(s) && /operation_type='CREATE'/.test(s)) return { rows:[],rowCount:0 };
     if (/COUNT\(\*\)[\s\S]*FROM authoring_workflow_steps/i.test(s)) {
       return { rowCount: 1, rows: [{ pending: '1', total: '2' }] };
     }
-    return { rowCount: 1, rows: [{ id: 'D1', doc_id: 'D1', code: '2.6.6', content: 'body' }] };
+    return { rowCount: 1, rows: [{ id: DOC_ID, doc_id: DOC_ID, code: '2.6.6', content: 'body' }] };
   });
   h.poolQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
     const s = String(sql);
     if (s.includes('organization_users')) return { rowCount: 1, rows: [{ role: 'approver', organization_id: 3, user_id: 7 }] };
     // A valid PIN, so the defect (a PIN alone signing) is reachable.
@@ -157,7 +162,7 @@ describe('Authoring signs with the platform ceremony', () => {
     describe(`POST /docs/:docId/${path}`, () => {
       it('a signing PIN alone signs nothing', async () => {
         const res = await request(makeApp())
-          .post(`/api/authoring/docs/D1/${path}`)
+          .post(`/api/authoring/docs/${DOC_ID}/${path}`)
           .set('Authorization', await bearer())
           .send({ pin: PIN, ...ACT[path] });
         expect(res.status, 'a PIN signed a document').toBe(400);
@@ -168,7 +173,7 @@ describe('Authoring signs with the platform ceremony', () => {
       it('signs with the account password and the enrolled code, and records that', async () => {
         h.mfaEnabled = true;
         const res = await request(makeApp())
-          .post(`/api/authoring/docs/D1/${path}`)
+          .post(`/api/authoring/docs/${DOC_ID}/${path}`)
           .set('Authorization', await bearer())
           .send({ password: 'right-password', mfaToken: '135790', ...ACT[path] });
         expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -180,7 +185,7 @@ describe('Authoring signs with the platform ceremony', () => {
       it('refuses the password alone when an authenticator is enrolled', async () => {
         h.mfaEnabled = true;
         const res = await request(makeApp())
-          .post(`/api/authoring/docs/D1/${path}`)
+          .post(`/api/authoring/docs/${DOC_ID}/${path}`)
           .set('Authorization', await bearer())
           .send({ password: 'right-password', ...ACT[path] });
         expect(res.status).toBe(400);
@@ -191,7 +196,7 @@ describe('Authoring signs with the platform ceremony', () => {
       it('refuses a wrong code, counts it against the account, and writes nothing', async () => {
         h.mfaEnabled = true;
         const res = await request(makeApp())
-          .post(`/api/authoring/docs/D1/${path}`)
+          .post(`/api/authoring/docs/${DOC_ID}/${path}`)
           .set('Authorization', await bearer())
           .send({ password: 'right-password', mfaToken: '000000', ...ACT[path] });
         expect(res.status).toBe(401);
@@ -202,7 +207,7 @@ describe('Authoring signs with the platform ceremony', () => {
 
       it('signs with the password when no authenticator is enrolled, and records that', async () => {
         const res = await request(makeApp())
-          .post(`/api/authoring/docs/D1/${path}`)
+          .post(`/api/authoring/docs/${DOC_ID}/${path}`)
           .set('Authorization', await bearer())
           .send({ password: 'right-password', ...ACT[path] });
         expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -211,7 +216,7 @@ describe('Authoring signs with the platform ceremony', () => {
 
       it('refuses a wrong password and writes nothing', async () => {
         const res = await request(makeApp())
-          .post(`/api/authoring/docs/D1/${path}`)
+          .post(`/api/authoring/docs/${DOC_ID}/${path}`)
           .set('Authorization', await bearer())
           .send({ password: 'wrong', ...ACT[path] });
         expect(res.status).toBe(401);

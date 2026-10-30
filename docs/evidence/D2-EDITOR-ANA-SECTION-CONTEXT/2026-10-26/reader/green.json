@@ -1,0 +1,54 @@
+{
+  "startedAt": "2026-10-26T20:52:16.863805+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts",
+    "server/services/ana-ri/__tests__/open-document-earlier-outline.test.ts",
+    "server/services/ana-ri/__tests__/open-document-turn.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 22.661,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "green-inputs.json",
+  "sourcesBefore": {
+    "server/services/ana-ri/open-document.ts": "600a2dd2c2bb3dd38befcfdc57a027d7721dcff101e30e05bf349cf44cd631cc",
+    "server/services/ana-ri/saved-open-template.ts": "959c4b12066ab2aa49d980e4e39ae5610fdee1330e49abd3d65000e1459075fb",
+    "server/services/authoring/authoring-draft-template.ts": "416117acec8dc8b3da7f94d5889ff0d2a169002243bdeb9b50e8e24bee6a205d",
+    "server/services/ana/saved-template-review.ts": "c940769329ca1356fa8117f9e75f443dde6d0729855f4e77d4f0681ecfbacc65",
+    "server/services/authoring/authoring-template-guidance.ts": "aa6344e50e0d2cfcf472770a8830b82f2a0a631cf9d42b37582c1a23a9a8095b",
+    "server/services/authoring/authoring-permissions.ts": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+    "server/services/authoring/authoring-program-access.ts": "6920b7d28ab8de450d13555234615cbd8f2efce7a491bc1a2a2c347756ddb7e1",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts": "c44a3b35c7fb4fa038f1f85dc689866beac67f0e3e598ffed3d8c362e2061bc6",
+    "server/services/ana-ri/__tests__/open-document-earlier-outline.test.ts": "d844aff104c55c13a66eca8056cd44b06b891f3587d73ce779bb18e82ed6f5f3",
+    "server/services/ana-ri/__tests__/open-document-turn.test.ts": "593942e79c67faf002c34897d0797f439c8fdc2aac0aef77f590c79e6d45fb2b",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts": "2aee1c95d1ec9338a85c7a58639efabf8319384f8e151e6333fb842f54c61c2c"
+  },
+  "sourcesAfter": {
+    "server/services/ana-ri/open-document.ts": "600a2dd2c2bb3dd38befcfdc57a027d7721dcff101e30e05bf349cf44cd631cc",
+    "server/services/ana-ri/saved-open-template.ts": "959c4b12066ab2aa49d980e4e39ae5610fdee1330e49abd3d65000e1459075fb",
+    "server/services/authoring/authoring-draft-template.ts": "416117acec8dc8b3da7f94d5889ff0d2a169002243bdeb9b50e8e24bee6a205d",
+    "server/services/ana/saved-template-review.ts": "c940769329ca1356fa8117f9e75f443dde6d0729855f4e77d4f0681ecfbacc65",
+    "server/services/authoring/authoring-template-guidance.ts": "aa6344e50e0d2cfcf472770a8830b82f2a0a631cf9d42b37582c1a23a9a8095b",
+    "server/services/authoring/authoring-permissions.ts": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+    "server/services/authoring/authoring-program-access.ts": "6920b7d28ab8de450d13555234615cbd8f2efce7a491bc1a2a2c347756ddb7e1",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts": "c44a3b35c7fb4fa038f1f85dc689866beac67f0e3e598ffed3d8c362e2061bc6",
+    "server/services/ana-ri/__tests__/open-document-earlier-outline.test.ts": "d844aff104c55c13a66eca8056cd44b06b891f3587d73ce779bb18e82ed6f5f3",
+    "server/services/ana-ri/__tests__/open-document-turn.test.ts": "593942e79c67faf002c34897d0797f439c8fdc2aac0aef77f590c79e6d45fb2b",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts": "2aee1c95d1ec9338a85c7a58639efabf8319384f8e151e6333fb842f54c61c2c"
+  },
+  "sourceDrift": [],
+  "rawOutput": "green.log.gz",
+  "rawGzipSha256": "9b24a553d5f5b0c04429a4791bb3d32f147a241ec254d4b0b3add8e5f4107d78",
+  "testSummary": [
+    "Test Files  4 passed (4)",
+    "Tests  56 passed (56)",
+    "Duration  21.76s (transform 7.93s, setup 115ms, import 13.63s, tests 7.30s, environment 0ms)"
+  ]
+}

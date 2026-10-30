@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/7c08efdd-9c7c-467b-b725-d6118db4116a/annotations/b4e9ccd0-b76d-493f-a199-b11286975fb4/retract",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 422,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 51,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "REASON_REQUIRED",
+      "message": "A reason for change of at least 8 characters is required."
+    }
+  }
+}

@@ -23,6 +23,18 @@ export const AUTHOR = {
   email: 'approver@filing.example',
   name: 'Avery Approver',
 };
+/**
+ * A second member who drafted nothing. An approval signature must come from
+ * someone who is not an author of the document (21 CFR 11.10(g); the
+ * authoring routes ask separation-of-duties.ts since 2026-10-29), so the
+ * approvals in these suites are signed by this member, not by AUTHOR.
+ */
+export const APPROVER = {
+  id: '43',
+  organizationId: 1,
+  email: 'independent.approver@filing.example',
+  name: 'Quinn Independent',
+};
 export const PROJECT = '9a111111-2222-3333-4444-666666666666';
 export const PASSWORD = 'signer-password';
 export const T = 180_000;
@@ -52,6 +64,8 @@ const PREREQ = `
   INSERT INTO organizations (id, name) VALUES (1, 'f1-org');
   INSERT INTO users (id, name, email) VALUES (42, '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 42, 'member');
+  INSERT INTO users (id, name, email) VALUES (43, '${APPROVER.name}', '${APPROVER.email}');
+  INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 43, 'member');
   INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROJECT}', 1);
 `;
 
@@ -86,6 +100,11 @@ export async function signToken(claims: Record<string, unknown> = {}): Promise<s
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt().setExpirationTime('1h')
     .sign(new TextEncoder().encode(FILING_JWT_SECRET));
+}
+
+/** A token for APPROVER, the member who drafted nothing. */
+export function signApproverToken(claims: Record<string, unknown> = {}): Promise<string> {
+  return signToken({ userId: APPROVER.id, email: APPROVER.email, name: APPROVER.name, ...claims });
 }
 
 export interface FilingApp {

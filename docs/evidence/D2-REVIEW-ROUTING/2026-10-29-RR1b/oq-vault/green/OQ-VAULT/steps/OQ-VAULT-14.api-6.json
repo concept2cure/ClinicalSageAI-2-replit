@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/vault/ingest",
+    "anonymous": false,
+    "identity": null,
+    "body": "[multipart/form-data]"
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 1197,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "document": {
+        "id": "42323a85-4c2d-404e-b382-a89c7568f1b2",
+        "programId": "3bdbdfc1-d8ee-4b10-bced-9c4dea945250",
+        "documentCode": "OQ-002 Approval family 20261029102303.pdf",
+        "documentTitle": "OQ-002 Approval family 20261029102303",
+        "documentType": "PROTOCOL",
+        "version": "2.0",
+        "fileName": "approval-v2.pdf",
+        "fileSize": 629,
+        "mimeType": "application/pdf",
+        "contentHash": "2244dc05a7027991d5d68e49710400c0504c870786544af4929559e9137e29bf",
+        "processingStatus": "PENDING",
+        "hasExtractedText": true,
+        "wordCount": 11,
+        "createdAt": "2026-10-29T10:25:32.561Z",
+        "updatedAt": "2026-10-29T10:25:32.561Z"
+      },
+      "filing": {
+        "view": "pharma",
+        "folderId": "module-5",
+        "evidenceKind": "protocol",
+        "ctdSection": null,
+        "placementStatus": "suggested",
+        "confidence": "medium",
+        "rationale": "Kept from version 1.0 when this version was added.",
+        "folderLabel": "Module 5 · Clinical",
+        "needsReview": false
+      }
+    }
+  }
+}

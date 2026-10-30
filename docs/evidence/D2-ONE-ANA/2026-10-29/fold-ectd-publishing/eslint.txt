@@ -1,0 +1,36 @@
+ESLint per changed file, HEAD vs working tree (tools/eslint-compare.sh.txt)
+client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx  head=new  now=0w/0e
+client/src/concept2cure/v2/surfaces/EctdCompile.tsx  head=4w/0e  now=4w/0e
+client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/surfaces/PublishingCenter.tsx  head=4w/0e  now=0w/0e
+client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx  head=new  now=0w/0e
+client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/__tests__/publishingCenterHonestReads.test.tsx  head=0w/0e  now=0w/0e
+
+======================== Part 2 ========================
+ESLint per changed file, HEAD vs working tree (tools/eslint-compare.sh.txt)
+client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx  head=new  now=0w/0e
+client/src/concept2cure/v2/surfaces/EctdCompile.tsx  head=4w/0e  now=4w/0e
+client/src/concept2cure/v2/surfaces/EctdCompileDtdEvidence.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/surfaceViews.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/registryModel.ts  head=1w/0e  now=1w/0e
+client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx  head=new  now=0w/0e
+client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts  head=new  now=0w/0e
+client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/__tests__/anaOperatesEctdCompile.test.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx  head=0w/0e  now=0w/0e
+shared/navigation/surface-actions.ts  head=1w/0e  now=1w/0e
+shared/navigation/index.ts  head=0w/0e  now=0w/0e
+shared/constants/ui-surface-registry.ts  head=1w/0e  now=1w/0e
+shared/constants/ui-surface-registry.ui-v2.ts  head=1w/0e  now=1w/0e
+shared/constants/deferred-capability-inventory.ts  head=0w/0e  now=0w/0e
+shared/constants/__tests__/deferred-capability-inventory.test.ts  head=0w/0e  now=0w/0e
+server/services/entitlements/__tests__/launch-scope.test.ts  head=0w/0e  now=0w/0e
+server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts  head=0w/0e  now=0w/0e
+tests/schema-contract/catalog-module-claims.contract.test.ts  head=0w/0e  now=0w/0e
+scripts/ci/check-ana-surface-context.mjs  head=5w/0e  now=5w/0e
+client/src/concept2cure/v2/surfaces/PublishingCenter.tsx  head=4w/0e  now=deleted
+client/src/concept2cure/v2/__tests__/publishingCenterHonestReads.test.tsx  head=0w/0e  now=deleted
+client/src/concept2cure/v2/__tests__/publishingCenterSpecLabels.test.tsx  head=0w/0e  now=deleted
+client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts and tests/schema-contract/catalog-module-claims.contract.test.ts re-linted after their last edit: npx eslint --no-ignore, exit 0.

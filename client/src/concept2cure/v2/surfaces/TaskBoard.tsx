@@ -21,6 +21,7 @@ import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { publishShellProject } from '../shellProject';
+import { getSurfaceMeta } from '../registryModel';
 import { consumeNavParams, NAV_PARAMS_EVENT, stashNavParamsForTarget } from '../navParams';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { isTaskFilingHome, isTrackedFilingId, type TaskFilingHome } from '@shared/types/task-filing-home';
@@ -120,6 +121,11 @@ interface TaskItem {
    */
   phase: string | null;
   blocked?: boolean;
+  /** Another store records this work as holding the submission (a blocker type,
+   *  critical to quality, an agency hold): the cross-store view's own flag, sent
+   *  by the board read. Not the same as `blocked`, the status. Absent on the
+   *  board's own tasks. (D2, 2026-10-29, the device-tasks fold.) */
+  blocking?: boolean;
   blockedReason?: string;
   estimatedHours?: number | null;
   assignmentType?: string;
@@ -138,19 +144,26 @@ interface TaskItem {
   description?: string | null;
 }
 
-/** The screen that owns another store's work, as a person reads it. */
+/** The screen that owns another store's work, as a person reads it. A project's
+ *  page is named by its project (section 9 of
+ *  .design/client-journey/INFORMATION_ARCHITECTURE.md), so `project-home` has no
+ *  fixed label here: OtherStoreTaskDetail names the task's project (the title it
+ *  opens the project with), or says "its project" when the board cannot name it. */
 const HOME_LABEL: Record<string, string> = {
-  'project-home': 'Project home',
-  'submission-center': 'Submission Center',
+  'submission-center': getSurfaceMeta('submission-center').label,
 };
 
 /** A store the board could not read (meta.unreadSources), as a person reads it. */
 const STORE_LABEL: Record<string, string> = {
   unified_tasks: "the board's own tasks",
-  project_tasks: 'the schedule and Communication Center',
+  project_tasks: `the schedule and ${getSurfaceMeta('communication-center').label}`,
   c2c_project_work_items: 'agency correspondence',
   estar_submissions: 'tracked filings',
 };
+
+/** The blocking flag's words, shared by the card, the table row and the
+ *  Analytics count so the three cannot name it differently. */
+const BLOCKING_FLAG = 'Blocking the submission';
 
 /** Initials for an already-resolved display name. '?' when there is no name. */
 function tbAvatar(name: string): string {
@@ -806,6 +819,11 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     return {
       total: list.length, open: open.length,
       blocked: list.filter(t => t.blocked).length,
+      /* Work holding the submission, by the cross-store summary's own rule
+         (unified-work-view.ts `blocking`): blocked, or recorded as blocking by
+         another store, or a board task on the critical path that is not done.
+         Replaces the device workbench's "· N blocking" (D2, 2026-10-29). */
+      blocking: list.filter(t => t.blocked || t.blocking || (t.criticalPath && t.status !== 'completed')).length,
       crit: list.filter(t => t.criticalPath).length,
       reg: list.filter(t => t.regulatoryImpact).length,
       appr: list.filter(t => t.approvalRequired && t.approvalStatus === 'pending').length,
@@ -867,8 +885,9 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     const sel0 = sel;
     return {
       summary:
-        `Task board for the organisation: ${stats.total} tasks, ${stats.open} open, ` +
-        `${stats.blocked} blocked, ${overdue.length} overdue, ${stats.appr} awaiting approval.` +
+        `Tasks for the organisation: ${stats.total} tasks, ${stats.open} open, ` +
+        `${stats.blocked} blocked, ${stats.blocking} holding the submission, ` +
+        `${overdue.length} overdue, ${stats.appr} awaiting approval.` +
         (unreadStores.length
           ? ` These counts are incomplete: ${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')} could not be read.`
           : '') +
@@ -878,7 +897,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         mine,
         unreadStores,
         totals: {
-          all: stats.total, open: stats.open, blocked: stats.blocked,
+          all: stats.total, open: stats.open, blocked: stats.blocked, blocking: stats.blocking,
           overdue: overdue.length, criticalPath: stats.crit,
           regulatoryImpact: stats.reg, awaitingApproval: stats.appr,
         },
@@ -962,7 +981,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Project — collaboration</div>
-          <h1 className="ph-title">Task board</h1>
+          <h1 className="ph-title">{getSurfaceMeta('tasks').label}</h1>
           <div className="ph-sub">The organisation's tasks from every store: the board's own, and the schedule's, agency correspondence's and tracked filings' work, each labelled with where it lives. Filter to a project below. Work from another store opens where it lives to be changed.</div>
         </div>
         {canWrite ? (
@@ -1122,6 +1141,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
                         {t.moduleType && <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>}
                         {t.criticalPath && <span className="tb-flag crit" title="On critical path">{I.zap}</span>}
                         {t.regulatoryImpact && <span className="tb-flag reg" title="Regulatory impact">{I.shieldCheck}</span>}
+                        {t.blocking && !t.blocked && <span className="tb-flag blk" title={BLOCKING_FLAG}>{I.alertTriangle}</span>}
                       </div>
                       <div className="tb-card-title">{t.title}</div>
                       {t.blocked && <div className="tb-blocked">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
@@ -1201,7 +1221,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
             </div>
           )}
           <div className="metrics">
-            {([['Open tasks', stats.open, ''], ['On critical path', stats.crit, 'ai'], ['Regulatory impact', stats.reg, 'warn'], ['Blocked', stats.blocked, stats.blocked ? 'err' : ''], ['Approvals pending', stats.appr, 'warn']] as const).map((m, i) => (
+            {([['Open tasks', stats.open, ''], ['On critical path', stats.crit, 'ai'], ['Regulatory impact', stats.reg, 'warn'], ['Blocked', stats.blocked, stats.blocked ? 'err' : ''], [BLOCKING_FLAG, stats.blocking, stats.blocking ? 'err' : ''], ['Approvals pending', stats.appr, 'warn']] as const).map((m, i) => (
               <div key={i} className="metric" data-tone={m[2]}><div className="metric-l">{m[0]}</div><div className="metric-n">{m[1]}</div></div>
             ))}
           </div>
@@ -1233,7 +1253,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           {list.map(t => (
             <button key={t.taskId} className="ct-row" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }} onClick={() => setSel(t)}>
               <div className="ct-strong mono" style={{ fontSize: 10.5 }}>{t.taskId}</div>
-              <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{t.blocked && <span className="tb-flag blk inline">{I.alertTriangle}</span>}</div>
+              <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{t.blocked && <span className="tb-flag blk inline">{I.alertTriangle}</span>}{t.blocking && !t.blocked && <span className="tb-flag blk inline" title={BLOCKING_FLAG}>{I.alertTriangle}</span>}</div>
               <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
               <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
               <div><span className={`tb-pri pri-${t.priority}`}>{t.priority}</span></div>
@@ -1314,7 +1334,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
             if (t.home.source === 'filing') {
               const filingId = t.home.nativeId;
               if (!isTrackedFilingId(filingId)) {
-                setFilingHomeError('This exact tracked filing could not be verified because its identifier is invalid. The current programme has not changed.');
+                setFilingHomeError('This exact tracked filing could not be verified because its identifier is invalid. The current project has not changed.');
                 return;
               }
               if (openingFiling === t.taskId) return;
@@ -1325,7 +1345,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
               try {
                 const { home } = await loadTaskFilingHome(filingId, headers);
                 if (!stillSelected()) return;
-                if (home.programId) publishShellProject({ id: home.programId, title: home.programTitle || 'Tracked filing programme' });
+                if (home.programId) publishShellProject({ id: home.programId, title: home.programTitle || 'Tracked filing project' });
                 stashNavParamsForTarget('submission-center', { filingId, ws: 'portfolio' });
                 setSel(null); onNav('submission-center');
               } catch (error) {
@@ -1409,10 +1429,17 @@ const ARCHIVE_REASON_MAX = 1000;
  * store, so this panel offers none of the board's controls (move, archive,
  * sign): it says what the store records and opens the screen that owns it.
  */
+/** The place another store's work lives: a project's page is named by its project. */
+function homeLabel(home: TaskItem['home'], project: string | null): string | null {
+  if (!home) return null;
+  if (home.surface === 'project-home') return home.programTitle || project || 'its project';
+  return HOME_LABEL[home.surface] ?? getSurfaceMeta(home.surface).label;
+}
+
 /** Where another store's work lives, in one sentence. */
 function whereItLives(home: string | null, project: string | null): React.ReactNode {
   if (!home) return 'This work lives in another store. The board shows it and does not edit it.';
-  const forProject = project ? ` for ${project}` : '';
+  const forProject = project && project !== home ? ` for ${project}` : '';
   return `This work lives in ${home}${forProject}. It is changed there; the board shows it and does not edit it.`;
 }
 
@@ -1426,8 +1453,8 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome, opening, erro
 }) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const status = (TB_COLS.find(c => c.id === t.status) || { label: t.status }).label;
-  const home = t.home ? HOME_LABEL[t.home.surface] ?? t.home.surface : null;
   const project = t.project ? projLabel(t.project) : null;
+  const home = homeLabel(t.home, project);
   const dialogRef = useDialog(onClose);
   return (
     <div className="tb-detail-bd" onClick={onClose}>
@@ -1443,7 +1470,7 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome, opening, erro
           {error && <div role="alert" className="tb-detail-note">{error}</div>}
           {home && (t.home?.source === 'filing' || t.home?.programId
               ? <button className="btn primary" disabled={opening} aria-busy={opening} onClick={() => void onOpenHome(t)}>Open in {home}</button>
-              : <div role="status" className="tb-detail-note">This task has no available program link. Open its program from Projects; the current program has not been changed.</div>)}
+              : <div role="status" className="tb-detail-note">This task has no available project link. Open its project from Projects; the current project has not been changed.</div>)}
         </div>
       </div>
     </div>
@@ -2105,9 +2132,9 @@ async function loadTaskFilingHome(filingId: string, headers: Record<string, stri
 function filingHomeErrorText(error: unknown): string {
   const status = error instanceof ApiRequestError ? error.status : null;
   if (status === 401) return 'Your session expired. Sign in again before opening this tracked filing.';
-  if (status === 403) return 'Your current access does not permit this tracked filing. The current programme has not changed.';
-  if (status === 404) return 'This tracked filing or its project is no longer available. The current programme has not changed.';
-  return 'This exact tracked filing could not be verified. Retry; the current programme has not changed.';
+  if (status === 403) return 'Your current access does not permit this tracked filing. The current project has not changed.';
+  if (status === 404) return 'This tracked filing or its project is no longer available. The current project has not changed.';
+  return 'This exact tracked filing could not be verified. Retry; the current project has not changed.';
 }
 function publishNativeTaskHome(t: TaskItem, projLabel: (id: string) => string): void {
   if (!t.home?.programId) return;

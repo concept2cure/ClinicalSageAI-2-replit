@@ -1,0 +1,26 @@
+{
+  "files": 12,
+  "errorCount": 0,
+  "warningCount": 1,
+  "messages": [
+    {
+      "file": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'writeHandoffStage' has a complexity of 19. Maximum allowed is 15.",
+          "line": 56,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 56,
+          "endColumn": 33
+        }
+      ]
+    }
+  ],
+  "writeHandoffStageIdenticalToFirstCapturedProductionEpoch": true,
+  "unchangedFunctionSha256": "2dd71d11ea73878a94d3b8fe15232fa42fcec67d2a37cc233cef899a0dc97054",
+  "detailsSha256": "e84748b36d9d44431eaef17dab531dd08f009c93a2d067e47292a605d97cb0e1",
+  "limit": "Lead owns original-branch diff confirmation. No baseline or rule changes were made."
+}

@@ -1,0 +1,113 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+{
+  "timestamp": "2026-10-26T16:08:14.815Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T16:08:14.817Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+{
+  "timestamp": "2026-10-26T16:08:14.817Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+{
+  "timestamp": "2026-10-26T16:08:15.069Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > a full stated battery and NOAEL cannot establish readiness or a program starting dose
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > without a project, asks for one and claims no record was read
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > refuses another project while one is open
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > a database failure remains an error, not an empty battery
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > an open project with no supplied figures gets requirements and no gap determination
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > does not invent a clinical duration for its requirements
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > offers only project/context fields and tells the model not to pass figures
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > compute_fih_dose identifies the stated NOAEL rather than a recorded program starting dose 16ms
+   → expected { status: 'computed', …(8) } to match object { status: 'computed', …(2) }
+(16 matching properties omitted from actual)
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > calculate_safety_margin identifies the stated NOAEL rather than a recorded program starting dose 29ms
+   → expected { status: 'computed', …(3) } to match object { status: 'computed', …(2) }
+(13 matching properties omitted from actual)
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > a complete listed battery has a stated basis and no program adequacy verdict
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > classifies stated findings as a worksheet without directing their use in M2.4
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > labels the carcinogenicity assessment as based on stated inputs
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > refuses an unknown safety-margin species instead of computing zero doses
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > 'compute_fih_dose' describes its worksheet basis within the tool budget
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > 'classify_tox_findings' describes its worksheet basis within the tool budget
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > 'calculate_safety_margin' describes its worksheet basis within the tool budget
+ ↓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > 'assess_carcinogenicity_need' describes its worksheet basis within the tool budget
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > compute_fih_dose identifies the stated NOAEL rather than a recorded program starting dose
+AssertionError: expected { status: 'computed', …(8) } to match object { status: 'computed', …(2) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "appliesTo": "the inputs stated in this conversation",
+-   "basis": "stated",
+    "status": "computed",
+  }
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:84:17
+     82|   ])('%s identifies the stated NOAEL rather than a recorded program st…
+     83|     const out = JSON.parse(await getToolHandler(tool as string)!(input…
+     84|     expect(out).toMatchObject({ status: 'computed', basis: 'stated', a…
+       |                 ^
+     85|     expect(out.instruction).toMatch(/NOAEL you stated/);
+     86|     expect(out.instruction).toMatch(/not the program's starting dose/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > calculate_safety_margin identifies the stated NOAEL rather than a recorded program starting dose
+AssertionError: expected { status: 'computed', …(3) } to match object { status: 'computed', …(2) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "appliesTo": "the inputs stated in this conversation",
+-   "basis": "stated",
+    "status": "computed",
+  }
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:84:17
+     82|   ])('%s identifies the stated NOAEL rather than a recorded program st…
+     83|     const out = JSON.parse(await getToolHandler(tool as string)!(input…
+     84|     expect(out).toMatchObject({ status: 'computed', basis: 'stated', a…
+       |                 ^
+     85|     expect(out.instruction).toMatch(/NOAEL you stated/);
+     86|     expect(out.instruction).toMatch(/not the program's starting dose/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 15 skipped (17)
+   Start at  16:08:12
+   Duration  8.56s (transform 5.91s, setup 76ms, import 8.23s, tests 48ms, environment 0ms)

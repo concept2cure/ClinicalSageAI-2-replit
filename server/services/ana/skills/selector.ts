@@ -207,9 +207,9 @@ function scoreFacets(skill: SelectableSkill, ctx: SkillSelectionContext, ctxRegi
   if (skill.segments.length > 0 && ctxSegments.length > 0) {
     if (skill.segments.some(s => ctxSegments.includes(s))) {
       out.score += 1;
-      out.reasons.push(`the program is ${ctxSegments.join('/')}`);
+      out.reasons.push(`the project is ${ctxSegments.join('/')}`);
     } else {
-      out.mismatches.push(`written for ${skill.segments.join('/')}, the program is ${ctxSegments.join('/')}`);
+      out.mismatches.push(`written for ${skill.segments.join('/')}, the project is ${ctxSegments.join('/')}`);
     }
   }
 
@@ -219,7 +219,7 @@ function scoreFacets(skill: SelectableSkill, ctx: SkillSelectionContext, ctxRegi
     values: skill.therapeuticAreas,
     actual: ctx.therapeuticArea,
     weight: 2,
-    label: "program's therapeutic area",
+    label: "project's therapeutic area",
   });
   if (areaMatched) out.inFront = true;
   scoreListFacet(out, { values: skill.submissionTypes, actual: ctxRegistryId, weight: 2, label: 'submission' });

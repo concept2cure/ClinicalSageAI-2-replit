@@ -1,0 +1,9 @@
+M12: acceptable:true without a signature is let through
+file: server/routes/mdx-risk-management.ts
+test: server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > recording the residual risk as acceptable is the same judgment > a plain PATCH setting acceptable true answers 428, and nothing is written or limite
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > recording the residual risk as acceptable is the same judgment > with a rationale beside it, the same 10ms
+      Tests  2 failed | 31 passed (33)

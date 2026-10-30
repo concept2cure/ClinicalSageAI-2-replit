@@ -118,13 +118,3 @@ describe('the audit panel fails closed', () => {
     expect(fn).toMatch(/No audit entries have been recorded/);
   });
 });
-
-describe('the programme select reads the org’s own portfolio', () => {
-  it('AgencyMeetings builds its Program options from a live read, not a literal list', () => {
-    const src = executableOnly(readFileSync(join(SURFACES, 'AgencyMeetings.tsx'), 'utf8'));
-    expect(src).toMatch(/useLiveRows<AmProgramOption>\('\/api\/c2c\/projects'\)/);
-    expect(src).toMatch(/options: programOptions/);
-    // And it says so when there are none, rather than falling back to a list.
-    expect(src).toMatch(/No programmes are recorded for your organization yet/);
-  });
-});

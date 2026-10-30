@@ -1,0 +1,10 @@
+{
+  "head": "a54e56337c0028c53d20276b5441681feddf67b4",
+  "files": {
+    "server/services/csr/csr-job-runner.ts": "dde738c27fd0f6faa5b1e7e1a6cfc882342bc839c5d0eea4a08a44b611f82e52",
+    "server/services/csr-builder.ts": "86b10136867351de436eee4a7acadf3ef5b6c4b43d5c10f003d26bd13ef8483e",
+    "server/services/study-design/crf-shell.ts": "fffe43d583bebb7c2e754c8640a04f8f0814d637929ce1aeb27e1f1808943e24",
+    "server/services/authoring/study-design-crf-source.ts": "150bcbe4863989a060c03b7d7193662b5bb4cc9cf09da16de30c71c31455a2f0",
+    "server/services/authoring/workflow-source-import.ts": "66ed1e536bc0dea39d1aa89d8ea654c5ce02da724a8f3e25db7b5d4ac85c4957"
+  }
+}

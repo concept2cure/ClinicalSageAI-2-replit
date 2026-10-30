@@ -1,0 +1,84 @@
+/**
+ * Static inventory of every route a Vault-only organization can reach under
+ * /api/artifacts-center and /api/concept2cure/projects once `vault` claims both
+ * prefixes. Reads each router file the two mounts use, every
+ * <router>.(get|post|put|patch|delete)('/projects…') (and '/' + '/:artifactId/export'
+ * for the artifacts center), the middleware named between path and handler, and
+ * gate markers in the handler body up to the next route. Crossed with the
+ * ci:launch-scope-api walk: which launch or shell surfaces' code names the path.
+ * Run from the repository root: npx tsx docs/evidence/D2-ONE-ANA/2026-10-29/vault-artifact-leaf/tools/routes-under-prefixes.ts.txt
+ */
+import fs from 'node:fs';
+import { checkLaunchScopeApi, REAL } from '../../../../../../scripts/ci/check-launch-scope-api';
+import { buildPrefixMap } from '../../../../../../server/services/entitlements/api-prefix-map';
+import { LAUNCH_SURFACE_IDS } from '../../../../../../shared/constants/launch-scope';
+
+const ROOT = new URL('../../../../../../', import.meta.url).pathname;
+const C2C = [
+  'server/routes/c2c/reviews.ts', 'server/routes/c2c/notifications.ts', 'server/routes/c2c/communication-center.ts',
+  'server/routes/c2c/tasks.ts', 'server/routes/c2c/conversations.ts', 'server/routes/c2c/exports.ts',
+  'server/routes/c2c/artifacts.ts', 'server/routes/c2c/ai-editing.ts', 'server/routes/c2c/haq-sessions.ts',
+  'server/routes/c2c/program-twin.ts', 'server/routes/c2c/context-intelligence.ts', 'server/routes/c2c/project-knowledge.ts',
+  'server/routes/c2c/governance-ops.ts', 'server/routes/c2c/knowledge-sources.ts', 'server/routes/concept2cure.ts',
+  'server/routes/project-schedule-of-events.ts',
+];
+const MARKERS = [
+  'requireEditorAccess', 'requireRole', 'requireModule', 'signedActAttempts', 'verifyReauth', 'checkSigningAuthority',
+  'isSigningAuthorized', 'requireProjectAdmission', 'requireCurrentProjectActor', 'canEditProject', 'GOVERNED_WRITE_ROLES',
+  'requireProjectRouteAccess', 'verifyProjectAccess', 'authorizedProjectId', 'loadProjectAccessRow', 'requireGovernedWrite',
+  'assertGovernedWriter', 'requireWriteRole', 'canMutateProgram', 'requireReviewer', 'requireAdmin', 'isAdminRole',
+  'commitSignedArtifactAct', 'signGovernedAct', 'persistGovernedActionSignature', 'requireCurrentMember', 'humanConfirmed',
+];
+const ROLE_MARKERS = new Set([
+  'requireEditorAccess', 'requireRole', 'signedActAttempts', 'verifyReauth', 'checkSigningAuthority', 'isSigningAuthorized',
+  'canEditProject', 'GOVERNED_WRITE_ROLES', 'requireGovernedWrite', 'assertGovernedWriter', 'requireWriteRole', 'canMutateProgram',
+  'requireReviewer', 'requireAdmin', 'isAdminRole', 'commitSignedArtifactAct', 'signGovernedAct', 'persistGovernedActionSignature',
+]);
+
+interface Row { method: string; path: string; file: string; line: number; mw: string[]; markers: string[]; forWrite: boolean }
+function scan(file: string, mount: string, pathFilter: (p: string) => boolean): Row[] {
+  const src = fs.readFileSync(ROOT + file, 'utf8');
+  const re = /\b(\w+)\.(get|post|put|patch|delete)\(\s*(['"`])([^'"`]+)\3/g;
+  const hits: Array<{ m: RegExpExecArray }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src))) if (pathFilter(m[4])) hits.push({ m });
+  const all: number[] = [];
+  const reAll = /\b(\w+)\.(get|post|put|patch|delete)\(\s*['"`]/g;
+  while ((m = reAll.exec(src))) all.push(m.index);
+  return hits.map(({ m }) => {
+    const start = m.index;
+    const next = all.find((i) => i > start) ?? src.length;
+    const block = src.slice(start, next);
+    // Middleware: identifiers listed between the path literal and the handler.
+    const afterPath = block.slice(block.indexOf(m[4]) + m[4].length + 1);
+    const handlerAt = afterPath.search(/async\s*\(|\(\s*req\b|function\s*\(/);
+    const mw = (handlerAt > 0 ? afterPath.slice(0, handlerAt) : '')
+      .split(',').map((x) => x.trim()).filter((x) => /^[A-Za-z_][\w.]*(\(.*\))?$/.test(x));
+    const markers = MARKERS.filter((k) => new RegExp(`\\b${k}\\b`).test(block));
+    const forWrite = /requireProjectAdmission\([^)]*,\s*true\b|requireCurrentProjectActor\(\s*req\s*,\s*true\b/.test(block);
+    return { method: m[2].toUpperCase(), path: mount + m[4], file, line: src.slice(0, start).split('\n').length, mw, markers, forWrite };
+  });
+}
+
+const rows: Row[] = [
+  ...scan('server/routes/artifacts-center-routes.ts', '/api/artifacts-center', () => true),
+  ...C2C.flatMap((f) => scan(f, '/api/concept2cure', (p) => p === '/projects' || p.startsWith('/projects/'))),
+];
+const map = buildPrefixMap();
+const walk = checkLaunchScopeApi(REAL, map, LAUNCH_SURFACE_IDS);
+const norm = (p: string) => p.replace(/:[A-Za-z_]\w*/g, ':p').replace(/\/+$/, '');
+const callers = (p: string) => {
+  const want = norm(p);
+  const out = new Set<string>();
+  for (const [wp, e] of walk.all) if (wp === want) for (const s of e.surfaces) out.add(s);
+  return [...out].sort();
+};
+console.log(['method', 'path', 'where', 'middleware', 'gate markers in handler', 'role gate', 'launch/shell callers'].join('\t'));
+for (const r of rows) {
+  // projectRecordAdmission(true) is concept2cure.ts's write admission (role and project edit rights).
+  const role = r.mw.some((x) => ROLE_MARKERS.has(x.replace(/\(.*$/, '')) || x === 'projectRecordAdmission(true)')
+    || r.markers.some((k) => ROLE_MARKERS.has(k)) || r.forWrite;
+  console.log([r.method, r.path, `${r.file}:${r.line}`, r.mw.join(' ') || '-', r.markers.join(' ') || '-',
+    r.method === 'GET' ? (role ? 'yes' : 'read') : (role ? 'yes' : 'NONE FOUND'), callers(r.path).join(',') || '(none)'].join('\t'));
+}
+console.error(`# ${rows.length} routes: ${rows.filter((r) => r.method === 'GET').length} reads, ${rows.filter((r) => r.method !== 'GET').length} writes`);

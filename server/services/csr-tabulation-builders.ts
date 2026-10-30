@@ -16,9 +16,18 @@
  *   §12.2 AE incidence by SOC and PT
  *   §12.3 Deaths, SAEs, discontinuations due to AE
  *   §12.4 Clinical laboratory shifts
+ *   §12.5 Vital signs and ECG, change from baseline (when supplied)
+ *   §11.2 Concomitant medications (when supplied)
+ *
+ * §10.1 renders a disposition status the source never recorded as
+ * "not recorded", never as 0 (2026-10-29, CSR slice 6).
  */
 
 import type { GeneratedTable } from './module3Composer.js';
+import { roundHalfUp } from './csr-figure-format.js';
+import { buildDescriptiveDemographicsTable } from './csr/csr-demographics-descriptive.js';
+import { buildEfficacyTable } from './csr/csr-efficacy-table.js';
+export { roundHalfUp };
 
 // ── Input shape (study database extract) ────────────────────────────────────
 
@@ -38,6 +47,31 @@ export interface StudyData {
   exposure?: ExposureSummary[];
   /** Lab shifts (baseline → on-treatment) */
   labShifts?: LabShift[];
+  /** The final-disposition categories the source classifies subjects into. A
+   * declared category with no subject is a recorded zero; a category neither
+   * declared nor used by any record is not recorded, never 0 (§10.1). */
+  dispositionCategories?: DispositionRecord['status'][];
+  /** What "completed" means in this source: study completion (ADSL EOSSTT) or
+   * treatment completion (EOTSTT). Undeclared keeps the previous label. */
+  dispositionBasis?: 'end-of-study' | 'end-of-treatment';
+  /** Where AE discontinuation is recorded: per event (ledToDiscontinuation, the
+   * default) or per subject (DispositionRecord.discontinuedForAdverseEvent),
+   * when the study did not collect the action taken per event (2026-10-30). */
+  aeDiscontinuationBasis?: 'event' | 'subject';
+  /** §12.5 — one record per safety subject and vital-sign/ECG parameter */
+  vitalSigns?: VitalSignRecord[];
+  /** Concomitant medications, one record per subject and medication */
+  concomitantMedications?: ConcomitantMedicationRecord[];
+  /** 'not-supplied': the source carries no efficacy results, and §11.4 states so (D10, 2026-10-30). */
+  efficacyStatus?: 'not-supplied';
+  /** Further named populations with per-arm counts, shown under their label in §11.1 (D11). */
+  additionalPopulations?: Array<{ key: string; label: string; counts: Record<string, number> }>;
+  /** The descriptive §11.2 table with a Total column (D12); undeclared keeps the compact table. */
+  demographicsPresentation?: 'descriptive';
+  /** The source's age groups in reporting order (D12). */
+  ageGroups?: string[];
+  /** Further baseline characteristics, in reporting order (D12). */
+  baselineCharacteristics?: Array<{ key: string; label: string; kind: 'continuous' | 'categorical'; categories?: string[] }>;
 }
 
 export interface TreatmentArm {
@@ -62,6 +96,8 @@ export interface DispositionRecord {
   /** Final status: completed | discontinued | screen-failed | other */
   status: 'completed' | 'discontinued' | 'screen-failed' | 'lost-to-followup' | 'death' | 'other';
   reason?: string;
+  /** Subject-level withdrawal for an AE (aeDiscontinuationBasis 'subject'). */
+  discontinuedForAdverseEvent?: boolean;
 }
 
 export interface DemographicRecord {
@@ -74,12 +110,18 @@ export interface DemographicRecord {
   ethnicity?: string;
   weight?: number;
   bmi?: number;
+  /** Descriptive presentation only (D12): height in cm, age group, declared characteristics by key. */
+  height?: number;
+  ageGroup?: string;
+  baselineValues?: Record<string, number>;
+  baselineCategories?: Record<string, string>;
 }
 
 export interface EfficacyResult {
   endpointName: string;
   endpointType: 'primary' | 'secondary' | 'exploratory';
-  armId: string;
+  /** Absent for an armless result, such as a dose-response test across arms (D10), which states method and population. */
+  armId?: string;
   /** Numerical result (mean, median, % responders, hazard ratio, etc.) */
   value: number;
   /** Result interpretation (string) */
@@ -90,6 +132,13 @@ export interface EfficacyResult {
   pValue?: number;
   /** Comparator arm */
   comparatorArmId?: string;
+  /** Bayesian credible interval, as the SAP reports it */
+  credibleInterval?: { lower: number; upper: number; level: string };
+  /** Posterior probability of the named hypothesis (for example "OR > 1") */
+  posteriorProbability?: { value: number; hypothesis: string };
+  /** The analysis method and population, as the SAP output states them (required for an armless result). */
+  method?: string;
+  population?: string;
 }
 
 export interface AdverseEvent {
@@ -123,6 +172,26 @@ export interface LabShift {
   totalAssessed: number;
 }
 
+export interface VitalSignRecord {
+  subjectId: string;
+  armId: string;
+  /** Parameter as the source names it, with its unit ("Systolic Blood Pressure (mmHg)") */
+  parameter: string;
+  /** Baseline value (ABLFL='Y') */
+  baseline: number;
+  /** The last on-treatment value */
+  lastOnTreatment: number;
+}
+
+export interface ConcomitantMedicationRecord {
+  subjectId: string;
+  armId: string;
+  /** Standardized medication name (CMDECOD) */
+  medication: string;
+  /** ATC class as coded (CMCLAS); absent when the source did not code it */
+  atcClass?: string;
+}
+
 // ── Output ──────────────────────────────────────────────────────────────────
 
 export interface CSRTables {
@@ -148,6 +217,10 @@ export interface CSRTables {
   deathsSAEsDiscontinuations: GeneratedTable;
   /** §12.4 — Lab shifts (optional) */
   labShifts?: GeneratedTable;
+  /** §12.5 — Vital signs and ECG, change from baseline (only when supplied) */
+  vitalSigns?: GeneratedTable;
+  /** §11.2 — Concomitant medications (only when supplied) */
+  concomitantMedications?: GeneratedTable;
 }
 
 // ── Top-level builder ───────────────────────────────────────────────────────
@@ -167,10 +240,20 @@ export function buildCSRTables(study: StudyData): CSRTables {
     aeTopPT: buildAETopPT(study, 0.05),
     deathsSAEsDiscontinuations: buildDeathsSAEsTable(study),
     labShifts: study.labShifts && study.labShifts.length > 0 ? buildLabShiftsTable(study) : undefined,
+    // Present only when supplied, so a source without them yields the same
+    // table object, and the same retained-table digest, as before.
+    ...(study.vitalSigns?.length ? { vitalSigns: buildVitalSignsTable(study) } : {}),
+    ...(study.concomitantMedications?.length ? { concomitantMedications: buildConcomitantMedicationsTable(study) } : {}),
   };
 }
 
 // ── §10.1 Disposition ───────────────────────────────────────────────────────
+
+const DISPOSITION_STATUSES: DispositionRecord['status'][] = [
+  'completed', 'discontinued', 'screen-failed', 'lost-to-followup', 'death', 'other',
+];
+/** The cell for a status the source never recorded: distinguishable from a recorded 0. */
+export const NOT_RECORDED = 'not recorded';
 
 export function buildDispositionTable(study: StudyData): GeneratedTable {
   const arms = study.treatmentArms;
@@ -182,29 +265,32 @@ export function buildDispositionTable(study: StudyData): GeneratedTable {
     const arm = dispByArm.get(d.armId);
     if (arm) arm.set(d.status, (arm.get(d.status) || 0) + 1);
   }
-
-  const statuses: DispositionRecord['status'][] = [
-    'completed', 'discontinued', 'screen-failed', 'lost-to-followup', 'death', 'other',
-  ];
+  // A status is recorded when the source declares it or any record uses it;
+  // a status used in one arm is a classification, so its absence elsewhere is 0.
+  const recorded = new Set([...(study.dispositionCategories ?? []), ...study.disposition.map(d => d.status)]);
 
   return {
     title: '§10.1 — Patient Disposition',
     headers: ['Status', ...arms.map(a => `${a.armName} (n=${a.randomized})`), 'Total'],
     rows: [
       ['Randomized', ...arms.map(a => String(a.randomized)), String(arms.reduce((s, a) => s + a.randomized, 0))],
-      ...statuses.map(status => {
+      ...DISPOSITION_STATUSES.map(status => {
+        const label = statusLabel(status, study.dispositionBasis);
+        if (!recorded.has(status)) return [label, ...arms.map(() => NOT_RECORDED), NOT_RECORDED];
         const cells = arms.map(a => String(dispByArm.get(a.armId)?.get(status) || 0));
         const total = cells.reduce((sum, c) => sum + parseInt(c, 10), 0);
-        return [statusLabel(status), ...cells, String(total)];
+        return [label, ...cells, String(total)];
       }),
     ],
   };
 }
 
-function statusLabel(s: DispositionRecord['status']): string {
+function statusLabel(s: DispositionRecord['status'], basis: StudyData['dispositionBasis']): string {
   switch (s) {
-    case 'completed': return 'Completed treatment';
-    case 'discontinued': return 'Discontinued (any reason)';
+    case 'completed': return basis === 'end-of-study' ? 'Completed study' : 'Completed treatment';
+    // A source that declares its basis (2026-10-29, adversarial review) classifies
+    // death and loss to follow-up separately, so this row is not "any reason".
+    case 'discontinued': return basis ? 'Discontinued (other reasons)' : 'Discontinued (any reason)';
     case 'lost-to-followup': return 'Lost to follow-up';
     case 'death': return 'Death';
     case 'screen-failed': return 'Screen failure';
@@ -233,6 +319,9 @@ export function buildAnalysisPopulationsTable(study: StudyData): GeneratedTable 
         ...arms.map(a => String(a.populations.perProtocol ?? '—')),
         arms.some(a => a.populations.perProtocol === undefined) ? '—' : String(arms.reduce((s, a) => s + a.populations.perProtocol!, 0)),
       ]] : []),
+      // Declared further populations (D11), under their own label; present only when declared.
+      ...(study.additionalPopulations ?? []).map(p => [p.label, ...arms.map(a => String(p.counts[a.armId] ?? '—')),
+        arms.some(a => p.counts[a.armId] === undefined) ? '—' : String(arms.reduce((s, a) => s + p.counts[a.armId], 0))]),
       ['Completed', ...arms.map(a => String(a.populations.completed)), String(arms.reduce((s, a) => s + a.populations.completed, 0))],
     ],
   };
@@ -240,7 +329,17 @@ export function buildAnalysisPopulationsTable(study: StudyData): GeneratedTable 
 
 // ── §11.2 Demographics ──────────────────────────────────────────────────────
 
+/** "mean (SD)" to one place. Descriptive sample SD uses Bessel's correction;
+ * one observation cannot establish its sample SD, so it is never printed as 0. */
+function meanSd(values: number[]): string {
+  if (values.length === 0) return '—';
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const sd = values.length > 1 ? Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / (values.length - 1)) : null;
+  return `${roundHalfUp(mean, 1)} (${sd === null ? '—' : roundHalfUp(sd, 1)})`;
+}
+
 export function buildDemographicsTable(study: StudyData): GeneratedTable {
+  if (study.demographicsPresentation === 'descriptive') return buildDescriptiveDemographicsTable(study);
   const arms = study.treatmentArms;
   const byArm = new Map<string, DemographicRecord[]>();
   for (const arm of arms) byArm.set(arm.armId, []);
@@ -248,15 +347,8 @@ export function buildDemographicsTable(study: StudyData): GeneratedTable {
     byArm.get(d.armId)?.push(d);
   }
 
-  const cellNumeric = (records: DemographicRecord[], key: 'age' | 'weight' | 'bmi'): string => {
-    const values = records.map(r => r[key]).filter((v): v is number => typeof v === 'number');
-    if (values.length === 0) return '—';
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    // Descriptive sample SD uses Bessel's correction; one observation cannot
-    // establish its sample SD. Never print a fabricated zero variability.
-    const sd = values.length > 1 ? Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / (values.length - 1)) : null;
-    return `${mean.toFixed(1)} (${sd === null ? '—' : sd.toFixed(1)})`;
-  };
+  const cellNumeric = (records: DemographicRecord[], key: 'age' | 'weight' | 'bmi'): string =>
+    meanSd(records.map(r => r[key]).filter((v): v is number => typeof v === 'number'));
 
   const cellSex = (records: DemographicRecord[]): string => {
     if (records.length === 0) return '—';
@@ -264,7 +356,7 @@ export function buildDemographicsTable(study: StudyData): GeneratedTable {
     const f = records.filter(r => r.sex === 'F').length;
     const other = records.filter(r => r.sex === 'Other').length;
     const total = records.length || 1;
-    return `${m} (${((m / total) * 100).toFixed(0)}%) M / ${f} (${((f / total) * 100).toFixed(0)}%) F / ${other} (${((other / total) * 100).toFixed(0)}%) Other`;
+    return `${m} (${roundHalfUp((m / total) * 100, 0)}%) M / ${f} (${roundHalfUp((f / total) * 100, 0)}%) F / ${other} (${roundHalfUp((other / total) * 100, 0)}%) Other`;
   };
 
   const rows: string[][] = [
@@ -288,43 +380,9 @@ export function buildDemographicsTable(study: StudyData): GeneratedTable {
 }
 
 // ── §11.4 Efficacy ──────────────────────────────────────────────────────────
-
-export function buildEfficacyTable(
-  study: StudyData,
-  type: 'primary' | 'secondary'
-): GeneratedTable {
-  const results = study.efficacy.filter(e => e.endpointType === type);
-  const byEndpoint = new Map<string, EfficacyResult[]>();
-  for (const r of results) {
-    const list = byEndpoint.get(r.endpointName) || [];
-    list.push(r);
-    byEndpoint.set(r.endpointName, list);
-  }
-
-  const armIdToName = new Map(study.treatmentArms.map(a => [a.armId, a.armName]));
-
-  const rows: string[][] = [];
-  for (const [endpoint, armResults] of byEndpoint) {
-    for (const r of armResults) {
-      rows.push([
-        endpoint,
-        armIdToName.get(r.armId) || r.armId,
-        r.display,
-        r.ci ? `${r.ci.lower.toFixed(2)}–${r.ci.upper.toFixed(2)} (${r.ci.level})` : '—',
-        r.pValue !== undefined ? r.pValue.toFixed(3) : '—',
-        r.comparatorArmId ? armIdToName.get(r.comparatorArmId) || r.comparatorArmId : '—',
-      ]);
-    }
-  }
-
-  return {
-    title: type === 'primary'
-      ? '§11.4 — Primary Efficacy Endpoint Results'
-      : '§11.4 — Secondary Efficacy Endpoint Results',
-    headers: ['Endpoint', 'Arm', 'Result', 'CI', 'p-value', 'vs Comparator'],
-    rows: rows.length > 0 ? rows : [['No data', '', '', '', '', '']],
-  };
-}
+// In server/services/csr/csr-efficacy-table.ts since the D10 change (armless
+// results, efficacy not supplied, 2026-10-30); re-exported here unchanged.
+export { buildEfficacyTable };
 
 // ── §12.1 Extent of exposure ────────────────────────────────────────────────
 
@@ -340,8 +398,8 @@ export function buildExposureTable(study: StudyData): GeneratedTable {
         a.armName,
         String(a.populations.safety),
         e?.meanDailyDose || '—',
-        e?.meanExposureDays !== undefined ? e.meanExposureDays.toFixed(1) : '—',
-        e?.totalPersonYears !== undefined ? e.totalPersonYears.toFixed(2) : '—',
+        e?.meanExposureDays !== undefined ? roundHalfUp(e.meanExposureDays, 1) : '—',
+        e?.totalPersonYears !== undefined ? roundHalfUp(e.totalPersonYears, 2) : '—',
       ];
     }),
   };
@@ -352,8 +410,12 @@ export function buildExposureTable(study: StudyData): GeneratedTable {
 /** A recorded zero event count does not establish a percentage when no
  * subjects belong to that arm's denominator. */
 function incidence(subjects: number, denominator: number): string {
-  return `${subjects} (${denominator > 0 ? `${((subjects / denominator) * 100).toFixed(1)}%` : '—'})`;
+  return `${subjects} (${denominator > 0 ? `${roundHalfUp((subjects / denominator) * 100, 1)}%` : '—'})`;
 }
+
+/** Subjects recorded as withdrawn for an AE when the source records it per subject (the contract holds them to the safety population). */
+const aeDiscontinuedSubjects = (study: StudyData, armId: string) =>
+  new Set(study.disposition.filter(d => d.armId === armId && d.discontinuedForAdverseEvent).map(d => d.subjectId)).size;
 
 export function buildAEOverallSummary(study: StudyData): GeneratedTable {
   const arms = study.treatmentArms;
@@ -387,11 +449,10 @@ export function buildAEOverallSummary(study: StudyData): GeneratedTable {
         const subjects = subjectsWithAE(aes);
         return incidence(subjects, a.populations.safety);
       })],
-      ['AE Leading to Discontinuation, n (%)', ...arms.map(a => {
-        const aes = (aeByArm.get(a.armId) || []).filter(e => e.ledToDiscontinuation);
-        const subjects = subjectsWithAE(aes);
-        return incidence(subjects, a.populations.safety);
-      })],
+      study.aeDiscontinuationBasis === 'subject'
+        ? ['Discontinued for an AE (subject-level), n (%)', ...arms.map(a => incidence(aeDiscontinuedSubjects(study, a.armId), a.populations.safety))]
+        : ['AE Leading to Discontinuation, n (%)', ...arms.map(a =>
+          incidence(subjectsWithAE((aeByArm.get(a.armId) || []).filter(e => e.ledToDiscontinuation)), a.populations.safety))],
       ['Fatal AE, n (%)', ...arms.map(a => {
         const aes = (aeByArm.get(a.armId) || []).filter(e => e.outcome === 'fatal');
         const subjects = subjectsWithAE(aes);
@@ -479,10 +540,12 @@ export function buildDeathsSAEsTable(study: StudyData): GeneratedTable {
         const rsaes = study.adverseEvents.filter(ae => ae.armId === a.armId && ae.serious && ae.related === 'related');
         return String(new Set(rsaes.map(s => s.subjectId)).size);
       })],
-      ['Discontinuations Due to AE, n', ...arms.map(a => {
-        const dcs = study.adverseEvents.filter(ae => ae.armId === a.armId && ae.ledToDiscontinuation);
-        return String(new Set(dcs.map(d => d.subjectId)).size);
-      })],
+      study.aeDiscontinuationBasis === 'subject'
+        ? ['Discontinuations Due to AE (subject-level), n', ...arms.map(a => String(aeDiscontinuedSubjects(study, a.armId)))]
+        : ['Discontinuations Due to AE, n', ...arms.map(a => {
+          const dcs = study.adverseEvents.filter(ae => ae.armId === a.armId && ae.ledToDiscontinuation);
+          return String(new Set(dcs.map(d => d.subjectId)).size);
+        })],
     ],
   };
 }
@@ -504,14 +567,58 @@ export function buildLabShiftsTable(study: StudyData): GeneratedTable {
         const low = shifts.reduce((sum, s) => sum + s.shiftToLow, 0);
         const baselineNormal = shifts.reduce((sum, s) => sum + s.shiftFromNormal, 0);
         const stayed = baselineNormal - high - low;
-        const pct = (n: number) => baselineNormal > 0 ? `${n} (${((n / baselineNormal) * 100).toFixed(1)}%)` : `${n} (—)`;
+        const pct = (n: number) => baselineNormal > 0 ? `${n} (${roundHalfUp((n / baselineNormal) * 100, 1)}%)` : `${n} (—)`;
         return [param, a.armName, String(total), String(baselineNormal), pct(high), pct(low), pct(stayed)];
       })
     ),
   };
 }
 
-// ── Convenience: render tables to ICH E3 markdown ───────────────────────────
+// ── §12.5 Vital signs and ECG ───────────────────────────────────────────────
+
+/** Change from baseline to the last on-treatment value, per parameter and arm.
+ * Descriptive only: no test, no p-value, no clinical-significance judgement. */
+export function buildVitalSignsTable(study: StudyData): GeneratedTable {
+  const records = study.vitalSigns ?? [];
+  const params = [...new Set(records.map(r => r.parameter))].sort();
+  return {
+    title: '§12.5 — Vital Signs and ECG: Change from Baseline to Last On-Treatment Value',
+    headers: ['Parameter', 'Arm', 'n', 'Baseline, mean (SD)', 'Last on-treatment, mean (SD)', 'Change from baseline, mean (SD)'],
+    rows: params.flatMap(param => study.treatmentArms.map(a => {
+      const own = records.filter(r => r.parameter === param && r.armId === a.armId);
+      return [param, a.armName, String(own.length), meanSd(own.map(r => r.baseline)),
+        meanSd(own.map(r => r.lastOnTreatment)), meanSd(own.map(r => r.lastOnTreatment - r.baseline))];
+    })),
+  };
+}
+
+// ── §11.2 Concomitant medications ───────────────────────────────────────────
+
+/** An ATC class the source did not code is said so, not merged into another. */
+const NOT_CODED = 'ATC class not coded';
+
+/** Subjects taking each medication, by ATC class, n (%) of the safety population. */
+export function buildConcomitantMedicationsTable(study: StudyData): GeneratedTable {
+  const arms = study.treatmentArms;
+  const records = study.concomitantMedications ?? [];
+  const subjects = (armId: string, match: (r: ConcomitantMedicationRecord) => boolean) =>
+    new Set(records.filter(r => r.armId === armId && match(r)).map(r => r.subjectId)).size;
+  const keyOf = (r: ConcomitantMedicationRecord) => JSON.stringify([r.atcClass ?? NOT_CODED, r.medication]);
+  const keys = [...new Set(records.map(keyOf))].sort();
+  return {
+    title: '§11.2 — Concomitant Medications by ATC Class and Medication',
+    headers: ['ATC class', 'Medication', ...arms.map(a => `${a.armName} (n=${a.populations.safety}) n (%)`)],
+    rows: [
+      ['Any concomitant medication', '', ...arms.map(a => incidence(subjects(a.armId, () => true), a.populations.safety))],
+      ...keys.map(key => {
+        const [atcClass, medication] = JSON.parse(key) as [string, string];
+        return [atcClass, medication, ...arms.map(a => incidence(subjects(a.armId, r => keyOf(r) === key), a.populations.safety))];
+      }),
+    ],
+  };
+}
+
+// ── Convenience: render tables to ICH E3 markdown ─────────────────────────────
 
 export function renderTablesAsMarkdown(tables: CSRTables): string {
   const sections = [
@@ -526,6 +633,8 @@ export function renderTablesAsMarkdown(tables: CSRTables): string {
     tables.aeTopPT,
     tables.deathsSAEsDiscontinuations,
     tables.labShifts,
+    tables.vitalSigns,
+    tables.concomitantMedications,
   ].filter((t): t is GeneratedTable => t !== undefined);
 
   return sections

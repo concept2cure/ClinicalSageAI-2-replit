@@ -1,0 +1,53 @@
+/**
+ * P-72 slice 0, item 4: the tenant purge's erasure, as purgeTenant's transaction issues it (deleteTenantRows,
+ * tenant-offboarding.ts, working tree): in PURGE_CHILD_TABLES order, a table behind a PURGE_DOORS door is erased once
+ * through `SELECT <columns> FROM public.<door>($1)`, vault.documents through purge_tenant_vault_records, and every other
+ * table by `DELETE FROM <t> WHERE <PURGE_PARENT_SCOPED predicate | organization_id = $1>`, each behind a savepoint.
+ * (company_document_designs is erased by a plain DELETE here; the purge uses disposeCompanyDesigns.)
+ * As app_service, one transaction, with poolInstrumentation's LOCAL settings for SCOPE=sys (tenant '0', role
+ * app_super_admin: the /api/tenants system scope purgeTenant runs in), SCOPE=own (B's tenant id + org uuid, no role) or
+ * SCOPE=own+role (the same with the role, on an arm-removed copy only: the doors' settings test passes, no policy opens).
+ * Records each statement's count or error, COMMITs, then counts what is left of B (and of A, the control) as the owner.
+ * Env: APP_URL, OWNER_URL, SCOPE, OUT.
+ */
+import fs from 'node:fs';
+const REPO = '/home/user/ClinicalSageAI-2-replit';
+const pg = (await import(`${REPO}/node_modules/pg/lib/index.js`)).default;
+const { PURGE_CHILD_TABLES, PURGE_DOORS, PURGE_PARENT_SCOPED } = await import(`${REPO}/server/services/tenant/tenant-offboarding.ts`);
+const owner = new pg.Client({ connectionString: process.env.OWNER_URL }); await owner.connect();
+const app = new pg.Client({ connectionString: process.env.APP_URL }); await app.connect();
+const orgs = (await owner.query(`SELECT id, uuid::text uuid, slug FROM organizations WHERE slug IN ('p72-a','p72-b') ORDER BY slug`)).rows;
+const [A, B] = orgs;
+const predicate = (t: string) => (Object.prototype.hasOwnProperty.call(PURGE_PARENT_SCOPED, t) ? PURGE_PARENT_SCOPED[t] : 'organization_id = $1');
+const count = async (t: string, org: number) => {
+  try { return Number((await owner.query(`SELECT count(*) n FROM ${t} WHERE ${predicate(t)}`, [org])).rows[0].n); } catch (e: any) { return `ERR ${String(e.message).slice(0, 50)}`; }
+};
+const doorTables = new Set<string>(PURGE_DOORS.flatMap((d: any) => d.tables));
+const allTables: string[] = [...new Set<string>([...PURGE_CHILD_TABLES, ...doorTables])];
+const before: Record<string, any> = {};
+for (const t of allTables) before[t] = [await count(t, B.id), await count(t, A.id)];
+// own: B's tenant id + org uuid, no role (destination O as the design states it).
+// own+role: the same, plus role 'app_super_admin' -- run ONLY on a copy with the P arm removed, where the role opens no
+// policy and only satisfies the doors' own settings test: what the doors do once slice 5 deletes that test.
+const scope = process.env.SCOPE === 'own' ? [String(B.id), B.uuid, '', ''] : process.env.SCOPE === 'own+role' ? [String(B.id), B.uuid, 'app_super_admin', ''] : ['0', '', 'app_super_admin', ''];
+const steps: any[] = [];
+await app.query('BEGIN');
+await app.query("SELECT set_config('app.current_tenant_id', $1, true), set_config('app.current_org_id', $2, true), set_config('app.current_user_role', $3, true), set_config('app.current_account_id', $4, true), set_config('app.rls_enforce', 'on', true), set_config('app.bypass_rls', '', true), set_config('app.is_admin', '', true)", scope);
+const opened = new Set<string>();
+const run = async (label: string, sql: string) => {
+  await app.query('SAVEPOINT s');
+  try { const r = await app.query(sql, [B.id]); await app.query('RELEASE SAVEPOINT s'); steps.push({ label, n: r.rowCount, rows: r.rows?.slice(0, 1) }); }
+  catch (e: any) { await app.query('ROLLBACK TO SAVEPOINT s'); steps.push({ label, err: String(e.message).slice(0, 160) }); }
+};
+for (const t of PURGE_CHILD_TABLES as string[]) {
+  const door = (PURGE_DOORS as any[]).find((d) => d.tables.includes(t));
+  if (door) { if (!opened.has(door.fn)) { opened.add(door.fn); await run(`door ${door.fn}`, `SELECT ${door.columns.join(', ')} FROM public.${door.fn}($1)`); } continue; }
+  if (t === 'vault.documents') { await run('door purge_tenant_vault_records', 'SELECT storage_version_id, storage_provider FROM public.purge_tenant_vault_records($1)'); continue; }
+  await run(`delete ${t}`, `DELETE FROM ${t} WHERE ${predicate(t)}`);
+}
+for (const door of PURGE_DOORS as any[]) if (!opened.has(door.fn)) { opened.add(door.fn); await run(`door ${door.fn} (not reached by the list)`, `SELECT ${door.columns.join(', ')} FROM public.${door.fn}($1)`); }
+await app.query('COMMIT');
+const after: Record<string, any> = {};
+for (const t of allTables) after[t] = [await count(t, B.id), await count(t, A.id)];
+fs.writeFileSync(process.env.OUT!, JSON.stringify({ scope: process.env.SCOPE, B: B.id, A: A.id, steps, before, after }, null, 1));
+await owner.end(); await app.end();

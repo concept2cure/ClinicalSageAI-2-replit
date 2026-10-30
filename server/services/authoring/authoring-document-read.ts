@@ -22,7 +22,7 @@ export interface AuthoringDocumentReadIdentity extends AuthoringReadIdentity {do
 export interface AuthoringDocumentFilters {module?:string;product_code?:string;status?:string;conversationId?:string;source?:string}
 export class AuthoringReadInputError extends Error {
   readonly code='AUTHORING_READ_INPUT_INVALID';
-  constructor(){super('A valid single program or document UUID is required.');}
+  constructor(){super('A valid single project or document UUID is required.');}
 }
 function readInput<T extends AuthoringReadIdentity>(input:T) {
   return {...input,includeOrganizationDocuments:!input.programId};
@@ -91,7 +91,9 @@ export async function readAuthoringDocuments(q:RequestSqlClient,input:AuthoringR
   const params:unknown[]=[captured.organizationId,parents(access),access.documentIds,access.sectionIds,
     capturedFilters.module||null,capturedFilters.product_code||null,status&&status.toLowerCase()!=='all'?status:null,
     captured.programId??null,capturedFilters.conversationId?.trim()||null,capturedFilters.source==='ana'];
-  const result=await q.query(`SELECT d.id,d.title,d.module,d.product_code,d.locale,d.status,d.created_at,d.updated_at,d.created_by,
+  // template_id: which template a working copy was made from, so a project's
+  // plan can tell a deliverable is started (CLIENT_JOURNEY_2026-10-25.md pass 3).
+  const result=await q.query(`SELECT d.id,d.title,d.module,d.product_code,d.locale,d.status,d.created_at,d.updated_at,d.created_by,d.template_id,
     CASE WHEN d.id=ANY($3::uuid[]) THEN to_jsonb(d)->'provenance'->>'source' END AS provenance_source,
     CASE WHEN d.id=ANY($3::uuid[]) THEN to_jsonb(d)->'provenance'->>'conversationId' END AS conversation_id,
     to_jsonb(d)->>'client_program_id' AS program_id,to_jsonb(d)->>'c2c_document_id' AS c2c_document_id,

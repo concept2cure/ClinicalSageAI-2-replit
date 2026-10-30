@@ -1,0 +1,10 @@
+{
+  "failure": "merged-regression.json",
+  "failedCase": "registryPickerOffers Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives",
+  "isolatedOriginalReproduction": "merged-retry-focus-reproduction.json",
+  "isolatedOriginalResult": "1 passed; 26 intentionally unselected cases",
+  "finding": "List DOM insertion can be observed before the existing passive focus effect; no competing focus writer or missing-input path was found by independent source review.",
+  "remedy": "Await the same final activeElement identity assertion with existing waitFor defaults. Retain busy/mounted/Retry-focus assertions. No production UI change, sleep, timeout growth or relaxed focus requirement.",
+  "correctedGroupReceipt": "merged-regression-corrected.json",
+  "independentReviewer": "us_biotech_workflow_audit"
+}

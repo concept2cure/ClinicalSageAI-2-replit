@@ -1,0 +1,138 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/3bdbdfc1-d8ee-4b10-bced-9c4dea945250/documents/55b58944-06fa-4fc3-a111-4d9f658fca59/versions",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 302,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "versions": [
+          {
+            "id": "55b58944-06fa-4fc3-a111-4d9f658fca59",
+            "version": "2.0",
+            "contentHash": "3a136831003c7008a87837c0a9341ff5fc7091ca9effbb5e6446de4be9182ef5",
+            "fileSize": 622,
+            "fileName": "next-version.pdf",
+            "uploader": "OQ Runner",
+            "uploaderId": 1,
+            "createdAt": "2026-10-29T10:23:28.132Z",
+            "current": true,
+            "link": "verified",
+            "lifecycle": {
+              "canonicalId": "bd2c9875-a741-4536-a8b4-4ba370f0c54e",
+              "stage": "in_review",
+              "creatorId": 1,
+              "review": {
+                "printedName": "OQ Signer",
+                "meaning": "REVIEWED",
+                "signedAt": "2026-10-29T10:24:00.562Z",
+                "signatureRef": "esig:7",
+                "signerId": 2
+              },
+              "approval": null,
+              "round": {
+                "route": {
+                  "id": "77848cd5-4ed5-4ee4-91de-1b9f1b9385ca",
+                  "round": 1,
+                  "senderId": 1,
+                  "senderName": "OQ Runner",
+                  "order": "parallel",
+                  "status": "open",
+                  "statusReason": null,
+                  "statusBy": null,
+                  "statusAt": null,
+                  "contentDigest": "3a136831003c7008a87837c0a9341ff5fc7091ca9effbb5e6446de4be9182ef5",
+                  "reviewDueAt": "2026-11-05T23:59:59.999Z",
+                  "approvalDueAt": "2026-11-12T23:59:59.999Z",
+                  "createdAt": "2026-10-29T10:23:33.416Z"
+                },
+                "members": [
+                  {
+                    "taskId": "ROUTE-77848cd5-2",
+                    "userId": 2,
+                    "role": "reviewer",
+                    "step": 1,
+                    "printedName": "OQ Signer",
+                    "outcome": "signed",
+                    "stepOpen": true,
+                    "dueDate": "2026-11-05T23:59:59.999Z",
+                    "signature": {
+                      "id": 7,
+                      "printedName": "OQ Signer",
+                      "meaning": "REVIEWED",
+                      "signedAt": "2026-10-29T10:24:00.562Z"
+                    },
+                    "actId": null
+                  },
+                  {
+                    "taskId": "ROUTE-77848cd5-3",
+                    "userId": 3,
+                    "role": "approver",
+                    "step": 2,
+                    "printedName": "OQ Approver",
+                    "outcome": "pending",
+                    "stepOpen": true,
+                    "dueDate": "2026-11-12T23:59:59.999Z",
+                    "signature": null,
+                    "actId": null
+                  }
+                ],
+                "reviewComplete": true,
+                "approvalComplete": false
+              },
+              "roundUnread": false
+            },
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "in_review, not approved"
+          },
+          {
+            "id": "505dbd59-e9b5-4449-92ed-7575330e7111",
+            "version": "1.0",
+            "contentHash": "1c8f000cfc17816be3cec294c7ded0c55c406aee9cfe2787e4e79f22c1e48097",
+            "fileSize": 611,
+            "fileName": "OQ-002-Protocol-20261029102303.pdf",
+            "uploader": "OQ Runner",
+            "uploaderId": 1,
+            "createdAt": "2026-10-29T10:23:08.166Z",
+            "current": false,
+            "link": "none",
+            "lifecycle": null,
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "superseded by a later version"
+          }
+        ],
+        "signing": {
+          "canSign": true,
+          "signers": [
+            {
+              "id": 3,
+              "name": "OQ Approver"
+            },
+            {
+              "id": 1,
+              "name": "OQ Runner"
+            },
+            {
+              "id": 2,
+              "name": "OQ Signer"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

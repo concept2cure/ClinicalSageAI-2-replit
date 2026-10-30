@@ -1,0 +1,54 @@
+# Each suite run alone under timeout 240, working tree with all three items. The two launch-scope-api-gate failures are /api/csr/jobs (7b209818a).
+server/middleware/__tests__/core-project-record-gating.test.ts :: Tests  7 passed (7)
+server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts :: Tests  6 passed (6)
+server/middleware/__tests__/ivd-board-under-diagnostics.test.ts :: Tests  5 passed (5)
+server/middleware/__tests__/launch-scope-api-gate.test.ts :: Tests  2 failed | 41 passed (43)
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 7ms
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+server/middleware/__tests__/launch-scope-device-features.test.ts :: Tests  3 passed (3)
+server/middleware/__tests__/moduleEntitlementGate.test.ts :: Tests  18 passed (18)
+server/middleware/__tests__/moduleEntitlementMasterAdmin.test.ts :: Tests  3 passed (3)
+server/services/entitlements/__tests__/access-requests.test.ts :: Tests  27 passed (27)
+server/services/entitlements/__tests__/company-documents-launch-claim.test.ts :: Tests  10 passed (10)
+server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts :: Tests  7 passed (7)
+server/services/entitlements/__tests__/enforcement-mode-under-rls.test.ts :: Tests  2 passed (2)
+server/services/entitlements/__tests__/enforcement-mode.test.ts :: Tests  19 passed (19)
+server/services/entitlements/__tests__/enforcement-observations.test.ts :: Tests  10 passed (10)
+server/services/entitlements/__tests__/grant-expiry.test.ts :: Tests  15 passed (15)
+server/services/entitlements/__tests__/ind-launch-claim.test.ts :: Tests  63 passed (63)
+server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts :: Tests  204 passed (204)
+server/services/entitlements/__tests__/launch-scope.test.ts :: Tests  36 passed (36)
+server/services/entitlements/__tests__/master-admin-designation.test.ts :: Tests  16 passed (16)
+server/services/entitlements/__tests__/master-admin.test.ts :: Tests  24 passed (24)
+server/services/entitlements/__tests__/mdx-entitlements.test.ts :: Tests  17 passed (17)
+server/services/entitlements/__tests__/module-grants.test.ts :: Tests  6 passed (6)
+server/services/entitlements/__tests__/navigation-entitlements.test.ts :: Tests  24 passed (24)
+server/services/entitlements/__tests__/reporting-launch-claim.test.ts :: Tests  19 passed (19)
+server/services/entitlements/__tests__/require-entitlement.test.ts :: Tests  18 passed (18)
+server/services/entitlements/__tests__/resolver-reports-an-unread-layer-as-unread.test.ts :: Tests  9 passed (9)
+tests/ui-readiness/ui-surface-registry.test.ts :: Tests  14 passed (14)
+tests/ui/surface-registry-coverage.test.ts :: Tests  4 passed (4)
+
+# The launch-scope CI gates:
+== ci:launch-scope
+[ci:launch-scope] 7 apps · 53 surfaces · 13 modules · 34 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit 0
+== ci:launch-scope:selftest
+✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+✅ selftest: gate exits 1 and names 'ectd-compile' when it is missing from the 20260810 keep-list
+✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route
+✅ selftest: gate passes on the real tree
+exit 0
+== ci:launch-scope-api
+
+  [out-of-scope] /api/csr/jobs
+    called by ectd-compile
+    in client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx
+exit 1
+== ci:launch-scope-api:selftest
+  ✓ keeps unrelated optional workbench imports outside that feature graph
+  ✓ an MDX feature with no component mapping fails closed
+
+selftest PASSED — the gate flags a launch screen that production would refuse.
+exit 0

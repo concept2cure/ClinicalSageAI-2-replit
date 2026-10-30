@@ -1,0 +1,8 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/dataConnect.tsx": "29a63b3daa64e84de3022f86638aaa921c00c7c52d143dd55fe53ce9eba44847",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "d7ffb4b6198f501d7a09303f138d47ce716c12d57e52a09d280f96ba02ed9db1",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "193d1aa355ca7c1f0eb22823d2a19c4f17f42fbada803bb5cb11bad55ef92f9a",
+    "client/src/concept2cure/v2/__tests__/dataConnectOwnedRead.test.tsx": "143efe6a4009981b3e2ba51084237bf1a97cbd1cdec8e1e6a1a2119c4ccf1538"
+  }
+}

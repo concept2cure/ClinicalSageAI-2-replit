@@ -28,13 +28,13 @@ export const ANA_SURFACE_CTX = {
     ],
   },
   'program-journey': {
-    here: 'the whole program journey — every stage from concept to submission',
-    focus: 'Program lifecycle · all 9 stages',
+    here: 'the whole project journey — every stage from concept to submission',
+    focus: 'Project lifecycle · all 9 stages',
     actions: [
       {
         label: 'Where are we blocked?',
         icon: 'alertTriangle',
-        prompt: 'Across the whole program journey, what is blocking submission and what is the fastest path to clear each blocker?',
+        prompt: 'Across the whole project journey, what is blocking submission and what is the fastest path to clear each blocker?',
       },
       {
         label: 'Readiness by stage',
@@ -44,7 +44,7 @@ export const ANA_SURFACE_CTX = {
       {
         label: 'Pre-empt agency questions',
         icon: 'sparkles',
-        prompt: 'List the predicted HAQs across the program and pre-draft a response to each.',
+        prompt: 'List the predicted HAQs across the project and pre-draft a response to each.',
       },
     ],
     suggestions: [
@@ -237,7 +237,7 @@ export const ANA_SURFACE_CTX = {
     suggestions: [
       'What is gating Module 3?',
       'Pull the 24-month stability trend',
-      'What is blocking the final export gate on this program?',
+      'What is blocking the final export gate on this project?',
       'Compile Module 3 and tell me which sections are still blocked',
       'Explain each open contradiction and what would resolve it',
       'What shelf life do my stability data actually support, and what limits it?',
@@ -308,32 +308,6 @@ export const ANA_SURFACE_CTX = {
       'Pre-draft the 3 predicted HAQs',
       'Which responses are due this week?',
       'Anchor a response on the locked CSR',
-    ],
-  },
-  'agency-meetings': {
-    here: 'agency interactions — briefing books, questions and minutes',
-    focus: 'Meetings · briefing books',
-    actions: [
-      {
-        label: 'Draft a briefing book',
-        icon: 'penLine',
-        prompt: 'Draft the briefing book for the next scheduled agency meeting from the current dossier.',
-      },
-      {
-        label: 'Frame the questions',
-        icon: 'sparkles',
-        prompt: 'Frame the meeting questions with our position and the supporting data for each.',
-      },
-      {
-        label: 'Track commitments',
-        icon: 'checkSquare',
-        prompt: 'Pull the commitments from the last meeting minutes and their current status.',
-      },
-    ],
-    suggestions: [
-      'Prep the next Type B/C briefing',
-      'Cross-reference prior minutes',
-      'What questions should we ask?',
     ],
   },
   'csr-workflow': {
@@ -424,7 +398,7 @@ export const ANA_SURFACE_CTX = {
     ],
   },
   'ind-checklist': {
-    here: 'the IND lifecycle — application, amendments and reports',
+    here: 'IND forms — the application, amendments and reports',
     focus: 'IND · §312 lifecycle',
     actions: [
       {
@@ -530,30 +504,5 @@ export const ANA_SURFACE_CTX = {
       'Summarize open deviations and CAPA status',
     ],
   },
-  dossier: {
-    here: 'the eCTD dossier — folder tree, documents and data room',
-    focus: 'Dossier · eCTD tree',
-    actions: [
-      {
-        label: 'Map a document to a leaf',
-        icon: 'gitBranch',
-        prompt: 'Map the active document to its correct eCTD leaf and lifecycle operation.',
-      },
-      {
-        label: 'What is unmapped?',
-        icon: 'alertTriangle',
-        prompt: 'List every required eCTD leaf that has no document mapped yet.',
-      },
-      {
-        label: 'Compile the dossier',
-        icon: 'sparkles',
-        prompt: 'Compile the current dossier and report completeness and readiness.',
-      },
-    ],
-    suggestions: [
-      'Show completeness by CTD module',
-      'Which leaves are missing?',
-      'Open the data room source files',
-    ],
-  },
+
 };

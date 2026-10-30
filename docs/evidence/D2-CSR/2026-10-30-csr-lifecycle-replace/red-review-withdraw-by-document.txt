@@ -1,0 +1,11 @@
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > places a revised CSR as a replace of each earlier file of the same study and part, naming its parent; a new part stays new (SYNTHETIC) 2103ms
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > lists an earlier file the revised assembly no longer has, refuses to drop it silently, and places once the user keeps it on file (SYNTHETIC) 636ms
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > withdraws only the files a part-way placement wrote, in its still-open sequence, after the build changed (SYNTHETIC) 565ms
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > refuses to withdraw a completed placement, or a part-way one whose sequence has since been frozen (SYNTHETIC) 1214ms
+ × server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > honours a withdrawal placed elsewhere by document, and withdraws an earlier file left out only when the user chooses it on the board (SYNTHETIC) 559ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > honours a withdrawal placed elsewhere by document, and withdraws an earlier file left out only when the user chooses it on the board (SYNTHETIC)
+AssertionError: expected [ { leafId: 21, …(3) } ] to deeply equal []
+- Expected
++ Received
+      Tests  1 failed | 4 passed (5)

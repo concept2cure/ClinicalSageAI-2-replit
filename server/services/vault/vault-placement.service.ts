@@ -45,15 +45,28 @@
  * the placer, refuses to confirm, and carries the agent's provenance in the
  * audit row beside the move. A person's call — the route — is unchanged.
  *
+ * ── The classifier's second look, once a scan's text is read ────────────────
+ * (MR-08 Stage 3 step 5, 2026-10-29.) Ingest proposes a filing from a file's
+ * name, title and text. A scanned PDF now reaches ingest with no text (its OCR
+ * moved to the processing sweep), so its proposal was made from its name alone,
+ * and a scan named `scan-0001.pdf` stayed unfiled after its text was read.
+ * `proposeFilingFromReadText` runs the same classifier over that text, on the
+ * sweep's transaction. It proposes only for a version that is still the
+ * classifier's to propose: unfiled, placed by no person, with no person's or
+ * agent's filing on record, and not a check-in (which keeps the filing of the
+ * version it replaced). It writes 'suggested', names no person, and carries a
+ * chained `vault.document.file` row naming the classifier.
+ *
  * @module server/services/vault/vault-placement.service
  */
 
 import { pool } from '../../db.js';
 import { writeChainedAuditRow } from '../auditService.js';
-import { resolveVaultView, isFolderInView, folderLabel, filingVocabularyRefusal } from './vault-filing.service.js';
+import { resolveVaultView, isFolderInView, folderLabel, filingVocabularyRefusal, classifyForFiling } from './vault-filing.service.js';
 import { requireCurrentVaultProgramWrite } from './vault-write-authority.js';
 import { ProgramReadAccessError } from '../c2c/current-program-access.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -159,7 +172,7 @@ function resolveTargetFolder(
       return {
         refusal: invalid(
           'INVALID_FOLDER',
-          `Folder '${target}' does not exist in this program's ${view} vault taxonomy.`,
+          `Folder '${target}' does not exist in this project's ${view} vault taxonomy.`,
         ),
       };
     }
@@ -410,4 +423,91 @@ async function writePlacement(
         needsReview: after.placement_status === 'unfiled',
       },
     };
+}
+
+/** The version the sweep just read, as it stands under the sweep's row lock. */
+interface ReadTextFilingRow extends PlacementRow {
+  file_name: string | null;
+  mime_type: string | null;
+  document_type: string | null;
+  placed_by: number | null;
+  supersedes_id: string | null;
+  decided: boolean;
+}
+
+export type ReadTextFiling =
+  | { proposed: false; reason: 'not_the_classifiers' | 'no_match' }
+  | { proposed: true; folderId: string; ctdSection: string | null; rationale: string };
+
+/**
+ * Propose a filing for a version from the text the processing sweep read.
+ * Runs on the caller's client, inside its transaction: the proposal and its
+ * audit row commit with the text, or not at all. Never touches a version a
+ * person or an agent has filed or unfiled, a confirmed or suggested filing, or
+ * a check-in.
+ */
+export async function proposeFilingFromReadText(
+  client: RequestSqlClient,
+  args: { organizationId: number; programId: string; documentId: string; text: string },
+): Promise<ReadTextFiling> {
+  const { organizationId, programId, documentId } = args;
+  // tenant-isolation-safe: vault.documents is program-scoped; the program is
+  // bound to the acting organisation in the same statement, and the caller runs
+  // in that organisation's tenant scope, so row security filters it too.
+  const { rows } = await client.query(
+    `SELECT d.document_title, d.file_name, d.mime_type, d.document_type, d.folder_id, d.evidence_kind,
+            d.ctd_section, d.placement_status, d.placement_rationale, d.placed_by, d.supersedes_id::text AS supersedes_id,
+            EXISTS (SELECT 1 FROM audit_logs a
+                     WHERE a.table_name = 'vault_document' AND a.record_id = d.id::text
+                       AND a.tenant_id = $3 AND a.action = 'vault.document.file'
+                       AND COALESCE(a.new_values::jsonb ->> 'actorKind', '') <> 'classifier') AS decided
+       FROM vault.documents d
+       JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $3 AND rp.deleted_at IS NULL
+      WHERE d.id = $1::uuid AND d.program_id = $2::uuid AND d.deleted_at IS NULL
+      FOR UPDATE OF d`,
+    [documentId, programId, organizationId],
+  );
+  const before = rows[0] as unknown as ReadTextFilingRow | undefined;
+  if (!before || before.placement_status !== 'unfiled' || before.placed_by != null || before.supersedes_id || before.decided) {
+    return { proposed: false, reason: 'not_the_classifiers' };
+  }
+  const view = await resolveVaultView(programId, organizationId, client);
+  const classified = classifyForFiling({
+    fileName: before.file_name ?? '',
+    title: before.document_title,
+    mimeType: before.mime_type,
+    extractedText: args.text,
+    view,
+    documentType: before.document_type,
+  });
+  if (!classified.folderId) return { proposed: false, reason: 'no_match' };
+  await client.query(
+    `UPDATE vault.documents SET
+       folder_id = $2, evidence_kind = COALESCE(evidence_kind, $3), ctd_section = $4,
+       placement_status = 'suggested', placement_confidence = $5, placement_rationale = $6, updated_at = NOW()
+     WHERE id = $1::uuid AND program_id = $7::uuid AND organization_id = $8
+       AND placement_status = 'unfiled' AND placed_by IS NULL`,
+    [documentId, classified.folderId, classified.evidenceKind, classified.ctdSection, classified.confidence, classified.rationale,
+      programId, organizationId],
+  );
+  await writeChainedAuditRow(client, {
+    tenantId: organizationId,
+    action: 'vault.document.file',
+    resourceType: 'vault_document',
+    resourceId: documentId,
+    details: {
+      actorKind: 'classifier',
+      reason: 'Proposed from the text read after upload.',
+      programId,
+      documentTitle: before.document_title,
+      view,
+      from: { folderId: before.folder_id, placementStatus: before.placement_status, ctdSection: before.ctd_section, evidenceKind: before.evidence_kind },
+      to: {
+        folderId: classified.folderId, placementStatus: 'suggested', ctdSection: classified.ctdSection,
+        evidenceKind: before.evidence_kind ?? classified.evidenceKind,
+      },
+      rationale: classified.rationale,
+    },
+  });
+  return { proposed: true, folderId: classified.folderId, ctdSection: classified.ctdSection, rationale: classified.rationale };
 }

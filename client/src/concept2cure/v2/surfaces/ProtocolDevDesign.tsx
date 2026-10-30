@@ -270,6 +270,7 @@ export interface StudyDesignTabProps {
   onChanged?: () => void;
   onError?: (m: string) => void;
   onToast?: (m: string) => void;
+  onNav?: (id: string) => void;
 }
 
 type DesignDrawer = 'bind' | 'unbind' | 'create';
@@ -285,7 +286,7 @@ function createDrawerProgram(drawer: DesignDrawer | null, canWrite: boolean, pro
   return drawer === 'create' && canWrite ? programId : undefined;
 }
 
-export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast }: StudyDesignTabProps) {
+export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast, onNav }: StudyDesignTabProps) {
   const [drawer, setDrawer] = useState<DesignDrawer | null>(null);
   const documentId = Number(doc.id);
   const sd = (doc.studyDesign ?? null) as PdevStudyDesignView | null;
@@ -312,7 +313,7 @@ export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast }: S
           design is read-only — it generates nothing into the protocol’s sections.
         </div>
       )}
-      {!sd && !programId && <div className="pde-note">This protocol has no recorded program. Select or start a program-filed protocol to create a new study design here; existing tenant designs can still be bound.</div>}
+      {!sd && !programId && <div className="pde-note">This protocol has no recorded project. Select or start a project-filed protocol to create a new study design here; existing tenant designs can still be bound.</div>}
 
       {sd && !sd.resolved && (
         <div className="pde-refusal" role="alert">
@@ -327,7 +328,7 @@ export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast }: S
           <DesignIdentity sd={sd} />
           <DesignGates sd={sd} />
           <PlanningInputsPanel studyId={sd.studyId} canWrite={canWrite} onError={onError} onToast={onToast} />
-          <ProjectionsPanel studyId={sd.studyId} designTitle={sd.title} />
+          <ProjectionsPanel studyId={sd.studyId} designTitle={sd.title} programId={programId} onNav={onNav} />
         </>
       )}
 

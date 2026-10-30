@@ -171,7 +171,7 @@ function InboxStep({ inbox, onAsk, onNav, onAdvance }: {
         onAdvance={onAdvance}
         onAsk={onAsk}
         onOpenTask={() => onNav('tasks')}
-        responses={inbox.projectId ? { projectId: inbox.projectId, fire: inbox.fire } : undefined}
+        responses={inbox.projectId ? { projectId: inbox.projectId, fire: inbox.fire, onNav } : undefined}
         emptyHint="Nothing open has been logged for this project. Add the agency's letter above, or log a communication in Communication."
       />
       {/* The request tells AnA to use no number or date the letter does not

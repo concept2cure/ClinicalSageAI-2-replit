@@ -1,0 +1,86 @@
+{
+  "sources": [
+    {
+      "id": "fda-application-types",
+      "url": "https://www.fda.gov/drugs/types-applications",
+      "status": "unavailable",
+      "error": "HTTPError: HTTP Error 404: Not Found"
+    },
+    {
+      "id": "fda-nda",
+      "url": "https://www.fda.gov/drugs/types-applications/new-drug-application-nda",
+      "resolvedUrl": "https://www.fda.gov/drugs/types-applications/new-drug-application-nda",
+      "status": 200,
+      "bytes": 47540,
+      "sha256": "c63c969e3d606bb2af472923d678583cf9f3afcc2ad1efabe031b9c3d2f2c363",
+      "retrievedUtc": "2026-10-26T23:07:07.897634+00:00"
+    },
+    {
+      "id": "fda-expanded-access",
+      "url": "https://www.fda.gov/drugs/investigational-new-drug-ind-application/ind-applications-clinical-treatment-expanded-access-overview",
+      "resolvedUrl": "https://www.fda.gov/drugs/investigational-new-drug-application-ind/ind-applications-clinical-treatment-expanded-access-overview",
+      "status": 200,
+      "bytes": 35029,
+      "sha256": "a4ca3919af0253cd16fcfd01086b5f9ca746957ae9adafeaee3db3e7d418cc2d",
+      "retrievedUtc": "2026-10-26T23:07:08.527836+00:00"
+    },
+    {
+      "id": "fda-dmf",
+      "url": "https://www.fda.gov/drugs/forms-submission-requirements/drug-master-files-dmfs",
+      "resolvedUrl": "https://www.fda.gov/drugs/forms-submission-requirements/drug-master-files-dmfs",
+      "status": 200,
+      "bytes": 36063,
+      "sha256": "4730e8505abd25ba361645dccfc2c3fdc6f81dd29e4cacc67b97165282cdbc3f",
+      "retrievedUtc": "2026-10-26T23:07:07.709419+00:00"
+    },
+    {
+      "id": "fda-rfd",
+      "url": "https://www.fda.gov/combination-products/jurisdictional-information/requests-designation-rfd",
+      "status": "unavailable",
+      "error": "HTTPError: HTTP Error 404: Not Found"
+    },
+    {
+      "id": "fda-eua",
+      "url": "https://www.fda.gov/emergency-preparedness-and-response/mcm-legal-regulatory-and-policy-framework/emergency-use-authorization",
+      "resolvedUrl": "https://www.fda.gov/emergency-preparedness-and-response/mcm-legal-regulatory-and-policy-framework/emergency-use-authorization",
+      "status": 200,
+      "bytes": 162590,
+      "sha256": "4011f49beb86e7f6de0ecb5e2f7073841c2115a74b372b136c370f4a3bf90a2f",
+      "retrievedUtc": "2026-10-26T23:07:08.114777+00:00"
+    },
+    {
+      "id": "fda-biosimilar",
+      "url": "https://www.fda.gov/drugs/biosimilars/review-and-approval",
+      "resolvedUrl": "https://www.fda.gov/drugs/biosimilars/review-and-approval",
+      "status": 200,
+      "bytes": 44085,
+      "sha256": "9e3e4375e9ee07a87670706bc42fc330f0cde459a07f2f0ffe663f6cad549553",
+      "retrievedUtc": "2026-10-26T23:07:08.179423+00:00"
+    },
+    {
+      "id": "weave-home",
+      "url": "https://www.weave.bio/",
+      "status": 200,
+      "bytes": 137227,
+      "sha256": "b169feae79e4266ce12fccf620a44af48ca575d2f251e9b59061096efeaf40c6",
+      "retrievedUtc": "2026-10-26T23:07:08.528982+00:00"
+    },
+    {
+      "id": "fda-ind",
+      "url": "https://www.fda.gov/drugs/types-applications/investigational-new-drug-application-ind",
+      "status": 200,
+      "bytes": 60131,
+      "sha256": "08ce7262d0629c8eafa326aa310d46588c791b6af24e0edcd7b7418e0b6707ee",
+      "retrievedUtc": "2026-10-26T23:07:08.529098+00:00"
+    },
+    {
+      "id": "fda-bla",
+      "url": "https://www.fda.gov/vaccines-blood-biologics/development-approval-process-cber/biologics-license-applications-blas-cber-regulated-products",
+      "status": 200,
+      "bytes": 49851,
+      "sha256": "643dacf8e9e5f56c42acc4fe74ae2193bfb6ccad06b39ec75c1fc6798db828b9",
+      "retrievedUtc": "2026-10-26T23:07:08.529160+00:00"
+    }
+  ],
+  "scope": "Read-only public-page retrieval, not independent validation of vendor performance or current regulatory applicability. Raw HTML is temporary research input; derived summaries and source hashes are retained."
+}

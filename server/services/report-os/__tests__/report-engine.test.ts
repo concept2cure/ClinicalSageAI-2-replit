@@ -74,7 +74,7 @@ describe('reportTypeApplies', () => {
   it('refuses a device-only type for a biologic program', () => {
     expect(reportTypeApplies(device, ['biotech'])).toBe(false);
     expect(reportTypeNotApplicableMessage('FDA eSTAR / 510(k) Equivalence Matrix', ['device'], ['biotech'])).toMatch(
-      /applies to device programs; this program is recorded as biotech/,
+      /applies to device projects; this project is recorded as biotech/,
     );
   });
   it('allows it for a device program, and a universal type for any', () => {

@@ -1,0 +1,6 @@
+{
+  "files": {
+    "server/routes/c2c/projects.ts": "ed10ec22773286383d8f9cb58d311db6f62292b5443ade992df3fd44a05b34d6",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts": "109f4b8905a2c3591477af0c2a73bd74967292624b95ac3dc35d2bfb38785c60"
+  }
+}

@@ -76,6 +76,37 @@ describe('POST /api/mdx/notifications', () => {
   });
 });
 
+/* RR1b (docs/design/REVIEW_ROUTING_2026-10-23.md §2.11, finding M4): a review
+   route's tasks are announced in the task_* categories, so a member could
+   forge "Review requested: <document>" into a colleague's inbox and send them
+   to sign something. The platform alone writes them now. */
+const TASK_CATEGORIES = ['task_assigned', 'task_blocked', 'task_completed', 'task_update'] as const;
+describe('POST /api/mdx/notifications refuses every task_* category (RR1b, M4)', () => {
+  it.each(TASK_CATEGORIES)("refuses '%s': only the task and route writers send it", async (category) => {
+    const res = await request(app).post('/api/mdx/notifications').send({ ...notice(category), title: 'Review requested: Clinical overview' });
+    expect(res.status).toBe(422);
+    expect(io.created).toEqual([]);
+  });
+  it.each(TASK_CATEGORIES)("may still be muted: PUT /notification-subscriptions/%s passes the category check", async (category) => {
+    const res = await request(app).put(`/api/mdx/notification-subscriptions/${category}`).send({ inAppEnabled: false });
+    expect(res.status).not.toBe(422);
+  });
+  it("AnA's fire_notification is not offered them, and refuses each by name", async () => {
+    const { FIRE_NOTIFICATION: fire } = await import('../../services/ana/notifications-study-memory-tool-defs.js');
+    const offered = (fire.input_schema as any).properties.category.enum as string[];
+    const { getToolHandler } = await import('../../services/ana/AnaToolExecutor.js');
+    for (const category of TASK_CATEGORIES) {
+      expect(offered).not.toContain(category);
+      const out = JSON.parse(await getToolHandler('fire_notification')!(
+        { category, severity: 'info', title: 'Review requested: Clinical overview', recipient_user_id: 6 },
+        { organizationId: 9, userId: 5 } as never,
+      ));
+      expect(out.error).toBeTruthy();
+    }
+    expect(io.created).toEqual([]);
+  }, 120_000);
+});
+
 describe("a person may still mute 'ana_turn'", () => {
   it('PUT /notification-subscriptions/ana_turn passes the category check', async () => {
     const res = await request(app).put('/api/mdx/notification-subscriptions/ana_turn').send({ inAppEnabled: false });

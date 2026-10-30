@@ -1,0 +1,12 @@
+# M4: an approved translation can be signed again (the already-approved refusal removed)
+# file: server/routes/mdx-labeling.ts  (sha256 before: 87cb1dee7780d171856383913174240dda0aaa8a06288b23266c229cba4fa563)
+# mutation:
+#   -       if (current.status === 'approved') {
+#   +       if (current.status === ('never' as string)) {
+
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts 2>&1 | grep -E "^ +(✓|×)|Tests  " 
+(exit 0)
+ × the ceremony refuses, and nothing is approved > a translation already approved: 409, rolled back, no second signature 9ms
+      Tests  1 failed | 22 passed (23)
+
+# restored: sha256 after = 87cb1dee7780d171856383913174240dda0aaa8a06288b23266c229cba4fa563  (MATCH)

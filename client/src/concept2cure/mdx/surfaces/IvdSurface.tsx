@@ -6,6 +6,16 @@
  * K510Surface: three+ live fetches that fall back to the data/ivd.ts fixtures
  * during load and on error, all wrapped in PathwayPanes so the IVD dossier gets
  * the same audit / notified-body correspondence / approvals / files tabs.
+ *
+ * D2, 2026-10-29 (docs/evidence/D2-ONE-ANA/2026-10-29/fold-f2-ivd-completeness/):
+ * the IVDR readiness panel is the family board (GSPR, analytical and clinical
+ * performance, scientific validity, the PER, classification, PMPF) from
+ * v2/surfaces/IvdReadinessBoard.tsx, read for this project; and the IVD
+ * assessment workbench (v2/surfaces/IvdAssessmentWorkbench.tsx) is mounted for
+ * the same project. Both were reachable only from the ivd-completeness screen,
+ * which folded into this one (fold F2, 2026-10-29). What AnA may see of the
+ * board is handed to the host (onReadinessContext), which publishes it inside
+ * device-diagnostics' one context.
  */
 
 import * as React from 'react';
@@ -22,16 +32,35 @@ import { AskAnaChip } from './AskAnaChip';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
+import { useRecordedPhaseLine } from './PmaSurface';
+import { EmptyState } from '../../v2/dataConnect';
 import { readyRows, toDataState } from '../lib/dataState';
 import { useCdxPairings, useCliaCategorizations } from '../hooks/useCdxClia';
 import { DataGate } from '../components/DataGate';
 import type { EditorSectionRef } from '../../v2/editorTarget';
+import { IvdAssessmentWorkbench } from '../../v2/surfaces/IvdAssessmentWorkbench';
+import { IvdReadinessBoard, ivdReadinessContext, ivdReadinessView, useIvdReadiness } from '../../v2/surfaces/IvdReadinessBoard';
+import type { SurfaceContext } from '../../v2/surfaceContext';
+import { useReportToHost } from './hostContextReport';
+
+/** What AnA may see of the IVDR readiness board, and the project it was read for. */
+export interface IvdReadinessReport {
+  programId: string;
+  readiness: Omit<SurfaceContext, 'surfaceId'>;
+}
 
 export interface IvdSurfaceProps {
   program: Program | null;
   onAskAna: (text: string) => void;
   /** Open the one document editor; a section ref deep-links to that section. */
   onOpenEditor?: (section?: EditorSectionRef) => void;
+  /** Shell navigation. The assessment workbench opens a saved record's working
+   *  copy in Authoring through it; without it that control is disabled. */
+  onNav?: (id: string) => void;
+  /** Open a letter in Communication on its record (P-39 step 3, S2). */
+  onOpenLetter?: (letterId: string) => void;
+  /** Receives the readiness board's AnA context when it changes, and null on unmount (./hostContextReport.ts). */
+  onReadinessContext?: (report: IvdReadinessReport | null) => void;
 }
 
 const PARAM_PILL: Record<IvdParamStatus, string> = {
@@ -44,10 +73,45 @@ function pct(v: number | null): string {
   return v === null ? '—' : `${(v * 100).toFixed(1)}%`;
 }
 
-export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps) {
-  const activeStageIdx = program ? Math.min(program.stageIdx, IVD_STAGES.length - 1) : 3;
-  const programStatus = program ? program.status : 'active';
+export function IvdSurface(props: IvdSurfaceProps) {
+  /* Slice 0, the map's `device-diagnostics` row ("with no project open … it says
+     no project is selected"), second pass after audit. With `program` null this
+     leaf used to state a default stage 3 ("Stage 4 of 7 — Clinical evidence ·
+     Notified body review", three stages ticked), name "IVD device", and read
+     IVDR, CDx and CLIA records for the whole organisation. Only MdxSurfaceHost's
+     guard kept a client from it. The leaf now refuses by itself, before any hook
+     can read. */
+  if (!props.program) {
+    return (
+      <EmptyState
+        title="No project is selected"
+        hint="Open an IVD project from Projects to see its IVDR evidence."
+        testId="ivd-project-required"
+      />
+    );
+  }
+  return <IvdProjectSurface {...props} program={props.program} />;
+}
+
+function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav, onOpenLetter, onReadinessContext }: IvdSurfaceProps & { program: Program }) {
   const programId = program?.id ?? null;
+  /* The IVDR readiness board, read for this project only (`?program_id=`); it
+     draws a response only when the response says it covers this project. What
+     AnA may see of it goes to the host, in every state: a failed or unconfirmed
+     read says so, never 0% (ivdReadinessContext). */
+  const readiness = useIvdReadiness(String(program.id));
+  useReportToHost(onReadinessContext, {
+    programId: String(program.id),
+    readiness: ivdReadinessContext(ivdReadinessView(readiness), readiness.open),
+  });
+  /* Slice 0, the same row: the project's recorded phase, read from its own row.
+     The strip used to re-label the kit stageIdx useMdxPrograms derives (from
+     progress bands when no phase is recorded) as an IVDR stage and tick every
+     stage before it: a recorded `authoring` read "Stage 4 of 7 — Clinical
+     evidence" with Intake, Classification and Analytical validation done, and
+     an approved IVD was clamped to "Stage 7 of 7 — Submit". A project records
+     no IVDR stage, so no stage is lit, ticked or named. */
+  const phaseLine = useRecordedPhaseLine(String(program.id));
 
   /* Live IVDR data — org-scoped lists + program-scoped GSPR matrix. Each
      falls back to the kit fixture on load/error so the surface is usable
@@ -77,16 +141,16 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
      partial case goes with the fixtures, and each panel now states its own
      reading through DataGate. */
   const classState = toDataState(classifications.rows, classifications.loading, classifications.error, {
-    idleReason: 'Classifications are held per program.',
+    idleReason: 'Classifications are held per project.',
   });
   const validState = toDataState(validations.rows, validations.loading, validations.error, {
-    idleReason: 'Analytical performance is held per program.',
+    idleReason: 'Analytical performance is held per project.',
   });
   const clinicalState = toDataState(clinical.rows, clinical.loading, clinical.error, {
-    idleReason: 'Clinical performance is held per program.',
+    idleReason: 'Clinical performance is held per project.',
   });
   const gsprState = toDataState(gspr.rows, gspr.loading, gspr.error, {
-    idleReason: 'The GSPR matrix is held per program.',
+    idleReason: 'The GSPR matrix is held per project.',
   });
 
   const sourceClass = readyRows(classState);
@@ -120,7 +184,7 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
     gspr.overallPercent ??
     (gsprTotals.total > 0 ? Math.round((gsprTotals.compliant / gsprTotals.total) * 100) : null);
 
-  const subjectName = program ? program.title : sourceClass[0]?.device ?? 'IVD device';
+  const subjectName = program.title;
 
   const workspace = (
     <>
@@ -130,8 +194,7 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
             IVDR pathway · {subjectName}
           </div>
           <div className="section-sub">
-            Stage {activeStageIdx + 1} of {IVD_STAGES.length} — {IVD_STAGES[activeStageIdx]?.label} ·{' '}
-            {program ? program.dueLabel : 'Notified body review'}
+            {phaseLine} · {program.dueLabel}
           </div>
         </div>
         <button
@@ -149,24 +212,33 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
       </div>
 
       <div className="stage-strip">
-        {IVD_STAGES.map((s, i) => {
-          const stateClass =
-            i < activeStageIdx
-              ? 'complete'
-              : i === activeStageIdx
-              ? programStatus === 'blocked'
-                ? 'blocked'
-                : 'active'
-              : 'idle';
-          return (
-            <div key={s.id} className={`stage-node ${stateClass}`}>
-              <div className="stage-dot">{i < activeStageIdx ? I.check : i + 1}</div>
-              <div className="stage-label">{s.label}</div>
-              <div className="stage-meta">{s.meta}</div>
-            </div>
-          );
-        })}
+        {IVD_STAGES.map((s, i) => (
+          <div key={s.id} className="stage-node idle">
+            <div className="stage-dot">{i + 1}</div>
+            <div className="stage-label">{s.label}</div>
+            <div className="stage-meta">{s.meta}</div>
+          </div>
+        ))}
       </div>
+      {/* Slice 0: say why no stage is lit, so an unlit strip is not read as "nothing started". */}
+      <div className="section-sub" data-testid="ivd-stage-note">
+        The IVDR pathway's {IVD_STAGES.length} stages. None is marked: a project records its project phase, stated
+        above, not an IVDR stage.
+      </div>
+
+      {/* IVDR readiness: the seven requirement families and the evidence filed
+          against each, for this project. */}
+      <div className="panel" data-testid="ivd-readiness-panel">
+        <div className="panel-hdr">
+          <div>
+            <div className="t">IVDR readiness · technical file</div>
+            <div className="s">GSPR · analytical and clinical performance · scientific validity · PER · classification · PMPF</div>
+          </div>
+        </div>
+        <IvdReadinessBoard readiness={readiness} onAsk={onAskAna} />
+      </div>
+
+      <IvdAssessmentWorkbench programId={String(program.id)} onNav={onNav} />
 
       <div className="col2">
         <div>
@@ -234,10 +306,18 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
                         </td>
                         <td style={{ color: 'var(--text-300)' }}>
                           {c.rule ?? '—'}
+                          {/* Slice 0 (audit 2): a row with no class asked AnA to explain the
+                              rule that puts the device "in Class null". It asks to classify it. */}
                           {onAskAna && (
                             <AskAnaChip
-                              onAsk={() => onAskAna(`Explain the IVDR Annex VIII rule that puts ${c.device} in Class ${c.classification}.`)}
-                              label={`Ask AnA about ${c.device}`}
+                              onAsk={() =>
+                                onAskAna(
+                                  c.classification === null
+                                    ? `Classify ${c.device} under IVDR Annex VIII and state the rule that applies.`
+                                    : `Explain the IVDR Annex VIII rule that puts ${c.device} in Class ${c.classification}.`,
+                                )
+                              }
+                              label={c.classification === null ? `Ask AnA to classify ${c.device}` : `Ask AnA about ${c.device}`}
                             />
                           )}
                         </td>
@@ -564,6 +644,7 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
       onAskAna={onAskAna}
       onOpenEditor={onOpenEditor}
       programId={programId}
+      onOpenLetter={onOpenLetter}
     />
   );
 }

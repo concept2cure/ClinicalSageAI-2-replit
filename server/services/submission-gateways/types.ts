@@ -330,6 +330,12 @@ export interface GatewayTransmitResult {
   };
   /** Whose account it went out under, attached by the guard (gateway-accounts.ts). */
   gatewayAccount?: { mode: 'platform' | 'client'; senderIdentifier: string | null };
+  /**
+   * Where the exact bytes sent are kept, attached by the guard
+   * (sent-package-archive.ts). Structural, as preTransmit is, to avoid an
+   * import cycle.
+   */
+  sentPackage?: { storageVersionId: string; provider: string; sha256: string; sizeBytes: number; filename: string };
 }
 
 export interface GatewayStatusResult {

@@ -637,6 +637,10 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:program-ownership-single-source:selftest && npm run ci:program-ownership-single-source
 
+      - name: Project creation has one canonical intake and bounded deferred writers
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:project-creation-owners:selftest && npm run ci:project-creation-owners
+
       - name: Guardrails — audit_logs fixtures accept the audit writer's columns
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The chained audit write is fail-closed: the §11.10(e) row and the
@@ -1147,6 +1151,13 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run test:ci-scripts
 
+      # The CSR cortex suites run under node:test (they transpile the real modules into
+      # an isolated directory). They matched no runner until 2026-10-30, so 95 tests,
+      # two of them failing, had never run (ci:check-unrun-tests).
+      - name: CSR cortex suites (node:test)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run test:cortex
+
       - name: Run TypeScript check (no regression vs baseline)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The .typecheck-baseline.json count has been ratcheted down to 0
@@ -1162,10 +1173,28 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run beta:typecheck
 
-  test:
-    name: Test
+  # The suite, in eight shards on eight runners (MR-02 Stage 3, OPS-25,
+  # 2026-10-30). Each shard runs the SAME command, one file at a time as
+  # vitest.config.ts requires, on its own Postgres; only the set of files
+  # differs (`--shard`, which `npm test` passes through to Vitest). Run
+  # serially in one job, the 5,809-file suite outgrew GitHub's 360-minute job
+  # limit: from 2026-10-24 this job was cancelled on almost every push with no
+  # verdict, and deploy-aws.yml's ci-verdict had nothing to read. The verdict
+  # the release-evidence policy names is the `test` job below, which passes
+  # only if every shard passed and every collected file ran exactly once.
+  test-shard:
+    name: Test (shard ${{ matrix.shard }}/8)
     runs-on: ubuntu-latest
     needs: lint
+    # A shard that runs past this is hung, not slow: at 8 shards each is about
+    # a fifth of the old serial job. A hang now costs 90 minutes, not 360.
+    timeout-minutes: 90
+    strategy:
+      # Every shard runs to its own verdict; one red shard must not cancel the
+      # others, or the merge below could not say which files passed.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     # Runs even when `lint` fails. `needs` still orders it after lint, but
     # without this a single broken guardrail SKIPS the entire suite — and a
     # skipped job reports neither pass nor fail.
@@ -1253,7 +1282,9 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
       - name: Run tests
-        run: npm test
+        # `npm test` unchanged: Jest, then Vitest; npm appends --shard to the
+        # Vitest command, the last in the script.
+        run: npm test -- --shard=${{ matrix.shard }}/8
         env:
           CI: true
           # Require the document runtime here: the AnA doc-surgery e2e FAILS
@@ -1263,6 +1294,57 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
+      - name: Upload shard test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: test-results-shard-${{ matrix.shard }}
+          path: test-results/
+          if-no-files-found: warn
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    # The verdict the release-evidence policy names (CI / Test) and Build
+    # waits for. It runs no tests: it reads the eight shards' reports and
+    # passes only when every shard delivered them, every shard passed, and the
+    # files they ran are exactly the files `vitest list` collects — none
+    # missing, none twice (scripts/ci/merge-test-shards.mjs). A shard that
+    # delivered nothing fails this job; it never makes the suite smaller.
+    needs: [lint, test-shard]
+    # As the shards: runs after a red lint, and runs (to fail) after a red shard.
+    if: '!cancelled()'
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        # `vitest list` collects the file set the shards are compared against.
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Download the shards' test results
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        continue-on-error: true
+        with:
+          pattern: test-results-shard-*
+          path: shards
+
+      - name: Every collected file ran once and every shard passed
+        run: node scripts/ci/merge-test-shards.mjs --shards 8 --dir shards --out test-results
+        env:
+          SHARD_JOBS_RESULT: ${{ needs.test-shard.result }}
+
       - name: Upload core test results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -1271,13 +1353,24 @@ jobs:
           path: test-results/
           if-no-files-found: warn
 
-  coverage:
-    name: Coverage (ratchet)
+  # Coverage runs nightly (the 06:00 UTC schedule), not on every push
+  # (MR-02 Stage 3, 2026-10-30). It runs the whole suite again with the v8
+  # provider, which on a push cost as much runner time as the Test job itself,
+  # and serially it ran past the 360-minute limit, so from 2026-10-24 it was
+  # cancelled every time and its ratchet never ran at all. Once a day, in
+  # eight shards merged below, it concludes, and the ratchet is enforced.
+  coverage-shard:
+    name: Coverage (shard ${{ matrix.shard }}/8)
     runs-on: ubuntu-latest
     needs: lint
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     # As `test`: a red guardrail in lint must not skip this job (a skipped job
     # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && github.event_name == 'schedule' }}
     # Runs the vitest suite with the v8 coverage provider against a real
     # Postgres so the DB-backed paths are counted, then ENFORCES that coverage
     # has not gone down.
@@ -1340,18 +1433,87 @@ jobs:
       - name: Install coverage provider
         run: npm install --no-save @vitest/coverage-v8@4.1.7
 
+      - name: Measure coverage (shard)
+        # Not the verdict: each shard records a blob; the coverage job below
+        # merges all eight and enforces the ratchet. continue-on-error for the
+        # reason the merged step states: test pass/fail is the Test job's.
+        continue-on-error: true
+        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --shard=${{ matrix.shard }}/8 --reporter=blob --coverage --coverage.reportOnFailure=true --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
+        env:
+          CI: true
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      - name: Upload coverage blob
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-blob-${{ matrix.shard }}
+          path: .vitest-reports/
+          if-no-files-found: warn
+          include-hidden-files: true
+
+  coverage:
+    name: Coverage (ratchet)
+    runs-on: ubuntu-latest
+    needs: [lint, coverage-shard]
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    # Nightly only, with its shards (see coverage-shard).
+    if: ${{ !cancelled() && github.event_name == 'schedule' }}
+    timeout-minutes: 30
+    # Merges the eight shards' coverage into the one report the ratchet reads,
+    # then ENFORCES that coverage has not gone down.
+    #
+    # It used to only measure. The run passed --coverage.thresholds.*=0 AND
+    # carried continue-on-error, so the job could not fail twice over; the GA
+    # readiness report listed it as outstanding with the note that it
+    # "measures, it never blocks". That is a gate that has only ever been seen
+    # to pass.
+    #
+    # Enforcing the 70/60/70/70 target in vitest.config.ts today would fail
+    # every build until thousands of tests exist, so it would be reverted and
+    # the job would go back to blocking nothing. Instead the ratchet pins what
+    # the suite actually achieves and refuses a DROP — enforceable immediately,
+    # and coverage can only rise toward the target. Same measure-freeze-improve
+    # pattern as the eslint, tenant-resolver and typecheck baselines.
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # @vitest/coverage-v8 is an OPTIONAL peer of vitest, so `npm ci` does not
+      # install it. Install it transiently (--no-save keeps package.json and the
+      # lockfile untouched / in sync for every other job) just for this run.
+      - name: Install coverage provider
+        run: npm install --no-save @vitest/coverage-v8@4.1.7
+
+      - name: Download the shards' coverage
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        continue-on-error: true
+        with:
+          pattern: coverage-blob-*
+          path: .vitest-reports
+          merge-multiple: true
+
       - name: Measure coverage
         # continue-on-error STAYS on this step, deliberately: test pass/fail is
         # owned by the Test job, and a flaky test must not be reported as a
         # failure twice. vitest's own thresholds stay at 0 for the same reason —
         # the enforcement lives in the ratchet step below, which is the thing
         # this job is allowed to fail on. json-summary is what the ratchet reads.
+        # The merge is of all eight shards' blobs; a missing shard leaves files
+        # uncounted, which the ratchet sees as a drop and refuses.
         continue-on-error: true
-        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --reporter=verbose --reporter=json --outputFile=test-results/vitest-coverage.json --coverage --coverage.reporter=json-summary --coverage.reporter=text-summary --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
+        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --merge-reports --reporter=verbose --reporter=json --outputFile=test-results/vitest-coverage.json --coverage --coverage.reportOnFailure=true --coverage.reporter=json-summary --coverage.reporter=text-summary --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
         env:
           CI: true
-          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
-          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
       - name: Coverage may not go down
         # NO continue-on-error — this is the gate. Fails when any metric falls
@@ -1442,6 +1604,9 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: lint
+    # The real-database suite (about 10 minutes) and the RUN_INTEGRATION_TESTS
+    # files. A hang costs this, not the 360-minute default.
+    timeout-minutes: 60
     # As `test`: a red guardrail in lint must not skip this job (a skipped job
     # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
     if: ${{ !cancelled() }}
@@ -1602,7 +1767,22 @@ jobs:
         # connect and ~100 server-side test files failed with
         # "Database connection not available." Mirror the value to
         # DATABASE_URL so the runtime actually sees it.
-        run: npm test
+        #
+        # It used to be `npm test` — the Test job's whole suite run a second
+        # time — differing from Test only in RUN_INTEGRATION_TESTS, which only
+        # the files selected below read (MR-02 Stage 3, 2026-10-30: about 270
+        # runner-minutes a push, and past the job limit). They are found by
+        # what they read, not listed, so a new one is never left out; none
+        # found is a failure, never an empty pass.
+        run: |
+          mkdir -p test-results
+          mapfile -t files < <(grep -rlE --include='*.test.ts' --include='*.test.tsx' 'process\.env\.RUN_INTEGRATION_TESTS' tests server client shared | sort)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "::error::no test file reads RUN_INTEGRATION_TESTS, so this step would test nothing."
+            exit 1
+          fi
+          printf 'reads RUN_INTEGRATION_TESTS: %s\n' "${files[@]}"
+          NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --reporter=verbose --reporter=json --outputFile=test-results/vitest.json "${files[@]}"
         env:
           CI: true
           RUN_INTEGRATION_TESTS: 'true'

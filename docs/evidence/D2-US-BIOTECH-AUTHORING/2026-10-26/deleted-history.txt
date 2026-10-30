@@ -1,0 +1,32 @@
+e943e0d49 D2 cleanup S05a: delete the off-applier CTD seed migrations, replaced by the record
+aaf83b232 D2 cleanup S04: delete the laptop-only CTD seed scripts
+0f0705fc8 D2 cleanup S03: delete repo-root template, policy and data files nothing loads
+3c394edb3 D2 cleanup D1: delete six CTD template files nothing can reach
+7df89f4f7 chore: pin upstream tools and resolve verification gates
+d7c044897 D2: the readiness twin records only what it assessed; dead innovation, parser and FDA tracker modules are removed
+83849bfdd P1-8 (IAM-11): drafting tasks and stability results answer only for the tenant's own records
+27ecdb8d2 Delete three dead CSR/search paths the column guard found writing a legacy shape
+b67cb52c8 One kit tree: the design-system mirror folds into ui_kits/, and the validation table is measured clean (L141, L140)
+0377c67ba L48: one eCTD template catalog, because two of them ship a wrong regulatory artifact
+9fa0b34e4 Sweep 4/5: unmount two route families that cannot work, delete four decoys
+bf6a12b65 fix(cmc): the module says what is true about scope, linkage and its own claims
+13517e99c chore(ind): delete the phantom-consolidated IND route family (-5,954 lines)
+2895218b8 refactor: one shell, and delete the dead code for good
+85616c46f fix: biotech market-readiness hardening — purge 9,370 lines of dead code, fix auth bypass, sync app catalog (#1265)
+d60158081 chore(docs): remove 390 superseded reports, proofs and audits
+78992cda9 Swarm audit wave 3: tenant-guard innovation routes, dead code, client fixes
+46044c426 chore(cleanup): Tier 3C — remove 126 zero-reference legacy client files (vite build + tsc green)
+fdfb00d33 chore(cleanup): Tier 3A — remove dead client dirs (api, templates, data, i18n set); vite build green
+4a96faf62 refactor(ana): remove duplicate IND filing-readiness engine
+e5a74a4df Remove disconnected legacy dead-code island from client/src/concept2cure (#675)
+7a144fd1e chore: delete all non-Claude-Design UI under client/src/
+8ba28dc0d Delete more zero-importer orphan files across legacy folders
+c4b7a1a31 Delete orphan per-industry dashboards and unused legacy shells
+b79f020e1 refactor: surgical dead code purge — 670 files removed, build verified
+30cc29cfd refactor: remove 80+ orphaned server files (~23,000 lines)
+83fa7f6cf refactor: remove 146 orphaned client files (~42,000 lines)
+9c96be52e Revert "chore: install gstack skills and update CLAUDE.md"
+87d13d7cd chore: BETA audit — remove mock data route + 127 dead Python files
+41c396989 A7-6 batch runner hardening (#84)
+4a87d39a4 WIP: reconcile codespace changes
+1c5d12c36 fix: Build errors and consolidation cleanup

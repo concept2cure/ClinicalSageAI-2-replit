@@ -5,7 +5,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { getSurface, UI_SURFACES } from '@shared/constants/ui-surface-registry';
-import { surfaceIdFromLocation } from '../routing';
+import { DEEP_LINK_ALIASES } from '../registryModel';
+import { destinationFor, locationForSurface, surfaceIdFromLocation, SURFACE_ADDRESSES } from '../routing';
 
 describe('surfaceIdFromLocation', () => {
   it('maps the bare base path to home', () => {
@@ -21,15 +22,21 @@ describe('surfaceIdFromLocation', () => {
 
   it('resolves deep-link aliases to their canonical surfaces', () => {
     expect(surfaceIdFromLocation('/concept2cure/task-board')).toBe('tasks');
-    // `device-submission` used to alias to `document-authoring` while
-    // SURFACE_VIEWS routed the same id to the device kit — the registry and the
-    // deep-link table disagreeing about what one id means. It is a real surface
-    // (the kit's submission-ops package view) and resolves to itself.
-    expect(surfaceIdFromLocation('/concept2cure/device-submission')).toBe('device-submission');
+    // `device-submission` once aliased to `document-authoring` while SURFACE_VIEWS
+    // routed the same id to the device kit. Its screen folded into Submission
+    // Center (D2, fold F5 item 1, 2026-10-30), and the one meaning is that.
+    expect(surfaceIdFromLocation('/concept2cure/device-submission')).toBe('submission-center');
     expect(surfaceIdFromLocation('/concept2cure/ind-lifecycle')).toBe('ind-checklist');
-    for (const target of ['tasks', 'document-authoring', 'ind-checklist']) {
+    for (const target of ['tasks', 'document-authoring', 'ind-checklist', 'submission-center']) {
       expect(getSurface(target), target).toBeDefined();
     }
+  });
+
+  it('/concept2cure/features is Subscription & features (section 12: no id with "app" in the address bar)', () => {
+    expect(surfaceIdFromLocation('/concept2cure/features')).toBe('apps');
+    expect(surfaceIdFromLocation('/concept2cure/features?program=7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d')).toBe('apps');
+    // A link written before the address changed still arrives.
+    expect(surfaceIdFromLocation('/concept2cure/apps')).toBe('apps');
   });
 
   it('ignores trailing segments and query strings', () => {
@@ -42,6 +49,26 @@ describe('surfaceIdFromLocation', () => {
   });
 });
 
+describe('locationForSurface (the path the shell writes)', () => {
+  it('writes /concept2cure/features for apps, and the id itself for every other surface', () => {
+    expect(locationForSurface('apps')).toBe('/concept2cure/features');
+    expect(locationForSurface('home')).toBe('/concept2cure');
+    for (const s of UI_SURFACES.filter((x) => x.id !== 'apps')) {
+      expect(locationForSurface(s.id), s.id).toBe(`/concept2cure/${s.id}`);
+    }
+  });
+
+  it('every address it writes reads back to the same surface', () => {
+    for (const [id, address] of Object.entries(SURFACE_ADDRESSES)) {
+      expect(DEEP_LINK_ALIASES[address], address).toBe(id);
+      expect(getSurface(address), `${address} is an address, not a registry id`).toBeUndefined();
+    }
+    for (const s of UI_SURFACES) {
+      expect(surfaceIdFromLocation(locationForSurface(s.id)), s.id).toBe(s.id);
+    }
+  });
+});
+
 describe('the retired kit paths still land somewhere real', () => {
   // `/concept2cure/mdx` and `/concept2cure/pdev` were top-level routes when the
   // kits were separate applications. Links and bookmarks still point at them.
@@ -51,8 +78,16 @@ describe('the retired kit paths still land somewhere real', () => {
   // `?surface=` — and wouter hands this function `location.pathname`, which has
   // no query string at all — so both landed on home. A redirect that silently
   // goes to the wrong place is worse than no redirect, because it looks handled.
-  it('/concept2cure/mdx resolves to the kit entry surface', () => {
-    expect(surfaceIdFromLocation('/concept2cure/mdx')).toBe('device-workstream');
+  it('/concept2cure/mdx resolves to Projects with its existing MDX filter', () => {
+    expect(surfaceIdFromLocation('/concept2cure/mdx')).toBe('projects');
+    expect(surfaceIdFromLocation('/concept2cure/mdx?view=compact#devices')).toBe('projects');
+    expect(destinationFor('mdx', false)).toEqual({
+      surfaceId: 'projects', applies: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
+    });
+    expect(getSurface('mdx')).toBeUndefined();
+    // A2.8 changes only the alias. The old portfolio shell stays until A2.10.
+    expect(getSurface('device-workstream')).toBeDefined();
+    expect(surfaceIdFromLocation('/concept2cure/device-workstream')).toBe('device-workstream');
   });
 
   it('/concept2cure/pdev resolves to itself — it is a real surface id now', () => {

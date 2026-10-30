@@ -1,0 +1,6 @@
+{
+  "files": {
+    "server/services/agency-responses/editor-response.ts": "ac40df428befdbf629ca3ca197d248e07c0ac23ba4b770265f46ffe41551e09f",
+    "server/services/agency-responses/__tests__/editor-response-text.test.ts": "feee84b0833e280a48450f81d11473e3bd6678371df9f282681e77da8780643a"
+  }
+}

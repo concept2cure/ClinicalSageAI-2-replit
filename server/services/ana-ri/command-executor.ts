@@ -15,7 +15,6 @@
  */
 
 import { getPool } from '../../db';
-import { projectBelongsToTenant } from '../cmc/project-membership';
 import type { StatisticalInput } from '../ana-biostats/types';
 import type { PoolClient } from 'pg';
 import type { AuditTaskActionParams } from '../tasking/task-audit.js';
@@ -293,92 +292,6 @@ async function persistGovernedCommandArtifact(
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. PROJECT OPERATIONS
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** Create a new project */
-export async function createProject(
-  ctx: CommandContext,
-  params: {
-    name: string;
-    description?: string;
-    submissionType?: string;
-    therapeuticArea?: string;
-    targetAgency?: string;
-    phase?: string;
-  }
-): Promise<CommandResult> {
-  try {
-    /* 2026-10-15: this wrote projects.submission_type, which projects does not
-       have, and left out client_workspace_id and type (both NOT NULL), so every
-       call failed. The submission type is metadata, as POST
-       /api/concept2cure/projects records it. The workspace decides who can see
-       the project (program-project-anchor.ts), so it is the organization's own
-       workspace, or its only one — never picked from several. */
-    const { DEFAULT_WORKSPACE_MARKER } = await import('../c2c/organization-default-workspace.js');
-    const ws = await pool.query(
-      `SELECT count(*)::int AS workspace_count,
-              min(id) FILTER (WHERE (metadata ->> $2) = 'true') AS default_workspace_id,
-              min(id) AS first_workspace_id
-         FROM client_workspaces WHERE organization_id = $1`,
-      [ctx.organizationId, DEFAULT_WORKSPACE_MARKER]
-    );
-    const wsRow = ws.rows[0] ?? {};
-    const workspaceCount = Number(wsRow.workspace_count ?? 0);
-    const workspaceId =
-      wsRow.default_workspace_id != null ? Number(wsRow.default_workspace_id)
-        : workspaceCount === 1 ? Number(wsRow.first_workspace_id) : null;
-    if (workspaceId === null) {
-      return {
-        success: false,
-        action: 'create_project',
-        message:
-          workspaceCount === 0
-            ? `Project "${params.name}" was not created: this organization has no client workspace to hold it.`
-            : `Project "${params.name}" was not created: this organization has ${workspaceCount} client workspaces and none is marked as its own, and the workspace decides who can see the project, so it is not chosen here. Create it from the Projects page, which names the workspace.`,
-        error: 'CLIENT_WORKSPACE_AMBIGUOUS',
-      };
-    }
-    const metadata: Record<string, string> = {};
-    if (params.submissionType) metadata.submissionType = params.submissionType;
-    if (params.targetAgency) metadata.targetAgency = params.targetAgency;
-    const result = await pool.query(
-      `INSERT INTO projects (organization_id, client_workspace_id, name, description, type, status,
-        therapeutic_area, metadata, created_by_id, owner_id, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, 'concept2cure', 'active', $5, $6::json, $7, $7, NOW(), NOW())
-       RETURNING id, name, status`,
-      [
-        ctx.organizationId,
-        workspaceId,
-        params.name,
-        params.description || '',
-        params.therapeuticArea || null,
-        JSON.stringify(metadata),
-        ctx.userId,
-      ]
-    );
-    const project = result.rows[0];
-    const typeLabel = params.submissionType ? ` (${params.submissionType.toUpperCase()})` : '';
-    const areaLabel = params.therapeuticArea ? ` in ${params.therapeuticArea}` : '';
-    return {
-      success: true,
-      action: 'create_project',
-      data: {
-        projectId: project.id,
-        name: project.name,
-        status: project.status,
-        submissionType: params.submissionType,
-      },
-      message: `Created project "${params.name}"${typeLabel}${areaLabel} — ID: ${project.id}, status: active.`,
-    };
-  } catch (err: unknown) {
-    const errMsg = err instanceof Error ? err.message : 'unknown error';
-    return {
-      success: false,
-      action: 'create_project',
-      message: `Failed to create project "${params.name}": ${errMsg}.`,
-      error: errMsg,
-    };
-  }
-}
 
 /** List user's projects */
 export async function listProjects(ctx: CommandContext): Promise<CommandResult> {
@@ -1202,6 +1115,20 @@ export async function createTask(
     moduleType?: string;
   }
 ): Promise<CommandResult> {
+  // A route member is written only by the review route (RR1a, M9). AnA has no
+  // path to send, sign or route anything; a create naming a route column
+  // creates nothing.
+  {
+    const { refuseRouteColumnsInInput, RouteTaskWriteRefused } = await import('../tasking/task-state-machine.js');
+    try {
+      refuseRouteColumnsInInput(params, 'ana.create_task');
+    } catch (err) {
+      if (err instanceof RouteTaskWriteRefused) {
+        return { success: false, action: 'create_task', message: err.message, error: err.code };
+      }
+      throw err;
+    }
+  }
   try {
     const result = await pool.query(
       `INSERT INTO project_tasks
@@ -1297,9 +1224,11 @@ export async function updateTask(
       approvalStatus: string | null;
       approvers: unknown;
     } | null = null;
+    /** The mirror row is a review route member: AnA may not move it (RR1a, B1). */
+    let mirrorIsRouteTask = false;
     try {
       const currentRes = await pool.query(
-        `SELECT status, approval_required, approval_status, approvers
+        `SELECT status, approval_required, approval_status, approvers, review_route_id
            FROM unified_tasks
          WHERE source_entity_type = 'project_task'
            AND source_entity_id = $1
@@ -1308,6 +1237,7 @@ export async function updateTask(
         [String(params.taskId), ctx.organizationId]
       );
       mirrorFrom = currentRes.rows[0] ? String(currentRes.rows[0].status) : null;
+      mirrorIsRouteTask = Boolean(currentRes.rows[0]) && currentRes.rows[0].review_route_id != null;
       mirrorApproval = currentRes.rows[0]
         ? {
             approvalRequired: currentRes.rows[0].approval_required as boolean | null,
@@ -1322,6 +1252,14 @@ export async function updateTask(
         '[ana-ri] unified_tasks mirror read failed (non-fatal):',
         err instanceof Error ? err.message : err
       );
+    }
+
+    // A route member belongs to its review route: refused before any write,
+    // so project_tasks is not changed either (RR1a, B1; §6: AnA has no path
+    // to sign, return or reassign).
+    if (mirrorIsRouteTask) {
+      const { ROUTE_TASK_REFUSAL_MESSAGE } = await import('../tasking/task-state-machine.js');
+      return { success: false, action: 'update_task', message: ROUTE_TASK_REFUSAL_MESSAGE, error: 'ROUTE_TASK_OWNED_BY_ROUTE' };
     }
 
     // Same domain rules as the routes: AnA must not drive a transition the HTTP
@@ -1991,89 +1929,110 @@ export async function erasePersonalData(
 // 6. SUBMISSION PACKAGING
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** The device filings create_submission_package tracks, by the family name the model gives. */
+const DEVICE_FILING_FAMILY_KEYS: Readonly<Record<string, string>> = Object.freeze({
+  '510k': '510k',
+  '510(k)': '510k',
+  de_novo: 'de_novo',
+  denovo: 'de_novo',
+  pma: 'pma_original',
+});
+
 /**
- * Create a submission package for a project.
+ * Track a device filing for a project (D2, fold F5 item 1, 2026-10-30;
+ * decision P-61 item 1: one device-filing store, estar_submissions).
  *
- * An e-signature-tier command: the INSERT and the creator's electronic
- * signature commit in ONE transaction, or neither does. A new package has no
- * content yet, so the signer attests to the creation DECISION — the package
- * definition in the payload — and the signature binds the ledger chain hash
- * under the governed-action-ledger basis. It claims no content hash
- * (2026-09-28; until then no signature was recorded at all).
+ * The command kept its name, and its e-signature tier: the tracked filing, its
+ * `created` event and the creator's electronic signature commit in ONE
+ * transaction, or none does. A new filing has no content yet, so the signer
+ * attests to the creation DECISION, the filing definition in the payload, and
+ * the signature binds the ledger chain hash under the governed-action-ledger
+ * basis. It claims no content hash.
+ *
+ * It wrote c2c_submission_packages, whose creator is on no deploy applier, and
+ * which no screen lists now. It writes the filing through the one insert the
+ * HTTP route uses (insertTrackedFiling), so Submission Center lists what AnA
+ * starts. The family is a device filing (510(k), De Novo, PMA) or any eSTAR
+ * catalogue key; an IND, NDA, BLA or CER is not a device filing and is refused
+ * by name, with where each is made.
  */
 export async function createSubmissionPackage(
   ctx: CommandContext,
   params: {
     projectId: number;
     title: string;
-    packageFamily: 'ind' | '510k' | 'cer' | 'nda' | 'bla' | 'pma';
-    description?: string;
-    targetDate?: string;
+    packageFamily?: string;
+    /** An eSTAR submission type (estar-catalog.ts), in place of the family. */
+    catalogKey?: string;
+    variant?: 'device' | 'ivd';
   }
 ): Promise<CommandResult> {
+  const { getCatalogEntry } = await import('../pathway-engines/estar/estar-catalog');
+  const family = String(params.packageFamily ?? '').trim().toLowerCase();
+  const catalogKey = params.catalogKey ?? DEVICE_FILING_FAMILY_KEYS[family];
+  if (!catalogKey || !getCatalogEntry(catalogKey as never)) {
+    return {
+      success: false,
+      action: 'create_submission_package',
+      error: 'NOT_A_DEVICE_FILING',
+      message:
+        `"${params.catalogKey ?? params.packageFamily ?? ''}" is not a device filing. This command tracks an eSTAR filing ` +
+        '(510(k), De Novo, PMA, Q-Sub, IDE, 513(g)) in Submission Center. An IND, NDA or BLA is a submission created in ' +
+        'Submission Center, and a CER is authored on the Clinical evaluation screen. Nothing was created.',
+    };
+  }
+  const variant = params.variant === 'ivd' ? 'ivd' : 'device';
+  const { insertTrackedFiling, EstarSubmissionError } = await import('../pathway-engines/estar/estar-submission-service');
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    /* The package's project is a projects row of this organization (PF-03),
-       the same rule as POST /api/submission-ops/packages. The id comes from the
-       command's params, which the model fills; it was inserted as given. */
-    if (!(await projectBelongsToTenant({ organizationId: ctx.organizationId, projectId: String(params.projectId) }, client))) {
-      await client.query('ROLLBACK');
-      return {
-        success: false,
-        action: 'create_submission_package',
-        error: 'PROJECT_NOT_FOUND',
-        message: `Project ${params.projectId} is not a project of this organization. No package was created.`,
-      };
+    /* The filing's project is a projects row of this organization (PF-03),
+       checked inside insertTrackedFiling on this transaction, before anything
+       is written. The id comes from the command's params, which the model fills. */
+    let filing: { id: string };
+    try {
+      filing = await insertTrackedFiling(
+        client,
+        { catalogKey, variant, title: params.title, projectId: params.projectId },
+        { organizationId: ctx.organizationId, userId: ctx.userId },
+        { via: 'create_submission_package' },
+      );
+    } catch (err) {
+      if (err instanceof EstarSubmissionError && err.code === 'NOT_FOUND') {
+        await client.query('ROLLBACK');
+        return {
+          success: false,
+          action: 'create_submission_package',
+          error: 'PROJECT_NOT_FOUND',
+          message: `Project ${params.projectId} is not a project of this organization. No filing was created.`,
+        };
+      }
+      throw err;
     }
-    const result = await client.query(
-      /* created_by_id: who created the package, as the HTTP route records it
-         (submission-ops.ts). Separation of duties names it the package's
-         author at transmit (SINGLE_AUTHOR['submission-package']); without it
-         every package AnA created read "no creator recorded" and nobody could
-         transmit it to the agency. */
-      `INSERT INTO c2c_submission_packages
-         (package_id, org_id, project_id, package_family, title, description,
-          target_date, status, created_by_id, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'active', $7, NOW(), NOW())
-       RETURNING package_id, title, package_family, status`,
-      [
-        ctx.organizationId,
-        params.projectId,
-        params.packageFamily,
-        params.title,
-        params.description || '',
-        params.targetDate || null,
-        ctx.userId,
-      ]
-    );
-    const pkg = result.rows[0];
     const { signatureId } = await signGovernedCommand(client, ctx, {
       command: 'create_submission_package',
-      target: `submission-package:${pkg.package_id}`,
+      target: `estar-submission:${filing.id}`,
       payload: {
         projectId: params.projectId,
-        packageFamily: params.packageFamily,
+        catalogKey,
+        variant,
         title: params.title,
-        targetDate: params.targetDate ?? null,
       },
-      binding: ledgerBinding('A new submission package has no content to bind: the signer attests to the decision to create it, as defined in the signed payload.'),
+      binding: ledgerBinding('A new tracked filing has no content to bind: the signer attests to the decision to create it, as defined in the signed payload.'),
     });
     await client.query('COMMIT');
     return {
       success: true,
       action: 'create_submission_package',
-      data: { packageId: pkg.package_id, title: pkg.title, family: pkg.package_family, signatureId },
-      message: `Submission package "${
-        params.title
-      }" created (${params.packageFamily.toUpperCase()}).`,
+      data: { filingId: filing.id, catalogKey, variant, title: params.title, status: 'draft', signatureId },
+      message: `Tracked filing "${params.title}" started (${catalogKey}, ${variant}), at draft. It is listed in Submission Center.`,
     };
   } catch (err: unknown) {
     await client.query('ROLLBACK').catch(() => undefined);
     return {
       success: false,
       action: 'create_submission_package',
-      message: 'Failed to create submission package.',
+      message: 'Failed to start the tracked filing.',
       error: err instanceof Error ? err.message : String(err),
     };
   } finally {
@@ -4743,7 +4702,6 @@ export async function assessDiagnosticsValidation(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CommandName =
-  | 'create_project'
   | 'list_projects'
   | 'update_project'
   | 'create_artifact'
@@ -4841,12 +4799,6 @@ export interface CommandDefinition {
 
 export const COMMAND_REGISTRY: CommandDefinition[] = [
   {
-    name: 'create_project',
-    description: 'Create a new regulatory project',
-    parameters: 'name, submissionType?, therapeuticArea?, description?',
-    example: '"Create an IND project for our oncology compound"',
-  },
-  {
     name: 'list_projects',
     description: 'List all projects in the organization',
     parameters: 'none',
@@ -4940,9 +4892,9 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'create_submission_package',
-    description: 'Create a submission package for regulatory filing',
-    parameters: 'projectId, title, packageFamily (ind/510k/cer/nda/bla/pma), targetDate?',
-    example: '"Create an IND submission package for project 5"',
+    description: 'Track a device filing (eSTAR) for a project in Submission Center: a 510(k), De Novo, PMA or another eSTAR submission type, at draft',
+    parameters: 'projectId, title, packageFamily (510k/de_novo/pma) or catalogKey (an eSTAR submission type), variant? (device/ivd)',
+    example: '"Start tracking a 510(k) filing for project 5"',
   },
   {
     name: 'create_review_thread',
@@ -5404,7 +5356,8 @@ export function buildCommandContextForPrompt(): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ParsedCommand {
-  command: CommandName;
+  // Untrusted JSON names remain strings until the dispatcher checks membership.
+  command: string;
   params: Record<string, unknown>;
 }
 
@@ -5418,8 +5371,8 @@ export function parseCommandBlocks(responseText: string): ParsedCommand[] {
   while ((match = regex.exec(responseText)) !== null) {
     try {
       const parsed = JSON.parse(match[1].trim());
-      if (parsed.command && COMMAND_REGISTRY.some(c => c.name === parsed.command)) {
-        commands.push({ command: parsed.command as CommandName, params: parsed.params || {} });
+      if (typeof parsed.command === 'string' && parsed.command.trim()) {
+        commands.push({ command: parsed.command, params: parsed.params || {} });
       }
     } catch {
       /* skip malformed */
@@ -5442,7 +5395,6 @@ export function parseCommandBlocks(responseText: string): ParsedCommand[] {
  * platform control surface.
  */
 export const COMMAND_HANDLERS: Record<string, any> = {
-  create_project: createProject,
   list_projects: listProjects,
   // updateProject now takes (ctx, params), the contract dispatch actually uses —
   // no cast needed. The previous cast masked a (ctx, projectId, updates)
@@ -5638,7 +5590,16 @@ export async function executeCommands(
   const commandMap: Record<string, any> = COMMAND_HANDLERS;
 
   for (const cmd of commands) {
-    const handler = commandMap[cmd.command];
+    const handler = Object.hasOwn(commandMap, cmd.command) ? commandMap[cmd.command] : undefined;
+    if (!handler) {
+      results.push({
+        success: false,
+        action: cmd.command,
+        message: 'This command is not registered and was not run.',
+        error: 'COMMAND_NOT_REGISTERED',
+      });
+      continue;
+    }
     if (handler) {
       // ── Part 11 gate: governed record-altering commands fail closed unless
       // this dispatch carries a valid sign-off. Tiered — reason-for-change

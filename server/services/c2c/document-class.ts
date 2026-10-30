@@ -184,10 +184,10 @@ export function describeUnmappedClass(
   programType: string | null | undefined,
   primaryAgency: string | null | undefined,
 ): string {
-  if (!programType) return 'The project has no program type, so no document class can be derived.';
+  if (!programType) return 'The project has no filing type, so no document class can be derived.';
   if (!primaryAgency) return 'The project has no primary agency, so no document class can be derived.';
   if (!PROGRAM_TO_DOC_TYPE[String(programType).trim().toLowerCase()]) {
-    return `No document class is defined for program type '${programType}'.`;
+    return `No document class is defined for filing type '${programType}'.`;
   }
   const regional = regionalDeviceApplicationClassOf(programType);
   const filing = regional ? resolveFilingCatalogEntry(regional.registryId) : null;

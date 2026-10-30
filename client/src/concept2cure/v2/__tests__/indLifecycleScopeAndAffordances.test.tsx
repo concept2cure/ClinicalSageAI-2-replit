@@ -106,8 +106,10 @@ describe('IndLifecycle — no button claims work that nothing performs', () => {
     }
     fireEvent.click(within(card('IND Cover Letter')).getByRole('button', { name: /Draft with AnA/ }));
     expect(p.onAsk).toHaveBeenLastCalledWith('Draft the IND cover letter (m1.2) for this IND in the editor.');
-    fireEvent.click(within(card('Pre-IND Briefing Book')).getByRole('button', { name: /Draft with AnA/ }));
-    expect(p.onAsk).toHaveBeenLastCalledWith('Draft the Pre-IND briefing book for this program in the editor.');
+    // The briefing book is an editor document (slice G14). On an IND linked to
+    // no project there is nothing for AnA to write into, so it offers no AnA
+    // button; with a project, its action is the template start's "Work with AnA".
+    expect(within(card('Pre-IND Briefing Book')).queryByRole('button', { name: /AnA/ })).toBeNull();
     expect(within(card('Letter of Authorization')).queryByRole('button', { name: /AnA/ })).toBeNull();
     expect(within(card('Statement of Right of Reference')).queryByRole('button', { name: /AnA/ })).toBeNull();
   });

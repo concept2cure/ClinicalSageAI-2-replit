@@ -1,0 +1,6 @@
+{
+  "files": {
+    "scripts/regulatory-coverage-report.ts": "327b8c344210b2a1ae94aab1da269ca3c47ef5369f87781cb5a0f776d4b99809",
+    "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts": "236b26f11215aae5ddbc6f5f51fbfbeaf67cf4b4b960d0b5c39016298ff678ec"
+  }
+}

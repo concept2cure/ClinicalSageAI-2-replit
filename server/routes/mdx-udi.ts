@@ -69,6 +69,24 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
  * records a submission is assembled from.
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
+/*
+ * The two reads below filter by `program_id` and by the caller's organization,
+ * so another tenant's rows never came back. They did not ask whether the
+ * organization owns the project: another organization's project, or a missing
+ * one, answered 200 with empty panels, which the project's UDI screen draws as
+ * "this project has none". Both now ask the one ownership answer first, as
+ * mdx-engineering.ts does (D2, 2026-10-29).
+ *
+ * The create and the PATCH stored the client's `programId` without asking. The
+ * row stayed in the caller's organization, but the column's key names
+ * `regulatory_programs(id)` alone: it admitted another organization's project
+ * and a deleted one, which a project screen then counted, and refused a missing
+ * one only as a 500. Both now ask first, through `admitProject` below, and
+ * answer as the reads do: 404 and no row when the organization does not own the
+ * live project, 503 when the check cannot run. No `programId`, or `null`, is
+ * unchanged (D3, 2026-10-29).
+ */
+import { admitProject as admitProjectShared } from '../lib/admit-project';
 
 const router = Router();
 const log = createScopedLogger('mdx-udi');
@@ -79,6 +97,10 @@ function getOrgId(req: Request): number | null {
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
 }
+
+/** The shared project-ownership refusal (server/lib/admit-project.ts). */
+const admitProject = (res: Response, programId: string | null | undefined, orgId: number) =>
+  admitProjectShared(res, log, programId, orgId);
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -139,7 +161,7 @@ router.get('/udi/summary', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const programId = typeof req.query.program_id === 'string' ? req.query.program_id : undefined;
   if (programId !== undefined && !UUID_RE.test(programId)) {
-    return clientError(res, 422, 'program_id must be a UUID');
+    return clientError(res, 422, 'The project id must be a UUID.');
   }
 
   /** Empty rather than fatal when an optional table is not migrated. */
@@ -163,6 +185,7 @@ router.get('/udi/summary', async (req: Request, res: Response) => {
   const args: unknown[] = programId ? [orgId, programId] : [orgId];
 
   try {
+    if (!(await admitProject(res, programId, orgId))) return;
     const udiRows = await panel<Record<string, any>>(
       'devices',
       `SELECT * FROM udi_records
@@ -322,6 +345,7 @@ router.get('/udi', async (req: Request, res: Response) => {
   args.push(limit);
 
   try {
+    if (!(await admitProject(res, programId, orgId))) return;
     const { rows } = await pool.query(
       `SELECT * FROM udi_records
         WHERE ${filters.join(' AND ')}
@@ -345,6 +369,7 @@ router.post('/udi', requireEditorAccess, async (req: Request, res: Response) => 
   const p = parsed.data;
 
   try {
+    if (!(await admitProject(res, p.programId, orgId))) return;
     const { rows } = await pool.query(
       `INSERT INTO udi_records (
          organization_id, program_id, device_name, udi_di, issuing_agency,
@@ -445,6 +470,7 @@ router.patch('/udi/:id', requireEditorAccess, async (req: Request, res: Response
   args.push(id, orgId);
 
   try {
+    if (!(await admitProject(res, parsed.data.programId, orgId))) return;
     const { rows } = await pool.query(
       `UPDATE udi_records
           SET ${setFrags.join(', ')}

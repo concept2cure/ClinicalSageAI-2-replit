@@ -39,8 +39,16 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { Vault } from '../surfaces/Vault';
 import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken } from '@/utils/authToken';
 
 const PROJECT_ID = '2c1f9c2a-0000-4000-8000-000000000001';
+/** The shell renders only behind ProtectedRoute, so a Vault user is always
+ *  signed in. Source intake (8c86a44a, useSourceIntake.ts) captures that
+ *  account and refuses an anonymous visit, so the fixture signs one in. */
+const USER_ID = 7;
+const ORG_ID = 12;
+const TOKEN = `fixture.${btoa(JSON.stringify({ userId: USER_ID, organizationId: ORG_ID }))}.synthetic`;
 
 const leaf = (id: string, num: string, title: string) => ({
   id, num, title, type: 'Required', status: 'draft', pct: 0,
@@ -105,6 +113,8 @@ async function openInEditor(title: string, folderLabel: string) {
 }
 
 beforeEach(() => {
+  authService.endSession(null); clearAuthToken();
+  authService.setToken(TOKEN, { id: String(USER_ID), organizationId: String(ORG_ID), roles: ['author'], permissions: [] }, 'fixture-refresh', 3600);
   apiRequest.mockReset();
   apiRequest.mockImplementation((_m: string, url: string) =>
     url.startsWith('/api/c2c/project-vault/')
@@ -121,16 +131,26 @@ afterEach(() => {
   cleanup();
   clearEditorTarget();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  authService.endSession(null); clearAuthToken();
 });
 
 describe('Vault — Open in editor carries the selected document', () => {
   it('pulls an uploaded document through verified intake and opens the exact saved working copy', async () => {
     const uploadId = '33333333-3333-4333-8333-333333333333';
     const workingId = '44444444-4444-4444-8444-444444444444';
+    // The receipt the import route actually returns (authoring-source-import.ts):
+    // the saved row with its tenant, project, creator and recorded provenance, and
+    // its saved sections. 8c86a44a's strict decoder refuses anything thinner as an
+    // unconfirmed save, and never opens it.
+    const origin = { kind: 'vault', id: uploadId, programId: PROJECT_ID, title: 'IB.pdf', fileName: 'IB.pdf',
+      mimeType: 'application/pdf', documentType: null, sectionCode: null, sha256: 'ab'.repeat(32), conversion: 'extracted-text' };
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (url === '/api/authoring/import/source' && method === 'POST') return ok({ success: true, data: {
-        doc: { id: workingId, title: 'IB.pdf' }, sections: [], warnings: ['Extracted text requires review.'], reused: false,
-        origin: { kind: 'vault', id: uploadId, programId: PROJECT_ID, sha256: 'ab'.repeat(32), conversion: 'extracted-text' },
+        doc: { id: workingId, title: 'IB.pdf', tenant_id: ORG_ID, client_program_id: PROJECT_ID, created_by: USER_ID, status: 'DRAFT',
+          provenance: { source: 'import', importSource: { ...origin, reason: 'Revise the IB', warnings: ['Extracted text requires review.'] } } },
+        sections: [{ id: '55555555-5555-4555-8555-555555555555', doc_id: workingId, tenant_id: ORG_ID, code: 'source.1',
+          title: 'IB.pdf', content: '<p>Extracted investigator brochure text</p>', order_index: 0 }],
+        warnings: ['Extracted text requires review.'], reused: false, origin,
       } });
       return ok({ success: true, data: { ...VAULT_PAYLOAD.data, tree: [{ id: 'uploads', label: 'Uploaded files', children: [
         { ...leaf(uploadId, '', 'IB.pdf'), src: 'upload', docId: uploadId },
@@ -154,7 +174,10 @@ describe('Vault — Open in editor carries the selected document', () => {
     await screen.findByText('Extracted text requires review.');
     expect(navigated).toEqual([]);
     fireEvent.click(screen.getByRole('button', { name: 'Open working copy' }));
-    expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/import/source', { programId: PROJECT_ID, source: { kind: 'vault', documentId: uploadId }, reason: 'Revise the IB' });
+    // Dispatched once, as the signed-in account the intake captured.
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toEqual([['POST', '/api/authoring/import/source',
+      { programId: PROJECT_ID, source: { kind: 'vault', documentId: uploadId }, reason: 'Revise the IB' },
+      { Authorization: `Bearer ${TOKEN}`, 'x-organization-id': String(ORG_ID) }]]);
     expect(peekEditorTarget()).toMatchObject({ docId: workingId, programId: PROJECT_ID });
     expect(navigated).toEqual(['document-authoring']);
   });

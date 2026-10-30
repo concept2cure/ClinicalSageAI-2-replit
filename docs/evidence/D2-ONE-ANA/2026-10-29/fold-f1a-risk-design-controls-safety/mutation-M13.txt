@@ -1,0 +1,8 @@
+M13: a hazard can be created already accepted
+file: server/routes/mdx-risk-management.ts
+test: server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a new hazard cannot be created already accepted: 428, and nothing is inserted 8ms
+      Tests  1 failed | 32 passed (33)

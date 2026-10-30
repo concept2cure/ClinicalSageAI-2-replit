@@ -34,6 +34,7 @@ const H = vi.hoisted(() => ({
   refresh: vi.fn(),
   signed: null as unknown,
   signError: null as string | null,
+  assigned: { listing: null as unknown, failed: false },
 }));
 
 const DRAFT = {
@@ -49,6 +50,9 @@ vi.mock('../hooks', () => ({
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
   useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: H.trainRows, loading: false, error: H.trainError, refresh: H.trainRefresh }),
+  useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
+  useTrainingAssignments: () => ({ ...H.assigned, error: H.assigned.failed ? 'unavailable' : null, refresh: vi.fn() }),
+  useJobRoles: () => ({ listing: null, failed: false, error: null, refresh: vi.fn() }),
 }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver' }) }));
 vi.mock('@/lib/queryClient', () => ({
@@ -62,8 +66,10 @@ vi.mock('../../_shared/components/EsignModal', () => ({
     action: string;
     meanings?: string[];
     onSign: (i: { meaning: string; reason: string; password: string; totp?: string }) => Promise<unknown>;
+    renderMeaningDetails?: (meaning: string, committing: boolean) => React.ReactNode;
   }) => (
     <div role="dialog" aria-label={p.action} data-meanings={(p.meanings ?? []).join(',')}>
+      {p.renderMeaningDetails?.(p.meanings?.[0] ?? '', false)}
       <button
         onClick={() =>
           p
@@ -94,6 +100,7 @@ beforeEach(() => {
   H.refresh.mockReset();
   H.signed = null;
   H.signError = null;
+  H.assigned = { listing: null, failed: false };
 });
 afterEach(cleanup);
 
@@ -129,6 +136,8 @@ describe('SopRegister — approval is a signature taken here', () => {
       mfaToken: '123456',
       meaning: 'APPROVED',
       reason: 'Reviewed against ISO 13485 §8.2.2',
+      // CAT2-19: the day it is effective from, today by default, signed with the approval.
+      effectiveDate: new Date().toISOString().slice(0, 10),
     });
     expect(H.signed).toMatchObject({ meaning: 'approval', signedAt: '2026-09-24T09:12:00.000Z' });
     expect(H.refresh).toHaveBeenCalled();
@@ -167,39 +176,28 @@ describe('SopRegister — a draft is sent for review before it can be approved',
     expect(reviewRow.textContent).not.toMatch(/Send for review/);
   });
 
-  it('sends the draft for review through the existing PATCH route and refreshes the register', async () => {
+  it('Send for review opens the review route form, which names the QMS approver before anything is sent (RR4)', async () => {
     H.docs = [DRAFT_ROW];
-    H.apiRequest.mockResolvedValue({ status: 200, ok: true, json: async () => ({ data: { id: 7, status: 'in_review' } }) });
+    H.apiRequest.mockResolvedValue({ status: 200, ok: true, json: async () => ({ ok: true, timeZone: 'UTC', documentId: 7, candidates: [] }) });
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
-    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Ready for independent Quality review.' } });
-    fireEvent.click(screen.getAllByRole('button', { name: /Send for review/ }).at(-1)!);
-    await waitFor(() => expect(H.refresh).toHaveBeenCalled());
-    expect(H.apiRequest).toHaveBeenCalledTimes(1);
-    expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/documents/7', { status: 'in_review', reason: 'Ready for independent Quality review.' });
-    expect(screen.getByRole('status').textContent).toMatch(/WI-014 was sent for review/);
-  });
-
-  it('shows the server’s refusal as the server words it, and changes nothing on screen', async () => {
-    H.docs = [DRAFT_ROW];
-    H.apiRequest.mockRejectedValue(new Error('This document is effective. An approved document changes only through a revision.'));
-    renderRegister();
-    fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
-    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Ready for independent Quality review.' } });
-    fireEvent.click(screen.getAllByRole('button', { name: /Send for review/ }).at(-1)!);
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/changes only through a revision/));
-    expect(H.refresh).not.toHaveBeenCalled();
+    const form = await screen.findByTestId('qms-route-form');
+    expect(form.textContent).toMatch(/QMS approver/);
+    expect((screen.getByTestId('qms-route-send') as HTMLButtonElement).disabled).toBe(true);
+    // Only the candidates read: the send itself, its refusals and its route are in qmsReviewRoute.test.tsx.
+    await waitFor(() => expect(H.apiRequest.mock.calls.some(([m, u]) => m === 'GET' && u === '/api/mdx/qms/documents/7/route-candidates')).toBe(true));
+    expect(H.apiRequest.mock.calls.every(([m]) => m === 'GET')).toBe(true);
   });
 });
 
 describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)', () => {
   beforeEach(() => { H.docs = [EFFECTIVE]; });
 
-  it('opens the e-signature dialog for Retire, offering the approval meaning only', () => {
+  it('opens the e-signature dialog for Retire, offering the retirement meaning only (P-51)', () => {
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     const dialog = screen.getByRole('dialog', { name: 'Retire controlled document' });
-    expect(dialog.getAttribute('data-meanings')).toBe('approval');
+    expect(dialog.getAttribute('data-meanings')).toBe('retirement');
   });
 
   it('posts the signature to the signed retire route and shows the server’s time', async () => {
@@ -220,10 +218,10 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
     expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents/6/retire', {
       password: 'pw',
       mfaToken: '123456',
-      meaning: 'APPROVED',
+      meaning: 'retirement',
       reason: 'Reviewed against ISO 13485 §8.2.2',
     });
-    expect(H.signed).toMatchObject({ meaning: 'approval', signedAt: '2026-09-26T12:00:00.000Z', hash: 'e'.repeat(64) });
+    expect(H.signed).toMatchObject({ meaning: 'retirement', signedAt: '2026-09-26T12:00:00.000Z', hash: 'e'.repeat(64) });
     expect(H.refresh).toHaveBeenCalled();
   });
 
@@ -299,5 +297,82 @@ describe('SopRegister — a failed read is not an empty register', () => {
     expect(k.querySelector('.val')?.textContent).toBe('—');
     expect(k.getAttribute('data-tone')).toBe('');
     expect(k.textContent).toMatch(/No training-controlled documents yet/);
+  });
+});
+
+describe('SopRegister — the signature block (§11.50; MR-12 Stage 5 step 4)', () => {
+  const SIGNED = { state: 'valid', version: '1.0', signerName: 'Dana Whitfield', signedAt: '2026-09-01T14:02:09.000Z', meaning: 'APPROVED' };
+
+  it('shows who approved the version in force, when in UTC, and with what meaning', () => {
+    H.docs = [{ ...EFFECTIVE, approvalSignature: SIGNED }];
+    renderRegister();
+    const line = screen.getByTestId('qms-signature-line');
+    expect(line.textContent).toContain('v1.0 · Approved by Dana Whitfield');
+    expect(line.textContent).toContain('2026-09-01 14:02:09 UTC');
+    expect(line.textContent).toContain('Meaning: Approval');
+  });
+
+  it('never shows a changed, withdrawn or unread approval as standing', () => {
+    H.docs = [
+      { ...EFFECTIVE, approvalSignature: { ...SIGNED, state: 'changed' } },
+      { ...EFFECTIVE, id: 7, docNumber: 'SOP-016', approvalSignature: { ...SIGNED, state: 'withdrawn' } },
+      { ...EFFECTIVE, id: 8, docNumber: 'SOP-017', approvalSignature: { state: 'unavailable', signerName: null, signedAt: null, meaning: null } },
+    ];
+    renderRegister();
+    const lines = screen.getAllByTestId('qms-signature-line').map((l) => l.textContent ?? '');
+    expect(lines[0]).toContain('Content changed after approval');
+    expect(lines[1]).toContain('Approval withdrawn');
+    expect(lines[2]).toBe('The approval signature could not be read.');
+    expect(lines.some((l) => l.startsWith('v1.0 · Approved by'))).toBe(false);
+  });
+
+  it('shows who retired a retired document, and says when no retirement signature is on record', () => {
+    H.docs = [
+      { ...EFFECTIVE, status: 'retired', retirementSignature: { state: 'signed', signerName: 'Q. Lead', signedAt: '2026-10-29T09:00:00.000Z', meaning: 'retirement' } },
+      { ...EFFECTIVE, id: 9, docNumber: 'SOP-018', status: 'retired', retirementSignature: { state: 'unsigned', signerName: null, signedAt: null, meaning: null } },
+    ];
+    renderRegister();
+    const lines = screen.getAllByTestId('qms-signature-line').map((l) => l.textContent ?? '');
+    expect(lines[0]).toContain('Retired by Q. Lead');
+    expect(lines[0]).toContain('Meaning: Retirement');
+    expect(lines[1]).toContain('no retirement signature is on record');
+  });
+});
+
+/* The approval reaches the people assigned to train (P-49; docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.12):
+   the dialog says how many, and whether the day chosen leaves them a training period. */
+describe('SopRegister — the approve dialog names who it reaches', () => {
+  const listing = (peopleCount: number, assignments: unknown[] = [{ id: 1 }]) => ({
+    assignments, trainable: { inForce: null, pending: null }, people: [], peopleCount, peopleScope: 'everyone', canAssign: true,
+  });
+  const open = () => { renderRegister(); fireEvent.click(screen.getByRole('button', { name: /Approve/ })); };
+  const later = () => {
+    const day = new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10);
+    fireEvent.change(screen.getByLabelText(/Effective from/), { target: { value: day } });
+    return day;
+  };
+
+  it('says effective today leaves the people assigned no training period', () => {
+    H.assigned = { listing: listing(3), failed: false };
+    open();
+    expect(screen.getByText('3 people are assigned to train on this document. Effective today leaves them no training period: it is in force when you sign.')).toBeTruthy();
+  });
+
+  it('says a later day lets them read it ahead, until the day it takes effect', () => {
+    H.assigned = { listing: listing(1), failed: false };
+    open();
+    const day = later();
+    expect(screen.getByText(`1 person is assigned to train on this document. They can read and acknowledge it from approval until it takes effect on ${day}.`)).toBeTruthy();
+  });
+
+  it.each([
+    ['nobody is assigned', listing(0, []), false, 'No one is assigned to train on this document.'],
+    ['nobody assigned is an active member', listing(0), false, 'No one assigned to train on this document is an active member.'],
+    ['the read failed', null, true, 'Who is assigned to train on this document could not be read.'],
+  ])('says so when %s, with no count', (_case, value, failed, sentence) => {
+    H.assigned = { listing: value, failed };
+    open();
+    expect(screen.getByText(sentence)).toBeTruthy();
+    expect(screen.queryByText(/\d+ (people are|person is) assigned/)).toBeNull();
   });
 });

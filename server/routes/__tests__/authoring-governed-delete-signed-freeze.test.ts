@@ -24,6 +24,7 @@
  * than stubbing auth (as authoring-atomic-mutations.test.ts does).
  */
 import express from 'express';
+import JSZip from 'jszip';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { readFileSync } from 'node:fs';
@@ -100,6 +101,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-go
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { releaseGovernanceRead } from '../../services/authoring/__tests__/release-governance-reads';
 
 const PASSWORD = 'signer-password';
 const DOC = '3f6c1b52-4a8e-4d55-9a0b-1d2e3f405162';
@@ -143,6 +145,8 @@ beforeEach(() => {
   delete process.env.ADMIN_TOKEN;
   h.scanBuffer.mockImplementation(async () => ({ scanned: true, clean: true }));
   h.clientQuery.mockImplementation(async (s: string) => {
+    const governance = releaseGovernanceRead(s);
+    if (governance) return governance;
     if (/^BEGIN|^COMMIT|^ROLLBACK/i.test(s)) return {};
     if (/FROM authoring_documents[\s\S]*FOR UPDATE/i.test(s)) {
       return docRow ? { rowCount: 1, rows: [docRow] } : { rowCount: 0, rows: [] };
@@ -164,6 +168,8 @@ beforeEach(() => {
     return { rowCount: 1, rows: [{}] };
   });
   h.poolQuery.mockImplementation(async (s: string) => {
+    const governance = releaseGovernanceRead(s);
+    if (governance) return governance;
     if (/FROM authoring_documents WHERE id = \$1/i.test(s)) {
       return { rowCount: 1, rows: [{ id: DOC, status: 'draft', version: '1.0', product_code: 'UAT-1' }] };
     }
@@ -435,7 +441,11 @@ describe('IAM-14 — POST /images and POST /import/docx run assertUploadSafe', (
 
   it('a Word container that the scanner flags is refused before it is parsed', async () => {
     h.scanBuffer.mockImplementation(async () => ({ scanned: true, clean: false, signature: 'Eicar-Test' }));
-    const zip = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.alloc(32, 2)]);
+    // A readable container, so it passes the archive limit (SEC-17) and reaches the
+    // scanner; the ZIP magic followed by junk is now refused as unreadable first.
+    const word = new JSZip();
+    word.file('word/document.xml', '<w:document/>', { createFolders: false });
+    const zip = await word.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
     const res = await upload(
       'import/docx',
       'notes.docx',

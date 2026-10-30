@@ -1,0 +1,5 @@
+ ✓ client/src/concept2cure/v2/__tests__/ivdCompletenessOneBoard.test.tsx > the ivd-completeness screen reads what is open > with a project open, it reads and draws that project's board 64ms
+ ✓ client/src/concept2cure/v2/__tests__/ivdCompletenessOneBoard.test.tsx > the ivd-completeness screen reads what is open > with no project open, it reads the organization and says so 23ms
+ ✓ client/src/concept2cure/v2/__tests__/ivdCompletenessOneBoard.test.tsx > one board, two mounts > the family board is drawn by IvdReadinessBoard only, and both screens mount it 1ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)

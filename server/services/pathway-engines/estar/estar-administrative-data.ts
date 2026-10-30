@@ -373,7 +373,7 @@ export function projectEstarAdministrativeData(
     const first = predicates[0];
     const named = text(first.kNumber) ?? text(first.name) ?? 'the first entry';
     advisories.push(
-      `${predicates.length} predicate devices are on file for this program; the eSTAR predicate fields ` +
+      `${predicates.length} predicate devices are on file for this project; the eSTAR predicate fields ` +
         `carry only the first (${named}). Add the others on the form itself, and check that the first ` +
         `entered is the primary predicate.`,
     );

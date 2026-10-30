@@ -1,7 +1,7 @@
 /**
  * Concept2Cure Routes - Unit Tests
  *
- * Covers project creation, conversation creation, artifact creation,
+ * Covers retired alternate project creators, conversation creation, artifact creation,
  * and electronic signature creation paths.
  *
  * @module tests/routes/concept2cure.test
@@ -270,15 +270,6 @@ vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
 
-/* The blueprint's milestones reach the board through the one seeder, which
-   writes each with its task.create row in one transaction
-   (server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts).
-   Here: the route hands it the project, its creator and the blueprint. */
-const seeding = vi.hoisted(() => ({ seedBlueprintMilestones: vi.fn(async () => [] as string[]) }));
-vi.mock('../../server/services/tasking/blueprint-milestones', () => ({
-  seedBlueprintMilestones: seeding.seedBlueprintMilestones,
-}));
-
 // Import after mocks
 import concept2cureRouter from '../../server/routes/concept2cure';
 // The artifact domain moved to its own router (L53, slice 8).
@@ -301,50 +292,13 @@ describe('Concept2Cure API', () => {
     vi.clearAllMocks();
   });
 
-  it('should create a project with valid payload', async () => {
-    const req = createMockRequest({
-      body: {
-        name: 'Test Project',
-        submissionType: 'IND',
-        description: 'Test description',
-      },
-    }) as any;
-    req.userId = 1;
-    req.userEmail = 'tester@example.com';
-    req.userRole = 'admin';
-    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
-
-    const res = createMockResponse();
-
-    // Invoke handler directly by simulating route
-    const layer = concept2cureRouter.stack.find((l: any) => l.route?.path === '/projects' && l.route?.methods?.post);
-    const handler = layer.route.stack[layer.route.stack.length - 1].handle;
-
-    await handler(req, res);
-
-    expectStatus(res, 201);
-    expectJson(res, {
-      success: true,
-      data: expect.objectContaining({
-        name: 'Test Project',
-        submissionType: 'IND',
-      }),
-    });
-  });
-
-  it('seeds the blueprint’s milestones through the ledgered seeder, as the project’s creator', async () => {
-    const req = createMockRequest({ body: { name: 'Test Project', submissionType: 'IND' } }) as any;
-    req.userId = 1;
-    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
-    const res = createMockResponse();
-    const layer: any = concept2cureRouter.stack.find((l: any) => l.route?.path === '/projects' && l.route?.methods?.post);
-    await layer.route.stack[layer.route.stack.length - 1].handle(req, res, () => undefined);
-
-    expectStatus(res, 201);
-    expect(seeding.seedBlueprintMilestones, 'the milestones did not go through the ledgered seeder').toHaveBeenCalledTimes(1);
-    const [input] = seeding.seedBlueprintMilestones.mock.calls[0] as unknown as [Record<string, any>];
-    expect(input).toMatchObject({ organizationId: 1, projectId: 1, userId: 1, registryId: 'US_IND' });
-    expect(input.milestones.length).toBeGreaterThan(0);
+  it.each(['/projects', '/projects/:id/duplicate'])('retires the alternate POST %s creator', path => {
+    // Creation belongs to Projects.tsx → POST /api/c2c/projects; its canonical
+    // anchor/quota/actor behavior is qualified by projects-create-anchor.pglite.
+    const registered = concept2cureRouter.stack.some((layer: any) =>
+      layer.route?.path === path && layer.route?.methods?.post,
+    );
+    expect(registered).toBe(false);
   });
 
   it('should create a conversation for a project', async () => {

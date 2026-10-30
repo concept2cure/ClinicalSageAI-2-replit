@@ -201,6 +201,14 @@ describe('seedCapabilityRegistry under RLS_ENFORCE=on', () => {
     expect(second.total).toBe(SEED_CAPABILITIES.length);
   });
 
+  it('deactivates the folded dossier mapping identity on every boot, including existing installs', async () => {
+    await seedCapabilityRegistry();
+    await seedCapabilityRegistry();
+    const retirements = harness.clientCalls.filter(c => c.text.startsWith('update "ana_capability_registry"')
+      && c.text.includes('"is_active"') && JSON.stringify(c.params) === JSON.stringify([false, 'dossier-mapping']));
+    expect(retirements).toHaveLength(2);
+  });
+
   it('backfillCapabilityGovernance declares its own scope when called on its own', async () => {
     await seedCapabilityRegistry();
     harness.clientCalls.length = 0;

@@ -1765,21 +1765,10 @@ export async function runOrchestrator(
         // are the tabulation steps handled by csr.tabulate). Pass the
         // exact subset the task design specifies so we never trigger a
         // "full build of every leaf" by accident.
-        const sectionsToGenerate = [
-          '1',
-          '2',
-          '3',
-          '4',
-          '5',
-          '6',
-          '7',
-          '8',
-          '9',
-          '13',
-          '14',
-          '15',
-          '16',
-        ];
+        // 2026-10-29: §3 and §14–16 removed — e3SectionDraftingMode marks them
+        // 'manual' (prepared from source), and the builder now refuses them
+        // as model drafting targets (CSR_SECTION_MANUAL).
+        const sectionsToGenerate = ['1', '2', '4', '5', '6', '7', '8', '9', '13'];
 
         const enqueuedJobs: Array<{
           studyId: string;
@@ -1815,7 +1804,9 @@ export async function runOrchestrator(
                   inputs.drugProductName || inputs.drugSubstanceName || '[product]',
                 studyDesign: csr.studyDesign,
                 primaryEndpoint: csr.primaryEndpoint,
-                sampleSize: csr.sampleSize ?? undefined,
+                // The request's sampleSize is the planned size: an enrolled
+                // count when one is recorded, else the plan the inputs carried.
+                sampleSize: csr.sampleSize ?? csr.plannedSampleSize ?? undefined,
               },
               sectionsToGenerate,
             },

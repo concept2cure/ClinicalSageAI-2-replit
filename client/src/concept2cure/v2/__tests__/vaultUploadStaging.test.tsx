@@ -25,6 +25,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
+import { statusText } from '../surfaces/VaultUploadStaging';
+import { FAKE_BODY_BYTES, stubIngestXhr } from './_ingest-xhr-fake';
 import { PID, ok, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
 
 function mockApi() {
@@ -37,7 +39,7 @@ function mockApi() {
 
 function stubIngest(answers: Array<{ status: number; body: unknown }>) {
   const sent: FormData[] = [];
-  vi.stubGlobal('fetch', vi.fn(async (_url: string, init: { body?: unknown }) => {
+  stubIngestXhr(vi.fn(async (_url: string, init: { body?: unknown }) => {
     sent.push(init.body as FormData);
     const a = answers.shift() ?? { status: 201, body: { success: true, document: { version: '1.0' } } };
     return { ok: a.status < 300, status: a.status, json: async () => a.body } as Response;
@@ -122,6 +124,14 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
     expect(sent[2].get('documentCode')).toBe('b.pdf');
   });
 
+  it('says when a recorded file’s text is still being read (MR-08 Stage 3)', async () => {
+    stubIngest([{ status: 201, body: { success: true, document: { version: '1.0', extraction: 'pending' } } }]);
+    const panel = await choose([new File(['%PDF scanned'], 'scan.pdf')]);
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    const [row] = within(panel).getAllByTestId('vault-stage-row');
+    expect(await within(row).findByText('Recorded as v1.0 · Unfiled, needs a folder · Its text is still being read; search finds it once that is done.')).toBeTruthy();
+  });
+
   it('flags a second file with the same name before it is sent', async () => {
     stubIngest([]);
     const a = new File(['a'], 'protocol.pdf');
@@ -171,3 +181,33 @@ describe('the staged list is usable without sight or a pointer (accessibility re
     await waitFor(() => expect(document.activeElement).toBe(within(panel).getByRole('button', { name: 'Close' })));
   });
 });
+
+describe('each row says how far its file has got (MR-08 Stage 6 step 2)', () => {
+  it('shows the share sent with a progress bar, and the rows behind it wait their turn', async () => {
+    let release!: () => void;
+    const held = new Promise<void>((r) => { release = r; });
+    stubIngestXhr(vi.fn(async () => {
+      await held;
+      return { ok: true, status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+    }), [0.5]);
+    const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    const rows = within(panel).getAllByTestId('vault-stage-row');
+    expect(await within(rows[0]).findByText('Uploading… 50% of 1.9 MB sent')).toBeTruthy();
+    const bar = rows[0].querySelector('progress');
+    expect(bar?.getAttribute('aria-label')).toBe('Sending a.pdf');
+    expect([bar?.getAttribute('value'), bar?.getAttribute('max')]).toEqual([String(FAKE_BODY_BYTES / 2), String(FAKE_BODY_BYTES)]);
+    expect(within(rows[1]).getByText('Waiting: files are sent one at a time.')).toBeTruthy();
+    release();
+    expect(await within(rows[1]).findByText('Recorded as v1.0 · Unfiled, needs a folder')).toBeTruthy();
+    expect(within(rows[0]).getByText('Recorded as v1.0 · Unfiled, needs a folder')).toBeTruthy();
+    expect(panel.querySelector('progress')).toBeNull();
+  });
+
+  it('says the server is scanning and storing a file once all of it is sent, and only "Uploading…" before it knows', () => {
+    expect(statusText({ state: 'uploading', sent: FAKE_BODY_BYTES, total: FAKE_BODY_BYTES })).toBe('Sent. The server is scanning it and storing it…');
+    expect(statusText({ state: 'uploading', sent: 0, total: FAKE_BODY_BYTES })).toBe('Uploading… 0% of 1.9 MB sent');
+    expect(statusText({ state: 'uploading' })).toBe('Uploading…');
+  });
+});
+

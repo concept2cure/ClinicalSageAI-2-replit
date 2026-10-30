@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { hasKeys, liveGetOrNull } from '../dataConnect';
-import { marketSupportPath, type MarketSupportView } from '../MarketSupportLine';
+import { marketBuildText, marketSupportPath, type MarketSupportView } from '../MarketSupportLine';
+import { filingAskPrompt, FILING_CATEGORY_METADATA } from '@shared/regulatory/filing-catalog';
+import { filingLifecycleReferenceFor, filingReferenceFactsFor } from '@shared/regulatory/filing-lifecycle-reference';
+import { FilingReferenceDetails } from './FilingLifecycleReference';
 
 const SEG_ICONS: Record<string, string> = {
   pharma_biotech: 'beaker', medical_devices: 'stethoscope',
@@ -84,6 +87,13 @@ function useFilingOffers(pairs: Pair[]) {
   return { ...state, retry: () => setBump((b) => b + 1) };
 }
 
+export interface FilingBrowseState {
+  segment: string;
+  searchTerm: string;
+  /** A read-only inspected reference is never the selected creation choice. */
+  inspectedReference: { id: string; name: string; agency: string; region: string; format: string; ctdModule: string; workflow: string; description: string; lifecycleReference: ReturnType<typeof filingLifecycleReferenceFor> } | null;
+}
+
 interface RegistryPickerProps {
   value: string; onChange: (id: string) => void;
   /** The application type a catalog filing creates (Projects.tsx programTypeFor):
@@ -95,9 +105,35 @@ interface RegistryPickerProps {
      arrived in and could not follow them when they switched tabs — it went on
      naming a category they were no longer looking at. */
   onSegmentChange?: (segment: string) => void;
+  onAsk?: (text: string) => void;
+  /** Catalog state only; no configuration fields or project records. */
+  onBrowseChange?: (state: FilingBrowseState) => void;
 }
 
-export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegment, compact, onSegmentChange }: RegistryPickerProps) {
+function ChosenFilingNote({ entry, chosen, market, onAsk }: {
+  entry: RegistryEntry; chosen: RowOffer; market: MarketRow | undefined; onAsk?: (text: string) => void;
+}) {
+  const build = chosen.kind === 'offer' ? marketBuildText(market ?? {}) : null;
+  return <div className="rpk-result-note" role="status" data-testid="rpk-chosen-offer">
+    {chosen.kind === 'offer' ? <p><strong>{chosen.offer.label}.</strong> {chosen.offer.reason}</p> : <p>
+      <strong>No tier is stated for this filing.</strong>{' '}
+      {chosen.offer.label} is stated for the {chosen.agency} {chosen.type.toUpperCase()} application itself
+      ({chosen.names.join(', ')}). This filing is not one of them. Creating it opens
+      a project whose application type is {chosen.type.toUpperCase()}.
+    </p>}
+    {entry.description && <p><strong>Catalog reference.</strong> {entry.description}</p>}
+    <FilingReferenceDetails filingId={entry.id} />
+    <p data-testid="rpk-chosen-build"><strong>How you’ll build it.</strong>{' '}
+      {chosen.kind === 'unclaimed' ? 'No build details are stated for this filing; the support above concerns the application it creates.'
+        : build ?? 'Build details could not be read for this filing’s market.'}
+    </p>
+    {onAsk && <button type="button" className="btn ghost sm" onClick={() => onAsk(filingAskPrompt(entry.displayName))}>
+      {I.sparkles} Ask AnA
+    </button>}
+  </div>;
+}
+
+export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegment, compact, onSegmentChange, onAsk, onBrowseChange }: RegistryPickerProps) {
   const segs = ((window as any).REG_SEGMENTS || {}) as Record<string, { label: string; count: number }>;
   const cats = ((window as any).REG_CATEGORIES || {}) as Record<string, { label: string }>;
   const catalog = useMemo(() => ((window as any).GLOBAL_REGISTRY || []) as RegistryEntry[], []);
@@ -144,7 +180,9 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
   }, [catalog, typeOf, offers]);
   const segKeys = Object.keys(segs);
   const [seg, setSegState] = useState(initialSegment || segKeys[0] || 'pharma_biotech');
+  const [inspectedReferenceId, setInspectedReferenceId] = useState<string | null>(null);
   const setSeg = (next: string) => {
+    setInspectedReferenceId(null);
     setSegState(next);
     onSegmentChange?.(next);
   };
@@ -160,7 +198,9 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
   const matches = (e: RegistryEntry) =>
     e.displayName.toLowerCase().includes(term) || e.agency.toLowerCase().includes(term) ||
     e.region.toLowerCase().includes(term) || (e.dossierStandard || '').toLowerCase().includes(term) ||
-    (e.ctdModule || '').toLowerCase().includes(term) || e.id.toLowerCase().includes(term);
+    (e.ctdModule || '').toLowerCase().includes(term) || e.id.toLowerCase().includes(term) ||
+    (e.description || '').toLowerCase().includes(term) ||
+    (filingReferenceFactsFor(e.id)?.workflowLabel ?? '').toLowerCase().includes(term);
   const filtered = useMemo(() => {
     let pool = term ? registry : segEntries;
     if (term) pool = pool.filter(matches);
@@ -169,22 +209,60 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     return pool;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `matches` reads only `term`
   }, [term, segEntries, registry, regionFilter, agencyFilter]);
-  const grouped = useMemo(() => {
+  /* What a client starts with first: the filings the platform builds,
+     validates and sequences end to end. The tab listed them among every
+     documents-only filing in one wall of identical cards (43 in Pharma &
+     Biotech), and a client testing the product read the documents-only ones as
+     disabled (docs/design/CLIENT_JOURNEY_2026-10-25.md). The rest follow one
+     press away; a search lists everything it matches, as before. The rest are
+     not all documents-only: a filing that creates an application without
+     being it (a Pre-IND meeting) has no tier stated, so the heading claims
+     nothing the server did not. The split is the server's offer, so nothing
+     here decides what is built. */
+  const isFull = (e: RegistryEntry) => {
+    const o = offerOf.get(e.id);
+    return o?.kind === 'offer' && o.offer.tier === 'build_and_sequence';
+  };
+  const [showRest, setShowRest] = useState(false);
+  const groupOf = (entries: RegistryEntry[]) => {
     const byCat: Record<string, RegistryEntry[]> = {};
-    filtered.forEach(e => { (byCat[e.category] = byCat[e.category] || []).push(e); });
-    return Object.entries(byCat).map(([catId, entries]) => ({
-      catId, label: cats[catId]?.label || catId, entries,
+    entries.forEach(e => { (byCat[e.category] = byCat[e.category] || []).push(e); });
+    return Object.entries(byCat).map(([catId, list]) => ({
+      catId, label: cats[catId]?.label || catId, description: FILING_CATEGORY_METADATA.find(category => category.id === catId)?.description, entries: list,
     }));
-  }, [filtered, cats]);
-  /* A search that matches filings the platform does not offer lists them, each
-     with the server's reason, rather than "no match". */
+  };
+  const full = term ? filtered : filtered.filter(isFull);
+  const rest = term ? [] : filtered.filter((e) => !isFull(e));
+  /* A tab with nothing built end to end, or a chosen filing among the rest,
+     opens the rest: the choice is never hidden behind a press. */
+  const restOpen = showRest || full.length === 0 || rest.some((e) => e.id === value);
+  const grouped = groupOf(full);
+  const restGrouped = restOpen ? groupOf(rest) : [];
+  /* Browse every unavailable filing in the current segment, or search across
+     segments. Reference details never call onChange or create a project. */
   const notOfferedMatches = useMemo(
-    () => (term ? notOffered.filter(({ entry: e }) => matches(e)) : []),
+    () => notOffered.filter(({ entry: e }) => (term ? matches(e) : e.segment === seg)
+      && (!regionFilter || e.region === regionFilter) && (!agencyFilter || e.agency === agencyFilter)),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `matches` reads only `term`
-    [term, notOffered],
+    [term, notOffered, seg, regionFilter, agencyFilter],
   );
+  const inspected = inspectedReferenceId && !offers.loading && !offers.error && notOfferedMatches.some(({ entry }) => entry.id === inspectedReferenceId)
+    ? filingReferenceFactsFor(inspectedReferenceId) : null;
+  const inspectedEntry = inspected?.entry ?? null;
+  const inspectedWorkflow = inspected?.workflowLabel ?? '';
+  const inspectedReference = useMemo<FilingBrowseState['inspectedReference']>(() => inspectedEntry ? {
+    id: inspectedEntry.id, name: inspectedEntry.displayName, agency: inspectedEntry.agency, region: inspectedEntry.region,
+    format: inspectedEntry.submissionFormat, ctdModule: inspectedEntry.ctdModule,
+    workflow: inspectedWorkflow, description: inspectedEntry.description, lifecycleReference: filingLifecycleReferenceFor(inspectedEntry.id),
+  } : null, [inspectedEntry, inspectedWorkflow]);
+  React.useEffect(() => {
+    if (inspectedReferenceId && !inspectedReference) setInspectedReferenceId(null);
+    onBrowseChange?.({ segment: seg, searchTerm: q, inspectedReference });
+  }, [seg, q, inspectedReferenceId, inspectedReference, onBrowseChange]);
   const notOfferedCount = notOfferedMatches.length;
   const chosen = value ? offerOf.get(value) : undefined;
+  const chosenEntry = catalog.find(entry => entry.id === value);
+  const chosenMarket = chosenEntry ? rowFor(offers.byType.get(typeOf.get(value) ?? ''), chosenEntry.agency) : undefined;
   const notOfferedInTab = notOffered.filter((n) => n.entry.segment === seg).length;
   /* After a Retry that succeeds, the alert (and its button) gives way to the
      list: focus goes to the search box rather than falling to the page. */
@@ -195,6 +273,25 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     if (retried.current && !offers.loading && !offers.error) { retried.current = false; searchRef.current?.focus(); }
   }, [offers.loading, offers.error]);
   const clearFilters = () => { setRegionFilter(null); setAgencyFilter(null); };
+  const card = (e: RegistryEntry) => (
+    <button key={e.id} className="rpk-type" data-on={value === e.id || undefined}
+      onClick={() => onChange(e.id)} title={e.description || e.displayName}>
+      <div className="rpk-type-n">{e.displayName}</div>
+      {term && <span className="rpk-chip">{segs[e.segment]?.label ?? e.segment}</span>}
+      <div className="rpk-type-meta">
+        {(() => {
+          const o = offerOf.get(e.id);
+          return o?.kind === 'offer' && o.offer.tier === 'author_only'
+            ? <span className="rpk-chip">{o.offer.label}</span>
+            : null;
+        })()}
+        <span className="rpk-chip rpk-chip-agency">{e.agency}</span>
+        <span className="rpk-chip rpk-chip-region">{e.region}</span>
+        {e.dossierStandard !== '—' && <span className="rpk-chip rpk-chip-dossier">{e.dossierStandard}</span>}
+        {e.ctdModule && e.ctdModule !== '—' && <span className="rpk-chip rpk-chip-ctd">{e.ctdModule}</span>}
+      </div>
+    </button>
+  );
   /* No filing is offered before the server has said what it offers: a pending
      read lists nothing, and a failed read says so and offers Retry. */
   if (offers.loading || offers.error) {
@@ -218,15 +315,15 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     <div className={'rpk' + (compact ? ' rpk-compact' : '')}>
       <div className="rpk-search">
         <span className="ico rpk-search-ic">{I.search}</span>
-        <input ref={searchRef} aria-label="Search filing types" value={q} onChange={e => { setQ(e.target.value); if (e.target.value) clearFilters(); }}
+        <input ref={searchRef} aria-label="Search filing types" value={q} onChange={e => { setInspectedReferenceId(null); setQ(e.target.value); if (e.target.value) clearFilters(); }}
           placeholder={'Search ' + registry.length + ' filing types — name, agency, region…'} />
-        {q && <button className="tbtn rpk-search-x" aria-label="Clear search" onClick={() => setQ('')}>{I.close}</button>}
+        {q && <button className="tbtn rpk-search-x" aria-label="Clear search" onClick={() => { setInspectedReferenceId(null); setQ(''); }}>{I.close}</button>}
       </div>
       {!term && (
         <div className="rpk-tabs">
           {segKeys.map(k => (
             <button key={k} className="rpk-tab" data-on={seg === k || undefined}
-              onClick={() => { setSeg(k); clearFilters(); }}>
+              onClick={() => { setSeg(k); clearFilters(); setShowRest(false); }}>
               <span className="ico">{I[SEG_ICONS[k]] || '◇'}</span>
               <span>{segs[k].label}</span>
               <span className="rpk-tab-n">{registry.filter(e => e.segment === k).length}</span>
@@ -263,61 +360,70 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
       {!term && notOfferedInTab > 0 && (
         <div className="rpk-result-note">
           {notOfferedInTab} filing type{notOfferedInTab === 1 ? '' : 's'} in {segs[seg]?.label ?? 'this tab'}{' '}
-          {notOfferedInTab === 1 ? 'is' : 'are'} not offered. Search for one to see why.
+          {notOfferedInTab === 1 ? 'is' : 'are'} not offered. Their reference details and the server’s reasons appear below.
         </div>
       )}
       {/* What the platform offers for the chosen filing, as text: a tooltip
           never reaches a keyboard or touch user. */}
-      {chosen?.kind === 'offer' && (
-        <div className="rpk-result-note" role="status" data-testid="rpk-chosen-offer">
-          <strong>{chosen.offer.label}.</strong> {chosen.offer.reason}
-        </div>
-      )}
-      {chosen?.kind === 'unclaimed' && (
-        <div className="rpk-result-note" role="status" data-testid="rpk-chosen-offer">
-          <strong>No tier is stated for this filing.</strong>{' '}
-          {chosen.offer.label} is stated for the {chosen.agency} {chosen.type.toUpperCase()} application itself
-          ({chosen.names.join(', ')}). This filing is not one of them. Creating it opens
-          a project whose application type is {chosen.type.toUpperCase()}.
-        </div>
-      )}
+      {chosen && chosenEntry && <ChosenFilingNote entry={chosenEntry} chosen={chosen} market={chosenMarket} onAsk={onAsk} />}
       <div className="rpk-body">
+        {!term && full.length > 0 && (
+          <div className="rpk-tier-h" data-testid="rpk-full-heading">
+            Built and validated here
+            <span className="rpk-tier-s">The platform assembles and validates the electronic submission (eCTD sequence) for these filings.</span>
+          </div>
+        )}
         {grouped.map(g => (
           <div key={g.catId} className="rpk-cat">
             <div className="rpk-cat-h">{g.label} <span className="rpk-cat-n">{g.entries.length}</span></div>
-            <div className="rpk-cat-grid">
-              {g.entries.map(e => (
-                <button key={e.id} className="rpk-type" data-on={value === e.id || undefined}
-                  onClick={() => onChange(e.id)} title={e.description || e.displayName}>
-                  <div className="rpk-type-n">{e.displayName}</div>
-                  <div className="rpk-type-meta">
-                    {(() => {
-                      const o = offerOf.get(e.id);
-                      return o?.kind === 'offer' && o.offer.tier === 'author_only'
-                        ? <span className="rpk-chip">{o.offer.label}</span>
-                        : null;
-                    })()}
-                    <span className="rpk-chip rpk-chip-agency">{e.agency}</span>
-                    <span className="rpk-chip rpk-chip-region">{e.region}</span>
-                    {e.dossierStandard !== '—' && <span className="rpk-chip rpk-chip-dossier">{e.dossierStandard}</span>}
-                    {e.ctdModule && e.ctdModule !== '—' && <span className="rpk-chip rpk-chip-ctd">{e.ctdModule}</span>}
-                  </div>
-                </button>
-              ))}
-            </div>
+            {g.description && <p className="rpk-result-note">{g.description}</p>}
+            <div className="rpk-cat-grid">{g.entries.map(card)}</div>
           </div>
         ))}
-        {notOfferedCount > 0 && (
-          <div className="rpk-cat" data-testid="rpk-not-offered">
-            <div className="rpk-cat-h">Not offered <span className="rpk-cat-n">{notOfferedCount}</span></div>
-            {notOfferedMatches.map(({ entry: e, reason }) => (
-              <div key={e.id} className="rpk-result-note">
-                <strong>{e.displayName} · {e.agency}.</strong> {reason}
+        {rest.length > 0 && (
+          <div className="rpk-rest" data-testid="rpk-rest">
+            <div className="rpk-tier-h">
+              More filing types
+              <span className="rpk-tier-s">
+                Those marked “Author documents for this market” are written and approved here and filed elsewhere.
+                Choose a filing to see what the platform does for it.
+              </span>
+            </div>
+            {!restOpen ? (
+              <button type="button" className="btn ghost" onClick={() => setShowRest(true)} aria-expanded={false}>
+                Show {rest.length} more filing type{rest.length === 1 ? '' : 's'}
+              </button>
+            ) : restGrouped.map(g => (
+              <div key={g.catId} className="rpk-cat">
+                <div className="rpk-cat-h">{g.label} <span className="rpk-cat-n">{g.entries.length}</span></div>
+                {g.description && <p className="rpk-result-note">{g.description}</p>}
+                <div className="rpk-cat-grid">{g.entries.map(card)}</div>
               </div>
             ))}
           </div>
         )}
-        {!grouped.length && !notOfferedCount && (
+        {notOfferedCount > 0 && (
+          <details className="rpk-cat" data-testid="rpk-not-offered" open={term ? true : undefined}
+            onToggle={event => { if (event.target === event.currentTarget && !event.currentTarget.open) setInspectedReferenceId(null); }}>
+            <summary className="rpk-cat-h">Not offered <span className="rpk-cat-n">{notOfferedCount}</span></summary>
+            {notOfferedMatches.map(({ entry: e, reason }) => (
+              <div key={e.id} className="rpk-result-note">
+                <strong>{e.displayName} · {e.agency}.</strong> {reason}
+                {term && <p>{segs[e.segment]?.label ?? e.segment}</p>}
+                <details open={inspectedReferenceId === e.id} onToggle={event => {
+                  if (event.target !== event.currentTarget) return;
+                  const opened = event.currentTarget.open;
+                  setInspectedReferenceId(current => opened ? e.id : current === e.id ? null : current);
+                }}>
+                  <summary>Reference details for {e.displayName}</summary>
+                  {e.description && <p><strong>Catalog reference.</strong> {e.description}</p>}
+                  <FilingReferenceDetails filingId={e.id} onAsk={onAsk} label={`Filing reference for ${e.displayName}`} />
+                </details>
+              </div>
+            ))}
+          </details>
+        )}
+        {!grouped.length && !rest.length && !notOfferedCount && (
           <div className="rpk-empty">
             <span className="ico">{I.search}</span>
             <p>No filing types match{term ? ' "' + q + '"' : ' these filters'}. {term ? 'Try an agency (FDA, EMA) or a pathway (510(k), BLA).' : 'Clear filters to browse.'}</p>

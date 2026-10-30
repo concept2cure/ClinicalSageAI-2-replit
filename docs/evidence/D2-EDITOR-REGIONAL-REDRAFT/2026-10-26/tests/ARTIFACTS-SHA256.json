@@ -1,0 +1,245 @@
+{
+  "algorithm": "SHA-256",
+  "artifacts": [
+    {
+      "path": "GREEN-result.json",
+      "bytes": 420,
+      "sha256": "130392c67af6e3d869ffabe51b1e2c3605b718ed48613b9008e513c4370b4f64"
+    },
+    {
+      "path": "GREEN.txt",
+      "bytes": 4898,
+      "sha256": "ef06caa96ae427f31018b7061db1ae285047cad0cf4d52a87afeb73c494433b4"
+    },
+    {
+      "path": "LINT-result.json",
+      "bytes": 396,
+      "sha256": "e27cc0825c22e75c4b337b29065a99a61a5870e4258efed1978d24117b910edc"
+    },
+    {
+      "path": "LINT.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4673,
+      "sha256": "16773973b806abb680d2ccd0e115b59bcdc8cd2c1293f872ff15550bcf756f44"
+    },
+    {
+      "path": "RED-result.json",
+      "bytes": 420,
+      "sha256": "904d0c68f9d74af8526b29fc09e1540d1feee548708575d46fc768f7f04775d5"
+    },
+    {
+      "path": "RED.txt",
+      "bytes": 16521,
+      "sha256": "69959733a4f2f0a4910160b485d1ffe400b215b75c1181b54899f381fc6da061"
+    },
+    {
+      "path": "SETTLED-GREEN-result.json",
+      "bytes": 420,
+      "sha256": "834edfd85d0f24049aae16f0fbe319e4208bdd73247a3f9cbafcc87bb75fc11e"
+    },
+    {
+      "path": "SETTLED-GREEN.txt",
+      "bytes": 4897,
+      "sha256": "de324990ff045f102393a36156e751fbc3e7f12c4702dc4567c3ba011c60ce75"
+    },
+    {
+      "path": "SETTLED-LINT-result.json",
+      "bytes": 396,
+      "sha256": "24ebdfd07ccd87dc6d90b2b0462e11e00394b1d3b5ce1d53acc89a1fd38c02e2"
+    },
+    {
+      "path": "SETTLED-LINT.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "final-inputs.json",
+      "bytes": 2150,
+      "sha256": "496e68a4be605b277e812f01ea3115f8b7889427434ab12e679cd7046e1e2cad"
+    },
+    {
+      "path": "green-inputs.json",
+      "bytes": 2651,
+      "sha256": "5f836f76f954bbf7dcc9ccb9c65052c55797da65958da3365acb24f1aa4a5559"
+    },
+    {
+      "path": "green-source-AuthoringAiDraft.tsx.txt.gz",
+      "bytes": 7869,
+      "sha256": "bcf91c3879d690b492e3e5938015ec08d6323229d4bdc7cd2fbd864023322594"
+    },
+    {
+      "path": "green-source-EDITOR_REGIONAL_REDRAFT_2026-10-26.md.txt.gz",
+      "bytes": 2813,
+      "sha256": "4efec79f6c26fa1c73c1af864d4e550eedadc8b88dd667f17ec9395f80acac5a"
+    },
+    {
+      "path": "green-source-assemblyDraftQueue.ts.txt.gz",
+      "bytes": 2272,
+      "sha256": "41d29c06865950bebfd353ee36ac2b0a9a9c4a1bbbd203df055bce60cbb1fb3d"
+    },
+    {
+      "path": "green-source-authoringDraftInputs.test.tsx.txt.gz",
+      "bytes": 3964,
+      "sha256": "55e6c9e270d8009a472e24b4d72d83afde9b11354a7982dc116f8a3b40513422"
+    },
+    {
+      "path": "green-source-authoringDraftTransport.ts.txt.gz",
+      "bytes": 3042,
+      "sha256": "1f0c45c31a14cb5eb4671aa7eb1cd464716fb55703acaa528d55f747c4e5cebd"
+    },
+    {
+      "path": "green-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "green-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "green-source-shellProject.ts.txt.gz",
+      "bytes": 5671,
+      "sha256": "3269ba8f1bea195b8bc8bcff0a4cef770e1d857681f733cd707d85e9a55083a3"
+    },
+    {
+      "path": "green-source-useAuthoringAssemblyBuild.ts.txt.gz",
+      "bytes": 6369,
+      "sha256": "ae41d32c0fbad6fd7b6aae5cfb83db4ddb15a020aafcd4dee3d408eb5d90878b"
+    },
+    {
+      "path": "green-source-useAuthoringDraftReview.ts.txt.gz",
+      "bytes": 2781,
+      "sha256": "8fc75ec7e2beb244b1f314a9294434a078ce17d3d60320978fe947958bd11436"
+    },
+    {
+      "path": "green-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "red-inputs.json",
+      "bytes": 2629,
+      "sha256": "3ed524d37ba161f8f7048262e4ada151509fbc7f8dd9ec0ef1faf26f38a4ae4a"
+    },
+    {
+      "path": "red-source-AuthoringAiDraft.tsx.txt.gz",
+      "bytes": 7841,
+      "sha256": "326bf71e16fa512651e41c361738f4f7d3e130e19f2e79001b30a13e67d9357b"
+    },
+    {
+      "path": "red-source-EDITOR_REGIONAL_REDRAFT_2026-10-26.md.txt.gz",
+      "bytes": 2813,
+      "sha256": "4efec79f6c26fa1c73c1af864d4e550eedadc8b88dd667f17ec9395f80acac5a"
+    },
+    {
+      "path": "red-source-assemblyDraftQueue.ts.txt.gz",
+      "bytes": 2250,
+      "sha256": "5d71946b0426d8cdb9f68cdcd21682e6d42740988f20b1a18fd4b2bedbc50f10"
+    },
+    {
+      "path": "red-source-authoringDraftInputs.test.tsx.txt.gz",
+      "bytes": 3964,
+      "sha256": "55e6c9e270d8009a472e24b4d72d83afde9b11354a7982dc116f8a3b40513422"
+    },
+    {
+      "path": "red-source-authoringDraftTransport.ts.txt.gz",
+      "bytes": 2978,
+      "sha256": "909c55ec93ce85b535ef8b33e3031de1eb4c2c41e33ce8bdc61450ab4039e448"
+    },
+    {
+      "path": "red-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "red-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "red-source-shellProject.ts.txt.gz",
+      "bytes": 5671,
+      "sha256": "3269ba8f1bea195b8bc8bcff0a4cef770e1d857681f733cd707d85e9a55083a3"
+    },
+    {
+      "path": "red-source-useAuthoringAssemblyBuild.ts.txt.gz",
+      "bytes": 6369,
+      "sha256": "ae41d32c0fbad6fd7b6aae5cfb83db4ddb15a020aafcd4dee3d408eb5d90878b"
+    },
+    {
+      "path": "red-source-useAuthoringDraftReview.ts.txt.gz",
+      "bytes": 2740,
+      "sha256": "4e179663a330724c45df8f1d2f9327585960a29c9e29709c8bbb80020432fe8d"
+    },
+    {
+      "path": "red-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "settled-inputs.json",
+      "bytes": 2673,
+      "sha256": "f7118eb067187db204ac985d063d66f4d21abe0bbf2ecf636b51a3296112a595"
+    },
+    {
+      "path": "settled-source-AuthoringAiDraft.tsx.txt.gz",
+      "bytes": 7873,
+      "sha256": "1c192be846b9266043aa353ab77afa605889205a5c837b7e857cc84b3ce20eec"
+    },
+    {
+      "path": "settled-source-EDITOR_REGIONAL_REDRAFT_2026-10-26.md.txt.gz",
+      "bytes": 2813,
+      "sha256": "4efec79f6c26fa1c73c1af864d4e550eedadc8b88dd667f17ec9395f80acac5a"
+    },
+    {
+      "path": "settled-source-assemblyDraftQueue.ts.txt.gz",
+      "bytes": 2272,
+      "sha256": "41d29c06865950bebfd353ee36ac2b0a9a9c4a1bbbd203df055bce60cbb1fb3d"
+    },
+    {
+      "path": "settled-source-authoringDraftInputs.test.tsx.txt.gz",
+      "bytes": 3964,
+      "sha256": "55e6c9e270d8009a472e24b4d72d83afde9b11354a7982dc116f8a3b40513422"
+    },
+    {
+      "path": "settled-source-authoringDraftTransport.ts.txt.gz",
+      "bytes": 3042,
+      "sha256": "1f0c45c31a14cb5eb4671aa7eb1cd464716fb55703acaa528d55f747c4e5cebd"
+    },
+    {
+      "path": "settled-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "settled-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "settled-source-shellProject.ts.txt.gz",
+      "bytes": 5671,
+      "sha256": "3269ba8f1bea195b8bc8bcff0a4cef770e1d857681f733cd707d85e9a55083a3"
+    },
+    {
+      "path": "settled-source-useAuthoringAssemblyBuild.ts.txt.gz",
+      "bytes": 6369,
+      "sha256": "ae41d32c0fbad6fd7b6aae5cfb83db4ddb15a020aafcd4dee3d408eb5d90878b"
+    },
+    {
+      "path": "settled-source-useAuthoringDraftReview.ts.txt.gz",
+      "bytes": 2781,
+      "sha256": "8fc75ec7e2beb244b1f314a9294434a078ce17d3d60320978fe947958bd11436"
+    },
+    {
+      "path": "settled-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    }
+  ]
+}

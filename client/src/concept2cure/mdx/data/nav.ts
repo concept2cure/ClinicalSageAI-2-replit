@@ -50,8 +50,8 @@ export const MDX_NAV_V2: NavItem[] = [
 
   // System — deliberately empty. Admin is a PRODUCT-level surface, not a
   // per-workstream one: the device/diagnostics workstream embeds this module
-  // inside the ui-v2 product shell, whose single AdminConsole serves every
-  // client type. Keeping a separate "Admin and Access" here produced two
+  // inside the ui-v2 product shell, whose single administration surface
+  // (admin-console) serves every client type. Keeping a separate "Admin and Access" here produced two
   // admins (one per client type); it was removed so there is one product admin.
 ];
 
@@ -111,11 +111,11 @@ export const ANA_TOOLS: AnaTool[] = [
   { id: 'search_precedents',    group: 'Precedent', label: 'Search precedents',       desc: 'Cross-agency regulatory decisions' },
   { id: 'search_literature',    group: 'Evidence',  label: 'Search literature',       desc: 'PubMed / Embase / Cochrane corpus' },
   { id: 'search_adverse',       group: 'Evidence',  label: 'Adverse events',          desc: 'FAERS / MAUDE signal query' },
-  { id: 'get_program_status',   group: 'Program',   label: 'Program status',          desc: 'Readiness, next blocker, open deficiencies' },
-  { id: 'get_rim_signals',      group: 'Program',   label: 'RIM signals',             desc: 'Deficiency / reviewer-trigger signals' },
-  { id: 'run_judgment',         group: 'Program',   label: 'Judgment framework',      desc: '6-model scoring on an artifact' },
-  { id: 'get_evidence_chain',   group: 'Program',   label: 'Evidence chain',          desc: 'Confidence trace for a claim' },
-  { id: 'suggest_next_action',  group: 'Program',   label: 'Suggest next action',     desc: 'Recommendation engine' },
+  { id: 'get_program_status',   group: 'Project',   label: 'Project status',          desc: 'Readiness, next blocker, open deficiencies' },
+  { id: 'get_rim_signals',      group: 'Project',   label: 'RIM signals',             desc: 'Deficiency / reviewer-trigger signals' },
+  { id: 'run_judgment',         group: 'Project',   label: 'Judgment framework',      desc: '6-model scoring on an artifact' },
+  { id: 'get_evidence_chain',   group: 'Project',   label: 'Evidence chain',          desc: 'Confidence trace for a claim' },
+  { id: 'suggest_next_action',  group: 'Project',   label: 'Suggest next action',     desc: 'Recommendation engine' },
   { id: 'draft_section',        group: 'Authoring', label: 'Draft section',           desc: 'Governed authoring — 510(k), CER, PMA' },
   { id: 'create_artifact',      group: 'Authoring', label: 'Create artifact',         desc: 'Editor wire-up' },
 ];

@@ -143,6 +143,6 @@ export async function resolveCmcArtifactProject(
   return {
     state: 'unaddressable',
     artifactProjectId: null,
-    detail: `Project id ${raw || '(empty)'} is neither a projects.id nor a program uuid.`,
+    detail: `Project id ${raw || '(empty)'} is neither a tracking-record id nor a project uuid.`,
   };
 }

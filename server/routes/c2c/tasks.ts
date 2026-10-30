@@ -6,9 +6,11 @@
  * (ledger L53, slice 5), mounted at the same prefix ahead of it with the same
  * middleware chain; the handlers moved verbatim.
  *
- * The CMC data, project-context and transform-context endpoints that shared
- * the old banner stay in the main file: they are project reads that happen to
- * include tasks, not task management.
+ * The project-context and transform-context endpoints that shared the old
+ * banner are in program-twin.ts: they are project reads that happen to include
+ * tasks, not task management. The CMC data endpoints that shared it are
+ * retired (decision P-62). The assessment reads CMC readiness from the CMC /
+ * Module 3 register instead.
  *
  * @module server/routes/c2c/tasks
  */
@@ -28,6 +30,8 @@ import {
   sendError,
   sendSuccess,
 } from './shared';
+import { admittedProjectId, projectAdmissionMiddleware } from './project-access';
+import { cmcNextActions, readProjectCmcReadiness } from '../../services/cmc/project-cmc-readiness';
 
 const logger = createScopedLogger('concept2cure-tasks');
 const router = Router();
@@ -62,6 +66,17 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+
+/* Every task route admits the project first (D6, docs/evidence/D6-PROJECT-WRITE-GATES/
+   2026-10-29/). The handlers scoped every statement to the organization and
+   checked nothing else, so a viewer, a member without edit permission, a
+   member who is not on a private project and any caller of an archived
+   project created, changed, deleted and bulk-generated its tasks, and read
+   them. Reads are admitted in read mode, writes in write mode; the assessment
+   is a POST that changes nothing, so it is admitted as a read. */
+router.param('projectId', projectAdmissionMiddleware({
+  routes: { 'POST /projects/:projectId/tasks/assess': 'read' },
+}));
 
 /* ── Project tasks and submission milestones ────────────────────────────── */
 
@@ -305,10 +320,16 @@ router.put('/projects/:projectId/tasks/:taskId', async (req: Request, res: Respo
     const updates: Record<string, unknown> = { ...data, updatedAt: new Date() };
     if (data.dueDate) updates.dueDate = new Date(data.dueDate);
 
+    // The URL's project as well: the project admitted above is the only one
+    // whose task this may change.
     const [updated] = await db
       .update(projectTasks)
       .set(updates)
-      .where(and(eq(projectTasks.id, taskId), eq(projectTasks.organizationId, organizationId)))
+      .where(and(
+        eq(projectTasks.id, taskId),
+        eq(projectTasks.organizationId, organizationId),
+        eq(projectTasks.projectId, admittedProjectId(req)),
+      ))
       .returning();
 
     if (!updated) return sendError(res, 404, 'Task not found');
@@ -332,9 +353,14 @@ router.delete('/projects/:projectId/tasks/:taskId', async (req: Request, res: Re
 
     // db's union return type isn't iterable; cast at the boundary then index
     // (matches the .returning() pattern used elsewhere in this file).
+    // The URL's project as well, as in the PUT.
     const deletedRows = (await db
       .delete(projectTasks)
-      .where(and(eq(projectTasks.id, taskId), eq(projectTasks.organizationId, organizationId)))
+      .where(and(
+        eq(projectTasks.id, taskId),
+        eq(projectTasks.organizationId, organizationId),
+        eq(projectTasks.projectId, admittedProjectId(req)),
+      ))
       .returning()) as any[];
     const deleted = deletedRows[0];
     if (!deleted) return sendError(res, 404, 'Task not found');
@@ -599,22 +625,15 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
       });
     }
 
-    // Check CMC readiness
-    const metadata = (project.metadata as Record<string, any>) || {};
-    if (!metadata.cmcDrugSubstance?.substanceName) {
-      nextActions.push({
-        action: 'Enter Drug Substance data (CMC Module 3)',
-        priority: 'medium',
-        reason: 'Drug Substance information is required for Module 3 documentation.',
-      });
-    }
-    if (!metadata.cmcDrugProduct?.productName) {
-      nextActions.push({
-        action: 'Enter Drug Product data (CMC Module 3)',
-        priority: 'medium',
-        reason: 'Drug Product information is required for Module 3 documentation.',
-      });
-    }
+    /* CMC readiness, from the CMC / Module 3 register (decision P-62). This
+       used to read projects.metadata, which nothing writes, so it told every
+       project to enter drug substance data: a device's, and one whose register
+       held a drug substance. A program the composition boundary refuses gets
+       no CMC action, and `cmc` says why. A read that failed is a risk, never
+       "complete" and never "missing" (services/cmc/project-cmc-readiness.ts). */
+    const cmc = await readProjectCmcReadiness(organizationId, project);
+    nextActions.push(...cmcNextActions(cmc));
+    if (cmc.state === 'unreadable') risks.push(cmc.reason);
 
     return sendSuccess(res, {
       healthScore,
@@ -628,6 +647,7 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
       },
       risks,
       nextActions: nextActions.slice(0, 5),
+      cmc,
       assessedAt: new Date().toISOString(),
     });
   } catch (error) {

@@ -1,0 +1,48 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-26T15:10:07.769Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-26T15:10:07.770Z","pid":4416,"hostname":"a96758174962","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-26T15:10:07.770Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-10-26T15:10:12.049Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 94b7748a-1322-4bc1-86ce-85c634264fac by unknown"}
+{"level":30,"time":"2026-10-26T15:10:12.056Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 94b7748a-1322-4bc1-86ce-85c634264fac by unknown"}
+{"level":30,"time":"2026-10-26T15:10:12.060Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 94b7748a-1322-4bc1-86ce-85c634264fac by unknown"}
+{"level":30,"time":"2026-10-26T15:10:12.065Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 94b7748a-1322-4bc1-86ce-85c634264fac by unknown"}
+{"level":30,"time":"2026-10-26T15:10:12.069Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 94b7748a-1322-4bc1-86ce-85c634264fac by unknown"}
+{"level":30,"time":"2026-10-26T15:10:12.073Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 94b7748a-1322-4bc1-86ce-85c634264fac by unknown"}
+{"level":30,"time":"2026-10-26T15:10:12.076Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 94b7748a-1322-4bc1-86ce-85c634264fac by unknown"}
+{"level":30,"time":"2026-10-26T15:10:12.079Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 94b7748a-1322-4bc1-86ce-85c634264fac by unknown"}
+{"level":30,"time":"2026-10-26T15:10:12.083Z","pid":4416,"hostname":"a96758174962","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 94b7748a-1322-4bc1-86ce-85c634264fac by unknown"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > creates an owned draft, Authoring sections and durable grants through the actual request client 186ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reads register/editor using real auth ALS and LazyRequestDbClient 24ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > distinguishes raw unscoped denial from working canonical ALS global and pinned reads 4ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reviews then approves saved text with real password re-verification and one bound signature 109ms
+(node:4416) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback
+[qms-training] immutable release unavailable: Synthetic private retained version read diagnostic
+
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback
+[qms-training] immutable release unavailable: Synthetic private retained version read diagnostic
+
+{"level":50,"time":"2026-10-26T15:10:12.474Z","pid":4416,"hostname":"a96758174962","context":{"err":"Synthetic post-commit audit-write fault","correlationId":null,"code":"42501"},"msg":"[mdx-qms] training-ack failed"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > reads retained versions and counts actual current-version training 122ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback 70ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > rolls back the personal receipt with its mandatory audit on failure and recovers on a fresh request 83ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > refuses exact foreign records, training acknowledgments and program claims without exposing prose 70ms
+{"level":50,"time":"2026-10-26T15:10:12.665Z","pid":4416,"hostname":"a96758174962","context":{"err":"Request-scoped database context is required","correlationId":null,"code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-qms] doc-editor failed"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > uses fresh membership to refuse an unshared member despite an admin token claim 66ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > fails closed on a missing request client even with synthetic ALS, without claiming an auth-production defect 3ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > recovers a genuinely committed legacy signature after lost COMMIT reply and discards its physical connection 46ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  15:10:05
+   Duration  7.63s (transform 3.93s, setup 99ms, import 313ms, tests 6.94s, environment 0ms)
+

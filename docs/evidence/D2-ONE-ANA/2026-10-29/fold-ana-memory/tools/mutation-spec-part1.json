@@ -1,0 +1,154 @@
+[
+ {
+  "id": "M1",
+  "what": "the user-level read takes its user from the request's query",
+  "file": "server/routes/mdx-ana-memory.ts",
+  "old": "          LIMIT 1`,\n        [orgId, userId],\n      );\n      return ok(res, rows[0] ?? null, { scope: 'user' });",
+  "new": "          LIMIT 1`,\n        [orgId, Number(req.query.user_id) || userId],\n      );\n      return ok(res, rows[0] ?? null, { scope: 'user' });",
+  "run": "npx vitest run server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts"
+ },
+ {
+  "id": "M2",
+  "what": "the user-level read loses its user binding (any member's notes in the organization)",
+  "file": "server/routes/mdx-ana-memory.ts",
+  "old": "WHERE organization_id = $1 AND user_id = $2 AND project_id IS NULL",
+  "new": "WHERE organization_id = $1 AND $2::int IS NOT NULL AND project_id IS NULL",
+  "run": "npx vitest run server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts"
+ },
+ {
+  "id": "M3",
+  "what": "the project read loses its user binding (any member's notes for the project)",
+  "file": "server/routes/mdx-ana-memory.ts",
+  "old": "WHERE organization_id = $1 AND user_id = $2 AND project_id = $3",
+  "new": "WHERE organization_id = $1 AND $2::int IS NOT NULL AND project_id = $3",
+  "run": "npx vitest run server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts"
+ },
+ {
+  "id": "M4",
+  "what": "the project read trusts the request's project id without the conversation's admission",
+  "file": "server/routes/mdx-ana-memory.ts",
+  "old": "    admitted = await admitAnaProjectScope(pool, { organizationId: orgId, userId, projectRef: parsed.data.project_id });",
+  "new": "    void admitAnaProjectScope; admitted = { projectId: parseInt(parsed.data.project_id, 10) || null, programId: null, projectRef: parsed.data.project_id };",
+  "run": "npx vitest run server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts"
+ },
+ {
+  "id": "M5",
+  "what": "the route ignores ?project_id and answers the user-level row",
+  "file": "server/routes/mdx-ana-memory.ts",
+  "old": "  if (parsed.data.project_id === undefined) {",
+  "new": "  if (parsed.data.project_id === undefined || true) {",
+  "run": "npx vitest run server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts"
+ },
+ {
+  "id": "M6",
+  "what": "an admission refusal answered as an empty profile",
+  "file": "server/routes/mdx-ana-memory.ts",
+  "old": "    if (err instanceof AnaProjectScopeError) return res.status(err.status).json({ error: err.message, code: err.code });",
+  "new": "    if (err instanceof AnaProjectScopeError) return ok(res, null, { scope: 'project' });",
+  "run": "npx vitest run server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts"
+ },
+ {
+  "id": "M7",
+  "what": "an absent store answered as no notes (pendingStore dropped)",
+  "file": "server/routes/mdx-ana-memory.ts",
+  "old": "return ok(res, null, { scope: 'user', pendingStore: true });",
+  "new": "return ok(res, null, { scope: 'user' });",
+  "run": "npx vitest run server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts"
+ },
+ {
+  "id": "M8",
+  "what": "the conversation's claim on the profile read removed from the registry",
+  "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+  "old": ", '/api/concept2cure/projects', '/api/mdx/ana/memory/profile'],",
+  "new": ", '/api/concept2cure/projects'],",
+  "run": "npx vitest run server/routes/__tests__/mdx-ana-memory-profile.pglite.test.ts && npm run --silent ci:launch-scope-api"
+ },
+ {
+  "id": "M9",
+  "what": "an answer that does not say it is the project's shown as the project's",
+  "file": "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+  "old": "  if (scope === 'project' && !keyedTo(read.meta, projectRef)) {",
+  "new": "  if (scope === 'project' && !keyedTo(read.meta, projectRef) && false) {",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "M10",
+  "what": "a failed read rendered as an empty memory",
+  "file": "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+  "old": "  if (read.error) return failureOf(scope, read);",
+  "new": "  if (read.error) return { state: 'none' };",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "M11",
+  "what": "a project refusal offered Try again",
+  "file": "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+  "old": "`${refusal}, so AnA's notes for it were not read.`, false);",
+  "new": "`${refusal}, so AnA's notes for it were not read.`, true);",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "M12",
+  "what": "a refused read of the caller's notes offered Try again",
+  "file": "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+  "old": "'Your account or organization could not be confirmed, so nothing was read.', false);",
+  "new": "'Your account or organization could not be confirmed, so nothing was read.', true);",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "M13",
+  "what": "an absent store shown as no notes yet",
+  "file": "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+  "old": "  if (read.meta?.pendingStore === true) {",
+  "new": "  if (read.meta?.pendingStore === true && false) {",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "M14",
+  "what": "an empty ledger says nothing",
+  "file": "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+  "old": "<div className=\"amem-empty\">Nothing on the ledger yet.</div>",
+  "new": "null",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "M15",
+  "what": "the latest read of how the person is doing replaced by the oldest",
+  "file": "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+  "old": "signals.length > 0 ? signals[signals.length - 1] : null",
+  "new": "signals.length > 0 ? signals[0] : null",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "M16",
+  "what": "the count of turns labelled as conversations (the retired screen's mislabel)",
+  "file": "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+  "old": "{turns === 1 ? 'turn' : 'turns'}",
+  "new": "{turns === 1 ? 'conversation' : 'conversations'}",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "M17",
+  "what": "a project-scoped read with no project open",
+  "file": "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+  "old": "  const projectPath = project ? `${PROFILE_PATH}?project_id=${encodeURIComponent(project)}` : null;",
+  "new": "  const projectPath = `${PROFILE_PATH}?project_id=${encodeURIComponent(project ?? '')}`;",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "M18",
+  "what": "the panel reads no project although the conversation's turns carry one",
+  "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+  "old": "<WhatAnaRemembers projectRef={shellProjectId} ",
+  "new": "<WhatAnaRemembers projectRef={null} ",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ },
+ {
+  "id": "M19",
+  "what": "the header control does not open the panel",
+  "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+  "old": "onClick={() => setRemembersOpen(true)}>",
+  "new": "onClick={() => setRemembersOpen(false)}>",
+  "run": "npx vitest run client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx"
+ }
+]

@@ -1,0 +1,15 @@
+Before the corresponding fix. Full lossless log in safety-red.txt.gz. Credentials and records are synthetic.
+
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > refuses a retained Accept decision after bearer replacement
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > refuses a retained Decline decision after bearer replacement
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not accept an unnamed inviting organization
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > rejects duplicate pending invitation identities
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not acknowledge an unconfirmed membership: {"success":true}
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not acknowledge an unconfirmed membership: {"success":true,"data":{"invitationId":52,"organizationId":9,"userId":44,"role":"member","status":"accepted"}}
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > withholds a late consent acknowledgement after the owner changes
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > refuses a stale source before the shared helper rotates a session
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not adopt over or end an unrelated login while SELECT is pending
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > reserves the native editor before the shared helper spends a bearer
+ FAIL  client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > ends its own uncertain session after a network failure without navigating
+ Test Files  1 failed (1)
+      Tests  11 failed | 1 passed (12)

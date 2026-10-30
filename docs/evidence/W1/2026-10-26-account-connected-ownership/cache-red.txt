@@ -1,0 +1,5 @@
+Negative qualification before the corresponding fix. Full lossless log in cache-red.txt.gz. JWTs are synthetic.
+
+ FAIL  client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > withholds a cached persona immediately when current bearer claims belong to another account
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)

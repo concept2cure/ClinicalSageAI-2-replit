@@ -1,0 +1,7 @@
+{
+  "originalReceipt": "green.json",
+  "originalResult": "10 passed; 1 assertion failed",
+  "cause": "Assertion required error:null on the final UPDATE payload, but the existing transition to drafting already clears the durable error. The fake applies all updates. Assert the resulting fake job state instead.",
+  "productionChangedForCorrection": false,
+  "additionalControls": "Full-build empty-array semantics and supported duplicate subset are now explicit."
+}

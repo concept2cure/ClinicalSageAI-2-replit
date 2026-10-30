@@ -124,7 +124,8 @@ function assertNoReactErrors() {
 }
 
 // No MemorySurface / AdminSurface cases. The kit's AnA Memory surface was
-// retired for v2 `ana-memory` (same /api/mdx/ana/memory endpoint, write-capable),
+// retired for v2 `ana-memory` (same /api/mdx/ana/memory endpoint), which itself
+// folded into the conversation's "What AnA remembers" on 2026-10-29,
 // and its admin surface was never imported by the kit's own app — admin is
 // product-level, on v2 `admin-console`.
 describe('design-system surface smoke tests', () => {
@@ -154,9 +155,16 @@ describe('design-system surface smoke tests', () => {
     assertNoReactErrors();
   });
 
-  it('UdiSurface renders', () => {
-    const { getByText } = render(<UdiSurface onAskAna={askAna} onOpenEditor={openEditor} />);
+  /* UdiSurface reads the open project's records and takes a required programId
+     (ca88fa26); with none it reads nothing and says a project is needed. */
+  it('UdiSurface renders for a project', () => {
+    const { getByText } = render(<UdiSurface programId="11111111-1111-4111-8111-111111111111" onAskAna={askAna} onOpenEditor={openEditor} />);
     expect(getByText('UDI and labeling')).toBeTruthy();
+    assertNoReactErrors();
+  });
+
+  it('UdiSurface renders with no project', () => {
+    render(<UdiSurface programId={null} onAskAna={askAna} onOpenEditor={openEditor} />);
     assertNoReactErrors();
   });
 

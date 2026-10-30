@@ -13,7 +13,7 @@ import { threadOwnerMatches } from '../chat-thread-helpers';
 export class NotificationTargetRefusal extends Error {
   constructor(readonly status: 404 | 422 | 503) {
     super(status === 404 ? 'The linked record is unavailable or you no longer have access.'
-      : status === 422 ? 'This notification does not name a record and program relationship this version can open.'
+      : status === 422 ? 'This notification does not name a record and project relationship this version can open.'
         : 'The linked record could not be checked. Try again.');
   }
 }
@@ -114,17 +114,39 @@ async function conversationTarget(ctx: TargetContext, ref: RecordReference): Pro
   if (!threadOwnerMatches(thread.user_id,ctx.userId)) throw new NotificationTargetRefusal(404);
   return {surface:'conversation-thread',label:'Open conversation',params:{threadId:ref.id},programId:await ownedProgram(ctx,thread.program_id ?? null)};
 }
+/**
+ * A lifecycle record (RR1b, REVIEW_ROUTING §2.11): a Vault version's opens
+ * that version in the Vault of its project, when the recipient may open the
+ * project. A record that is not a Vault version's names nothing this version
+ * can open.
+ */
+async function canonicalDocumentTarget(ctx: TargetContext, canonicalId: string): Promise<NotificationRecordTarget> {
+  const doc = await rowFor(ctx,`SELECT source_refs->'vault_documents'->>'nativeId' AS vault_id FROM canonical_documents WHERE canonical_id=$1 AND organization_id=$2`,[canonicalId,ctx.organizationId]);
+  const vaultId = doc.vault_id;
+  if (typeof vaultId !== 'string' || !NOTICE_UUID.test(vaultId)) throw new NotificationTargetRefusal(422);
+  const version = await rowFor(ctx,'SELECT program_id::text AS program_id FROM vault.documents WHERE id=$1::uuid AND organization_id=$2 AND deleted_at IS NULL',[vaultId,ctx.organizationId]);
+  const programId = await ownedProgram(ctx,version.program_id);
+  if (!programId) throw new NotificationTargetRefusal(422);
+  return {surface:'vault',label:'Open the version in the Vault',params:{documentId:vaultId.toLowerCase()},programId};
+}
+/** A task opens on the Tasks board; a review route member's opens its subject, where the route is acted on (RR1b). */
+async function taskTarget(ctx: TargetContext, taskId: string): Promise<NotificationRecordTarget> {
+  const task = await rowFor(ctx,'SELECT project_id, review_route_id, source_entity_type, source_entity_id FROM unified_tasks WHERE task_id=$1 AND organization_id=$2 AND deleted_at IS NULL',[taskId,ctx.organizationId]);
+  if (task.review_route_id != null) {
+    if (task.source_entity_type === 'canonical_document' && typeof task.source_entity_id === 'string') return canonicalDocumentTarget(ctx,task.source_entity_id);
+    throw new NotificationTargetRefusal(422);
+  }
+  return {surface:'tasks',label:'Open task',params:{taskId},programId:task.project_id == null ? null : await projectProgram(ctx,task.project_id)};
+}
 async function resolveRecord(ctx: TargetContext, ref: RecordReference): Promise<NotificationRecordTarget> {
   switch (ref.kind) {
     case 'authoring_document': return authoringTarget(ctx,ref);
     case 'submission': case 'ectd_sequence': return submissionTarget(ctx,ref);
     case 'report_run': return reportTarget(ctx,ref);
-    case 'regulatory_program': return {surface:'project-home',label:'Open program',params:{},programId:await ownedProgram(ctx,ref.id)};
-    case 'project': return {surface:'project-home',label:'Open program',params:{},programId:await projectProgram(ctx,ref.id)};
-    case 'unified_task': {
-      const task = await rowFor(ctx,'SELECT project_id FROM unified_tasks WHERE task_id=$1 AND organization_id=$2 AND deleted_at IS NULL',[ref.id,ctx.organizationId]);
-      return {surface:'tasks',label:'Open task',params:{taskId:ref.id},programId:task.project_id == null ? null : await projectProgram(ctx,task.project_id)};
-    }
+    case 'regulatory_program': return {surface:'project-home',label:'Open project',params:{},programId:await ownedProgram(ctx,ref.id)};
+    case 'project': return {surface:'project-home',label:'Open project',params:{},programId:await projectProgram(ctx,ref.id)};
+    case 'unified_task': return taskTarget(ctx,ref.id);
+    case 'canonical_document': return canonicalDocumentTarget(ctx,ref.id);
     case 'gateway_transmittal': {
       const row = await rowFor(ctx,'SELECT program_id::text AS program_id FROM submission_transmittals WHERE id=$1 AND organization_id=$2',[ref.id,ctx.organizationId]);
       return {surface:'gateway-transmittals',label:'Open transmittal',params:{transmittalId:ref.id},programId:await ownedProgram(ctx,row.program_id)};

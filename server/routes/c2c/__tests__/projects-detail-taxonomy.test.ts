@@ -79,7 +79,7 @@ const deviceRow = () => ({
   application_number: null, sponsor_name: 'Concept2Cure Diagnostics',
   product_type: 'ivd', device_class: 'II', regulatory_path: '510k', product_code: 'QNX',
   predicate_devices: [{ kNumber: 'K223456' }],
-  metadata: { createdVia: 'v2-new-project-wizard', reviewPanel: 'Microbiology', regulationNumber: '866.3985', deviceFlags: ['softwareAiMl', 'cyberDevice', 'clinicalData'] },
+  metadata: { createdVia: 'v2-new-project-wizard', submissionTypeId: 'us_510k_ivd', reviewPanel: 'Microbiology', regulationNumber: '866.3985', deviceFlags: ['softwareAiMl', 'cyberDevice', 'clinicalData'] },
 });
 
 const drugRow = () => ({
@@ -98,6 +98,30 @@ beforeEach(() => {
 });
 
 describe('GET /api/c2c/projects/:id — device taxonomy', () => {
+  it('reaches the exact recorded filing identity without exposing internal metadata', async () => {
+    query.mockResolvedValueOnce({ rows: [{ ...deviceRow(), metadata: {
+      submissionTypeId: 'us_510k', createdVia: 'private-provenance', privateNote: 'not a public fact',
+    } }] });
+    const res = await request(app(2)).get(`/api/c2c/projects/${PID}`);
+    expect(res.status).toBe(200);
+    expect(res.body.submission_type_id).toBe('us_510k');
+    expect(res.body).not.toHaveProperty('metadata');
+    expect(JSON.stringify(res.body)).not.toContain('private-provenance');
+    expect(JSON.stringify(res.body)).not.toContain('not a public fact');
+  });
+
+  it.each([null, 'not json', [], {}, { submissionTypeId: 510 }, { submissionTypeId: '  ' }])(
+    'does not infer a filing identity from program_type when metadata is %j', metadata => {
+      expect(serializeProgramDetail({ ...deviceRow(), metadata }).submission_type_id).toBeNull();
+    },
+  );
+
+  it('withholds an unknown recorded identity instead of silently remapping it to a known guide', () => {
+    const row = serializeProgramDetail({ ...drugRow(), metadata: JSON.stringify({ submissionTypeId: 'legacy_reference_id' }) });
+    expect(row.submission_type_id).toBeNull();
+    expect(row).not.toHaveProperty('metadata');
+  });
+
   it('selects the stored device columns and returns them for a 510(k) IVD program', async () => {
     query.mockResolvedValueOnce({ rows: [deviceRow()] });
     const res = await request(app(2)).get(`/api/c2c/projects/${PID}`);
@@ -110,6 +134,7 @@ describe('GET /api/c2c/projects/:id — device taxonomy', () => {
 
     expect(res.body).toMatchObject({
       product_type: 'ivd',
+      submission_type_id: 'us_510k_ivd',
       device_class: 'II',
       regulatory_path: '510k',
       product_code: 'QNX',
@@ -156,6 +181,44 @@ describe('GET /api/c2c/projects/:id — device taxonomy', () => {
   });
 });
 
+describe('the exact recorded filing identity is projected without metadata', () => {
+  it.each([
+    ['us_ind', 'us_ind'], ['US_IND', 'us_ind'], [' us_pre_ind ', 'us_pre_ind'],
+    ['EU_CTA', 'eu_cta'], ['US_510K_IVD', 'us_510k_ivd'],
+  ])('normalizes the recorded canonical id %s to %s', (recorded, expected) => {
+    const out = serializeProgramDetail({ ...drugRow(), program_type: 'nda', metadata: {
+      submissionTypeId: recorded, createdVia: 'private-internal-provenance', privateNote: 'Not public',
+    } });
+    expect(out.submission_type_id).toBe(expected);
+    expect(out).not.toHaveProperty('metadata');
+    expect(JSON.stringify(out)).not.toMatch(/private-internal-provenance|privateNote|submissionTypeId/);
+  });
+
+  it.each([null, undefined, {}, [], 'not json', JSON.stringify([]),
+    { submissionTypeId: '' }, { submissionTypeId: '  ' }, { submissionTypeId: 12 },
+    { submissionTypeId: ['us_ind'] }, { submissionTypeId: { id: 'us_ind' } },
+    { submissionTypeId: 'not_a_filing' }, { submissionTypeId: 'IND' },
+    { submissionTypeId: 'fda_510k' }, { registryId: 'US_IND' },
+  ])('withholds missing, malformed, unrecognized or alias-only identity: %j', metadata => {
+    const out = serializeProgramDetail({ ...drugRow(), program_type: 'ind', primary_agency: 'FDA', metadata });
+    expect(out).toHaveProperty('submission_type_id', null);
+    expect(out).not.toHaveProperty('metadata');
+  });
+
+  it('reads the driver JSON string but never takes a registry fallback or a parent program type', async () => {
+    query.mockResolvedValueOnce({ rows: [{ ...drugRow(), program_type: 'nda', metadata: JSON.stringify({
+      submissionTypeId: 'us_pre_ind', registryId: 'US_NDA', createdVia: 'private-internal-provenance',
+    }) }] });
+    const response = await request(app(2)).get(`/api/c2c/projects/${PID}`);
+    expect(response.status).toBe(200);
+    expect(response.body.submission_type_id).toBe('us_pre_ind');
+    expect(response.body.program_type).toBe('nda');
+    expect(response.body).not.toHaveProperty('metadata');
+    expect(response.body).not.toHaveProperty('registryId');
+    expect(JSON.stringify(response.body)).not.toContain('private-internal-provenance');
+  });
+});
+
 describe('POST /api/c2c/projects — the create answers with the same serializer', () => {
   it('201 carries `program` from serializeProgramDetail, so the read returns what the write stored', async () => {
     const card = { id: PID, title: '[Demo · MDX] NeuroPanel-Dx 510(k)', ws: 'MDX', code: 'DMN5', stage: 'Planning', readiness: 0, status: 'active', lead: '—', blocker: null, due: '—', activity: 'Updated Sep 21' };
@@ -165,6 +228,7 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
       // 510k creates no submission spine. Program anchor preflight → no anchor → insert.
       .mockResolvedValueOnce({ rows: [{ has_column: 1, workspace_count: 1, workspace_id: 55 }] })
       .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 55, name: 'Fixture client' }] }) // current intake locks the active owned selection
       .mockResolvedValueOnce({ rows: [{ id: 9001 }] })
       .mockResolvedValueOnce({ rows: [] })                    // audit_logs INSERT
       .mockResolvedValueOnce({ rows: [] })                    // COMMIT
@@ -173,7 +237,7 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
       .mockResolvedValueOnce({ rows: [] });                   // governed readiness: a new program has no governed sections yet
     const res = await request(app(2, 1)).post('/api/c2c/projects').send({
       name: '[Demo · MDX] NeuroPanel-Dx 510(k)', productName: 'NeuroPanel-Dx', programType: '510k', productType: 'ivd',
-      primaryAgency: 'FDA', indication: 'Differential diagnosis of viral CNS infection',
+      primaryAgency: 'FDA', submissionTypeId: 'us_510k_ivd', indication: 'Differential diagnosis of viral CNS infection',
       deviceClassification: { deviceClass: 'II', productCode: 'QNX', regulationNumber: '866.3985', reviewPanel: 'Microbiology', predicateK: 'K223456', predicateName: 'ViroPanel CNS', flags: ['softwareAiMl', 'cyberDevice', 'clinicalData'] },
     });
     expect(res.status).toBe(201);
@@ -188,11 +252,40 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
     // The card carries the same figure, not the stored progress_percent 0 the
     // re-select used to project (the mocked card row still holds that 0).
     expect(res.body.data).toMatchObject({ readiness: null, readinessState: 'no_sections' });
-    expect(res.body.program).toMatchObject({ device_class: 'II', product_code: 'QNX', predicate_devices: [{ kNumber: 'K223456' }], review_panel: 'Microbiology', product_type: 'ivd' });
+    expect(res.body.program).toMatchObject({ submission_type_id: 'us_510k_ivd', device_class: 'II', product_code: 'QNX', predicate_devices: [{ kNumber: 'K223456' }], review_panel: 'Microbiology', product_type: 'ivd' });
 
     // The detail re-select is the SAME SQL the read issues (one projection, one serializer).
     const detailSql = String(query.mock.calls[query.mock.calls.length - 2][0]);
     expect(detailSql).toContain('p.device_class');
     expect(detailSql).toContain('o.name AS sponsor_name');
+    expect(res.body.program).not.toHaveProperty('metadata');
+    expect(JSON.stringify(res.body.program)).not.toContain('createdVia');
+    query.mockResolvedValueOnce({ rows: [deviceRow()] });
+    const read = await request(app(2)).get(`/api/c2c/projects/${PID}`);
+    expect(read.status).toBe(200);
+    const { canChange, ...detail } = read.body;
+    expect(canChange).toBe(true);
+    expect(detail).toEqual(res.body.program);
+
   });
+});
+
+
+describe('project detail retains exact public filing identity', () => {
+  it.each(['US_NDA', 'US_BLA', 'US_351K', 'US_505B2'])('retains %s without leaking raw metadata', registryId => {
+    const value = serializeProgramDetail({ ...drugRow(), program_type: 'bla', primary_agency: 'FDA',
+      metadata: { submissionTypeId: registryId.toLowerCase(), createdVia: 'private-internal-marker' } });
+    expect(value.registry_id).toBe(registryId); expect(value).not.toHaveProperty('metadata');
+    expect(JSON.stringify(value)).not.toContain('private-internal-marker');
+  });
+  it('uses only canonical type/agency fallback and keeps unknown choices unconfirmed', () => {
+    expect(serializeProgramDetail({ ...drugRow(), metadata: {} }).registry_id).toBe('US_IND');
+    expect(serializeProgramDetail({ ...drugRow(), primary_agency: 'EMA', metadata: {} }).registry_id).toBeNull();
+    expect(serializeProgramDetail({ ...drugRow(), metadata: { submissionTypeId: 'not-a-filing' } }).registry_id).toBeNull();
+  });
+});
+
+
+it.each([{ value: 42 }, { value: {} }, { value: [] }])('keeps malformed recorded filing identity unconfirmed: %j', ({ value }) => {
+  expect(serializeProgramDetail({ ...drugRow(), metadata: { submissionTypeId: value } }).registry_id).toBeNull();
 });

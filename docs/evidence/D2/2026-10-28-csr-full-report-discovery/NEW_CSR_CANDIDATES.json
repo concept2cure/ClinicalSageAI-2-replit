@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "discoveredAt": "2026-10-28",
+  "status": "discovery_only_not_downloaded_or_admitted",
+  "purpose": "Full-report discovery for AnA CSR medical-writing benchmarking, not automatic model training",
+  "records": [
+    {
+      "id": "nichd-colt1",
+      "title": "BPCA COLT1 — Pediatric Lithium Pharmacokinetic and Tolerability Study",
+      "source": "NICHD DASH",
+      "url": "https://dash.nichd.nih.gov/study/16018",
+      "documentLabel": "COLT1_Clinical Study Report-redacted.pdf",
+      "classification": "clinical_study_report_redacted",
+      "documentPresence": "listed_on_source_page",
+      "priority": "high",
+      "why": "Complex multi-phase design, PK, randomized withdrawal and long-term safety"
+    },
+    {
+      "id": "nichd-fluc-safety",
+      "title": "BPCA Fluconazole Safety in Premature Infants",
+      "source": "NICHD DASH",
+      "url": "https://dash.nichd.nih.gov/study/19811",
+      "documentLabel": "Fluconazole_Safety_Clinical_Study_Report.pdf",
+      "classification": "clinical_study_report",
+      "documentPresence": "listed_on_source_page",
+      "priority": "high",
+      "why": "Infectious disease and detailed safety signal reporting"
+    },
+    {
+      "id": "gsk-205013",
+      "title": "GSK Trial 205013",
+      "source": "GSK Study Register",
+      "url": "https://www.gsk-studyregister.com/trials/205013",
+      "documentLabel": "Clinical study report; protocol; statistical analysis plan",
+      "classification": "csr_scope_unverified",
+      "documentPresence": "download_link_listed",
+      "priority": "high",
+      "why": "Potential report-protocol-SAP cross-document reconciliation"
+    },
+    {
+      "id": "gsk-116073",
+      "title": "GSK Trial 116073",
+      "source": "GSK Study Register",
+      "url": "https://www.gsk-studyregister.com/trials/116073",
+      "documentLabel": "Clinical study report; protocol; scientific result summary",
+      "classification": "csr_scope_unverified",
+      "documentPresence": "download_link_listed",
+      "priority": "medium",
+      "why": "CSR-to-synopsis consistency"
+    },
+    {
+      "id": "gsk-116266",
+      "title": "GSK Trial 116266",
+      "source": "GSK Study Register",
+      "url": "https://www.gsk-studyregister.com/trials/116266",
+      "documentLabel": "Clinical study report; protocol; scientific result summary",
+      "classification": "csr_scope_unverified",
+      "documentPresence": "download_link_listed",
+      "priority": "medium",
+      "why": "Report and protocol cross-referencing"
+    },
+    {
+      "id": "gsk-113398",
+      "title": "GSK Trial 113398",
+      "source": "GSK Study Register",
+      "url": "https://www.gsk-studyregister.com/trials/113398",
+      "documentLabel": "Clinical study report; scientific result summary",
+      "classification": "csr_scope_unverified",
+      "documentPresence": "download_link_listed",
+      "priority": "medium",
+      "why": "Report/synopsis comparisons"
+    },
+    {
+      "id": "gsk-201037",
+      "title": "GSK Trial 201037",
+      "source": "GSK Study Register",
+      "url": "https://www.gsk-studyregister.com/trials/201037",
+      "documentLabel": "Clinical study report",
+      "classification": "csr_scope_unverified",
+      "documentPresence": "download_link_listed",
+      "priority": "medium",
+      "why": "Additional CSR structure and writing benchmark"
+    }
+  ],
+  "rules": [
+    "Do not equate source listing with successful acquisition",
+    "Compare source identifiers and SHA-256 against existing retained manifest before any download",
+    "Preserve every original and derivative after authorized acquisition",
+    "GSK and sponsor portal rights require review; public visibility does not grant commercial model-training rights",
+    "EMA Policy 0070 general-access terms may prohibit download, saving and commercial use; do not scrape or mirror",
+    "Classify full report body versus synopsis only after inspecting acquired original",
+    "No production Cortex admission without document-level rights, completeness and source review",
+    "Never treat comparator clinical outcomes as LMN-201 client data"
+  ]
+}

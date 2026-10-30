@@ -1,0 +1,3 @@
+# Mutation: viewer-offered
+ × Assign makes a deliverable one person’s task > is not offered to a viewer, whose task writes the server refuses 79ms
+      Tests  1 failed | 12 passed (13)

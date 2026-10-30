@@ -119,6 +119,19 @@ afterAll(async () => {
 });
 
 describe('Apps catalog module descriptions', () => {
+  it('keeps folded dossier identities deprecated across replay without deleting their rows', async () => {
+    await pg.exec(`INSERT INTO available_modules (module_id, name, description, category, metadata)
+      VALUES ('dossier', 'Existing dossier', '', 'Documents', '{}'),
+             ('dossier-map', 'Existing dossier map', '', 'Documents', '{}')
+      ON CONFLICT (module_id) DO UPDATE SET metadata = '{}'`);
+    const source = fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql'), 'utf8');
+    await pg.exec(source);
+    await pg.exec(source);
+    const result = await pg.query<{ module_id: string; deprecated: string }>(`SELECT module_id, metadata->>'deprecated' AS deprecated
+      FROM available_modules WHERE module_id IN ('dossier', 'dossier-map') ORDER BY module_id`);
+    expect(result.rows).toEqual([{ module_id: 'dossier', deprecated: 'true' }, { module_id: 'dossier-map', deprecated: 'true' }]);
+  });
+
   it('replays every catalog writer in the deploy set, in deploy order', () => {
     expect(CATALOG_MIGRATIONS.length).toBeGreaterThanOrEqual(13);
     // The pair whose order decided the defect: the honest rewrite, then the
@@ -216,5 +229,435 @@ describe('Apps catalog module descriptions', () => {
     expect(row, 'haq-manager missing from the catalog').toBeDefined();
     expect(row!.description).not.toMatch(/\bsign(ed|ature)/i);
     expect(row!.description).toMatch(/approv/i);
+  });
+});
+
+
+describe('Retired filing catalogue subscriptions', () => {
+  it('fresh replay neither creates a retired filing identity nor requires it for packaging', async () => {
+    const reconcile = fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql'), 'utf8');
+    const packaging = fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260823_module_catalog_commercial_packaging.sql'), 'utf8');
+    for (let replay = 0; replay < 2; replay += 1) {
+      await pg.exec(reconcile);
+      await pg.exec(packaging);
+      expect((await pg.query("SELECT module_id FROM available_modules WHERE module_id = 'filings-catalog'")).rows).toEqual([]);
+      expect((await pg.query("SELECT module_id FROM available_modules WHERE module_id = 'projects' AND COALESCE((metadata->>'deprecated')::boolean, false) = false")).rows).toEqual([{ module_id: 'projects' }]);
+    }
+  });
+
+  it('keeps an existing filing catalogue and subscription retired across catalogue and packaging replay', async () => {
+    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (210010, 'A2.10 historical subscriber', 'a210-historical-subscriber');
+      INSERT INTO available_modules (module_id, name, description, category, metadata)
+      VALUES ('filings-catalog', 'Historical filing catalogue', '', 'Reference', '{"legacyMarker":"kept","tiers":["recorded"]}')
+      ON CONFLICT (module_id) DO UPDATE SET metadata = '{"legacyMarker":"kept","tiers":["recorded"]}';
+      ALTER TABLE module_subscriptions ADD CONSTRAINT a210_subscription_retirement_fk
+        FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;
+      INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata)
+      VALUES (210010, 'filings-catalog', false, '{"historicalSubscription":"kept"}');`);
+    const before = await pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 210010');
+    const reconcile = fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql'), 'utf8');
+    const packaging = fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260823_module_catalog_commercial_packaging.sql'), 'utf8');
+    for (let replay = 0; replay < 2; replay += 1) { await pg.exec(reconcile); await pg.exec(packaging); }
+    const catalog = await pg.query<{ metadata: Record<string, unknown> }>("SELECT metadata FROM available_modules WHERE module_id='filings-catalog'");
+    expect(catalog.rows).toHaveLength(1);
+    expect(catalog.rows[0].metadata).toEqual({ deprecated: true, legacyMarker: 'kept', tiers: ['recorded'] });
+    const after = await pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 210010');
+    expect(after.rows).toEqual(before.rows);
+  });
+});
+
+/* The device task workbench folded into Tasks (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/). Both catalogue writers
+   were amended in place (CLAUDE.md Rule 1): a fresh database never gets the row,
+   and a deployed one keeps it, deprecated, with its subscriptions. */
+describe('Retired device task workbench', () => {
+  const reconcile = () => fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql'), 'utf8');
+  const packaging = () => fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260823_module_catalog_commercial_packaging.sql'), 'utf8');
+
+  it('fresh replay neither creates device-tasks nor requires it for packaging, and Tasks stays offered', async () => {
+    for (let replay = 0; replay < 2; replay += 1) {
+      await pg.exec(reconcile());
+      await pg.exec(packaging());
+      expect((await pg.query("SELECT module_id FROM available_modules WHERE module_id = 'device-tasks'")).rows).toEqual([]);
+      expect((await pg.query("SELECT module_id FROM available_modules WHERE module_id = 'tasks' AND COALESCE((metadata->>'deprecated')::boolean, false) = false")).rows).toEqual([{ module_id: 'tasks' }]);
+    }
+  });
+
+  it('keeps an existing device-tasks row and its subscription, deprecated, across catalogue and packaging replay', async () => {
+    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291029, 'Device tasks historical subscriber', 'device-tasks-historical-subscriber');
+      INSERT INTO available_modules (module_id, name, description, category, metadata)
+      VALUES ('device-tasks', 'Device submission workload', '', 'Review & govern', '{"legacyMarker":"kept","tiers":["standard"]}')
+      ON CONFLICT (module_id) DO UPDATE SET metadata = '{"legacyMarker":"kept","tiers":["standard"]}';
+      ALTER TABLE module_subscriptions ADD CONSTRAINT device_tasks_subscription_retirement_fk
+        FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;
+      INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata)
+      VALUES (291029, 'device-tasks', true, '{"historicalSubscription":"kept"}');`);
+    const before = await pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291029');
+    for (let replay = 0; replay < 2; replay += 1) { await pg.exec(reconcile()); await pg.exec(packaging()); }
+    const catalog = await pg.query<{ metadata: Record<string, unknown> }>("SELECT metadata FROM available_modules WHERE module_id='device-tasks'");
+    expect(catalog.rows).toHaveLength(1);
+    expect(catalog.rows[0].metadata).toEqual({ deprecated: true, legacyMarker: 'kept', tiers: ['standard'] });
+    const after = await pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291029');
+    expect(after.rows).toEqual(before.rows);
+  });
+});
+
+/* The Artifacts center and the device vault folded into the Vault (D2, fold F3,
+   2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/). Both catalogue
+   writers were amended in place (CLAUDE.md Rule 1): a fresh database never gets
+   either row, and a deployed one keeps each, deprecated, with its subscriptions. */
+describe('Retired Artifacts center and device vault', () => {
+  const reconcile = () => fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql'), 'utf8');
+  const packaging = () => fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260823_module_catalog_commercial_packaging.sql'), 'utf8');
+  const RETIRED = [
+    { id: 'artifacts-center', name: 'Artifacts Center', category: 'Evidence & data', tier: 'free', org: 291030 },
+    { id: 'device-vault', name: 'Device artifact vault', category: 'Evidence & data', tier: 'standard', org: 291031 },
+  ];
+
+  it('fresh replay creates neither row nor requires either for packaging, and the Vault stays offered at free', async () => {
+    for (let replay = 0; replay < 2; replay += 1) {
+      await pg.exec(reconcile());
+      await pg.exec(packaging());
+      for (const { id } of RETIRED) {
+        expect((await pg.query('SELECT module_id FROM available_modules WHERE module_id = $1', [id])).rows, id).toEqual([]);
+      }
+      const vault = await pg.query<{ metadata: { tiers?: string[]; deprecated?: boolean } }>(
+        "SELECT metadata FROM available_modules WHERE module_id = 'vault'");
+      expect(vault.rows).toHaveLength(1);
+      expect(vault.rows[0].metadata.deprecated ?? false).toBe(false);
+      expect(vault.rows[0].metadata.tiers).toEqual(['free']);
+    }
+  });
+
+  it('keeps each existing row and its subscription, deprecated, across catalogue and packaging replay', async () => {
+    for (const r of RETIRED) {
+      await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (${r.org}, 'Historical subscriber ${r.id}', 'historical-${r.id}');`);
+      await pg.query(
+        `INSERT INTO available_modules (module_id, name, description, category, metadata)
+         VALUES ($1, $2, '', $3, $4::json)
+         ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+        [r.id, r.name, r.category, JSON.stringify({ legacyMarker: 'kept', tiers: [r.tier] })],
+      );
+      await pg.query(
+        `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES ($1, $2, true, '{"historicalSubscription":"kept"}')`,
+        [r.org, r.id],
+      );
+    }
+    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT f3_vault_fold_subscription_retirement_fk
+      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
+    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id IN (291030, 291031) ORDER BY organization_id');
+    const before = await subs();
+    expect(before.rows).toHaveLength(2);
+    for (let replay = 0; replay < 2; replay += 1) { await pg.exec(reconcile()); await pg.exec(packaging()); }
+    for (const r of RETIRED) {
+      const catalog = await pg.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [r.id]);
+      expect(catalog.rows, r.id).toHaveLength(1);
+      expect(catalog.rows[0].metadata, r.id).toEqual({ deprecated: true, legacyMarker: 'kept', tiers: [r.tier] });
+    }
+    expect((await subs()).rows).toEqual(before.rows);
+  });
+});
+
+/* The Part 11 console folded into Audit trail (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/). It never had a
+   catalogue row (21 CFR §11.10(e): it is not licensable), but 20260810 kept it on
+   step 1's keep-list, so a row added by any other path stayed live for a screen
+   that no longer exists. Amended in place (CLAUDE.md Rule 1): off the keep-list,
+   so such a row is deprecated on replay with its subscriptions kept. Audit trail
+   stays off the catalogue and on the keep-list. */
+describe('Retired Part 11 console', () => {
+  const reconcile = () => fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql'), 'utf8');
+  const packaging = () => fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260823_module_catalog_commercial_packaging.sql'), 'utf8');
+
+  it('fresh replay creates no part11-console row, and Audit trail stays uncatalogued', async () => {
+    for (let replay = 0; replay < 2; replay += 1) {
+      await pg.exec(reconcile());
+      await pg.exec(packaging());
+      for (const id of ['part11-console', 'audit-trail']) {
+        expect((await pg.query('SELECT module_id FROM available_modules WHERE module_id = $1', [id])).rows, id).toEqual([]);
+      }
+    }
+  });
+
+  it('deprecates a part11-console row added by another path, and keeps its subscription, across replay', async () => {
+    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291032, 'Historical subscriber part11-console', 'historical-part11-console');`);
+    await pg.query(
+      `INSERT INTO available_modules (module_id, name, description, category, metadata)
+       VALUES ('part11-console', '21 CFR Part 11 console', '', 'Review & govern', '{"legacyMarker":"kept","tiers":[]}'::json)
+       ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+    );
+    await pg.query(
+      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES (291032, 'part11-console', true, '{"historicalSubscription":"kept"}')`,
+    );
+    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT part11_console_fold_subscription_retirement_fk
+      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
+    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291032');
+    const before = await subs();
+    expect(before.rows).toHaveLength(1);
+    for (let replay = 0; replay < 2; replay += 1) { await pg.exec(reconcile()); await pg.exec(packaging()); }
+    const catalog = await pg.query<{ metadata: Record<string, unknown> }>("SELECT metadata FROM available_modules WHERE module_id = 'part11-console'");
+    expect(catalog.rows).toHaveLength(1);
+    expect(catalog.rows[0].metadata).toEqual({ deprecated: true, legacyMarker: 'kept', tiers: [] });
+    expect((await subs()).rows).toEqual(before.rows);
+  });
+});
+
+/* The eCTD publishing reference folded into eCTD Compile (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/). Its row was written
+   only by migrations/20260814j (ON CONFLICT DO NOTHING), which runs before
+   20260810 in the deploy set; 20260810 kept it off step 1's deprecation and healed
+   earlier ones (step 1b); 20260823 gave it a tier. All three were amended in place
+   (CLAUDE.md Rule 1): no insert, off the keep-list, no heal step, no packaging
+   row. A fresh database never holds the row; a deployed one keeps it, its
+   recorded tier and its subscriptions, deprecated on every replay, and nothing
+   clears the flag. */
+describe('Retired eCTD publishing reference', () => {
+  const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
+  const WRITERS = [
+    'migrations/20260814j_catalog_missing_product_surfaces.sql',
+    'db/migrations/20260810_reconcile_module_catalog.sql',
+    'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+  ];
+  const meta = async (db: PGlite, id: string) =>
+    (await db.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [id])).rows;
+
+  it('a fresh database replaying the whole catalogue set twice never creates the row nor requires it for packaging, and eCTD Compile stays offered', async () => {
+    expect(WRITERS.every((f) => CATALOG_MIGRATIONS.includes(f))).toBe(true);
+    expect(CATALOG_MIGRATIONS.indexOf(WRITERS[0])).toBeLessThan(CATALOG_MIGRATIONS.indexOf(WRITERS[1]));
+    const fresh = new PGlite();
+    try {
+      for (const ddl of baseDdl()) await fresh.exec(ddl);
+      for (let replay = 0; replay < 2; replay += 1) {
+        for (const file of CATALOG_MIGRATIONS) await fresh.exec(read(file));
+        expect(await meta(fresh, 'ectd-publishing'), `replay ${replay}`).toEqual([]);
+        const compile = await meta(fresh, 'ectd-compile');
+        expect(compile[0].metadata.deprecated ?? false).toBe(false);
+        expect(compile[0].metadata.tiers).toEqual(['standard']);
+      }
+    } finally {
+      await fresh.close();
+    }
+  }, 120_000);
+
+  it('keeps a deployed row, its tier and its subscription, deprecated, across catalogue and packaging replay', async () => {
+    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291033, 'Historical subscriber ectd-publishing', 'historical-ectd-publishing');`);
+    // As a deployed database holds it today: healed by the old step 1b, tiered by the old packaging row.
+    await pg.query(
+      `INSERT INTO available_modules (module_id, name, description, category, metadata)
+       VALUES ('ectd-publishing', 'Publishing centre', '', 'Submissions', '{"legacyMarker":"kept","tiers":["standard"]}'::json)
+       ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+    );
+    await pg.query(
+      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES (291033, 'ectd-publishing', true, '{"historicalSubscription":"kept"}')`,
+    );
+    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT ectd_publishing_fold_subscription_retirement_fk
+      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
+    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291033');
+    const before = await subs();
+    expect(before.rows).toHaveLength(1);
+    for (let replay = 0; replay < 2; replay += 1) {
+      for (const file of WRITERS) await pg.exec(read(file));
+      expect(await meta(pg, 'ectd-publishing'), `replay ${replay}`).toEqual([
+        { metadata: { deprecated: true, legacyMarker: 'kept', tiers: ['standard'] } },
+      ]);
+    }
+    expect((await subs()).rows).toEqual(before.rows);
+  });
+});
+
+/* Risk management and Design controls folded into Engineering evidence (fold
+   F1c), and IVD completeness into IVDR evidence (fold F2) (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/). Every writer
+   of the three rows was amended in place (CLAUDE.md Rule 1): 20260810's keep-list
+   and upsert, 20260823's packaging and customer-copy rows (risk,
+   ivd-completeness), 20260814j's insert and 20260823_module_catalog_mdx_registers'
+   upsert and assertion (design-controls). A fresh database never holds the rows;
+   a deployed one keeps each, deprecated, with its tier and its subscriptions,
+   which carry to the target (decision P-61 item 4). */
+describe('Retired risk, design-controls and ivd-completeness', () => {
+  const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
+  const WRITERS = [
+    'migrations/20260814j_catalog_missing_product_surfaces.sql',
+    'db/migrations/20260810_reconcile_module_catalog.sql',
+    'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+    'db/migrations/20260823_module_catalog_customer_copy.sql',
+    'db/migrations/20260823_module_catalog_mdx_registers.sql',
+  ];
+  const RETIRED = [
+    { id: 'risk', name: 'Risk management', org: 291034 },
+    { id: 'design-controls', name: 'Design controls (DHF)', org: 291035 },
+    { id: 'ivd-completeness', name: 'IVD completeness', org: 291036 },
+  ];
+  const meta = async (db: PGlite, id: string) =>
+    (await db.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [id])).rows;
+
+  it('a fresh database replaying the whole catalogue set twice holds none of the three, and both targets and human factors stay offered at standard', async () => {
+    expect(WRITERS.every((f) => CATALOG_MIGRATIONS.includes(f))).toBe(true);
+    const fresh = new PGlite();
+    try {
+      for (const ddl of baseDdl()) await fresh.exec(ddl);
+      for (let replay = 0; replay < 2; replay += 1) {
+        for (const file of CATALOG_MIGRATIONS) await fresh.exec(read(file));
+        for (const { id } of RETIRED) expect(await meta(fresh, id), `${id}, replay ${replay}`).toEqual([]);
+        for (const id of ['device-engineering', 'device-diagnostics', 'human-factors']) {
+          const [row] = await meta(fresh, id);
+          expect(row?.metadata.deprecated ?? false, id).toBe(false);
+          expect(row?.metadata.tiers, id).toEqual(['standard']);
+        }
+      }
+    } finally {
+      await fresh.close();
+    }
+  }, 120_000);
+
+  it('keeps each deployed row, its tier and its subscription, deprecated, across replay of every writer', async () => {
+    for (const r of RETIRED) {
+      await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (${r.org}, 'Historical subscriber ${r.id}', 'historical-${r.id}');`);
+      // As a deployed database holds it today: live, packaged at standard.
+      await pg.query(
+        `INSERT INTO available_modules (module_id, name, description, category, metadata)
+         VALUES ($1, $2, '', 'Folded', '{"legacyMarker":"kept","tiers":["standard"],"industries":[]}'::json)
+         ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+        [r.id, r.name],
+      );
+      await pg.query(
+        `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES ($1, $2, true, '{"historicalSubscription":"kept"}')`,
+        [r.org, r.id],
+      );
+    }
+    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT f1c_f2_fold_subscription_retirement_fk
+      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
+    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id IN (291034, 291035, 291036) ORDER BY organization_id');
+    const before = await subs();
+    expect(before.rows).toHaveLength(3);
+    for (let replay = 0; replay < 2; replay += 1) {
+      for (const file of WRITERS) await pg.exec(read(file));
+      for (const r of RETIRED) {
+        expect(await meta(pg, r.id), `${r.id}, replay ${replay}`).toEqual([
+          { metadata: { deprecated: true, legacyMarker: 'kept', tiers: ['standard'], industries: [] } },
+        ]);
+      }
+    }
+    expect((await subs()).rows).toEqual(before.rows);
+  });
+});
+
+/* Fold F5 item 2 (D2, 2026-10-29; decision P-61 item 2;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/). The
+   organization-wide blocker list (device-validation) retired: a blocker belongs
+   to a filing, from that filing's deterministic readiness. Its writers were
+   amended in place (CLAUDE.md Rule 1): 20260810's keep-list and upsert, and
+   20260823's packaging row. A fresh database never holds the row; a deployed one
+   keeps it, deprecated, with its tier and its subscriptions, which carry to
+   Submission Center (decision P-61 item 4). */
+describe('Retired organization-wide blocker list', () => {
+  const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
+  const WRITERS = [
+    'db/migrations/20260810_reconcile_module_catalog.sql',
+    'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+  ];
+  const meta = async (db: PGlite, id: string) =>
+    (await db.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [id])).rows;
+
+  it('a fresh database replaying the whole catalogue set twice never holds device-validation, and Submission Center stays offered at standard', async () => {
+    expect(WRITERS.every((f) => CATALOG_MIGRATIONS.includes(f))).toBe(true);
+    const fresh = new PGlite();
+    try {
+      for (const ddl of baseDdl()) await fresh.exec(ddl);
+      for (let replay = 0; replay < 2; replay += 1) {
+        for (const file of CATALOG_MIGRATIONS) await fresh.exec(read(file));
+        expect(await meta(fresh, 'device-validation'), `replay ${replay}`).toEqual([]);
+        const [row] = await meta(fresh, 'submission-center');
+        expect(row?.metadata.deprecated ?? false).toBe(false);
+        expect(row?.metadata.tiers).toEqual(['standard']);
+      }
+    } finally {
+      await fresh.close();
+    }
+  }, 120_000);
+
+  it('keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer', async () => {
+    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291037, 'Historical subscriber device-validation', 'historical-device-validation');`);
+    // As a deployed database holds it today: live, packaged at standard.
+    await pg.query(
+      `INSERT INTO available_modules (module_id, name, description, category, metadata)
+       VALUES ('device-validation', 'Submission blockers', '', 'Submit & file', '{"legacyMarker":"kept","tiers":["standard"],"industries":[]}'::json)
+       ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+    );
+    await pg.query(
+      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES (291037, 'device-validation', true, '{"historicalSubscription":"kept"}')`,
+    );
+    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT f5_validation_subscription_retirement_fk
+      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
+    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291037');
+    const before = await subs();
+    expect(before.rows).toHaveLength(1);
+    for (let replay = 0; replay < 2; replay += 1) {
+      for (const file of WRITERS) await pg.exec(read(file));
+      expect(await meta(pg, 'device-validation'), `replay ${replay}`).toEqual([
+        { metadata: { deprecated: true, legacyMarker: 'kept', tiers: ['standard'], industries: [] } },
+      ]);
+    }
+    expect((await subs()).rows).toEqual(before.rows);
+  });
+});
+
+/* Fold F5 item 1 (D2, 2026-10-30; decision P-61 item 1;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/). The device
+   submission-packages screen (device-submission) folded into Submission
+   Center's device filings, over the one device-filing store, estar_submissions.
+   Its writers were amended in place (CLAUDE.md Rule 1): 20260810's keep-list and
+   upsert, and 20260823's packaging row. A fresh database never holds the row; a
+   deployed one keeps it, deprecated, with its tier and its subscriptions, which
+   carry to Submission Center (decision P-61 item 4). */
+describe('Retired device submission packages', () => {
+  const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
+  const WRITERS = [
+    'db/migrations/20260810_reconcile_module_catalog.sql',
+    'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+  ];
+  const meta = async (db: PGlite, id: string) =>
+    (await db.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [id])).rows;
+
+  it('a fresh database replaying the whole catalogue set twice never holds device-submission, and Submission Center stays offered at standard', async () => {
+    expect(WRITERS.every((f) => CATALOG_MIGRATIONS.includes(f))).toBe(true);
+    const fresh = new PGlite();
+    try {
+      for (const ddl of baseDdl()) await fresh.exec(ddl);
+      for (let replay = 0; replay < 2; replay += 1) {
+        for (const file of CATALOG_MIGRATIONS) await fresh.exec(read(file));
+        expect(await meta(fresh, 'device-submission'), `replay ${replay}`).toEqual([]);
+        const [row] = await meta(fresh, 'submission-center');
+        expect(row?.metadata.deprecated ?? false).toBe(false);
+        expect(row?.metadata.tiers).toEqual(['standard']);
+      }
+    } finally {
+      await fresh.close();
+    }
+  }, 120_000);
+
+  it('keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer', async () => {
+    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291038, 'Historical subscriber device-submission', 'historical-device-submission');`);
+    // As a deployed database holds it today: live, packaged at standard.
+    await pg.query(
+      `INSERT INTO available_modules (module_id, name, description, category, metadata)
+       VALUES ('device-submission', 'Device submission packages', '', 'Submit & file', '{"legacyMarker":"kept","tiers":["standard"],"industries":[]}'::json)
+       ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+    );
+    await pg.query(
+      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES (291038, 'device-submission', true, '{"historicalSubscription":"kept"}')`,
+    );
+    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT f5_submission_subscription_retirement_fk
+      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
+    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291038');
+    const before = await subs();
+    expect(before.rows).toHaveLength(1);
+    for (let replay = 0; replay < 2; replay += 1) {
+      for (const file of WRITERS) await pg.exec(read(file));
+      expect(await meta(pg, 'device-submission'), `replay ${replay}`).toEqual([
+        { metadata: { deprecated: true, legacyMarker: 'kept', tiers: ['standard'], industries: [] } },
+      ]);
+    }
+    expect((await subs()).rows).toEqual(before.rows);
   });
 });

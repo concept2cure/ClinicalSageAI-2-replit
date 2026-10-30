@@ -1,0 +1,2 @@
+ × server/services/cmc/__tests__/specification-history.test.ts > the read asks the database the right question > scopes the history to the caller’s tenant, in SQL
+      Tests  1 failed | 23 passed (24)

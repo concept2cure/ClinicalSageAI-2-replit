@@ -34,16 +34,16 @@ describe('EmptyState — the four-part contract', () => {
     const onAct = vi.fn();
     render(
       <EmptyState
-        title="Open a program to build its Module 3"
+        title="Open a project to build its Module 3"
         hint="The build state is per-project."
-        action={{ label: 'Choose or create a program', onAct }}
+        action={{ label: 'Choose or create a project', onAct }}
         regulation="Serves the CTD Module 3 record (ICH M4Q)"
       />,
     );
-    expect(screen.getByText('Open a program to build its Module 3')).toBeTruthy();
+    expect(screen.getByText('Open a project to build its Module 3')).toBeTruthy();
     expect(screen.getByText('The build state is per-project.')).toBeTruthy();
     expect(screen.getByText('Serves the CTD Module 3 record (ICH M4Q)')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Choose or create a program' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose or create a project' }));
     expect(onAct).toHaveBeenCalledTimes(1);
     /* An empty state is a POLITE status (UI standards §10) — the contract must
        not have promoted it to an interruption. */
@@ -59,14 +59,14 @@ describe('EmptyState — the four-part contract', () => {
         title="Couldn't load the quality design"
         hint="The service did not respond."
         retry={retry}
-        action={{ label: 'Choose or create a program', onAct }}
+        action={{ label: 'Choose or create a project', onAct }}
         regulation="Serves the quality design record (ICH Q8, Q9 and Q10)"
       />,
     );
     /* Delegated to ErrorState: assertive, with recovery — and without the
        contract slots that belong to genuine emptiness. */
     expect(screen.getByRole('alert')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Choose or create a program' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Choose or create a project' })).toBeNull();
     expect(screen.queryByText(/ICH Q8, Q9 and Q10/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(retry).toHaveBeenCalledTimes(1);
@@ -76,9 +76,11 @@ describe('EmptyState — the four-part contract', () => {
   it('openProgramAction navigates when it holds nav, and reaches the shell when it does not', () => {
     const nav = vi.fn();
     const action = openProgramAction(nav);
-    expect(action.label).toBe('Choose or create a program');
+    expect(action.label).toBe('Choose or create a project');
     action.onAct();
-    expect(nav).toHaveBeenCalledWith('mission-control');
+    /* Slice 0: Projects, where a project is opened and New project creates one. It was Mission Control,
+       which is outside the release, so every "Choose or create a project" opened a lock. */
+    expect(nav).toHaveBeenCalledWith('projects');
 
     /* No nav threaded → the event channel, NOT `undefined`.
      *
@@ -110,9 +112,11 @@ describe('the passive instruction is retired from the converted surfaces', () =>
   const CONVERTED = ['CmcModule3Build.tsx', 'CmcQuality.tsx', 'CmcModule.tsx'];
 
   for (const file of CONVERTED) {
-    it(`${file} no longer says "Select a program" as prose`, () => {
+    it(`${file} no longer says "Select a program" (or "Select a project") as prose`, () => {
       const src = fs.readFileSync(path.join(surfacesDir, file), 'utf8');
-      expect(src.includes('Select a program'), `${file} reintroduced the passive instruction`).toBe(
+      // Either noun: decision 12 made "project" the word, so the retired
+      // instruction comes back as "Select a project" if it comes back at all.
+      expect(/Select a pro(gram|ject)\b/.test(src), `${file} reintroduced the passive instruction`).toBe(
         false,
       );
     });

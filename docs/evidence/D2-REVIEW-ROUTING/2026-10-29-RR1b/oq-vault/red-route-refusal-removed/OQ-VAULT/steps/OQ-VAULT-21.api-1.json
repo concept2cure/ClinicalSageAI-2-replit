@@ -1,0 +1,105 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/projects",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ-002 Where-used program 20261029102745",
+      "programType": "ind",
+      "productType": "drug",
+      "primaryAgency": "FDA",
+      "indication": "Validation exercise",
+      "priority": "medium"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 231,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": "6478ef23-84be-4008-ad98-642961e18d56",
+        "title": "OQ-002 Where-used program 20261029102745",
+        "ws": "Biotech",
+        "pathway": "other",
+        "code": "OQ-002-HHE7",
+        "stage": "Planning",
+        "status": "active",
+        "lead": "OQ Runner",
+        "blocker": null,
+        "due": "—",
+        "due_date": null,
+        "activity": "Updated Oct 29",
+        "client_workspace_id": 3,
+        "client_name": "OQ-002 Validation Org (RR1b)",
+        "readiness": 0,
+        "readinessState": "measured"
+      },
+      "program": {
+        "id": "6478ef23-84be-4008-ad98-642961e18d56",
+        "code": "OQ-002-HHE7",
+        "name": "OQ-002 Where-used program 20261029102745",
+        "program_type": "ind",
+        "status": "active",
+        "phase": "planning",
+        "priority": "medium",
+        "description": null,
+        "product_name": "OQ-002 Where-used program 20261029102745",
+        "indication": "Validation exercise",
+        "intended_use": null,
+        "primary_agency": "FDA",
+        "target_agencies": [
+          "FDA"
+        ],
+        "target_submission_date": null,
+        "actual_submission_date": null,
+        "approval_date": null,
+        "lead_user_id": 1,
+        "team_members": [],
+        "created_at": "2026-10-29T10:28:31.949Z",
+        "updated_at": "2026-10-29T10:28:31.949Z",
+        "application_number": null,
+        "product_type": "drug",
+        "device_class": null,
+        "regulatory_path": null,
+        "product_code": null,
+        "sponsor_name": "OQ-002 Validation Org (RR1b)",
+        "client_workspace_id": 3,
+        "client_name": "OQ-002 Validation Org (RR1b)",
+        "registry_id": "US_IND",
+        "submission_type_id": null,
+        "predicate_devices": [],
+        "review_panel": null,
+        "regulation_number": null,
+        "device_flags": null,
+        "readiness": 0,
+        "readinessState": "measured",
+        "readinessAsOf": "2026-10-29T10:28:32.120Z"
+      },
+      "meta": {
+        "created": true,
+        "organizationId": 5,
+        "actorUserId": 1,
+        "clientWorkspaceId": 3,
+        "clientWorkspaceName": "OQ-002 Validation Org (RR1b)",
+        "documentId": "doc_d77973c645e64342b5d3441802497f71",
+        "scaffoldedSections": 92,
+        "marketSupport": {
+          "tier": "build_and_sequence",
+          "label": "Build and sequence",
+          "reason": "Authored, built and frozen here as an eCTD sequence for FDA. Transmit not proven: FDA onboarding, submission requirements and an accepted test submission have not been verified.",
+          "appliesTo": [
+            "US_IND",
+            "US_IND_AMENDMENT"
+          ]
+        },
+        "submissionId": 23,
+        "submissionCreated": true,
+        "projectAnchorId": 17,
+        "projectAnchorCreated": true
+      }
+    }
+  }
+}

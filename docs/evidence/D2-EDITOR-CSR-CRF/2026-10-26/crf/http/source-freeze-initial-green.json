@@ -1,0 +1,14 @@
+{
+  "files": {
+    "shared/authoring/source-import.ts": "9ed5d414d727b23b25f3b6e988a9149ff77109e692d8b66fb6ef62b2219e24e7",
+    "shared/authoring/plain-text-html.ts": "683497ab49c9af3a97cc88b2dbb6091e88796012b1a0ab0947a1e1696feec10f",
+    "server/services/authoring/authoring-source-import.ts": "568d541408d217480def9037a9433929b50ac7ab6fa58d32adb449526a96fdbd",
+    "server/services/authoring/workflow-source-import.ts": "d7203236bc130a9b5b08fde4014d673c59cfa1f3aed19d34b7b29528bc3dc1a5",
+    "server/services/authoring/study-design-crf-source.ts": "1bd92c8de9774548327f5ea86f7c69e9d1b72cfe7522effec28f52c43e665e46",
+    "server/services/authoring/import-source-references.ts": "d8dcac7df1b7fe8fa45fbff6f3452cf889f28433ca402596c030cd4b26791b77",
+    "server/services/authoring/workflow-copy-content.ts": "82e93452ae7e2be413c49ea16c0bf0c143ec9cfa1797380c03254d59f7254dad",
+    "server/services/study-design/study-design-repository.ts": "5643011144d91aefa25795f8901f5f1d2e8b0cd29abb9a6365b3b153d08f89eb",
+    "server/services/study-design/crf-shell.ts": "fffe43d583bebb7c2e754c8640a04f8f0814d637929ce1aeb27e1f1808943e24",
+    "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts": "e479741b72eefdc26bc60835545a543c2c97d2509c63a8ab578ae52e205614bc"
+  }
+}

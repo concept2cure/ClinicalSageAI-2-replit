@@ -265,7 +265,7 @@ function gapsSectionFor(
         {
           kind: 'summary',
           text:
-            'Gaps were not evaluated: no section or governed document of this program records a CTD section ' +
+            'Gaps were not evaluated: no section or governed document of this project records a CTD section ' +
             'code, so nothing could be matched against this market’s Module 1 headings.',
         },
       ],
@@ -284,6 +284,11 @@ function humanize(key: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/** The register's statement that its counts are the organisation's, not one
+ *  program's. One sentence: the lifecycle calendar states it too, because under
+ *  an open project it lists every admitted project's obligations (D2, 2026-10-29). */
+const ORGANIZATION_COUNTS = "Counts are the organisation's records of this kind; they are not limited to one program.";
+
 /**
  * A research-compliance register's own content (computeDomainRun): its counts,
  * as metrics and count tables. Before this the summary was computed and never
@@ -295,7 +300,7 @@ function domainSection(domain: Record<string, unknown>, providers: RenderInput['
   const blocks: ReportBlock[] = [
     {
       kind: 'summary',
-      text: computedScope === 'project' ? 'Counts are limited to this project’s recorded awards, proposals and their associated records.' : "Counts are the organisation's records of this kind; they are not limited to one program.",
+      text: computedScope === 'project' ? 'Counts are limited to this project’s recorded awards, proposals and their associated records.' : ORGANIZATION_COUNTS,
     },
   ];
   for (const [key, value] of Object.entries(domain)) {
@@ -336,7 +341,7 @@ function domainSection(domain: Record<string, unknown>, providers: RenderInput['
 
 function renderedDomainSections(domain: Record<string, unknown>, providers: RenderInput['providers'], computedScope: string): ReportSection[] {
   const calendar = lifecycleCalendarOf(domain);
-  if (calendar) return renderLifecycleCalendar(calendar, providers.flatMap(provider => provider.atoms ?? []));
+  if (calendar) return renderLifecycleCalendar(calendar, providers.flatMap(provider => provider.atoms ?? []), computedScope === 'organization' ? ORGANIZATION_COUNTS : null);
   const labelMatrix = labelCurrencyMatrixOf(domain);
   return labelMatrix ? renderLabelCurrencyMatrix(labelMatrix, providers.flatMap(provider => provider.atoms ?? [])) : [domainSection(domain, providers, computedScope)];
 }
@@ -402,7 +407,7 @@ function module1CoverageBlocks(module1: Record<string, unknown> | null): ReportB
       {
         kind: 'summary',
         text:
-          'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code, ' +
+          'Module 1 coverage was not assessed: no section or governed document of this project records a CTD section code, ' +
           `so nothing could be matched against the ${required ?? 0} heading(s) this filing requires.`,
       },
       { kind: 'metric', label: 'Required Module 1 headings covered', value: null, status: 'missing' },

@@ -6,6 +6,7 @@ import { completeDiscovery } from './onboardingDiscoveryFixtures';
 import { Onboarding } from '../surfaces/Onboarding';
 import type { SurfaceViewProps } from '../surfaceViews';
 import type { OnboardingDiscoveryAnswers } from '@shared/types/onboarding-discovery';
+import { __resetSurfaceActionBus, registerSurfaceActionHandlers } from '../surfaceActions';
 
 const { request, publish, identity } = vi.hoisted(() => ({ request: vi.fn(), publish: vi.fn(), identity: { orgId: 7 } }));
 vi.mock('@/lib/queryClient', () => ({ apiRequest: request, redactInternals: (message: string) => message, probeAuditRowOutcome: vi.fn(), serverMessage: () => null }));
@@ -52,7 +53,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', mutation);
   localStorage.clear(); sessionStorage.clear();
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); __resetSurfaceActionBus(); vi.unstubAllGlobals(); });
 
 async function next() {
   const oldHeading = document.querySelector('.pj-card-b > h2')?.textContent;
@@ -68,6 +69,22 @@ async function reviewWithInvite(role = 'member') {
   fireEvent.change(screen.getByLabelText('Role for invitee 1'), { target: { value: role } });
   await next(); await next(); await next(); await next();
 }
+
+describe('onboarding reaches canonical project creation', () => {
+  it('opens the canonical project wizard after activation without creating a project', async () => {
+    await reviewWithInvite();
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    const create = await screen.findByRole('button', { name: 'Create your first project' });
+    const mutationCount = mutation.mock.calls.length;
+    fireEvent.click(create);
+    expect(props.onNav).toHaveBeenCalledWith('projects');
+    const openWizard = vi.fn(() => ({ ok: true as const }));
+    registerSurfaceActionHandlers('projects', { 'projects.new-project': openWizard });
+    expect(openWizard).toHaveBeenCalledOnce();
+    expect(mutation).toHaveBeenCalledTimes(mutationCount);
+    expect(request.mock.calls.some(([, path]) => path === '/api/c2c/projects')).toBe(false);
+  });
+});
 
 describe('intelligent discovery wizard', () => {
   it('asks drug and device follow-ups for combination products and service questions for service providers', async () => {
@@ -176,5 +193,51 @@ describe('intelligent discovery wizard', () => {
     fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
     await screen.findByText('Outcome unconfirmed');
     expect(screen.getByText(/0 of 1 invitations recorded.*need attention/i)).toBeTruthy();
+  });
+});
+
+describe('discovery setup handoffs', () => {
+  async function securityStep() {
+    props.onNav = vi.fn();
+    render(<Onboarding {...props} />);
+    for (let index = 0; index < 7; index += 1) await next();
+    const checkbox = screen.getByRole('checkbox', { name: /Help me establish/ });
+    fireEvent.click(checkbox);
+  }
+
+  it('saves changed discovery before opening existing organization setup', async () => {
+    await securityStep();
+    fireEvent.click(screen.getByRole('button', { name: 'Organization setup' }));
+    await waitFor(() => expect(props.onNav).toHaveBeenCalledWith('setup'));
+    expect(request).toHaveBeenLastCalledWith('PATCH', '/api/onboarding/discovery', expect.objectContaining({ complete: false }));
+    expect(mutation).not.toHaveBeenCalled();
+  });
+
+  it('keeps the wizard and changed answers when the handoff save is refused', async () => {
+    await securityStep();
+    request.mockRejectedValueOnce(new Error('Discovery save unavailable.'));
+    fireEvent.click(screen.getByRole('button', { name: 'Roles and access' }));
+    await screen.findByText('Discovery save unavailable.');
+    expect(props.onNav).not.toHaveBeenCalled();
+    expect(screen.getByTestId('discovery-security')).toBeTruthy();
+    expect(screen.getByText(/unsaved changes/)).toBeTruthy();
+  });
+});
+
+describe('complete discovery review', () => {
+  it('previews therapeutic, experience and security answers and returns to their existing question steps', async () => {
+    await reviewWithInvite();
+    const projectSummary = screen.getByText('Project and desired outcome');
+    fireEvent.click(projectSummary);
+    expect(screen.getByText(answers.indication)).toBeTruthy();
+    expect(screen.getByText(answers.therapeuticAreas.join(', '))).toBeTruthy();
+    fireEvent.click(screen.getByText('Company and working context'));
+    expect(screen.getByText('Regularly manage regulated projects')).toBeTruthy();
+    fireEvent.click(screen.getAllByText('Security requirements')[0]);
+    expect(screen.getByText('Multi-factor authentication')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Review project and desired outcome' }));
+    expect(screen.getByTestId('discovery-project')).toBeTruthy();
+    expect((screen.getByLabelText('Therapeutic areas *') as HTMLInputElement).value).toBe(answers.therapeuticAreas.join(', '));
+    expect(mutation).not.toHaveBeenCalled();
   });
 });

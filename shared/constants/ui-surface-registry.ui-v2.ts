@@ -86,22 +86,6 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     engineering: 'assessTmfCompleteness via GET /api/etmf/trials/:trialId/completeness; file gaps via POST .../artifacts. The inspection-package ZIP and artifacts/bulk endpoints are unbuilt; Download degrades live-first.',
   },
   {
-    id: 'filings-catalog',
-    label: 'Filings catalog',
-    navTier: 'global',
-    layoutMode: 'filings-catalog',
-    group: 'workspace',
-    icon: 'clipboardList',
-    uiKit: 'home',
-    apiPrefixes: ['/api/regulatory/registry'],
-    anaToolFamilies: ['get_csr_template', 'plan_submission'],
-    sharedContract: '@shared/regulatory/global-document-registry',
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: deferredSurfaceDescription('filings-catalog'),
-  },
-  {
     // Routable but unregistered until now. `/concept2cure/client-portal` is
     // where auth/redirectUtils.ts sends a `client_user` / `client_admin` after
     // login (CLIENT_FALLBACK), and `surfaceIdFromLocation` carries the segment
@@ -129,7 +113,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   // ─── ui-v2 additions: project ─────────────────────────────────────────────
   {
     id: 'program-journey',
-    label: 'Program journey',
+    label: 'Project journey',
     navTier: 'project',
     layoutMode: 'program-journey',
     group: 'workspace',
@@ -148,7 +132,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'dispatch-readiness',
-    label: 'Dispatch readiness',
+    label: 'Readiness',
     navTier: 'project',
     layoutMode: 'dispatch-readiness',
     group: 'submission',
@@ -197,23 +181,8 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     notes: 'The immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how). Answer-first defensibility read, then the readable chain of governed decisions (5 node types), then chain-integrity verify + compliance frameworks + eCTD-compatible export.',
     engineering: 'Bound to GET /api/decision-lineage/:entityType/:entityId + verify-chain. Contract ref (not yet a @shared file): @shared/types/decision-lineage.',
   },
-  {
-    id: 'ivd-completeness',
-    label: 'IVD completeness',
-    navTier: 'project',
-    layoutMode: 'ivd-completeness',
-    group: 'workspace',
-    icon: 'microscope',
-    uiKit: 'mdx',
-    apiPrefixes: ['/api/validate-completeness', '/api/c2c/projects', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/ivd-completeness'],
-    anaToolFamilies: ['assess_filing_readiness', 'draft_section'],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: 'IVDR technical-file completeness (validate-completeness IVDR branch) — GSPR Annex I, Performance Evaluation Report Annex XIII, analytical + clinical performance, scientific validity, PMPF/PMS. IVD-only; derives from the diagnostics IVDR spine. Answer-first CE-marking readiness, not the borrowed device checklist.',
-    engineering: 'Contract ref (not yet a @shared file): @shared/regulatory/ivdr.',
-  },
+  // No `ivd-completeness`: folded into device-diagnostics (D2, fold F2, 2026-10-29), whose readiness
+  // panel draws the IVDR board and the assessment workbench; its claims moved there too.
   {
     id: 'batch-draft',
     label: 'Parallel drafting',
@@ -280,22 +249,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     notes: 'Sentence-level provenance: every sentence carries a typed source (trial data, literature, regulatory guidance or internal data) with a confidence score, and untraced claims are surfaced. Literature citations are checked against PubMed and CrossRef — an unconfirmed citation is flagged, never assumed. Still sample-backed, and labelled as such until it is wired to live data.',
     engineering: 'POST /sources/analyze (claimsFound); verification via /api/citations/verify (verified|not_found|unverifiable|error). Contract ref (not yet a @shared file): server/routes/sourceLinks.ts + server/routes/citations.ts.',
   },
-  {
-    id: 'dossier',
-    label: 'Dossier',
-    navTier: 'project',
-    layoutMode: 'dossier',
-    group: 'workspace',
-    icon: 'folder',
-    uiKit: 'mdx',
-    apiPrefixes: ['/api/ectd', '/api/documents', '/api/corpus'],
-    anaToolFamilies: ['draft_section', 'get_document'],
-    sharedContract: '@shared/types/document-contract',
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Document-first workspace (Artos/Weave model): eCTD folder tree · submission documents in process with status/version · the live document · Data Room of source files.',
-  },
+
   {
     id: 'conversation-thread',
     label: 'Conversation',
@@ -307,7 +261,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // Launch-scope API (2026-09-25, ci:launch-scope-api): useFilingOutline.ts reads the filing outline.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): ConversationThread.tsx exports and routes artifacts through the legacy project API.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/chat', '/api/authoring-actions/decision-context', '/api/authoring-actions/decisions', '/api/authoring-actions/module-preflight', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects'],
+    // '/api/mdx/ana/memory/profile' (2026-10-29, fold of ana-memory): WhatAnaRemembers.tsx reads the caller's own
+    // relational profile beside the conversation. Only that read: the rest of /api/mdx/ana/memory stays ana-memory's.
+    apiPrefixes: ['/api/chat', '/api/authoring-actions/decision-context', '/api/authoring-actions/decisions', '/api/authoring-actions/module-preflight', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects', '/api/mdx/ana/memory/profile'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
@@ -398,7 +354,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'stethoscope',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx', '/api/510k/estar', '/api/510k/device', '/api/cer', '/api/cerv2', '/api/ivdr', '/api/manufacturing'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/client-review', '/api/510k/estar', '/api/510k/device', '/api/cer', '/api/cerv2', '/api/ivdr', '/api/manufacturing'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,
@@ -416,13 +374,15 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
      second rail is gone; these are how the shell reaches what it drew. */
   {
     id: 'device-pma',
-    label: 'PMA submissions',
+    label: 'PMA',
     navTier: 'project',
     layoutMode: 'section-workspace',
     group: 'device',
     icon: 'shieldCheck',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/regulatory-programs'],
+    // 2026-10-29 (trunk-red-sweep-2): '/api/mdx/audit' is the Audit trail tab its pathway screen
+    // reads (programTabsService.ts); it was served only through other features' '/api/mdx' root claims.
+    apiPrefixes: ['/api/regulatory-programs', '/api/mdx/audit'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -438,7 +398,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'stethoscope',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx', '/api/study-design'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/clinical-studies', '/api/mdx/effective-context', '/api/mdx/rbm-attention', '/api/mdx/rbm-summary', '/api/mdx/study-archetypes', '/api/study-design'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -454,7 +416,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'code',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/software', '/api/mdx/software-summary'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -464,19 +428,29 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'device-engineering',
-    label: 'Device engineering',
+    label: 'Engineering evidence',
     navTier: 'project',
     layoutMode: 'section-workspace',
     group: 'device',
     icon: 'wrench',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    // 2026-10-29: '/api/mdx/risk-items' and '/api/design-controls' added. Since
+    // 79d00b348 this screen mounts the risk register (RiskRegister.tsx) and the
+    // design-control trace (DesignControlsTrace.tsx). Only `risk` and
+    // `design-controls` claimed their families, so under MODULE_ENFORCEMENT=enforce
+    // an organization entitled to device-engineering alone was refused both
+    // (docs/evidence/D2-ONE-ANA/2026-10-29/core-project-record-gating/, item 3).
+    // 2026-10-29 (fold F1c): both folded in; this entry is the families' one claimant.
+    // A holder of either kept its access: its grant carries here (P-61 item 4, folded-module-successors.ts).
+    apiPrefixes: ['/api/mdx/engineering', '/api/mdx/risk-items', '/api/design-controls'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Program-scoped engineering rollup. Distinct from design-controls and human-factors, which are org-scoped registers.',
+    notes: 'Program-scoped engineering rollup, holding the project\'s ISO 14971 risk file and design-control trace (fold F1c). Distinct from human-factors, an org-scoped register.',
   },
   {
     id: 'device-udi',
@@ -486,7 +460,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'barcode',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/udi'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -496,13 +472,15 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'device-postmarket',
-    label: 'Post-market vigilance',
+    label: 'Post-market surveillance and CAPA',
     navTier: 'specialist',
     layoutMode: 'section-workspace',
     group: 'device',
     icon: 'shieldAlert',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx', '/api/capa-mdr'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/postmarket', '/api/capa-mdr'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -526,70 +504,21 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     compliance: [PART11, A11Y, TONE],
     notes: 'Q-Sub meeting manager. Previously reachable only through a persisted localStorage value — no rail, tab or palette entry existed.',
   },
-  {
-    id: 'device-vault',
-    label: 'Device artifact vault',
-    navTier: 'project',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'vault',
-    uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Reads the mdx_vault store with per-artifact version history. Named separately from `vault` because the two read different document stores; converging the stores is a backend decision, and until it is made two names are honest and one is not.',
-  },
-  {
-    id: 'device-tasks',
-    label: 'Device submission workload',
-    navTier: 'project',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'clipboardList',
-    uiKit: 'mdx',
-    apiPrefixes: ['/api/submission-ops'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'The submission-ops workload slice. Deliberately NOT called "Tasks" — task-board is the task board, and two rail entries with the same name is the defect this convergence removed.',
-  },
-  {
-    id: 'device-validation',
-    label: 'Submission blockers',
-    navTier: 'project',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'shieldAlert',
-    uiKit: 'mdx',
-    apiPrefixes: ['/api/submission-ops'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Open blockers across programs. The only blockers view in the product.',
-  },
-  {
-    id: 'device-submission',
-    label: 'Device submission packages',
-    navTier: 'project',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'rocket',
-    uiKit: 'mdx',
-    apiPrefixes: ['/api/submission-ops'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Package readiness and milestones from submission-ops. submission-center is the eCTD sequence dispatch surface — a later lifecycle stage over different endpoints.',
-  },
+  // No device-vault. The device kit's document vault folded into the Vault (D2,
+  // fold F3, 2026-10-29); 'device-vault' is a DEEP_LINK_ALIASES entry for 'vault'.
+  // Its claim, /api/mdx/vault, went with its router (server/routes/mdx-vault.ts).
+  // No device-validation. The organization-wide blocker list retired (D2, fold F5
+  // item 2, 2026-10-29; decision P-61 item 2): a blocker belongs to a filing, from
+  // that filing's deterministic readiness (EstarFilingPanel), and is closed by
+  // fixing it. 'device-validation' is a DEEP_LINK_ALIASES entry for
+  // 'submission-center'. Its claim, /api/submission-ops/blockers, has no client
+  // caller now, so no screen claims it.
+  // No device-submission. The device submission-packages screen folded into
+  // Submission Center (D2, fold F5 item 1, 2026-10-30; decision P-61 item 1: one
+  // device-filing store, estar_submissions). 'device-submission' is a
+  // DEEP_LINK_ALIASES entry for 'submission-center', whose device filings read
+  // /api/510k/estar/submissions (its claim). The screen claimed nothing at the
+  // end: it called /api/submission-ops/packages, which no client calls now.
   {
     id: 'device-analytics',
     label: 'Device pathway analytics',
@@ -598,7 +527,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'barChart3',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/analytics'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -608,7 +539,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'protocol-dev',
-    label: 'Protocol development',
+    label: 'The protocol workspace',
     navTier: 'project',
     layoutMode: 'protocol-dev',
     group: 'authoring',
@@ -708,19 +639,21 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'quality',
-    label: 'Quality & Assurance',
+    label: 'Quality',
     navTier: 'project',
     layoutMode: 'quality',
     group: 'quality-cmc',
     icon: 'shieldCheck',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx/qms'],
+    // '/api/capa-mdr/capa': the CAPA register (decision P-48). The rest of
+    // /api/capa-mdr (complaints, MDR, vigilance) stays device post-market's.
+    apiPrefixes: ['/api/mdx/qms', '/api/capa-mdr/capa'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records).',
+    notes: 'Quality: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records).',
     engineering: 'Backed by /api/mdx/qms/*.',
   },
   {
@@ -771,25 +704,16 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     compliance: [PART11, A11Y, TONE],
     notes: 'EU Summary of Product Characteristics — QRD template section tree (1–10) with per-section authoring status + submission-readiness over the required sections. EU companion to labeling-pi (USPI).',
   },
-  {
-    id: 'agency-meetings',
-    label: 'Agency meetings',
-    navTier: 'project',
-    layoutMode: 'agency-meetings',
-    group: 'lifecycle',
-    icon: 'users',
-    uiKit: 'mdx',
-    apiPrefixes: ['/api/ha-interactions', '/api/rim'],
-    anaToolFamilies: ['draft_briefing_book', 'prepare_meeting_request'],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Agency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice. Briefing book document + questions, minutes + commitments back to the dossier.',
-  },
+  // No agency-meetings. It retired into Communication (P-39 step 4, 2026-10-30;
+  // docs/evidence/D2-AGENCY-MEETINGS-RETIRED/2026-10-30/): a meeting is recorded,
+  // moved and given its minutes letter on Communication's Meetings tab, and its
+  // briefing book is the meeting package in the editor. 'agency-meetings' is a
+  // deep-link alias to communication-center (registryModel.ts). The AnA tools the
+  // launch inventory files under it stay withheld: it was never a launch surface.
+
   {
     id: 'communication-center',
-    label: 'Communication Center',
+    label: 'Communication',
     navTier: 'project',
     layoutMode: 'communication-center',
     group: 'submission',
@@ -1161,7 +1085,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes:
-      'Module 1–5 IND assembly readiness from GET /api/pdev/programs/:id/ind-assembly, with a governed compile (POST .../ind-assembly/compile). Named "readiness" deliberately, per the route\'s own doc comment — it reports what is ready to assemble and is NOT eCTD publishing; ectd-compile and ectd-publishing own that.',
+      'Module 1–5 IND assembly readiness from GET /api/pdev/programs/:id/ind-assembly, with a governed compile (POST .../ind-assembly/compile). Named "readiness" deliberately, per the route\'s own doc comment — it reports what is ready to assemble and is NOT eCTD publishing; ectd-compile owns that.',
   },
   {
     id: 'pdev-contradictions',
@@ -1199,7 +1123,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes:
-      'Chronological FDA touchpoint stream for one IND program (q_submissions family + fda_communications) via GET /api/pdev/programs/:id/fda-interactions, with AnA-derived feedback proposals and a governed apply (POST .../fda-feedback/apply). Program-scoped and IND-specific; `agency-meetings` is the cross-program meeting manager.',
+      'Chronological FDA touchpoint stream for one IND program (q_submissions family + fda_communications) via GET /api/pdev/programs/:id/fda-interactions, with AnA-derived feedback proposals and a governed apply (POST .../fda-feedback/apply). Program-scoped and IND-specific; meetings across programs are recorded in Communication (ha_interactions) since agency-meetings retired (2026-10-30).',
   },
 
   // ─── ui-v2 additions: specialist ─────────────────────────────────────────────
@@ -1240,30 +1164,8 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     compliance: [PART11, A11Y, TONE],
     notes: 'Safety surveillance: signal detection (PRR/FAERS/EudraVigilance), PSUR/PBRER aggregate-report cycles, expedited 7/15-day submissions across approved products.',
   },
-  {
-    id: 'design-controls',
-    label: 'Design controls (DHF)',
-    navTier: 'specialist',
-    layoutMode: 'design-controls',
-    group: 'device',
-    icon: 'gitBranch',
-    uiKit: null,
-    // /api/design-controls, not /api/design-risk. This entry named the latter,
-    // which was a 20-endpoint duplicate whose ten tables existed on no database:
-    // its only creator was classified-skipped on install-fresh for a shape
-    // collision and was on no deploy applier, so every one of those endpoints
-    // returned 500. The surface never called them — DesignControls.tsx reads and
-    // writes /api/design-controls (server/routes/design-controls.routes.ts, which
-    // fails closed to an empty list on 42P01) — so `routes-ready` was true of the
-    // surface and false of the prefix it advertised. The duplicate is deleted.
-    apiPrefixes: ['/api/design-controls'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: '21 CFR 820.30 DHF — design inputs/outputs/verification/validation traceability matrix + completeness assessment.',
-  },
+  // No `design-controls`: folded into Engineering evidence (D2, fold F1c, 2026-10-29), which claims
+  // /api/design-controls and mounts the trace (DesignControlsTrace.tsx).
   {
     id: 'human-factors',
     label: 'Human factors (IEC 62366-1)',
@@ -1284,7 +1186,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   // ─── ui-v2 additions: admin ─────────────────────────────────────────────
   {
     id: 'licensing',
-    label: 'Plans & licensing',
+    label: 'Compare subscriptions',
     navTier: 'admin',
     layoutMode: 'setup',
     group: 'admin',
@@ -1296,19 +1198,19 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Plan tiers, seat licensing, module entitlements, upgrade/downgrade.',
+    notes: 'Plan tiers and the current subscription; for billing administrators, the invoices, checkout and the billing portal.',
   },
   {
     /* Routable but unregistered until now: the account menu's "Licensing"
        entry (Shell.tsx ACCT_ITEMS, org-admin gated) navigated here, and
        `getSurface('master-licensing')` returned undefined — so the platform
        licensing console rendered under a breadcrumb reading "Home" and had no
-       ⌘K row. Distinct from `licensing` (Plans & licensing), which is the
-       customer-facing plan/upgrade view; this is the platform-admin control
+       ⌘K row. Distinct from `licensing` (Compare subscriptions), which is the
+       customer-facing subscription view; this is the platform-admin control
        room that DEFINES the tiers. The surface re-checks platform-admin
        server-side on every read and write; registration only names it. */
     id: 'master-licensing',
-    label: 'Master licensing',
+    label: 'Platform licensing',
     navTier: 'admin',
     layoutMode: 'master-licensing',
     group: 'admin',
@@ -1394,7 +1296,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // settings writer (server/services/tenant/tenant-settings-writer.ts).
     // 2026-10-18 (ci:launch-scope-api): the Company documents panel, same rule — company
     // identity, letterhead and the legal-document library ARE organisation settings, and
-    // CompanyDocumentSettings.tsx is rendered from here (AdminAccess.tsx, AdminSurfaces.tsx).
+    // CompanyDocumentSettings.tsx is rendered from here (AdminAccess.tsx, through AdminSettings.tsx).
     // Both prefixes were refused in production: company-documents was claimed by no surface
     // at all, and templates/extract resolved to template-library + authoring-engine, neither
     // of which is a launch surface — so the letterhead import was a button that answered
@@ -1418,7 +1320,15 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // /api/admin/scim-tenants all serve. Turning enforcement on would refuse all of them plus
     // these two together — one condition across six prefixes, a packaging decision to make
     // deliberately rather than a line to widen here.
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config'],
+    // 2026-10-29 (D2, fold setup): Setup folded into Settings, so its claims that a Settings
+    // card calls moved here: the retention period (RetentionPeriodCard.tsx), claimed by setup
+    // alone, and the legal holds (LegalHoldsCard.tsx), shared with the Vault. The Profile
+    // card's /api/organizations and /api/mdx/industry-profile, and /api/gateway-accounts, are
+    // LAUNCH_PLATFORM_API. '/api/validation-kit' is the GAMP 5 validation package's, reached on
+    // Settings by ValidationKitCard.tsx (decision P-67, 2026-10-29), which replaced the
+    // AdminConsole no surface had mounted since af973c5e8 (2026-07-27)
+    // (docs/evidence/D4/2026-10-29/validation-kit-settings/).
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/validation-kit'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -1473,7 +1383,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Plan usage limits, weekly caps, usage credits and rate limits by tier.',
+    notes: 'Plan usage limits, weekly caps, and the rate limits the platform enforces, the same for every subscription.',
     engineering: 'billing-dashboard.ts router, mounted at /api/billing (verified against register-inline-routes 2026-07-05).',
   },
   {

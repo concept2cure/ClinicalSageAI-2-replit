@@ -13,6 +13,7 @@ import { and, asc, desc, eq, inArray, like, sql } from 'drizzle-orm';
 
 import { writeChainedAuditRow } from '../auditService';
 import { capaContext, authorizeCapaProgram, visibleCapaPrograms, mutateCapa, readCapa, CapaPersistenceError, type CapaCaller } from './governed-context';
+import { scheduleCapaActionTask, scheduleCapaTask } from './capa-tasks';
 export { CapaAccessError, CapaPersistenceError } from './governed-context';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import {
@@ -48,7 +49,7 @@ import type {
   VigilanceEventKind,
 } from '../../../shared/schema/capa-mdr';
 
-import { classify, type TriageInput } from './triageEngine';
+import { classify, unstatedTriageFacts, TRIAGE_FACT_VALUES, type TriageFact, type TriageInput } from './triageEngine';
 import { computeReportDue, daysToDue } from './clockCalculator';
 import {
   assertCapaTransition,
@@ -81,10 +82,12 @@ export class NotFoundError extends Error {
  *
  * Patient harm drives the preliminary MDR reportability classification, so it
  * cannot be assumed. Both fields used to default ('none', 'minor'), and a
- * complaint nobody had assessed was classified "no MDR".
+ * complaint nobody had assessed was classified "no MDR". The event facts the
+ * classification also turns on (TRIAGE_FACTS) defaulted to false, and the
+ * country to outside the EU, until 2026-10-26; they are required too.
  */
 export class ComplaintAssessmentRequired extends Error {
-  constructor(readonly field: 'patientHarm' | 'severityAssessment', allowed: readonly string[]) {
+  constructor(readonly field: 'patientHarm' | 'severityAssessment' | TriageFact, allowed: readonly string[]) {
     super(`${field} is required at intake and must be one of: ${allowed.join(', ')}`);
     this.name = 'ComplaintAssessmentRequired';
   }
@@ -95,7 +98,7 @@ export class ComplaintAssessmentRequired extends Error {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function assertProgramAccess(organizationId: number, programId: string): Promise<void> {
-  if (capaContext().organizationId !== organizationId) throw new TenantAccessError('Programme access denied.');
+  if (capaContext().organizationId !== organizationId) throw new TenantAccessError('Project access denied.');
   await authorizeCapaProgram(programId);
 }
 
@@ -281,14 +284,16 @@ export interface CreateComplaintInput {
   deviceSerial?: string | null;
   deviceModel?: string | null;
   eventDate?: Date | null;
-  eventLocationCountry?: string | null;
+  /** Required: an ISO 3166-1 alpha-2 code, or 'unknown'. */
+  eventLocationCountry: string;
   eventNarrative: string;
   /** Required: the intake classification is computed from it. */
   patientHarm: HarmLevel;
   severityAssessment: SeverityLevel;
-  isMalfunction?: boolean;
-  anticipatesCorrection?: boolean;
-  trendThresholdCrossed?: boolean;
+  /** Required, as the country is: the classification turns on them, so none is assumed false. */
+  isMalfunction: boolean;
+  anticipatesCorrection: boolean;
+  trendThresholdCrossed: boolean;
   createdBy?: string | null;
 }
 
@@ -300,6 +305,8 @@ function requireComplaintAssessments(input: CreateComplaintInput): void {
   if (!(SEVERITY_LEVELS as readonly string[]).includes(input.severityAssessment)) {
     throw new ComplaintAssessmentRequired('severityAssessment', SEVERITY_LEVELS);
   }
+  const [unstated] = unstatedTriageFacts(input);
+  if (unstated) throw new ComplaintAssessmentRequired(unstated, TRIAGE_FACT_VALUES[unstated]);
 }
 
 async function createComplaintTx(
@@ -310,10 +317,10 @@ async function createComplaintTx(
 
   const triageInput: TriageInput = {
     patientHarm: input.patientHarm,
-    isMalfunction: input.isMalfunction ?? false,
-    eventLocationCountry: input.eventLocationCountry ?? null,
-    anticipatesCorrection: input.anticipatesCorrection ?? false,
-    trendThresholdCrossed: input.trendThresholdCrossed ?? false,
+    isMalfunction: input.isMalfunction,
+    eventLocationCountry: input.eventLocationCountry,
+    anticipatesCorrection: input.anticipatesCorrection,
+    trendThresholdCrossed: input.trendThresholdCrossed,
     eventNarrative: input.eventNarrative,
   };
   const classification = classify(triageInput);
@@ -333,7 +340,7 @@ async function createComplaintTx(
         deviceSerial: input.deviceSerial ?? null,
         deviceModel: input.deviceModel ?? null,
         eventDate: input.eventDate ?? null,
-        eventLocationCountry: input.eventLocationCountry ?? null,
+        eventLocationCountry: classification.facts.eventLocationCountry ?? 'unknown',
         eventNarrative: input.eventNarrative,
         patientHarm: input.patientHarm,
         severityAssessment: input.severityAssessment,
@@ -498,9 +505,9 @@ async function createMdrEventTx(
   if (input.sourceComplaintId) {
     const [bound] = await capaContext().db.select({ id: complaints.id }).from(complaints)
       .where(and(eq(complaints.id, input.sourceComplaintId), eq(complaints.programId, input.programId))).limit(1);
-    if (!bound) throw new NotFoundError('Source complaint not found in this programme.');
+    if (!bound) throw new NotFoundError('Source complaint not found in this project.');
     const source = await getComplaintTx(organizationId, input.sourceComplaintId);
-    if (!source || source.programId !== input.programId) throw new NotFoundError('Source complaint not found in this programme.');
+    if (!source || source.programId !== input.programId) throw new NotFoundError('Source complaint not found in this project.');
   }
 
   const clock = computeReportDue({
@@ -872,7 +879,7 @@ export interface AddCapaActionInput {
 async function addCapaActionTx(
   organizationId: number,
   input: AddCapaActionInput
-): Promise<CapaAction> {
+): Promise<{ action: CapaAction; capaCode: string }> {
   // Verify the parent CAPA belongs to the org.
   const parent = await getCapaRecordTx(organizationId, input.capaId);
   if (!parent) throw new NotFoundError(`CAPA ${input.capaId} not found`);
@@ -905,7 +912,7 @@ async function addCapaActionTx(
     payload: { capaId: input.capaId, n: next, type: input.type },
   });
 
-  return row;
+  return { action: row, capaCode: parent.capaCode };
 }
 
 export interface UpdateCapaActionInput {
@@ -919,10 +926,10 @@ async function transitionCapaActionTx(
   organizationId: number,
   actionId: string,
   input: UpdateCapaActionInput
-): Promise<CapaAction> {
+): Promise<{ action: CapaAction; capaCode: string }> {
   // Tenant guard via a join.
   const rows = await capaContext().db
-    .select({ action: capaActions, programId: capaRecords.programId })
+    .select({ action: capaActions, programId: capaRecords.programId, capaCode: capaRecords.capaCode })
     .from(capaActions)
     .innerJoin(capaRecords, eq(capaRecords.id, capaActions.capaId))
     .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${capaRecords.programId}::uuid`))
@@ -967,7 +974,7 @@ async function transitionCapaActionTx(
     reason: input.reason ?? null,
   });
 
-  return row;
+  return { action: row, capaCode: ctx.capaCode };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1132,17 +1139,27 @@ export function createMdrEvent(org: number, input: CreateMdrEventInput, caller: 
 export function transitionMdrEvent(org: number, id: string, input: TransitionMdrInput, caller: CapaCaller) {
   return mutateCapa(org, caller, () => transitionMdrEventTx(org, id, { ...input, actor: String(caller.userId) }));
 }
-export function createCapaRecord(org: number, input: CreateCapaInput, caller: CapaCaller) {
-  return mutateCapa(org, caller, () => createCapaRecordTx(org, { ...input, createdBy: String(caller.userId) }));
+// A CAPA's target close and an action's due date are owed as tasks once the act
+// commits (capa-tasks.ts). The task write is best effort and never fails the act.
+export async function createCapaRecord(org: number, input: CreateCapaInput, caller: CapaCaller) {
+  const row = await mutateCapa(org, caller, () => createCapaRecordTx(org, { ...input, createdBy: String(caller.userId) }));
+  await scheduleCapaTask(org, row, caller.userId);
+  return row;
 }
-export function transitionCapa(org: number, id: string, input: TransitionCapaInput, caller: CapaCaller) {
-  return mutateCapa(org, caller, () => transitionCapaTx(org, id, { ...input, actor: String(caller.userId) }));
+export async function transitionCapa(org: number, id: string, input: TransitionCapaInput, caller: CapaCaller) {
+  const row = await mutateCapa(org, caller, () => transitionCapaTx(org, id, { ...input, actor: String(caller.userId) }));
+  await scheduleCapaTask(org, row, caller.userId);
+  return row;
 }
-export function addCapaAction(org: number, input: AddCapaActionInput, caller: CapaCaller) {
-  return mutateCapa(org, caller, () => addCapaActionTx(org, { ...input, actor: String(caller.userId) }));
+export async function addCapaAction(org: number, input: AddCapaActionInput, caller: CapaCaller) {
+  const { action, capaCode, auditTrail } = await mutateCapa(org, caller, () => addCapaActionTx(org, { ...input, actor: String(caller.userId) }));
+  await scheduleCapaActionTask(org, action, capaCode, caller.userId);
+  return { ...action, auditTrail };
 }
-export function transitionCapaAction(org: number, id: string, input: UpdateCapaActionInput, caller: CapaCaller) {
-  return mutateCapa(org, caller, () => transitionCapaActionTx(org, id, { ...input, actor: String(caller.userId) }));
+export async function transitionCapaAction(org: number, id: string, input: UpdateCapaActionInput, caller: CapaCaller) {
+  const { action, capaCode, auditTrail } = await mutateCapa(org, caller, () => transitionCapaActionTx(org, id, { ...input, actor: String(caller.userId) }));
+  await scheduleCapaActionTask(org, action, capaCode, caller.userId);
+  return { ...action, auditTrail };
 }
 export function getComplaint(org: number, id: string, caller: CapaCaller) {
   return readCapa(org, caller, () => getComplaintTx(org, id));

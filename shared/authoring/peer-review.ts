@@ -33,6 +33,8 @@ export const authoringReviewInputSchema = z.object({
   review_status: z.enum(['approved', 'rejected', 'changes_requested']),
   review_comments: z.string().trim().max(4000).optional(),
   expected: authoringReviewExpectedSchema,
+  /** Parsed against the bounded scientific-review contract after authorization. */
+  csr_evidence: z.unknown().optional(),
 }).strict();
 
 export const authoringReviewContextSchema = z.object({
@@ -47,6 +49,9 @@ export const authoringReviewContextSchema = z.object({
   }).strict().nullable(),
   canReview: z.boolean(),
   unavailableReason: z.string().min(1).nullable(),
+  /** The server's CSR rule for this document (requiresCsrScientificReview), so
+   * the screen opens the scientific-review step for a CSR its label does not name. */
+  csrScientificReviewRequired: z.boolean().optional(),
 }).superRefine((value, ctx) => {
   if (value.snapshot.id !== value.documentId || (value.canReview && (!value.myReview || value.unavailableReason !== null))) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'A decision needs this document and an authorized current review request.' });
@@ -100,3 +105,12 @@ export type AuthoringReviewExpected = z.infer<typeof authoringReviewExpectedSche
 export type AuthoringReviewContext = z.infer<typeof authoringReviewContextSchema>;
 export type AuthoringReviewInput = z.infer<typeof authoringReviewInputSchema>;
 export type AuthoringReviewRow = z.infer<typeof authoringReviewRowSchema>;
+
+/**
+ * On a review route (RR5) a reviewer's REVIEWER signature over today's sections
+ * is their review: `routeSignedAt` is set by the Review board's read only
+ * then. A later verdict other than approval still governs.
+ */
+export function signedOnRoute(r: { status: string; routeSignedAt?: string | null }): boolean {
+  return r.routeSignedAt != null && (r.status === 'pending' || r.status === 'approved');
+}

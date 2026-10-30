@@ -20,9 +20,11 @@
  * Scope.
  *   - Module 1 is regional and is not an ICH M4 heading; `isIchHeading` is
  *     false for every 1.x code.
+ *   - Module 2's Quality Overall Summary: 2.3.S.1–7, 2.3.P.1–8 and 2.3.A.1–3
+ *     are here since 2026-10-25 (they were held only in the IND section list).
  *   - Module 3: this file holds the eCTD backbone skeleton and two structural
  *     pharmaceutical-development parents (3.2.P.2.1 and 3.2.P.2.2). Module 3
- *     content and its deeper headings (3.2.A.1–3, 2.3.S.x…) belong to the CMC lane, which
+ *     content and its deeper headings (3.2.A.1–3, 3.2.S.7.x…) belong to the CMC lane, which
  *     appends them here through the same `IchM4Heading` type. There is never a
  *     second Module 3 tree. Append-only shared file (ANA_REGULATORY_RECORD.md R0).
  *   - The tabulated nonclinical summaries (2.6.3, 2.6.5, 2.6.7) are numbered in
@@ -32,10 +34,12 @@
  * Basis. Each row carries its own, and every one is `recall`: a search extract
  * is recall (`M4E_R2` was labelled regulator-text until 2026-10-15). `M4E_R2`
  * is used only for the rows whose number and wording were matched against
- * search extracts of the FDA-hosted ICH M4E(R2) on 2026-10-05. The ICH M4
- * organisation and M4S rows were matched against search extracts of FDA-hosted
- * copies (fda.gov/media/71628, the FDA M4 organisation guidance) and say so in
- * their note; `regulatory-basis.ts` declares no M4S or M4 constant yet, and a
+ * search extracts of the FDA-hosted ICH M4E(R2) on 2026-10-05. Of the ICH M4
+ * organisation and M4S rows, only those in `EXTRACT_SHOWED` were matched
+ * against search extracts of FDA-hosted copies (fda.gov/media/71628, the FDA M4
+ * organisation guidance); the rest are numbered by the guideline's pattern, and
+ * each row's note says which (corrected 2026-10-25: every row claimed the
+ * match); `regulatory-basis.ts` declares no M4S or M4 constant yet, and a
  * file in `ind/ctd` does not declare its own. The facts are in
  * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
  * g-ich-m4-headings-facts.md.
@@ -62,6 +66,12 @@ export interface IchM4Heading {
   parent: string | null;
   module: 2 | 3 | 4 | 5;
   basis: RegulatoryBasis;
+  /**
+   * When the heading applies, where the guideline makes it conditional (2.5.6.5,
+   * "when used"; 2.7.4.6, a product already marketed). A conditional heading is
+   * not required of every document (3a review, 2026-10-25).
+   */
+  condition?: string;
 }
 
 // 2026-10-15: the note ended "regulator-text once its constant is declared in
@@ -70,32 +80,79 @@ export interface IchM4Heading {
 const SEARCH_EXTRACT_NOTE =
   'wording matched against a search extract of the FDA-hosted copy on 2026-10-05; the document itself was not read. Verbatim re-read owed.';
 
-const M4_ORG = (): RegulatoryBasis => ({
+/*
+ * 2026-10-25 (3a review): SEARCH_EXTRACT_NOTE was on every M4 and M4S row, but
+ * the extracts showed only the rows in EXTRACT_SHOWED; the facts file says the
+ * others were "filled in by the same numbering pattern"
+ * (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-ich-m4-headings-facts.md).
+ * The 2.4.1–2.4.6 rows (2026-10-13) were taken from the template library, not an extract.
+ */
+const EXTRACT_SHOWED: ReadonlySet<string> = new Set([
+  '2.1', '3.1', '3.2', '3.3', '4.1', '4.2',
+  '2.6.4.2', '2.6.6.2', '2.6.6.10', '4.2.3.4.1', '4.2.3.5.4', '4.2.3.7.1',
+]);
+const PATTERN_NOTE =
+  "numbered and worded by the guideline's pattern; no extract of the guideline showed this heading (g-ich-m4-headings-facts.md). Verbatim read owed.";
+const noteFor = (code: string) => (EXTRACT_SHOWED.has(code) ? SEARCH_EXTRACT_NOTE : PATTERN_NOTE);
+
+const M4_ORG = (code: string): RegulatoryBasis => ({
   ...recall('ICH M4(R4), Organisation of the CTD'),
-  note: SEARCH_EXTRACT_NOTE,
+  note: noteFor(code),
 });
 const M4S = (section: string): RegulatoryBasis => ({
   ...recall(`ICH M4S(R2) ${section}`),
-  note: SEARCH_EXTRACT_NOTE,
+  note: noteFor(section),
 });
 const M4E = (section: string): RegulatoryBasis => recall(`ICH M4E(R2) ${section}`);
-// The 2.5.6 benefit-risk subdivisions, added 2026-10-20: the regulator hosts were unreachable
-// from the build environment, so the numbers and wording rest on a search extract.
+// The 2.5.6 benefit-risk subdivisions, added 2026-10-20. What backs them, exactly
+// (3a review, 2026-10-25: the first note claimed an extract that was never seen):
+// the record's own 2.5.6 brief names all seven; a web search's model-written
+// answer named the same seven, from a query that supplied five of the titles; the
+// FDA and ICH copies did not resolve (increment-3/m4e-r2-2.5.6-search-2026-10-20.md).
 const M4E_BR = (section: string): RegulatoryBasis => ({
   ...recall(`ICH M4E(R2) ${section}`),
-  note: 'number and wording matched against a search extract of the table of contents of the FDA-hosted copy on 2026-10-20; the document itself was not read. Verbatim re-read owed.',
+  note: "number and wording as the record's 2.5.6 brief states them; a web-search answer (a summary, not an extract of the guideline) named the same headings on 2026-10-20; the FDA and ICH copies did not resolve. Verbatim read owed.",
+});
+// The QOS subdivisions (2026-10-25): M4Q(R1) numbers the QOS to parallel Module 3
+// (3.2.S.1–7, 3.2.P.1–8, 3.2.A.1–3); no extract of the guideline showed these rows.
+const M4Q_QOS = (section: string): RegulatoryBasis => ({
+  ...recall(`ICH M4Q(R1) ${section}`),
+  note: "numbered and worded by the guideline's pattern: the QOS parallels Module 3's numbering; no extract of the guideline showed this heading. Verbatim read owed.",
 });
 const M4Q = (section: string): RegulatoryBasis => ({
   ...recall(`ICH M4Q(R1) ${section}`),
   note: 'Module 3 structure only; detailed Module 3 content is in the canonical authoring overlay',
 });
 
-type Row = readonly [code: string, title: string, basis: RegulatoryBasis];
+type Row = readonly [code: string, title: string, basis: RegulatoryBasis, condition?: string];
 
 const ROWS: readonly Row[] = [
   // ── Module 2 ────────────────────────────────────────────────────────────────
-  ['2', 'Common Technical Document Summaries', M4_ORG()],
-  ['2.1', 'Common Technical Document Table of Contents (Modules 2–5)', M4_ORG()],
+  ['2', 'Common Technical Document Summaries', M4_ORG('2')],
+  ['2.1', 'Common Technical Document Table of Contents (Modules 2–5)', M4_ORG('2.1')],
+  /* The Quality Overall Summary's own subdivisions, which mirror Module 3. Appended
+     2026-10-25 (D2 cleanup C1, the founder's one-copy order): until then they were held
+     only in services/regulatory/ind-ectd-sections.ts, a second heading list, and the
+     record had none, so no QOS outline could reach them from the record. Headings only;
+     QOS content and its composition stay the CMC lane's (P-28). */
+  ['2.3.S.1', 'General Information', M4Q_QOS('2.3.S.1')],
+  ['2.3.S.2', 'Manufacture', M4Q_QOS('2.3.S.2')],
+  ['2.3.S.3', 'Characterisation', M4Q_QOS('2.3.S.3')],
+  ['2.3.S.4', 'Control of Drug Substance', M4Q_QOS('2.3.S.4')],
+  ['2.3.S.5', 'Reference Standards or Materials', M4Q_QOS('2.3.S.5')],
+  ['2.3.S.6', 'Container Closure System', M4Q_QOS('2.3.S.6')],
+  ['2.3.S.7', 'Stability', M4Q_QOS('2.3.S.7')],
+  ['2.3.P.1', 'Description and Composition of the Drug Product', M4Q_QOS('2.3.P.1')],
+  ['2.3.P.2', 'Pharmaceutical Development', M4Q_QOS('2.3.P.2')],
+  ['2.3.P.3', 'Manufacture', M4Q_QOS('2.3.P.3')],
+  ['2.3.P.4', 'Control of Excipients', M4Q_QOS('2.3.P.4')],
+  ['2.3.P.5', 'Control of Drug Product', M4Q_QOS('2.3.P.5')],
+  ['2.3.P.6', 'Reference Standards or Materials', M4Q_QOS('2.3.P.6')],
+  ['2.3.P.7', 'Container Closure System', M4Q_QOS('2.3.P.7')],
+  ['2.3.P.8', 'Stability', M4Q_QOS('2.3.P.8')],
+  ['2.3.A.1', 'Facilities and Equipment', M4Q_QOS('2.3.A.1')],
+  ['2.3.A.2', 'Adventitious Agents Safety Evaluation', M4Q_QOS('2.3.A.2')],
+  ['2.3.A.3', 'Excipients', M4Q_QOS('2.3.A.3')],
   /* The Nonclinical Overview's own subsections. Found missing on 2026-10-13 by the repo-wide
      Module 1 scan, which reported all six as "not an ICH M4 heading" against
      server/services/market-specs/document-template-library.ts — where they are stated correctly.
@@ -115,9 +172,9 @@ const ROWS: readonly Row[] = [
   ['2.5.6.2', 'Benefits', M4E_BR('2.5.6.2')],
   ['2.5.6.3', 'Risks', M4E_BR('2.5.6.3')],
   ['2.5.6.4', 'Benefit-Risk Assessment', M4E_BR('2.5.6.4')],
-  ['2.5.6.5', 'Appendix', M4E_BR('2.5.6.5')],
+  ['2.5.6.5', 'Appendix', M4E_BR('2.5.6.5'), 'when detailed benefit-risk methods or results are presented (M4E(R2): a descriptive approach is generally adequate)'],
   ['2.5.7', 'Literature References', M4E_R2],
-  ['2.6', 'Nonclinical Written and Tabulated Summaries', M4_ORG()],
+  ['2.6', 'Nonclinical Written and Tabulated Summaries', M4_ORG('2.6')],
   ['2.6.4.1', 'Brief Summary', M4S('2.6.4.1')],
   ['2.6.4.2', 'Methods of Analysis', M4S('2.6.4.2')],
   ['2.6.4.3', 'Absorption', M4S('2.6.4.3')],
@@ -138,7 +195,7 @@ const ROWS: readonly Row[] = [
   ['2.6.6.8', 'Other Toxicity Studies', M4S('2.6.6.8')],
   ['2.6.6.9', 'Discussion and Conclusions', M4S('2.6.6.9')],
   ['2.6.6.10', 'Tables and Figures', M4S('2.6.6.10')],
-  ['2.7', 'Clinical Summary', M4_ORG()],
+  ['2.7', 'Clinical Summary', M4_ORG('2.7')],
   ['2.7.1.1', 'Background and Overview', M4E('2.7.1.1')],
   ['2.7.1.2', 'Summary of Results of Individual Studies', M4E('2.7.1.2')],
   ['2.7.1.3', 'Comparison and Analyses of Results Across Studies', M4E('2.7.1.3')],
@@ -180,24 +237,24 @@ const ROWS: readonly Row[] = [
   ['2.7.4.5.6', 'Drug Abuse', M4E('2.7.4.5.6')],
   ['2.7.4.5.7', 'Withdrawal and Rebound', M4E('2.7.4.5.7')],
   ['2.7.4.5.8', 'Effects on Ability to Drive or Operate Machinery or Impairment of Mental Ability', M4E('2.7.4.5.8')],
-  ['2.7.4.6', 'Post-marketing Data', M4E_R2],
+  ['2.7.4.6', 'Post-marketing Data', M4E_R2, 'when the product is already marketed in any region'],
   ['2.7.4.7', 'Appendix', M4E('2.7.4.7')],
 
   // ── Module 3: skeleton only (the CMC lane appends the rest) ─────────────────
-  ['3', 'Quality', M4_ORG()],
-  ['3.1', 'Table of Contents of Module 3', M4_ORG()],
-  ['3.2', 'Body of Data', M4_ORG()],
+  ['3', 'Quality', M4_ORG('3')],
+  ['3.1', 'Table of Contents of Module 3', M4_ORG('3.1')],
+  ['3.2', 'Body of Data', M4_ORG('3.2')],
   ['3.2.S', 'Drug Substance', M4Q('3.2.S')],
   ['3.2.P', 'Drug Product', M4Q('3.2.P')],
   // Parents of the exact P.2 leaves added 2026-10-09; content remains in the overlay.
   ['3.2.P.2.1', 'Components of the Drug Product', M4Q('3.2.P.2.1')],
   ['3.2.P.2.2', 'Drug Product', M4Q('3.2.P.2.2')],
-  ['3.3', 'Literature References', M4_ORG()],
+  ['3.3', 'Literature References', M4_ORG('3.3')],
 
   // ── Module 4 ────────────────────────────────────────────────────────────────
-  ['4', 'Nonclinical Study Reports', M4_ORG()],
-  ['4.1', 'Table of Contents of Module 4', M4_ORG()],
-  ['4.2', 'Study Reports', M4_ORG()],
+  ['4', 'Nonclinical Study Reports', M4_ORG('4')],
+  ['4.1', 'Table of Contents of Module 4', M4_ORG('4.1')],
+  ['4.2', 'Study Reports', M4_ORG('4.2')],
   ['4.2.1', 'Pharmacology', M4S('4.2.1')],
   ['4.2.2', 'Pharmacokinetics', M4S('4.2.2')],
   ['4.2.3', 'Toxicology', M4S('4.2.3')],
@@ -219,7 +276,7 @@ const ROWS: readonly Row[] = [
   ['4.2.3.7.7', 'Other', M4S('4.2.3.7.7')],
 
   // ── Module 5 ────────────────────────────────────────────────────────────────
-  ['5', 'Clinical Study Reports', M4_ORG()],
+  ['5', 'Clinical Study Reports', M4_ORG('5')],
   ['5.3', 'Clinical Study Reports', M4E('5.3')],
   ['5.3.1.1', 'Bioavailability (BA) Study Reports', M4E_R2],
   ['5.3.1.2', 'Comparative BA and Bioequivalence (BE) Study Reports', M4E_R2],
@@ -245,13 +302,14 @@ function parentCode(code: string): string | null {
 
 /** The structural ICH M4 headings of Modules 2–5 not carried by `CTD_AUTHORING_GUIDANCE`, in CTD order. */
 export const ICH_M4_HEADINGS: readonly IchM4Heading[] = Object.freeze(
-  ROWS.map(([code, title, basis]) =>
+  ROWS.map(([code, title, basis, condition]) =>
     Object.freeze({
       code,
       title,
       parent: parentCode(code),
       module: Number(code[0]) as IchM4Heading['module'],
       basis,
+      ...(condition ? { condition } : {}),
     }),
   ),
 );

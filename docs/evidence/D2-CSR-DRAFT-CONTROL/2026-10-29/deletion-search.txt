@@ -1,0 +1,46 @@
+e3a2d0475 2026-10-29 Device Correspondence tab reads the project inbox; letters are answered in Communication | client/src/concept2cure/mdx/__tests__/anaDrafterNoFabrication.test.tsx
+e3a2d0475 2026-10-29 Device Correspondence tab reads the project inbox; letters are answered in Communication | client/src/concept2cure/mdx/components/AnaDrafter.tsx
+e3a2d0475 2026-10-29 Device Correspondence tab reads the project inbox; letters are answered in Communication | client/src/concept2cure/mdx/drafter.css
+ad69500f01 2026-09-21 WE: AI draft refuses without a provider (no template fallback); Vault shows uploaded files | server/routes/__tests__/authoringAiDraftFallback.test.ts
+bf84d94a57 2026-08-24 feat(cmc): the correspondence loop can be written, not just read | server/api/cmc/regulatory_aiDraft.ts
+90760ae008 2026-08-17 Editor: one canonical canvas (TipTap), track changes, anchored comments, revision diff, collab wiring | client/src/concept2cure/v2/surfaces/EditorCanvas.tsx
+8777475359 2026-08-04 fix(ci): regenerate the second dead-code baseline, and delete two unused routers | server/routes/atoms.js
+8777475359 2026-08-04 fix(ci): regenerate the second dead-code baseline, and delete two unused routers | server/routes/collaboration.ts
+d9c0d65f5f 2026-08-04 test: retire 37 tests whose subjects were deleted, keep the 18 that still test something | client/src/concept2cure/components/ana/__tests__/se-comparison-table.test.tsx
+2895218b8b 2026-08-04 refactor: one shell, and delete the dead code for good | client/src/concept2cure/components/ana/SEComparisonTable.tsx
+2895218b8b 2026-08-04 refactor: one shell, and delete the dead code for good | client/src/concept2cure/components/intelligentDocs/SourceSuggestionPanel.tsx
+a32a0067c2 2026-07-13 feat(ui-v2): phases 3-7 full UI replacement + backend gap closures (#1012) | client/src/concept2cure/hooks/useWorkspaceSuggestedActions.ts
+46044c4263 2026-06-05 chore(cleanup): Tier 3C — remove 126 zero-reference legacy client files (vite build + tsc green) | client/src/lib/diff.ts
+e5a74a4dfa 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/components/editor/DocumentDiff.tsx
+e5a74a4dfa 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/components/editor/extensions/TrackChangesExtension.ts
+e5a74a4dfa 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/components/provenance/DocumentVersionCompare.tsx
+e5a74a4dfa 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2cure (#675) | client/src/concept2cure/components/ui/ValidationRefineTrigger.tsx
+73f88df16d 2026-06-02 MDX install: pathway sub-tabs · Files tree · dossier drawer · AnaDrafter (#677) | client/src/concept2cure/mdx/surfaces/AuditSurface.tsx
+2b80b9c4c9 2026-05-26 Remove dead AnA surfaces, fix placeholder data, wire chat to validated biostats engine | client/src/concept2cure/components/chat/anaStreamingClient.ts
+ac5018cc30 2026-05-08 chore: remove test/spec files — production code only on this branch | server/services/__tests__/citation-engine-diff.test.ts
+ac5018cc30 2026-05-08 chore: remove test/spec files — production code only on this branch | server/services/__tests__/citation-engine-project-diff.test.ts
+ac5018cc30 2026-05-08 chore: remove test/spec files — production code only on this branch | server/services/__tests__/submission-chat-apply-rewrite.test.ts
+7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/DocumentDiffViewer.tsx
+7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/cer/CERStreamingGenerator.jsx
+7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/claude/ClaudeStreamingDraft.tsx
+7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/cmc/AISuggestionEngine.tsx
+7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/coauthor/SearchSuggestions.jsx
+7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/csr-analyzer/CSRComparison.jsx
+7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/documentrecommender/ContentSuggestionPanel.jsx
+7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/extensions/TrackChangesExtension.js
+7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/ | client/src/components/protocol/ProtocolCompareViewer.tsx
+bb243dfadf 2026-04-28 chore(ui): delete every surface not built by Claude Design | client/src/routes/authoring/documents/[docId]/EditorCanvas.tsx
+b79f020e1a 2026-04-05 refactor: surgical dead code purge — 670 files removed, build verified | server/routes/versionDiff.ts
+fc9a7943bb 2026-04-04 refactor: Phase 2D — delete orphaned editors, pages, and route components | client/src/components/DocumentDiffViewer.tsx
+3ea8cc863d 2026-04-04 refactor: Phase 2 — massive dead client component purge | client/src/components/cer/CERStreamingGenerator.jsx
+3ea8cc863d 2026-04-04 refactor: Phase 2 — massive dead client component purge | client/src/components/csr-analyzer/CSRComparison.jsx
+3ea8cc863d 2026-04-04 refactor: Phase 2 — massive dead client component purge | client/src/components/protocol/ProtocolCompareViewer.tsx
+e1dca6e3de 2026-04-04 refactor: Phase 1 final — delete remaining orphaned services | server/services/componentDiff.js
+b6e991501c 2026-04-04 refactor: Phase 1 dead code purge — delete unused routes and orphaned services | server/services/delta-comparison-service.js
+b6e991501c 2026-04-04 refactor: Phase 1 dead code purge — delete unused routes and orphaned services | server/services/diffChecker.js
+83fa7f6cfb 2026-04-01 refactor: remove 146 orphaned client files (~42,000 lines) | client/src/components/ProtocolCorrectionSuggestions.tsx
+36f997067b 2026-03-30 chore: delete 35 verified orphaned client components (-13,782 lines) | client/src/components/DocumentDiffDialog.tsx
+36f997067b 2026-03-30 chore: delete 35 verified orphaned client components (-13,782 lines) | client/src/components/VersionDiff.tsx
+5c1033735f 2026-03-30 chore: delete 3 orphaned components + remove stale jspdf type declarations | client/src/components/csr/CSRCompareViewer.tsx
+87d13d7cd4 2026-03-25 chore: BETA audit — remove mock data route + 127 dead Python files | server/api/agent/suggestions.py
+3decdf8b31 2026-03-22 chore: remove _deprecated folder (13 dead component files) | client/src/components/_deprecated/ProtocolCorrectionSuggestions.jsx

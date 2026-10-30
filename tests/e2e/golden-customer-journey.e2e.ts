@@ -70,6 +70,8 @@ async function browserApi<T>(
   ) as Promise<{ status: number; headers: Record<string, string>; body: T }>;
 }
 
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 function payload<T>(response: { body: any }): T {
   return (response.body.data ?? response.body) as T;
 }
@@ -312,13 +314,15 @@ test('fixture-free golden journey persists evidence, content edits, review, prov
   expect(JSON.stringify(payload(persisted))).toContain(JOURNEY.artifactTitle);
   expect(JSON.stringify(payload(persisted))).toContain('review');
 
-  // Artifacts center is not a nav place any more (docs/design/ONE_ANA_ONE_CANVAS.md §5;
-  // registryModel.ts RAIL_CORE). Open it from the top bar's search, by accessible
-  // names: the path client/src/concept2cure/v2/__tests__/shellNav.test.tsx pins. A
-  // direct URL load bounces back to Home (the shell restores its own state on a cold load).
+  // The Artifacts center folded into the Vault (D2, fold F3 slice C, 2026-10-29):
+  // with no project open, the Vault lists the governed artifacts of every project
+  // the author can open, with the gallery's governance line. Open it from the top
+  // bar's search, by accessible names: the path
+  // client/src/concept2cure/v2/__tests__/shellNav.test.tsx pins. A direct URL load
+  // bounces back to Home (the shell restores its own state on a cold load).
   await page.getByRole('button', { name: 'Search, jump, or run a command' }).click();
-  await page.getByPlaceholder(/Search surfaces/).fill('Artifacts');
-  await page.getByRole('button', { name: /Artifacts center/i }).first().click();
+  await page.getByPlaceholder(/Search surfaces/).fill('Vault');
+  await page.getByRole('button', { name: /^Vault/ }).first().click();
   // Anchor on the row's testid, not the exact title: the listing truncates
   // long titles in the cell text, so an exact-text locator can never match.
   // The governance label is the claim under test and is asserted verbatim.
@@ -361,4 +365,167 @@ test('fixture-free golden journey persists evidence, content edits, review, prov
   });
   await authorContext.close();
   await reviewerContext.close();
+});
+
+/** The New project wizard, as a person fills it: an IND for a drug. */
+async function createIndProject(page: Page, projectName: string) {
+  await page.getByRole('button', { name: /^Investigational New Drug Application/ }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByLabel('Project name').fill(projectName);
+  await page.getByLabel('Product name').fill('FS-101');
+  await page.getByLabel('Indication').fill('idiopathic pulmonary fibrosis');
+  await page.getByLabel('Product type').selectOption('Drug');
+  await page.getByLabel('Target submission date').fill('2027-03-31');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('button', { name: /Create project/ }).click();
+}
+
+/** The editor's Send for review, to one reviewer, with a reason; returns the dialog showing its outcome. */
+async function sendForReview(page: Page, reviewer: string) {
+  await page.getByRole('button', { name: 'Send for review' }).click();
+  const dialog = page.getByRole('dialog');
+  // Offered only when the document's existing review requests were read; a
+  // refused read (2026-10-25: the 20-a-minute document bucket) offers no one.
+  await expect(dialog.getByLabel(reviewer)).toBeVisible({ timeout: 30_000 });
+  await dialog.getByLabel(reviewer).check();
+  await dialog.getByLabel(/Reason for the request/).fill('Ready for a first review of the profile.');
+  await dialog.getByRole('button', { name: 'Send for review' }).click();
+  await expect(dialog.getByText(/^Review requested\. The server recorded one request on this document/)).toBeVisible({ timeout: 30_000 });
+  await expect(dialog.getByText(new RegExp(`in ${reviewer}’s My work`))).toBeVisible();
+  return dialog;
+}
+
+const SYNTHETIC_SOURCE = {
+  name: 'fs-101-nonclinical-summary.txt',
+  mimeType: 'text/plain',
+  buffer: Buffer.from(
+    'SYNTHETIC TEST DATA. FS-101 nonclinical summary for a first-session browser test. Not scientific evidence.\n'
+  ),
+};
+
+/**
+ * The first session, driven through the screens a person uses (decision 13 of
+ * docs/design/CLIENT_JOURNEY_2026-10-25.md). The regulatory lead of a small
+ * biotech signs in, creates an IND project, adds a source, assigns a document
+ * of the filing to a person with a due date, starts it from its template, asks
+ * AnA to draft it, sends it for review, and sees what is left. Every step is a
+ * click or a keystroke on a screen; no step is an API call. The test above
+ * proves the governed records; this one proves a person can reach them.
+ *
+ * No model key is configured where this runs, so the AnA step asserts the
+ * hand-off (the request arrives in the conversation, with the document it came
+ * from, and the way back to it), not a drafted answer.
+ */
+test('first session: create an IND project, add a source, assign, draft with AnA, send for review, see what is left', async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(300_000);
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await authenticatedPage(context, JOURNEY.adminEmail, JOURNEY.adminPassword);
+  const projectName = `FS-${Date.now().toString(36).toUpperCase()} — first session IND`;
+  const deliverable = 'Target Product Profile';
+  const snap = async (name: string) =>
+    testInfo.attach(name, { body: await page.screenshot({ fullPage: false }), contentType: 'image/png' });
+
+  await test.step('Home offers a way to start a project', async () => {
+    const projects = page.locator('section', { has: page.getByRole('heading', { name: 'Your projects' }) });
+    await projects.getByRole('button', { name: /^(Create your first project|New project)$/ }).click();
+  });
+
+  await test.step('the wizard creates an IND and the project opens on Plan', async () => {
+    await createIndProject(page, projectName);
+    await expect(page).toHaveURL(/project-home/, { timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: projectName })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What this IND needs' })).toBeVisible();
+    await expect(page.locator('details[data-phase]')).toHaveCount(8);
+    await snap('first-session-01-plan.png');
+  });
+
+  await test.step('Evidence: a source is added and read', async () => {
+    await page.getByRole('button', { name: /^Evidence/ }).first().click();
+    await page.getByLabel('Attach files to this project').setInputFiles(SYNTHETIC_SOURCE);
+    const dataRoom = page.locator('section', { has: page.getByRole('heading', { name: 'Data room' }) });
+    await expect(dataRoom.getByText(/fs-101-nonclinical-summary\.txt.*text extracted/).first()).toBeVisible({ timeout: 30_000 });
+    await snap('first-session-02-evidence.png');
+  });
+
+  const entryIn = (scope: ReturnType<Page['locator']>) =>
+    scope.locator('details', { has: page.locator('> summary', { hasText: new RegExp(`^${deliverable}`) }) }).first();
+
+  await test.step('Plan: the document is assigned to a person with a due date', async () => {
+    await page.getByRole('button', { name: /^Plan/ }).first().click();
+    const entry = entryIn(page.locator('details[data-phase="phase1"]'));
+    await entry.locator('> summary').click();
+    await entry.getByRole('button', { name: /^Assign/ }).click();
+    const drawer = page.getByRole('dialog');
+    await drawer.getByLabel(/Person/).selectOption({ label: 'Admin User' });
+    await drawer.getByLabel(/Due date/).fill('2026-12-15');
+    await drawer.getByRole('button', { name: 'Assign', exact: true }).click();
+    await expect(entry.getByTestId('plan-assignment')).toHaveText('Assigned to Admin User, due Dec 15, 2026');
+    await snap('first-session-03-assigned.png');
+  });
+
+  await test.step('Plan: the document starts from its template, in the editor', async () => {
+    const entry = entryIn(page.locator('details[data-phase="phase1"]'));
+    await entry.getByRole('button', { name: 'Create from template' }).click();
+    await expect(page).toHaveURL(/document-authoring/, { timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: deliverable })).toBeVisible();
+  });
+
+  await test.step('AnA: the draft request arrives in the conversation, and leads back', async () => {
+    await page.getByRole('button', { name: 'Draft with AnA', exact: true }).first().click();
+    await expect(page).toHaveURL(/conversation-thread/);
+    await expect(page.locator('textarea').first()).toHaveValue(new RegExp(deliverable));
+    await snap('first-session-04-ana.png');
+    await page.getByRole('button', { name: /^Back to/ }).first().click();
+    await expect(page).toHaveURL(/document-authoring/);
+    await expect(page.getByRole('heading', { name: deliverable })).toBeVisible();
+  });
+
+  await test.step('the editor saves a revision, with its reason', async () => {
+    await page.locator('[contenteditable="true"]').first().click();
+    await page.keyboard.type('SYNTHETIC TEST DATA. FS-101 is an oral small molecule for idiopathic pulmonary fibrosis.');
+    await page.getByPlaceholder(/Why this changed/).fill('First draft of the product profile.');
+    await page.getByTestId('save-section').click();
+    await expect(page.getByTestId('save-section')).toHaveText(/Saved/, { timeout: 30_000 });
+  });
+
+  await test.step('Send for review: a reviewer is asked, with a reason', async () => {
+    const dialog = await sendForReview(page, 'Reviewer User');
+    await snap('first-session-05-sent.png');
+    await dialog.getByRole('button', { name: 'Done' }).click();
+  });
+
+  const named = (title: string) => new RegExp(`^${escapeRegExp(title)}.*${escapeRegExp(projectName)}`);
+
+  await test.step('see what is left: Home lists the assigned document, by project', async () => {
+    await page.locator('button.nav-item', { hasText: /^Home$/ }).click();
+    const open = page.getByTestId('home-open-items');
+    await expect(open.getByRole('button', { name: named(`Prepare: ${deliverable}`) })).toBeVisible({ timeout: 30_000 });
+    await snap('first-session-06-home.png');
+  });
+
+  await test.step('see what is left: the project shows the document started, assigned and in review', async () => {
+    await page.getByTestId('home-projects').getByRole('button', { name: new RegExp(escapeRegExp(projectName)) }).click();
+    await expect(page).toHaveURL(/project-home/);
+    await expect(page.locator('.pj-lc-stage[data-status="active"]')).toHaveText('Plan');
+    const phase1 = page.locator('details[data-phase="phase1"]');
+    await expect(phase1.locator('> summary')).toContainText(/\d+ documents · 1 started/);
+    await expect(entryIn(phase1).getByTestId('plan-assignment')).toHaveText('Assigned to Admin User, due Dec 15, 2026');
+    await page.getByRole('button', { name: /^Review/ }).first().click();
+    const reviews = page.locator('section', { has: page.getByRole('heading', { name: 'Reviews' }) });
+    await expect(reviews).toContainText(deliverable, { timeout: 30_000 });
+    await expect(reviews).toContainText('Reviewer User');
+    await snap('first-session-07-review-step.png');
+  });
+  await context.close();
+
+  await test.step('the reviewer sees the review on their Home, by project', async () => {
+    const reviewerContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+    const reviewer = await authenticatedPage(reviewerContext, JOURNEY.reviewerEmail, JOURNEY.reviewerPassword);
+    const open = reviewer.getByTestId('home-open-items');
+    await expect(open.getByRole('button', { name: named(`Review: ${deliverable}`) })).toBeVisible({ timeout: 30_000 });
+    await testInfo.attach('first-session-08-reviewer-home.png', { body: await reviewer.screenshot(), contentType: 'image/png' });
+    await reviewerContext.close();
+  });
 });

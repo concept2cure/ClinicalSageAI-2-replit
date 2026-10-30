@@ -1,0 +1,12 @@
+ × tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > every heading says what it is for or what it carries 13ms
+ × tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > every heading AnA drafts carries its writing rules, and its brief renders them 2ms
+ × tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > every §14–§16 heading says how its outputs are displayed or compiled 2ms
+ × tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > §9.7.1, §11.4 and §11.4.1 carry the ICH E9(R1) estimand attributes and cite E9(R1) 2ms
+ × tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > E3 Annexes I–IVb are display models, each tied to the heading it serves 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ '9.4', '9.5', '10', '11', …(30) ] to deeply equal []
+AssertionError: expected [ '1', '2', '4', '5', '5.1', …(77) ] to deeply equal []
+AssertionError: expected [ '14.1', '14.2', '14.3', …(32) ] to deeply equal []
+AssertionError: 9.7.1: expected '## ICH E3 §9.7.1 Statistical and Anal…' to match /population-level summary/i
+AssertionError: expected [] to deeply equal [ 'I', 'II', 'IIIa', 'IIIb', …(2) ]
+      Tests  5 failed | 3 passed | 27 skipped (35)

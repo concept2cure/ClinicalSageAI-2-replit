@@ -68,7 +68,7 @@ function StationeryChoices(props: StationeryProps & { owner: CompanySession }) {
           })}
         </select>
       </label>
-      <p className="rl-card-meta">An explicit published design applies to this archive only. This chooser offers organization-wide stationery; scoped designs require a matching known program, market, language and subsidiary.</p>
+      <p className="rl-card-meta">An explicit published design applies to this archive only. This chooser offers organization-wide stationery; scoped designs require a matching known project, market, language and subsidiary.</p>
       {next && <button type="button" className="rl-card-run" disabled={blocked} onClick={() => void read(next)}>Load more stationery</button>}
       {loading && <p role="status">Reading published stationery…</p>}
       {error && <p role="status">{error}</p>}

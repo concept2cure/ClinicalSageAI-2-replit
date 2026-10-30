@@ -1,7 +1,9 @@
 /**
  * The one client call for a QMS approval signature — a controlled document, a
- * change, or a document's retirement — and, below it, the review routing that
- * must precede a document's approval (sendQmsDocumentForReview). The signed routes take the same body and
+ * change, or a document's retirement. The review routing that must precede a
+ * document's approval is its review route since RR4 (qmsReviewRoute.ts
+ * sendQmsForReview, which replaced sendQmsDocumentForReview here: a send now
+ * names one QMS approver and any reviewers). The signed routes take the same body and
  * answer the same way (server/routes/mdx-qms.ts: POST /qms/documents/:id/approve;
  * since P1-28 / DP-31, POST /qms/changes/:id/approve; since P1-29 / DP-32,
  * POST /qms/documents/:id/retire), so the register and the change log share
@@ -36,15 +38,29 @@ const SIGNED_PATH: Record<QmsApprovalTarget['kind'], (id: number) => string> = {
   change: (id) => `changes/${id}/approve`,
 };
 
+/**
+ * The meaning each target kind is signed with, as the route stores it and as
+ * the dialog names it. A retirement withdraws the document from use; it is not
+ * an approval (P-51).
+ */
+const SIGNED_MEANING: Record<QmsApprovalTarget['kind'], { stored: string; id: 'approval' | 'retirement' }> = {
+  document: { stored: 'APPROVED', id: 'approval' },
+  'document-retire': { stored: 'retirement', id: 'retirement' },
+  change: { stored: 'APPROVED', id: 'approval' },
+};
+
 export async function postQmsApproval(
   target: QmsApprovalTarget,
   input: { reason: string; password: string; totp?: string },
+  /** For a document approval: the day it is effective from (YYYY-MM-DD, not before today), bound in the signature (CAT2-19). */
+  effectiveDate?: string,
 ): Promise<EsigSignedManifest> {
   const res = await apiRequest('POST', `/api/mdx/qms/${SIGNED_PATH[target.kind](target.id)}`, {
     password: input.password,
     ...(input.totp ? { mfaToken: input.totp } : {}),
-    meaning: 'APPROVED',
+    meaning: SIGNED_MEANING[target.kind].stored,
     reason: input.reason,
+    ...(target.kind === 'document' && effectiveDate ? { effectiveDate } : {}),
   });
   const json = (await res.json().catch(() => null)) as {
     meta?: { signature?: { signedAt?: string; boundPayloadDigest?: string } };
@@ -59,7 +75,7 @@ export async function postQmsApproval(
     throw new Error('The server did not return the signature record. Reload the register to see whether the approval was recorded.');
   }
   return {
-    meaning: 'approval',
+    meaning: SIGNED_MEANING[target.kind].id,
     reason: input.reason,
     signedAt: sig.signedAt,
     ...(sig.boundPayloadDigest ? { hash: sig.boundPayloadDigest } : {}),
@@ -76,49 +92,89 @@ export type QmsPeriodicReviewDecision =
  * changes nothing on the document: the review is the signature
  * (server/services/qms/periodic-review.ts).
  */
-export async function postQmsPeriodicReview(
+export function postQmsPeriodicReview(
   id: number,
   decision: QmsPeriodicReviewDecision,
   input: { reason: string; password: string; totp?: string },
 ): Promise<EsigSignedManifest> {
+  return sendSignedAct('POST', `/api/mdx/qms/documents/${id}/periodic-review`, decision, { ...input, meaning: 'review' }, UNCONFIRMED_REVIEW);
+}
+
+/**
+ * Sign a nonconformance's disposition. The reason is recorded as its
+ * rationale, and a signed disposition is not changed
+ * (server/services/qms/nonconformance-disposition.ts).
+ */
+export function signNcDisposition(
+  id: number,
+  disposition: string,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  return sendSignedAct('PATCH', `/api/mdx/qms/nonconforming/${id}/disposition`, { disposition }, input, UNCONFIRMED_DISPOSITION);
+}
+const UNCONFIRMED_DISPOSITION = 'The server did not confirm the disposition. Reload the register and check the nonconformance before you sign again.';
+
+/** Close a deviation with a signature (server/services/qms/deviations.ts, P-57). */
+export function signDeviationClose(
+  id: number,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  return sendSignedAct('POST', `/api/mdx/qms/deviations/${id}/close`, {}, input, UNCONFIRMED_CLOSE);
+}
+const UNCONFIRMED_CLOSE = 'The server did not confirm the close. Reload the register and check the deviation before you sign again.';
+
+/** Cancel a deviation recorded in error; the signer's reason is the cancellation's. */
+export function signDeviationCancel(
+  id: number,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  return sendSignedAct('POST', `/api/mdx/qms/deviations/${id}/cancel`, {}, input, UNCONFIRMED_CANCEL);
+}
+const UNCONFIRMED_CANCEL = 'The server did not confirm the cancellation. Reload the register and check the deviation before you sign again.';
+
+/** Sign a supplier's approval standing (server/services/qms/supplier-approval.ts). */
+export function signSupplierApproval(
+  id: number,
+  decision: { approvalStatus: string; reapprovalDate?: string },
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  return sendSignedAct('POST', `/api/mdx/qms/suppliers/${id}/approval`, decision, input, UNCONFIRMED_APPROVAL);
+}
+const UNCONFIRMED_APPROVAL = "The server did not confirm the supplier's standing. Reload the register and check the supplier before you sign again.";
+
+/**
+ * A route that signs through the platform's one ceremony (routes/governed-signed-act.ts),
+ * which answers with the signature's time. A coded refusal (4xx) is the server's
+ * sentence. A dropped connection or a server error may have come after the
+ * commit, so it is not "nothing was signed", and signing again could record a
+ * second act.
+ */
+async function sendSignedAct(
+  method: 'POST' | 'PATCH',
+  path: string,
+  fields: Record<string, unknown>,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+  unconfirmed: string,
+): Promise<EsigSignedManifest> {
   let res: Response;
   try {
-    res = await apiRequest('POST', `/api/mdx/qms/documents/${id}/periodic-review`, {
-      ...decision,
+    res = await apiRequest(method, path, {
+      ...fields,
       password: input.password,
       ...(input.totp ? { mfaToken: input.totp } : {}),
-      meaning: 'review',
+      meaning: input.meaning,
       reason: input.reason,
     });
   } catch (err) {
-    // A coded refusal (4xx) is the server's sentence. A dropped connection or a
-    // server error may have come after the commit, so it is not "nothing was
-    // signed", and signing again could record a second review.
     const status = (err as { status?: unknown } | null)?.status;
     if (typeof status === 'number' && status < 500) throw err;
-    throw new Error(UNCONFIRMED_REVIEW);
+    throw new Error(unconfirmed);
   }
   const json = (await res.json().catch(() => null)) as { signedAt?: string; sha256Chain?: string } | null;
   if (res.status === 401) {
     throw refusedSigning(serverMessage(json) ?? 'Your password or code was not verified. Re-enter them and sign again.');
   }
-  if (!json?.signedAt) throw new Error(UNCONFIRMED_REVIEW);
-  return { meaning: 'review', reason: input.reason, signedAt: json.signedAt, ...(json.sha256Chain ? { hash: json.sha256Chain } : {}) };
+  if (!json?.signedAt) throw new Error(unconfirmed);
+  return { meaning: input.meaning, reason: input.reason, signedAt: json.signedAt, ...(json.sha256Chain ? { hash: json.sha256Chain } : {}) };
 }
 const UNCONFIRMED_REVIEW = 'The server did not confirm the review. Reload the register and check the document’s last review before you sign again.';
-
-/**
- * Send a draft controlled document for review: the existing edit route,
- * PATCH /api/mdx/qms/documents/:id with status 'in_review' (the server admits
- * only draft or in-review edits and records the §11.10(e) row). Not a
- * signature. Since 2026-10-08 only a document under review can be approved, so
- * this is the step before Approve (QA walk J8: no control in the product moved
- * a draft to review). A refusal is thrown as the server's sentence.
- */
-export async function sendQmsDocumentForReview(id: number, reason: string): Promise<void> {
-  const res = await apiRequest('PATCH', `/api/mdx/qms/documents/${id}`, { status: 'in_review', reason });
-  if (!res.ok) {
-    const json = await res.json().catch(() => null);
-    throw new Error(serverMessage(json) ?? 'Your session could not be verified. Sign in again; nothing was changed.');
-  }
-}

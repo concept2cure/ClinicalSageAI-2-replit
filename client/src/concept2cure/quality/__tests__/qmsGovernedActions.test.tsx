@@ -61,6 +61,7 @@ vi.mock('../hooks', () => ({
   useSopTemplates: () => ({ templates: TEMPLATES, loading: false, error: null }),
   useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: [], loading: false, error: null, refresh: vi.fn() }),
+  useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
 }));
 vi.mock('../changeHooks', async () => {
   const { CHANGE_SUMMARY } = await import('./changeRows');
@@ -139,8 +140,8 @@ describe('SOP register — governed actions reach their routes', () => {
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /New controlled document/ }));
     const d = drawer(/New controlled document/);
-    await waitFor(() => expect(within(d).getByLabelText('Program').querySelector(`option[value="${PROGRAM}"]`)).toBeTruthy());
-    fill(d, /^Program$/, PROGRAM);
+    await waitFor(() => expect(within(d).getByLabelText('Project').querySelector(`option[value="${PROGRAM}"]`)).toBeTruthy());
+    fill(d, /^Project$/, PROGRAM);
     fill(d, /^Template$/, 'sop');
     fill(d, /Document type/, 'sop');
     fill(d, /^Template$/, 'sop');
@@ -269,7 +270,7 @@ describe('Change control — governed actions reach their routes', () => {
     renderLog();
     fireEvent.click(screen.getByRole('button', { name: /Change-control procedure/ }));
     const d = drawer(/New controlled document/);
-    await waitFor(() => expect((within(d).getByLabelText('Program') as HTMLSelectElement).value).toBe(PROGRAM));
+    await waitFor(() => expect((within(d).getByLabelText('Project') as HTMLSelectElement).value).toBe(PROGRAM));
     expect((within(d).getByRole('button', { name: 'Create and open' }) as HTMLButtonElement).disabled).toBe(true);
     expect(H.apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
     fill(d, /^Reason$/, 'Establish change control for the current program.');

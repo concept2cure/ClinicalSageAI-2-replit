@@ -37,6 +37,60 @@ export interface DrugApproval {
   marketingStatus: string;
   approvalCount: number;
   latestApprovalDate: string | null;
+  /** Listed agency documents; this search does not acquire their bytes. */
+  applicationDocuments: FdaApplicationDocument[];
+}
+
+export interface FdaApplicationDocument {
+  id: string;
+  url: string;
+  agencyType: string;
+  classification: 'label' | 'letter' | 'review_package_index' | 'regulatory_review' | 'regulatory_document';
+  date: string;
+  submissionType: string;
+  submissionNumber: string;
+  acquisitionStatus: 'listed_only';
+}
+
+function documentList(value: unknown): any[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function parseDocumentUrl(value: unknown): URL | null {
+  try {
+    const url = new URL(String(value ?? ''));
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+function classifyDocument(agencyType: string, url: URL): FdaApplicationDocument['classification'] {
+  const kind = agencyType.toLowerCase();
+  if (kind === 'label') return 'label';
+  if (kind === 'letter') return 'letter';
+  if (kind.includes('review')) {
+    return /\.html?$/i.test(url.pathname) ? 'review_package_index' : 'regulatory_review';
+  }
+  return 'regulatory_document';
+}
+
+/** Preserve application_docs and their submission identity; reviews are not CSRs. */
+export function normalizeApplicationDocuments(raw: any): FdaApplicationDocument[] {
+  const documents: FdaApplicationDocument[] = [];
+  for (const submission of documentList(raw?.submissions)) {
+    for (const doc of documentList(submission?.application_docs)) {
+      const url = parseDocumentUrl(doc?.url);
+      if (!url) continue;
+      const agencyType = String(doc.type ?? '');
+      const classification = classifyDocument(agencyType, url);
+      documents.push({ id: String(doc.id ?? ''), url: String(doc.url), agencyType, classification,
+        date: fmtDate(String(doc.date ?? '')), submissionType: String(submission.submission_type ?? ''),
+        submissionNumber: String(submission.submission_number ?? ''), acquisitionStatus: 'listed_only' });
+    }
+  }
+  return documents;
 }
 
 export interface DrugApprovalSearchResult {
@@ -95,6 +149,7 @@ export function normalizeApproval(raw: any): DrugApproval {
     marketingStatus: String(products[0]?.marketing_status ?? ''),
     approvalCount: approved.length,
     latestApprovalDate: approvalDates.length ? approvalDates[approvalDates.length - 1] : null,
+    applicationDocuments: normalizeApplicationDocuments(r),
   };
 }
 
@@ -127,7 +182,8 @@ export async function searchDrugApprovals(
   }
 
   const data: any = await res.json();
-  const results = Array.isArray(data?.results) ? data.results : [];
+  if (!Array.isArray(data?.results)) throw new Error('openFDA drug/drugsfda response has no results array (unexpected shape)');
+  const results = data.results;
   const total = Number(data?.meta?.results?.total ?? results.length) || results.length;
   return {
     source: 'Drugs@FDA (openFDA)',

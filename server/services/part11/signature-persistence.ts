@@ -63,7 +63,7 @@ import type { SQL } from 'drizzle-orm';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { resolveSignerIdentity } from './resolve-signer-identity.js';
 import { GOVERNED_SIGN_MEANINGS, signMeaningRefusal, type GovernedSignMeaning } from './signature-meanings.js';
-import { CONTENT_BINDERS } from './governed-target-binders.js';
+import { CONTENT_BINDERS, type BinderOptions } from './governed-target-binders.js';
 import type { RecordedPackageIdentitySnapshot } from '../ectd/package-identity';
 import { deriveEctdSequenceBinding } from './ectd-sequence-binding';
 import {
@@ -209,6 +209,14 @@ export const BINDING_BASIS = {
    */
   REPORT_RUN_SEAL: 'report-run-seal-sha256',
   /**
+   * sha256 (stableStringify) over a Vault seal's manifest: every current
+   * document's identity, version, content hash, filing and lifecycle stage as
+   * sealed (VR-19, server/services/vault/vault-seal.service.ts). The seal row is
+   * written on the signing transaction just before the signature, which binds
+   * its recorded manifest_sha256. Free TEXT, as above.
+   */
+  VAULT_DATA_ROOM_SEAL_MANIFEST: 'vault-data-room-seal-manifest-sha256',
+  /**
    * sha256 of a Vault version's bytes that are a RENDERING of Authoring content
    * a signature covers (FD5 (c), 2026-10-01). The Authoring signature covers the
    * sections digest; the filing rendered exactly those sections (digest
@@ -228,6 +236,47 @@ export const BINDING_BASIS = {
    * vocabulary names every basis a row can carry.
    */
   QMS_DOCUMENT_VERSION_CONTENT: 'qms-document-version-content-sha256',
+  /**
+   * sha256 (recipe labeling-document/v1, governed-target-binders.ts) over a
+   * device labeling document as its approver attests it: the device, kind,
+   * version, language, region, UDI-DI and expiry, its ISO 15223-1 symbols, and
+   * the sha256 of the label text it names. No status, approval stamp,
+   * effective date or timestamp, so one digest serves its approval, its move to
+   * effective and its supersession. Added 2026-10-29
+   * (docs/evidence/D5-CONTENT-DIGEST-BINDERS/2026-10-29/).
+   */
+  LABELING_DOCUMENT_CONTENT: 'labeling-document-content-sha256',
+  /**
+   * sha256 (recipe labeling-translation/v1) over a labeling translation as its
+   * approver attests it: the document it translates, the language, the
+   * translator, the method, the back-translation check, and the sha256 of the
+   * translated text it names. No status, stamp or timestamp. Added 2026-10-29.
+   * Since P-64 (the same day) the recipe is labeling-translation/v2, which also
+   * binds the source document's version and labeling-document/v1 digest; the
+   * basis names both, and the manifest's bindingRecipe (or, for a v1 approval,
+   * the recipe tag in its bindingNote) says which.
+   */
+  LABELING_TRANSLATION_CONTENT: 'labeling-translation-content-sha256',
+  /**
+   * sha256 (recipe risk-residual-acceptance/v1) over an ISO 14971 hazard as
+   * its residual risk is accepted: the hazard, situation, harm and sequence,
+   * the initial and residual estimates, the control strategy, the benefit-risk
+   * rationale, and every risk control with its evidence and status. Not the
+   * status or `acceptable` flag the acceptance writes, the project or the
+   * assignee. Added 2026-10-29.
+   */
+  RISK_RESIDUAL_ACCEPTANCE_CONTENT: 'risk-residual-acceptance-content-sha256',
+  /**
+   * sha256 (recipe filed-sequence-baseline/v1,
+   * submission-service/filed-sequence-baseline-content.ts filedBaselineDigest)
+   * over a declaration that a submission's US sequences 0000–N were filed
+   * outside the platform: the submission, the region, N, the sequence that
+   * opened the Original Application, and the evidence (the Vault document and
+   * the sha256 of its bytes). The database refuses a declaration at COMMIT
+   * unless its signature carries this basis
+   * (migrations/20261029g_submission_filed_baselines.sql). Added 2026-10-29.
+   */
+  FILED_SEQUENCE_BASELINE_CONTENT: 'filed-sequence-baseline-content-sha256',
   /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
@@ -541,6 +590,16 @@ export interface GovernedBinding {
   recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
   /** Original sequence/leaf digest, retained to distinguish stale identity from changed content. */
   sequenceContentDigest?: string;
+  /** On a ledger fallback only: why no content digest was derivable, in words. Not recorded on the manifest. */
+  fallbackReason?: string;
+  /**
+   * Members the binder records on the signature's manifest, after bindingNote:
+   * the recipe it digested by (`bindingRecipe`) and a source it bound
+   * (`boundSource`, P-64), so a later read derives by the same recipe
+   * (signed-content-state.ts). A binding with none leaves the manifest's bytes
+   * exactly as before.
+   */
+  manifest?: Record<string, unknown>;
 }
 
 /**
@@ -557,11 +616,16 @@ export interface GovernedBinding {
  * governed-action-ledger basis: NO content hash is claimed, and the caller
  * records the audit chain hash with that explicit basis instead. A non-42P01
  * database error propagates (fail closed).
+ *
+ * `options` asks a binder for the recipe a signature recorded, and a source as
+ * it was recorded (BinderOptions; signed-content-state.ts, P-64). At signing
+ * it is unset: the binder's current recipe.
  */
 export async function deriveGovernedTargetBinding(
   client: SignatureDbClient,
   target: string,
   orgId: number,
+  options?: BinderOptions,
 ): Promise<GovernedBinding> {
   const colonIdx = target.indexOf(':');
   const prefix = colonIdx === -1 ? target : target.slice(0, colonIdx);
@@ -572,6 +636,7 @@ export async function deriveGovernedTargetBinding(
     basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER,
     note: `No content digest derivable for target '${target}': ${why}. ` +
       'bound_payload_digest carries the governed action audit sha256 chain hash (target identity + payload hash + actor + time), not a content hash.',
+    fallbackReason: why,
   });
 
   try {
@@ -631,7 +696,7 @@ export async function deriveGovernedTargetBinding(
         // 42P01 still falls back to the ledger basis below.
         const binder = CONTENT_BINDERS[prefix];
         return binder
-          ? await binder(client, rest, orgId, ledgerFallback)
+          ? await binder(client, rest, orgId, ledgerFallback, options)
           : ledgerFallback(`no content-digest derivation implemented for target type '${prefix}'`);
       }
     }
@@ -674,6 +739,29 @@ export interface GovernedSignParams {
    * (a reviewer's approve or reject), so the signature row states it itself.
    */
   extraManifest?: Record<string, unknown>;
+  /**
+   * The content basis this signature must bind (§11.70), for an act whose
+   * target has a content binder. A binding with any other basis, the ledger
+   * fallback included, refuses the signature (SignatureContentUnboundError)
+   * before anything is written, so the caller's transaction rolls back rather
+   * than signing over the chain hash instead. Unset, the binding is whatever
+   * deriveGovernedTargetBinding derives, the ledger basis named when it has
+   * none. Never recorded on the manifest.
+   */
+  requiredBasis?: BindingBasis;
+}
+
+/**
+ * A signature whose declared content basis could not be bound
+ * (GovernedSignParams.requiredBasis). Thrown before the signer lookup and the
+ * INSERT, so nothing of the signature was written when a caller sees it.
+ */
+export class SignatureContentUnboundError extends Error {
+  readonly code = 'SIGNATURE_CONTENT_UNBOUND';
+  constructor(why: string) {
+    super(`The content this signature covers could not be bound to it (21 CFR 11.70): ${why}. It is not signed over the ledger chain hash instead. Nothing was signed.`);
+    this.name = 'SignatureContentUnboundError';
+  }
 }
 
 /**
@@ -787,6 +875,7 @@ export async function persistGovernedActionSignature(
     boundPayloadDigest,
     bindingBasis: binding.basis,
     bindingNote: binding.note,
+    ...(binding.manifest ?? {}),
     ...(params.extraManifest ?? {}),
     ...(binding.recordedPackageIdentity ? { recordedPackageIdentity: binding.recordedPackageIdentity, sequenceContentDigest: binding.sequenceContentDigest } : {}),
   };
@@ -832,6 +921,10 @@ export async function persistGovernedSignSignature(
 ): Promise<{ id: number; signedAt: Date }> {
   // Honest content binding for the signed target, derived on the caller's client.
   const binding = await deriveGovernedTargetBinding(client, params.target, params.orgId);
+  // Fail closed on a declared basis: never the chain hash in its place.
+  if (params.requiredBasis && (binding.basis !== params.requiredBasis || !binding.digest)) {
+    throw new SignatureContentUnboundError(binding.fallbackReason ?? `the binding has basis '${binding.basis}', not '${params.requiredBasis}'`);
+  }
   return persistGovernedActionSignature(client, { ...params, binding });
 }
 

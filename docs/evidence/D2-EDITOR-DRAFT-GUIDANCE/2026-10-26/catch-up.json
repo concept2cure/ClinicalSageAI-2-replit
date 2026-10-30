@@ -1,0 +1,8 @@
+{
+  "atUtc": "2026-10-26T19:06:24.709210+00:00",
+  "head": "c7f2745a655aba0d6be88638bb22be0d02762df6",
+  "incoming": "A2.5 + docs/health/type fixture; normal FF after clean449baa69d",
+  "branch": "concept2cure-v2",
+  "runtime": "running/current/unrestricted-enforced",
+  "liveCalls": false
+}

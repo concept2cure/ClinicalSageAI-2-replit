@@ -124,7 +124,7 @@ export function sourceLabel(sourceType: string, sourceKey: string, payload: unkn
 }
 
 const notAProgram = (): Refusal =>
-  refuse(409, 'NO_PROGRAM_VAULT', 'This project has no program Vault, so no document can be linked as evidence. Open a program.');
+  refuse(409, 'NO_PROGRAM_VAULT', 'This tracking record has no project Vault, so no document can be linked as evidence. Open a project.');
 
 interface DocumentRow {
   id: string;
@@ -237,10 +237,10 @@ export async function linkSourceEvidence(
         ORDER BY version DESC LIMIT 1`,
       [a.organizationId, a.programId, sourceKey],
     );
-    if (src.rows.length === 0) return refuse(404, 'SOURCE_NOT_FOUND', 'No such CMC record in this program.');
+    if (src.rows.length === 0) return refuse(404, 'SOURCE_NOT_FOUND', 'No such CMC record in this project.');
     const sourceType = String(src.rows[0].source_type);
     const doc = await lockDocument(client, a.organizationId, a.programId, documentId);
-    if (!doc) return refuse(404, 'DOCUMENT_NOT_FOUND', 'That document is not in this program’s Vault.');
+    if (!doc) return refuse(404, 'DOCUMENT_NOT_FOUND', 'That document is not in this project’s Vault.');
     if (!doc.original_file_available) {
       return refuse(409, 'DOCUMENT_WITHDRAWN', 'The original document has been withdrawn and cannot be linked as new CMC evidence. Nothing was saved.');
     }
@@ -296,7 +296,7 @@ export async function unlinkSourceEvidence(
       [a.linkId, a.organizationId, a.programId],
     );
     const link = rows[0];
-    if (!link) return refuse(404, 'LINK_NOT_FOUND', 'No such evidence link in this program.');
+    if (!link) return refuse(404, 'LINK_NOT_FOUND', 'No such evidence link in this project.');
     if (link.unlinked_at) return refuse(409, 'ALREADY_UNLINKED', 'That evidence link was already removed.');
     await client.query(
       `UPDATE public.cmc_source_evidence

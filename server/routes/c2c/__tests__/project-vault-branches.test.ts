@@ -9,8 +9,11 @@
  *     read-model never queried, so "the row appears in the tree because the
  *     server wrote it" (Vault.tsx) was false in effect.
  *
- * The read-model now unions both as derived branches — "Module 3 (CMC)"
- * organized by CTD section, and "Uploaded files" — each degrading HONESTLY:
+ * The read-model now unions both as derived branches — the governed artifacts
+ * organized by CTD module ("Module 3 (CMC)" until fold F3 slice A, 2026-10-29,
+ * widened it to every artifact of the project as "Governed artifacts"; its
+ * own suite is project-vault-governed-artifacts.test.ts), and "Uploaded
+ * files" — each degrading HONESTLY:
  * a store this environment has not provisioned is reported in `unavailable`,
  * never rendered as an empty folder (which would read as "no documents").
  */
@@ -120,7 +123,7 @@ describe('GET /api/c2c/project-vault/:id — one identity for the gate and the h
 });
 
 describe('GET /api/c2c/project-vault/:id — derived branches', () => {
-  it('lists CMC-compiled Module 3 artifacts organized by CTD section', async () => {
+  it('lists CMC-compiled Module 3 artifacts organized by CTD section (the Module 3 group of Governed artifacts)', async () => {
     seedBase();
     queryMock
       // Module 3 artifacts (anchored via the program → project EXISTS)
@@ -140,9 +143,11 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
     const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
     expect(res.status).toBe(200);
 
-    const m3 = folders(res.body)['m3-cmc'];
+    const artifacts = folders(res.body)['artifacts'];
+    expect(artifacts).toBeTruthy();
+    expect(artifacts.label).toBe('Governed artifacts');
+    const m3 = artifacts.children.find((g: any) => g.label === 'Module 3');
     expect(m3).toBeTruthy();
-    expect(m3.label).toBe('Module 3 (CMC)');
     expect(m3.children).toHaveLength(2);
     expect(m3.children[0].num).toBe('3.2.S.1');
     // Approved artifact → approved chip, 100% on the one completion definition.
@@ -151,9 +156,10 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
     // Draft artifact → draft chip, 0% — drafting is not completion.
     expect(m3.children[1].status).toBe('draft');
     expect(m3.children[1].pct).toBe(0);
-    // The artifact query is anchored through the program uuid, org-scoped.
+    // The artifact query is anchored through the program uuid, org-scoped
+    // (the registry's one read binds organization, program, no project list, then the window).
     const artifactCall = queryMock.mock.calls.find((c) => String(c[0]).includes('concept2cure_artifacts'));
-    expect(artifactCall?.[1]).toEqual([PROJECT, 7]);
+    expect(artifactCall?.[1]).toEqual([7, PROJECT, null, 2001]);
     expect(String(artifactCall?.[0])).toContain('regulatory_program_id');
   });
 
@@ -215,7 +221,7 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
     ]);
   });
 
-  it('reports an UNANCHORED program as unavailable, not as a missing Module 3 branch', async () => {
+  it('reports an UNANCHORED program as unavailable, not as a missing artifacts branch', async () => {
     // The defect: `module3Branch` returned null for two different facts — "this
     // program is anchored and nothing is filed" and "this program has no
     // PM-spine anchor, so the registry cannot be asked about it at all" — and
@@ -239,12 +245,13 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
     const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
 
     expect(res.status).toBe(200);
-    expect(folders(res.body)['m3-cmc']).toBeUndefined();
+    expect(folders(res.body)['artifacts']).toBeUndefined();
     expect(res.body.data.unavailable).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          branch: 'Module 3 (CMC)',
-          reason: expect.stringContaining('no PM-spine anchor'),
+          branch: 'Governed artifacts',
+          // The Vault's sentence: the branch is every artifact, not Module 3 only.
+          reason: expect.stringContaining('not linked to your organization’s artifact registry'),
         }),
       ]),
     );
@@ -264,9 +271,9 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
     const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
 
     expect(res.status).toBe(200);
-    expect(folders(res.body)['m3-cmc']).toBeUndefined();
+    expect(folders(res.body)['artifacts']).toBeUndefined();
     expect(
-      (res.body.data.unavailable ?? []).some((u: { branch: string }) => u.branch === 'Module 3 (CMC)'),
+      (res.body.data.unavailable ?? []).some((u: { branch: string }) => u.branch === 'Governed artifacts'),
     ).toBe(false);
   });
 

@@ -117,8 +117,13 @@ export function NavUnlockPanel({
 
   return (
     <div className="nav-unlock-bd" onClick={onClose}>
+      {/* data-lock-source names the verdict this panel explains, so a check
+          can tell "not in this release" from a plan the organisation lacks:
+          the launch walk (tests/e2e/launch-walk-no-lock.e2e.ts) fails on the
+          first and records the second. */}
       <div
         className="nav-unlock"
+        data-lock-source={verdict.source}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -148,7 +153,7 @@ export function NavUnlockPanel({
           <div className="nav-unlock-req">
             {mine.loading && (
               <p className="nav-unlock-req-note" role="status" aria-live="polite">
-                Checking whether you have already asked for this app.
+                Checking whether you have already asked for this feature.
               </p>
             )}
 
@@ -184,7 +189,7 @@ export function NavUnlockPanel({
                   value={note}
                   maxLength={2000}
                   disabled={sending}
-                  placeholder="The work this app is needed for, and by when."
+                  placeholder="The work this feature is needed for, and by when."
                   onChange={(e) => setNote(e.target.value)}
                 />
                 {writeError && (

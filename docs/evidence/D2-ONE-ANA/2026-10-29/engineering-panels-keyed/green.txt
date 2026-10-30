@@ -1,0 +1,33 @@
+# Green: one file at a time, timeout 300 npx vitest run <file>, on the finished tree after every mutation was restored.
+# 1-5: the new test files. 6-28: existing tests over the changed code (engineering route and screen, QMS routes,
+# AnA risk and change tools, every tenant purge suite, the export-covers-purge and deploy-prerequisite contracts).
+# 28 files, 368 tests, all passing.
+
+server/routes/__tests__/mdx-engineering-panels-by-project.test.ts exit=0  Tests  9 passed (9)
+server/routes/__tests__/mdx-qms-nonconforming-project.test.ts exit=0  Tests  6 passed (6)
+server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts exit=0  Tests  4 passed (4)
+tests/schema-contract/nonconforming-products-program-key.pglite.test.ts exit=0  Tests  7 passed (7)
+server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts exit=0  Tests  2 passed (2)
+server/routes/__tests__/mdx-engineering-trace-by-project.test.ts exit=0  Tests  6 passed (6)
+server/routes/__tests__/mdx-engineering.contract.test.ts exit=0  Tests  19 passed (19)
+server/__tests__/routes/device-project-reads-admit-program.test.ts exit=0  Tests  20 passed (20)
+tests/mdx-beta-surfaces-routes.test.ts exit=0  Tests  27 passed (27)
+client/src/concept2cure/mdx/hooks/__tests__/useEngineering.unavailable.test.ts exit=0  Tests  6 passed (6)
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.traceKeyed.test.tsx exit=0  Tests  3 passed (3)
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx exit=0  Tests  18 passed (18)
+server/routes/__tests__/qms-governed-writes-audited.test.ts exit=0  Tests  16 passed (16)
+server/routes/__tests__/qms-legacy-api-retired.test.ts exit=0  Tests  18 passed (18)
+server/routes/__tests__/mdx-qms-readiness.test.ts exit=0  Tests  6 passed (6)
+server/routes/__tests__/mdx-qms-retire.test.ts exit=0  Tests  15 passed (15)
+tests/mdx-qms-labeling-search-analytics-routes.test.ts exit=0  Tests  28 passed (28)
+server/services/ana/__tests__/risk-tool-admits-program.test.ts exit=0  Tests  9 passed (9)
+server/services/ana/__tests__/qms-change-tools.test.ts exit=0  Tests  17 passed (17)
+server/services/tenant/__tests__/tenant-offboarding.test.ts exit=0  Tests  26 passed (26)
+server/services/tenant/__tests__/tenant-purge-audit.test.ts exit=0  Tests  12 passed (12)
+server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts exit=0  Tests  21 passed (21)
+server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts exit=0  Tests  11 passed (11)
+server/services/tenant/__tests__/tenant-source-read-receipts.test.ts exit=0  Tests  26 passed (26)
+server/routes/__tests__/tenants-simple-purge-audit.test.ts exit=0  Tests  5 passed (5)
+tests/schema-contract/tenant-export-covers-purge.contract.test.ts exit=0  Tests  11 passed (11)
+tests/schema-contract/design-controls-risk-items-program-keys.pglite.test.ts exit=0  Tests  12 passed (12)
+tests/schema-contract/qms-deployment-prerequisite.contract.test.ts exit=0  Tests  8 passed (8)

@@ -5,7 +5,7 @@ import type { CSRBuildRequest } from '../../csr-builder';
 
 const state = vi.hoisted(() => ({ database: null as unknown }));
 vi.mock('../../../db', () => ({ get db() { return state.database; } }));
-vi.mock('../../csr-builder', () => ({ ICH_E3_STRUCTURE: [], draftCSRSectionWithProvenance: vi.fn(), flattenICHE3Sections: () => [], hasUnresolvedPlaceholders: () => false }));
+vi.mock('../../csr-builder', () => ({ csrSectionSelectionRefusal: () => null, resolveCSRDraftTargets: () => [], draftCSRSectionWithProvenance: vi.fn(), hasUnresolvedPlaceholders: () => false }));
 import { enqueueCSRBuildJob } from '../csr-job-runner';
 import { resolveCsrScope } from '../project-scope';
 
@@ -30,7 +30,7 @@ beforeAll(async () => {
     CREATE TABLE csr_build_jobs (id serial PRIMARY KEY, organization_id integer NOT NULL, project_id integer,
       study_id text NOT NULL, status text NOT NULL, progress integer NOT NULL,
       sections_to_generate text[], study_info_snapshot jsonb, error jsonb, requested_by integer,
-      started_at timestamp, completed_at timestamp, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now());
+      started_at timestamp, completed_at timestamp, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now(), source_run_id text GENERATED ALWAYS AS ((study_info_snapshot -> 'evidenceSource' ->> 'runId')) STORED);
   `);
 });
 beforeEach(async () => { await database.exec('TRUNCATE csr_build_jobs RESTART IDENTITY'); });
@@ -58,9 +58,11 @@ describe('CSR scope before persistence', () => {
     await enqueueCSRBuildJob({ ...request, projectId: 11 }, { organizationId: 7, requestedBy: 5 });
     expect(await rows()).toEqual([{ organization_id: 7, project_id: 11 }]);
   });
-  it('keeps genuine organization-wide builds when no target was supplied', async () => {
-    await enqueueCSRBuildJob(request, { organizationId: 7, requestedBy: 5 });
-    expect(await rows()).toEqual([{ organization_id: 7, project_id: null }]);
+  // 6f57de780 (2026-10-27, "require resolved project anchor for regulated CSR
+  // build jobs") deliberately ended organization-wide CSR builds.
+  it('refuses a build with no project or program anchor before storing a job', async () => {
+    await expect(enqueueCSRBuildJob(request, { organizationId: 7, requestedBy: 5 })).rejects.toMatchObject({ code: 'CSR_PROJECT_REQUIRED', status: 400 });
+    expect(await rows()).toEqual([]);
   });
   it('resolves a real program through its own unique anchor and rejects a foreign program or conflicting project', async () => {
     const handle = state.database as Parameters<typeof resolveCsrScope>[0];

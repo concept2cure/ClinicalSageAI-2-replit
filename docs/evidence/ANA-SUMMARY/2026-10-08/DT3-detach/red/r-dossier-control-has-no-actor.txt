@@ -1,6 +1,6 @@
 # r-dossier-control-has-no-actor: exit 1 (non-zero = red)
 # tests: server/services/ana/__tests__/lineage-dossier-control-actor.test.ts
- × server/services/ana/__tests__/lineage-dossier-control-actor.test.ts > the dossier says who took each control > the asker's steer by name, the administrator's cancel by name and role with the reason, an unnamed actor by id 15ms
+ × server/services/ana/__tests__/lineage-dossier-control-actor.test.ts > the dossier says who took each control > the asker's steer by name, the administrator's cancel by name and role with the reason, an unnamed actor by id 13ms
    → expected [ …(3) ] to deeply equal [ [ 'interject', …(3) ], …(2) ]
  × server/services/ana/__tests__/lineage-dossier-control-actor.test.ts > the dossier says who took each control > the XML carries by, byRole and the reason 3ms
    → expected '<?xml version="1.0" encoding="UTF-8" …' to match /<Control action="cancel"[^>]* by="Dan…/

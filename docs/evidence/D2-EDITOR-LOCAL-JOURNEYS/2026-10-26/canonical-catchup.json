@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-26T15:01:11.797089+00:00",
+  "argv": [
+    "git",
+    "merge",
+    "--ff-only",
+    "origin/concept2cure-v2"
+  ],
+  "exitCode": 0,
+  "headBefore": "4bae69d8905fe7cb07b516348c628628acf9c473",
+  "incoming": "6f7477656801aa84bf774e6926287457574de745",
+  "headAfter": "6f7477656801aa84bf774e6926287457574de745",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "59a661da6132d50932f0a3c1add6e077ec8712b835a963e5467ef05108361d72",
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "2fb465847ecf605b9a87e156eadf9b051614588c11d4528141a4097743619c63",
+    "client/src/concept2cure/v2/editor/useSourceIntake.ts": "e6a8459fd96cd3161c3dff7953c7861068e075f5ed76d302a0eb015d873f8523"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "59a661da6132d50932f0a3c1add6e077ec8712b835a963e5467ef05108361d72",
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "ee2a4c1d24e7eac9e006812bc5ef7d341c44d0b083bfe003eaba2c03621a2143",
+    "client/src/concept2cure/v2/editor/useSourceIntake.ts": "e6a8459fd96cd3161c3dff7953c7861068e075f5ed76d302a0eb015d873f8523"
+  }
+}

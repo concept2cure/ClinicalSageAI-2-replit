@@ -1,0 +1,36 @@
+{
+  "startedAt": "2026-10-26T18:11:28.832118+00:00",
+  "argv": [
+    "./node_modules/.bin/vitest",
+    "run",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.67,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "source-freeze-edge-review-red.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "f64bb7e986268c05f8cc114bddfd1954c803a91ec1d7084351da37f58e923e40",
+    "client/src/concept2cure/v2/editor/proposalAnchor.ts": "f529138731155da9db6bc1267321d594b751173c57820dc75e814b5f9ffd10a3",
+    "shared/authoring/remedies.ts": "cdf39fbd14adec0e643ac5d6c80ac00a0d7ae194285111c4828e69530b22568e",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "e027807cd7c63b37ecc5c1c489419c22a1800ef28b3a09249245d5b72b7bd132",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "f64bb7e986268c05f8cc114bddfd1954c803a91ec1d7084351da37f58e923e40",
+    "client/src/concept2cure/v2/editor/proposalAnchor.ts": "f529138731155da9db6bc1267321d594b751173c57820dc75e814b5f9ffd10a3",
+    "shared/authoring/remedies.ts": "cdf39fbd14adec0e643ac5d6c80ac00a0d7ae194285111c4828e69530b22568e",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "e027807cd7c63b37ecc5c1c489419c22a1800ef28b3a09249245d5b72b7bd132",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  },
+  "sourceDrift": [],
+  "rawOutput": "edge-review-red.log.gz",
+  "rawGzipSha256": "681a7ee67d41f387fbc28beec2c098469e08f773a8deaacc45b7e21920087682",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  5 failed | 57 passed (62)",
+    "Duration  2.21s (transform 230ms, setup 134ms, import 251ms, tests 1.18s, environment 472ms)"
+  ]
+}

@@ -305,10 +305,10 @@ describe('POST /api/onboarding/commit — governed, server-authoritative', () =>
       groups: [
         {
           entity: 'program',
-          label: 'First program',
+          label: 'First project',
           fields: [
             {
-              id: 'p0-program.code', entity: 'program', targetField: 'program.code', label: 'Program code',
+              id: 'p0-program.code', entity: 'program', targetField: 'program.code', label: 'Project code',
               value: 'MER-204', extractedValue: 'MER-204',
               provenance: { file: 'profile.pdf', page: 1 }, confidence: 0.9, status: 'proposed',
             },

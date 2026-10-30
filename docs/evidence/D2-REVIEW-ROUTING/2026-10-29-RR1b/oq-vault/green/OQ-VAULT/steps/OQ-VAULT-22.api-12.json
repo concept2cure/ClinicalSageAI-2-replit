@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/3bdbdfc1-d8ee-4b10-bced-9c4dea945250/annotations/e2423202-08ab-4289-addd-140e87360bea/retract",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reason": "Posted on the wrong document by mistake."
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 51,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {}
+    }
+  }
+}

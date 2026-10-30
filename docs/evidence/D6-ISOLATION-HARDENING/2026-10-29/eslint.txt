@@ -1,0 +1,16 @@
+ESLint: npx eslint --no-ignore -f json <file>, each changed file against its HEAD version (git show HEAD:<file> | eslint --stdin --stdin-filename <file>). w = warnings, e = errors.
+server/routes/part11-compliance.ts  HEAD=7w/0e  now=7w/0e
+server/routes/mdx-client-review.ts  HEAD=0w/0e  now=0w/0e
+server/services/clinical-regulatory-evidence/public-reference-sources.ts  HEAD=0w/0e  now=0w/0e
+server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts  HEAD=new  now=0w/0e
+server/routes/__tests__/part11TenantScoping.test.ts  HEAD=0w/0e  now=0w/0e
+server/routes/__tests__/mdx-client-review-admits-project.test.ts  HEAD=new  now=0w/0e
+server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts  HEAD=0w/0e  now=0w/0e
+server/services/clinical-regulatory-evidence/__tests__/public-reference-seed.pglite.integration.test.ts  HEAD=0w/0e  now=0w/0e
+tests/db/vault-isolation-hardening.dbtest.ts  HEAD=new  now=0w/0e
+client/src/concept2cure/mdx/hooks/useClientReview.ts  HEAD=1w/0e  now=1w/0e
+client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx  HEAD=0w/0e  now=0w/0e
+scripts/cre/prepare-public-reference-seed.mjs  HEAD=3w/0e  now=3w/0e
+scripts/cre/prepare-public-reference-seed.d.mts  HEAD=1w/0e  now=1w/0e
+scripts/db/migration-set.mjs  HEAD=4w/0e  now=4w/0e
+No file gains a warning. The .d.mts count is ESLint's 'no matching configuration' notice, the same at HEAD.

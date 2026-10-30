@@ -1,0 +1,124 @@
+{
+  "head": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+  "method": "Read-only dynamic canonical registry/builtin/outline resolution, static consumer tracing and deleted-name history; no tests, writes to product, provider calls or workflow qualification.",
+  "counts": {
+    "allBuiltinTemplates": 398,
+    "usPharmaRegistry": 32,
+    "globalPharmaRegistry": 17,
+    "usPharmaNarrative": 0,
+    "globalPharmaNarrative": 5,
+    "ectdCtIsComponentTemplates": 19
+  },
+  "evidenceFiles": [
+    "inventory.json",
+    "ind-inventory.json",
+    "lifecycle-inventory.json"
+  ],
+  "findings": [
+    {
+      "id": "core-narrative-metadata",
+      "severity": "high",
+      "observed": "Protocol87,IB15,SAP10,ICF12,DSUR23,PBRER42 complete retained outlines are projected manual because exact component metadata is missing. Direct saved section draft refuses TEMPLATE_NOT_DRAFTABLE and assembly considers them ineligible.",
+      "owners": [
+        "server/services/regulatory/templateCatalog.ts",
+        "server/services/authoring/builtin-authoring-templates.ts",
+        "server/services/authoring/authoring-draft-template.ts"
+      ],
+      "completion": "Add exact supported working-document metadata and explicit original-record/table/signature section modes; do not make whole mixed filings narrative."
+    },
+    {
+      "id": "protocol-synopsis-wrong-tree",
+      "severity": "high",
+      "observed": "phase5.protocol_outline:deliverable:0 has259 M5.3.5 report-tree rows, including E3 CSR content; finalprotocol deliverable has88 M11 rows.",
+      "owners": [
+        "services/regulatory/pyramids/ind-pyramid.ts",
+        "server/services/authoring/ind-authoring-templates.ts",
+        "server/services/authoring/ind-template-outlines-m4-m5.ts"
+      ],
+      "completion": "Resolve known protocol/synopsis deliverable from existing exact protocol/M11 source rather than broad CTD binding; preserve independent source identity."
+    },
+    {
+      "id": "filing-scoped-discovery",
+      "severity": "high",
+      "observed": "getTemplatesForType US_IND/NDA/BLA/505B2 yieldsctd metadata only, and351K usesdefaultctd. Adding metadata alone does not expose clinical document choices under those known filing filters.",
+      "owner": "server/services/regulatory/templateCatalog.ts",
+      "completion": "Extend exact relevant TEMPLATE_SETS mappings; no parallel catalog."
+    },
+    {
+      "id": "lifecycle-specific-starts",
+      "severity": "partial",
+      "observed": "Existing lifecycle records EOP2/preNDA/preBLA, four distinct IND amendments/holdresponse, ISS/ISE have exact component guides but are not separately retained builtin template starts. TypeD/INTERACT have timeline and AnA formalmeetingpackage support.",
+      "owners": [
+        "server/services/ind/ctd/lifecycle-document-types.ts",
+        "server/services/market-specs/lifecycle-record-outlines.ts",
+        "server/services/ana-ri/document-templates.ts"
+      ],
+      "completion": "Reach existing records through exact editor template identity and source guidance; do not report backend absent or duplicate records."
+    },
+    {
+      "id": "expanded-access",
+      "severity": "partial",
+      "observed": "GlobalRI expanded-access framework/tool/routes exist, but no exact expanded-access/Form3926 template found in current canonical registry/editor outlines.",
+      "owners": [
+        "server/services/global-ri/expanded-access.ts",
+        "server/routes/global-ri/expanded-access.routes.ts"
+      ],
+      "completion": "Verify current FDA source/form requirements and complete a preparation-to-original-form authoring handoff; generic IND does not prove this scenario."
+    },
+    {
+      "id": "eua-modality-scope",
+      "severity": "high",
+      "observed": "US_EUA includesvaccine productclass but ismedical_devices and its served outline/limitations requiredevice/assay and device-description fields. This cannot prove a therapeutics/vaccine EUA authoring path.",
+      "owners": [
+        "shared/regulatory/global-document-registry.ts",
+        "shared/regulatory/device-authoring-sections.ts",
+        "shared/regulatory/project-bootstrap.ts"
+      ],
+      "completion": "Correct or distinguish applicable modality insideexisting type; do not add a duplicate EUA registry."
+    },
+    {
+      "id": "rfd-scope",
+      "severity": "partial",
+      "observed": "Existing combination-product US_RFD serves generic pre-sub meeting fields rather than an exact jurisdiction/PMOA rationale working outline.",
+      "owners": [
+        "shared/regulatory/global-document-registry.ts",
+        "shared/regulatory/project-bootstrap.ts"
+      ],
+      "completion": "Complete exact RFD content from current authoritative source, retaining original request records and existingpath."
+    },
+    {
+      "id": "crosscutting-denominator",
+      "severity": "reporting",
+      "observed": "32US pharma rows exclude combination-product RFD and vaccine EUA as well as US module1crosscutting, and template counts include planning/device entries. No count establishes all plausible biotech coverage.",
+      "completion": "Report filing/component/clinical/source/data/message/workflow coverage separately; no VERIFIED claim from outlines."
+    }
+  ],
+  "suggestedManualPolicy": {
+    "note": "Product preparation safeguards, not claims that law requires manual typing. Review exact source content and distinguish narrative discussion from original data/records.",
+    "ICF": [
+      "10 signatures"
+    ],
+    "protocol": [
+      "table_of_contents generated index",
+      "actual source signature/record areas, if present"
+    ],
+    "IB": [
+      "frontmatter generated tableofcontents"
+    ],
+    "DSUR": [
+      "7 line listings/summary tabulations",
+      "appendices original sources"
+    ],
+    "PBRER": [
+      "6.2/6.3 original safety summary tabulations",
+      "20 original appendices"
+    ],
+    "SAP": "Narrative plannedmethods allowed; computations/results must be actual deterministic source outputs."
+  },
+  "limits": [
+    "No verified end-to-end filing row produced.",
+    "49 medicinal registryrows are authoring outlines, not a complete artifact/subtype/transport denominator.",
+    "Clinical, regulatorycurrency and live gateway competence were not tested.",
+    "Additional sourceverified scope candidates require separate end-to-end traces; the32US list alone cannot establish completeness."
+  ]
+}

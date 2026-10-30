@@ -4,8 +4,8 @@
  *
  * Pure, closed-form, reproducible regulatory-intelligence engines for Software
  * as a Medical Device (SaMD), Software in a Medical Device (SiMD), and AI/ML-
- * enabled device software functions. NO LLM, NO network, NO database, NO imports
- * from other services. Identical input always yields identical output.
+ * enabled device software functions. NO LLM, NO network, NO database. Shared
+ * input readers validate stated facts. Identical input always yields identical output.
  *
  * Grounded in (verbatim, citation-backed):
  *   - IMDRF/SaMD WG/N12 FINAL:2014 — "Software as a Medical Device: Possible
@@ -44,6 +44,7 @@
  */
 
 import type { DeviceClass as UsDeviceClass } from '../../../shared/regulatory/device-class.js';
+import { statedBoolean } from '../immunogenicity/immunogenicity-reference.js';
 
 // ════════════════════════════════════════════════════════════════════════════
 // SECTION 0 — SHARED TYPES
@@ -1606,7 +1607,7 @@ export interface AssessDeviceCybersecurityParams {
   networkConnected?: boolean;
   /** Does the device include or rely on software (a "cyber device" gate for 524B). */
   includesSoftware?: boolean;
-  /** Is the submission on/after the 524B effective date (default true). */
+  /** Is the submission on/after the 524B effective date. Omitted means not stated. */
   submissionUnder524B?: boolean;
   /** Has a threat model been produced. */
   threatModelProvided?: boolean;
@@ -1627,14 +1628,16 @@ export interface AssessDeviceCybersecurityParams {
 export interface CyberRequirementResult {
   id: string;
   requirement: string;
-  status: 'present' | 'missing' | 'not-applicable';
+  /** 'not_stated': the input was omitted. It is not read as present or missing, and it counts as a gap. */
+  status: 'present' | 'missing' | 'not_stated' | 'not-applicable';
   detail: string;
   severity: Verdict;
   citations: string[];
 }
 
 export interface Assess524BResult {
-  applies: boolean;
+  /** null when applicability is undetermined: a device criterion or submission date was not stated. */
+  applies: boolean | null;
   rationale: string;
   obligations: string[];
   citations: string[];
@@ -1642,7 +1645,8 @@ export interface Assess524BResult {
 
 export interface AssessDeviceCybersecurityResult {
   deviceName: string;
-  isCyberDevice: boolean;
+  /** null when neither criterion is stated false and one of them is not stated. */
+  isCyberDevice: boolean | null;
   section524B: Assess524BResult;
   requirements: CyberRequirementResult[];
   threatModelingGuidance: string[];
@@ -1651,13 +1655,44 @@ export interface AssessDeviceCybersecurityResult {
   vulnerabilityHandlingGuidance: string[];
   overallVerdict: Verdict;
   criticalGapCount: number;
+  /**
+   * The device criteria, submission date and artifact inputs the result rests on that were
+   * not stated. Each counts as a gap, so the verdict is never pass while one is listed.
+   */
+  notStated: string[];
   citations: Citation[];
+}
+
+/**
+ * Status, detail and severity of a cybersecurity requirement from its input:
+ * true is present, false is missing, and omitted is not stated, which counts
+ * as a gap and is never read as present.
+ */
+function cyberRequirementState(
+  input: string,
+  stated: boolean | undefined,
+  missingSeverity: Verdict,
+  detail: { present: string; missing: string },
+): Pick<CyberRequirementResult, 'status' | 'detail' | 'severity'> {
+  if (stated === true) return { status: 'present', detail: detail.present, severity: 'pass' };
+  if (stated === false) return { status: 'missing', detail: detail.missing, severity: missingSeverity };
+  return {
+    status: 'not_stated',
+    detail: `Not stated: ${input} was not given, so this requirement is not assessed as present or missing. It counts as a ${missingSeverity === 'critical-gap' ? 'critical ' : ''}gap until it is stated.`,
+    severity: missingSeverity,
+  };
 }
 
 /**
  * Assess premarket cybersecurity for a device software function: threat
  * modeling, SBOM, security risk management (AAMI TIR57/SW96), vulnerability
  * handling, and Section 524B "cyber device" obligations. Deterministic.
+ *
+ * An omitted cyber-device criterion or artifact input is not stated (2026-10-26).
+ * Until then each was read `!== false`, so `({})` was a cyber device with every
+ * artifact provided and an overall verdict of pass. The submission date is
+ * also not assumed; mandatory 524B artifacts remain critical gaps until 524B
+ * is explicitly ruled out. An omitted handlesSensitiveData adds no data row.
  */
 export function assessDeviceCybersecurity(
   params: AssessDeviceCybersecurityParams,
@@ -1671,19 +1706,64 @@ export function assessDeviceCybersecurity(
   // software, (2) has the ability to connect to the internet, and (3) contains
   // technological characteristics that could be vulnerable to cybersecurity
   // threats.
-  const includesSoftware = params.includesSoftware !== false;
-  const networkConnected = params.networkConnected !== false;
-  const isCyberDevice = includesSoftware && networkConnected;
-  const under524B = params.submissionUnder524B !== false;
+  // A criterion that is not stated is not assumed (2026-10-26; both were read
+  // as true when omitted): either stated false decides "not a cyber device",
+  // both stated true decide "a cyber device", and anything else leaves the
+  // status undetermined.
+  const includesSoftware = statedBoolean('includesSoftware', params.includesSoftware);
+  const networkConnected = statedBoolean('networkConnected', params.networkConnected);
+  const isCyberDevice: boolean | null =
+    includesSoftware === false || networkConnected === false
+      ? false
+      : includesSoftware === true && networkConnected === true
+        ? true
+        : null;
+  const under524B = statedBoolean('submissionUnder524B', params.submissionUnder524B);
+  const unstatedCriteria: string[] = [];
+  if (isCyberDevice === null) {
+    if (includesSoftware === undefined) unstatedCriteria.push('includesSoftware');
+    if (networkConnected === undefined) unstatedCriteria.push('networkConnected');
+  }
+  if (isCyberDevice !== false && under524B === undefined) unstatedCriteria.push('submissionUnder524B');
 
-  const applies524B = isCyberDevice && under524B;
+  // The artifacts: true is present, false is missing, omitted is not stated.
+  const artifacts = {
+    threatModelProvided: statedBoolean('threatModelProvided', params.threatModelProvided),
+    sbomProvided: statedBoolean('sbomProvided', params.sbomProvided),
+    securityRiskManagementProvided: statedBoolean(
+      'securityRiskManagementProvided',
+      params.securityRiskManagementProvided,
+    ),
+    vulnerabilityHandlingProcess: statedBoolean('vulnerabilityHandlingProcess', params.vulnerabilityHandlingProcess),
+    postMarketUpdatePlan: statedBoolean('postMarketUpdatePlan', params.postMarketUpdatePlan),
+  };
+  const notStated = [
+    ...unstatedCriteria,
+    ...Object.entries(artifacts)
+      .filter(([, stated]) => stated === undefined)
+      .map(([input]) => input),
+  ];
+
+  const applies524B: boolean | null =
+    isCyberDevice === false || under524B === false
+      ? false
+      : isCyberDevice === true && under524B === true
+        ? true
+        : null;
+  // Missing or unstated mandatory artifacts remain critical until 524B is ruled out.
+  const mandatoryArtifactSeverity: Verdict = applies524B === false ? 'gap' : 'critical-gap';
+  const criticalIf524B =
+    applies524B === null ? ' 524B applicability is undetermined, so this remains a critical gap until it is ruled out.' : '';
   const section524B: Assess524BResult = {
     applies: applies524B,
-    rationale: applies524B
-      ? 'Section 524B applies. The device meets the "cyber device" definition (includes validated software, can connect to the internet, and contains technological characteristics vulnerable to cybersecurity threats) and the submission is on/after the 524B effective date.'
-      : isCyberDevice
-        ? 'The device meets the "cyber device" definition, but the submission is asserted to predate the 524B effective date; 524B may not be a refuse-to-accept trigger, though FDA premarket cybersecurity expectations still apply.'
-        : 'The device does NOT clearly meet the "cyber device" definition (it lacks software and/or network-connection ability). 524B-specific premarket requirements may not apply, but cybersecurity should still be addressed proportionate to risk.',
+    rationale:
+      applies524B === null
+        ? `Undetermined. Section 524B applicability rests on ${unstatedCriteria.join(' and ')}, which ${unstatedCriteria.length > 1 ? 'were' : 'was'} not stated. 524B obligations are not listed until it is determined; FDA premarket cybersecurity expectations apply either way.`
+        : applies524B
+          ? 'Section 524B applies. The device meets the "cyber device" definition (includes validated software, can connect to the internet, and contains technological characteristics vulnerable to cybersecurity threats) and the submission is on/after the 524B effective date.'
+          : under524B === false
+            ? 'The submission is asserted to predate the 524B effective date; 524B may not be a refuse-to-accept trigger, though FDA premarket cybersecurity expectations still apply.'
+            : 'The device does NOT clearly meet the "cyber device" definition (it lacks software and/or network-connection ability). 524B-specific premarket requirements may not apply, but cybersecurity should still be addressed proportionate to risk.',
     obligations: applies524B
       ? [
           'Submit a plan to monitor, identify, and address post-market cybersecurity vulnerabilities and exploits, including coordinated vulnerability disclosure and related procedures [524B(b)(1)].',
@@ -1701,28 +1781,25 @@ export function assessDeviceCybersecurity(
   requirements.push({
     id: 'CY-TM',
     requirement: 'Threat model covering the device system, interfaces, and data flows.',
-    status: params.threatModelProvided === false ? 'missing' : 'present',
-    detail:
-      params.threatModelProvided === false
-        ? 'No threat model provided. FDA expects a threat model (e.g., STRIDE-based) that identifies assets, trust boundaries, attack surfaces (interfaces, comms, update mechanism), and threats across the system, including connected systems and cloud.'
-        : 'Threat model provided. Ensure it covers all interfaces, trust boundaries, the software update path, and connected/cloud systems.',
-    severity: params.threatModelProvided === false ? 'gap' : 'pass',
+    ...cyberRequirementState('threatModelProvided', artifacts.threatModelProvided, 'gap', {
+      missing:
+        'No threat model provided. FDA expects a threat model (e.g., STRIDE-based) that identifies assets, trust boundaries, attack surfaces (interfaces, comms, update mechanism), and threats across the system, including connected systems and cloud.',
+      present:
+        'Threat model provided. Ensure it covers all interfaces, trust boundaries, the software update path, and connected/cloud systems.',
+    }),
     citations: ['FDA-CYBER-2023', 'AAMI-TIR57'],
   });
 
   // SBOM
-  const sbomStatus: CyberRequirementResult['status'] =
-    params.sbomProvided === false ? 'missing' : 'present';
   requirements.push({
     id: 'CY-SBOM',
     requirement: 'Software Bill of Materials (SBOM) per 524B(b)(3) and NTIA minimum elements.',
-    status: sbomStatus,
-    detail:
-      params.sbomProvided === false
-        ? 'No SBOM provided. 524B(b)(3) requires an SBOM including commercial, open-source, and off-the-shelf components. Use the NTIA minimum elements (supplier, component name, version, unique identifiers, dependency relationships, author, timestamp).'
-        : 'SBOM provided. Confirm it includes commercial/open-source/off-the-shelf components and the NTIA minimum data fields, plus a process to map components to known vulnerabilities.',
-    severity:
-      params.sbomProvided === false ? (applies524B ? 'critical-gap' : 'gap') : 'pass',
+    ...cyberRequirementState('sbomProvided', artifacts.sbomProvided, mandatoryArtifactSeverity, {
+      missing:
+        'No SBOM provided. 524B(b)(3) requires an SBOM including commercial, open-source, and off-the-shelf components. Use the NTIA minimum elements (supplier, component name, version, unique identifiers, dependency relationships, author, timestamp).' + criticalIf524B,
+      present:
+        'SBOM provided. Confirm it includes commercial/open-source/off-the-shelf components and the NTIA minimum data fields, plus a process to map components to known vulnerabilities.',
+    }),
     citations: ['FDC-524B', 'FDA-CYBER-2023', 'NTIA-SBOM'],
   });
 
@@ -1731,12 +1808,12 @@ export function assessDeviceCybersecurity(
     id: 'CY-SRM',
     requirement:
       'Security risk management, performed separately from but coordinated with safety risk management (AAMI TIR57 / SW96; ISO 14971).',
-    status: params.securityRiskManagementProvided === false ? 'missing' : 'present',
-    detail:
-      params.securityRiskManagementProvided === false
-        ? 'No security risk management provided. FDA expects a security risk management process and report distinct from the ISO 14971 safety risk file, addressing exploitability, security risk, and controls — per AAMI TIR57 and ANSI/AAMI SW96.'
-        : 'Security risk management provided. Confirm it follows AAMI TIR57/SW96, assesses exploitability and security risk, and links security controls to identified threats.',
-    severity: params.securityRiskManagementProvided === false ? 'gap' : 'pass',
+    ...cyberRequirementState('securityRiskManagementProvided', artifacts.securityRiskManagementProvided, 'gap', {
+      missing:
+        'No security risk management provided. FDA expects a security risk management process and report distinct from the ISO 14971 safety risk file, addressing exploitability, security risk, and controls — per AAMI TIR57 and ANSI/AAMI SW96.',
+      present:
+        'Security risk management provided. Confirm it follows AAMI TIR57/SW96, assesses exploitability and security risk, and links security controls to identified threats.',
+    }),
     citations: ['FDA-CYBER-2023', 'AAMI-TIR57', 'AAMI-SW96', 'ISO-14971'],
   });
 
@@ -1745,13 +1822,12 @@ export function assessDeviceCybersecurity(
     id: 'CY-VULN',
     requirement:
       'Coordinated vulnerability disclosure and vulnerability handling processes [524B(b)(1)].',
-    status: params.vulnerabilityHandlingProcess === false ? 'missing' : 'present',
-    detail:
-      params.vulnerabilityHandlingProcess === false
-        ? 'No coordinated vulnerability disclosure (CVD) / handling process described. 524B(b)(1) requires a plan to monitor, identify, and address post-market vulnerabilities, including CVD.'
-        : 'Vulnerability handling / CVD process described. Confirm it includes intake, triage, remediation timelines, and customer communication.',
-    severity:
-      params.vulnerabilityHandlingProcess === false ? (applies524B ? 'critical-gap' : 'gap') : 'pass',
+    ...cyberRequirementState('vulnerabilityHandlingProcess', artifacts.vulnerabilityHandlingProcess, mandatoryArtifactSeverity, {
+      missing:
+        'No coordinated vulnerability disclosure (CVD) / handling process described. 524B(b)(1) requires a plan to monitor, identify, and address post-market vulnerabilities, including CVD.' + criticalIf524B,
+      present:
+        'Vulnerability handling / CVD process described. Confirm it includes intake, triage, remediation timelines, and customer communication.',
+    }),
     citations: ['FDC-524B', 'FDA-CYBER-2023'],
   });
 
@@ -1759,18 +1835,17 @@ export function assessDeviceCybersecurity(
   requirements.push({
     id: 'CY-PATCH',
     requirement: 'Post-market update/patch capability and plan [524B(b)(2)].',
-    status: params.postMarketUpdatePlan === false ? 'missing' : 'present',
-    detail:
-      params.postMarketUpdatePlan === false
-        ? 'No post-market update/patch plan described. 524B(b)(2) requires the ability to deploy security updates and patches, on a reasonably justified regular cycle and out-of-cycle for critical vulnerabilities.'
-        : 'Post-market update/patch plan described. Confirm a secure update mechanism (signed updates, integrity verification) and a defined cadence plus out-of-cycle process for critical issues.',
-    severity:
-      params.postMarketUpdatePlan === false ? (applies524B ? 'critical-gap' : 'gap') : 'pass',
+    ...cyberRequirementState('postMarketUpdatePlan', artifacts.postMarketUpdatePlan, mandatoryArtifactSeverity, {
+      missing:
+        'No post-market update/patch plan described. 524B(b)(2) requires the ability to deploy security updates and patches, on a reasonably justified regular cycle and out-of-cycle for critical vulnerabilities.' + criticalIf524B,
+      present:
+        'Post-market update/patch plan described. Confirm a secure update mechanism (signed updates, integrity verification) and a defined cadence plus out-of-cycle process for critical issues.',
+    }),
     citations: ['FDC-524B', 'FDA-CYBER-2023'],
   });
 
   // Sensitive data
-  if (params.handlesSensitiveData === true) {
+  if (statedBoolean('handlesSensitiveData', params.handlesSensitiveData) === true) {
     requirements.push({
       id: 'CY-DATA',
       requirement: 'Protection of sensitive data (ePHI) at rest and in transit.',
@@ -1827,7 +1902,7 @@ export function assessDeviceCybersecurity(
   }
   let overallVerdict: Verdict;
   if (criticalGapCount > 0) overallVerdict = 'critical-gap';
-  else if (anyGap) overallVerdict = 'gap';
+  else if (anyGap || notStated.length > 0) overallVerdict = 'gap';
   else overallVerdict = 'pass';
 
   const citations = resolveCitations([
@@ -1852,6 +1927,7 @@ export function assessDeviceCybersecurity(
     vulnerabilityHandlingGuidance,
     overallVerdict,
     criticalGapCount,
+    notStated,
     citations,
   };
 }

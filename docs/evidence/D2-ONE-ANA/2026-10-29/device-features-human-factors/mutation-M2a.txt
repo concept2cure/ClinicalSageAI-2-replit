@@ -1,0 +1,15 @@
+Mutation M2a-route-reads-without-project
+File: server/routes/human-factors.ts
+-   const files = programId ? await listHfFiles(orgId, { programId }) : await listHfFiles(orgId);
++   const files = await listHfFiles(orgId);
+Test: server/routes/__tests__/human-factors-reads-the-project.test.ts
+
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > GET /api/human-factors?program_id=: the open project's file, and only it > reads the caller's own project's file, by organization and project, and says the scope 
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > GET /api/human-factors?program_id=: the open project's file, and only it > gives a project with no file of its own no file, never the organization's unscoped one 
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > a use scenario for a project attaches to that project's file 5ms
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > a use scenario for a project with no file is refused (409), and lands in no unscoped fi
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > an element tick for a project is written to that project's file 13ms
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > an element tick for a project with no file is refused (409), and changes no unscoped fi
+Tests  6 failed | 16 passed (22)
+
+Restored byte for byte: yes

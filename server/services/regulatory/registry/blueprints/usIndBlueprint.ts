@@ -1,17 +1,15 @@
 /**
- * US IND Blueprint — Uses the existing deep IND eCTD section map as source of truth.
+ * US IND task blueprint: the IND's milestones.
  *
- * This blueprint delegates to the adapter that reads from
- * services/regulatory/ind-ectd-sections.ts rather than duplicating definitions.
- *
- * For the full 108-section deep hierarchy, use getFullINDSectionsForBootstrap().
- * For the registry-compatible SectionBlueprint, use the adapted version.
+ * Its section blueprint (getUSIndSectionBlueprint, through the
+ * usIndFromExistingSections adapter) had no caller and was deleted 2026-10-26
+ * (D2 cleanup S06); a US IND project's sections are its ind:fda rule pack
+ * (c2c-project-scaffold.contract.test.ts).
  *
  * @module server/services/regulatory/registry/blueprints/usIndBlueprint
  */
 
-import type { SectionBlueprint, TaskBlueprint, MilestoneDefinition } from '../../../../../shared/regulatory/document-taxonomy.js';
-import { buildUSIndBlueprint } from '../adapters/usIndFromExistingSections.js';
+import type { TaskBlueprint, MilestoneDefinition } from '../../../../../shared/regulatory/document-taxonomy.js';
 
 // ─── Task Blueprint ───────────────────────────────────────────────────────────
 
@@ -107,12 +105,5 @@ export const US_IND_TASK_BLUEPRINT: TaskBlueprint = {
   name: 'US IND Task Blueprint',
   milestones: IND_MILESTONES,
 };
-
-/**
- * Get the US IND section blueprint (adapted from existing deep map).
- */
-export async function getUSIndSectionBlueprint(): Promise<SectionBlueprint> {
-  return buildUSIndBlueprint();
-}
 
 export { US_IND_TASK_BLUEPRINT as taskBlueprint };

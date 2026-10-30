@@ -15,6 +15,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/* The rail's availability rule, as the menu reads it: a surface the release
+   locks is a verdict of source 'launch-scope'. Default: nothing locked. */
+const locked = vi.hoisted(() => new Set<string>());
+vi.mock('../navEntitlements', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../navEntitlements')>()),
+  useNavEntitlements: () => ({
+    verdictFor: (id: string) => (locked.has(id) ? { surfaceId: id, entitled: false, source: 'launch-scope' } : null),
+  }),
+}));
+
 import { AppMentionMenu, insertMention, mentionTokenAt, useAppMentions, type SkillMentionSource } from '../appMentions';
 import { searchSlashCommands } from '@shared/ana/slash-commands';
 import { findCallableApp, searchCallableApps } from '@shared/navigation/callable-apps';
@@ -43,7 +53,7 @@ const type = (el: HTMLTextAreaElement, value: string) => {
   fireEvent.select(el);
 };
 
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); locked.clear(); });
 
 describe('mentionTokenAt / insertMention', () => {
   it('sees an app token only when the caret is inside an @word at the start or after whitespace', () => {
@@ -138,6 +148,42 @@ describe('useAppMentions in a composer', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
     fireEvent.keyDown(ta, { key: 'Enter' });
     expect(sent).toEqual(['@zzzz']);
+  });
+});
+
+describe('the @ menu offers only what this viewer can open', () => {
+  // 2026-10-25 (D2 client journey, slice 0): the menu listed every callable
+  // feature, about forty of them outside the release, and choosing one ended
+  // on "not in this release". It now asks the rail's rule (useSurfaceAvailable),
+  // by the surface each navigation id opens (DEEP_LINK_ALIASES).
+  it('a feature outside the release is not offered; one in it still is', () => {
+    locked.add('deep-research');
+    render(<Host onSend={vi.fn()} />);
+    const box = screen.getByLabelText('Message') as HTMLTextAreaElement;
+    type(box, '@Deep');
+    expect(screen.queryByRole('option', { name: /Deep Research/ })).toBeNull();
+    type(box, '@Vault');
+    expect(screen.getByRole('option', { name: /Vault/ })).toBeTruthy();
+  });
+
+  it('a navigation id is checked as the surface it opens', () => {
+    // `tasking` (labelled Tasks) opens the `tasks` surface; locking `tasks` hides it.
+    render(<Host onSend={vi.fn()} />);
+    const box = screen.getByLabelText('Message') as HTMLTextAreaElement;
+    type(box, '@Tasking');
+    expect(screen.getByRole('option', { name: '@Tasks' })).toBeTruthy();
+    cleanup();
+    locked.add('tasks');
+    render(<Host onSend={vi.fn()} />);
+    type(screen.getByLabelText('Message') as HTMLTextAreaElement, '@Tasking');
+    expect(screen.queryByRole('option', { name: '@Tasks' })).toBeNull();
+  });
+
+  it('a locked feature does not take one of the eight places from an available one', () => {
+    for (const app of searchCallableApps('', 100).slice(0, 8)) locked.add(app.id);
+    render(<Host onSend={vi.fn()} />);
+    type(screen.getByLabelText('Message') as HTMLTextAreaElement, '@');
+    expect(screen.getAllByRole('option').length).toBe(8);
   });
 });
 

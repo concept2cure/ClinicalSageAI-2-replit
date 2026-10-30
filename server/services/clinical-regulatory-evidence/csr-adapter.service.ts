@@ -26,6 +26,8 @@ import type { EvidenceSource, ClinicalStudy, StudyDesignFeature, StudyResultObse
 import { gatherCsrEffectEvidence } from '../study-design/csr-evidence-source';
 import { projectDesignFeature, persistCsrDerivedAtoms } from './retrieval-atoms.service';
 import type { EmbedFn, GenerateResult, AtomDraft } from './retrieval-atoms.service';
+import { runCsrIndexBatch } from './csr-index-batch.js';
+import { projectCsrContentEvidenceWithCoverage, type CsrContentCoverage } from './csr-content-projection.js';
 
 // csr_reports.content / .metadata and csr_details.results are free-shape JSON.
 interface CsrReportRow {
@@ -155,17 +157,26 @@ export async function projectOrgCsrReports(
   return { total: rows.length, projected, alreadyPresent, failed, studyCount: studies.size };
 }
 
-/**
- * Materialize retrieval atoms for one CSR's §4.3 study-design features into
- * lumen_data_atoms (via the retrieval-atoms service). Ensures the CSR is adapted
- * into the spine first (idempotent), so the atoms carry the real cre source id as
- * provenance. Returns null when the CSR is not visible to the org.
- *
- * Only report-specific design features are materialized here; result observations
- * are indication-scoped (they span multiple CSRs) and are materialized separately
- * so their provenance is never collapsed onto a single source.
- */
-export async function atomizeCsrReport(orgId: number, csrReportId: number, opts: { embed?: EmbedFn | null } = {}): Promise<GenerateResult | null> {
+/** Resumable keyset page through the existing tenant-owned CSR corpus. */
+export async function atomizeOrgCsrReports(
+  orgId: number,
+  opts: { limit?: number; afterId?: number; embed?: EmbedFn | null } = {},
+) {
+  return runCsrIndexBatch(orgId, opts, {
+    list: async (organizationId, afterId, limit) => {
+      const { rows } = await pool.query(
+        'SELECT id FROM csr_reports WHERE organization_id = $1 AND deleted_at IS NULL AND id > $2 ORDER BY id LIMIT $3',
+        [organizationId, afterId, limit],
+      );
+      return rows as Array<{ id: number }>;
+    },
+    atomize: (organizationId, reportId) => atomizeCsrReport(organizationId, reportId, { embed: opts.embed }),
+  });
+}
+
+/** Materialize this report's design facts and screened source aggregates using
+ * the existing CRE writer. Coverage is extraction coverage, not validation. */
+export async function atomizeCsrReport(orgId: number, csrReportId: number, opts: { embed?: EmbedFn | null } = {}): Promise<(GenerateResult & { coverage: CsrContentCoverage }) | null> {
   const adapted = await adaptCsrReport(orgId, csrReportId);
   if (!adapted) return null;
   const read = await readReport(orgId, csrReportId);
@@ -175,7 +186,21 @@ export async function atomizeCsrReport(orgId: number, csrReportId: number, opts:
   for (const f of features) {
     drafts.push(...projectDesignFeature(f, { sourceId: adapted.source.id, indication: read.report.indication, phase: read.report.phase }));
   }
-  return persistCsrDerivedAtoms(orgId, drafts, { embed: opts.embed });
+  // Capture the remaining explicitly recorded CSR domains using the same
+  // tenant-scoped CRE atom persistence and retrieval pathway. Do not infer
+  // statistical validity from free text or re-compute submitted results.
+  const projection = projectCsrContentEvidenceWithCoverage({
+    reportId: read.report.report_id,
+    sourceId: adapted.source.id,
+    studyId: adapted.study.id,
+    content: read.report.content,
+    detailResults: read.detail?.results,
+    detailEndpoints: read.detail?.endpoints,
+    reportMetadata: read.report.metadata,
+  });
+  drafts.push(...projection.atoms);
+  const persisted = await persistCsrDerivedAtoms(orgId, drafts, { embed: opts.embed });
+  return { ...persisted, coverage: projection.coverage };
 }
 
 async function getSourceById(orgId: number, id: number): Promise<EvidenceSource | null> {

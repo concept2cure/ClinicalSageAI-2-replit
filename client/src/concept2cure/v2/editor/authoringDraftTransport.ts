@@ -6,19 +6,43 @@ import { readAnswerCheck, type AnswerCheckView } from '../../components/ana/anaA
 import { readTurnRecord } from '../../components/ana/anaProgress';
 import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
 import { readAssemblySourceManifest, type AssemblySourceManifest } from '@shared/authoring/assembly-sources';
+import type { DraftPassage } from '@shared/authoring/draft-passage';
 
 export interface AiDraftMetadata {
   tone?: string; region?: string; generated_at?: string; model?: string | null; provider?: string | null;
   sourcesRetrieved?: number; attributableSources?: number;
   retrievalStatus?: 'ok' | 'empty' | 'failed'; retrievalError?: string | null; source?: string;
 }
+/** What the server says a revision was drafted from: the candidate as parked, and the instruction. */
+export interface AiDraftDerivation { draftId: string; contentSha256: string; instruction: string }
+export type { DraftPassage };
 export interface PendingAiDraft {
   sectionId: string; generated: string; draftId: string | null; metadata: AiDraftMetadata;
   check: AnswerCheckView | null; turnRecord?: AnaTurnRecordStatus;
+  /** Present on a revision, as the server parked it (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3). */
+  derivedFrom?: AiDraftDerivation;
+  /** Present on a replacement for a selected passage: the passage the server drafted it for (slice 4). */
+  passage?: DraftPassage;
 }
 export interface AcceptedAttribution { sourceSpans: number; authorSpans: number; distinctSources: number; coverage: number }
+export interface AiDraftGenerationInputs { tone: string; region: string; context: string; requirements: string }
+/** What one alternative asked the draft route for: the existing tone vocabulary. */
+export type AiDraftApproach = 'professional' | 'concise' | 'detailed';
+/** One alternative: its own single-use candidate, and the person's edits of it. A revision names the
+ *  entry it revises and the instruction; `single` marks a lone draft listed once it was revised. */
+export interface AiDraftAlternative {
+  approach: AiDraftApproach; draft: PendingAiDraft; body: string;
+  revision?: { from: number; instruction: string }; single?: true;
+}
 export interface AiDraftReviewState {
   draft: PendingAiDraft | null; body: string; changeReason: string; refusal: string | null;
+  /** Alternatives that arrived, in order; `draft`/`body` are the one shown (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md). */
+  alternatives?: AiDraftAlternative[];
+  shownAlternative?: number;
+  /** Approaches still being drafted, so a pending one reads as pending, never as absent. */
+  pendingApproaches?: AiDraftApproach[];
+  /** Editable inputs for the next explicit draft; source authority stays on the session. */
+  generationInputs?: AiDraftGenerationInputs;
   /** A lost or malformed acceptance response may follow a committed save. */
   acceptUnknown?: boolean;
   /** A confirmed base conflict keeps the candidate for comparison only. */
@@ -33,13 +57,29 @@ export interface AiDraftReviewSession {
   sources?: AssemblySourceManifest;
 }
 export const createEmptyAiDraftReviewState = (): AiDraftReviewState => ({ draft: null, body: '', changeReason: '', refusal: null });
-export interface DraftRequest { sectionId: string; tone?: string; region?: string; context?: string; requirements?: string; sources?: AssemblySourceManifest }
+export interface DraftRequest {
+  sectionId: string; tone?: string; region?: string; context?: string; requirements?: string; sources?: AssemblySourceManifest;
+  /** A revision of a live candidate, by the person's instruction. */
+  revise?: { fromDraftId: string; instruction: string };
+  /** A replacement for one passage of the saved section, never the whole section. */
+  passage?: DraftPassage;
+}
 export interface DraftAcceptRequest { sectionId: string; draftId: string; content: string; changeReason?: string; docId?: string }
 export interface DraftFailure { ok: false; status: number; code: string | null; message: string; unknown: boolean; stale?: true }
 export type DraftGenerationResult = { ok: true; draft: PendingAiDraft } | DraftFailure;
 export type DraftAcceptResult = { ok: true; section: Record<string, unknown>; attribution: AcceptedAttribution | null } | DraftFailure;
 const record = (value: unknown): Record<string, unknown> | null => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const text = (value: unknown): value is string => typeof value === 'string' && Boolean(value.trim());
+function derivation(value: unknown): AiDraftDerivation | undefined {
+  const d = record(value);
+  return d && text(d.draftId) && text(d.contentSha256) && text(d.instruction)
+    ? { draftId: d.draftId, contentSha256: d.contentSha256, instruction: d.instruction } : undefined;
+}
+function passageOf(value: unknown): DraftPassage | undefined {
+  const p = record(value);
+  return p && text(p.quote) && typeof p.prefix === 'string' && typeof p.suffix === 'string'
+    ? { quote: p.quote, prefix: p.prefix, suffix: p.suffix } : undefined;
+}
 const stale = (unknown = false): DraftFailure => ({ ok: false, status: 0, code: 'CONTEXT_CHANGED', message: 'The document, project or signed-in account changed. No later action was started.', unknown, stale: true });
 
 /** Guard every stage of a request; same-project metadata/token refresh remains valid. */
@@ -71,7 +111,9 @@ function decodeDraft(sectionId: string, body: Record<string, unknown> | null, st
   return { ok: true, draft: { sectionId, generated: draft.content,
     draftId: body?.success === true && text(draft.draftId) ? draft.draftId : null,
     metadata: (record(draft.metadata) ?? {}) as AiDraftMetadata,
-    check: readAnswerCheck(draft.check) ?? null, turnRecord: readTurnRecord(draft.turnRecord) } };
+    check: readAnswerCheck(draft.check) ?? null, turnRecord: readTurnRecord(draft.turnRecord),
+    ...(derivation(draft.derivedFrom) ? { derivedFrom: derivation(draft.derivedFrom) } : {}),
+    ...(passageOf(draft.passage) ? { passage: passageOf(draft.passage) } : {}) } };
 }
 function decodeAcceptance(input: DraftAcceptRequest, body: Record<string, unknown> | null, status: number): DraftAcceptResult {
   const section = record(body?.section);
@@ -88,7 +130,8 @@ function decodeAcceptance(input: DraftAcceptRequest, body: Record<string, unknow
 function draftRequestPayload(input: DraftRequest, sources?: AssemblySourceManifest) {
   return { tone: input.tone ?? 'professional', region: input.region ?? 'FDA',
     ...(input.context?.trim() ? { context: input.context.trim() } : {}),
-    ...(input.requirements?.trim() ? { requirements: input.requirements.trim() } : {}), ...(sources ? { sources } : {}) };
+    ...(input.requirements?.trim() ? { requirements: input.requirements.trim() } : {}), ...(sources ? { sources } : {}),
+    ...(input.revise ? { revise: input.revise } : {}), ...(input.passage ? { passage: input.passage } : {}) };
 }
 export async function generateAuthoringDraft(input: DraftRequest, isCurrent: () => boolean = () => true): Promise<DraftGenerationResult> {
   if (!isCurrent()) return stale();

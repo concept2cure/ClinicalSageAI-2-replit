@@ -262,15 +262,13 @@ describe('QMS routes', () => {
     expect(res.status).toBe(422);
   });
 
-  it('NC disposition 200', async () => {
-    queryFn.mockResolvedValueOnce({
-      rows: [{ id: 1, disposition: 'rework' }],
-    });
+  // A disposition is a signed act (2026-10-29; server/routes/__tests__/qms-signed-decisions.test.ts).
+  it('NC disposition without a signature 400, nothing written', async () => {
     const res = await request(makeApp())
       .patch('/api/mdx/qms/nonconforming/1/disposition')
       .send({ disposition: 'rework', dispositionRationale: 'process miss' });
-    expect(res.status).toBe(200);
-    expect(res.body.data.disposition).toBe('rework');
+    expect(res.status).toBe(400);
+    expect(queryFn.mock.calls.some(([sql]) => /UPDATE qms_nonconforming_products/.test(String(sql)))).toBe(false);
   });
 });
 

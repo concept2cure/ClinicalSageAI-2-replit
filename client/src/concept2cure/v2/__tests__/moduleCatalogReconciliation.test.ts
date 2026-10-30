@@ -100,7 +100,10 @@ function catalogMigrationFiles(): string[] {
  * evidenced?" — 'identity-console' (enterprise SSO/SCIM) is a real commercial
  * add-on, and 'qmp' / 'report-governance' are features, so all three ARE seeded.
  */
-const NEVER_LICENSABLE = new Set(['audit-trail', 'part11-console']);
+const NEVER_LICENSABLE = new Set(['audit-trail']);
+/** Folded into a NEVER_LICENSABLE app (part11-console into audit-trail, D2, 2026-10-29):
+ *  no longer a shell app, and still never seeded. */
+const FOLDED_NEVER_LICENSABLE = ['part11-console'];
 
 /**
  * Module ids that MORE THAN ONE migration seeds, and why.
@@ -111,7 +114,7 @@ const NEVER_LICENSABLE = new Set(['audit-trail', 'part11-console']);
  * apply order alone. Each acknowledged re-key is listed here; anything new
  * fails the duplicate check until it is either fixed or recorded with a reason.
  *
- * design-controls / human-factors
+ * human-factors
  *   migrations/20260814j_catalog_missing_product_surfaces.sql seeded both in the
  *   ROOT migrations/ tree as 'Design controls' / 'Human factors' under category
  *   'Device & diagnostics' (sort 210/220) with `{"tiers": []}` — which is what
@@ -121,8 +124,12 @@ const NEVER_LICENSABLE = new Set(['audit-trail', 'part11-console']);
  *   after 20260814j in C2C_MIGRATION_FILES and asserts its own end state, so the
  *   later definition wins deterministically. Its header carries the same
  *   correction — it originally claimed neither id had ever been catalogued.
+ *
+ * design-controls was the pair's other half until it folded into
+ * device-engineering (D2, fold F1c, 2026-10-29): both its writers were amended in
+ * place and seed it no more (docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/).
  */
-const KNOWN_RESEEDS = ['design-controls', 'human-factors'];
+const KNOWN_RESEEDS = ['human-factors'];
 
 /** Every app id the shell presents to a user, across every segment. */
 function shellAppIds(): Set<string> {
@@ -272,6 +279,10 @@ describe('Apps catalog ↔ shell taxonomy', () => {
     // the shell's app list would silently re-introduce an "Audit trail" toggle.
     for (const id of NEVER_LICENSABLE) {
       expect(shell.has(id), `${id} should still be a real shell app`).toBe(true);
+      expect(seeded, `${id} must not be entitlement-gated`).not.toContain(id);
+    }
+    for (const id of FOLDED_NEVER_LICENSABLE) {
+      expect(shell.has(id), `${id} folded into audit-trail and is no shell app`).toBe(false);
       expect(seeded, `${id} must not be entitlement-gated`).not.toContain(id);
     }
   });

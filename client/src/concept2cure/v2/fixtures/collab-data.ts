@@ -51,10 +51,7 @@ export interface SurfaceContextDef {
 
 export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   projects:                 { mod: 'Regulatory',      noun: 'portfolio',                et: 'portfolio' },
-  'artifacts-center':       { mod: 'Evidence',        noun: 'artifact',                 et: 'artifact' },
   'cro-portfolio':          { mod: 'Regulatory',      noun: 'sponsor portfolio',        et: 'sponsor' },
-  'filings-catalog':        { mod: 'Regulatory',      noun: 'filing type',              et: 'filing' },
-  dossier:                  { mod: 'eCTD',            noun: 'dossier section',           et: 'section' },
   'project-home':           { mod: 'Regulatory',      noun: 'project',                  et: 'project' },
   'conversation-thread':    { mod: 'Regulatory',      noun: 'conversation',             et: 'conversation' },
   'document-authoring':     { mod: 'Clinical',        noun: 'document section',          et: 'section' },
@@ -70,7 +67,6 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   'device-510k':            { mod: 'MedicalDevice',   noun: '510(k) section',            et: 'section' },
   'device-cer':             { mod: 'MedicalDevice',   noun: 'CER section',               et: 'section' },
   'device-diagnostics':     { mod: 'MedicalDevice',   noun: 'diagnostics item',          et: 'device' },
-  'device-submission':      { mod: 'MedicalDevice',   noun: 'device submission',         et: 'submission' },
   cmc:                      { mod: 'CMC',             noun: 'CMC section',               et: 'section' },
   'ind-checklist':          { mod: 'IND',             noun: 'IND item',                  et: 'ind' },
   pdev:                     { mod: 'IND',             noun: 'development activity',      et: 'activity' },
@@ -80,7 +76,6 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   'template-library':       { mod: 'Regulatory',      noun: 'template',                  et: 'template' },
   tasks:                    { mod: 'Regulatory',      noun: 'task',                      et: 'unified' },
   'task-board':             { mod: 'Regulatory',      noun: 'task',                      et: 'unified' },
-  'dossier-map':            { mod: 'eCTD',            noun: 'module',                    et: 'module' },
   'csr-workflow':           { mod: 'Clinical',        noun: 'CSR section',               et: 'section' },
   registrations:            { mod: 'Regulatory',      noun: 'registration',              et: 'registration' },
   'market-access':          { mod: 'Market Access',   noun: 'access item',               et: 'access' },
@@ -96,9 +91,7 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   'report-engine':          { mod: 'Evidence',        noun: 'report',                    et: 'report' },
   'safety-narrative':       { mod: 'Safety',          noun: 'safety case',               et: 'case' },
   labeling:                 { mod: 'Labeling',        noun: 'label',                     et: 'label' },
-  risk:                     { mod: 'MedicalDevice',   noun: 'risk item',                 et: 'risk' },
   'deep-research':          { mod: 'Intelligence',    noun: 'research',                  et: 'research' },
-  setup:                    { mod: 'Regulatory',      noun: 'setting',                   et: 'admin' },
   'audit-trail':            { mod: 'Quality',         noun: 'audit item',                et: 'audit' },
   billing:                  { mod: 'Regulatory',      noun: 'billing item',              et: 'billing' },
   home:                     { mod: 'Regulatory',      noun: 'item',                      et: 'workspace' },
@@ -130,6 +123,18 @@ const CL_MOD_LABEL: Record<string, string> = {
   MedicalDevice: 'Medical Device',
   ProtocolDesign: 'Protocol Design',
   general: 'General',
+  /* Spellings tasks are stored under that are identifiers, not words: they
+     reached the screen as written on Home's open items and in "Your work"
+     (2026-10-25, D2 first session). */
+  cmc: 'CMC',
+  ind: 'IND',
+  clinical: 'Clinical',
+  authoring: 'Authoring',
+  ectd: 'eCTD',
+  cer: 'CER',
+  study: 'Study',
+  mdx: 'Medical Device',
+  'submission-center': 'Submission Center',
 };
 export const clModLabel = (m: string): string => CL_MOD_LABEL[m] ?? m;
 export const CL_MOD_OPTIONS: ReadonlyArray<{ value: string; label: string }> = Object.keys(CL_MOD)

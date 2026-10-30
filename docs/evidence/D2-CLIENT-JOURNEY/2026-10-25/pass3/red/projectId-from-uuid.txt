@@ -1,0 +1,4 @@
+# Mutation: projectId-from-uuid
+ × Assign makes a deliverable one person’s task > writes one task to the task store, scoped and linked, and reads the assignment back 165ms
+ × the assignment model > never Number()s the program UUID: the project id is the verified numeric one 2ms
+      Tests  2 failed | 11 passed (13)

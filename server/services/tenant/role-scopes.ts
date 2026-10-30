@@ -27,9 +27,9 @@ import { REPORT_FINALIZE_PERMISSION } from '../../../shared/constants/permission
 const DESCRIPTIONS: Readonly<Record<string, string>> = {
   admin: 'Administers the organization (members, roles, settings, API keys) and may do everything a manager may.',
   approver: 'Everything a manager may.',
-  manager: 'Manages every program, writes governed records and reads the audit trail.',
+  manager: 'Manages every project, writes governed records and reads the audit trail.',
   reviewer: 'Everything a member may.',
-  member: 'Writes governed records and creates programs.',
+  member: 'Writes governed records and creates projects.',
   viewer: 'Reads only; writes nothing.',
 };
 

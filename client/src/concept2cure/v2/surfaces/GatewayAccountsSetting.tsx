@@ -15,7 +15,8 @@ import '../styles/translation-v2.css';
  *   PUT /api/gateway-accounts/:region/:gateway/:environment   { mode, senderIdentifier?,
  *       credentials?, reason, reauth: { password, totp? } }   owner or administrator
  *
- * One component, rendered by admin Setup and by the onboarding wizard, so there
+ * One component, rendered by Admin and access → Settings (Setup until it folded
+ * in, D2 2026-10-29) and by the onboarding wizard, so there
  * is one place the choice is made. What is shown is what the server stored: it
  * is read again after every change. A read that fails is shown as unread, never
  * as "platform". Certificates and keys go to the server and are never read

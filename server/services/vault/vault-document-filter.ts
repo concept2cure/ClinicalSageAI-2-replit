@@ -70,6 +70,24 @@ export const VAULT_FILTER_PARAMETERS = {
   lifecycleStages: 'lifecycleStage',
 } as const satisfies Record<keyof VaultDocumentFilters, string>;
 
+/** Every query parameter a filter is read from. */
+export const VAULT_FILTER_PARAMETER_NAMES: readonly string[] = Object.values(VAULT_FILTER_PARAMETERS);
+
+/**
+ * Parsed filters back to the search's own query parameters: the inverse of
+ * parseVaultFilters' reading. A saved view stores them in this shape and the
+ * find view sends them back verbatim, so parse(query(parse(x))) is parse(x).
+ * Empty dimensions are omitted.
+ */
+export function vaultFilterQuery(filters: VaultDocumentFilters): Partial<Record<string, string[]>> {
+  const out: Partial<Record<string, string[]>> = {};
+  for (const [key, parameter] of Object.entries(VAULT_FILTER_PARAMETERS) as Array<[keyof VaultDocumentFilters, string]>) {
+    const values = filters[key];
+    if (values?.length) out[parameter] = [...values];
+  }
+  return out;
+}
+
 export function hasVaultFilters(f: VaultDocumentFilters | undefined): boolean {
   return !!f && Object.values(f).some((v) => Array.isArray(v) && v.length > 0);
 }

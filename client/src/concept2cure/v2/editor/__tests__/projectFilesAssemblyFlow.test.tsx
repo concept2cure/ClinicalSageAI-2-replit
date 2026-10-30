@@ -81,7 +81,7 @@ beforeEach(async () => {
     if (method === 'POST' && path.endsWith('/assembly/preview')) return ok({ success: true, data: plan(input!) });
     if (method === 'POST' && path.endsWith('/assembly/commit')) return ok({ success: true, data: { docId: TARGET, programId: PROGRAM, plan: plan(input!), sections: [targetSection] } });
     if (method === 'POST' && path.endsWith('/ai/draft')) return ok({ success: true, draft: { content: 'Vault-source candidate for review', draftId: 'vault-candidate', metadata: {}, check: null } });
-    if (path.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [currentDoc, targetDoc].map(doc => ({ ...doc, program_id: PROGRAM })) });
+    if (path.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [currentDoc, targetDoc].map(doc => ({ ...doc, program_id: PROGRAM, readScope: 'document' })) });
     if (path.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true, sources: [], revisions: [], events: [], comments: [] });
   });

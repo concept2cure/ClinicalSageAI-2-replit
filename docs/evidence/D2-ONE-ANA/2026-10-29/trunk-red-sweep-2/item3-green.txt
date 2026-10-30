@@ -1,0 +1,8 @@
+# item 3 green
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Analytics: every button click is handler-safe 74ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Postmarket: every button click is handler-safe 20ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Engineering: every risk-matrix cell click is handler-safe 36ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > UDI: every label-preview / format-picker click is handler-safe 38ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX Files tab — root structure > renders all five filesystem roots on PathwayPanes(k510) 182ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)

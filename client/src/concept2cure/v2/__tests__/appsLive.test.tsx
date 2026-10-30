@@ -29,7 +29,7 @@ import { ApiRequestError } from '@/lib/queryClient';
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE: UiSurface = {
-  id: 'apps', label: 'Workflows', navTier: 'workspace', layoutMode: 'apps',
+  id: 'apps', label: 'Subscription & features', navTier: 'workspace', layoutMode: 'apps',
   group: 'workspace', uiKit: null, apiPrefixes: [], anaToolFamilies: [],
   sharedContract: null, discoveryCatalog: null, readiness: 'routes-ready', compliance: [],
 } as unknown as UiSurface;
@@ -129,11 +129,14 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     expect(screen.getByText(/Included from Enterprise/)).toBeTruthy();
     expect(screen.queryByText('Add-on')).toBeNull();
     /* The CTA is the shell's own words now, not a second string for the same
-       step. It was 'Upgrade plan'; it is 'View plans', which is what
-       lockNotice's tier branch offers everywhere else — and the more honest of
-       the two, since pressing it shows you plans rather than committing you to
-       one. One vocabulary across the rail, the palette and this catalog. */
-    expect(screen.getByText('View plans')).toBeTruthy();
+       step. It was 'Upgrade plan', then 'View plans'; it is 'Compare
+       subscriptions' (section 9: "Plan" is the project's step), which is what
+       lockNotice's tier branch offers everywhere else — and the more honest
+       wording, since pressing it shows you subscriptions rather than committing
+       you to one. One vocabulary across the rail, the palette and this catalog;
+       the licence band's door to the same screen carries the same name. */
+    expect(screen.getByTestId('admin-upgrade-plan').textContent).toBe('Compare subscriptions');
+    expect(screen.getByTestId('admin-manage-plan').textContent).toContain('Compare subscriptions');
     // live quota numbers
     expect(screen.getByText('14 / 25')).toBeTruthy();
     expect(screen.getByText('38 / 50')).toBeTruthy();
@@ -147,7 +150,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     mount();
     await findFeature('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
-    fireEvent.click(screen.getByTitle('Disable module')); // the enabled within-plan module
+    fireEvent.click(screen.getByTitle('Disable this feature')); // the enabled within-plan module
     confirmReason();
     await waitFor(() =>
       expect(put).toHaveBeenCalledWith('/api/module-subscriptions/cmc-wizard/toggle', { enabled: false, reason: REASON }),
@@ -167,11 +170,11 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     mount();
     await findFeature('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
-    fireEvent.click(screen.getByTitle('Disable module'));
+    fireEvent.click(screen.getByTitle('Disable this feature'));
     confirmReason();
     expect(await screen.findByText(/Could not disable CMC Wizard — Admin access required/)).toBeTruthy();
     // not applied — still on, still offering "Disable"
-    await waitFor(() => expect(screen.getByTitle('Disable module')).toBeTruthy());
+    await waitFor(() => expect(screen.getByTitle('Disable this feature')).toBeTruthy());
   });
 
   /* Settings/integrity audit 2026-10-17, finding 2: the switch wrote at once,
@@ -182,7 +185,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     mount();
     await findFeature('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
-    fireEvent.click(screen.getByTitle('Disable module'));
+    fireEvent.click(screen.getByTitle('Disable this feature'));
     const dialog = await screen.findByRole('dialog');
     expect(dialog.textContent).toMatch(/Disable CMC Wizard/);
     // A reason under the shared 8-character floor cannot be confirmed.
@@ -193,7 +196,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     // Cancel leaves the module as it was and writes nothing.
     fireEvent.click(screen.getByText('Cancel'));
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.getByTitle('Disable module')).toBeTruthy();
+    expect(screen.getByTitle('Disable this feature')).toBeTruthy();
     expect(put).not.toHaveBeenCalled();
   });
 
@@ -202,7 +205,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     mount();
     await findFeature('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
-    fireEvent.click(screen.getByTitle('Disable module'));
+    fireEvent.click(screen.getByTitle('Disable this feature'));
     confirmReason();
     expect(await screen.findByText(/Disabled CMC Wizard.*audit entry .*not written/i)).toBeTruthy();
   });
@@ -211,7 +214,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     apiRequest.mockRejectedValue(new Error('network down'));
     mount();
     // Honest error for the catalog; license band degrades to the honest note.
-    expect(await screen.findByText("Couldn't load workflows")).toBeTruthy();
+    expect(await screen.findByText("Couldn't load features")).toBeTruthy();
     expect(screen.getByText(/License & entitlement details are unavailable/)).toBeTruthy();
     // No fixture content and no sample markers leak through.
     expect(screen.queryByText('CMC Wizard')).toBeNull();

@@ -1,0 +1,69 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5211/api/mdx/qms/documents/5/review-route",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 31,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": true,
+      "documentId": 5,
+      "status": "in_review",
+      "round": {
+        "route": {
+          "id": "27dde7aa-c270-457d-8560-123c484d3ceb",
+          "round": 1,
+          "senderId": 1,
+          "senderName": "Oona Runner",
+          "order": "parallel",
+          "status": "open",
+          "statusReason": null,
+          "statusBy": null,
+          "statusAt": null,
+          "contentDigest": "0680ae437489927af23a2a564a8389eb1011a5b10de21ad491be0d837feaab4f",
+          "reviewDueAt": null,
+          "approvalDueAt": "2026-11-03T23:59:59.999Z",
+          "createdAt": "2026-10-29T20:28:36.366Z"
+        },
+        "members": [
+          {
+            "taskId": "ROUTE-27dde7aa-2",
+            "userId": 2,
+            "role": "approver",
+            "step": 1,
+            "printedName": "Sid Signer",
+            "outcome": "pending",
+            "stepOpen": true,
+            "dueDate": "2026-11-03T23:59:59.999Z",
+            "signature": null,
+            "actId": null
+          }
+        ],
+        "reviewComplete": true,
+        "approvalComplete": false,
+        "history": [
+          {
+            "action": "send",
+            "at": "2026-10-29T20:28:36.441Z",
+            "actorId": 1,
+            "actorName": "Oona Runner",
+            "reason": "OQ-006 step 04b: SOP A ready for QA approval",
+            "members": [
+              {
+                "userId": 2,
+                "role": "approver",
+                "printedName": "Sid Signer"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

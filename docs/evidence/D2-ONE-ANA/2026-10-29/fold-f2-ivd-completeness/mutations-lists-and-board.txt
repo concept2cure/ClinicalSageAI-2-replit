@@ -1,0 +1,42 @@
+### M6: the assessments list drops admitProject
+mutated server/routes/ivd-assessments.ts
+ × the assessments list > another organization's project: 404, and nothing is listed 20ms
+ × the assessments list > a missing project: 404, and nothing is listed 4ms
+ × the assessments list > a deleted project: 404, and nothing is listed 3ms
+ × the assessments list > a malformed project: 404, and nothing is listed 3ms
+ × the assessments list > when the ownership check cannot run: 503, and nothing is listed 4ms
+ × the assessments list > the organization's own project: asked once, then listed by that project on the request client 3ms
+      Tests  6 failed | 8 passed (14)
+
+### M7: the documents list drops admitProject
+mutated server/routes/ivd-assessments.ts
+ × the generated documents list > another organization's project: 404, and nothing is listed 7ms
+ × the generated documents list > a missing project: 404, and nothing is listed 4ms
+ × the generated documents list > a deleted project: 404, and nothing is listed 3ms
+ × the generated documents list > a malformed project: 404, and nothing is listed 3ms
+ × the generated documents list > when the ownership check cannot run: 503, and nothing is listed 3ms
+ × the generated documents list > the organization's own project: asked once, then listed by that project on the request client 2ms
+      Tests  6 failed | 8 passed (14)
+
+### M8: the board draws any response, whatever scope it says it covers
+mutated client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx
+ × a read it may not draw says so, and is never an empty board > a response for the organization is not drawn under a project 5040ms
+ × a read it may not draw says so, and is never an empty board > a response for another project is not drawn 5038ms
+      Tests  2 failed | 7 passed (9)
+
+### M9: the board reads the organization under a project (no program_id)
+mutated client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx
+ × IvdSurface draws the IVDR readiness board for the open project > reads the board with the project's id and draws its families 163ms
+      Tests  1 failed | 8 passed (9)
+
+### M10: an unread family is drawn as 0%
+mutated client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx
+      Tests  9 passed (9)
+### M10 (after tightening the test): an unread family is drawn as 0%
+mutated client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx
+ × a read it may not draw says so, and is never an empty board > a family that could not be read is "Not read", and no overall figure is shown 225ms
+      Tests  1 failed | 8 passed (9)
+### M11: the old screen carries a copy of the board's markup
+mutated client/src/concept2cure/v2/surfaces/IvdCompleteness.tsx
+ × one board, two mounts > the family board is drawn by IvdReadinessBoard only, and both screens mount it 8ms
+      Tests  1 failed | 2 passed (3)

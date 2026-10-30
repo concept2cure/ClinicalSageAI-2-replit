@@ -75,7 +75,7 @@ export function calculateLifecycleCalendar(snapshot: LifecycleCalendarSnapshot):
   return { schemaVersion: 1, observedAt, obligations, events,
     obligationSummary: summarizeCalendar(obligations.map(deadline), today), eventSummary: summarizeCalendar(events.map(deadline), today), gaps,
     limits: [LIFECYCLE_CALENDAR_LIMIT,
-      'The collection includes organization-owned unlinked obligations and submission-linked obligations in the current actor\'s admitted programs. A selected project is context, not an organization-completeness claim.',
+      'The collection includes organization-owned unlinked obligations and submission-linked obligations in the current actor\'s admitted projects. A selected project is context, not an organization-completeness claim.',
       'Only persisted occurrences are shown. Parent obligations and occurrences are counted separately; no new deadline or recurrence is generated.',
       'Date standing compares the recorded due date with the database observation date. Submitted and approved are stored statuses, not agency acknowledgements.',
       'Sources above 500 admitted rows per table are refused rather than silently truncated.'],

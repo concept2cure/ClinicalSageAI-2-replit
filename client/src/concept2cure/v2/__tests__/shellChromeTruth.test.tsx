@@ -75,20 +75,24 @@ describe('breadcrumb client category (finding 128)', () => {
     return s;
   };
 
-  it('names no category for a surface that belongs to both — the launch core, a device workbench', () => {
-    for (const id of ['projects', 'vault', 'document-authoring', 'submission-center', 'device-510k', 'device-pma']) {
+  /* The device workbenches (device-510k, device-pma, risk, …) were checked
+     here as client-category surfaces. Since 2026-10-23 they are features of the
+     client's project, crumbed Projects › the project › the feature, and
+     projectFeatureBreadcrumb.test.tsx holds that. */
+  it('names no category for a surface that belongs to both — the launch core', () => {
+    for (const id of ['projects', 'vault', 'document-authoring', 'submission-center']) {
       expect(breadcrumbTierOf(surface(id)), id).toBeNull();
     }
   });
 
   it('names the one category a surface belongs to, and Admin for an admin surface', () => {
-    expect(breadcrumbTierOf(surface('risk'))?.label).toBe('Medical Device & IVD');
     expect(breadcrumbTierOf(surface('cmc'))?.label).toBe('Biotech & Pharma');
     expect(breadcrumbTierOf(surface('identity-console'))?.label).toBe('Admin');
   });
 
   it('does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD")', () => {
-    expect(breadcrumbTierOf(surface('device-workstream'))).toBeNull();
+    // The device workstream's own name is the old tier's; its parent is Projects.
+    expect(breadcrumbTierOf(surface('device-workstream'))?.label).toBe('Projects');
   });
 
   it('never names a category the rail does not list the surface under — for every surface', () => {
@@ -96,7 +100,8 @@ describe('breadcrumb client category (finding 128)', () => {
     const listed = Object.fromEntries(tiers.map((t) => [t, new Set(surfacesByTier(t).map((s) => s.id))]));
     for (const s of UI_SURFACES) {
       const crumb = breadcrumbTierOf(s);
-      if (!crumb || crumb.id === 'admin') continue;
+      // Projects is the parent of a project feature, not a client category.
+      if (!crumb || crumb.id === 'admin' || crumb.id === 'projects') continue;
       const other = crumb.id === 'mdx' ? 'biopharma' : 'mdx';
       expect(listed[other].has(s.id), `${s.id} crumbed ${crumb.label} but listed under ${other}`).toBe(false);
     }
@@ -105,8 +110,9 @@ describe('breadcrumb client category (finding 128)', () => {
   it('the header draws exactly that crumb', () => {
     render(<TopBar surface={surface('device-510k')} onPalette={() => {}} segment="medtech" onSegment={() => {}} />);
     const crumbs = document.querySelector('.crumbs')?.textContent ?? '';
-    expect(crumbs).not.toMatch(/Biotech & Pharma/);
-    expect(crumbs).toMatch(/Concept2Cure\.RI\s*›\s*510\(k\) workbench/);
+    expect(crumbs).not.toMatch(/Biotech & Pharma|Medical Device & IVD/);
+    // A project feature, with no project open: Projects, then the feature.
+    expect(crumbs).toMatch(/Concept2Cure\.RI\s*›\s*Projects\s*›\s*510\(k\) and eSTAR/);
   });
 });
 

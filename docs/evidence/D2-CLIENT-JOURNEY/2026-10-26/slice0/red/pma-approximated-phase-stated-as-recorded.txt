@@ -1,0 +1,67 @@
+# device-pma, audit [0]: the approximated PMA phase stated as the project's position.
+# PmaSurface.tsx as the first pass left it; the real host and the real useMdxPrograms; tests other than the 'no recorded phase' case.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+x-xx
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — states the recorded project phase, through the real host > a recorded `authoring` reads as the project phase, not "Manufacturing validation"
+AssertionError: expected 'Phase 4 of 10 — Manufacturing validat…' to match /^Project phase: Authoring · No target…/
+Ignored nodes: comments, script, style
+...
+- Expected:
+/^Project phase: Authoring · No target set$/
++ Received:
+"Phase 4 of 10 — Manufacturing validation · No target set"
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx:121:52
+    119| async function settle(container: HTMLElement, expected: RegExp) {
+    120|   await waitFor(() => expect(container.querySelectorAll('.phases .phas…
+    121|   await waitFor(() => expect(phaseLine(container)).toMatch(expected));
+       |                                                    ^
+    122| }
+    123|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — states the recorded project phase, through the real host > a filed PMA is not in the Approval phase
+AssertionError: expected 'Phase 9 of 10 — Approval · No target …' to match /^Project phase: Submission · /
+Ignored nodes: comments, script, style
+...
+- Expected:
+/^Project phase: Submission · /
++ Received:
+"Phase 9 of 10 — Approval · No target set"
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx:121:52
+    119| async function settle(container: HTMLElement, expected: RegExp) {
+    120|   await waitFor(() => expect(container.querySelectorAll('.phases .phas…
+    121|   await waitFor(() => expect(phaseLine(container)).toMatch(expected));
+       |                                                    ^
+    122| }
+    123|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — states the recorded project phase, through the real host > a failed read of the project row says so — it is not "no phase recorded"
+AssertionError: expected 'Phase 4 of 10 — Manufacturing validat…' to match /^The project phase could not be read …/
+Ignored nodes: comments, script, style
+...
+- Expected:
+/^The project phase could not be read · No target set$/
++ Received:
+"Phase 4 of 10 — Manufacturing validation · No target set"
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx:121:52
+    119| async function settle(container: HTMLElement, expected: RegExp) {
+    120|   await waitFor(() => expect(container.querySelectorAll('.phases .phas…
+    121|   await waitFor(() => expect(phaseLine(container)).toMatch(expected));
+       |                                                    ^
+    122| }
+    123|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 skipped (4)
+   Start at  03:30:50
+   Duration  17.94s (transform 1.59s, setup 151ms, import 1.89s, tests 15.29s, environment 470ms)

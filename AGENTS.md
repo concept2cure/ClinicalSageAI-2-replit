@@ -40,6 +40,17 @@ never described as new. Work without that section is not ready to build.
 - Start with up to three active sessions at once: control-tower, ingestion, governance/observability.
 - Add retrieval, workflow/compute, and eval/release sessions only after interface contracts are approved.
 
+## Founder product direction — core workflows (2026-10-26)
+
+Specialized capabilities belong inside the core project screens, aligned to the
+project's product, pathway, stage, jurisdiction and available records. Standalone
+app identities are reserved for standardized central services, such as Projects,
+Submission Center, Tasking, Vault, CMC, RBM, and Study and Protocol Design. Reuse
+the existing services and screens; carry every function and its safeguards into
+its reachable home before removing a standalone entry. The canonical placement
+map is [the client-journey information architecture](.design/client-journey/INFORMATION_ARCHITECTURE.md).
+Read its current accepted direction before changing navigation or adding a surface.
+
 ## Repository Safety Rules
 
 - No new production dependency without a written justification doc in `docs/`.

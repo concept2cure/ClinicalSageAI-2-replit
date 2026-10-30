@@ -1,0 +1,347 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — the empty lifecycle list offers a way to add an item > offers "Ask AnA to add a lifecycle item" and sends AnA the request
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Ask AnA to add a lifecycle item"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Software lifecycle":
+  <h1
+    class="page-title"
+  />
+
+  Name "Required deliverables":
+  <h2 />
+
+  Name "Lifecycle items":
+  <h2 />
+
+  --------------------------------------------------
+  button:
+
+  Name "Ask AnA":
+  <button
+    class="btn ghost small"
+    type="button"
+  />
+
+  Name "Check again":
+  <button
+    class="c2c-empty-action"
+    type="button"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state tone-idle"
+    data-testid="data-gate-empty"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-header"
+    >
+      <div>
+        <div
+          class="page-eyebrow"
+        >
+          Workstream
+        </div>
+        <h1
+          class="page-title"
+        >
+          Software lifecycle
+        </h1>
+        <div
+          class="page-sub"
+        >
+          IEC 62304 · FDA 2023 software & cybersecurity guidance · AAMI TIR57.
+           · SW-1
+        </div>
+      </div>
+      <div
+        class="page-actions"
+      >
+        <button
+          class="btn ghost small"
+          type="button"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"
+            />
+            <path
+              d="M5 3v4M19 17v4M3 5h4M17 19h4"
+            />
+          </svg>
+           Ask AnA
+        </button>
+      </div>
+    </div>
+    <div
+      class="metrics-row metrics-compact"
+    >
+      <div
+        class="metric-card"
+      >
+        <div
+          class="metric-label"
+        >
+          Documentation level
+        </div>
+        <div
+          class="metric-val"
+          style="font-size: 18px; text-transform: capitalize;"
+        >
+          basic
+        </div>
+        <div
+          class="metric-meta"
+        >
+          FDA 2023 software guidance
+        </div>
+      </div>
+      <div
+        class="metric-card"
+      >
+        <div
+          class="metric-label"
+        >
+          Completeness
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+          <span
+            class="unit"
+          >
+            %
+          </span>
+        </div>
+        <div
+          class="metric-meta"
+        >
+          0
+           of 
+          2
+           required deliverables approved
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone="warn"
+      >
+        <div
+          class="metric-label"
+        >
+          Approved
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+          <span
+            class="unit"
+          >
+            /
+            2
+          </span>
+        </div>
+        <div
+          class="metric-meta"
+        >
+          Required deliverables signed off
+        </div>
+      </div>
+    </div>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Required deliverables
+        </h2>
+        <span
+          class="section-sub"
+        >
+          The 
+          basic
+           documentation set · present = drafted · approved = signed off
+        </span>
+      </div>
+      <div
+        class="ctable"
+      >
+        <div
+          class="ctable-head"
+          style="grid-template-columns: 1.6fr 110px 110px;"
+        >
+          <div>
+            Deliverable
+          </div>
+          <div>
+            Present
+          </div>
+          <div>
+            Approved
+          </div>
+        </div>
+        <div
+          class="ctable-row"
+          style="grid-template-columns: 1.6fr 110px 110px;"
+        >
+          <div
+            class="ctable-strong"
+          >
+            Software requirements (SRS)
+          </div>
+          <div>
+            <span
+              style="color: var(--warning);"
+            >
+              missing
+            </span>
+          </div>
+          <div>
+            —
+          </div>
+        </div>
+        <div
+          class="ctable-row"
+          style="grid-template-columns: 1.6fr 110px 110px;"
+        >
+          <div
+            class="ctable-strong"
+          >
+            SBOM
+          </div>
+          <div>
+            <span
+              style="color: var(--warning);"
+            >
+              missing
+            </span>
+          </div>
+          <div>
+            —
+          </div>
+        </div>
+      </div>
+    </section>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Lifecycle items
+        </h2>
+        <span
+          class="section-sub"
+        >
+          All SRS / SDS / test / cybersecurity artifacts recorded for this project
+        </span>
+      </div>
+      <div
+        class="data-gate"
+      >
+        <div
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          data-testid="data-gate-empty"
+          role="status"
+        >
+          <span
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+              />
+            </svg>
+          </span>
+          <div
+            class="c2c-empty-t"
+          >
+            No software lifecycle items yet
+          </div>
+          <div
+            class="c2c-empty-h"
+          >
+            Software requirements, design, test, and cybersecurity artifacts appear here once recorded.
+          </div>
+          <button
+            class="c2c-empty-action"
+            type="button"
+          >
+            Check again
+          </button>
+          <div
+            class="c2c-empty-reg"
+          >
+            Serves the IEC 62304 software lifecycle record
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx:57:24
+     55|     render(<SoftwareSurface program={PROGRAM} onAskAna={onAskAna} />);
+     56|     await waitFor(() => expect(screen.getByText('No software lifecycle…
+     57|     const ask = screen.getByRole('button', { name: 'Ask AnA to add a l…
+       |                        ^
+     58|     expect(screen.queryByRole('button', { name: 'Check again' })).toBe…
+     59|     fireEvent.click(ask);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  02:17:03
+   Duration  1.75s (transform 349ms, setup 147ms, import 481ms, tests 467ms, environment 521ms)
+

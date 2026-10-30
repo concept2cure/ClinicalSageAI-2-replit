@@ -1,0 +1,9 @@
+{
+  "client/src/concept2cure/v2/registryModel.ts": "07c33bc2cfabe64e47a39cb0d4c5fba8841bd50e4c2368fd7c379a866fdfb3cf",
+  "shared/navigation/index.ts": "b1aae015bfb8390d0df28abdd787ece4a240abe33bcbacfe610a5d29525449bb",
+  "client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts": "970860c19ea6b6af6b5132aa52183d70410fe048d6e1a4df342e271a2513c593",
+  "client/src/concept2cure/v2/__tests__/projectDestination.test.ts": "b2454152787de479d70ed42c3d96a1c53d12ae5a9b1e2eb76581401ba0c2538b",
+  "client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx": "daed1efee9d1900d0a30319b5e15cc833a03d73ba1094f3c9b3f44fb6417e74e",
+  "client/src/concept2cure/v2/__tests__/navigationReachability.test.ts": "fc9b0c0752e27edbd9edd471c5c1bfff79bf4455fb8f458fd57f37b766d93906",
+  "tests/e2e/projects-mdx-destination.e2e.ts": "650fc00bece1f1e664d2c3a1f91c567be1c7a79cefb8017e71abbabd3bf87d16"
+}

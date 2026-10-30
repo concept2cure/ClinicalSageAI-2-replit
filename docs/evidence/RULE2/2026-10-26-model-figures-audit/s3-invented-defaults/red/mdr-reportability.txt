@@ -1,0 +1,34 @@
+# Rule 2 S3 red, item mdr-reportability: its new test on trunk 3e06155de, before the item's edits.
+
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a serious injury with nothing else stated is FDA reportable, and the rest is not determined 21ms
+   → expected { fdaReportable: true, …(8) } to match object { fdaReportable: true, …(6) }
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a malfunction whose recurrence risk is not stated is not "not reportable" 3ms
+   → expected { fdaReportable: false, …(8) } to match object { fdaReportable: null, …(2) }
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a country stated as unknown leaves EU vigilance undetermined, not "outside the EU" 3ms
+   → expected { fdaReportable: true, …(8) } to match object { fdaReportable: true, …(3) }
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > records the facts it used, and is complete when every one it turns on is stated 3ms
+   → expected { fdaReportable: true, …(8) } to match object { fdaReportable: true, …(8) }
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without anticipatesCorrection, and stores nothing 4ms
+   → expected { fdaReportable: true, …(8) } to be undefined
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without isMalfunction 5ms
+   → promise resolved "{ id: 'row-1', …(19) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without eventLocationCountry 3ms
+   → promise resolved "{ id: 'row-1', …(19) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without trendThresholdCrossed 2ms
+   → promise resolved "{ id: 'row-1', …(19) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a country it cannot read rather than read it as outside the EU 4ms
+   → promise resolved "{ id: 'row-1', …(19) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the facts as stated; a country stated as unknown leaves EU vigilance undetermined 3ms
+   → expected { fdaReportable: true, …(8) } to match object { fdaReportable: true, …(4) }
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > assess_mdr_reportability asks for each omitted fact > { patientHarm: "serious_injury" } is not a 30-day report: it names each fact it was not given 5ms
+   → expected { fdaReportable: true, …(8) } to be undefined
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > assess_mdr_reportability asks for each omitted fact > computes from stated facts, and says what a country stated as unknown leaves undetermined 2ms
+   → expected { fdaReportable: true, …(8) } to match object { fdaReportable: true, …(2) }
+  "rationale": "Serious injury → FDA 30-day",
++     "rationale": "Serious injury → FDA 30-day",
++     "rationale": "Serious injury → FDA 30-day",
++     "rationale": "Serious injury → FDA 30-day",
++     "rationale": "Serious injury → FDA 30-day",
+  "rationale": "Serious injury → FDA 30-day",
+ Test Files  1 failed (1)
+      Tests  12 failed (12)

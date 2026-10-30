@@ -215,6 +215,72 @@ describe('stored Live Drive preference', () => {
   });
 });
 
+/* ── The rail starts open, with its labels ───────────────────────────────── */
+
+describe('stored rail preference', () => {
+  /* The rail started as a 56px strip of unlabelled icons, two pairs of them the
+     same glyph, and a client testing the product could not tell the places
+     apart (docs/design/CLIENT_JOURNEY_2026-10-25.md). It starts open now,
+     except at phone width, where the open rail paints over the page. As with
+     Live Drive, a pref serialised under the old default is re-read once, and a
+     collapse made afterwards is kept. */
+  let phone = false;
+  beforeEach(() => {
+    localStorage.clear();
+    phone = false;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false, status: 503, body: null, json: async () => ({}) })),
+    );
+    vi.stubGlobal('matchMedia', ((q: string) => ({
+      matches: phone && q.includes('max-width: 640px'), media: q, onchange: null,
+      addListener: () => {}, removeListener: () => {},
+      addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia);
+    const NoopObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+    (window as unknown as { ResizeObserver?: unknown }).ResizeObserver ??= NoopObserver;
+    (window as unknown as { IntersectionObserver?: unknown }).IntersectionObserver ??= NoopObserver;
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+    window.history.pushState({}, '', '/');
+  });
+
+  async function railCollapsedWith(stored: Record<string, unknown> | null): Promise<string | null> {
+    if (stored) localStorage.setItem(PREFS_KEY, JSON.stringify(stored));
+    window.history.pushState({}, '', locationForSurface('projects'));
+    const { container } = render(
+      <Providers>
+        <V2App />
+      </Providers>,
+    );
+    await screen.findByRole('navigation', { name: 'Primary' }, { timeout: 5000 });
+    return container.querySelector('.c2c-v2.shell')?.getAttribute('data-collapsed') ?? null;
+  }
+
+  it('a first visit starts with the rail open', async () => {
+    expect(await railCollapsedWith(null)).toBe('false');
+  });
+
+  it('a pref serialised while the rail started collapsed loads open', async () => {
+    expect(await railCollapsedWith({ railCollapsed: true, liveDrive: true, liveDriveDefault: 2 })).toBe('false');
+  });
+
+  it('a collapse made under the open default is kept', async () => {
+    expect(await railCollapsedWith({ railCollapsed: true, railDefault: 2 })).toBe('true');
+  });
+
+  it('at phone width a first visit starts collapsed', async () => {
+    phone = true;
+    expect(await railCollapsedWith(null)).toBe('true');
+  });
+});
+
 /* ── The program a drive directive carries ───────────────────────────────── */
 
 describe('readDirectiveProgram', () => {

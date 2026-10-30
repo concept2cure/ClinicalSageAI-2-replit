@@ -163,8 +163,8 @@ function notApplicableReason(formId: string, programType: string | null): string
   const programs = formsRegistry.getApplicability(formId)?.programs ?? [];
   const type = (programType ?? 'this').toUpperCase();
   return programs.length > 0
-    ? `Form ${formId.replace(/^FDA_/, '')} applies to ${programs.join(' / ')} submissions, not to a ${type} program.`
-    : `Form ${formId.replace(/^FDA_/, '')} is not catalogued for a ${type} program.`;
+    ? `Form ${formId.replace(/^FDA_/, '')} applies to ${programs.join(' / ')} submissions, not to a project of type ${type}.`
+    : `Form ${formId.replace(/^FDA_/, '')} is not catalogued for a project of type ${type}.`;
 }
 
 /**
@@ -225,7 +225,7 @@ async function metaForRequest(
     return null;
   }
   if (program.applicantSponsorId && !program.boundSponsor) {
-    res.status(409).json({ error: { code: 'APPLICANT_SPONSOR_UNAVAILABLE', message: 'The recorded applicant sponsor is unavailable for this organization. Review the program binding before generating a form.' } });
+    res.status(409).json({ error: { code: 'APPLICANT_SPONSOR_UNAVAILABLE', message: 'The recorded applicant sponsor is unavailable for this organization. Review the project’s applicant sponsor before generating a form.' } });
     return null;
   }
   const meta = recordedRequestMetadata(program, stated);
@@ -720,7 +720,7 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
     return res.status(400).json({
       error: {
         code: 'VALIDATION',
-        message: 'projectId (numeric) or projectIdent (program UUID/code) is required to persist a governed form artifact.',
+        message: 'projectId (the tracking record’s numeric id) or projectIdent (the project’s UUID or code) is required to save a governed form artifact.',
       },
     });
   }
@@ -784,8 +784,8 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
           error: {
             code: 'PROGRAM_NOT_ANCHORED',
             message:
-              'This program has no project record, so it has no dossier to save the form into. Nothing was saved. ' +
-              'An administrator can give the program its project record.',
+              'This project has no tracking record, so it has no dossier to save the form into. Nothing was saved. ' +
+              'An administrator can give the project its tracking record.',
           },
         });
       }
@@ -1188,7 +1188,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
       const ident = typeof body.projectIdent === 'string' ? body.projectIdent.trim() : '';
       if (ident === '') {
         return res.status(400).json({
-          error: { code: 'VALIDATION', message: 'projectIdent (the open program) is required to file a completed form.' },
+          error: { code: 'VALIDATION', message: 'projectIdent (the open project) is required to file a completed form.' },
         });
       }
       const attestation = statedAttestation(body.attestCompletedSigned);
@@ -1229,7 +1229,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
         return res.status(409).json({
           error: {
             code: 'NO_SUBMISSION_SPINE',
-            message: 'This program has no submission record yet, so there is nothing to file the form into.',
+            message: 'This project has no submission record yet, so there is nothing to file the form into.',
           },
         });
       }
@@ -1277,7 +1277,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
         return res.status(409).json({
           error: {
             code: 'SEQUENCE_NOT_IN_PROGRAM',
-            message: 'That sequence is not part of this program’s submission, so the form was not filed into it.',
+            message: 'That sequence is not part of this project’s submission, so the form was not filed into it.',
           },
         });
       }

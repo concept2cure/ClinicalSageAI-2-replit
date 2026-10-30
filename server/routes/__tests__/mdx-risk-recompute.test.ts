@@ -33,7 +33,9 @@ function appWith(org: number | null) {
   const app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org };
+    // An editing role: the risk writes take requireEditorAccess since D2 fold F1
+    // slice A (2026-10-29); mdx-risk-program-scope.test.ts pins a viewer's refusal.
+    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, role: 'member' };
     next();
   });
   app.use('/api/mdx', riskRouter);

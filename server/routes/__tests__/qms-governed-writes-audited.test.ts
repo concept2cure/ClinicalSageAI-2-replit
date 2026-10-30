@@ -123,13 +123,43 @@ const CASES: Array<{
     status: 200,
   },
   {
-    name: 'changing an approved supplier',
+    name: "changing an approved supplier's audit date",
     method: 'patch',
     path: '/api/mdx/qms/suppliers/5',
-    body: { approvalStatus: 'conditional' },
+    body: { nextAuditDate: '2026-12-01' },
     action: 'mdx.qms.supplier.update',
     resourceType: 'qms_supplier',
-    row: { id: 5, organization_id: 9, approval_status: 'conditional' },
+    row: { id: 5, organization_id: 9, approval_status: 'approved', next_audit_date: '2026-12-01' },
+    status: 200,
+  },
+  {
+    name: 'recording a deviation (P-57)',
+    method: 'post',
+    path: '/api/mdx/qms/deviations',
+    body: { deviationNumber: 'DEV-2026-001', title: 'EM excursion', description: 'Viable count above action limit.', deviationType: 'unplanned', classification: 'major', detectedDate: '2026-10-20' },
+    action: 'mdx.qms.deviation.create',
+    resourceType: 'qc_deviation',
+    row: { id: 5, organization_id: 9, deviation_number: 'DEV-2026-001', status: 'open', classification: 'major', title: 'EM excursion', target_closure_date: null },
+    status: 201,
+  },
+  {
+    name: 'recording a management-review action (P-48)',
+    method: 'post',
+    path: '/api/mdx/qms/management-reviews/3/actions',
+    body: { description: 'Appoint a QA lead', owner: 'CEO', dueDate: '2026-12-01' },
+    action: 'mdx.qms.management_review.action.add',
+    resourceType: 'qms_management_review',
+    row: { id: 3, organization_id: 9, outputs: { actions: [{ n: 1, state: 'open' }] }, open_action_count: 1 },
+    status: 201,
+  },
+  {
+    name: 'closing a management-review action (P-48)',
+    method: 'post',
+    path: '/api/mdx/qms/management-reviews/3/actions/1/close',
+    body: { closureNote: 'QA lead started on 2026-11-15' },
+    action: 'mdx.qms.management_review.action.close',
+    resourceType: 'qms_management_review',
+    row: { id: 3, organization_id: 9, outputs: { actions: [{ n: 1, state: 'closed' }] }, closed_action_count: 1 },
     status: 200,
   },
   {
@@ -209,4 +239,32 @@ describe('every governed QMS write records a §11.10(e) row', () => {
       expect(res.body.data).toBeTruthy();
     });
   }
+});
+
+describe("a supplier's quality agreement names this organisation's controlled document", () => {
+  /** The document lookup answers `documentFound`; every other statement answers one row. */
+  function documentLookup(documentFound: boolean) {
+    query.mockImplementation(async (sql: unknown) => /FROM qms_documents WHERE id = \$1 AND organization_id = \$2/i.test(String(sql))
+      ? { rows: documentFound ? [{ id: 41 }] : [], rowCount: documentFound ? 1 : 0 }
+      : { rows: [{ id: 5, organization_id: 9 }], rowCount: 1 });
+  }
+  const wrote = () => query.mock.calls.some(([sql]) => /INSERT INTO qms_suppliers|UPDATE qms_suppliers/i.test(String(sql)));
+
+  it.each([
+    ['adding a supplier', 'post', '/api/mdx/qms/suppliers', { supplierName: 'Acme CDMO', criticality: 'critical', qualityAgreementId: 41 }],
+    ['updating a supplier', 'patch', '/api/mdx/qms/suppliers/5', { qualityAgreementId: 41 }],
+  ] as const)('refuses another organisation\'s document when %s, writing nothing', async (_name, method, path, body) => {
+    documentLookup(false);
+    const res = await request(app())[method](path).send(body);
+    expect(res.status).toBe(422);
+    expect(JSON.stringify(res.body)).toMatch(/controlled document of this organization/);
+    expect(wrote()).toBe(false);
+  });
+
+  it('admits its own document', async () => {
+    documentLookup(true);
+    const res = await request(app()).patch('/api/mdx/qms/suppliers/5').send({ qualityAgreementId: 41 });
+    expect(res.status).toBe(200);
+    expect(wrote()).toBe(true);
+  });
 });

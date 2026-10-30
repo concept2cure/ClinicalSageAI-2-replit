@@ -58,12 +58,12 @@ describe('Vault coverage', () => {
 
   it("says when the list is the ICH baseline and not the program's own", async () => {
     mockVaultApi(apiRequest, () =>
-      ok(vaultPayload({ coverage: available({ source: 'fallback', reason: 'The program type is unknown.' }) })),
+      ok(vaultPayload({ coverage: available({ source: 'fallback', reason: 'The filing type is unknown.' }) })),
     );
     render(<Vault {...props()} />);
     const block = await screen.findByTestId('vault-coverage');
-    await waitFor(() => expect(block.textContent).toContain("ICH CTD baseline, not this program's own"));
-    expect(block.textContent).toContain('The program type is unknown.');
+    await waitFor(() => expect(block.textContent).toContain("ICH CTD baseline, not this project's own"));
+    expect(block.textContent).toContain('The filing type is unknown.');
   });
 
   it('files an existing document at a missing section through the filing call', async () => {

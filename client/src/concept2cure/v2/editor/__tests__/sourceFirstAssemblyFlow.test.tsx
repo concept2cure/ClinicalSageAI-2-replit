@@ -48,13 +48,15 @@ function deferred<T>() {
   return { promise: new Promise<T>(done => { resolve = done; }), resolve: (value: T) => resolve(value) };
 }
 let commitReply: (input: AssemblyPreviewInput) => Response | Promise<Response>;
+let draftRegion: AssemblyPlan['draftRegion'];
+let draftingGuidance: string;
 function plan(input: AssemblyPreviewInput): AssemblyPlan {
   return { version: 1, docId: TARGET, programId: PROGRAM, templateId: TEMPLATE, selection: input.selection,
     targetSnapshot: 'saved-target', templateSnapshot: 'saved-template', fingerprint: 'assembly-fingerprint',
-    templateName: 'Source-led organization template', draftRegion: 'FDA', limitations: [], gaps: [],
+    templateName: 'Source-led organization template', draftRegion, limitations: [], gaps: [],
     ...(input.sources ? { sources: manifest } : {}), rows: targetSections.map(section => ({ code: section.code, title: section.title,
       content: '', ordering: section.order_index, disposition: 'preserve', existingSectionId: section.id,
-      aiDraftable: true, aiDraftableReason: 'Narrative section.', gaps: ['Scientific text remains to be written.'] })) };
+      aiDraftable: true, aiDraftableReason: 'Narrative section.', ...(draftingGuidance ? { draftingGuidance } : {}), gaps: ['Scientific text remains to be written.'] })) };
 }
 for (const prototype of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<Record<string, unknown>>) {
   prototype.getClientRects ??= () => [];
@@ -65,6 +67,7 @@ beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); clearEditorTarget(); __resetCeremonies();
   vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user })));
   await authService.adoptSession(`fixture.${btoa(JSON.stringify({ userId: 281, organizationId: 28 }))}.synthetic`); publishShellProject({ id: PROGRAM });
+  draftRegion = 'FDA'; draftingGuidance = '';
   commitReply = input => ok({ success: true, data: { docId: TARGET, programId: PROGRAM, plan: plan(input), sections: targetSections } });
   apiRequest.mockReset().mockImplementation(async (method: string, url: string, input?: AssemblyPreviewInput) => {
     const pathname = new URL(url, 'http://localhost').pathname;
@@ -72,7 +75,7 @@ beforeEach(async () => {
     if (method === 'POST' && url.endsWith('/assembly/preview')) return ok({ success: true, data: plan(input!) });
     if (method === 'POST' && url.endsWith('/assembly/commit')) return commitReply(input!);
     if (method === 'POST' && url.endsWith('/ai/draft')) return ok({ success: true, draft: { content: `Candidate ${url}`, draftId: `draft-${url}`, metadata: {}, check: null } });
-    if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [priorDoc, targetDoc].map(doc => ({ ...doc, program_id: PROGRAM })) });
+    if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [priorDoc, targetDoc].map(doc => ({ ...doc, program_id: PROGRAM, readScope: 'document' })) });
     if (pathname === `/api/authoring/docs/${PRIOR}` || pathname === `/api/authoring/docs/${TARGET}`) return ok({ success: true, document: { ...(pathname.endsWith(PRIOR) ? priorDoc : targetDoc), client_program_id: PROGRAM } });
     if (pathname === `/api/authoring/docs/${PRIOR}/sections`) return ok({ success: true, sections: [priorSection] });
     if (pathname === `/api/authoring/docs/${TARGET}/sections`) return ok({ success: true, sections: targetSections });
@@ -138,7 +141,8 @@ describe('source-first intent reaches the one actual document editor', () => {
     expect(postCalls('/assembly/commit')).toHaveLength(0);
     expect(postCalls('/ai/draft')).toHaveLength(0);
   });
-  it.each([false, true])('preserves exact sources through the actual chooser, build, queue and manual regeneration (consumeDeepLinks=%s)', async consumeDeepLinks => {
+  it.each([['FDA', false], ['EMA', true], ['PMDA', false], ['Health Canada', true]] as const)('retains %s drafting inputs and exact sources through chooser, build, review switches and regeneration (consumeDeepLinks=%s)', async (region, consumeDeepLinks) => {
+    draftRegion = region; draftingGuidance = `Use the recorded ${region} template guidance; identify missing scientific evidence.`;
     await mounted({ consumeDeepLinks }); await chooseFromCatalogue();
     expect(postCalls('/assembly/preview')).toHaveLength(0);
     expect(postCalls('/assembly/commit')).toHaveLength(0);
@@ -149,19 +153,37 @@ describe('source-first intent reaches the one actual document editor', () => {
     await waitFor(() => expect(postCalls('/assembly/preview')).toHaveLength(2));
     fireEvent.change(screen.getByLabelText('Reason for build'), { target: { value: 'Assemble with these exact selected evidence sources.' } });
     fireEvent.click(screen.getByLabelText('Draft empty eligible sections with AnA'));
+    fireEvent.change(screen.getByLabelText('Draft requirements (optional)'), { target: { value: '  Preserve units and distinguish missing evidence.  ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Build document' }));
     await waitFor(() => expect(postCalls('/ai/draft')).toHaveLength(2));
     expect(postCalls('/assembly/commit')[0][2]).toMatchObject({ sources: selectors });
     for (const call of postCalls('/ai/draft')) expect(call[2].sources).toEqual(manifest);
+    const originalInputs = globalThis.structuredClone(postCalls('/ai/draft')[0][2]);
+    expect(originalInputs).toMatchObject({ tone: 'professional', region, requirements: 'Preserve units and distinguish missing evidence.', sources: manifest });
+    expect(JSON.parse(originalInputs.context.split('\n')[1])).toMatchObject({ kind: 'template-reference', templateId: TEMPLATE,
+      sectionCode: targetSections[0].code, guidance: draftingGuidance });
+    expect(originalInputs.context).toContain('BEGIN_TEMPLATE_REFERENCE_JSON');
+    expect(originalInputs.context).toContain('END_TEMPLATE_REFERENCE_JSON');
     expect(postCalls('/accept')).toHaveLength(0);
     expect(document.querySelectorAll('.tiptap')).toHaveLength(1);
     await screen.findByText(/2 candidates retained for individual review/i);
+    fireEvent.change(screen.getByLabelText('Draft requirements (optional)'), { target: { value: 'Different instructions for a future assembly build.' } });
     fireEvent.click(await screen.findByRole('button', { name: 'Review 3.2.S.1' }));
     await screen.findByTestId('ai-draft-body');
+    fireEvent.click(screen.getByRole('button', { name: 'Review 3.2.S.2' }));
+    await waitFor(() => expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement).value).toContain(targetSections[1].id));
+    fireEvent.click(within(screen.getByTestId('ai-draft-panel')).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByTestId('ai-draft-panel')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Review 3.2.S.1' }));
+    await waitFor(() => expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement).value).toContain(NEXT));
     fireEvent.click(screen.getByTestId('ai-draft-regenerate'));
     await waitFor(() => expect(postCalls('/ai/draft')).toHaveLength(3));
     expect(postCalls('/ai/draft')[2][2].sources).toEqual(manifest);
+    expect(postCalls('/ai/draft')[2][2]).toEqual(originalInputs);
+    expect(postCalls('/assembly/commit')).toHaveLength(1);
     expect(postCalls('/accept')).toHaveLength(0);
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+    expect(document.querySelectorAll('.tiptap')).toHaveLength(1);
   });
 
   it('does not bind sources after cancelling the actual dirty-work navigation', async () => {

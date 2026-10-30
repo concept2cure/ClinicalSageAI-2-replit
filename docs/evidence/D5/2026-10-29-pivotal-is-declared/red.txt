@@ -1,0 +1,40 @@
+# Red runs (2026-10-29). Each check against the code before its part, or with its guard taken out.
+
+## 1. m2-pivotal-declared.test.ts against the phase-based rule: 7 of 7 fail
+ × server/services/__tests__/m2-pivotal-declared.test.ts > Module 2.5 reads pivotal from the sponsor’s declaration > a Phase 2/3 study declared pivotal is pivotal 7ms
+ × server/services/__tests__/m2-pivotal-declared.test.ts > Module 2.5 reads pivotal from the sponsor’s declaration > a Phase 3 study declared not pivotal is not pivotal 2ms
+ × server/services/__tests__/m2-pivotal-declared.test.ts > Module 2.5 reads pivotal from the sponsor’s declaration > an undeclared study (undefined) is never inferred pivotal from its phase, and is named 1ms
+ × server/services/__tests__/m2-pivotal-declared.test.ts > Module 2.5 reads pivotal from the sponsor’s declaration > an undeclared study (null) is never inferred pivotal from its phase, and is named 1ms
+ × server/services/__tests__/m2-pivotal-declared.test.ts > Module 2.5 reads pivotal from the sponsor’s declaration > no text says “pivotal (Phase 3)”: pivotal no longer means Phase 3 1ms
+ × server/services/__tests__/m2-pivotal-declared.test.ts > Module 2.7 reads pivotal from the sponsor’s declaration > a Phase 2/3 study declared pivotal is pivotal; an undeclared Phase 3 study is named, not counted 2ms
+ × server/services/__tests__/m2-pivotal-declared.test.ts > Module 2.7 reads pivotal from the sponsor’s declaration > with nothing declared pivotal, it says so 2ms
+      Tests  7 failed (7)
+
+## 2. study-pivotal-declaration.pglite.test.ts before the loader read the declaration
+ × server/services/csr/__tests__/study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > Module 2’s input carries each study’s current declaration, and null where none was made 38ms
+AssertionError: expected { 'LMN-201-PART-A': undefined, …(2) } to deeply equal { 'LMN-201-PART-A': false, …(2) }
+      Tests  1 failed | 9 passed (10)
+
+## 3. csr-study-pivotal.pglite.test.ts, each guard removed in turn
+## mutation A: the writing-role gate removed
+ × server/routes/__tests__/csr-study-pivotal.pglite.test.ts > /api/csr-workflow/pivotal > refuses a role that may not write, and records nothing 19ms
+      Tests  1 failed | 8 passed (9)
+## mutation B: the declaration admitted on an archived project (forWrite false)
+ × server/routes/__tests__/csr-study-pivotal.pglite.test.ts > /api/csr-workflow/pivotal > refuses an archived project, and records nothing 16ms
+      Tests  1 failed | 8 passed (9)
+
+## 4. studyPivotalDeclarations.test.tsx, each guard removed in turn
+## mutation A: the reason floor removed from the form
+ × client/src/concept2cure/v2/__tests__/studyPivotalDeclarations.test.tsx > Pivotal studies > lists an undeclared study as not declared, and records a declaration with its reason 272ms
+      Tests  1 failed | 4 passed (5)
+## mutation B: the write-permission gate removed
+ × client/src/concept2cure/v2/__tests__/studyPivotalDeclarations.test.tsx > Pivotal studies > offers no declaration to someone without the write permission, and still shows what is declared 20ms
+      Tests  1 failed | 4 passed (5)
+
+## 5. Follow-up (D6, 1446214b8): csr-study-pivotal.pglite.test.ts before the declaration passed the project's write admission
+# A member whose project sharing gives use but not edit could declare (201).
+ × server/routes/__tests__/csr-study-pivotal.pglite.test.ts > /api/csr-workflow/pivotal > lists the project’s studies, undeclared until the sponsor declares, then with the declaration 150ms
+ × server/routes/__tests__/csr-study-pivotal.pglite.test.ts > /api/csr-workflow/pivotal > refuses a member the project’s sharing does not let edit, and records nothing 11ms
+AssertionError: expected [] to deeply equal [ [ '11', true ] ]
+AssertionError: expected 201 to be 403 // Object.is equality
+      Tests  2 failed | 8 passed (10)

@@ -1,0 +1,102 @@
+[
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/__tests__/routes/ana-platform-control.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/bootstrap/register-advanced-platform-routes.ts",
+    "errorCount": 0,
+    "warningCount": 8
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/device-projects-class-not-invented.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/legacy-secondary-project-creators-retired.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/program-journey-read.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/projects-management-create-retired.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/ana-platform-control.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/concept2cure.ts",
+    "errorCount": 0,
+    "warningCount": 10
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/device-projects.ts",
+    "errorCount": 0,
+    "warningCount": 4
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/program-journey.routes.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts",
+    "errorCount": 0,
+    "warningCount": 2
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/projects-management.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/services/ana-platform-controller.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/services/ctd-ingestion-service.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/services/program-journey/__tests__/program-journey-service.pglite.integration.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/services/program-journey/program-journey-service.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/tests/routes/concept2cure.test.ts",
+    "errorCount": 0,
+    "warningCount": 3
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/tests/routes/device-projects-governed-writes.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/tests/routes/projects-management-tenant-boundary.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  }
+]

@@ -126,9 +126,9 @@ export const INDL_DELIVERABLES: IndlDeliverable[] = [
   },
   {
     id: 'briefing-book', title: 'Pre-IND Briefing Book', placement: 'Meeting package', ref: 'FDA Type B (Pre-IND)', ai: true, group: 'file',
-    route: 'POST /api/ind-lifecycle/briefing-book',
+    route: 'GET /api/authoring/templates (the meeting-package start, IndBriefingBookStart)',
     desc: 'FDA meeting briefing book -- background, questions, and sponsor positions for the Pre-IND meeting.',
-    ask: 'Draft the Pre-IND briefing book for this program in the editor.',
+    ask: 'Draft the Pre-IND briefing book for this project in the editor.',
   },
   {
     id: 'loa', title: 'Letter of Authorization', placement: 'eCTD m1.4.1', ref: '21 CFR 312.23(b)', ai: false, group: 'file',

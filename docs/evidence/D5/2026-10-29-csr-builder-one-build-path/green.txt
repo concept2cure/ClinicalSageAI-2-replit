@@ -1,0 +1,37 @@
+# Green: the same two files with the change
+ ✓ server/routes/__tests__/csr-draft-source-honesty.test.ts > a provider refusal returns a template with its actual source instead of claiming an AI draft 37ms
+ ✓ server/routes/__tests__/csr-draft-source-honesty.test.ts > empty model output has the same explicit template source as the provenance drafting path 7ms
+ ✓ server/routes/__tests__/csr-draft-source-honesty.test.ts > a refused unsupported statistical draft cannot be labelled as accepted AI output 7ms
+ ✓ server/routes/__tests__/csr-draft-source-honesty.test.ts > an accepted gateway draft retains the verified actor/organization without inventing a project or provider 7ms
+ ✓ server/routes/__tests__/csr-draft-source-honesty.test.ts > ethics template after refusal retains unknown approval and consent rather than inventing them 16ms
+ ✓ server/routes/__tests__/csr-draft-source-honesty.test.ts > ethics template after empty retains unknown approval and consent rather than inventing them 14ms
+ ✓ server/routes/__tests__/csr-draft-source-honesty.test.ts > the worker drafting door records ethics fallback as template content needing source records 2ms
+ ✓ server/routes/__tests__/csr-draft-source-honesty.test.ts > the synchronous drafting door classifies unknown ethics evidence as needs_data 4ms
+ ✓ server/routes/__tests__/csr-draft-source-honesty.test.ts > the on-demand route refuses a heading that is not a drafting target, by E3 number 9ms
+ ✓ server/routes/__tests__/csr-draft-source-honesty.test.ts > the builder no longer builds, and its structure lists every E3 heading 7ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/safety-signals answers 404 27ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/safety-signals answers 404 4ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/generate-narrative answers 404 3ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/generate-narrative answers 404 3ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/analyze-benefit-risk answers 404 4ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/analyze-benefit-risk answers 404 3ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/build answers 404 2ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/build answers 404 2ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > no longer mounts the builder a second time at /api/csr 9ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > keeps the builder routes that remain at /api/csr-builder 5ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > mounts the builder behind its own authentication, not only the RTM export's /api-wide one 3ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > refuses a call without a session before any builder handler 4ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > reaches /api/csr/jobs through its own router 3ms
+ Test Files  2 passed (2)
+      Tests  23 passed (23)
+
+# Every suite that reaches the builder routes, the builder service, the bootstrap or the CSR job path (57 files)
+      1       Tests  2 failed | 957 passed (959)
+      1  FAIL  tests/regulatory/csr-e3-overlay.test.ts
+      1  FAIL  tests/unit/csr-jobs-routes.test.ts
+      1  Test Files  2 failed | 55 passed (57)
+
+# The two failures, on the committed code without this change (same failures, not this change's)
+ FAIL  tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the market-specs CSR spine (get_document_template) is E3’s sixteen headings, each with the tree’s summary
+ FAIL  tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId/sections > returns the section array
+      Tests  2 failed | 42 passed (44)

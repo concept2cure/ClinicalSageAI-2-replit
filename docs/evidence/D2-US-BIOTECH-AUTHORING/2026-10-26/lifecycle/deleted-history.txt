@@ -1,0 +1,6 @@
+7df89f4f7 chore: pin upstream tools and resolve verification gates
+0a047fbcf P-32 amended: agency questions stay locked until their approval is a signed act (D2)
+51e047988 feat(ectd): one canonical generator — retire ectdExportService, spine-backed compile (D1)
+2895218b8 refactor: one shell, and delete the dead code for good
+86774630b refactor(ind): split analysis.routes into compute/sequence/submission routers
+a9b499a32 refactor: delete 3 deprecated governed decision shim files

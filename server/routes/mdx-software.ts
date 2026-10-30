@@ -245,7 +245,7 @@ router.get('/software-summary/:programId', async (req: Request, res: Response) =
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const programId = String(req.params.programId);
-  if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
+  if (!UUID_RE.test(programId)) return clientError(res, 422, 'The project id must be a UUID.');
 
   const levelBasis = fdaDocumentationLevel({}).basis;
 
@@ -261,9 +261,9 @@ router.get('/software-summary/:programId', async (req: Request, res: Response) =
 
     if (recordedLevels.length !== 1 || !(DOC_LEVEL as readonly string[]).includes(recordedLevels[0])) {
       const reason = recordedLevels.length === 0
-        ? 'No software lifecycle items are recorded for this program, so the FDA Documentation Level (Basic or Enhanced) has not been determined and no completeness is computed.'
+        ? 'No software lifecycle items are recorded for this project, so the FDA Documentation Level (Basic or Enhanced) has not been determined and no completeness is computed.'
         : recordedLevels.length > 1
-          ? `Lifecycle items are recorded at more than one FDA Documentation Level (${recordedLevels.join(', ')}). The program has one level; correct the items before completeness is computed.`
+          ? `Lifecycle items are recorded at more than one FDA Documentation Level (${recordedLevels.join(', ')}). The project has one level; correct the items before completeness is computed.`
           : `Lifecycle items are recorded at a documentation level FDA does not define (${recordedLevels[0]}); the level is Basic or Enhanced. Correct the items before completeness is computed.`;
       return ok(res, {
         docLevel: 'undetermined' as const,
@@ -317,7 +317,7 @@ router.get('/software-summary/:programId', async (req: Request, res: Response) =
     const approvedCount = matrix.filter((m) => m.approved).length;
 
     const reason = cyber.status === 'undetermined'
-      ? 'Whether the device is a cyber device (FD&C Act §524B) is not recorded on the program, so the cybersecurity documentation is not known to be required or not, and no completeness is computed.'
+      ? 'Whether the device is a cyber device (FD&C Act §524B) is not recorded on the project, so the cybersecurity documentation is not known to be required or not, and no completeness is computed.'
       : null;
     const completion = reason !== null || matrix.length === 0
       ? null

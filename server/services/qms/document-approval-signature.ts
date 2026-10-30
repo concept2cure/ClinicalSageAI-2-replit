@@ -31,6 +31,18 @@
  * Any throw rolls the whole approval back: the document is never effective
  * without its signature and audit row, and never signed without being effective.
  *
+ * ── An approval that is not the last (RR2 records, 2026-10-29) ───────────────
+ * On a review route naming several approvers, every one signs (NEW-4) and only
+ * the last makes the document effective. An earlier approval writes the ledger
+ * pair (toStatus `in_review`) and one signature of its OWN type,
+ * `qms-document-interim-approval`, with the meaning APPROVED its signer declared
+ * and its share (`approvalsRecorded` of `approvalsRequired`) in the manifest. It
+ * writes no status change, approval stamp or sealed copy. Only the last
+ * approval is a `qms-document-approval` signature, the type the 20261001 guard,
+ * the release-approval reader and every report read as the document's approval.
+ * Until 2026-10-29 the earlier one carried that type too; those stored rows are
+ * read as interim from their route (services/review/approval-share.ts).
+ *
  * ── §11.70 binding ───────────────────────────────────────────────────────────
  * The bound digest is sha256 over the canonical JSON of the document VERSION
  * content read under `FOR UPDATE` before the status flip: identity (id, org,
@@ -72,12 +84,13 @@ import {
   type BindingBasis,
   type SignatureDbClient,
 } from '../part11/signature-persistence';
-import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
+import { TASK_SIGNATURE_MEANINGS, type GovernedSignMeaning } from '../part11/signature-meanings';
 import { qmsTrainingSectionSchema } from '../../../shared/qms/training';
 import { captureQmsAuthoringContent, persistQmsSignedVersion, authorizeQmsAuthoredSignature, QmsContentRefusedError, type QmsAuthoringSnapshot } from './controlled-document-content';
 import { filingAgreesWithEditing } from '../c2c/filing-section-target';
 import { QmsControlledTextAuthorshipInvalid, qmsControlledTextAuthorIds } from './controlled-text-authorship';
 import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
+import { QMS_INTERIM_APPROVAL_TYPE, shareWords } from '../review/approval-share';
 
 /**
  * The §11.50(a)(3) meaning an approval carries. Taken from the platform's
@@ -86,6 +99,14 @@ import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
  * the route accepts this value and no other.
  */
 export const QMS_DOCUMENT_APPROVAL_MEANING: (typeof TASK_SIGNATURE_MEANINGS)[number] = 'APPROVED';
+
+/**
+ * The §11.50(a)(3) meaning a retirement carries (P-51, 2026-10-29): the signer
+ * withdraws the document from use, which is not an approval of it. Until then a
+ * retirement was signed 'APPROVED'; those stored rows keep the meaning they were
+ * signed with. The route accepts this value and no other.
+ */
+export const QMS_DOCUMENT_RETIREMENT_MEANING = 'retirement' as const satisfies GovernedSignMeaning;
 
 /**
  * `electronic_signatures.binding_basis` for a QMS controlled-document approval,
@@ -168,7 +189,8 @@ export function computeQmsDocumentRetirementDigest(row: QmsDocumentRow): string 
   return computeQmsDocumentContentDigest({ ...row, metadata });
 }
 
-export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL' | 'INVALID_AUTHORSHIP' | 'FILING_DIVERGED';
+export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL' | 'INVALID_AUTHORSHIP' | 'FILING_DIVERGED'
+  | 'EFFECTIVE_DATE_BACKDATED';
 
 /** A refusal the route maps to a status. Nothing has been written when thrown. */
 export class QmsApprovalRefusedError extends Error {
@@ -231,6 +253,47 @@ export interface ApproveQmsDocumentSignedParams {
   authenticationMethod: 'password' | 'password+totp';
   secondFactorVerified: boolean;
   ipAddress: string | null;
+  /**
+   * The review route's part in the approval (RR4, §2.8; services/qms/qms-review-route.ts):
+   * `before` runs under the row lock, after the content digest is computed and
+   * before anything is written, and refuses an approval the route does not admit
+   * (returning what `after` needs, or null for a document with no route);
+   * `after` runs on the same transaction once the signature row exists.
+   */
+  route?: QmsApprovalRoute;
+}
+
+/** What the review route contributes to an approval (RR4). */
+export interface QmsApprovalRoute {
+  before: (client: SignatureDbClient, row: QmsDocumentRow, contentDigest: string) => Promise<unknown>;
+  /**
+   * RR2: whether this approval is the last one the route needs. The others are
+   * signed (the one signature, ledger row and digest), but they do not make
+   * the document effective: no status change, no approval stamp, no sealed
+   * authored copy. Absent, every routed approval completes (one approver).
+   */
+  completes?: (routed: unknown) => { completes: boolean; approvalsRecorded: number; approvalsRequired: number };
+  after: (client: SignatureDbClient, routed: unknown, signatureId: number) => Promise<void>;
+}
+const noRoute = async (): Promise<null> => null;
+
+/**
+ * The content a QMS approval signs, and its §11.70 digest: the version row as
+ * it stands, with the canonical authored sections captured under lock when the
+ * document is authored in the editor. One recipe, read by the approval, by the
+ * review route's send (the route's content_digest) and by the `qms-document`
+ * binder for a review signature (governed-target-binders.ts), so a review and
+ * the approval that follows it bind the same digest (RR4, §2.8: "the review
+ * digest equals the approval digest").
+ */
+export async function qmsSignedContent(
+  client: SignatureDbClient,
+  current: QmsDocumentRow,
+  requireText = true,
+): Promise<{ authoredContent: QmsAuthoringSnapshot | null; row: QmsDocumentRow; contentDigest: string }> {
+  const authoredContent = current.authoring_document_id ? await captureQmsAuthoringContent(client, current, requireText) : null;
+  const row = authoredContent ? { ...current, metadata: { ...(current.metadata ?? {}), authoringContent: authoredContent } } : current;
+  return { authoredContent, row, contentDigest: computeQmsDocumentContentDigest(row) };
 }
 
 export interface QmsApprovalSignatureRecord {
@@ -249,6 +312,8 @@ export interface QmsApprovalSignatureRecord {
 export interface ApproveQmsDocumentSignedResult {
   document: QmsDocumentRow;
   signature: QmsApprovalSignatureRecord;
+  /** False when other named approvers are still to sign (RR2): the document is still in review. */
+  approvalComplete: boolean;
 }
 
 /**
@@ -319,7 +384,7 @@ async function applyApproval(
         SET status = 'effective',
             approver_id = $3,
             approved_at = $6::timestamptz,
-            effective_date = COALESCE($4::date, effective_date, $6::date),
+            effective_date = $4::date,
             metadata = COALESCE(metadata, '{}'::jsonb) || CASE WHEN $11::jsonb IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('authoringContent', $11::jsonb) END || jsonb_build_object(
               'approval',
               jsonb_build_object(
@@ -360,10 +425,71 @@ async function applyApproval(
   return document;
 }
 
+/** The content an approval signs, refused when there is no controlled text, the signer may not sign the authored copy, or its filing diverged. */
+async function approvableContent(client: SignatureDbClient, params: ApproveQmsDocumentSignedParams, current: QmsDocumentRow) {
+  const signedContent = await qmsSignedContent(client, current);
+  const { authoredContent } = signedContent;
+  if (!authoredContent && !qmsTrainingSectionSchema.array().min(1).safeParse(current.metadata?.sections).success)
+    throw new QmsContentRefusedError(409, 'QMS_CONTENT_REQUIRED', 'Save actual controlled procedure text before review or approval. A registry entry or template outline cannot be approved.');
+  if (authoredContent) await authorizeQmsAuthoredSignature(client, params.orgId, params.userId, authoredContent);
+  if (authoredContent) await refuseIfFilingDiverged(client, authoredContent.documentId, params.orgId);
+  return signedContent;
+}
+
+const APPROVAL_DIGEST_NOTE = 'sha256 over the canonical qms_documents version content (id, organization, doc number, version, title, type, category, artifact pointer, next review date, metadata minus metadata.approval) read under FOR UPDATE';
+
+/**
+ * What the signature row records about which approval it is (RR2 records,
+ * 2026-10-29): the last one the route requires (or the only one, unrouted) is
+ * the `qms-document-approval`; an earlier one is its own type and says it does
+ * not approve the document. Both state their share when routed.
+ */
+function approvalSignatureRecord(
+  share: ReturnType<typeof routeShare>, contentDigest: string, manifest: Record<string, unknown>,
+) {
+  const completes = share?.completes ?? true;
+  const extraManifest = share ? { ...manifest, approvalsRecorded: share.approvalsRecorded, approvalsRequired: share.approvalsRequired } : manifest;
+  if (completes) {
+    return {
+      signatureType: 'qms-document-approval', extraManifest,
+      binding: { digest: contentDigest, basis: QMS_DOCUMENT_BINDING_BASIS, note: `${APPROVAL_DIGEST_NOTE} at approval time — the same digest stored on metadata.approval.contentDigest.` },
+      complianceStatement:
+        'QMS controlled-document approval (21 CFR 820.40 / ISO 13485 §4.2.4) applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
+    };
+  }
+  return {
+    signatureType: QMS_INTERIM_APPROVAL_TYPE, extraManifest,
+    binding: { digest: contentDigest, basis: QMS_DOCUMENT_BINDING_BASIS, note: `${APPROVAL_DIGEST_NOTE} at signing time — the review route's content digest. The document stays in review, so no metadata.approval is written.` },
+    complianceStatement:
+      `QMS controlled-document approval signature, ${shareWords(share!)} (21 CFR 820.40 / ISO 13485 §4.2.4), applied under 21 CFR Part 11 §11.50/§11.70/§11.200. ` +
+      'It does not approve the document: the document stays in review until the last named approver signs. Ledger-chained to the audit_logs sha256 chain.',
+  };
+}
+
+/** This approval's share of a routed approval (RR2), or null for a document with no route. */
+function routeShare(route: QmsApprovalRoute | undefined, routed: unknown) {
+  if (!route || !routed) return null;
+  return route.completes?.(routed) ?? null;
+}
+
 /**
  * Approve a controlled document as a signed act, on the caller's transaction
  * client. See the module header for the three writes and the rollback rule.
  */
+/**
+ * The effective date an approval signs (CAT2-19): the one given, refused when
+ * it is earlier than the database's today, or else the approval's UTC day.
+ * Nothing has been written when it refuses.
+ */
+async function signedEffectiveDate(client: SignatureDbClient, given: string | null, occurredAt: Date): Promise<string> {
+  if (!given) return occurredAt.toISOString().slice(0, 10);
+  const { rows } = await client.query(`SELECT $1::date < CURRENT_DATE AS backdated`, [given]);
+  if (rows[0]?.backdated === true) {
+    throw new QmsApprovalRefusedError('EFFECTIVE_DATE_BACKDATED', 'An effective date cannot be earlier than today. Nothing was signed.');
+  }
+  return given;
+}
+
 export async function approveQmsDocumentSigned(
   client: SignatureDbClient,
   params: ApproveQmsDocumentSignedParams,
@@ -371,19 +497,23 @@ export async function approveQmsDocumentSigned(
   const { orgId, userId, documentId } = params;
   const current = await lockApprovableDocument(client, orgId, userId, documentId);
   await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-document:${documentId}` });
-  const authoredContent = current.authoring_document_id ? await captureQmsAuthoringContent(client, current) : null;
-  if (!authoredContent && !qmsTrainingSectionSchema.array().min(1).safeParse(current.metadata?.sections).success)
-    throw new QmsContentRefusedError(409, 'QMS_CONTENT_REQUIRED', 'Save actual controlled procedure text before review or approval. A registry entry or template outline cannot be approved.');
-  if (authoredContent) await authorizeQmsAuthoredSignature(client, orgId, userId, authoredContent);
-  if (authoredContent) await refuseIfFilingDiverged(client, authoredContent.documentId, orgId);
-  const row = authoredContent ? { ...current, metadata: { ...(current.metadata ?? {}), authoringContent: authoredContent } } : current;
+  const { authoredContent, row, contentDigest } = await approvableContent(client, params, current);
+  const routed = await (params.route?.before ?? noRoute)(client, row, contentDigest);
   const controlledTextAuthorUserIds = qmsControlledTextAuthorIds(row.metadata);
   const twoPersonRule = row.author_id != null || controlledTextAuthorUserIds.length > 0 ? 'enforced' : 'not_applicable_no_author_recorded';
-  const contentDigest = computeQmsDocumentContentDigest(row);
   const target = `qms-document:${documentId}`;
   const occurredAt = new Date();
+  /* CAT2-19 (2026-10-29): the version is effective from the date the approver
+     signs, never the prior version's: the date given, which may not be earlier
+     than the database's today, else the approval's own UTC day. It is bound in
+     the signature's manifest, so a later change to effective_date no longer
+     verifies (current-release-approval.ts exactManifest). */
+  const effectiveDate = await signedEffectiveDate(client, params.effectiveDate, occurredAt);
 
-  const document = await applyApproval(client, params, { contentDigest, occurredAt, twoPersonRule, authoredContent });
+  // RR2: on a route with several approvers, only the last signature makes it effective.
+  const share = routeShare(params.route, routed);
+  const completes = share?.completes ?? true;
+  const document = completes ? await applyApproval(client, { ...params, effectiveDate }, { contentDigest, occurredAt, twoPersonRule, authoredContent }) : current;
 
   // §11.10(e): the chained ledger pair, same transaction.
   const gov = await recordGovernedAction(client, {
@@ -399,7 +529,9 @@ export async function approveQmsDocumentSigned(
       docNumber: row.doc_number,
       version: row.version,
       fromStatus: row.status,
-      toStatus: 'effective',
+      toStatus: completes ? 'effective' : 'in_review',
+      effectiveDate,
+      ...(share ? { approvalsRecorded: share.approvalsRecorded, approvalsRequired: share.approvalsRequired } : {}),
       originalAuthorId: row.author_id,
       controlledTextAuthorUserIds,
     },
@@ -421,27 +553,25 @@ export async function approveQmsDocumentSigned(
     secondFactorVerified: params.secondFactorVerified,
     ipAddress: params.ipAddress,
     occurredAt,
-    signatureType: 'qms-document-approval',
     command: 'approve',
-    binding: {
-      digest: contentDigest,
-      basis: QMS_DOCUMENT_BINDING_BASIS,
-      note:
-        'sha256 over the canonical qms_documents version content (id, organization, doc number, version, title, type, category, artifact pointer, next review date, metadata minus metadata.approval) read under FOR UPDATE at approval time — the same digest stored on metadata.approval.contentDigest.',
-    },
-    extraManifest: { docNumber: row.doc_number, version: row.version, twoPersonRule, originalAuthorId: row.author_id, controlledTextAuthorUserIds },
-    complianceStatement:
-      'QMS controlled-document approval (21 CFR 820.40 / ISO 13485 §4.2.4) applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
+    ...approvalSignatureRecord(share, contentDigest, {
+      docNumber: row.doc_number, version: row.version, effectiveDate, twoPersonRule, originalAuthorId: row.author_id, controlledTextAuthorUserIds,
+    }),
   });
 
-  if (authoredContent) {
+  // The approval that makes the document effective seals the authored copy it signed (RR2: only the last one).
+  if (authoredContent && completes) {
     await persistQmsSignedVersion(client, document, authoredContent, contentDigest, signed.id);
     await client.query(`UPDATE authoring_documents SET status = 'APPROVED', approved_at = NOW(), updated_at = NOW()
       WHERE id = $1 AND tenant_id = $2`, [authoredContent.documentId, orgId]);
   }
+  // RR4 (§2.8): on a routed document, the approver's task closes on this
+  // signature and the route completes, on this transaction.
+  if (routed) await params.route!.after(client, routed, signed.id);
 
   return {
     document,
+    approvalComplete: completes,
     signature: {
       id: signed.id,
       signedAt: signed.signedAt.toISOString(),
@@ -459,8 +589,10 @@ export async function approveQmsDocumentSigned(
 
 /* ── Retirement ─────────────────────────────────────────────────────────────── */
 
-/** The retirement takes the approval's parameters less the effective date, which it does not set. */
-export type RetireQmsDocumentSignedParams = Omit<ApproveQmsDocumentSignedParams, 'effectiveDate'>;
+/** The retirement takes the approval's parameters less the effective date, which it does not set, and carries the retirement meaning. */
+export type RetireQmsDocumentSignedParams = Omit<ApproveQmsDocumentSignedParams, 'effectiveDate' | 'meaning'> & {
+  meaning: typeof QMS_DOCUMENT_RETIREMENT_MEANING;
+};
 
 export interface RetireQmsDocumentSignedResult {
   document: QmsDocumentRow;
@@ -553,6 +685,8 @@ export async function retireQmsDocumentSigned(
   const contentDigest = computeQmsDocumentRetirementDigest(row);
   const target = `qms-document:${documentId}`;
   const occurredAt = new Date();
+  // RR4 (§2.9): retiring a document in review is an exit from review; its open route is withdrawn below.
+  const routed = await (params.route?.before ?? noRoute)(client, row, contentDigest);
 
   const document = await applyRetirement(client, params, row.status, contentDigest, occurredAt);
 
@@ -602,6 +736,7 @@ export async function retireQmsDocumentSigned(
     complianceStatement:
       'QMS controlled-document retirement (21 CFR 820.40 / ISO 13485 §4.2.4 obsolete-document control) applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
   });
+  if (routed) await params.route!.after(client, routed, signed.id);
 
   return {
     document,

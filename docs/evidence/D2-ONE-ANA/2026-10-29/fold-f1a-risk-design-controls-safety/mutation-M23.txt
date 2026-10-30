@@ -1,0 +1,10 @@
+M23: DesignControls draws an answer not keyed to the project
+file: client/src/concept2cure/v2/surfaces/DesignControls.tsx
+test: client/src/concept2cure/v2/__tests__/designControlsReadsOpenProject.test.tsx
+exit: 1
+restored byte for byte: True
+
+ × client/src/concept2cure/v2/__tests__/designControlsReadsOpenProject.test.tsx > with a project open > draws no input from an answer with the organization's scope, and says the read was not this project's 37ms
+ × client/src/concept2cure/v2/__tests__/designControlsReadsOpenProject.test.tsx > with a project open > draws no input from an answer with another project's scope, and says the read was not this project's 38ms
+ × client/src/concept2cure/v2/__tests__/designControlsReadsOpenProject.test.tsx > with a project open > draws no input from an answer with no scope at all, and says the read was not this project's 25ms
+      Tests  3 failed | 4 passed (7)

@@ -1,0 +1,11 @@
+# downloads-recorded-or-refused.test.ts against HEAD 05e4b0fe0 (route code unchanged)
+ × server/routes/__tests__/downloads-recorded-or-refused.test.ts > a download that cannot be recorded is refused, not sent > an IVDR pack whose download event does not persist is not delivered 28ms
+ ✓ server/routes/__tests__/downloads-recorded-or-refused.test.ts > a download that cannot be recorded is refused, not sent > an IVDR pack is delivered once its download event persists 5ms
+ × server/routes/__tests__/downloads-recorded-or-refused.test.ts > a download that cannot be recorded is refused, not sent > a refused RTM export is an error the browser shows, not a saved file 5ms
+ × server/routes/__tests__/downloads-recorded-or-refused.test.ts > a download that cannot be recorded is refused, not sent > a refused IVDR classification report is an error, not a saved file 5ms
+ ✓ server/routes/__tests__/downloads-recorded-or-refused.test.ts > a download that cannot be recorded is refused, not sent > both still deliver as attachments once recorded 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 200 to be 503 // Object.is equality
+AssertionError: expected undefined to be 'EXPORT_GOVERNANCE_REQUIRED' // Object.is equality
+AssertionError: expected 'attachment; filename="ivdr-classifica…' to be undefined
+      Tests  3 failed | 2 passed (5)

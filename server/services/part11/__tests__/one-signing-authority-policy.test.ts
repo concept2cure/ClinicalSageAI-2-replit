@@ -51,13 +51,17 @@ const PREDICATE_CALLERS: Record<string, { count: number; reason: string }> = {
     count: 1,
     reason: 'GET /user/permissions canSign: what the client offers. Approve and lock refuse through checkSigningAuthority.',
   },
-  'server/routes/authoring.router.ts': {
+  'server/services/authoring/authoring-document-read.ts': {
     count: 1,
-    reason: "The document's act gates (what the editor offers, with the role named). The signing routes refuse through checkSigningAuthority.",
+    reason: "roleGates: the document's act gates (what the editor offers, with the role named), moved here from authoring.router.ts. The signing routes refuse through checkSigningAuthority.",
   },
   'server/services/protocol-reviews/protocol-reviews-service.ts': {
     count: 1,
     reason: "Judges the reviewer being ASSIGNED, not the caller's signature, and names their role and a missing membership apart.",
+  },
+  'server/services/review/review-route-member.ts': {
+    count: 1,
+    reason: "validateRouteMember judges the member being NAMED to a review route (5985619e5, RR4), not the caller's signature: MEMBER_CANNOT_SIGN before the route is sent. Each member's own signature still goes through checkSigningAuthority.",
   },
   'server/services/vault/vault-signing-posture.ts': {
     count: 1,

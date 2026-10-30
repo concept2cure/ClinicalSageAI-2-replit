@@ -1,0 +1,101 @@
+# Green, real PostgreSQL 16 (RLS_ENFORCE=on, app_service): the seal suite with the archive cases, and the Vault where-used suite, after the last edit
+
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each placement carries its sequence's dispatch status
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > records every current document, hashes the record, and binds the signature and the audit row to that hash
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > lists the seal with who sealed it and why
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > verifies intact when nothing changed, its stored files included
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > refuses a seal with no reason, and writes nothing
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > refuses a wrong password, and a viewer
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > refuses another organisation's project, and shows that organisation nothing
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > the runtime role can neither change nor remove a seal
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > holds every sealed file, the manifest as signed, an index, SHA256SUMS and the audit trail, and records its own hash before sending
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > another organisation's seal is not found, and nothing is recorded
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > a viewer the project admits may download it
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > sends nothing when the archive cannot be recorded in the audit trail
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a sealed document whose original file a data disposition removed > is listed as withheld, with its sealed hash and why, and its file is neither read nor archived
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal says when the Vault no longer matches it > could not verify, never intact, when a sealed file can no longer be read
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal says when the Vault no longer matches it > builds no archive for a seal that does not verify, sends nothing and records nothing
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > the tenant purge removes seals through its door > refuses while the organisation is not pending deletion, then removes them
+ Test Files  2 passed (2)
+      Tests  23 passed (23)
+
+# Unit and client after the last edit: builder, seal service, seals card, Vault surface, Vault AnA context
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > offers the exact receiver candidate formats, including raw structured text and signature-supported images
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents"
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > names the person whose filing it is, and when, in UTC
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > gives a suggestion no filer: nobody decided it yet
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > says so when a filing records no person, rather than implying one
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a failed search publishes failure without an empty finding or an unrelated selection
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a pending search does not publish a zero or stale selection
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[],"total":null}
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":{},"total":0}
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[{"id":"one","title":"One"}],"total":0}
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > an accessible-project library panel does not reuse the disabled project reader as a zero finding
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a verified empty project search can publish its returned zero
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — what AnA is told about the selected document > an upload has no completion figure — null, not 0% complete
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — "N documents" counts documents, not tree entries > one authored document with three sections is "1 document", to the user and to AnA
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > lists each seal with when, who, how many documents, its hash and why
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > says a Vault never sealed is not sealed, and a failed read is a failure, never "not sealed"
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > seals through the ceremony with approval or responsibility, and lists the new seal
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > offers no seal to a role that may not write the Vault
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the Vault seals > verifies on demand and says the verdict in words, naming what changed
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is offered once the seal verifies intact, is checked against the recorded SHA-256, saved, and the hash stated
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > says when a sealed document’s file was removed under a data disposition and is not in the archive
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is not saved when the file received does not match the recorded hash, or no hash was stated
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is not offered for a seal that does not verify, and a refusal says the server's verdict
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > the verdict sentence > never reads intact when anything could not be read
+ ✓ server/services/vault/__tests__/vault-archive-builder.test.ts > archive paths > orders by index number, then title, then id, the same way every time
+ ✓ server/services/vault/__tests__/vault-archive-builder.test.ts > archive paths > never lets a file name leave its folder
+ ✓ server/services/vault/__tests__/vault-archive-builder.test.ts > building an archive > holds each document, the manifest, the index, attachments and SHA256SUMS over every other file
+ ✓ server/services/vault/__tests__/vault-archive-builder.test.ts > building an archive > refuses bytes that do not match, bytes with no recorded hash, and the same document twice
+ ✓ server/services/vault/__tests__/vault-archive-builder.test.ts > building an archive > refuses an attachment that would overwrite a file or leave the archive
+ ✓ server/services/vault/__tests__/vault-archive-builder.test.ts > building an archive > leaves nothing on disk after cleanup
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > is the same record, and the same hash, whatever order the rows are read in
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > records the hash in lower case and the index number the tree gives
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > a seal needs a reason, and nothing is written without one
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > intact when every sealed document is recorded with its sealed hash
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > changed, naming the document, when its recorded hash differs
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > changed when a sealed document is no longer recorded
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > could not verify, never intact, when the stored manifest no longer hashes to its record
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > could not verify when a stored file cannot be read, whatever else matches
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > a seal of another project is not found
+ Test Files  5 passed (5)
+      Tests  57 passed (57)
+
+# Earlier in the slice: the Vault route, service and client suites (one failure, the fixture red in 04)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a failed search publishes failure without an empty finding or an unrelated selection
+ Test Files  1 failed | 111 passed (112)
+      Tests  1 failed | 1176 passed (1177)
+
+# After answering /seals in the shared Vault fixture: the failing suite and every other suite that mounts the Vault but was not in the run above
+ Test Files  6 passed (6)
+      Tests  40 passed (40)
+
+# tsc --noEmit -p tsconfig.json, after the last edit
+EXIT 0

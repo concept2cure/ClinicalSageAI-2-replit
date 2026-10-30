@@ -24,6 +24,10 @@
  * @module server/services/vault/vault-version-checkin
  */
 import { isDeepStrictEqual } from 'node:util';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { closeReviewRoute } from '../review/review-route.js';
+import { routeStanding } from '../review/review-route-standing.js';
+import type { TaskEventNotice } from '../tasking/task-side-effects.js';
 
 /** A pg-style client: the pool, or the ingest's transaction client. */
 export interface CheckInQueryable {
@@ -93,19 +97,38 @@ async function assignNextRetainedVersion(q: CheckInQueryable, p: {
 }
 
 /**
+ * Bytes the document already holds are refused, so a version is never added
+ * twice. A restore (MR-08 Stage 5) is the one exception: the bytes are the
+ * version being restored, and they are admitted unless the current version
+ * already holds them.
+ */
+function sameBytesRefusal(
+  same: Array<{ id: string; version: string }>, head: CheckInHead, restoreOf: string | undefined,
+): CheckInRefusal | null {
+  if (!same.length) return null;
+  if (restoreOf && same.some((r) => r.id === head.id)) {
+    return { ok: false, status: 409, code: 'CONTENT_ALREADY_CURRENT',
+      message: `The current version, ${head.version}, already holds these exact bytes. ${NOTHING}` };
+  }
+  if (restoreOf && same.some((r) => r.id === restoreOf)) return null;
+  return { ok: false, status: 409, code: 'CONTENT_ALREADY_A_VERSION',
+    message: `These exact bytes are already version ${same[0].version} of this document. ${NOTHING}` };
+}
+
+/**
  * Plan a check-in against `headId`: refusals in the order a person can act on
  * them, else the head and the version to assign. `lock` takes FOR UPDATE on the
  * head, and holds only inside a transaction.
  */
 export async function planCheckIn(
   q: CheckInQueryable,
-  p: { organizationId: number; programId: string; headId: string; contentHash: string; lock?: boolean },
+  p: { organizationId: number; programId: string; headId: string; contentHash: string; lock?: boolean; restoreOf?: string },
 ): Promise<CheckInPlan> {
   const notFound: CheckInRefusal = {
     ok: false,
     status: 404,
     code: 'VERSION_HEAD_NOT_FOUND',
-    message: `The document to add a version to is not in this program. ${NOTHING}`,
+    message: `The document to add a version to is not in this project. ${NOTHING}`,
   };
   if (!UUID_RE.test(p.headId)) return notFound;
 
@@ -186,19 +209,13 @@ export async function planCheckIn(
   }
 
   const same = await q.query(
-    `SELECT version FROM vault.documents
+    `SELECT id::text AS id, version FROM vault.documents
       WHERE program_id = $1::uuid AND organization_id = $2 AND document_code = $3 AND content_hash = $4
-      ORDER BY created_at LIMIT 1`,
+      ORDER BY created_at`,
     [p.programId, p.organizationId, head.document_code, p.contentHash],
   );
-  if (same.rows[0]) {
-    return {
-      ok: false,
-      status: 409,
-      code: 'CONTENT_ALREADY_A_VERSION',
-      message: `These exact bytes are already version ${same.rows[0].version} of this document. ${NOTHING}`,
-    };
-  }
+  const sameBytes = sameBytesRefusal(same.rows as Array<{ id: string; version: string }>, head, p.restoreOf);
+  if (sameBytes) return sameBytes;
 
   const assigned = await assignNextRetainedVersion(q, p, head);
   return assigned.ok ? { ok: true, head, version: assigned.version } : assigned;
@@ -258,6 +275,17 @@ export function checkInArgumentRefusal(args: {
   return null;
 }
 
+/**
+ * What a check-in's audit row says of it: the version it succeeds, and that
+ * its filing was kept. A restore (MR-08 Stage 5) also names the version whose
+ * bytes these are and the person's reason, and says so in the line the
+ * history shows.
+ */
+export function checkInAuditDetails(head: CheckInHead, version: string, restoreOf?: { versionId: string; version: string; reason: string }) {
+  const lineage = { supersedes: head.id, predecessorVersion: head.version, filingKept: true, ...(restoreOf ? { restoredFrom: restoreOf } : {}) };
+  return restoreOf ? { lineage, description: `Restored version ${restoreOf.version} as version ${version}` } : { lineage };
+}
+
 /** The filing a new version keeps: its head's, as recorded. */
 export function inheritedPlacement(h: CheckInHead) {
   return {
@@ -280,7 +308,7 @@ export function inheritedPlacement(h: CheckInHead) {
  */
 export async function recheckUnderLock(
   client: CheckInQueryable,
-  p: { organizationId: number; programId: string; contentHash: string },
+  p: { organizationId: number; programId: string; contentHash: string; restoreOf?: string },
   planned: { head: CheckInHead; version: string },
 ): Promise<CheckInRefusal | null> {
   const locked = await planCheckIn(client, { ...p, headId: planned.head.id, lock: true });
@@ -295,4 +323,36 @@ export async function recheckUnderLock(
     message: `The document’s filing or metadata changed while the new version was being prepared. Review its current Vault record and try again. ${NOTHING}`,
   };
   return null;
+}
+
+/**
+ * A check-in makes its head no longer current, so an open review route on the
+ * head's lifecycle record is withdrawn on the check-in's own transaction, with
+ * the reason "Superseded by version N" (RR1a, §2.9: every exit from review
+ * closes the route). The record is locked first, then the route's rows; the
+ * notices go out after COMMIT. Nothing happens when the head has no record, or
+ * its record has no open route.
+ */
+export async function withdrawHeadReviewRoute(
+  client: CheckInQueryable,
+  p: { organizationId: number; headId: string; version: string; actorUserId: number },
+): Promise<TaskEventNotice[]> {
+  const { rows } = await client.query(
+    `SELECT canonical_id, title, stage FROM canonical_documents
+      WHERE organization_id = $1 AND source_refs ? 'vault_documents' AND source_refs -> 'vault_documents' ->> 'nativeId' = $2
+      ORDER BY created_at, canonical_id LIMIT 1 FOR UPDATE`,
+    [p.organizationId, p.headId],
+  );
+  const record = rows[0];
+  if (!record) return [];
+  const standing = await routeStanding(client, {
+    organizationId: p.organizationId, subjectType: 'canonical_document', subjectId: String(record.canonical_id),
+    inReview: record.stage === 'in_review', forUpdate: true,
+  });
+  if (standing.state !== 'live') return [];
+  const closed = await closeReviewRoute(drizzle(client as never) as never, {
+    organizationId: p.organizationId, standing, status: 'withdrawn', reason: `Superseded by version ${p.version}`,
+    actorUserId: p.actorUserId, subjectType: 'canonical_document', subjectId: String(record.canonical_id), subjectTitle: String(record.title),
+  });
+  return closed.notices;
 }

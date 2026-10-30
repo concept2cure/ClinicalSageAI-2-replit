@@ -20,6 +20,11 @@ import { EmptyState, hasKeys, useLiveData, type DataState, type ShapeGuard } fro
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
 import { Ring } from '../fixtures/project-home-data';
 import type { BuiltDocument } from '../editor/CanvasDocumentList';
+import type { EditingCopy } from '../editor/editingCopy';
+import type { ArtifactReadiness } from '@shared/types/dossier-artifact-readiness';
+import { ArtifactSectionStatus, artifactReadinessOf } from './ProjectArtifactReadiness';
+import type { DossierSectionTracking } from '@shared/types/dossier-section-tracking';
+import { SectionTracking, sectionTrackingOf } from './ProjectSectionTracking';
 
 /** A figure as the server states it (dossier-read DossierFigure). */
 export type DossierFigure =
@@ -39,6 +44,8 @@ export interface DossierRow {
   drafted: number;
   figure: DossierFigure;
   lastUpdated: string | null;
+  /** Counted governed sections. An older response can omit these details. */
+  sections?: Array<{ key: string; label: string; status: string }>;
 }
 
 export interface DossierMarket {
@@ -50,12 +57,20 @@ export interface DossierMarket {
   notHeld: Array<{ key: string; label: string }> | null;
 }
 
+export interface SupportingReadiness {
+  sectionTracking: DossierSectionTracking;
+}
+
 export interface DossierRead {
   projectId: string;
   measuredAt: string;
   home: DossierFigure;
   markets: DossierMarket[];
   rows: DossierRow[];
+  /** Separate artifact lifecycle source; absent from older responses. */
+  artifactReadiness?: ArtifactReadiness;
+  /** Existing project_sections records, with their own tracking lifecycle. */
+  supportingReadiness?: SupportingReadiness;
 }
 
 const isFigure = (v: unknown): v is DossierFigure => {
@@ -100,8 +115,54 @@ function figureLine(f: DossierFigure): string {
 
 const marketName = (m: DossierMarket) => `${m.agency.toUpperCase()} · ${m.docType.toUpperCase()}`;
 
-/** The aside card: the home filing's figure, and each added market's line. */
-export function DossierReadinessCard({ read }: { read: DossierState }) {
+/** Keep an older or malformed detail distinct from an empty section list. */
+const hasSectionDetails = (sections: unknown): sections is NonNullable<DossierRow['sections']> =>
+  Array.isArray(sections) && sections.every((s) => s && typeof s.key === 'string' && typeof s.label === 'string' && typeof s.status === 'string');
+
+const SECTION_STATUS_LABELS = new Map([
+  ['approved', 'Approved'], ['locked', 'Locked'], ['review', 'In review'], ['drafted', 'Drafted'], ['empty', 'Empty'],
+]);
+const sectionStatus = (status: string) => SECTION_STATUS_LABELS.get(status) ?? (status || 'Status not recorded');
+
+/** A card line's door: the editing copy of the filing the line measures,
+ *  opened whole (the line counts the whole filing, so no module rides along),
+ *  or why there is none, in the rows' words. Never a dead button (F3 part C).
+ *  `forMarket`: an added market's line, or the home line. */
+function MarketCopy({ name, forMarket, copy, onOpen }: {
+  name: string; forMarket: boolean; copy: RowCopy; onOpen: (doc: BuiltDocument, within: string | null) => void;
+}) {
+  const testId = forMarket ? 'pj-dossier-market-copy' : 'pj-dossier-home-copy';
+  if (copy.kind !== 'one') return <div data-testid={testId}>{noCopyWords(forMarket, copy)}</div>;
+  return (
+    <div data-testid={testId}>
+      <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onOpen(copy.doc, null)}
+        aria-label={`Open ${copy.doc.title}, the editing copy for ${name}`}>Open {copy.doc.title}</button>
+    </div>
+  );
+}
+
+/** The home line's door. One home document: its editing copy, as a market's
+ *  line opens its own. Several: no one copy is the figure's, so none opens.
+ *  None (nothing to count, or the store unread): the figure line says why. */
+function HomeCopy({ documents, copyFor, onOpen }: {
+  documents: string[]; copyFor: (filingId: string) => RowCopy; onOpen: (doc: BuiltDocument, within: string | null) => void;
+}) {
+  if (documents.length === 1) return <MarketCopy name="the home filing" forMarket={false} copy={copyFor(documents[0])} onOpen={onOpen} />;
+  if (documents.length === 0) return null;
+  return <div data-testid="pj-dossier-home-copy">This figure counts {documents.length} home documents, so none is opened from here.</div>;
+}
+
+/** The aside card: the home filing's figure, and each added market's line.
+ *  Each line opens the editing copy of the filing it measures, as that
+ *  filing's rows in Module completion do: a market's line its
+ *  `DossierMarket.documentId`, the home line the one home document. Both were
+ *  words only until 2026-10-29. */
+export function DossierReadinessCard({ read, copyFor, onOpen }: {
+  read: DossierState;
+  /** The editing copy of a filing, the lookup Module completion's rows use. */
+  copyFor: (filingId: string) => RowCopy;
+  onOpen: (doc: BuiltDocument, within: string | null) => void;
+}) {
   const { state, retry } = read;
   const d = state.data;
   let body: React.ReactNode;
@@ -116,6 +177,14 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
     body = <p role="status" aria-busy="true" className="pj-card-note">Reading…</p>;
   } else {
     const added = d.markets.filter((m) => m.scope === 'market');
+    /* The home filing's rows. dossier-read's homeFigure counts the sections of
+       every document that is not an added market's, and each of those has rows
+       with no agency, so their documents are the ones the home line measures. */
+    const homeRows = d.rows.filter((r) => r.agency === null);
+    const homeCounts = homeRows.reduce(
+      (total, r) => ({ inReview: total.inReview + r.inReview, drafted: total.drafted + r.drafted }),
+      { inReview: 0, drafted: 0 },
+    );
     body = (
       <>
         {d.home.state === 'measured' && (
@@ -123,7 +192,13 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
             <div className="pj-map-ring"><Ring value={d.home.pct} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
           </div>
         )}
-        <p className="pj-card-note" data-testid="pj-dossier-home">{figureLine(d.home)}</p>
+        <div data-testid="pj-dossier-home">
+          <p className="pj-card-note">{figureLine(d.home)}</p>
+          <HomeCopy documents={[...new Set(homeRows.map((r) => r.documentId))]} copyFor={copyFor} onOpen={onOpen} />
+        </div>
+        {d.home.state === 'measured' && (
+          <p className="pj-card-note">{homeCounts.inReview} in review · {homeCounts.drafted} drafted</p>
+        )}
         {added.length > 0 && (
           <ul className="pj-dossier-mkts" aria-label="Each added market">
             {added.map((m) => (
@@ -133,6 +208,7 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
                   <> {m.notHeld.length} required section{m.notHeld.length === 1 ? ' is' : 's are'} not in this project&apos;s dossier.</>
                 )}
                 {m.notHeld === null && <> Whether its required sections are all held could not be read.</>}
+                <MarketCopy name={marketName(m)} forMarket copy={copyFor(m.documentId)} onOpen={onOpen} />
               </li>
             ))}
           </ul>
@@ -153,15 +229,37 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
   );
 }
 
+/** The editing copy of the filing a row measures, or why it is not known. */
+export type RowCopy = EditingCopy<BuiltDocument> | { kind: 'unread'; failed: boolean };
+
+/** What a row or a market line says when it has no copy to open (F3: never a
+ *  dead end, never a guess). `forMarket`: the filing is an added market's. */
+function noCopyWords(forMarket: boolean, copy: Exclude<RowCopy, { kind: 'one' }>): string {
+  if (copy.kind === 'several') return `${copy.docs.length} documents are bound to this filing, so none is opened from here.`;
+  if (copy.kind === 'unread') {
+    return copy.failed ? 'The project\'s documents could not be read, so its editing copy is not known.' : 'Reading the project\'s documents…';
+  }
+  return forMarket
+    ? 'No editing copy of this market\'s documents yet. Create one from the filing list in the editor.'
+    : 'No editing copy of this filing yet.';
+}
+
 /** One row: the module (or document), its bar, its figure and what it counts.
- *  A row whose module holds one of this project's documents opens the newest
- *  one (FILING_SPINE.md §6 row 4); otherwise it has nothing to click. */
-function ModuleRow({ r, match, onOpen }: {
-  r: DossierRow; match: { doc: BuiltDocument; count: number; n: number } | null; onOpen: (doc: BuiltDocument) => void;
+ *  It opens the editing copy of the filing it measures (FILING_SPINE.md F3:
+ *  the document bound to `documentId`). It named the newest document TAGGED
+ *  with its module until 2026-10-29, so the home Module 1 row could open an
+ *  added market's copy. With no single copy it says why and opens nothing. */
+/** The CTD module a row opens its copy at, or null: a device pack's lettered heading is not a CTD code. */
+const rowModule = (r: DossierRow): string | null => (r.group === 'module' && r.module && /^[1-5]$/.test(r.module) ? `M${r.module}` : null);
+
+function ModuleRow({ r, copy, onOpen }: {
+  r: DossierRow; copy: RowCopy; onOpen: (doc: BuiltDocument, within: string | null) => void;
 }) {
   const pct = r.figure.state === 'measured' ? r.figure.pct : null;
   const counts = `${r.complete} of ${r.counted} approved or locked${r.inReview ? ` · ${r.inReview} in review` : ''}`;
   const risk = pct != null && pct < 50 ? true : undefined;
+  const updated = r.lastUpdated ? new Date(r.lastUpdated) : null;
+  const hasUpdated = updated && !Number.isNaN(updated.getTime());
   const body = (
     <>
       <span className="pj-lmod-t">{r.label} · {counts}</span>
@@ -169,26 +267,43 @@ function ModuleRow({ r, match, onOpen }: {
       <span className="pj-lmod-pct">{figureValue(r.figure)}</span>
     </>
   );
-  if (!match) return <div className="pj-lmod" data-none data-risk={risk} data-testid="pj-lmod">{body}</div>;
-  const { doc, count, n } = match;
-  const which = count > 1 ? `, the newest of ${count} Module ${n} documents` : '';
   return (
     <div className="pj-lmodrow">
-      <button type="button" className="pj-lmod" data-risk={risk} data-testid="pj-lmod" onClick={() => onOpen(doc)}
-        aria-label={`${r.label}: ${counts}, ${figureValue(r.figure)}. Open ${doc.title}${which}`}>
-        {body}
-      </button>
-      <span className="pj-lmod-doc" data-testid="pj-lmod-doc">Opens {doc.title}{which}</span>
+      {copy.kind === 'one' ? (
+        <>
+          <button type="button" className="pj-lmod" data-risk={risk} data-testid="pj-lmod" onClick={() => onOpen(copy.doc, rowModule(r))}
+            aria-label={`${r.label}: ${counts}, ${figureValue(r.figure)}. Open ${copy.doc.title}`}>
+            {body}
+          </button>
+          <span className="pj-lmod-doc" data-testid="pj-lmod-doc">Opens {copy.doc.title}</span>
+        </>
+      ) : (
+        <>
+          <div className="pj-lmod" data-none data-risk={risk} data-testid="pj-lmod">{body}</div>
+          <span className="pj-lmod-doc" data-testid="pj-lmod-doc">{noCopyWords(Boolean(r.agency), copy)}</span>
+        </>
+      )}
+      <span className="pj-lmod-doc">{hasUpdated ? <>Updated <time dateTime={r.lastUpdated!}>{updated.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></> : 'Update time not recorded.'}</span>
+      {hasSectionDetails(r.sections) ? (
+        <details className="pj-lmod-sections">
+          <summary>Section status</summary>
+          <p className="pj-card-note">Counted governed sections. Empty headings that hold other sections are not counted.</p>
+          <ul aria-label={`${r.label} section status`}>
+            {r.sections.map((s) => <li key={s.key}><span>{s.key} · {s.label}</span><span>{sectionStatus(s.status)}</span></li>)}
+          </ul>
+        </details>
+      ) : <p className="pj-card-note">Section details unavailable.</p>}
     </div>
   );
 }
 
 /** The Author tab's module rows, from the same read as the card. */
-export function ModuleCompletion({ read, docForModule, onOpen }: {
+export function ModuleCompletion({ read, copyFor, onOpen, onAsk }: {
   read: DossierState;
-  /** The newest of this project's documents in a CTD module, and how many it holds. */
-  docForModule: (module: string | null) => { doc: BuiltDocument; count: number; n: number } | null;
-  onOpen: (doc: BuiltDocument) => void;
+  /** The editing copy of the filing (`DossierRow.documentId`) a row measures. */
+  copyFor: (filingId: string) => RowCopy;
+  onOpen: (doc: BuiltDocument, within: string | null) => void;
+  onAsk?: (question: string) => void;
 }) {
   const { state, retry } = read;
   const d = state.data;
@@ -206,17 +321,17 @@ export function ModuleCompletion({ read, docForModule, onOpen }: {
     body = (
       <div className="pj-mods">
         {d.rows.map((r) => (
-          <ModuleRow key={`${r.documentId}:${r.module ?? r.label}`} r={r}
-            match={r.group === 'module' && !r.agency ? docForModule(r.module) : null} onOpen={onOpen} />
+          <ModuleRow key={`${r.documentId}:${r.module ?? r.label}`} r={r} copy={copyFor(r.documentId)} onOpen={onOpen} />
         ))}
       </div>
     );
   }
   return (
-    <section className="pj-sec">
+    <><section className="pj-sec">
       <div className="pj-sec-h"><h2>Module completion</h2><span className="sec-sub">sections approved or locked, by module</span></div>
+      {onAsk && <button type="button" className="btn ghost" onClick={() => onAsk('What is the critical path to filing?')}>Ask AnA: critical path to filing</button>}
       {body}
-    </section>
+    </section><ArtifactSectionStatus read={read} /><SectionTracking read={read} /></>
   );
 }
 
@@ -231,7 +346,9 @@ export function dossierFacts(read: DossierState): Record<string, unknown> {
       measuredAt: d.measuredAt,
       home: d.home,
       markets: d.markets.map((m) => ({ market: marketName(m), scope: m.scope, figure: m.figure, notHeld: m.notHeld?.length ?? null })),
-      rows: d.rows.map((r) => ({ label: r.label, module: r.module, counted: r.counted, complete: r.complete, inReview: r.inReview, drafted: r.drafted, figure: r.figure })),
+      rows: d.rows.map((r) => ({ label: r.label, module: r.module, agency: r.agency, counted: r.counted, complete: r.complete, inReview: r.inReview, drafted: r.drafted, figure: r.figure, lastUpdated: r.lastUpdated, sections: hasSectionDetails(r.sections) ? r.sections : null })),
+      artifactReadiness: artifactReadinessOf(d.artifactReadiness),
+      supportingReadiness: { sectionTracking: sectionTrackingOf(d.supportingReadiness?.sectionTracking) },
     },
     dossierUnavailable: null,
   };

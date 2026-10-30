@@ -1,0 +1,17 @@
+# authoring-signing-reason-stated.test.ts with authoring.router.ts at HEAD (stashed)
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'e-sign' > refuses a intent that is missing, and signs nothing
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'e-sign' > refuses a intent that is empty, and signs nothing
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'e-sign' > refuses a intent that is spaces only, and signs nothing
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'e-sign' > refuses a intent that is seven characters, and signs nothing
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'e-sign' > refuses a intent that is a number, and signs nothing
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'e-sign' > refuses a intent that is an object, and signs nothing
+ ✓ server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'e-sign' > a stated intent passes this check and goes on to the next (here, the unknown document)
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'sign' > refuses a reason that is missing, and signs nothing
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'sign' > refuses a reason that is empty, and signs nothing
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'sign' > refuses a reason that is spaces only, and signs nothing
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'sign' > refuses a reason that is seven characters, and signs nothing
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'sign' > refuses a reason that is a number, and signs nothing
+ × server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'sign' > refuses a reason that is an object, and signs nothing
+ ✓ server/routes/__tests__/authoring-signing-reason-stated.test.ts > POST /docs/:docId/'sign' > a stated reason passes this check and goes on to the next (here, the unknown document)
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  12 failed | 2 passed (14)

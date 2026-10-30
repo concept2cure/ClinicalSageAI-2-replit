@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-10-26T23:18:04.033479+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 13.559,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "project/recovery-red-inputs.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx": "ec8a7280e3ba52d9e557ca31cc109ff44a5dd897987a9b2f51a7c24f892957b3",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx": "81dc09c3d3dc6b26e32d9b920c3d841292469286a7877b1dd6c2947417ecd6fe",
+    "client/src/concept2cure/v2/editor/useScopedDocuments.ts": "c3080749eefed1617cefdfc71443dc360ee10b1235e4f18098173d1cb6fe92a2"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx": "ec8a7280e3ba52d9e557ca31cc109ff44a5dd897987a9b2f51a7c24f892957b3",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx": "81dc09c3d3dc6b26e32d9b920c3d841292469286a7877b1dd6c2947417ecd6fe",
+    "client/src/concept2cure/v2/editor/useScopedDocuments.ts": "c3080749eefed1617cefdfc71443dc360ee10b1235e4f18098173d1cb6fe92a2"
+  },
+  "sourceDrift": [],
+  "rawOutput": "recovery-red.log.gz",
+  "rawGzipSha256": "94e1d3177548f8dcab66cf936d2cc388453920bf46b98b533fb3d41943aef51f",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  2 failed | 7 passed (9)",
+    "Duration  13.07s (transform 1.04s, setup 252ms, import 1.22s, tests 11.01s, environment 435ms)"
+  ]
+}

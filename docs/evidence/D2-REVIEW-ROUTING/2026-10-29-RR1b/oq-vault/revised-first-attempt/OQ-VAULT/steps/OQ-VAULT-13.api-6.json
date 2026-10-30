@@ -1,0 +1,725 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/regulatory/documents/267c9d08-7a24-4253-ae6f-f23b55408002",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 33,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": true,
+      "canonicalId": "267c9d08-7a24-4253-ae6f-f23b55408002",
+      "stage": "authoring",
+      "version": 1,
+      "hasContent": true,
+      "outline": [
+        {
+          "code": "title_page",
+          "title": "Title Page",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Identify the sponsor, product, trial, protocol version, available regulatory identifiers, approval and signatory records. Apply the source title-page field instructions.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "amendment_details",
+          "title": "Amendment Details",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). State original or amended protocol status; for an amendment, document its scope, rationale and current changes with references to affected sections.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "table_of_contents",
+          "title": "Table of Contents",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Provide a navigable, current contents list consistent with the final protocol headings.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "1",
+          "title": "PROTOCOL SUMMARY",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "1.1",
+          "title": "Protocol Synopsis",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Summarise the approved objectives, estimands, design and population; use the deeper synopsis fields in the source template.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "1.2",
+          "title": "Trial Schema",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Show the sequence of trial periods, intervention groups and participant progression consistent with the detailed design.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "1.3",
+          "title": "Schedule of Activities",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Reconcile assessments, procedures, visit timing and allowed windows with the approved protocol and operational records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "2",
+          "title": "INTRODUCTION",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "2.1",
+          "title": "Purpose of Trial",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Explain the scientific purpose and rationale using the development programme and supporting clinical and nonclinical evidence.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "2.2",
+          "title": "Assessment of Risks and Benefits",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Summarise supported risks, mitigation, potential benefits and the integrated risk-benefit assessment; consult its deeper source headings.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "3",
+          "title": "TRIAL OBJECTIVES AND ASSOCIATED ESTIMANDS",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "3.1",
+          "title": "Primary Objective(s) and Associated Estimand(s)",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). State each primary objective and associated endpoint; define the applicable estimand characteristics using the source repeatable objective structure.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "3.2",
+          "title": "Secondary Objective(s) and Associated Estimand(s)",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Document the approved secondary objectives and associated estimands, or an explicit not-applicable statement when no secondary objective exists.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "3.3",
+          "title": "Exploratory Objective(s)",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Document approved exploratory objectives and endpoints; define estimands when applicable and preserve the source repeatable structure.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "4",
+          "title": "TRIAL DESIGN",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "4.1",
+          "title": "Description of Trial Design",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe the intervention model, comparator, trial periods and applicable adaptive, dose-escalation or transition features; reconcile with the synopsis and schema.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "4.2",
+          "title": "Rationale for Trial Design",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Justify the approved design, estimands, intervention model, control, duration and applicable novel features from supporting evidence.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "4.3",
+          "title": "Trial Stopping Rules",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). State approved rules for stopping the trial and the evidence and decision responsibilities supporting them.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "4.4",
+          "title": "Start of Trial and End of Trial",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Define trial start and end using the approved operational and regulatory definitions.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "4.5",
+          "title": "Access to Trial Intervention After End of Trial",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Explain post-trial intervention access arrangements and their applicability using sponsor and country-specific records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "5",
+          "title": "TRIAL POPULATION",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "5.1",
+          "title": "Description of Trial Population and Rationale",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe the intended population and justify its selection and representativeness for the scientific question.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "5.2",
+          "title": "Inclusion Criteria",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). List the approved, operationally clear eligibility conditions without inventing thresholds or biomarkers.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "5.3",
+          "title": "Exclusion Criteria",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). List the approved exclusion conditions with the design and safety rationale where specified.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "5.4",
+          "title": "Contraception",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Record applicable reproductive-risk definitions and contraception requirements from the approved product risk assessment and country requirements.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "5.5",
+          "title": "Lifestyle Restrictions",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Specify applicable dietary, substance-use, activity and other restrictions from the approved trial design.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "5.6",
+          "title": "Screen Failure and Rescreening",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe screen-failure records and the approved conditions and procedures for rescreening.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6",
+          "title": "TRIAL INTERVENTION AND CONCOMITANT THERAPY",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6.1",
+          "title": "Description of Investigational Trial Intervention",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Identify each investigational intervention using the approved product, formulation and intervention records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6.2",
+          "title": "Rationale for Investigational Trial Intervention Dose and Regimen",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Justify dose, regimen and exposure using the supporting clinical, nonclinical and pharmacology evidence.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6.3",
+          "title": "Investigational Trial Intervention Administration",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). State the approved route, administration schedule and operational instructions.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6.4",
+          "title": "Investigational Trial Intervention Dose Modification",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe approved dose adjustment, interruption and restart conditions using source rules.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6.5",
+          "title": "Management of Investigational Trial Intervention Overdose",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable overdose management and reporting using approved safety guidance.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6.6",
+          "title": "Preparation, Storage, Handling and Accountability of Investigational Trial Intervention",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Reconcile preparation, storage, handling and accountability with the current product and pharmacy records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6.7",
+          "title": "Investigational Trial Intervention Assignment, Randomisation and Blinding",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe assignment and applicable randomisation, blinding and emergency-unblinding procedures using the source substructure.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6.8",
+          "title": "Investigational Trial Intervention Adherence",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Explain how adherence will be assessed and addressed under the approved procedures.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6.9",
+          "title": "Description of Noninvestigational Trial Intervention",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable background, rescue and other noninvestigational interventions using approved treatment records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "6.10",
+          "title": "Concomitant Therapy",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). State applicable permitted and prohibited therapies and the approved recording and management procedures.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "7",
+          "title": "PARTICIPANT DISCONTINUATION OF TRIAL INTERVENTION AND DISCONTINUATION OR WITHDRAWAL FROM TRIAL",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "7.1",
+          "title": "Discontinuation of Trial Intervention for Individual Participants",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Distinguish permanent or temporary intervention discontinuation and applicable rechallenge procedures from trial withdrawal.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "7.2",
+          "title": "Participant Discontinuation or Withdrawal from the Trial",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe participant trial withdrawal, data and sample decisions, and applicable follow-up using approved consent and trial procedures.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "7.3",
+          "title": "Management of Loss to Follow-Up",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe approved attempts and responsibilities for follow-up and documentation of participants who cannot be contacted.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8",
+          "title": "TRIAL ASSESSMENTS AND PROCEDURES",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8.1",
+          "title": "Trial Assessments and Procedures Considerations",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe assessment procedures and relevant operational considerations consistent with the schedule of activities.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8.2",
+          "title": "Screening/Baseline Assessments and Procedures",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Specify the approved screening and baseline procedures, timing and eligibility verification.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8.3",
+          "title": "Efficacy Assessments and Procedures",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Define endpoint measurements and assessment procedures consistent with the objectives and analysis plan.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8.4",
+          "title": "Safety Assessments and Procedures",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable safety assessments, their methods and timing; use the source deeper headings for the selected assessments.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8.5",
+          "title": "Pharmacokinetics",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Document applicable pharmacokinetic sampling and assessment procedures from the approved protocol and bioanalytical records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8.6",
+          "title": "Biomarkers",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Specify applicable genetic, genomic, pharmacodynamic and other biomarker procedures and sample plans.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8.7",
+          "title": "Immunogenicity Assessments",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Document applicable immunogenicity sampling and assessments using the approved assay and analysis plans.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8.8",
+          "title": "Medical Resource Utilisation and Health Economics",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable resource-use and economic assessments from the approved design.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "9",
+          "title": "ADVERSE EVENTS, SERIOUS ADVERSE EVENTS, PRODUCT COMPLAINTS, PREGNANCY AND POSTPARTUM INFORMATION, AND SPECIAL SAFETY SITUATIONS",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "9.1",
+          "title": "Definitions",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Use the approved adverse-event, serious-adverse-event and applicable product-complaint definitions, with the source substructure.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "9.2",
+          "title": "Timing and Procedures for Collection and Reporting",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Reconcile safety collection periods, evaluation and reporting procedures with the approved safety plan and applicable agency obligations.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "9.3",
+          "title": "Pregnancy and Postpartum Information",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable collection and follow-up for participant or partner pregnancies using the approved safety and consent procedures.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "9.4",
+          "title": "Special Safety Situations",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Identify applicable special safety situations and their collection, assessment and reporting procedures.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10",
+          "title": "STATISTICAL CONSIDERATIONS",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.1",
+          "title": "General Considerations",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). State the statistical framework and relationship to the approved statistical analysis plan.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.2",
+          "title": "Analysis Sets",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Define the approved analysis populations and rules for participant inclusion.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.3",
+          "title": "Analyses of Demographics and Other Baseline Variables",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe planned demographic and baseline summaries without creating study results.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.4",
+          "title": "Analyses Associated with the Primary Objective(s)",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Link each primary analysis to its estimand, intercurrent-event handling, missing-data approach and applicable sensitivity analyses.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.5",
+          "title": "Analyses Associated with the Secondary Objective(s)",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe the approved secondary analyses and associated estimand and missing-data methods, or state their non-applicability.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.6",
+          "title": "Analyses Associated with the Exploratory Objective(s)",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable exploratory analyses and their interpretation under the approved analysis plan.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.7",
+          "title": "Safety Analyses",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe planned safety analyses and exposure summaries using the approved safety and statistical plans.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.8",
+          "title": "Other Analyses",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe other approved analyses applicable to the design without inventing new objectives.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.9",
+          "title": "Interim Analyses",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable interim analyses, decision rules and information access using the approved design and analysis plan.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.10",
+          "title": "Multiplicity Adjustments",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable multiplicity control and its relationship to the approved testing strategy.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "10.11",
+          "title": "Sample Size Determination",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Trace the sample-size rationale, assumptions and calculations to approved statistical records; never invent quantitative inputs.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11",
+          "title": "TRIAL OVERSIGHT AND OTHER GENERAL CONSIDERATIONS",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.1",
+          "title": "Regulatory and Ethical Considerations",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). State the applicable regulatory, ethical and GCP framework using current country and ethics records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.2",
+          "title": "Trial Oversight",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe investigator and sponsor responsibilities and oversight arrangements from the approved governance records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.3",
+          "title": "Informed Consent Process",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe the approved consent process and applicable rescreening or remaining-sample provisions, consistent with ethics-approved forms.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.4",
+          "title": "Committees",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable committee roles and link to current committee charters.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.5",
+          "title": "Insurance and Indemnity",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). State applicable participant protection and insurance arrangements using approved country and sponsor records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.6",
+          "title": "Risk-Based Quality Management",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe the approved approach to trial quality risks, critical factors and proportionate controls using the quality-management records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.7",
+          "title": "Data Governance",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe approved data-management and governance responsibilities and processes.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.8",
+          "title": "Data Protection",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable privacy and data-protection arrangements using the approved consent and country records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.9",
+          "title": "Source Records",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe source-record expectations and authorised access for monitoring, audit and inspection using applicable agreements.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.10",
+          "title": "Protocol Deviations",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe approved deviation handling and documentation procedures.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.11",
+          "title": "Early Site Closure",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Specify approved site-closure decision rights, criteria and responsibilities.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "11.12",
+          "title": "Data Dissemination",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Describe applicable trial registration, results reporting and dissemination plans using approved sponsor policy and regulatory records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "12",
+          "title": "APPENDIX: SUPPORTING DETAILS",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Retain this containing heading and populate its applicable subsections from the approved trial design and sponsor source records.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "12.1",
+          "title": "Clinical Laboratory Tests",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Specify the applicable laboratory panels and referenced calculations consistent with the assessment schedule.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "12.2",
+          "title": "Country/Region-Specific Differences",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Identify approved country or region differences, affected protocol sections and their communication through local addenda or other documented arrangements.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "12.3",
+          "title": "Prior Protocol Amendment(s)",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). State amendment history and retain the applicable original, first-amendment or prior-amendment information using controlled versions.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "13",
+          "title": "APPENDIX: GLOSSARY OF TERMS AND ABBREVIATIONS",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). Define terms and abbreviations used in the protocol consistently with its content.",
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "14",
+          "title": "APPENDIX: REFERENCES",
+          "module": 0,
+          "guidance": "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026). List the actual sources cited in the protocol and verify each reference.",
+          "required": true,
+          "contentType": "mixed"
+        }
+      ],
+      "sectionCount": 87,
+      "audit": [],
+      "chainValid": true,
+      "chainBrokenAt": -1,
+      "chainHashesRecomputed": true
+    }
+  }
+}

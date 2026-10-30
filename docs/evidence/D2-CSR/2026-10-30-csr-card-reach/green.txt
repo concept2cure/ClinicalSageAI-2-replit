@@ -1,0 +1,80 @@
+# GREEN after the review fixes (2026-10-30): vitest run client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx
+client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx
+client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx
+client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx tests/unit/csr-jobs-routes.test.ts server/routes/__tests__/csr-jobs-assembly.pglite.test.ts
+server/routes/__tests__/csr-jobs-narratives.pglite.test.ts
+server/services/entitlements/__tests__/csr-pivotal-launch-scope.test.ts
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > returns 202 with a run id at once; the worker composes as the user and lands §14.3.3 and §12.3.2 188ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a build with no bound run at once, and queues nothing 16ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a hand-built source on the run by name, as the Vault reader states it 14ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a refusal by its code when the reader states one without the CSR_ prefix (access lost, Vault bytes unavailable) 14ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records an ADAE row that does not establish seriousness, naming the row 17ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > queues an assembly off the request, records the declarations, and reads it back 60ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses a short declaration and an unreachable job by status, not as an empty result 7ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place into a frozen sequence before the leaf writer is called 27ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place an assembly whose body cites a table or listing it does not contain, or a build that is not complete 17ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > shows and places a revised body as a replace of the study's earlier body, and refuses to withdraw a placement that is not partial (SYNTHETIC) 30ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > queues a build bound to the run once its tables read for this protocol 35ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol 14ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses a run retained under another program than the build, before reading it 4ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > records each decision as the signed-in reviewer, never a body-supplied one 38ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > refuses a send-back without a reason and a malformed section number 6ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > lists only this organization's builds bound to the run, newest first 5ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > refuses a missing or malformed run and a missing program, never an empty list 6ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > previews the exact version/hash and requires explicit inclusion before publishing the source selection 332ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > names the study’s ClinicalTrials.gov number from its source, or says the source states none (D5, 2026-10-29) 127ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > shows the project’s pivotal declarations on the CSR card, which a launch screen shows (D5, 2026-10-29) 9ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > keeps unapproved source previews read-only 44ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > separates failed and malformed source lists from a confirmed empty list and supports retry 24ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > refuses a preview with another source hash instead of including incomplete or changed inputs 37ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > refuses a preview with missing required table instead of including incomplete or changed inputs 46ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > refuses a preview with unrecorded source approval instead of including incomplete or changed inputs 33ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > discards a late former-program preview and clears busy state on the program change 38ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > does not adopt a pending package build after switching away from its program and back 86ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > reads frozen tables for the exact saved run and excludes late previous-run data 19ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > offers an exact saved-read retry after a wrong run receipt without manufacturing empty history 68ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > paginates large aggregate tables and fetches the authenticated source contract without changing source selection 162ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > includes only an explicitly approved source in the real package-start request 120ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > retains saved run history while fencing source choices during an existing governed ceremony 52ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > queues the assembly and shows its progress while it runs 255ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a refusal to assemble as stated 51ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a failed read as an alert, not as "not assembled" 15ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lists each leaf with pages and SHA-256 and each missing appendix with whether it blocks; shows a placement refusal as stated 120ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > assembles again with the supplied document and the declarations the user entered 83ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > is reachable on the csr-workflow board for the job 53ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a placement a stopped worker left as interrupted, not as being placed, and offers to place it again into that sequence (2026-10-30) 54ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > marks a drafted section that keeps a data placeholder as blocking placement 12ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows what each file replaces in the chosen sequence, and places only once an earlier file left out is confirmed on file (2026-10-30) 53ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > offers to withdraw the partly placed CSR files with a reason, and shows a refusal as stated (2026-10-30) 39ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > states a withdrawal and offers a fresh placement (2026-10-30) 33ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lets the user withdraw an earlier file left out, or one of two current files for a part, in this sequence (review, 2026-10-30) 44ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > offers "Build CSR draft" only for a saved run that holds retained tables, and binds that run 286ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > renders no build control for a run with no retained tables 23ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > shows the server refusal as stated, never a silent empty or a queued build 68ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > records a review decision on the exact text, and shows a refused decision 140ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > requires a stated reason to send a section back 43ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision 121ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > carries the narrative build and the assembly for a build of the saved run, on the card 263ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > a newly queued build is selected on the card; nothing navigates to the board 120ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states that no build exists for the run, and a refused build list as an alert, never an empty list 59ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > follows a drafting build until it ends, then stops re-reading the list 64ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > queues the build, shows subjects done of total while it runs, then the outcome and the QC list 349ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > refreshes the QC list and the board when the build finished before the first status read 47ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows a failed build by its recorded refusal, naming the rows 35ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > says a stalled build stopped, and building again resumes it 47ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows the server refusal as stated 30ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > says so when the build status cannot be read, rather than showing nothing 13ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job 47ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > refuses an explicitly malformed project instead of enqueueing an organization-wide build 39ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 202 with { jobId, status: "queued" } when authenticated 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 401 when organizationId is missing from req 3ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns the status object when found in the same org 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 404 when getCSRBuildJobStatus returns null 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 400 when :jobId is non-numeric 2ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId/sections > returns the section array 3ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > transitions status to "cancelled" via the org-scoped Drizzle update 3ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > returns 409 when status is already "complete" 2ms
+ ✓ server/services/entitlements/__tests__/csr-pivotal-launch-scope.test.ts > launch scope for the CSR workflow paths > serves the pivotal declarations at launch, read and write 2ms
+ ✓ server/services/entitlements/__tests__/csr-pivotal-launch-scope.test.ts > launch scope for the CSR workflow paths > does not widen to the rest of /api/csr-workflow 1ms
+ Test Files  10 passed (10)
+      Tests  72 passed (72)

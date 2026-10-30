@@ -1,0 +1,35 @@
+{
+  "pageCount": 1,
+  "hasMore": true,
+  "counts": {
+    "total": 2,
+    "byWorkstream": {
+      "MDX": 2,
+      "Biotech": 1
+    },
+    "byPathway": {
+      "k510": 2
+    },
+    "filingWithin60Days": 0
+  },
+  "alias": {
+    "canonicalPath": "/concept2cure/projects",
+    "selectedWorkstream": "MDX",
+    "noProjectRequired": true,
+    "filteredReads": [
+      {
+        "url": "/api/c2c/projects?ws=MDX",
+        "status": 200
+      },
+      {
+        "url": "/api/c2c/projects?ws=MDX",
+        "status": 200
+      },
+      {
+        "url": "/api/c2c/projects?ws=MDX&pathway=k510",
+        "status": 200
+      }
+    ],
+    "manualFilterSurvivedRerender": true
+  }
+}

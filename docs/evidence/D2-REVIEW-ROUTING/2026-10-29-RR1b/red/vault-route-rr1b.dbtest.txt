@@ -1,0 +1,287 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-29T06:57:47.337Z","pid":622,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T06:57:47.339Z","pid":622,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T06:57:47.339Z","pid":622,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-29T06:57:55.743Z","pid":622,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-29T06:57:56.153Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:57:56.160Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+{
+  "timestamp": "2026-10-29T06:57:57.151Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3cf3e603-100b-47f1-a6ae-3d3065b4920d",
+    "code": "DBTEST-RR1B-mvt6yf3r_a8e42bc6-NOROUTE",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:57:57.246Z","pid":622,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:57:57.258Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:57:57.259Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > with a route it is sent, as RR1a sends it
+{
+  "timestamp": "2026-10-29T06:57:57.281Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "cc11b9a6-ac2f-4d37-88ad-4b4ac8b6986c",
+    "code": "DBTEST-RR1B-mvt6yf3r_a8e42bc6-WITHROUTE",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring 9814ms
+   → {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"ee94cafe-66c7-4063-bfb3-d890da1cbfdc","version":1,"from":"authoring","to":"in_review","actor":"10","reason":"Ready for named review","at":"2026-10-29T06:57:57.201Z","contentHash":"f36334ec3a525ba766b6d318ff47bf14586025618ec7ffc524a40591acfe1ce8","prevEventHash":"","eventHash":"94c96331abe9fcae5d969d1af01a781318b130550034a3bb3da5c8fb547d7327"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+{"level":40,"time":"2026-10-29T06:57:57.435Z","pid":622,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:57:57.452Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:57:57.455Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > before the record exists: each member with what the validator answers, nothing written
+{
+  "timestamp": "2026-10-29T06:57:57.477Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d72d0447-fe55-4878-904f-457b6ceff3da",
+    "code": "DBTEST-RR1B-mvt6yf3r_a8e42bc6-PICKER",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > with a route it is sent, as RR1a sends it 185ms
+{"level":40,"time":"2026-10-29T06:57:57.516Z","pid":622,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:57:57.531Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:57:57.532Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > once started by someone else: the sender is refused as the sender, and the uploader as an author
+{
+  "timestamp": "2026-10-29T06:57:57.552Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ae56b145-b327-449a-bd26-83cc67a0083c",
+    "code": "DBTEST-RR1B-mvt6yf3r_a8e42bc6-PICKER-STARTED",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:57:57.598Z","pid":622,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:57:57.611Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:57:57.612Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > a reviewer of this content is offered to review again, never to approve
+{
+  "timestamp": "2026-10-29T06:57:57.631Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f6baa7f9-68a3-495d-9c7b-828235c3d788",
+    "code": "DBTEST-RR1B-mvt6yf3r_a8e42bc6-PICKER-REVIEWED",
+    "type": "OTHER",
+    "size": 87,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > before the record exists: each member with what the validator answers, nothing written 80ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > once started by someone else: the sender is refused as the sender, and the uploader as an author 86ms
+   → {}: expected 404 to be 200 // Object.is equality
+{"level":40,"time":"2026-10-29T06:57:57.872Z","pid":622,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:57:57.885Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:57:57.886Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > another organization's version is not found, and a malformed id is refused
+{
+  "timestamp": "2026-10-29T06:57:57.916Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3af875e6-4944-4421-89ba-dcba0be4eb58",
+    "code": "DBTEST-RR1B-mvt6yf3r_a8e42bc6-PICKER-CROSS",
+    "type": "OTHER",
+    "size": 84,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:57:57.940Z","pid":622,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:57:57.955Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+ × tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > a reviewer of this content is offered to review again, never to approve 276ms
+   → Cannot read properties of undefined (reading 'find')
+ ✓ tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > another organization's version is not found, and a malformed id is refused 71ms
+{"level":40,"time":"2026-10-29T06:57:57.956Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the reviewer's notice opens the version (RR1b, §2.11) > task_assigned names the route task, and its target is the version in the Vault of its project
+{
+  "timestamp": "2026-10-29T06:57:57.979Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "755f66a8-8f60-4ce5-b3d8-36c1dfb7d3e2",
+    "code": "DBTEST-RR1B-mvt6yf3r_a8e42bc6-NOTICE",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T06:57:58.202Z","pid":622,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T06:57:58.211Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T06:57:58.212Z","pid":622,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault-rr1b.dbtest.ts > the Review board: mine, and Requested by me (RR1b, §2.11) > a named reviewer's open step is theirs, with its due date; the approver waits; the sender sees every outcome
+{
+  "timestamp": "2026-10-29T06:57:58.232Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "afccb035-2e4a-48bf-9efe-1fb336b02a96",
+    "code": "DBTEST-RR1B-mvt6yf3r_a8e42bc6-BOARD",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault-rr1b.dbtest.ts > the reviewer's notice opens the version (RR1b, §2.11) > task_assigned names the route task, and its target is the version in the Vault of its project 259ms
+   → {"error":"This notification does not name a record and project relationship this version can open."}: expected 422 to be 200 // Object.is equality
+ × tests/db/review-route-vault-rr1b.dbtest.ts > the Review board: mine, and Requested by me (RR1b, §2.11) > a named reviewer's open step is theirs, with its due date; the approver waits; the sender sees every outcome 183ms
+   → expected { …(12) } to match object { mine: true, step: 'review', …(1) }
+(10 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/review-route-vault-rr1b.dbtest.ts > REVIEW_ROUTE_REQUIRED: a Vault version is sent with named people (RR1b, §2.6) > an advance into review without a route is refused, and the record stays in authoring
+AssertionError: {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"ee94cafe-66c7-4063-bfb3-d890da1cbfdc","version":1,"from":"authoring","to":"in_review","actor":"10","reason":"Ready for named review","at":"2026-10-29T06:57:57.201Z","contentHash":"f36334ec3a525ba766b6d318ff47bf14586025618ec7ffc524a40591acfe1ce8","prevEventHash":"","eventHash":"94c96331abe9fcae5d969d1af01a781318b130550034a3bb3da5c8fb547d7327"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/review-route-vault-rr1b.dbtest.ts:162:46
+    160|     const { id } = await started('NOROUTE');
+    161|     const r = await send(id, undefined);
+    162|     expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                              ^
+    163|     expect(r.body.error).toBe('REVIEW_ROUTE_REQUIRED');
+    164|     expect(r.body.message).toMatch(/Name the reviewers and the approve…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > before the record exists: each member with what the validator answers, nothing written
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/review-route-vault-rr1b.dbtest.ts:184:46
+    182|     const before = await counts();
+    183|     const r = await candidates('uploader', vaultId);
+    184|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                              ^
+    185|     expect(r.body.ok).toBe(true);
+    186|     expect(r.body.timeZone).toBe('UTC');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > once started by someone else: the sender is refused as the sender, and the uploader as an author
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/review-route-vault-rr1b.dbtest.ts:200:46
+    198|     const { vaultId } = await started('PICKER-STARTED');
+    199|     const r = await candidates('r2', vaultId);
+    200|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                              ^
+    201|     const list = r.body.candidates as Candidate[];
+    202|     expect(byWho(list, 'uploader')?.approver?.code).toBe('MEMBER_IS_AU…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/db/review-route-vault-rr1b.dbtest.ts > the picker's read: who may be named, by validateRouteMember's rules (RR1b, §2.5) > a reviewer of this content is offered to review again, never to approve
+TypeError: Cannot read properties of undefined (reading 'find')
+ ❯ byWho tests/db/review-route-vault-rr1b.dbtest.ts:178:55
+    176| describe("the picker's read: who may be named, by validateRouteMember'…
+    177|   type Candidate = { id: number; name: string; reviewer: { code: strin…
+    178|   const byWho = (list: Candidate[], who: Who) => list.find((c) => c.id…
+       |                                                       ^
+    179|
+    180|   it('before the record exists: each member with what the validator an…
+ ❯ tests/db/review-route-vault-rr1b.dbtest.ts:213:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/db/review-route-vault-rr1b.dbtest.ts > the reviewer's notice opens the version (RR1b, §2.11) > task_assigned names the route task, and its target is the version in the Vault of its project
+AssertionError: {"error":"This notification does not name a record and project relationship this version can open."}: expected 422 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 422
+
+ ❯ tests/db/review-route-vault-rr1b.dbtest.ts:232:56
+    230|     expect(notice.resource_id).toMatch(/^ROUTE-/);
+    231|     const target = await get('r1', `/api/mdx/notifications/${notice.id…
+    232|     expect(target.status, JSON.stringify(target.body)).toBe(200);
+       |                                                        ^
+    233|     expect(target.body.data).toEqual({
+    234|       surface: 'vault', label: 'Open the version in the Vault', params…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/db/review-route-vault-rr1b.dbtest.ts > the Review board: mine, and Requested by me (RR1b, §2.11) > a named reviewer's open step is theirs, with its due date; the approver waits; the sender sees every outcome
+AssertionError: expected { …(12) } to match object { mine: true, step: 'review', …(1) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "mine": true,
+-   "routeUnread": false,
+    "step": "review",
+  }
+
+ ❯ tests/db/review-route-vault-rr1b.dbtest.ts:255:16
+    253|
+    254|     const r1 = (await board('r1', 'mine')).find((i) => i.canonicalId =…
+    255|     expect(r1).toMatchObject({ mine: true, step: 'review', routeUnread…
+       |                ^
+    256|     expect(r1!.myDueAt).toMatch(/^\d{4}-\d{2}-\d{2}T23:59:59\.999Z$/);
+    257|     expect((await board('approver', 'mine')).some((i) => i.canonicalId…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  06:57:44
+   Duration  13.91s (transform 7.75s, setup 91ms, import 256ms, tests 13.16s, environment 0ms)
+

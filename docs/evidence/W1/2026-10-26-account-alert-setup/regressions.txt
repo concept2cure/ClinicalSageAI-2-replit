@@ -1,0 +1,257 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > onboarding reaches canonical project creation > opens the canonical project wizard after activation without creating a project 757ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > asks drug and device follow-ups for combination products and service questions for service providers 163ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > keeps incomplete discovery on its step and moves focus to the new step heading 102ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > lets a nonadministrator review saved answers but makes no writes 105ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > validates invitations and defaults to least-privilege membership 249ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > stops activation before any organization, invitation or billing write if discovery cannot be completed 429ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows private setup links before checkout and never sends them or discovery narratives to AnA 587ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > honestly confirms invitation email delivery using the server vocabulary 369ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > clears activation secrets and tenant drafts when the active organization changes 438ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > preserves an invited signer role and records pending consent without claiming membership 412ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows a created account whose activation failed as needing attention 616ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > does not count an unconfirmed accepted-status response as a recorded invitation 585ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > saves changed discovery before opening existing organization setup 552ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > keeps the wizard and changed answers when the handoff save is refused 472ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > complete discovery review > previews therapeutic, experience and security answers and returns to their existing question steps 346ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > reads the signed-in person’s inbox and reporting role; no fixture or invented organization name 333ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > accepts an invitation through the self-only endpoint, re-reads pending rows and keeps the current tenant 131ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing member role instead of requiring the invitation’s suggested role 115ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing admin role instead of requiring the invitation’s suggested role 88ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing owner role instead of requiring the invitation’s suggested role 73ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > confirms a decline calmly and allows cancellation before the server mutation 90ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > shows quota or authorization refusals without claiming the invitation was accepted 78ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > keeps an inbox read error distinct from no pending invitations and retries it 37ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > refuses malformed pending rows instead of offering a mutation against a guessed organization 40ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > does not accept an invitation until the inviting organization is identified by name 36ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > retains a pending named invitation when the server does not confirm acceptance 74ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":null} without refreshing membership or announcing acceptance 48ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":""} without refreshing membership or announcing acceptance 60ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":"  "} without refreshing membership or announcing acceptance 57ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":["owner"]} without refreshing membership or announcing acceptance 59ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"invitationId":53} without refreshing membership or announcing acceptance 58ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"organizationId":72} without refreshing membership or announcing acceptance 57ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"userId":34} without refreshing membership or announcing acceptance 40ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"status":"pending"} without refreshing membership or announcing acceptance 39ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > can clear the reporting role without changing the membership role 36ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > does not offer persona controls if membership is refused or the server vocabulary is unknown 27ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > refuses all reads and writes after a session identity change 6ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > requires an authenticated access token even if the backend permits development fallbacks 6ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > Account reaches existing in-app alert setup > loads on request, saves the current recipient preference and refreshes the existing inbox badge 257ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects the empty-list-for-an-object case that caused the crashes 7ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > names the path in the error, so the failing route is identifiable from a log 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects a JSON scalar 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects a bare array 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects an object missing a required key 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects a 200 carrying an error body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > reports the HTTP status alongside the rejection 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > accepts the well-formed payload (the guard did not gut the happy path) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > accepts present-but-null fields — "no program selected yet" is real data 2ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > does not guard an ABSENT payload — that is the honest empty state 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > does not guard a 204 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > is unchanged when no guard is passed (the 100+ existing call sites) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > hasKeys / isRowsWith > hasKeys rejects arrays and null, accepts an object with the keys 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > hasKeys / isRowsWith > isRowsWith accepts an EMPTY array — zero rows is a real answer 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > useLiveData surfaces a shape rejection as error, not as data 77ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > useLiveRows reports a non-array as an error instead of a false empty state 58ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > useLiveRows still reports a genuinely empty list as empty 61ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > an INLINE guard does not re-trigger the fetch on every render 57ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > a guarded surface reports instead of crashing > BatchDraft renders its error state for the payload that used to crash it 32ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > a guarded surface reports instead of crashing > BatchDraft still renders its real content for a well-formed spine 31ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > returns the body on success 3ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > surfaces a 428 as a readable result — the e-signature trigger 2ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > surfaces a 409 conflict with the server’s own message 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > surfaces a ZodIssue array as readable text, never [object Object] 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > distinguishes a transport failure from a server rejection 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — a thrown status becomes data > a 401 is reported as a status, not swallowed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiErrorText — fallback behaviour > falls back when the payload carries no usable message 0ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — optional captured owner handoff > does not dispatch a retired owner and never retries it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — optional captured owner handoff > does not parse a response after its owner retires 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — optional captured owner handoff > discards a parsed body when ownership changes during JSON 51ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — optional captured owner handoff > discards an obsolete rejection without changing current rejection normalization 1ms
+ ✓ client/src/concept2cure/v2/__tests__/apiCall.test.ts > apiCall — optional captured owner handoff > keeps a current guarded success identical to the existing three-argument result 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveGetOrNull failure status > reports 403 as 403, with the server’s own message 8ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveGetOrNull failure status > reports 404 as 404 2ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveGetOrNull failure status > keeps 0 for a request that never got a response 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveGetOrNull failure status > still returns 401 through the response branch apiRequest does not throw on 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveMutateOrNull failure status > reports a refused governed write as 403, not as a network failure 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveMutateOrNull failure status > reports a rejected body as 400 with the validation message 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveMutateOrNull failure status > keeps 0 for a mutation that never reached the server 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > liveMutateOrNull failure status > reports a 500 as 500 so a retry-able server fault is distinguishable 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > failure status is read structurally, not by class identity > honours a status on an error that is not an ApiRequestError instance 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > failure status is read structurally, not by class identity > ignores a non-numeric status rather than reporting nonsense 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectFailureStatus.test.ts > failure status is read structurally, not by class identity > does not throw when a non-Error value is thrown 0ms
+stderr | client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx > TaskTray — approvals come from the authoring approval chain > lists the documents at my sign-off from the review board, and nothing from the unified store
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx > TaskTray — approvals come from the authoring approval chain > lists the documents at my sign-off from the review board, and nothing from the unified store 271ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx > TaskTray — approvals come from the authoring approval chain > a failed board read says the approvals could not be loaded 38ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx > TaskTray — approvals come from the authoring approval chain > no sign-off waiting renders no approvals group 39ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 172ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 33ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 26ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > does not acknowledge an unconfirmed successful write 167ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses a stale-organization write before sending it 107ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > never delivers an old save acknowledgement to a changed account 79ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > rejects a confirmation for another recipient scope 80ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > rejects a confirmation for another recipient scope 82ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > blocks duplicate writes and drops a reply after the settings close 72ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > opens a saved report using its validated run resource instead of an arbitrary action URL 241ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > does not offer a report link for a malformed or unrelated resource 50ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > a failed notifications read is an alert, not "No unread messages" 25ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > a genuinely empty inbox still says so 19ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a failed unread-count read is not shown as zero waiting 15ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a failed my-work read is not shown as zero waiting either 14ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > when every count loads and nothing is waiting, there is no badge 9ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a real count still shows as a number 8ms
+stderr | client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — native task handoff > retains the exact unified task business key for assigned and approval rows
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — native task handoff > retains the exact unified task business key for assigned and approval rows 95ms
+stderr | client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > keeps the tray open with the native surface refusal and never writes or navigates
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > holds triage when unsaved work owns the canvas 30ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > holds triage when account work owns the canvas 32ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > keeps the tray open with the native surface refusal and never writes or navigates 37ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > refuses a same-tick bearer replacement before React sees the account change 28ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > retires the old drawer and its pending reads when the actor changes 28ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > notification setup refresh ownership > refreshes counts for current-recipient preference changes and ignores a different organization 14ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > names the conversation, and opens it once the server confirms it 235ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > a conversation the server will not confirm (not yours, or gone) is not opened 65ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > a notice with no record stays a row that only marks read 38ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > does not disclose role notifications to another organization role 18ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > requires a live membership, not just an organization number 8ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > binds category and severity filters as data while preserving audience and limit 16ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > a role notification cannot be marked read by a nonrecipient 8ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > one person reading a team notice does not clear another recipient tray 13ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > mark all read changes only the current recipient receipts 11ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > archiving an org notice is private to the archiving recipient 10ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > honors the actual recipient in-app category preference 9ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > keeps one reference across re-renders when the payload is a real array 46ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > keeps one reference across re-renders on a null-payload success 50ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > keeps one reference across re-renders on a 204 No Content 12ms
+ ✓ client/src/concept2cure/v2/__tests__/liveRowsStability.test.tsx > useLiveRows — rows identity > a consumer effect keyed on rows settles instead of looping 135ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists the actual task_update producer preference from its labelled mounted control 545ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists the actual schedule_milestone_slip producer preference from its labelled mounted control 156ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists a category preference and re-reads the saved value without enabling external channels 135ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > keeps the saved preference visible when a write fails 105ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > a failed preference read never presents assumed defaults as saved settings 18ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > rejects a malformed successful preference response instead of displaying default settings 8ms
+stdout | server/routes/__tests__/notification-server-only-category.test.ts
+{
+  "timestamp": "2026-10-26T20:51:44.253Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T20:51:44.254Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/notification-server-only-category.test.ts
+{
+  "timestamp": "2026-10-26T20:51:44.255Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/notification-server-only-category.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/notification-server-only-category.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/notification-server-only-category.test.ts
+{
+  "timestamp": "2026-10-26T20:51:44.419Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/notification-server-only-category.test.ts > AnA's fire_notification > is not offered 'ana_turn', and refuses it by name
+Created cache directory: /workspace/ClinicalSageAI/data/cache
+
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications > refuses 'ana_turn': the platform alone writes it 22ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > POST /api/mdx/notifications > still creates any other category 5ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > a person may still mute 'ana_turn' > PUT /notification-subscriptions/ana_turn passes the category check 3ms
+ ✓ server/routes/__tests__/notification-server-only-category.test.ts > AnA's fire_notification > is not offered 'ana_turn', and refuses it by name 9527ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > separates requested SSO from verified second-factor status and routes to existing setup 181ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > does not report enrolled when authentication was not verified 25ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > opens the canonical account panel and rereads security after closing 81ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > mounts the runtime-backed session policy only for an organization administrator 28ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnect.test.ts > unwrapList > returns a bare array unchanged 2ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnect.test.ts > unwrapList > extracts the inner list from the canonical { data } envelope 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnect.test.ts > unwrapList > returns the payload as-is when data is not an array 0ms
+
+ Test Files  15 passed (15)
+      Tests  142 passed (142)
+   Start at  20:51:14
+   Duration  41.44s (transform 10.39s, setup 1.31s, import 5.33s, tests 25.72s, environment 6.90s)

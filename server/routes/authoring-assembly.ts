@@ -25,6 +25,35 @@ export function registerAuthoringAssemblyRoutes(router: Router, dependencies: {
       return res.status(503).json({ success: false, error: 'SAVED_ASSEMBLY_SOURCES_UNAVAILABLE', message: 'Saved document sources could not be verified. Check again before reusing them.' });
     }
   });
+  // Reuse the authenticated Authoring router and its assigned human review.
+  router.post('/documents/:id/csr-evidence/preview', async (req, res) => {
+    try {
+      const principal = dependencies.principal(req);
+      const ctx = dependencies.context(req);
+      if (!principal || principal.id !== ctx.actor.id) {
+        return res.status(401).json({ success: false, error: 'CSR_EVIDENCE_ACTOR_REQUIRED' });
+      }
+      if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) ||
+          Object.keys(req.body).some(key => key !== 'runIds')) {
+        return res.status(400).json({ success: false, error: 'CSR_EVIDENCE_INPUT_INVALID' });
+      }
+      const { requestConnectable } = await import('../db/requestDb');
+      const { previewAuthoringCsrReview } = await import('../services/authoring/peer-review');
+      const preview = await previewAuthoringCsrReview(requestConnectable(req), {
+        tenantId: ctx.tenantId, actorId: String(principal.id),
+        documentId: String(req.params.id), runIds: req.body.runIds,
+      });
+      return res.json({ success: true, preview });
+    } catch (error) {
+      const known = error as { code?: unknown; status?: unknown };
+      const status = Number(known?.status);
+      if (typeof known?.code === 'string' && /^CSR_|^REVIEW_/.test(known.code) &&
+          [400, 401, 403, 404, 409, 503].includes(status)) {
+        return res.status(status).json({ success: false, error: known.code });
+      }
+      return res.status(503).json({ success: false, error: 'CSR_EVIDENCE_UNAVAILABLE' });
+    }
+  });
   for (const action of ['preview', 'commit'] as const) {
     router.post(`/docs/:docId/assembly/${action}`, async (req, res) => {
       try {

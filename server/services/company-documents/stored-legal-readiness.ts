@@ -17,7 +17,7 @@ async function recordedTarget(q: RequestSqlClient, organizationId: number, seque
   const row = rows[0];
   const country = canonicalRegionOf(typeof row?.region === 'string' ? row.region : null);
   if (rows.length !== 1 || !country || typeof row.program_id !== 'string' || typeof row.application_type !== 'string') {
-    throw new CompanyDocumentsError(409, 'LEGAL_REQUIREMENT_TARGET_UNVERIFIED', 'The saved legal requirements cannot be evaluated until the sequence’s recorded market, program and filing type are verified.');
+    throw new CompanyDocumentsError(409, 'LEGAL_REQUIREMENT_TARGET_UNVERIFIED', 'The saved legal requirements cannot be evaluated until the sequence’s recorded market, project and filing type are verified.');
   }
   return { programId: row.program_id, submissionId: Number(row.submission_id), sequenceId, country, agency: toAgency(country)!, submissionType: row.application_type };
 }

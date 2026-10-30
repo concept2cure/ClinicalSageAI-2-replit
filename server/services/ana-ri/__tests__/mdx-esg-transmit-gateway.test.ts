@@ -179,6 +179,10 @@ vi.mock('node:https', () => {
 vi.mock('../../../routes/c2c/actions', () => ({ recordGovernedAction }));
 vi.mock('../../auditService', () => ({ default: audit }));
 
+// The guard keeps the bytes it sends (sent-package-archive.ts); in memory here.
+// What it keeps is pinned by mdx-esg-transmit-sent-package.test.ts.
+vi.mock('../../storage', async () => (await import('../../submission-gateways/__tests__/sent-package-storage-stub')).storageModule);
+
 import { esgTransmit } from '../mdx-command-handlers';
 import { _resetMdxToolRateLimitersForTests } from '../mdx-tool-rate-limit';
 

@@ -42,6 +42,7 @@
  */
 
 import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
+import { PATHWAY_IDENTITY_PROGRAM_TYPES, REGULATORY_PATH_TO_PATHWAY } from '../mdx.js';
 import type { QuestionOption } from '../../types/intelligence-questions.js';
 import { filingDocumentClassOf, filingDocumentClassTypes } from '../../regulatory/filing-document-classes.js';
 import { regionalDeviceApplicationClassOf, regionalDeviceApplicationClassTypes, resolveFilingCatalogEntry } from '../../regulatory/filing-catalog.js';
@@ -333,6 +334,26 @@ export function workstreamSqlCase(column: string, productTypeColumn?: string): s
          ${classBranch}
          ELSE initcap(replace(${column}, '_', ' '))
        END`;
+}
+
+/** Canonical portfolio pathway classification over trusted SQL column names.
+ * Alias data and exact-filing precedence are shared with pathwayForProgram. */
+export function pathwaySqlCase(programTypeColumn: string, regulatoryPathColumn: string): string {
+  const key = (column: string) => `lower(regexp_replace(trim(COALESCE(${column}, '')), '[[:space:]-]+', '_', 'g'))`;
+  const type = key(programTypeColumn);
+  const path = key(regulatoryPathColumn);
+  const branches = (entries: readonly string[]) => entries.map(alias =>
+    `WHEN '${alias}' THEN '${REGULATORY_PATH_TO_PATHWAY[alias]}'`).join('\n');
+  const aliases = Object.keys(REGULATORY_PATH_TO_PATHWAY);
+  return `CASE ${type}
+    ${branches(PATHWAY_IDENTITY_PROGRAM_TYPES)}
+    ELSE CASE ${path}
+      ${branches(aliases)}
+      ELSE CASE ${type}
+        ${branches(aliases)}
+        ELSE 'other' END
+      END
+    END`;
 }
 
 export function listProductTypes(): ProductType[] {

@@ -100,13 +100,23 @@
   "add_labeling_symbol": {
    "class": "confirm",
    "writes": "INSERT labeling_symbols",
-   "site": "AnaToolExecutor.ts registerToolHandler('add_labeling_symbol')"
+   "site": "AnaToolExecutor.ts registerToolHandler('add_labeling_symbol')",
+   "present": {
+    "verb": "add",
+    "object": "a symbol to the label",
+    "source": "project"
+   }
   },
   "add_labeling_translation": {
    "class": "conditional",
    "writes": "INSERT labeling_translations",
    "site": "AnaToolExecutor.ts registerToolHandler('add_labeling_translation')",
-   "rule": "input.back_translation_verified === true -> refuse (verification claim); else confirm"
+   "rule": "input.back_translation_verified === true -> refuse (verification claim); else confirm",
+   "present": {
+    "verb": "add",
+    "object": "a label translation",
+    "source": "project"
+   }
   },
   "add_other_support_entry": {
    "class": "confirm",
@@ -172,7 +182,12 @@
    "class": "conditional",
    "writes": "INSERT risk_controls",
    "site": "AnaToolExecutor.ts registerToolHandler('add_risk_control')",
-   "rule": "input.status in (verified, effective) or verification_evidence/effectiveness_evidence supplied -> refuse; else confirm"
+   "rule": "input.status in (verified, effective) or verification_evidence/effectiveness_evidence supplied -> refuse; else confirm",
+   "present": {
+    "verb": "add",
+    "object": "a risk control",
+    "source": "project"
+   }
   },
   "add_soa_assessment": {
    "class": "confirm",
@@ -1547,7 +1562,12 @@
   "assess_stored_cer": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('assess_stored_cer')"
+   "site": "AnaToolExecutor.ts registerToolHandler('assess_stored_cer')",
+   "present": {
+    "verb": "check",
+    "object": "the stored clinical evaluation report",
+    "source": "engine"
+   }
   },
   "assess_structural_alerts": {
    "class": "read",
@@ -1779,7 +1799,12 @@
   "categorize_clia_complexity": {
    "class": "confirm",
    "writes": "INSERT ivd_clia_categorization",
-   "site": "AnaToolExecutor.ts registerToolHandler('categorize_clia_complexity')"
+   "site": "AnaToolExecutor.ts registerToolHandler('categorize_clia_complexity')",
+   "present": {
+    "verb": "record",
+    "object": "the CLIA complexity categorization",
+    "source": "project"
+   }
   },
   "certify_other_support": {
    "class": "refuse",
@@ -2029,7 +2054,12 @@
   "classify_ivd_device": {
    "class": "confirm",
    "writes": "INSERT ivdr_classifications",
-   "site": "AnaToolExecutor.ts registerToolHandler('classify_ivd_device')"
+   "site": "AnaToolExecutor.ts registerToolHandler('classify_ivd_device')",
+   "present": {
+    "verb": "classify",
+    "object": "the device under the IVDR",
+    "source": "project"
+   }
   },
   "classify_medical_device": {
    "class": "read",
@@ -2280,12 +2310,22 @@
   "compose_510k_summary": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('compose_510k_summary')"
+   "site": "AnaToolExecutor.ts registerToolHandler('compose_510k_summary')",
+   "present": {
+    "verb": "assemble",
+    "object": "the 510(k) Summary",
+    "source": "engine"
+   }
   },
   "compose_correspondence_cover_letter": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('compose_correspondence_cover_letter')"
+   "site": "AnaToolExecutor.ts registerToolHandler('compose_correspondence_cover_letter')",
+   "present": {
+    "verb": "assemble",
+    "object": "the correspondence cover letter",
+    "source": "engine"
+   }
   },
   "compose_e2b_icsr": {
    "class": "read",
@@ -2422,7 +2462,15 @@
    "class": "conditional",
    "writes": "INSERT clinical_studies; irb_approved records an IRB approval fact",
    "site": "AnaToolExecutor.ts registerToolHandler('create_clinical_study')",
-   "rule": "input.irb_approved === true -> refuse; else confirm"
+   "rule": "input.irb_approved === true -> refuse; else confirm",
+   "present": {
+    "verb": "create",
+    "object": "a clinical study",
+    "source": "project",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "create_coi_disclosure": {
    "class": "confirm",
@@ -2432,7 +2480,12 @@
   "create_complaint": {
    "class": "confirm",
    "writes": "INSERT complaints + vigilance event",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_complaint')"
+   "site": "AnaToolExecutor.ts registerToolHandler('create_complaint')",
+   "present": {
+    "verb": "record",
+    "object": "a device complaint",
+    "source": "qms"
+   }
   },
   "create_consent_form": {
    "class": "confirm",
@@ -2523,7 +2576,12 @@
   "create_labeling_document": {
    "class": "confirm",
    "writes": "INSERT labeling_documents",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_labeling_document')"
+   "site": "AnaToolExecutor.ts registerToolHandler('create_labeling_document')",
+   "present": {
+    "verb": "create",
+    "object": "a labeling document",
+    "source": "project"
+   }
   },
   "create_lifecycle_obligation": {
    "class": "confirm",
@@ -2549,7 +2607,12 @@
    "class": "conditional",
    "writes": "INSERT ivdr_per_documents with model-chosen status",
    "site": "AnaToolExecutor.ts registerToolHandler('create_per_document')",
-   "rule": "input.per_status in (approved, superseded) -> refuse; else confirm"
+   "rule": "input.per_status in (approved, superseded) -> refuse; else confirm",
+   "present": {
+    "verb": "create",
+    "object": "a performance evaluation report",
+    "source": "project"
+   }
   },
   "create_protocol_amendment": {
    "class": "confirm",
@@ -2590,7 +2653,15 @@
   "create_q_sub": {
    "class": "confirm",
    "writes": "INSERT q_submissions + audit",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_q_sub')"
+   "site": "AnaToolExecutor.ts registerToolHandler('create_q_sub')",
+   "present": {
+    "verb": "create",
+    "object": "a Q-Submission",
+    "source": "submissions",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "create_qms_document": {
    "class": "confirm",
@@ -2623,13 +2694,23 @@
   "create_risk_item": {
    "class": "confirm",
    "writes": "INSERT risk_items",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_risk_item')"
+   "site": "AnaToolExecutor.ts registerToolHandler('create_risk_item')",
+   "present": {
+    "verb": "add",
+    "object": "a risk to the risk file",
+    "source": "project"
+   }
   },
   "create_software_lifecycle_item": {
    "class": "conditional",
    "writes": "INSERT software_lifecycle_items with model-chosen status",
    "site": "AnaToolExecutor.ts registerToolHandler('create_software_lifecycle_item')",
-   "rule": "status in (approved, superseded) -> refuse; else confirm"
+   "rule": "status in (approved, superseded) -> refuse; else confirm",
+   "present": {
+    "verb": "create",
+    "object": "a software lifecycle record",
+    "source": "project"
+   }
   },
   "create_tmf": {
    "class": "confirm",
@@ -2639,7 +2720,12 @@
   "create_udi_record": {
    "class": "confirm",
    "writes": "INSERT udi_records",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_udi_record')"
+   "site": "AnaToolExecutor.ts registerToolHandler('create_udi_record')",
+   "present": {
+    "verb": "create",
+    "object": "a UDI record",
+    "source": "project"
+   }
   },
   "critique_document": {
    "class": "read",
@@ -3768,7 +3854,12 @@
   "generate_se_matrix": {
    "class": "confirm",
    "writes": "POST to the shadow review service with an admin token (unverified whether it persists; fail closed)",
-   "site": "AnaToolExecutor.ts registerToolHandler('generate_se_matrix')"
+   "site": "AnaToolExecutor.ts registerToolHandler('generate_se_matrix')",
+   "present": {
+    "verb": "generate",
+    "object": "the substantial-equivalence matrix",
+    "source": "project"
+   }
   },
   "generate_sop": {
    "class": "read",
@@ -3849,7 +3940,7 @@
    "site": "biotech-program.ts register('get_biotech_program_status')",
    "present": {
     "verb": "look_up",
-    "object": "the biotech program status",
+    "object": "the project's development status",
     "source": "project"
    }
   },
@@ -3871,6 +3962,19 @@
     "verb": "look_up",
     "object": "the CMC requirements",
     "source": "knowledge"
+   }
+  },
+  "get_csr_section_evidence": {
+   "class": "read",
+   "writes": "none",
+   "site": "csr-section-evidence-tool.ts register('get_csr_section_evidence')",
+   "present": {
+    "verb": "read",
+    "object": "the study's retained CSR tables",
+    "source": "engine",
+    "preview": [
+     "section"
+    ]
    }
   },
   "get_csr_template": {
@@ -4009,7 +4113,12 @@
   "get_predicate_defense_preview": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('get_predicate_defense_preview')"
+   "site": "AnaToolExecutor.ts registerToolHandler('get_predicate_defense_preview')",
+   "present": {
+    "verb": "read",
+    "object": "the predicate defense preview",
+    "source": "project"
+   }
   },
   "get_rbm_attention": {
    "class": "read",
@@ -4032,7 +4141,7 @@
    "site": "AnaToolExecutor.ts registerToolHandler('get_session_briefing')",
    "present": {
     "verb": "look_up",
-    "object": "where your program stands",
+    "object": "where your project stands",
     "source": "project"
    }
   },
@@ -4449,7 +4558,7 @@
    "site": "AnaToolExecutor.ts registerToolHandler('link_program_clinical_study')",
    "present": {
     "verb": "link",
-    "object": "the program to its clinical study",
+    "object": "the project to its clinical study",
     "source": "authoring"
    }
   },
@@ -4678,12 +4787,22 @@
   "log_study_ae": {
    "class": "confirm",
    "writes": "INSERT clinical_study_aes",
-   "site": "AnaToolExecutor.ts registerToolHandler('log_study_ae')"
+   "site": "AnaToolExecutor.ts registerToolHandler('log_study_ae')",
+   "present": {
+    "verb": "record",
+    "object": "a study adverse event",
+    "source": "project"
+   }
   },
   "log_study_deviation": {
    "class": "confirm",
    "writes": "INSERT clinical_study_deviations",
-   "site": "AnaToolExecutor.ts registerToolHandler('log_study_deviation')"
+   "site": "AnaToolExecutor.ts registerToolHandler('log_study_deviation')",
+   "present": {
+    "verb": "record",
+    "object": "a study deviation",
+    "source": "project"
+   }
   },
   "lookup_fda_guidance": {
    "class": "read",
@@ -4884,7 +5003,15 @@
   "open_device_capa": {
    "class": "confirm",
    "writes": "INSERT capa_records",
-   "site": "AnaToolExecutor.ts registerToolHandler('open_device_capa')"
+   "site": "AnaToolExecutor.ts registerToolHandler('open_device_capa')",
+   "present": {
+    "verb": "open",
+    "object": "a CAPA",
+    "source": "qms",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "open_grant_closeout": {
    "class": "confirm",
@@ -4917,7 +5044,12 @@
   "pair_companion_diagnostic": {
    "class": "confirm",
    "writes": "INSERT cdx_pairings",
-   "site": "AnaToolExecutor.ts registerToolHandler('pair_companion_diagnostic')"
+   "site": "AnaToolExecutor.ts registerToolHandler('pair_companion_diagnostic')",
+   "present": {
+    "verb": "link",
+    "object": "a companion diagnostic to its drug",
+    "source": "project"
+   }
   },
   "pdf_overlay": {
    "class": "read",
@@ -5392,7 +5524,12 @@
   "read_vigilance_timeline": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('read_vigilance_timeline')"
+   "site": "AnaToolExecutor.ts registerToolHandler('read_vigilance_timeline')",
+   "present": {
+    "verb": "read",
+    "object": "the vigilance timeline",
+    "source": "qms"
+   }
   },
   "recall_rim_patterns": {
    "class": "read",
@@ -5417,7 +5554,12 @@
   "reconcile_device_documents": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('reconcile_device_documents')"
+   "site": "AnaToolExecutor.ts registerToolHandler('reconcile_device_documents')",
+   "present": {
+    "verb": "compare",
+    "object": "figures across post-market documents",
+    "source": "engine"
+   }
   },
   "reconcile_dossier_numbers": {
    "class": "read",
@@ -5442,12 +5584,28 @@
   "record_analytical_performance_study": {
    "class": "confirm",
    "writes": "INSERT ivd_analytical_performance",
-   "site": "AnaToolExecutor.ts registerToolHandler('record_analytical_performance_study')"
+   "site": "AnaToolExecutor.ts registerToolHandler('record_analytical_performance_study')",
+   "present": {
+    "verb": "record",
+    "object": "an analytical performance study",
+    "source": "project",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "record_clinical_performance_study": {
    "class": "confirm",
    "writes": "INSERT ivd_clinical_performance (incl. endpoint-met flag)",
-   "site": "AnaToolExecutor.ts registerToolHandler('record_clinical_performance_study')"
+   "site": "AnaToolExecutor.ts registerToolHandler('record_clinical_performance_study')",
+   "present": {
+    "verb": "record",
+    "object": "a clinical performance study",
+    "source": "project",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "record_cost_share_contribution": {
    "class": "confirm",
@@ -5457,7 +5615,12 @@
   "record_endpoint_result": {
    "class": "confirm",
    "writes": "INSERT clinical_study_endpoints",
-   "site": "AnaToolExecutor.ts registerToolHandler('record_endpoint_result')"
+   "site": "AnaToolExecutor.ts registerToolHandler('record_endpoint_result')",
+   "present": {
+    "verb": "record",
+    "object": "an endpoint result",
+    "source": "project"
+   }
   },
   "record_grant_award": {
    "class": "confirm",
@@ -5482,7 +5645,12 @@
   "record_literature": {
    "class": "confirm",
    "writes": "UPSERT literature_entries",
-   "site": "AnaToolExecutor.ts registerToolHandler('record_literature')"
+   "site": "AnaToolExecutor.ts registerToolHandler('record_literature')",
+   "present": {
+    "verb": "save",
+    "object": "search results to the literature corpus",
+    "source": "literature"
+   }
   },
   "record_subaward": {
    "class": "confirm",
@@ -5517,7 +5685,12 @@
   "register_ldt": {
    "class": "confirm",
    "writes": "INSERT ldt_inventory",
-   "site": "AnaToolExecutor.ts registerToolHandler('register_ldt')"
+   "site": "AnaToolExecutor.ts registerToolHandler('register_ldt')",
+   "present": {
+    "verb": "record",
+    "object": "a laboratory-developed test",
+    "source": "project"
+   }
   },
   "register_supplier": {
    "class": "confirm",
@@ -5845,7 +6018,12 @@
   "review_label_currency": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('review_label_currency')"
+   "site": "AnaToolExecutor.ts registerToolHandler('review_label_currency')",
+   "present": {
+    "verb": "check",
+    "object": "label currency across markets",
+    "source": "engine"
+   }
   },
   "review_lifecycle_calendar": {
    "class": "read",
@@ -6822,7 +7000,7 @@
    "site": "AnaToolExecutor.ts registerToolHandler('set_program_metadata')",
    "present": {
     "verb": "update",
-    "object": "the program's details",
+    "object": "the project's details",
     "source": "project"
    }
   },
@@ -6985,7 +7163,12 @@
   "suggest_predicate_devices": {
    "class": "confirm",
    "writes": "POST to the shadow review service with an admin token (unverified whether it persists; fail closed)",
-   "site": "AnaToolExecutor.ts registerToolHandler('suggest_predicate_devices')"
+   "site": "AnaToolExecutor.ts registerToolHandler('suggest_predicate_devices')",
+   "present": {
+    "verb": "search",
+    "object": "candidate predicate devices",
+    "source": "agency"
+   }
   },
   "suggest_reports": {
    "class": "read",
@@ -6993,7 +7176,7 @@
    "site": "AnaToolExecutor.ts registerToolHandler('suggest_reports')",
    "present": {
     "verb": "look_up",
-    "object": "reports that fit your programs",
+    "object": "reports that fit your projects",
     "source": "reports"
    }
   },
@@ -7070,7 +7253,12 @@
   "triage_capa_mdr_queue": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('triage_capa_mdr_queue')"
+   "site": "AnaToolExecutor.ts registerToolHandler('triage_capa_mdr_queue')",
+   "present": {
+    "verb": "review",
+    "object": "the complaint, MDR and CAPA queue",
+    "source": "qms"
+   }
   },
   "triage_compliance_attention": {
    "class": "confirm",
@@ -7151,7 +7339,12 @@
   "update_q_sub_commitment_rolled_in": {
    "class": "confirm",
    "writes": "UPDATE q_sub_commitments + audit row",
-   "site": "AnaToolExecutor.ts registerToolHandler('update_q_sub_commitment_rolled_in')"
+   "site": "AnaToolExecutor.ts registerToolHandler('update_q_sub_commitment_rolled_in')",
+   "present": {
+    "verb": "update",
+    "object": "a Q-Sub commitment",
+    "source": "submissions"
+   }
   },
   "update_research_agreement": {
    "class": "confirm",
@@ -7337,12 +7530,22 @@
   "write_kit_section": {
    "class": "confirm",
    "writes": "UPDATE cerv2_510k_sections + version + audit",
-   "site": "AnaToolExecutor.ts registerToolHandler('write_kit_section')"
+   "site": "AnaToolExecutor.ts registerToolHandler('write_kit_section')",
+   "present": {
+    "verb": "save",
+    "object": "drafted section content",
+    "source": "authoring"
+   }
   },
   "write_q_sub_section": {
    "class": "confirm",
    "writes": "UPSERT q_sub_section_bodies (clears acceptance) + lineage",
-   "site": "AnaToolExecutor.ts registerToolHandler('write_q_sub_section')"
+   "site": "AnaToolExecutor.ts registerToolHandler('write_q_sub_section')",
+   "present": {
+    "verb": "save",
+    "object": "a briefing-document section",
+    "source": "submissions"
+   }
   }
  }
 }

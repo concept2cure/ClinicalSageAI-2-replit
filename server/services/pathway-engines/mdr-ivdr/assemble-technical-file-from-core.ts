@@ -136,7 +136,7 @@ export class NoAuthoredTechnicalFileContentError extends Error {
   readonly code = 'NO_AUTHORED_CONTENT';
   constructor(regulation: EuRegulation, programId: string) {
     super(
-      `No authored ${regulation.toUpperCase()} technical-documentation section exists for program ${programId} ` +
+      `No authored ${regulation.toUpperCase()} technical-documentation section exists for project ${programId} ` +
         'in this organization — there is nothing to package. Author and save at least one Annex II/III section first.',
     );
     this.name = 'NoAuthoredTechnicalFileContentError';

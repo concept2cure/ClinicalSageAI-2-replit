@@ -141,7 +141,7 @@ export function createProjectSetupFlow(): FlowDefinition {
             id: 'project_name',
             label: 'Project Name',
             type: 'text',
-            placeholder: 'e.g., Project Atlas — ABC-1234 Phase 3 Program',
+            placeholder: 'e.g., Project Atlas — ABC-1234 Phase 3',
             required: true,
           },
           {
@@ -395,7 +395,7 @@ export function createProjectSetupFlow(): FlowDefinition {
         section: 'product_regulatory',
         question: 'Which application are you making?',
         guidance:
-          'The application decides what evidence you owe and whose data you may rely on. These positions are the platform’s own filing registry, annotated with what taking each one commits the programme to and the authority behind it, and narrowed to what the modality frame allows this product — so a monoclonal antibody is offered a biologics licence and not an NDA, and a small molecule is offered 505(b)(1), 505(b)(2) and the ANDA route in the frame’s own order. The filing that permits the study rather than the sale is offered after them, because a programme before its marketing application still has one to name.',
+          'The application decides what evidence you owe and whose data you may rely on. These positions are the platform’s own filing registry, annotated with what taking each one commits the project to and the authority behind it, and narrowed to what the modality frame allows this product — so a monoclonal antibody is offered a biologics licence and not an NDA, and a small molecule is offered 505(b)(1), 505(b)(2) and the ANDA route in the frame’s own order. The filing that permits the study rather than the sale is offered after them, because a project before its marketing application still has one to name.',
         fields: [
           {
             id: 'submission_type',
@@ -471,7 +471,7 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'no_us_filing', label: 'Not applicable / No US filing planned' },
             ],
             helpText:
-              'The FDA class. A programme filing only in Europe says so here rather than stating a class it has not determined — and if the US follows later, AnA asks again.',
+              'The FDA class. A project filing only in Europe says so here rather than stating a class it has not determined — and if the US follows later, AnA asks again.',
           },
           {
             id: 'product_code',
@@ -523,7 +523,7 @@ export function createProjectSetupFlow(): FlowDefinition {
         question:
           'Which route are you taking to market, and against what?',
         guidance:
-          'Medical device submissions follow distinct pathways: 510(k) for substantial equivalence to a predicate device (21 CFR 807), PMA for Class III devices (21 CFR 814), and De Novo for novel low-to-moderate risk devices (21 CFR 860). Each position says what it commits the programme to. Where the classification you have just given speaks against a route, AnA marks it and still offers it — the choice is yours, and she records the basis you take it on.',
+          'Medical device submissions follow distinct pathways: 510(k) for substantial equivalence to a predicate device (21 CFR 807), PMA for Class III devices (21 CFR 814), and De Novo for novel low-to-moderate risk devices (21 CFR 860). Each position says what it commits the project to. Where the classification you have just given speaks against a route, AnA marks it and still offers it — the choice is yours, and she records the basis you take it on.',
         fields: [
           {
             id: 'device_submission_pathway',

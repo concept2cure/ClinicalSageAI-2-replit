@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+(node:10466) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10466) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › tests/e2e/project-step-return.e2e.ts:5:1 › the project chip and a reload remember Plan after starting a document (20.6s)
+
+
+  1) [chromium] › tests/e2e/project-step-return.e2e.ts:5:1 › the project chip and a reload remember Plan after starting a document 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.pj-lc-stage[aria-current="step"]')
+    Expected: [32m"Plan"[39m
+    Received: [31m"Author"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('.pj-lc-stage[aria-current="step"]')[22m
+    [2m    9 × locator resolved to <button type="button" class="pj-lc-stage" aria-current="step" data-status="active" title="Draft eCTD sections with AnA, track changes">…</button>[22m
+    [2m      - unexpected value "Author"[22m
+
+
+      44 |   await page.locator('button.tb-proj').click();
+      45 |   await expect(page).toHaveURL(/project-home/);
+    > 46 |   await expect(activeStep).toHaveText('Plan');
+         |                            ^
+      47 |   await expect(page.locator('details[data-phase="phase1"] > summary')).toContainText('1 started');
+      48 |   await testInfo.attach('returned-plan.png', { body: await page.screenshot(), contentType: 'image/png' });
+      49 |
+        at /workspace/ClinicalSageAI-2-replit/tests/e2e/project-step-return.e2e.ts:46:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e/project-step-return.e2e.ts-e634b-n-after-starting-a-document-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e/project-step-return.e2e.ts-e634b-n-after-starting-a-document-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/project-step-return.e2e.ts:5:1 › the project chip and a reload remember Plan after starting a document 

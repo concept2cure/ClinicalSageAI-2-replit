@@ -1,0 +1,27 @@
+ × client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > asks the existing draft route once per approach and labels each by what was asked 240ms
+   → Unable to find an accessible element with the role "button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > shows each alternative as it arrives, without moving focus 75ms
+   → Unable to find an accessible element with the role "button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > keeps each alternative’s own edits when the person switches between them 69ms
+   → Unable to find an accessible element with the role "button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > accepts the whole alternative that is shown, through the existing accept 60ms
+   → Unable to find an accessible element with the role "button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > compares the shown alternative with another one as a redline 64ms
+   → Unable to find an accessible element with the role "button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > says how many arrived when one alternative fails, and keeps the ones that did 54ms
+   → Unable to find an accessible element with the role "button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > refuses with no provider and shows nothing that looks like a draft 54ms
+   → Unable to find an accessible element with the role "button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > discarding drops every alternative 57ms
+   → Unable to find an accessible element with the role "button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > replaces the current paragraph the chosen one is paired with, naming the alternative’s turn 5340ms
+   → Unable to find role="button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > adds chosen paragraphs to an empty section as one addition, each decided on its own 5162ms
+   → Unable to find role="button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > keeps an answer the governed-write rule does not admit out of the section 5147ms
+   → Unable to find role="button" and name "Draft three alternatives"
+ × client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > says before the click that chosen paragraphs carry no source citations 5161ms
+   → Unable to find role="button" and name "Draft three alternatives"
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  12 failed (12)

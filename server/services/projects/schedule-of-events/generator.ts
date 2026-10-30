@@ -113,7 +113,7 @@ export function generateSchedule(input: GenerateScheduleInput): GeneratedSchedul
     if (m.regulatoryBasis) rationaleParts.push(`Required by ${m.regulatoryBasis}.`);
     rationaleParts.push(
       `Placed at day ${scaledOffset} of the ${template.label} pathway` +
-        (factor !== 1 ? ` (compressed ${Math.round(factor * 100)}% to meet the program target).` : '.')
+        (factor !== 1 ? ` (compressed ${Math.round(factor * 100)}% to meet the project target).` : '.')
     );
     if (m.isCritical) rationaleParts.push('On the critical path.');
     return {
@@ -145,10 +145,10 @@ export function generateSchedule(input: GenerateScheduleInput): GeneratedSchedul
     `${milestones.length} milestones anchored from ${baseline.toISOString().slice(0, 10)}` +
     (requestedTarget
       ? ` toward a target of ${requestedTarget.toISOString().slice(0, 10)}`
-      : ` over a nominal ${template.nominalDurationDays}-day program`) +
+      : ` over a nominal ${template.nominalDurationDays}-day project`) +
     `. ` +
     (goalCount
-      ? `Aligned to ${goalCount} program goal${goalCount === 1 ? '' : 's'}. `
+      ? `Aligned to ${goalCount} project goal${goalCount === 1 ? '' : 's'}. `
       : '') +
     (factor < 0.85
       ? `Timeline compressed to ${Math.round(factor * 100)}% of nominal to hit the target — confidence is ${confidence}; consider parallelizing critical-path work.`

@@ -200,7 +200,7 @@ describe('the dispatched sequence has a package and a transmit (the blocker)', (
 
   it('with no application number or applicant on record, says "not recorded" and the server refusal, never a placeholder', async () => {
     seqs = [seqRow({ status: 'dispatched' })];
-    const refusal = 'A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the program code is not one). Nothing can be sent until it is recorded.';
+    const refusal = 'A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the project code is not one). Nothing can be sent until it is recorded.';
     mockApi((method, url) =>
       method === 'POST' && url === '/api/submissions/sequences/21/governed-precheck'
         ? ok({ step: 'transmit', cleared: false, refusal, transmit: { ...TRANSMIT({ staging: true, production: false }), recordedApplicationNumber: null, recordedApplicant: null, refusal } })
@@ -259,7 +259,7 @@ describe('a transmit signature serves only the transmit it was given for (P-23)'
       prechecks.push(body);
       const typed = (body as { applicationId?: string }).applicationId;
       return typed && typed !== '000512'
-        ? ok({ step: 'transmit', cleared: false, refusal: `Application number "${typed}" does not match the program's recorded application number "000512". The record is authoritative: transmit under the recorded number, or correct the program record first. Nothing was sent.`, transmit: TRANSMIT })
+        ? ok({ step: 'transmit', cleared: false, refusal: `Application number "${typed}" does not match the program's recorded application number "000512". The record is authoritative: transmit under the recorded number, or correct the project record first. Nothing was sent.`, transmit: TRANSMIT })
         : ok({ step: 'transmit', cleared: true, refusal: null, transmit: TRANSMIT });
     });
     await ready();

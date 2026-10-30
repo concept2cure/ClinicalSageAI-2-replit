@@ -112,7 +112,7 @@ export default function createReviewBoardRoutes(): Router {
     if (req.query.programId != null && String(req.query.programId) !== '') {
       const p = String(req.query.programId);
       if (!UUID_RE.test(p)) {
-        return res.status(400).json({ success: false, error: 'programId must be a regulatory program id (UUID)' });
+        return res.status(400).json({ success: false, error: 'programId must be a project id (UUID)' });
       }
       programId = p;
     }

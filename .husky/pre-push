@@ -353,18 +353,17 @@ if ! npm run --silent ci:unauthenticated-fetch 2>&1; then
 fi
 echo "   ✅ Client fetch() authentication passed."
 
-# Cheap, no database, and guards a privilege-escalation footgun: `SET
-# app.bypass_rls` is SESSION-scoped, so it survives client.release() and the
-# next checkout — a different tenant — inherits a full RLS bypass across 142
-# policies. There are 17 copyable examples in unmounted services; this stops an
-# eighteenth appearing in reachable code.
+# Cheap, no database. No session setting lifts row-level security (P-70,
+# 08619d5cc): no policy, function or code reads app.bypass_rls or app.is_admin,
+# and no script writes either. The platform scope itself becomes a role (P-72,
+# docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md).
 echo "   Validating no new session-scoped RLS bypass..."
 if ! npm run --silent ci:session-scoped-rls-bypass 2>&1; then
   echo ""
   echo "🚫 ERROR: Session-scoped RLS bypass check FAILED."
-  echo "   Use 'SET LOCAL app.bypass_rls' inside an explicit transaction so"
-  echo "   Postgres discards it at COMMIT/ROLLBACK, or release the connection with"
-  echo "   releaseWithoutBypass() (server/services/innovation/rlsBypassSession.ts)."
+  echo "   Nothing may read or set app.bypass_rls or app.is_admin (P-70). A path that"
+  echo "   must read across tenants does it through a reviewed SECURITY DEFINER door on"
+  echo "   scripts/db/security-definer-allowlist.json, never through a setting."
   echo ""
   exit 1
 fi
@@ -491,6 +490,16 @@ if ! npm run --silent ci:program-ownership-single-source:selftest 2>&1 || ! npm 
   exit 1
 fi
 echo "   ✅ One program-ownership check."
+
+# D2/A2.9: canonical intake owns creation, not merely the best-known UI door.
+# The self-test plants alternate SQL/ORM writers and checks bounded exceptions.
+echo "   Checking that project creation stays with its recorded owners..."
+if ! npm run --silent ci:project-creation-owners:selftest 2>&1 || ! npm run --silent ci:project-creation-owners 2>&1; then
+  echo "🚫 ERROR: An alternate project creator or an unbounded writer exception."
+  echo "   Use Projects -> POST /api/c2c/projects; keep deferred writers explicit."
+  exit 1
+fi
+echo "   ✅ Project creation stays with its recorded owners."
 
 # ── A Part 11 audit row written and its outcome discarded (unconditional) ──
 #

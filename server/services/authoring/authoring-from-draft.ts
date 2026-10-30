@@ -243,8 +243,8 @@ function parseDraftSections(raw: unknown): Parsed<DraftSectionInput[]> {
 export function parseDraftInput(raw: unknown): Parsed<CreateDocumentFromDraftInput> {
   const b = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const programId = typeof b.programId === 'string' ? b.programId.trim() : '';
-  if (!programId) return { ok: false, error: 'programId is required — an AnA-built document is filed in a project' };
-  if (!UUID_RE.test(programId)) return { ok: false, error: 'programId must be a valid UUID' };
+  if (!programId) return { ok: false, error: 'A project is required — an AnA-built document is filed in a project' };
+  if (!UUID_RE.test(programId)) return { ok: false, error: 'The project id must be a valid UUID.' };
   const title = typeof b.title === 'string' ? b.title.trim() : '';
   if (!title) return { ok: false, error: 'title is required' };
   const sections = parseDraftSections(b.sections);

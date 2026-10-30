@@ -108,7 +108,7 @@ export async function resolveProgramIdent(
     };
   } catch (error) {
     logger.error('program facts read failed', { err: error instanceof Error ? error.message : String(error) });
-    throw new ProgramFactsWriteRefusal('PROGRAM_FACTS_UNAVAILABLE', 503, 'The recorded program facts could not be read. Reload them before generating a form or recording another change.');
+    throw new ProgramFactsWriteRefusal('PROGRAM_FACTS_UNAVAILABLE', 503, 'The recorded project facts could not be read. Reload them before generating a form or recording another change.');
   }
 }
 
@@ -154,7 +154,7 @@ function parseProgramFacts(
 ): { ident: string; patch: ProgramFactsPatch; reason: string; expectedFactsVersion: string } | { refusal: string } {
   const ident = typeof body.projectIdent === 'string' ? body.projectIdent.trim() : '';
   if (ident === '' || /^\d+$/.test(ident)) {
-    return { refusal: 'projectIdent (the program UUID or code) is required: these facts are recorded on a program.' };
+    return { refusal: 'projectIdent (the project UUID or code) is required: these facts are recorded on a project.' };
   }
   const patch: ProgramFactsPatch = {};
   const fields = ['sponsorAddress', 'indType', 'applicationNumber', 'applicantSponsorId'] as const;
@@ -163,14 +163,14 @@ function parseProgramFacts(
     if (value === false) return { refusal: `${key} is text, or null to clear.` };
     if (value !== undefined) patch[key] = value;
   }
-  if (Object.keys(patch).length === 0) return { refusal: 'State a program fact to record.' };
+  if (Object.keys(patch).length === 0) return { refusal: 'State a project fact to record.' };
   const refusal = patchRefusal(patch, indTypes);
   if (refusal) return { refusal };
   const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
   if (reason.length < 8 || reason.length > 2000) return { refusal: 'State a reason for the change (8–2000 characters).' };
   const expectedFactsVersion = typeof body.expectedFactsVersion === 'string' ? body.expectedFactsVersion : '';
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(expectedFactsVersion)) {
-    return { refusal: 'Reload the recorded program facts and provide their exact expectedFactsVersion.' };
+    return { refusal: 'Reload the recorded project facts and provide their exact expectedFactsVersion.' };
   }
   return { ident, patch, reason, expectedFactsVersion };
 }
@@ -198,7 +198,7 @@ async function validateAndLockSponsor(
   program: ResolvedProgram, patch: ProgramFactsPatch, organizationId: number,
 ): Promise<void> {
   if (typeof patch.indType === 'string' && (program.programType ?? '').trim().toUpperCase() !== 'IND') {
-    throw new ProgramFactsWriteRefusal('VALIDATION', 400, `An IND type is recorded only on an IND program; this program is ${program.programType ?? 'of no recorded type'}.`);
+    throw new ProgramFactsWriteRefusal('VALIDATION', 400, `An IND type is recorded only on an IND project; this project is ${program.programType ?? 'of no recorded type'}.`);
   }
   if (typeof patch.applicationNumber === 'string' && (program.primaryAgency ?? '').trim().toUpperCase() === 'FDA' && !FDA_APPLICATION_NUMBER_PATTERN.test(patch.applicationNumber)) {
     throw new ProgramFactsWriteRefusal('VALIDATION', 400, 'FDA application numbers are the six digits FDA assigned, including leading zeros and without an IND/NDA/BLA prefix.');
@@ -253,7 +253,7 @@ export async function recordProgramFormFacts(
     const program = await resolveProgramIdent(resolved.id, ctx.organizationId, database);
     if (!program) throw new ProgramFactsWriteRefusal('NOT_FOUND', 404, 'Project not found for this organization.');
     if (program.factsVersion !== expectedFactsVersion) {
-      throw new ProgramFactsWriteRefusal('PROGRAM_FACTS_CONFLICT', 409, 'The recorded program facts changed. Reload them before saving another change. Nothing was written.');
+      throw new ProgramFactsWriteRefusal('PROGRAM_FACTS_CONFLICT', 409, 'The recorded project facts changed. Reload them before saving another change. Nothing was written.');
     }
     await validateAndLockSponsor(client, program, patch, ctx.organizationId);
     await updateProgramFacts(client, program, patch, ctx.organizationId);
@@ -280,8 +280,8 @@ export async function recordProgramFormFacts(
       commitStarted ? 'PROGRAM_FACTS_UNCONFIRMED' : 'PROGRAM_FACTS_UNAVAILABLE',
       503,
       commitStarted
-        ? 'The program change could not be confirmed. Reload its recorded facts and audit history before retrying.'
-        : 'The program facts and their audit entry could not be recorded. Nothing was written.',
+        ? 'The project change could not be confirmed. Reload its recorded facts and audit history before retrying.'
+        : 'The project facts and their audit entry could not be recorded. Nothing was written.',
     );
   } finally {
     client?.release();

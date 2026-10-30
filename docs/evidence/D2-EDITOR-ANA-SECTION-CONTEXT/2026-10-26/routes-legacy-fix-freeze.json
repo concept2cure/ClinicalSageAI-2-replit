@@ -1,0 +1,16 @@
+{
+  "files": {
+    "server/routes/chat/__tests__/send-message-saved-section-context.pglite.test.ts": "e8c03d630330f0f025f6c480204aae1d2d99c28d17b78d5fdb7ab19795fbd561",
+    "server/routes/chat/open-document-context.ts": "2cab4c8d1fba58ccae0a4d7ab511cd705ff70beb709f4c67dcb4992da45b3d90",
+    "server/routes/chat/send-message.ts": "d4f5573a307f5b86e62f2534af50c47743c7ab457f3b7f2a4f82433b1919bdaf",
+    "server/routes/ana-ri/stream.ts": "73a428b5e5a9feb4361731bd59e1ab4c9216730f132bbcb083412bab6c375211",
+    "server/services/ana-ri/chat-context-builder.ts": "b1c27764bbc9df399cb62ec819e834df5a0eab944da76a4216847c8d58b5d2c9",
+    "server/services/ana-ri/context-blocks.ts": "0e9e35cb618fb0222046188ba440f8ebdba7cf0bd3e486ee0063d8db1b888ea6",
+    "server/services/ana-ri/open-document.ts": "13f45982b2eb4967c5b9846176ba3a80d60b7b81e421a4efa6b67e8d315a65f3",
+    "server/services/ana-ri/saved-open-template.ts": "959c4b12066ab2aa49d980e4e39ae5610fdee1330e49abd3d65000e1459075fb",
+    "server/services/authoring/authoring-draft-template.ts": "897cb654b852f3482f22730043e3e69d579b899f67e20f5d5e72335daef9f991",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369",
+    "server/services/ana-ri/__tests__/open-document-prompt-context.test.ts": "06cb40ddeb265381ee23039b85d659ae35467bd10af03a3e1c294c497a12f23e",
+    "server/routes/ana-ri/__tests__/stream-context-latency.test.ts": "4377c914a033876f023907ea3bf8feb27458117b000fe3dde4f016b422cc48ce"
+  }
+}

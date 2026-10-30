@@ -48,8 +48,8 @@ const TARGETS: ReadonlyArray<{ targetField: string; entity: OnboardingEntity; la
   { targetField: 'org_profile.name', entity: 'org_profile', label: 'Organization name', hint: 'The legal or trading name of the company.' },
   { targetField: 'org_profile.clientType', entity: 'org_profile', label: 'Client type', hint: 'One of: medtech, biotech, pharma, diagnostics, cro, health.' },
   { targetField: 'org_profile.industryMode', entity: 'org_profile', label: 'Industry area', hint: 'The industry or therapeutic focus, 2-64 characters.' },
-  { targetField: 'program.name', entity: 'program', label: 'Program name', hint: 'The study, product or program name.' },
-  { targetField: 'program.code', entity: 'program', label: 'Program code', hint: 'A short identifier such as MER-204.' },
+  { targetField: 'program.name', entity: 'program', label: 'Project name', hint: 'The study, product or project name.' },
+  { targetField: 'program.code', entity: 'program', label: 'Project code', hint: 'A short identifier such as MER-204.' },
   { targetField: 'program.pathway', entity: 'program', label: 'Regulatory pathway', hint: 'e.g. IND, NDA, BLA, 510(k), De Novo, PMA, MAA.' },
   { targetField: 'program.indication', entity: 'program', label: 'Indication', hint: 'The disease or condition studied.' },
   { targetField: 'program.phase', entity: 'program', label: 'Phase', hint: 'e.g. Preclinical, Phase 1, Phase 2, Phase 3.' },
@@ -61,7 +61,7 @@ const TARGET_BY_FIELD = new Map(TARGETS.map((t) => [t.targetField, t]));
 
 const GROUP_LABEL: Record<OnboardingEntity, string> = {
   org_profile: 'Organization profile',
-  program: 'First program',
+  program: 'First project',
   contact: 'Primary contact',
 };
 

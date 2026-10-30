@@ -1,0 +1,18 @@
+Adversarial review, 2026-10-29. Red before the fix: npx vitest run server/services/csr/__tests__/adam-source-derivation.test.ts
+ × server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AESDTH and AEOUT both blank rather than counting it 0 30ms
+   → expected a refusal
+ × server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AESDTH blank and AEOUT UNKNOWN rather than counting it 0 14ms
+   → expected a refusal
+ × server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AEACN blank rather than counting it 0 6ms
+   → expected a refusal
+ × server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent row with AEACN UNKNOWN rather than counting it 0 5ms
+   → expected a refusal
+ × server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §10.1 reports the death and the loss to follow-up, and "not recorded" for what ADSL cannot establish 8ms
+   → expected [ …(7) ] to deeply equal [ …(7) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+Error: expected a refusal
+     24|   throw new Error('expected a refusal');
+AssertionError: expected [ …(7) ] to deeply equal [ …(7) ]
+-     "Discontinued (other reasons)",
++     "Discontinued (any reason)",
+      Tests  5 failed | 23 passed (28)

@@ -293,6 +293,8 @@ describe('GET /api/csr/jobs/:jobId/sections', () => {
     const sections = [
       { id: 1, jobId: 42, sectionNumber: '1', content: 'Section 1', organizationId: 100 },
       { id: 2, jobId: 42, sectionNumber: '2', content: 'Section 2', organizationId: 100 },
+      { id: 3, jobId: 42, sectionNumber: '3', content: 'Redrafted', organizationId: 100, reviewStatus: 'approved', contentHash: 'h2', reviewedContentHash: 'h1' },
+      { id: 4, jobId: 42, sectionNumber: '4', content: 'Approved', organizationId: 100, reviewStatus: 'approved', contentHash: 'h3', reviewedContentHash: 'h3' },
     ];
     hoisted.getCSRSectionOutputs.mockResolvedValue(sections);
 
@@ -301,7 +303,16 @@ describe('GET /api/csr/jobs/:jobId/sections', () => {
     );
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ sections });
+    // Since 7b209818ac (CSR slice 3) each row carries the review state a reader should see
+    // (csr-section-review.ts effectiveReviewState): an unreviewed section reads as a draft, an
+    // approval of since-redrafted text reads as a draft with a stale approval, a current one as approved.
+    const reviews = [
+      { state: 'draft', staleApproval: false },
+      { state: 'draft', staleApproval: false },
+      { state: 'draft', staleApproval: true },
+      { state: 'approved', staleApproval: false },
+    ];
+    expect(res.body).toEqual({ sections: sections.map((section, i) => ({ ...section, review: reviews[i] })) });
     expect(hoisted.getCSRSectionOutputs).toHaveBeenCalledWith(42, 100);
   });
 });

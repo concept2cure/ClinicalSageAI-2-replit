@@ -122,7 +122,7 @@ export class RegisterWriteRefusal extends Error {
 /* ─── The program a register record is filed under ────────────────────────── */
 
 export const PROJECT_NOT_IN_TENANT_REFUSAL =
-  'The program named is not one of this organisation’s programs, so the record was not filed under it.';
+  'The project named is not one of this organisation’s projects, so the record was not filed under it.';
 
 /**
  * The program a NEW register record is filed under: the body's, once it is
@@ -192,8 +192,8 @@ export async function projectOnEdit(
   );
   if (elsewhere.rows.length > 0) {
     throw new RegisterWriteRefusal(
-      'This record is already part of another program’s Module 3, so it was not filed under this one and nothing ' +
-        'was changed. Open that program to edit it, or record it again in this program.',
+      'This record is already part of another project’s Module 3, so it was not filed under this one and nothing ' +
+        'was changed. Open that project to edit it, or record it again in this project.',
     );
   }
   return { found: true, set: { projectId } };
@@ -514,7 +514,7 @@ export function registerBodyRefusal(register: RegisterName, body: unknown): stri
   const projectIssue = parsed.error.issues.find((i) => i.path[0] === 'projectId');
   const hint =
     register === 'manufacturing_process' && projectIssue
-      ? ' The manufacturing register keys its program by uuid; a legacy numeric project id cannot file a process — run the interview under a program.'
+      ? ' The manufacturing register keys its project by uuid; a tracking-record id cannot file a process — run the interview under a project.'
       : '';
   return `${register}: ${issues.join('; ')}.${hint}`;
 }

@@ -651,7 +651,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         ...designFacts,
       },
       availableActions: [
-        'Load one of the program\'s persisted study designs into the engine',
+        'Load one of the project\'s persisted study designs into the engine',
         'Adjust any design input or preset — the engine re-sizes the design and rewrites the document',
         'Pick a different statistical document type to generate',
         'Refine the document with AnA',
@@ -879,7 +879,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         {/* The list is org-scoped (every persisted statistical_summary artifact for the
             tenant), so the sub-label reads "org-scoped" — not "this project", which would
             misrepresent an organization/portfolio-wide list as a single project's. */}
-        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">{(govDocs.rows.length > 0 ? govDocs.rows.length + ' persisted · ' : '') + (program ? 'this program' : 'org-scoped')}</span></div>
+        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">{(govDocs.rows.length > 0 ? govDocs.rows.length + ' persisted · ' : '') + (program ? 'this project' : 'org-scoped')}</span></div>
         <div className="pj-card-b" style={{ padding: 8 }}>
           {govDocs.loading ? (
             <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading governed documents…</div>

@@ -46,6 +46,16 @@ import { pool } from '../../db.js';
 import type { Queryable } from './document-catalog.service.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety.js';
+import { signatureTypeFor } from '../../utils/fileSignature.js';
+import { extractInline } from './vault-inline-extraction.js';
+import { pendingExtractionOutcome } from './document-catalog-core.js';
+import { nudgeVaultProcessing } from '../../jobs/vaultProcessingSweep.js';
+
+/** The ingest response's word for a catalog status. */
+function extractionStateOf(status: string): 'extracted' | 'pending' | 'failed' {
+  if (status === 'extraction_pending') return 'pending';
+  return status === 'extraction_failed' ? 'failed' : 'extracted';
+}
 import { writeChainedAuditRow } from '../auditService.js';
 import { getStorageProvider } from '../storage/index.js';
 import {
@@ -56,7 +66,8 @@ import {
 } from './vault-ingest-discard.js';
 import { ingestTargetRefusal, ingestSourceRefusal } from './vault-ingest-access.js';
 import { readRecordedVersion, reuploadChanges, reuploadDiffers } from './vault-reupload.js';
-import { checkInArgumentRefusal, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
+import { checkInArgumentRefusal, checkInAuditDetails, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock, withdrawHeadReviewRoute } from './vault-version-checkin.js';
+import { notifyTaskEvent } from '../tasking/task-side-effects.js';
 import {
   classifyForFiling,
   filingVocabularyRefusal,
@@ -91,6 +102,39 @@ function sha256Bytes(buf: Buffer): string {
  * per put, so removing it cannot touch the bytes of a record that already
  * exists — including the one a DUPLICATE_CONTENT refusal points at.
  */
+/**
+ * A version the sender typed, for a document code that already has versions,
+ * without naming it as the next version (Part 11 review F1, 2026-10-22). It
+ * would record a second version of the same document with no supersession and
+ * no lineage, numbered outside the Vault's own numbering (nextMajorVersion).
+ * Refused for the callers that ask (`numberedByVault`, the upload route); a
+ * service that keeps its own numbering through this path (eSTAR, authoring)
+ * does not ask. The version already recorded is not this refusal's: it goes on
+ * to the conflict and same-bytes rules below.
+ */
+async function typedVersionRefusal(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
+  args: Pick<VaultIngestArgs, 'numberedByVault' | 'version' | 'programId'>,
+  orgId: number,
+  documentCode: string,
+): Promise<VaultIngestResult | null> {
+  if (!args.numberedByVault || args.version === undefined) return null;
+  const { rows } = await client.query(
+    `SELECT 1 FROM vault.documents
+      WHERE program_id = $1::uuid AND organization_id = $2 AND document_code = $3 AND deleted_at IS NULL LIMIT 1`,
+    [args.programId, orgId, documentCode],
+  );
+  if (!rows.length) return null;
+  const head = await currentVersionOfCode(client, { organizationId: orgId, programId: args.programId, documentCode });
+  return {
+    ok: false, status: 409, code: 'VERSION_FOR_EXISTING_DOCUMENT',
+    message:
+      `Document code "${documentCode}" already has recorded versions in this project${head ? ` (the current one is v${head.version})` : ''}. ` +
+      'The Vault numbers a new version: send this file as the next version of that document, or under a new code. Nothing was saved.',
+    ...(head ? { headDocumentId: head.id, headVersion: head.version } : {}),
+  };
+}
+
 export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultIngestResult> {
   const stored: StoredUpload = { versionId: null, orgId: null, committed: false };
   let result: VaultIngestResult;
@@ -152,7 +196,7 @@ async function admitVaultDocument(
   if (targetRefusal) return targetRefusal;
 
   const fileName = args.fileName || 'document';
-  const mimeType = args.mimeType || 'application/octet-stream';
+  const declaredMime = args.mimeType || 'application/octet-stream';
   const fileSize = args.fileBuffer.length;
   const userId = args.userId ?? null;
 
@@ -169,20 +213,24 @@ async function admitVaultDocument(
   // this handler returned by hand, so the client contract is unchanged apart
   // from that new 503.
   try {
-    await assertUploadSafe(args.fileBuffer, mimeType, fileName, { origin: args.origin ?? 'upload' });
+    await assertUploadSafe(args.fileBuffer, declaredMime, fileName, { origin: args.origin ?? 'upload' });
   } catch (err) {
     if (err instanceof UploadSafetyError) {
       return { ok: false, status: err.status, code: err.code, message: err.message };
     }
     throw err;
   }
+  // Stored as the type the name binds, which the bytes were just checked
+  // against: an .xpt a browser sent as octet-stream is recorded as a transport
+  // file, a .csv sent as text/plain as CSV (MR-08 Stage 3 step 3).
+  const mimeType = signatureTypeFor(fileName, declaredMime);
 
   const contentHash = sha256Bytes(args.fileBuffer);
 
   // A check-in is planned before any byte is stored, so a refusal stores
   // nothing, and again under the head's row lock in the transaction below.
   const checkIn = args.supersedesDocumentId
-    ? await planCheckIn(db, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash })
+    ? await planCheckIn(db, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash, restoreOf: args.restoreOf?.versionId })
     : null;
   if (checkIn && !checkIn.ok) return checkIn;
   // What this version is recorded as: a check-in's are the server's.
@@ -303,9 +351,18 @@ async function admitVaultDocument(
     const { pdfPageCount } = await import('../ocr/pdfInspector.js');
     pageCount = await pdfPageCount(args.fileBuffer);
   }
-  try {
-    const { extractDocumentText } = await import('../ocr/index.js');
-    const extracted = await extractDocumentText(args.fileBuffer, mimeType, fileName);
+  /* A text layer only, within the request's size and time budget (MR-08
+     Stage 3): what needs OCR, or more, is recorded as pending and read by the
+     processing sweep, so a long scanned PDF no longer holds the response open. */
+  const inline = await extractInline(args.fileBuffer, mimeType, fileName);
+  const extractionPending = inline.kind === 'pending';
+  if (inline.kind === 'failed') {
+    extractionError = inline.error;
+    logger.warn('Vault ingest text extraction failed (non-fatal)', { err: inline.error });
+  } else if (inline.kind === 'pending') {
+    logger.info('Vault ingest text left for the processing sweep', { reason: inline.reason, size: fileSize });
+  } else {
+    const extracted = inline.extracted;
     extractionMethod = extracted.method;
     extractionConfidence = extracted.confidence;
     if (extracted.text && extracted.text.trim().length > 0) {
@@ -318,9 +375,6 @@ async function admitVaultDocument(
         pagesMapped: pageSpans?.length ?? 0,
       });
     }
-  } catch (extractErr: any) {
-    extractionError = extractErr?.message ?? 'unknown extraction error';
-    logger.warn('Vault ingest text extraction failed (non-fatal)', { err: extractErr?.message });
   }
 
   /* The catalog's extraction tier and the passage index are deterministic and
@@ -360,7 +414,7 @@ async function admitVaultDocument(
   } else if (args.folderId) {
     if (!isFolderInView(vaultView, args.folderId)) {
       return { ok: false, status: 400, code: 'INVALID_FOLDER',
-        message: `Folder '${args.folderId}' does not exist in this program's ${vaultView} vault taxonomy.` };
+        message: `Folder '${args.folderId}' does not exist in this project's ${vaultView} vault taxonomy.` };
     }
     placement = {
       folderId: args.folderId,
@@ -414,11 +468,13 @@ async function admitVaultDocument(
     }
     // A check-in holds its head's row lock from here to COMMIT: a concurrent
     // check-in waits, then finds this version and is refused, naming it.
-    const stale = checkIn && (await recheckUnderLock(client, { organizationId: orgId, programId: args.programId, contentHash }, checkIn));
+    const stale = checkIn && (await recheckUnderLock(client, { organizationId: orgId, programId: args.programId, contentHash, restoreOf: args.restoreOf?.versionId }, checkIn));
     if (stale) return (await client.query('ROLLBACK'), stale);
     // What is already recorded at this (program, code, version), locked: a
     // same-bytes retry is judged against it (vault-reupload.ts).
     const recorded = await readRecordedVersion(client, args.programId, documentCode, version);
+    const typedRefusal = !checkIn && !recorded ? await typedVersionRefusal(client, args, orgId, documentCode) : null;
+    if (typedRefusal) return (await client.query('ROLLBACK'), typedRefusal);
     // An empty pre-read can still race with another admission. Only the UUID
     // returned by INSERT / ON CONFLICT proves whether this operation created it.
     const candidateId = randomUUID();
@@ -443,7 +499,7 @@ async function admitVaultDocument(
         placement_status, placement_confidence, placement_rationale,
         placed_by, placed_at,
         processing_status, created_by, organization_id,
-        storage_version_id, storage_provider, id
+        storage_version_id, storage_provider, id, restored_from_id
       ) VALUES (
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9, $10,
@@ -458,7 +514,7 @@ async function admitVaultDocument(
         $22, $23, $24,
         $25, CASE WHEN $25::integer IS NULL THEN NULL ELSE NOW() END,
         'PENDING', $26, $27,
-        $28, $29, $31
+        $28, $29, $31, $32
       )
       ON CONFLICT (program_id, document_code, version) DO UPDATE SET
         -- Title, type, classification and filing are not in this list: a
@@ -481,9 +537,11 @@ async function admitVaultDocument(
         retention_until = COALESCE(vault.documents.retention_until, EXCLUDED.retention_until),
         parent_document_id = COALESCE(vault.documents.parent_document_id, EXCLUDED.parent_document_id),
         supersedes_id = COALESCE(vault.documents.supersedes_id, EXCLUDED.supersedes_id),
-        extracted_text = EXCLUDED.extracted_text,
-        page_count = EXCLUDED.page_count,
-        word_count = EXCLUDED.word_count,
+        -- A same-bytes retry the request could not read keeps the text the
+        -- processing sweep already read (MR-08 Stage 3).
+        extracted_text = COALESCE(EXCLUDED.extracted_text, vault.documents.extracted_text),
+        page_count = COALESCE(EXCLUDED.page_count, vault.documents.page_count),
+        word_count = COALESCE(EXCLUDED.word_count, vault.documents.word_count),
         processing_status = 'PENDING',
         -- Repairs a row that predates the tenant key without ever moving one:
         -- the ownership guard above proved this program belongs to $27.
@@ -536,10 +594,10 @@ async function admitVaultDocument(
         placement.placedBy,
         userId,
         orgId,
-        storageVersionId,
-        storageProvider,
+        storageVersionId, storageProvider,
         DEFAULT_RETENTION_YEARS,
-        candidateId,
+        // A restore names the version whose bytes these are; the database checks it.
+        candidateId, (checkIn && args.restoreOf?.versionId) || null,
       ],
     );
 
@@ -558,7 +616,7 @@ async function admitVaultDocument(
         ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT',
         message:
           `A different document is already recorded at code "${documentCode}" ` +
-          `version "${version}" for this program. Nothing was changed. ` +
+          `version "${version}" for this project. Nothing was changed. ` +
           'Add it as a new version of that document instead of replacing the recorded one.',
         ...(head ? { headDocumentId: head.id, headVersion: head.version } : {}),
       };
@@ -570,15 +628,17 @@ async function admitVaultDocument(
        a failure with its reason — the state this catalog exists to make
        visible — and a re-upload with new bytes voids any prior comprehension
        (the service handles that in its upsert). */
-    await recordExtractionOutcome(client, {
+    const catalogStatus = await recordExtractionOutcome(client, {
       documentId: String(doc.id),
       contentHash,
-      outcome: buildExtractionOutcome({
-        text: extractedText,
-        method: extractionMethod,
-        confidence: extractionConfidence,
-        error: extractionError,
-      }),
+      outcome: extractionPending
+        ? pendingExtractionOutcome()
+        : buildExtractionOutcome({
+          text: extractedText,
+          method: extractionMethod,
+          confidence: extractionConfidence,
+          error: extractionError,
+        }),
       pageCount,
     });
 
@@ -603,6 +663,8 @@ async function admitVaultDocument(
       tenantId: orgId,
       userId: userId ?? undefined,
       action: recorded ? 'vault.document.reupload' : 'vault.document.ingest',
+      // A restore's reason is on the row's reason column, where the history reads it.
+      reason: checkIn ? args.restoreOf?.reason : undefined,
       resourceType: 'vault_document',
       resourceId: String(doc.id),
       ipAddress: args.ipAddress,
@@ -623,7 +685,7 @@ async function admitVaultDocument(
         ...(args.dataRoomSourceId != null ? { dataRoomSource: { sourceId: args.dataRoomSourceId } } : {}),
         ...(args.companyLegalSource ? { companyLegalSource: args.companyLegalSource } : {}),
         // A check-in names what it succeeds; its filing is the head's (above).
-        ...(checkIn ? { lineage: { supersedes: checkIn.head.id, predecessorVersion: checkIn.head.version, filingKept: true } } : {}),
+        ...(checkIn ? checkInAuditDetails(checkIn.head, version, args.restoreOf) : {}),
         /* WHERE the document was filed and WHO/WHAT decided — the audit
            trail records the placement decision, not merely that an upload
            happened. A 'suggested' placement is attributed to the classifier
@@ -632,11 +694,19 @@ async function admitVaultDocument(
       },
     });
 
+    // A check-in supersedes its head: the head's open review route, if any,
+    // is withdrawn on this transaction (RR1a, §2.9); its notices wait for COMMIT.
+    const routeNotices = checkIn && doc.id === candidateId && userId
+      ? await withdrawHeadReviewRoute(client, { organizationId: orgId, headId: checkIn.head.id, version, actorUserId: userId })
+      : [];
+
     // Protect possibly held bytes before COMMIT: losing its acknowledgement
     // cannot establish whether the row and audit committed.
     commitAttempted = true;
     stored.committed = true;
     await client.query('COMMIT');
+    for (const notice of routeNotices) notifyTaskEvent(notice);
+    if (catalogStatus === 'extraction_pending') nudgeVaultProcessing();
     // Committed means a committed record holds THIS copy. A retry's record
     // keeps the copy it already names, and the wrapper removes this one.
     stored.committed = doc.storage_version_id === storageVersionId;
@@ -677,6 +747,8 @@ async function admitVaultDocument(
         contentHash,
         processingStatus: doc.processing_status,
         hasExtractedText: !!extractedText,
+        // Whether this version's text was read, is still being read, or could not be.
+        extraction: extractionStateOf(catalogStatus),
         wordCount,
         createdAt: doc.created_at,
         updatedAt: doc.updated_at,
@@ -711,7 +783,7 @@ async function admitVaultDocument(
       return {
         ok: false, status: 409, code: 'DUPLICATE_CONTENT',
         message:
-          'These exact bytes are already recorded in this program under a different ' +
+          'These exact bytes are already recorded in this project under a different ' +
           'document code. Nothing was changed — file the existing document rather than ' +
           'admitting a second copy of it.',
       };

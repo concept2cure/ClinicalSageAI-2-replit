@@ -1,0 +1,15 @@
+# M26: the form offers the project only when none is open
+# file: client/src/concept2cure/quality/ChangeControl.tsx
+# command: npx vitest run client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx
+# exit: 1
+# original sha256 ee2c1351d66cdf8c1c9a718959fd6b5d3f5cdfceba13cbf336eeea03426c093b; restored byte for byte: True
+
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers the open project beside an organisation-wide change, and starts on organisation-wide 484ms
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends the open project when the person files the change under it 283ms
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers no project when none is open, and sends none 146ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers the open project beside an organisation-wide change, and starts on organisation-wide
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends the open project when the person files the change under it
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers no project when none is open, and sends none

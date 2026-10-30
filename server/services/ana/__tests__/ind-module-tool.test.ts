@@ -1,6 +1,6 @@
 /** The registered IND planner checks its own supplied-string scaffold, never an authored artifact or source. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildIndModuleAuthoringPlan, evaluateIndModuleVerification, IND_MODULE_TEMPLATES } from 'shared/ana/ind-module-authoring.js';
+import { buildIndModuleAuthoringPlan, evaluateIndModuleVerification, IND_MODULE_TEMPLATES } from '../ind-module-authoring.js';
 
 const h = vi.hoisted(() => ({ query: vi.fn(), getPool: vi.fn(), route: vi.fn(), fetch: vi.fn() }));
 vi.mock('../../../db', () => ({ db: {}, pool: { query: h.query }, getPool: h.getPool }));
@@ -24,7 +24,7 @@ const LIVE_FACTS = [
   { section_id: 'overview_clinical_pharmacology', label: 'Recommended dose', value: '200 mg' },
 ];
 const completeFacts = (module: string) => IND_MODULE_TEMPLATES[module].map((section, i) => ({
-  section_id: section.id, label: `Source figure ${i + 1}`, value: `${i + 21}.3%`, source: `Table ${i + 1}`,
+  section_id: section.code, label: `Source figure ${i + 1}`, value: `${i + 21}.3%`, source: `Table ${i + 1}`,
 }));
 
 beforeEach(() => {
@@ -85,7 +85,7 @@ describe('live planning results never attest sealability', () => {
   it.each(['2.5', '2.7'])('blocks an empty live %s plan even though its template headers pass', async module => {
     const out = await run({ module, facts: [], provenance: 'live' });
     expect(out.verification).toMatchObject({ ok: true, requiredStringsChecked: IND_MODULE_TEMPLATES[module].length, missingRequiredStrings: [] });
-    expect(out.honesty.sectionsWithoutFacts).toEqual(IND_MODULE_TEMPLATES[module].map(s => s.id));
+    expect(out.honesty.sectionsWithoutFacts).toEqual(IND_MODULE_TEMPLATES[module].map(s => s.code));
     expect(out.author_docx_native.content).toContain('[NO SOURCE FACT SUPPLIED');
     expectPlanningOnly(out);
   });
@@ -96,7 +96,7 @@ describe('live planning results never attest sealability', () => {
     expect(out.author_docx_native.content).toContain('- Primary endpoint ORR: 42.3% (source: Table 14.2.1)');
     expect(out.author_docx_native.content).toContain('- Median exposure: 24 months');
     expect(out.author_docx_native.content).toContain('- Recommended dose: 200 mg');
-    expect(out.honesty.sectionsWithoutFacts).toEqual(['product_development_rationale', 'overview_biopharmaceutics', 'benefits_and_risks_conclusions']);
+    expect(out.honesty.sectionsWithoutFacts).toEqual(['2.5.1', '2.5.2', '2.5.6', '2.5.7']);
     expect(out.verification.ok).toBe(true);
     expectPlanningOnly(out);
   });
@@ -135,19 +135,30 @@ describe('existing input qualification and missing-string blockers remain visibl
 
   it('retains a real missing-string failure for a fact outside the supported sections', async () => {
     const out = await run({ facts: [{ section_id: 'unknown_section', label: 'Unplaced figure', value: 'unsupported-figure-91%' }], provenance: 'live' });
-    expect(out.verification).toMatchObject({ ok: false, requiredStringsChecked: 7, missingRequiredStrings: ['unsupported-figure-91%'] });
+    // The 2.5 headers (seven, 2.5.7 included) and the one figure.
+    const checked = IND_MODULE_TEMPLATES['2.5'].length + 1;
+    expect(out.verification).toMatchObject({ ok: false, requiredStringsChecked: checked, missingRequiredStrings: ['unsupported-figure-91%'] });
     expect(out.author_docx_native.required_strings).toContain('unsupported-figure-91%');
     expect(out.author_docx_native.content).not.toContain('unsupported-figure-91%');
     expectPlanningOnly(out);
-    expect(out.honesty.blockers[1]).toMatch(/Verification incomplete: 1 required string.*missing of 7/);
+    expect(out.honesty.blockers[1]).toMatch(new RegExp(`Verification incomplete: 1 required string.*missing of ${checked}`));
   });
 
   it('keeps both prior blockers when an unassessed plan also fails its own text check', async () => {
     const out = await run({ facts: [{ section_id: 'unknown_section', label: 'Unplaced', value: 'unplaced-value' }] });
     expectPlanningOnly(out);
-    expect(out.honesty.blockers).toHaveLength(3);
+    // C4c: the unplaced fact is now a blocker of its own, after the two it already had.
+    expect(out.honesty.blockers).toHaveLength(4);
     expect(out.honesty.blockers[1]).toContain('"not_assessed"');
     expect(out.honesty.blockers[2]).toContain('Verification incomplete');
+    expect(out.honesty.blockers[3]).toContain('unknown_section');
+  });
+
+  it('names a supplied fact that fits no section of the template, instead of dropping it (C4c)', async () => {
+    const out = await run({ facts: [{ section_id: '2.7.4', label: 'SAEs', value: 'SAEs-7' }], provenance: 'live' });
+    expect(out.honesty.unplacedFacts).toEqual([{ section_id: '2.7.4', label: 'SAEs', value: 'SAEs-7' }]);
+    expect(out.honesty.blockers.at(-1)).toMatch(/1 supplied fact names no section of the 2\.5 template: 2\.7\.4/);
+    expectPlanningOnly(out);
   });
 
   it('preserves normalization and ignores malformed facts without qualifying their sources', async () => {

@@ -1,0 +1,105 @@
+$ RLS_ENFORCE=off npx vitest run client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx   # the fixed tree
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy 375ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > choosing Working copy (Word) on a draft posts the working-copy route and downloads what the server sent 107ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > Working copy (PDF) asks for a PDF 70ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a refusal is said in the server’s words, beside the control and in a toast, and nothing downloads 85ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item 68ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a FROZEN document offers the controlled export, through the export route 56ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a APPROVED document offers the controlled export, through the export route 51ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a approved document offers the controlled export, through the export route 61ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open 53ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > opens on ArrowDown with focus on the first item; the arrows move; Escape closes and returns focus 68ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > choosing an item closes the menu and returns focus to the button 100ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > a refusal for one document is not shown beside the next one the control is handed 93ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > an answer that arrives after the person moved on is told, but not shown beside the other document, and does not hold its control 178ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > the live region is an absolutely placed box inside the menu’s own wrapper
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button 53ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > near the top of the screen it opens below its button, right edges aligned, in fixed coordinates 3ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > with room above it opens above; aligned left where right-aligned would run off the screen 2ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > taller than the room below, it scrolls inside itself rather than running off the screen 1ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > the live region is an absolutely placed box inside the menu’s own wrapper 21ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > where the toolbar scrolls sideways it is the containing block, so it clips that box 3ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > the menu itself stays fixed, so the toolbar does not cut it off 2ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > stacks the list above the detail 9ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > wraps what does not fit in the detail, which cuts off what overflows it 27ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > makes every control a reviewer taps there a 44px target 7ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > marks the controls those rules name, and sets no inline height a rule cannot override 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Close and each notice’s Mark read 44px square 33ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Triage, Show more, Open the task board and every button in the tray 44px tall 34ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The review decision dialog at 390px > makes the decision, the reason and each button a 44px target 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > the shell resets every button’s padding and background 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-primary its box outranks that reset 3ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-secondary its box outranks that reset 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-close its box outranks that reset 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-meaning-opt its box outranks that reset 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > at 390px Sign and commit, Cancel, Done and each meaning are 44px tall, and the close control 44px square 2ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > reduced motion still stops their transitions, at the same rank 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > no second copy of the meaning pills’ rules works around the reset elsewhere 8ms
+
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+   Start at  09:00:49
+   Duration  4.39s (transform 992ms, setup 343ms, import 1.21s, tests 1.60s, environment 751ms)
+

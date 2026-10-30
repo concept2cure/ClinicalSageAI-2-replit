@@ -1,0 +1,15 @@
+Type check of the changed files and everything they import.
+
+Two scratch tsconfigs extend ./tsconfig.json (strict), with noEmit and incremental off. Each lists the files it
+checks and the repo's declaration files (server, shared and client/src *.d.ts).
+
+- Server: mdx-labeling.ts, both labeling route tests, and the three modules that augment express's Request
+  (server/auth.ts, server/middleware/auth.ts, server/middleware/tenantContext.ts). Through the route this checks
+  governed-signed-act.ts and the part11 modules too.
+- Client: Labeling.tsx, LabelingTranslationApproval.tsx, the new client test, and
+  client/src/concept2cure/auth/ZenLogin.tsx (its `vite/client` reference declares *.module.css).
+
+NODE_OPTIONS=--max-old-space-size=24576 npx tsc -p <scratch>/tsconfig.json
+
+server: exit 0, 0 lines of output (36s)
+client: exit 0, 0 lines of output (49s)

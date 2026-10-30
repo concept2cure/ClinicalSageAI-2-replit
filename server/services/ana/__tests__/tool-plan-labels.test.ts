@@ -25,7 +25,7 @@ describe('describeToolPlan', () => {
       'Scanning regulatory deadlines',
       'Scanning open project risks',
       'Checking the evidence for contradictions',
-      'Looking up where your program stands',
+      'Looking up where your project stands',
     ]);
     // Each step echoes its tool name so the client can correlate with events.
     expect(plan.map(p => p.tool)).toEqual([
@@ -65,7 +65,7 @@ describe('describeToolPlan', () => {
       // (document store consolidation step 2, 2026-10-17).
       'Saving an AnA draft in the editor',
       'Opening the Trial Master File',
-      'Looking up reports that fit your programs',
+      'Looking up reports that fit your projects',
       'Drafting the Module 2.5 Clinical Overview',
     ]);
   });

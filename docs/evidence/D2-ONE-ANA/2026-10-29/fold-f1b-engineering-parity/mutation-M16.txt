@@ -1,0 +1,11 @@
+M16: a new hazard names no project
+file: client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+replaced: '    ...(programId ? { programId } : {}),\n  };\n}'
+with: '  };\n}'
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+exit: 1
+Tests  1 failed | 17 passed (18)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > adds a hazard to the project 196ms
+sha256 before 18e51f5ad520b79670720473e82fea3ddd84befe0c41ebab77407def6317541f
+sha256 after  18e51f5ad520b79670720473e82fea3ddd84befe0c41ebab77407def6317541f
+restored byte for byte: yes

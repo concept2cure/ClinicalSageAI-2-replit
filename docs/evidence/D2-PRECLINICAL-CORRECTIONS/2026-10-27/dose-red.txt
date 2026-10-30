@@ -1,0 +1,21 @@
+FAIL grouped numeric text keeps all digits: Expected values to be strictly equal:  0 !== 1000 
+FAIL negative numeric text is refused: Expected values to be strictly equal:  10 !== null 
+FAIL scientific notation is read as a whole: Expected values to be strictly equal:  3 !== 1000 
+FAIL scientific notation with negative exponent is read as a whole: Expected values to be strictly equal:  3 !== 0.001 
+FAIL semantic prose does not become a NOAEL: Expected values to be strictly equal:  10 !== null 
+FAIL malformed decimal is refused: Expected values to be strictly equal:  1.2 !== null 
+FAIL non-finite Km is refused: Missing expected exception.
+FAIL negative NOAEL is refused: Missing expected exception.
+FAIL non-finite safety factor is refused: Missing expected exception.
+FAIL negative reference weight is refused: Missing expected exception.
+FAIL null explicit Km is not defaulted: Missing expected exception.
+FAIL negative MABEL exposure is refused: Missing expected exception.
+FAIL non-finite MABEL conversion factor is refused: Missing expected exception.
+FAIL missing explicit species is not replaced: Missing expected exception.
+FAIL HED overflow is refused: Missing expected exception.
+FAIL MRSD overflow is refused: Missing expected exception.
+FAIL MABEL overflow is refused: Missing expected exception.
+FAIL MRSD is not increased by intermediate rounding: The expression evaluated to a falsy value:    assert.ok(Math.abs(dose({ speciesNoaels }).recommendedStartingDoseMg - 360 / 37) < 1e-12) 
+FAIL small positive doses retain the correct limiting derivation: Expected values to be strictly equal:  0 !== 0.0003 
+FAIL species selection precedes display rounding: Expected values to be strictly equal: + actual - expected  + 'larger' - 'smaller' 
+RESULT 0 passed, 20 failed, 20 total; Node v22.23.4

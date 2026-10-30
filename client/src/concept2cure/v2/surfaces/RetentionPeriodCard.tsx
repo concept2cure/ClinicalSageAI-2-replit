@@ -1,5 +1,6 @@
 /**
- * Setup → Records retention: the organisation's retention period
+ * Admin and access → Settings → Records retention (Setup until it folded in,
+ * D2 2026-10-29): the organisation's retention period
  * (P1-22 remainder, DP-20; ADR-0014 §6).
  *
  *   GET /api/vault/legal-holds/retention   the period in force (the organisation's own, or the default)
@@ -33,7 +34,7 @@ type Payload = { retention: RetentionPeriodView };
 const isPayload = hasKeys<Payload>('retention');
 
 interface Props {
-  /** How a refused write is described — Setup's own reader, so both cards word a refusal the same way. */
+  /** How a refused write is described — the Profile card's reader (saveFailure), so the cards word a refusal the same way. */
   describeFailure: (error: string, status: number) => string;
 }
 

@@ -133,9 +133,9 @@ function renderStatement(plan: RenderPlan | undefined): string {
   const edition = plan.edition ? ` (edition ${plan.edition})` : '';
   switch (plan.method) {
     case 'official-acroform':
-      return `Returns the official FDA form${edition} with the program's values filled in and flattened.`;
+      return `Returns the official FDA form${edition} with the project's values filled in and flattened.`;
     case 'official-xfa-datasets':
-      return `Returns the official FDA form${edition} with the program's values written into it. Complete the remaining boxes and sign it in Adobe Acrobat.`;
+      return `Returns the official FDA form${edition} with the project's values written into it. Complete the remaining boxes and sign it in Adobe Acrobat.`;
     case 'reconstruction':
       return 'No official template is installed, so this returns a labeled reconstruction — not the official FDA form.';
     default:
@@ -355,7 +355,7 @@ function IndFormsPanelForScope({ note, projectIdent, isScopeCurrent }: { note: F
       if (res.status === 409) {
         // The program has no project record, so it has no dossier: the server
         // says so and saved nothing. Its own sentence names who can close it.
-        note(`FDA ${shortFormId(formId)} was not saved to the dossier. ${serverMessage(json) ?? 'This program has no project record, so nothing was saved.'}`, 'error');
+        note(`FDA ${shortFormId(formId)} was not saved to the dossier. ${serverMessage(json) ?? 'This project has no tracking record, so nothing was saved.'}`, 'error');
         return;
       }
       const missing = Array.isArray(json?.missingRequired) ? json.missingRequired.length : 0;
@@ -401,7 +401,7 @@ function IndFormsPanelForScope({ note, projectIdent, isScopeCurrent }: { note: F
     const revision = inputRevision.current;
     const actionCurrent = () => current() && inputRevision.current === revision;
     if (!programIdent) {
-      note('Open a program first — a completed form is filed into that program’s sequence.', 'error');
+      note('Open a project first — a completed form is filed into that project’s sequence.', 'error');
       return;
     }
     const sequenceId = target.seqId;
@@ -461,9 +461,9 @@ function IndFormsPanelForScope({ note, projectIdent, isScopeCurrent }: { note: F
   return (
     <div>
       {recordFacts && (
-        <section className="indf-record" aria-label="Values read from the program record">
+        <section className="indf-record" aria-label="Values read from the project record">
           <div className="indf-record-lead">
-            Read from the program record — every form below is filled with these values.
+            Read from the project record — every form below is filled with these values.
           </div>
           <div className="indf-record-grid">
             {recordFacts.map((f) => (

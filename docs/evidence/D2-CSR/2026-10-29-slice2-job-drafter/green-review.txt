@@ -1,0 +1,68 @@
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > admits an explicitly removed local visit, composes live rows, and fingerprints retained cells 405ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > admits an explicitly removed local assessment, composes live rows, and fingerprints retained cells 258ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a missing retired endpoint rather than dropping its retained cell 103ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a foreign-protocol retired endpoint rather than dropping its retained cell 93ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a foreign-organization retired endpoint rather than dropping its retained cell 124ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > preserves the full canonical structured protocol and actual matrix cells without source signing prose 70ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > holds an unverified controlled export while caller-executor content-only export excludes signature authority 84ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > discloses missing actual source data and explicit unbound association without inventing authorship 87ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > changes the fingerprint when composed SoA source facts or original scope change 158ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > denies an unassigned private-source actor before any source prose read, and permits a current project member 98ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses foreign tenant sources, mismatched recorded programs and missing recorded design relationships 61ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses a cross-protocol assessment cell rather than silently dropping it from composition 63ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > retains positive current protocol machine-span proof, including accepted drafts, without inventing model qualification 101ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > does not mistake deterministic copy lineage for proof of original AI generation 61ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > uses exact persisted ICH code/content/hash and retains null model as unknown qualification 54ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > preserves partial gaps and organization source scope with explicit association, rather than completing missing output 57ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > expands a selected actual parent only into available persisted descendant codes, retaining missing gaps 56ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > refuses missing selected output and a changed or forged recorded hash 47ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > changes selected fingerprints on truthful content/provenance changes while unrelated output leaves a selected copy stable 62ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > enforces fresh actor access and source-job/output project identity before reading CSR prose 29ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > does not mutate any original source during materialization and rejects inactive actors 53ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > reads the exact tenant/program row and verifies its actual UUID origin through the existing Authoring source verifier 447ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > requires actual current source access, refuses a different target and a withdrawn saved source 74ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > retains unfiled scope, demands an explicit association and detects changed result snapshots at governance time 60ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > imports saved generated-document payloads as draft copies without transferring approval or transmission 88ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > refuses deferred IVD through the otherwise launch-accessible Authoring endpoint before reading a source 55ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > honors newly filed protocol scope even before its first study design and refuses binding disagreement 96ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > passes claimed numbers and cross-references to report parts 3ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > refuses any other number, however it is written 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let a reference word hide a percentage 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds each kind of figure a model could invent 2ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a figure the study information supplied, and a confidence level 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits placeholder prose 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > treats methods and results sections as statistical, and ethics as not 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not store a §11.4 model draft that states results nobody supplied 3ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > keeps a model draft of a statistical section that states nothing unsupplied 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not apply the guard to a non-statistical section 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > the §9.7 template no longer asserts an analysis population or alpha nobody supplied 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > loadCsrInputsForProject — the Module 2 primary result > quotes the pointer to §11.4, never §11.4 text, even when the section states a result 1ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > detects the documented placeholder tokens 11ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > detects a general bracketed placeholder even outside the known token list 1ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > returns false for clean prose with no bracketed content 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > returns false for empty/undefined/null content 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > hasUnresolvedPlaceholders > does not flag a bare numeric-only bracket (e.g. a citation marker) 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > marks a section with residual placeholders "needs_data", not "drafted" 13ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > marks a section with fully-resolved content "drafted" 11ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > does not mark a results section drafted from statistics nobody supplied 8ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > generateCSRSections — section status > marks a section with no content "empty" (unchanged behavior) 8ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > drafts a selected nested section without drafting its parent 4ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > drafts a selected bare parent through its children, never itself 4ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > refuses a manual heading by name before billing 2ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > does not call a nonexistent section complete 1ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > rejects duplicate targets before billing 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > rejects an explicit empty selection before billing 0ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > targeted ICH E3 subsection drafting > does not mark a partly invalid section selection complete 1ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > launchCSRBuild — job status/progress (fail closed) > does NOT report complete/100 when generated sections still carry data placeholders 27ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > launchCSRBuild — job status/progress (fail closed) > reports complete/100 when generated sections have no residual placeholders 8ms
+ ✓ server/services/__tests__/csr-builder-completeness.test.ts > launchCSRBuild — job status/progress (fail closed) > reports partial progress (0 < progress < 100) when only some targeted sections are data-complete 9ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell 25ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an unclaimed numerator beside a claimed denominator 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a rate written in words rather than with a percent sign 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies 15ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a reply the gateway cannot attribute to a model 7ms
+ Test Files  4 passed (4)
+      Tests  66 passed (66)

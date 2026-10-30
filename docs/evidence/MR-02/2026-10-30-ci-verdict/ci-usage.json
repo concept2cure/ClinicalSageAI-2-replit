@@ -1,0 +1,222 @@
+{
+  "window": "2026-10-23T08:00Z..2026-10-30T08:00Z",
+  "branch": "concept2cure-v2",
+  "event": "push",
+  "pushes": 430,
+  "workflows": {
+    "c2c-agent.yml": {
+      "runs": 430,
+      "outcomes": {
+        "queued": 103,
+        "success": 177,
+        "cancelled": 48,
+        "failure": 102
+      },
+      "runner_minutes_per_completed_run_median": 6.4,
+      "runner_minutes_per_completed_run_p90": 8.7,
+      "runner_minutes_total_completed": 1999,
+      "job_queue_minutes_median": 568.7,
+      "job_queue_minutes_p90": 1400.2,
+      "push_to_verdict_minutes_median": 880.2,
+      "push_to_verdict_minutes_p90": 1440.0
+    },
+    "ci.yml": {
+      "runs": 430,
+      "outcomes": {
+        "queued": 187,
+        "in_progress": 9,
+        "failure": 180,
+        "cancelled": 54
+      },
+      "runner_minutes_per_completed_run_median": 957.8,
+      "runner_minutes_per_completed_run_p90": 1135.0,
+      "runner_minutes_total_completed": 145055,
+      "job_queue_minutes_median": 646.6,
+      "job_queue_minutes_p90": 1364.6,
+      "push_to_verdict_minutes_median": 2105.4,
+      "push_to_verdict_minutes_p90": 2896.7
+    },
+    "codeql.yml": {
+      "runs": 330,
+      "outcomes": {
+        "success": 276,
+        "cancelled": 50,
+        "queued": 3,
+        "in_progress": 1
+      },
+      "runner_minutes_per_completed_run_median": 29.9,
+      "runner_minutes_per_completed_run_p90": 60.4,
+      "runner_minutes_total_completed": 10040,
+      "job_queue_minutes_median": 876.2,
+      "job_queue_minutes_p90": 1412.2,
+      "push_to_verdict_minutes_median": 897.0,
+      "push_to_verdict_minutes_p90": 1440.0
+    },
+    "repo-health-baseline-refresh.yml": {
+      "runs": 430,
+      "outcomes": {
+        "queued": 1,
+        "cancelled": 385,
+        "success": 44
+      },
+      "runner_minutes_per_completed_run_median": 0,
+      "runner_minutes_per_completed_run_p90": 0.4,
+      "runner_minutes_total_completed": 22,
+      "job_queue_minutes_median": 14.5,
+      "job_queue_minutes_p90": 517.2,
+      "push_to_verdict_minutes_median": 6.4,
+      "push_to_verdict_minutes_p90": 24.4
+    },
+    "semgrep.yml": {
+      "runs": 430,
+      "outcomes": {
+        "queued": 103,
+        "in_progress": 1,
+        "failure": 296,
+        "cancelled": 30
+      },
+      "runner_minutes_per_completed_run_median": 18.1,
+      "runner_minutes_per_completed_run_p90": 26.4,
+      "runner_minutes_total_completed": 5747,
+      "job_queue_minutes_median": 724.3,
+      "job_queue_minutes_p90": 1397.1,
+      "push_to_verdict_minutes_median": 880.7,
+      "push_to_verdict_minutes_p90": 1440.0
+    },
+    "tier5-browser-smoke.yml": {
+      "runs": 430,
+      "outcomes": {
+        "queued": 103,
+        "failure": 303,
+        "cancelled": 24
+      },
+      "runner_minutes_per_completed_run_median": 3.5,
+      "runner_minutes_per_completed_run_p90": 5.2,
+      "runner_minutes_total_completed": 1352,
+      "job_queue_minutes_median": 839.9,
+      "job_queue_minutes_p90": 1399.7,
+      "push_to_verdict_minutes_median": 864.6,
+      "push_to_verdict_minutes_p90": 1434.5
+    }
+  },
+  "ci_yml_jobs": {
+    "Coverage (ratchet)": {
+      "ran": 134,
+      "median_minutes": 360.6,
+      "p90_minutes": 360.8,
+      "at_or_over_355_min": 122,
+      "conclusions": {
+        "failure": 12,
+        "cancelled": 122
+      }
+    },
+    "Integration Tests": {
+      "ran": 134,
+      "median_minutes": 360.6,
+      "p90_minutes": 361.0,
+      "at_or_over_355_min": 115,
+      "conclusions": {
+        "failure": 19,
+        "cancelled": 115
+      }
+    },
+    "Test": {
+      "ran": 131,
+      "median_minutes": 360.5,
+      "p90_minutes": 360.8,
+      "at_or_over_355_min": 112,
+      "conclusions": {
+        "failure": 20,
+        "cancelled": 111
+      }
+    },
+    "Lint": {
+      "ran": 183,
+      "median_minutes": 26.1,
+      "p90_minutes": 29.0,
+      "at_or_over_355_min": 0,
+      "conclusions": {
+        "failure": 183
+      }
+    },
+    "Secret scan (full history)": {
+      "ran": 182,
+      "median_minutes": 8.8,
+      "p90_minutes": 10.2,
+      "at_or_over_355_min": 0,
+      "conclusions": {
+        "success": 133,
+        "failure": 49
+      }
+    },
+    "Production Image Boot (built image, empty database, sign-in)": {
+      "ran": 130,
+      "median_minutes": 5.2,
+      "p90_minutes": 5.7,
+      "at_or_over_355_min": 0,
+      "conclusions": {
+        "success": 112,
+        "failure": 18
+      }
+    },
+    "Security Scan": {
+      "ran": 184,
+      "median_minutes": 2.8,
+      "p90_minutes": 3.2,
+      "at_or_over_355_min": 0,
+      "conclusions": {
+        "failure": 184
+      }
+    },
+    "Security Contract Tests": {
+      "ran": 184,
+      "median_minutes": 2.2,
+      "p90_minutes": 2.4,
+      "at_or_over_355_min": 0,
+      "conclusions": {
+        "success": 184
+      }
+    },
+    "Production Boot Smoke (RLS on, non-superuser role)": {
+      "ran": 132,
+      "median_minutes": 2.6,
+      "p90_minutes": 3.0,
+      "at_or_over_355_min": 0,
+      "conclusions": {
+        "success": 112,
+        "failure": 20
+      }
+    },
+    "Blank DB Provisioning + Deploy Migration": {
+      "ran": 133,
+      "median_minutes": 2.2,
+      "p90_minutes": 2.5,
+      "at_or_over_355_min": 0,
+      "conclusions": {
+        "failure": 133
+      }
+    },
+    "AnA Readiness Tests": {
+      "ran": 132,
+      "median_minutes": 1.6,
+      "p90_minutes": 1.8,
+      "at_or_over_355_min": 0,
+      "conclusions": {
+        "success": 86,
+        "failure": 46
+      }
+    },
+    "AIOS Audit Assets": {
+      "ran": 133,
+      "median_minutes": 0.5,
+      "p90_minutes": 0.6,
+      "at_or_over_355_min": 0,
+      "conclusions": {
+        "success": 133
+      }
+    }
+  },
+  "runner_minutes_completed_runs_total": 164215,
+  "runner_minutes_per_day_completed_runs": 23459,
+  "ci_green_runs": 0
+}

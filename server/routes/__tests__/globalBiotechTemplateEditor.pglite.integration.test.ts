@@ -8,6 +8,8 @@ import * as builtinTemplates from '../../services/authoring/builtin-authoring-te
 import { buildDocumentPreparation } from '../../services/market-specs/document-preparation';
 import { critiqueSavedDocument } from '../../services/ana/saved-document-critique';
 import { documentTemplateTool } from '../../services/ana/document-template-tool';
+import { ICH_E3_GUIDANCE } from '../../services/ind/ctd/csr-e3-guidance';
+import { getIndAuthoringTemplates } from '../../services/authoring/ind-authoring-templates';
 import type { IndAuthoringTemplate } from '../../services/authoring/ind-template-types';
 import { AUTHOR, ORG, OTHER_PROGRAM, PROGRAM } from './_authoring-canvas-fixture';
 import { app, author, counts, create, db, sections, templateEditorFixture } from './_template-editor-fixture';
@@ -35,7 +37,9 @@ templateEditorFixture([
 ]);
 
 const regions = ['US', 'CA', 'EU', 'JP', 'GLOBAL'];
-const filings = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry)) && regions.includes(entry.region));
+const moduleStarts = new Set(['US_CTD_M1_REGIONAL', 'ICH_CTD_M2', 'ICH_CTD_M3', 'ICH_CTD_M4', 'ICH_CTD_M5']);
+const filings = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry)
+  || moduleStarts.has(entry.id)) && regions.includes(entry.region));
 const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
 const sharedPlanningIds = ['RI_STRATEGY', 'RI_GAP_ANALYSIS', 'RI_COMPETITIVE', 'RI_HA_MEETING'];
 interface ListedTemplate extends IndAuthoringTemplate {
@@ -136,6 +140,110 @@ async function verifyCopy(template: ListedTemplate, outline: DocumentTemplateStr
   await verifySavedReview(doc.id, saved.length, doc.provenance.templateSource);
   return saved.length;
 }
+
+describe('canonically backed module starts preserve regional identity and source-only preparation', () => {
+  it.each([
+    { id: 'US_CTD_M1_REGIONAL', region: 'US', agency: 'FDA', module: 'M1', code: '1.2', minimum: 10 },
+    { id: 'ICH_CTD_M3', region: 'GLOBAL', agency: 'ICH', module: 'M3', code: '3.2.S.4.1', minimum: 40 },
+  ])('saves $id without borrowing a US IND filing identity or enabling whole-module drafting', async row => {
+    const template = await selected(`registry:${row.id}`);
+    expect(template).toMatchObject({ module: row.module, kind: 'preparation', aiDraftable: false, authoringMode: 'manual',
+      filingContext: { registryId: row.id, region: row.region, agency: row.agency } });
+    const made = await create(template);
+    expect(made.status, JSON.stringify(made.body)).toBe(201);
+    const document = made.body.document;
+    expect(document.provenance.templateSource.filingContext).toEqual(template.filingContext);
+    expect(document.provenance.templateSource.entryId).toBe(`registry:${row.id}`);
+    const saved = await sections(document.id);
+    expect(saved.length).toBeGreaterThan(row.minimum);
+    const original = saved.find(section => section.code === row.code);
+    expect(original, `The canonical ${row.code} record must reach the editor`).toBeDefined();
+    const before = await counts();
+    const refused = await author(request(app).post(`/api/authoring/sections/${original!.id}/ai/draft`)).send({ region: 'FDA' });
+    expect(refused.status, JSON.stringify(refused.body)).toBe(409);
+    expect(refused.body.error.code).toBe('TEMPLATE_NOT_DRAFTABLE');
+    expect(await counts()).toEqual(before);
+  });
+
+  it('does not fabricate a harmonized GLOBAL Module 1 from the US regional source', async () => {
+    expect((await listed()).some(template => template.entryId === 'registry:ICH_CTD_M1')).toBe(false);
+  });
+});
+
+describe('the full CSR remains one editable saved report', () => {
+  it.each(['registry:ICH_CSR', 'component:clinical_study_report'])('saves and reopens every canonical E3 heading from %s with its section policy', async entryId => {
+    const template = await selected(entryId);
+    const created = await create(template);
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const saved = await sections(created.body.document.id);
+    expect(saved.map(row => [row.code, row.title])).toEqual(ICH_E3_GUIDANCE.map(row => [row.number, row.title]));
+    expect(saved).toHaveLength(119);
+    expect(saved.every(row => row.content === '')).toBe(true);
+    expect(template).toMatchObject({ kind: 'narrative', aiDraftable: true, authoringMode: 'ai_draft' });
+    const audits = (await db.pglite.query<{ section_id: string; metadata: { templateGuidance: { drafting_mode: string } } }>(
+      "SELECT section_id,metadata FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='CREATE'", [created.body.document.id])).rows;
+    for (const code of ['3', '14', '14.3.3', '16.1.2', '16.1.5', '16.3.1', '16.4']) {
+      const section = saved.find(row => row.code === code)!;
+      expect(audits.find(row => row.section_id === section.id)?.metadata.templateGuidance.drafting_mode).toBe('manual');
+      const guide = await author(request(app).get(`/api/authoring/guidance/${section.id}`));
+      expect(guide.status, JSON.stringify(guide.body)).toBe(200);
+      expect(guide.body.template_guidance).toContainEqual(expect.objectContaining({ drafting_mode: 'manual' }));
+    }
+    const ethics = saved.find(row => row.code === '5')!;
+    expect(audits.find(row => row.section_id === ethics.id)?.metadata.templateGuidance.drafting_mode).toBe('narrative');
+    const reopened = await author(request(app).get(`/api/authoring/docs/${created.body.document.id}`));
+    expect(reopened.body.document.provenance.templateSource).toEqual(created.body.document.provenance.templateSource);
+    await verifySavedReview(created.body.document.id, 119, created.body.document.provenance.templateSource);
+    const preview = await author(request(app).post(`/api/authoring/docs/${created.body.document.id}/assembly/preview`))
+      .send({ programId: PROGRAM, templateId: template.id, selection: { target: 'document' } });
+    expect(preview.status, JSON.stringify(preview.body)).toBe(200);
+    expect(preview.body.data.draftRegion).toBeNull();
+    expect(preview.body.data.rows.every((row: { aiDraftable: boolean }) => !row.aiDraftable)).toBe(true);
+  }, 180_000);
+
+  it('pages the entire canonical CSR through the actual AnA reference tool', async () => {
+    const numbers: string[] = []; let offset = 0;
+    for (let page = 0; page < 60; page++) {
+      const raw = await documentTemplateTool({ template_id: 'clinical_study_report', market: 'JP', prepare: true, offset, limit: 30 });
+      expect(raw.length).toBeLessThanOrEqual(7800);
+      const out = JSON.parse(raw);
+      expect(out.ok, raw).toBe(true);
+      numbers.push(...out.template.sections.map((row: { number: string }) => row.number));
+      if (out.nextOffset === null) break;
+      expect(out.nextOffset).toBeGreaterThan(offset); offset = out.nextOffset;
+    }
+    expect(numbers).toEqual(ICH_E3_GUIDANCE.map(row => row.number));
+    expect(new Set(numbers).size).toBe(119);
+  });
+
+  it('keeps source-only E3 rows manual in a regional IND report assembly', async () => {
+    const template = getIndAuthoringTemplates().find(row => row.entryId === 'section:m5.3.5.1')!;
+    const created = await create(template);
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const preview = await author(request(app).post(`/api/authoring/docs/${created.body.document.id}/assembly/preview`))
+      .send({ programId: PROGRAM, templateId: template.id, selection: { target: 'document' } });
+    expect(preview.status, JSON.stringify(preview.body)).toBe(200);
+    const rows = preview.body.data.rows as Array<{ title: string; aiDraftable: boolean }>;
+    expect(rows).toHaveLength(120);
+    expect(preview.body.data.draftRegion).toBe('FDA');
+    expect(rows.find(row => row.title === '5 Ethics')?.aiDraftable).toBe(true);
+    expect(rows.find(row => row.title.startsWith('11.4.2.8 '))?.aiDraftable).toBe(true);
+    for (const number of ['3', '14', '16.1.2', '16.1.5', '16.3.1', '16.4']) {
+      expect(rows.find(row => row.title.startsWith(`${number} `))?.aiDraftable, number).toBe(false);
+    }
+  }, 180_000);
+});
+
+describe('generic blank CRF working templates use the same editor intake', () => {
+  it.each(['blank_crf', 'crf_annotation_worksheet'])('creates and reopens %s as an empty shared working document', async id => {
+    const template = await selected(`component:${id}`);
+    expect(template).toMatchObject({ module: null, kind: 'narrative', aiDraftable: true,
+      filingContext: { registryId: null, region: 'GLOBAL', agency: 'ICH' } });
+    expect(template.limitations.join(' ')).toMatch(/completed patient CRFs.*original source records/i);
+    const count = await verifyCopy(template, DOCUMENT_TEMPLATES.find(row => row.id === id));
+    expect(count).toBe(id === 'blank_crf' ? 13 : 7);
+  }, 180_000);
+});
 
 describe('shared planning documents reach the existing editor without a filing binding', () => {
   it.each(sharedPlanningIds)('loads, saves and reviews the exact %s working outline', async registryId => {

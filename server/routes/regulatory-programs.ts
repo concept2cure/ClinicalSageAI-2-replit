@@ -94,7 +94,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (orgId === null) return orgRequired(res);
     const data = await svc.getProgramById(orgId, String(req.params.id));
-    if (!data) return notFoundInTenant(res, 'Program');
+    if (!data) return notFoundInTenant(res, 'Project');
     return ok(res, data);
   } catch (e) {
     return fail(res, 'get-one', e);
@@ -112,7 +112,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
     }
 
     const data = await svc.getActivity(orgId, String(req.params.id), queryParsed.data.limit);
-    if (data === null) return notFoundInTenant(res, 'Program');
+    if (data === null) return notFoundInTenant(res, 'Project');
     return ok(res, data);
   } catch (e) {
     return fail(res, 'activity', e);
@@ -124,7 +124,7 @@ router.get('/:id/milestones', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (orgId === null) return orgRequired(res);
     const data = await svc.getMilestones(orgId, String(req.params.id));
-    if (data === null) return notFoundInTenant(res, 'Program');
+    if (data === null) return notFoundInTenant(res, 'Project');
     return ok(res, data);
   } catch (e) {
     return fail(res, 'milestones', e);
@@ -136,7 +136,7 @@ router.get('/:id/rim-recommendations', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (orgId === null) return orgRequired(res);
     const data = await svc.getRimRecommendations(orgId, String(req.params.id));
-    if (data === null) return notFoundInTenant(res, 'Program');
+    if (data === null) return notFoundInTenant(res, 'Project');
     return ok(res, data);
   } catch (e) {
     return fail(res, 'rim-recommendations', e);
@@ -148,7 +148,7 @@ router.get('/:id/change-impact', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (orgId === null) return orgRequired(res);
     const data = await svc.getChangeImpact(orgId, String(req.params.id));
-    if (data === null) return notFoundInTenant(res, 'Program');
+    if (data === null) return notFoundInTenant(res, 'Project');
     return ok(res, data);
   } catch (e) {
     return fail(res, 'change-impact', e);
@@ -160,7 +160,7 @@ router.get('/:id/safety-signals', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (orgId === null) return orgRequired(res);
     const data = await svc.getSafetySignals(orgId, String(req.params.id));
-    if (data === null) return notFoundInTenant(res, 'Program');
+    if (data === null) return notFoundInTenant(res, 'Project');
     return ok(res, data);
   } catch (e) {
     return fail(res, 'safety-signals', e);
@@ -172,7 +172,7 @@ router.get('/:id/literature', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (orgId === null) return orgRequired(res);
     const result = await svc.getLiterature(orgId, String(req.params.id));
-    if (result === null) return notFoundInTenant(res, 'Program');
+    if (result === null) return notFoundInTenant(res, 'Project');
     return ok(res, result.buckets, { total: result.total, productName: result.productName });
   } catch (e) {
     return fail(res, 'literature', e);
@@ -184,7 +184,7 @@ router.get('/:id/pma-modules', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (orgId === null) return orgRequired(res);
     const data = await svc.getPmaModules(orgId, String(req.params.id));
-    if (data === null) return notFoundInTenant(res, 'Program');
+    if (data === null) return notFoundInTenant(res, 'Project');
     return ok(res, data);
   } catch (e) {
     return fail(res, 'pma-modules', e);
@@ -196,7 +196,7 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (orgId === null) return orgRequired(res);
     const result = await svc.getPmaTrialMetrics(orgId, String(req.params.id));
-    if (result === null) return notFoundInTenant(res, 'Program');
+    if (result === null) return notFoundInTenant(res, 'Project');
     return ok(res, result.metrics, { study: result.study });
   } catch (e) {
     return fail(res, 'pma-trial-metrics', e);

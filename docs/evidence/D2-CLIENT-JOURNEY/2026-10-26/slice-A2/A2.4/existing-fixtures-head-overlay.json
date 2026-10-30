@@ -1,0 +1,12 @@
+{
+  "base": "49211250d7dc4d8e5c1ce84ca98b2cadc3deb0ae",
+  "method": "Vitest pre-load overlay with HEAD contents; no production-file replacement",
+  "files": {
+    "client/src/concept2cure/v2/surfaceActions.ts": "bd33c6c4e23b436819d5aab944c5d6f5cb04e24dce859a18cdfcc28203b78d40",
+    "shared/navigation/surface-actions.ts": "6d8bd36763815ae828c1c6c3a83aa4cdf37132b53a46f27f37696668a250e9b8",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "57e8ec731b03d60a2367544b1e52cec345d2e9b3b802b720b6bcb8c8568bf860",
+    "client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx": "dea0941bbd98ba32c0784b86cb2a00d535d64deb3ca2f96b93b5d15311543cb2",
+    "client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx": "95b4daafc4d578ea65e9235714a7a5fd264689010466e7020773d7f39e4e573b"
+  },
+  "result": "same 3 pre-existing failures, 25 skipped"
+}

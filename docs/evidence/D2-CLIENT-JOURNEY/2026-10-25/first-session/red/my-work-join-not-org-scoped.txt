@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/tasking/__tests__/my-work.pglite.test.ts > readMyWork — the caller’s open tasks, each with its project’s name > no name for a task with no project, and never another organisation’s
+AssertionError: expected 'Another organisation\'s project' to be null
+
+- Expected:
+null
+
++ Received:
+"Another organisation's project"
+
+ ❯ server/services/tasking/__tests__/my-work.pglite.test.ts:79:43
+     77|     const byId = Object.fromEntries(work.items.map((i) => [i.taskId, i…
+     78|     expect(byId['T-NOPROJ'].projectName).toBeNull();
+     79|     expect(byId['T-FOREIGN'].projectName).toBeNull();
+       |                                           ^
+     80|     expect(JSON.stringify(work)).not.toContain('Another organisation');
+     81|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  20:59:37
+   Duration  5.08s (transform 899ms, setup 91ms, import 1.56s, tests 3.12s, environment 0ms)
+

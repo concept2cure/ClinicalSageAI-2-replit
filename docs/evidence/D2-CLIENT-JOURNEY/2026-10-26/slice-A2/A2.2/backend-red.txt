@@ -1,0 +1,208 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-10-26T15:50:54.926Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-10-26T15:50:55.030Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:50:55.031Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-10-26T15:50:55.031Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > projects the recorded client on cards and retains page count over 60 programs 103ms
+   → expected { …(13) } to match object { …(3) }
+(12 matching properties omitted from actual)
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > supplies the recorded client separately from the retained organisation sponsor identity 36ms
+   → expected { …(34) } to match object { client_workspace_id: 71, …(2) }
+(33 matching properties omitted from actual)
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > filters inside current access before LIMIT/OFFSET rather than filtering a page 50ms
+   → expected false to be true // Object.is equality
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "0" 51ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "-1" 43ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "71junk" 39ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "1.5" 42ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "9007199254740992" 49ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "" 43ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > conceals another organisation workspace and an unknown workspace 42ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > offers minimal active client options across the accessible set, outside the selected page/filter 38ms
+   → expected undefined to deeply equal [ …(2) ]
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses a same-program reanchor observed between card read and response 43ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > projects the recorded client on cards and retains page count over 60 programs
+AssertionError: expected { …(13) } to match object { …(3) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "client_name": "Client Alpha",
+-   "client_workspace_id": 71,
+    "id": "00000000-0000-4000-8000-000000000001",
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:101:32
+     99|     expect(first.body.data).toHaveLength(50);
+    100|     expect(first.body.meta).toMatchObject({ count: 50, hasMore: true }…
+    101|     expect(first.body.data[0]).toMatchObject({ id: program(1), client_…
+       |                                ^
+    102|     const second = await list('?limit=50&offset=50');
+    103|     expect(second.body.data).toHaveLength(10);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > supplies the recorded client separately from the retained organisation sponsor identity
+AssertionError: expected { …(34) } to match object { client_workspace_id: 71, …(2) }
+(33 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "client_name": "Client Alpha",
+-   "client_workspace_id": 71,
+    "sponsor_name": "CRO organisation",
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:111:22
+    109|     const res = await request(app).get(`/api/c2c/projects/${program(1)…
+    110|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    111|     expect(res.body).toMatchObject({ client_workspace_id: A, client_na…
+       |                      ^
+    112|   });
+    113|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > filters inside current access before LIMIT/OFFSET rather than filtering a page
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:118:104
+    116|     expect(first.status, JSON.stringify(first.body)).toBe(200);
+    117|     expect(first.body.data).toHaveLength(20);
+    118|     expect(first.body.data.every((r: { client_workspace_id: number }) …
+       |                                                                                                        ^
+    119|     expect(first.body.meta).toMatchObject({ count: 20, hasMore: true }…
+    120|     const second = await list(`?clientWorkspaceId=${B}&limit=20&offset…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "0"
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "-1"
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "71junk"
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "1.5"
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "9007199254740992"
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace ""
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:127:24
+    125|   it.each(['0', '-1', '71junk', '1.5', '9007199254740992', ''])('refus…
+    126|     const res = await list(`?clientWorkspaceId=${encodeURIComponent(va…
+    127|     expect(res.status).toBe(400);
+       |                        ^
+    128|   });
+    129|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > conceals another organisation workspace and an unknown workspace
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:131:66
+    129|
+    130|   it('conceals another organisation workspace and an unknown workspace…
+    131|     expect((await list(`?clientWorkspaceId=${FOREIGN}`)).status).toBe(…
+       |                                                                  ^
+    132|     expect((await list('?clientWorkspaceId=9999')).status).toBe(404);
+    133|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > offers minimal active client options across the accessible set, outside the selected page/filter
+AssertionError: expected undefined to deeply equal [ …(2) ]
+
+- Expected:
+[
+  {
+    "id": 71,
+    "name": "Client Alpha",
+  },
+  {
+    "id": 72,
+    "name": "Client Beta",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:142:35
+    140|     const res = await list(`?clientWorkspaceId=${A}&limit=1`);
+    141|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    142|     expect(res.body.meta.clients).toEqual([{ id: A, name: 'Client Alph…
+       |                                   ^
+    143|     expect(JSON.stringify(res.body)).not.toMatch(/Private client name|…
+    144|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 1 passed (12)
+   Start at  15:50:50
+   Duration  8.61s (transform 2.91s, setup 74ms, import 640ms, tests 7.67s, environment 0ms)
+

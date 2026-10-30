@@ -1,0 +1,16 @@
+{
+  "head": "96ac4c4a3394d6725097229d7d97b1e43160e2a2",
+  "typeFixCommit": "ee0bfd83e6ba683755f1bfa00f82bf94c62bf37e",
+  "previous54InputsUnchangedByMerge": true,
+  "incomingRuntime": [
+    "client/src/concept2cure/v2/styles/project-home-v2.css",
+    "client/src/concept2cure/v2/surfaces/ProjectDossier.tsx",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+    "server/services/ana/skills/library/clinical.ts",
+    "server/services/ana/skills/library/cmc.ts",
+    "server/services/ana/vaccineTools.ts",
+    "server/services/c2c/dossier-read.ts",
+    "server/services/vaccine/vaccine-knowledge.ts"
+  ],
+  "inputCount": 62
+}

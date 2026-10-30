@@ -1,0 +1,9 @@
+{
+  "priorReceipts": [
+    "green.json",
+    "settled.json",
+    "pipe.json"
+  ],
+  "actualCause": "Pino diagnostics wrote directly to stdout during nonblocking large JSON writes; synchronous pipe writes also hit EAGAIN.",
+  "correction": "Explicit existing-logger CLI stderr destination selected before dynamic application imports; JSON uses awaited normal stdout completion. Server logging defaults/redaction unchanged; no diagnostics suppressed and no assertions relaxed."
+}

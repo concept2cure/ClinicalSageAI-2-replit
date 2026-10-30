@@ -1,0 +1,25 @@
+{
+  "sourceCommit": "5163d200756e75157337ab41bb74a801d87d9ad8",
+  "sourceCommits": [
+    "5163d200756e75157337ab41bb74a801d87d9ad8",
+    "61aea0a80a241794bdd8c5b363a0753969b07fab",
+    "357f25b8f561619aa82ed7cae91435f8c2fd5016"
+  ],
+  "head": "61aea0a80a241794bdd8c5b363a0753969b07fab",
+  "qualifiedInputs": "mdx-qualified-inputs.json",
+  "branch": "concept2cure-v2",
+  "acceptedCandidateHead": "28d129756d55efbb1211d7633a49620280bb832b",
+  "atUtc": "2026-10-26T21:40:13.931709+00:00",
+  "acceptedSourceHead": "28d129756d55efbb1211d7633a49620280bb832b",
+  "pushReceipt": "source-push-final.json",
+  "pushExitCode": 0,
+  "normalHooks": true,
+  "typeScriptErrors": 0,
+  "baselineChanged": false,
+  "priorAttempts": [
+    "source-push.json",
+    "accepted-source-push.json",
+    "source-push-mdx.json"
+  ],
+  "priorAttemptSummary": "Evidence-helper2loggingwarnings corrected without baseline change; later normal-hook/TypeScript0 passes met concurrent canonical ref updates. Every incoming change was normally merged and qualified; no force push."
+}

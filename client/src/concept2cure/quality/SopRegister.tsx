@@ -26,7 +26,11 @@
  *
  * Approve is offered on a document under review only, and a draft offers "Send
  * for review" — the existing edit route (PATCH status 'in_review'), not a
- * signature. Until 2026-10-08 a draft row offered Approve, its dialog said the
+ * signature. Since RR4 (docs/design/REVIEW_ROUTING_2026-10-23.md §2.7) the send
+ * names its review route — one QMS approver and any reviewers — in the route
+ * form (QmsReviewRoute.tsx), and a document under review on a route shows its
+ * round and is approved by its named approver; one already in review with no
+ * route keeps today's Approve. Until 2026-10-08 a draft row offered Approve, its dialog said the
  * version "becomes effective when you sign", and nothing in the product routed
  * a draft to review (QA walk J8); the server now approves in_review only.
  *
@@ -42,24 +46,32 @@ import {
   STATUS_TONE,
   formatDate,
   isReviewOverdue,
+  coverageKpiOf,
 } from './data';
 import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
-import { postQmsApproval, sendQmsDocumentForReview } from './qmsApproval';
+import { postQmsApproval } from './qmsApproval';
+import { QmsRouteForm, QmsRoutePanel } from './QmsReviewRoute';
+import { myTurn, qmsApprovalMeta, qmsRouteView } from './qmsReviewRoute';
+import { approvalShare, routeHeadline } from '../v2/reviewRoute/routeRound';
 import { useAuthUser } from '@/services/portal/authService';
-import { reviewRowOf, type QmsDoc } from './data';
+import { reviewRowOf, todayUtc, type QmsDoc } from './data';
 import { PeriodicReviewPanel, RecordPeriodicReview, canRecordReview, lastReviewLine, useRecordPeriodicReview } from './PeriodicReview';
 import { ErrorState } from '../v2/dataConnect';
 import { ControlledDocumentSetup, ControlledDocumentReason } from './ControlledDocumentDialogs';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
-import { reviseQmsDocument } from './qmsDocuments';
+import { fetchQmsControlledCopy, reviseQmsDocument } from './qmsDocuments';
+import { downloadBlob } from '../v2/download';
 import type { SopTemplate } from './data';
 import { ControlledDocumentHistory } from './ControlledDocumentHistory';
 import {useControlledDocumentTarget,ControlledDocumentTargetStatus} from './ControlledDocumentTarget';
 
 import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
-import { TrainingCoverage, DocumentReadButton } from './TrainingCoverage';
+import { TrainingCoverage, DocumentReadButton, TrainingAssignmentsPanel, ApprovalTrainingReach } from './TrainingCoverage';
+import { QMS_TRAINABLE_DOCUMENT_TYPES } from '@shared/qms/training';
+import { TrainingExpiry } from './TrainingExpiry';
+import { RegisterSignatureLine } from './RegisterSignatureLine';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -144,6 +156,22 @@ function NextReviewCell({ doc: d, overdue }: { doc: QmsDoc; overdue: boolean }) 
   );
 }
 
+/** Approve on the row: a document in review with no route keeps today's Approve; on a route, only its named approver at their turn (RR4). */
+function approvableBy(d: QmsDoc, meId: number | null): boolean {
+  const view = qmsRouteView(d);
+  if (view.kind === 'legacy') return true;
+  return myTurn(view, meId)?.role === 'approver';
+}
+
+/** The route's round in one line under the status, so the register shows where each document stands (RR4). */
+function RouteLine({ doc, meId }: { doc: QmsDoc; meId: number | null }) {
+  const view = qmsRouteView(doc);
+  if (view.kind === 'unread') return <span className="qms-route-line" role="alert">Reviewers could not be read.</span>;
+  if (view.kind === 'legacy') return <span className="qms-route-line">Not assigned to one person.</span>;
+  if (view.kind === 'none' || (view.kind === 'closed' && doc.status !== 'draft')) return null;
+  return <span className="qms-route-line" data-testid="qms-route-line">{routeHeadline(view.round, meId)}</span>;
+}
+
 export function SopRegister(props: SopRegisterProps) {
   const user = useAuthUser();
   return <SopRegisterSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
@@ -186,12 +214,29 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       approval: password, second factor, meaning and reason, re-verified by the
       server in the transaction that writes the signature. */
   const [retiring, setRetiring] = React.useState<QmsDoc | null>(null);
-  /** The draft being sent for review, while its request is in flight. */
-  const [routing, setRouting] = React.useState<number | null>(null);
+  /** The document whose review route is open in its sheet (RR4). */
+  const [routePanel, setRoutePanel] = React.useState<QmsDoc | null>(null);
+  const meId = user?.id && /^\d+$/.test(String(user.id)) ? Number(user.id) : null;
+  const admin = ((user as { roles?: string[] } | null)?.roles ?? []).some((r) => String(r).toLowerCase() === 'admin');
   /** The last register action's outcome, in the server's words when it refused. */
   const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  /** The day an approval makes its version effective from (CAT2-19): today unless the approver chooses later. */
+  const [effectiveFrom, setEffectiveFrom] = React.useState<string>(todayUtc());
+  /** The controlled copy of the version in force (MR-12 Stage 8): issued, recorded and downloaded, or the server's reason. */
+  const downloadControlledCopy = async (d: QmsDoc) => {
+    try {
+      const { blob, filename } = await fetchQmsControlledCopy(d.id);
+      setNotice(downloadBlob(filename, blob)
+        ? { tone: 'ok', text: `A controlled copy of ${d.docNumber} v${d.inForce?.version ?? d.version} was issued to you and recorded.` }
+        : { tone: 'err', text: 'The controlled copy was issued but this browser could not save it. Try again from another browser.' });
+    } catch (e) {
+      setNotice({ tone: 'err', text: e instanceof Error ? e.message : 'The controlled copy could not be issued. Nothing was downloaded.' });
+    }
+  };
   const [setup, setSetup] = React.useState<{ document?: QmsDoc; template?: SopTemplate; revision?: boolean } | null>(null);
   const [reviewing, setReviewing] = React.useState<QmsDoc | null>(null);
+  /** The document whose training assignments are open (P-49). */
+  const [assigning, setAssigning] = React.useState<QmsDoc | null>(null);
   const [revising, setRevising] = React.useState<QmsDoc | null>(null);
   const [editingId, setEditingId] = React.useState<number | null>(null);
   const [history, setHistory] = React.useState<QmsDoc | null>(null);
@@ -217,27 +262,18 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
     reg.refresh?.();
     setEditingId(id);
   };
-  const sendForReview = async (d: QmsDoc, reason: string) => {
-    setRouting(d.id);
-    setNotice(null);
-    try {
-      await sendQmsDocumentForReview(d.id, reason);
-      setNotice({ tone: 'ok', text: `${d.docNumber} was sent for review. A second person with signing authority can now approve it.` });
-      setReviewing(null);
-      reg.refresh?.();
-    } finally {
-      setRouting(null);
-    }
+  const sent = (d: QmsDoc) => {
+    setNotice({ tone: 'ok', text: `${d.docNumber} was sent for review on its route. The people named are told when it is their turn.` });
+    setReviewing(null);
+    reg.refresh?.();
   };
   // In force includes an effective SOP whose next version is being drafted or reviewed.
   const effectiveCount = docs.filter((d) => d.status === 'effective' || d.inForce).length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
   const draftCount = docs.filter((d) => d.status === 'draft').length;
   const overdueCount = reviewDue.filter((r) => r.overdue).length;
-  const trainedRows = training.filter((t) => t.of > 0 && t.eligible !== false);
-  const trainingPct = trainedRows.length
-    ? Math.round((trainedRows.reduce((s, t) => s + t.current / t.of, 0) / trainedRows.length) * 100)
-    : 0;
+  // The server's summary (P-49): the client computes no percentage.
+  const coverage = coverageKpiOf(training, trainComp.summary ?? null);
   /* A read that has not answered is not an empty register. An unread register
      resolves to `[]` above, so until 2026-09-25 a 401, a 500 or a
      dropped connection rendered "Effective documents 0" and "Review overdue 0 —
@@ -334,20 +370,20 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
             tone={overdueCount ? 'err' : 'ok'}
           />
         )}
-        {/* No trained rows is nothing assessed, not 0% compliance. */}
-        {trainUnread || trainedRows.length === 0 ? (
+        {/* Nothing assessed is not 0% compliance: no figure, and why. */}
+        {trainUnread || coverage.pct === null ? (
           <Kpi
             label="Acknowledgement coverage"
             val="—"
-            sub={trainUnread ? unreadSub(trainFailed) : training.length === 0 ? 'No training-controlled documents yet' : training.every((t) => t.eligible === false) ? 'Verified released text is unavailable' : 'No active roster members to assess'}
+            sub={trainUnread ? unreadSub(trainFailed) : coverage.sub}
           />
         ) : (
           <Kpi
             label="Acknowledgement coverage"
-            val={String(trainingPct)}
+            val={String(coverage.pct)}
             unit="%"
-            sub="Average verified-release coverage of active roster"
-            tone={trainingPct >= 95 ? 'ok' : trainingPct >= 80 ? 'warn' : 'err'}
+            sub={coverage.sub}
+            tone={coverage.pct >= 95 ? 'ok' : coverage.pct >= 80 ? 'warn' : 'err'}
           />
         )}
       </div>
@@ -452,38 +488,56 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                 >
                   {d.docNumber}
                 </button>
-                <div className="qms-cell qms-title" title={d.title}>{d.title}</div>
+                <div className="qms-cell qms-title" title={d.title}>{d.title}<RegisterSignatureLine doc={d} /></div>
                 <div className="qms-cell">
                   <span className="qms-tag">{DOC_TYPE_LABEL[d.docType] ?? d.docType}</span>
                 </div>
                 <div className="qms-cell mono">{d.version}</div>
-                <div className="qms-cell" title={d.inForce ? `Version ${d.inForce.version} stays in force until version ${d.version} is approved.` : undefined}>
+                <div className="qms-cell" title={d.inForce ? (d.status === 'effective'
+                  ? `Version ${d.inForce.version} stays in force until version ${d.version} is effective.`
+                  : `Version ${d.inForce.version} stays in force until version ${d.version} is approved.`) : undefined}>
                   {d.inForce && (
                     <span className="qms-pill" data-tone="effective" data-testid="qms-in-force">v{d.inForce.version} in force</span>
                   )}{d.inForce ? ' ' : null}
                   <span className="qms-pill" data-tone={STATUS_TONE[d.status]}>
                     {STATUS_LABEL[d.status]}
                   </span>
+                  <RouteLine doc={d} meId={meId} />
                 </div>
-                <div className="qms-cell">{formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}</div>
+                <div className="qms-cell">
+                  {formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}
+                  {d.status === 'effective' && d.effectiveDate && d.effectiveDate.slice(0, 10) > todayUtc() && (
+                    <span className="qms-route-line" data-testid="qms-pending-effective">v{d.version} from {d.effectiveDate.slice(0, 10)} (pending)</span>
+                  )}
+                </div>
                 <NextReviewCell doc={d} overdue={overdue} />
                 <div className="qms-cell qms-rowacts">
                   <DocumentReadButton doc={d} disabled={!personalTrainingScope(user, d.id)} onOpen={openReader} />
+                  <TrainingChip doc={d} onOpen={setAssigning} />
                   {d.status === 'draft' && (
                     <button
                       className="qms-chip"
-                      disabled={routing === d.id}
-                      title="Send this draft for review. Only a document under review can be approved."
+                      title="Send this draft for review, naming its QMS approver and any reviewers. Only a document under review can be approved."
                       onClick={() => setReviewing(d)}
                     >
-                      {I.arrowRight} {routing === d.id ? 'Sending…' : 'Send for review'}
+                      {I.arrowRight} Send for review
                     </button>
                   )}
                   {d.status === 'in_review' && (
                     <button
                       className="qms-chip"
+                      data-testid="qms-route-open"
+                      title="Who is named on this document's review route, and what each has done"
+                      onClick={() => setRoutePanel(d)}
+                    >
+                      {I.eye} Review route
+                    </button>
+                  )}
+                  {d.status === 'in_review' && approvableBy(d, meId) && (
+                    <button
+                      className="qms-chip"
                       title="Approve with your electronic signature (password and second factor). The author cannot approve their own document."
-                      onClick={() => setApproving(d)}
+                      onClick={() => { setEffectiveFrom(todayUtc()); setApproving(d); }}
                     >
                       {I.check} Approve
                     </button>
@@ -513,6 +567,16 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                         {I.archive} Retire
                       </button>}
                     </>
+                  )}
+                  {(d.status === 'effective' || d.inForce) && (
+                    <button
+                      className="qms-chip ghost"
+                      aria-label={`Download a controlled copy of ${d.docNumber}`}
+                      title="Download the version in force as a controlled copy: its approval signature and CONTROLLED COPY marking on every page. The issue is recorded."
+                      onClick={() => void downloadControlledCopy(d)}
+                    >
+                      {I.download} Controlled copy
+                    </button>
                   )}
                   <button
                     className="qms-chip ghost"
@@ -544,13 +608,16 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
         <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
           refresh={trainComp.refresh}
           canOpen={canOpen} onOpen={openReader} />
+        <TrainingExpiry />
       </div>
       {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
+      {assigning && <TrainingAssignmentsPanel doc={assigning} onClose={() => { setAssigning(null); trainComp.refresh(); }} />}
       {setup && <ControlledDocumentSetup document={setup.document} template={setup.template} templates={templates} revision={setup.revision}
         onClose={() => setSetup(null)} onCreated={openCreated} onNavigate={onNavigate} />}
-      {reviewing && <ControlledDocumentReason title="Send controlled document for review" action="Send for review"
-        description={`Send ${reviewing.docNumber} ${reviewing.title} v${reviewing.version} for independent review. Save the authored sections before continuing.`}
-        onClose={() => setReviewing(null)} onSubmit={reason => sendForReview(reviewing, reason)} />}
+      {reviewing && <QmsRouteForm doc={reviewing} mode="send" onClose={() => setReviewing(null)} onSent={() => sent(reviewing)} />}
+      {routePanel && <QmsRoutePanel doc={routePanel} view={qmsRouteView(docs.find((x) => x.id === routePanel.id) ?? routePanel)} meId={meId} admin={admin}
+        signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])} onClose={() => setRoutePanel(null)} onChanged={() => reg.refresh?.()}
+        onApprove={() => { setEffectiveFrom(todayUtc()); setApproving(routePanel); setRoutePanel(null); }} />}
       {revising && <ControlledDocumentReason title="Create controlled revision" action="Create revision"
         description={`Create a new draft of ${revising.docNumber} ${revising.title} v${revising.version}. The previous controlled editing copy stays read-only and recorded signed versions remain in the history.`}
         onClose={() => setRevising(null)} onSubmit={async reason => {
@@ -570,13 +637,22 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           open
           action="Approve controlled document"
           target={`${approving.docNumber} ${approving.title}`}
-          targetMeta={`v${approving.version} becomes effective when you sign. The author cannot approve their own document.`}
+          targetMeta={qmsApprovalMeta(approving.version, approving.reviewRoute ? approvalShare(approving.reviewRoute, meId) : null)}
           defaultMeaning="approval"
           meanings={['approval']}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          renderMeaningDetails={(_meaning, committing) => (<>
+            <label className="qms-effective-date">
+              Effective from (UTC day)
+              <input type="date" value={effectiveFrom} min={todayUtc()} disabled={committing} required
+                onChange={(e) => setEffectiveFrom(e.target.value)} aria-describedby="qms-effective-date-help" />
+              <span id="qms-effective-date-help">Signed with the approval. A later day leaves the version in force until then.</span>
+            </label>
+            <ApprovalTrainingReach documentId={approving.id} effectiveFrom={effectiveFrom || todayUtc()} today={todayUtc()} />
+          </>)}
           onClose={() => setApproving(null)}
           onSign={async (input) => {
-            const manifest = await postQmsApproval({ kind: 'document', id: approving.id }, input);
+            const manifest = await postQmsApproval({ kind: 'document', id: approving.id }, input, effectiveFrom || todayUtc());
             reg.refresh?.();
             return manifest;
           }}
@@ -588,8 +664,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           action="Retire controlled document"
           target={`${retiring.docNumber} ${retiring.title} (v${retiring.version})`}
           targetMeta="Retirement is the terminal state: the document leaves use for everyone trained on it when you sign. It is an electronic signature."
-          defaultMeaning="approval"
-          meanings={['approval']}
+          defaultMeaning="retirement"
+          meanings={['retirement']}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
           onClose={() => setRetiring(null)}
           onSign={async (input) => {
@@ -601,4 +677,11 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       )}
     </>
   );
+}
+
+/** Who must train on this document (P-49): offered on a document that carries read-and-understood, until it is retired. */
+function TrainingChip({ doc, onOpen }: { doc: QmsDoc; onOpen: (doc: QmsDoc) => void }) {
+  if (doc.status === 'retired' || !(QMS_TRAINABLE_DOCUMENT_TYPES as readonly string[]).includes(doc.docType)) return null;
+  return <button type="button" className="qms-chip" title="Who must read and acknowledge this document: job roles and named people"
+    onClick={() => onOpen(doc)}>{I.users} Training</button>;
 }

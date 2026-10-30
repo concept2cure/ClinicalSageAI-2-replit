@@ -122,12 +122,15 @@ describe('Vault legal-hold routes under the production API gate', () => {
     expect(out.reached).toBe(true);
   });
 
-  it('attributes the retention period to Setup and the hold family to Setup and Vault', () => {
+  /* Setup folded into Admin and access (D2, 2026-10-29): the retention and
+     legal-hold cards are on admin-console's Settings tab, which claims them now
+     (docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/). */
+  it('attributes the retention period to admin-console and the hold family to Vault and admin-console', () => {
     const map = buildPrefixMap();
     const owners = (p: string) => [...(modulesForPath(p, map) ?? [])];
-    expect(owners('/api/vault/legal-holds/retention')).toEqual(['setup']);
+    expect(owners('/api/vault/legal-holds/retention')).toEqual(['admin-console']);
     for (const r of ROUTES.filter((x) => !x.path.endsWith('/retention'))) {
-      expect(owners(r.path), r.path).toEqual(['vault', 'setup']);
+      expect(owners(r.path), r.path).toEqual(['vault', 'admin-console']);
     }
     for (const r of ROUTES) expect(owners(r.path).some((id) => LAUNCH_SURFACE_IDS.has(id)), r.path).toBe(true);
   });

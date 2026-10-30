@@ -54,7 +54,7 @@ export function SignalsTab({ signals, loading, programTitle, onAskAna }: Signals
               title="Run a fresh signal scan with AnA" aria-label="Run a fresh signal scan with AnA"
               onClick={() =>
                 onAskAna(
-                  `Run a fresh signal scan for ${programTitle ?? 'this program'} across FAERS, MAUDE, Eudamed and the literature corpus. ` +
+                  `Run a fresh signal scan for ${programTitle ?? 'this project'} across FAERS, MAUDE, Eudamed and the literature corpus. ` +
                     'Flag anything that should be re-included or escalated.',
                 )
               }
@@ -67,7 +67,7 @@ export function SignalsTab({ signals, loading, programTitle, onAskAna }: Signals
           /* null is "not read": still loading, or the feed failed (useProgramExtras
              degrades a failed field to null). Neither is "no signals". */
           <div role="status" style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: 'var(--text-300)' }}>
-            {loading ? 'Loading safety signals…' : 'Safety signals could not be loaded for this program.'}
+            {loading ? 'Loading safety signals…' : 'Safety signals could not be loaded for this project.'}
           </div>
         ) : signals.length === 0 ? (
           <div
@@ -114,7 +114,7 @@ export function SignalsTab({ signals, loading, programTitle, onAskAna }: Signals
                       style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-200)' }}
                       title={
                         typeof s.count === 'number'
-                          ? 'Adverse-event cases sharing this signal’s MedDRA PT code in this program’s scope'
+                          ? 'Adverse-event cases sharing this signal’s MedDRA PT code in this project’s scope'
                           : 'No MedDRA PT linkage on this signal — supporting cases cannot be counted'
                       }
                     >
@@ -128,7 +128,7 @@ export function SignalsTab({ signals, loading, programTitle, onAskAna }: Signals
                       <AskAnaChip
                         onAsk={() =>
                           onAskAna(
-                            `Assess safety signal ${s.id} (${s.event} · ${s.source}) for ${programTitle ?? 'this program'} — ` +
+                            `Assess safety signal ${s.id} (${s.event} · ${s.source}) for ${programTitle ?? 'this project'} — ` +
                               'pull current adverse-event context with search_device_adverse_events and recommend include, exclude, or keep under review, with the reasoning.',
                           )
                         }

@@ -1,0 +1,17 @@
+Red: the client tests against Labeling.tsx and LabelingTranslationApproval.tsx at HEAD.
+
+npx vitest run client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx
+ × a viewer > is offered no write control: no Approve, no Advance, no Add translation
+   → expected { approve: true, advance: true, …(1) } to deeply equal { Object (approve, advance, ...) }
+ × a viewer > is told the screen is view only, and the translations are still shown
+   → Unable to find an element by: [data-testid="labeling-view-only"]
+ ✓ an editor, and a session that does not say > an editor is offered Approve, Advance and Add translation
+ ✓ an editor, and a session that does not say > a session with no permissions array is offered them: the server decides (canGovernedWrite)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 2 passed (4)
+
+npx vitest run client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx (the one new case)
+ × the signed approval > a separation-of-duties refusal that already says "Nothing was signed." is said once
+   → expected 'No author is recorded for "labeling-t…' to be 'No author is recorded for "labeling-t…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed (11)

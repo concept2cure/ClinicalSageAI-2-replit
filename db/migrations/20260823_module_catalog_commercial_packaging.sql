@@ -1,3 +1,51 @@
+-- AMENDED IN PLACE 2026-10-30 — D2 fold F5 item 1: device submission packages into Submission Center (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts device-submission; its replay deprecates the
+-- existing row. Remove its packaging row too, so the unknown-module guard below
+-- still passes on a fresh database that never holds it. Replayed databases keep
+-- the deprecated row, the tier it was given ('standard'), its subscriptions and
+-- every other module's tier unchanged (submission-center stays 'standard').
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 fold F5 item 2: the organization-wide blocker list retires (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts device-validation; its replay deprecates the
+-- existing row. Remove its packaging row too, so the unknown-module guard below
+-- still passes on a fresh database that never holds it. Replayed databases keep
+-- the deprecated row, the tier it was given ('standard'), its subscriptions and
+-- every other module's tier unchanged (submission-center stays 'standard').
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 folds F1c and F2 (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts risk or ivd-completeness; its replay deprecates the
+-- existing rows. Remove their packaging rows too, so the unknown-module guard
+-- below still passes on a fresh database that never holds them. Replayed
+-- databases keep the deprecated rows, the tier each was given ('standard'), their
+-- subscriptions and every other module's tier unchanged (device-engineering and
+-- device-diagnostics stay 'standard'). design-controls never had a row here; its
+-- tier was 20260823_module_catalog_mdx_registers's, amended the same day.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 fold of ectd-publishing into eCTD Compile (CLAUDE.md Rule 1).
+-- 20260814j no longer inserts ectd-publishing, and 20260810 no longer keeps it
+-- off its deprecation or heals it. Remove its packaging row too, so the
+-- unknown-module guard below still passes on a fresh database that never holds
+-- the row. Replayed databases keep the deprecated row, the tier it was given
+-- ('standard'), its subscriptions and every other module's tier unchanged
+-- (ectd-compile stays 'standard').
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 fold F3: artifacts-center and device-vault into Vault (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts artifacts-center or device-vault; its replay
+-- deprecates the existing rows. Remove their packaging references too, so the
+-- unknown-module guard below still passes on a fresh database that never held
+-- the rows. Replayed databases keep the deprecated rows, their subscriptions and
+-- every other module's tier unchanged (vault stays 'free').
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 device-tasks fold into Tasks (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts device-tasks; its replay deprecates the existing row.
+-- Remove its packaging reference too, so the unknown-module guard below still
+-- passes on a fresh database that never held the row. Replayed databases keep the
+-- deprecated row, its subscriptions and every other module's tier unchanged.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/README.md.
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10a filing-catalogue fold (Rule 1).
+-- The discovery functions now live in Projects. Remove the retired identity's
+-- packaging reference too: a fresh database need not hold its old row, while
+-- replayed databases retain deprecated rows and subscriptions unchanged.
 -- ══ AMENDED IN PLACE 2026-09-22 (CLAUDE.md Rule 1) ══════════════════════════
 -- WHAT CHANGED: 'ectd-publishing' is assigned 'standard', beside ectd-compile,
 -- ectd-coauthor and dossier-map — the same eCTD publishing group.
@@ -129,17 +177,15 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   -- already caps it at 5 runs on free; gating it twice would turn the free tier
   -- into a wall of locks instead of a demonstration.
   --
-  -- authoring-engine, filings-catalog and intelligence-catalog are here for a
+  -- authoring-engine and intelligence-catalog are here for a
   -- different reason: they render NO organization data at all (verified -- no
-  -- fetch in AuthoringEngine.tsx, a static FILINGS_TAXONOMY, and a static tool
+  -- fetch in AuthoringEngine.tsx and a static tool
   -- registry). They are reference and wayfinding pages. Selling a static page
   -- is not something to do at any tier.
-  ('artifacts-center', 'free'),
   ('authoring-engine', 'free'),
   ('crl-library', 'free'),
   ('deep-research', 'free'),
   ('evidence-search', 'free'),
-  ('filings-catalog', 'free'),
   ('intelligence-catalog', 'free'),
   ('precedent-intelligence', 'free'),
   ('projects', 'free'),
@@ -208,26 +254,18 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('device-pma', 'standard'),
   ('device-presub', 'standard'),
   ('device-software', 'standard'),
-  ('device-submission', 'standard'),
-  ('device-tasks', 'standard'),
   ('device-udi', 'standard'),
-  ('device-validation', 'standard'),
-  ('device-vault', 'standard'),
   ('device-workstream', 'standard'),
   ('dispatch-readiness', 'standard'),
   ('doc-journey', 'standard'),
   ('document-authoring', 'standard'),
-  ('dossier', 'standard'),
-  ('dossier-map', 'standard'),
   ('ectd-coauthor', 'standard'),
   ('ectd-compile', 'standard'),
-  ('ectd-publishing', 'standard'),   -- added 2026-09-22; see the amendment note at the top
   ('global-ri', 'standard'),
   ('haq-manager', 'standard'),
   ('inconsistency', 'standard'),
   ('ind-checklist', 'standard'),
   ('insights', 'standard'),
-  ('ivd-completeness', 'standard'),
   ('labeling', 'standard'),
   ('labeling-pi', 'standard'),
   ('maa-cockpit', 'standard'),
@@ -243,7 +281,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('report-governance', 'standard'),
   ('research-admin', 'standard'),
   ('review', 'standard'),
-  ('risk', 'standard'),
   ('safety-narrative', 'standard'),
   ('source-tracer', 'standard'),
   ('submission-center', 'standard'),
@@ -351,3 +388,15 @@ UPDATE available_modules m
  WHERE p.module_id = m.module_id;
 
 COMMIT;
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10 (CLAUDE.md Rule 1).
+-- Filing discovery/reference now lives in the existing New project picker
+-- and ProjectPlan. Remove the retired filings-catalog packaging reference:
+-- fresh deployments have no such row, and existing rows keep their recorded
+-- metadata/subscriptions while 20260810 deprecates them on every replay.
+-- Evidence: slice-A2/A2.10/README.md, double-apply SQL checks.
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.7 (CLAUDE.md Rule 1).
+-- The dossier and dossier-map read functions now live in ProjectDossier on
+-- project Author. 20260810 no longer upserts their standalone identities.
+-- Remove these two packaging references too: a fresh database need not have
+-- their retired rows, and the unknown-module guard below must keep working.
+-- Existing retired rows, subscriptions and unrelated module tiers are preserved.

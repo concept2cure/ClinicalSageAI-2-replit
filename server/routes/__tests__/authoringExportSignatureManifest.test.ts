@@ -43,6 +43,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-ex
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { DOC_ID, releaseGovernanceRead } from '../../services/authoring/__tests__/release-governance-reads';
 
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -90,6 +91,8 @@ const SIGNED = {
 /** `title` is deliberately XML-hostile — see the escaping test below. */
 function mockRows(signatures: unknown[], title = 'Tox Summary') {
   mockQuery.mockImplementation(async (sql: unknown) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
     const s = String(sql);
     if (s.includes('FROM authoring_documents')) {
       // 'approved', not 'draft': a Part 11 filing export is refused (409) unless the
@@ -98,7 +101,7 @@ function mockRows(signatures: unknown[], title = 'Tox Summary') {
       // §11.50 signature manifest appended — would present whatever signatures
       // exist as certifying a final record that does not exist. Exporting an
       // approved document is what this route is for.
-      return { rowCount: 1, rows: [{ id: 'D1', title, module: 'M2', status: 'approved', created_at: new Date() }] };
+      return { rowCount: 1, rows: [{ id: DOC_ID, title, module: 'M2', status: 'approved', created_at: new Date() }] };
     }
     if (s.includes('FROM authoring_sections')) {
       return {
@@ -115,7 +118,7 @@ function mockRows(signatures: unknown[], title = 'Tox Summary') {
 
 function raw(format: string) {
   return request(makeApp())
-    .post('/api/authoring/docs/D1/export')
+    .post(`/api/authoring/docs/${DOC_ID}/export`)
     .set('Authorization', bearerSync)
     .send({ format })
     .buffer(true)

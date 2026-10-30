@@ -29,6 +29,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, ApiRequestError, redactInternals } from '@/lib/queryClient';
+import { editingCopyOf } from './editingCopy';
 
 /** The outline node being started: its code and its label. */
 export interface OutlineNodeRef {
@@ -135,7 +136,8 @@ export function startOffer(args: {
     };
   }
   if (doc.c2c_document_id !== filing.id) {
-    const copy = docs.find(d => d.c2c_document_id === filing.id);
+    const found = editingCopyOf(docs, filing.id, (d) => d.c2c_document_id);
+    const copy = found.kind === 'one' ? found.doc : null;
     return {
       ok: false,
       why:

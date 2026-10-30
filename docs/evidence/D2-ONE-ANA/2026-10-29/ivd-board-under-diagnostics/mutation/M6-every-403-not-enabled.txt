@@ -1,0 +1,30 @@
+# mutation M6-every-403-not-enabled: in client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx (diff below: restored copy, then mutated)
+# npx vitest run client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx
+
+145c145
+<     if (read.status === 403) return { kind: 'refused', message: REFUSED_403.get(read.code ?? '') ?? 'Your organization could not be confirmed, so the IVDR readiness was not read.' };
+---
+>     if (read.status === 403) return { kind: 'refused', message: 'This feature is not enabled for your organization, so the IVDR readiness was not read.' };
+
+ ✓ reads the board with the project's id and draws its families 152ms
+ ✓ mounts the IVD assessment workbench for the same project 145ms
+ ✓ a response for the organization is not drawn under a project 55ms
+ ✓ a response for another project is not drawn 70ms
+ ✓ a project the organization does not own (404) says so 47ms
+ ✓ an ownership check that could not run (503) says so 55ms
+ ✓ a failed read (500) says so 39ms
+ ✓ a refusal by the module gate (403 MODULE_NOT_LICENSED) says the feature is not enabled, not that the organization is unconfirmed 40ms
+ × a refusal outside the release (403 LAUNCH_SCOPE) says so 42ms
+   → expected 'The IVDR readiness was not readThis f…' to contain 'This part of the product is not in th…'
+ × an organization the route could not confirm (403 IVD_NO_TENANT) says so 37ms
+   → expected 'The IVDR readiness was not readThis f…' to contain 'Your organization could not be confir…'
+ ✓ a family that could not be read is "Not read", and no overall figure is shown 184ms
+ ✓ a project with no records reads empty, as a read that succeeded 28ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+Expected: "This part of the product is not in this release, so the IVDR readiness was not read."
+Received: "The IVDR readiness was not readThis feature is not enabled for your organization, so the IVDR readiness was not read.Try again"
+Expected: "Your organization could not be confirmed, so the IVDR readiness was not read."
+Received: "The IVDR readiness was not readThis feature is not enabled for your organization, so the IVDR readiness was not read.Try again"
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+vitest exit 1

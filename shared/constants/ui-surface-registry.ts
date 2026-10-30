@@ -166,7 +166,15 @@ export const UI_SURFACES: UiSurface[] = [
     // 2026-09-29: '/api/programs' removed: every route under it is the device
     // 510(k) app's predicate intelligence, SE render or RTM, and Projects calls
     // none of them (docs/evidence/D2-API-SCOPE/2026-09-29-programs-claim/).
-    apiPrefixes: ['/api/projects'],
+    // 2026-10-29: '/api/c2c/projects' added. It is the project record: the
+    // Projects list and New project (GET and POST /), and Project home's
+    // /:id, dossier, team, activity, records and sources. Only
+    // submission-center and ivd-completeness claimed it, both standard tier,
+    // so under MODULE_ENFORCEMENT=enforce an organization holding Projects
+    // (free tier) but neither of those was refused its own projects. They
+    // keep their claims; the gate serves a holder of any claimant, so nobody
+    // loses access (docs/evidence/D2-ONE-ANA/2026-10-29/core-project-record-gating/).
+    apiPrefixes: ['/api/projects', '/api/c2c/projects'],
     anaToolFamilies: ['plan_submission'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -176,7 +184,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'apps',
-    label: 'Workflows',
+    label: 'Subscription & features',
     navTier: 'global',
     layoutMode: 'apps',
     icon: 'grid',
@@ -188,32 +196,12 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Module catalog + entitlement-gated launch. Locked modules show upgrade CTA, not a dead button.',
+    notes: 'What the organization’s subscription includes and why any feature is unavailable; administrators turn features on and off. A locked feature says why, and what opens it.',
   },
-  {
-    id: 'artifacts-center',
-    label: 'Artifacts center',
-    navTier: 'global',
-    layoutMode: 'artifacts-center',
-    icon: 'sparkles',
-    group: 'evidence',
-    uiKit: null,
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx ArtifactsCenter reads and exports the gallery.
-    // 2026-09-29: '/api/biotech-artifacts' removed. It generates ICSRs, PSURs,
-    // CIOMS forms, expedited safety reports, clinical-operations reports and
-    // eCTD cover letters from the request body and records none of them (no
-    // vault document, version or audit row). No screen calls it, and PV and
-    // clinical operations are outside the release. A regulated document is
-    // produced only through a path that records it (Authoring → Vault).
-    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/atoms', '/api/artifacts-center'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE, PART11],
-    notes: 'Cross-project artifact library, version chain, provenance, signature status.',
-  },
+  // No artifacts-center. The Artifacts center folded into the Vault as its
+  // organization view (D2, fold F3 slice C, 2026-10-29); 'artifacts-center' is a
+  // DEEP_LINK_ALIASES entry for 'vault', and /api/artifacts-center is the Vault's
+  // claim alone. Its other claim, /api/atoms, had no route and no caller.
 
   // ─── Tier: project ───────────────────────────────────────────────────────────
   {
@@ -238,7 +226,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'document-authoring',
-    label: 'Document editor & authoring',
+    label: 'The editor',
     navTier: 'project',
     layoutMode: 'editor',
     icon: 'penLine',
@@ -292,25 +280,37 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'vault',
-    label: 'Vault (DMS)',
+    label: 'Vault',
     navTier: 'project',
     layoutMode: 'vault',
     icon: 'vault',
     group: 'evidence',
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
+    // 2026-10-30 (D2, fold F5): useWorkbench and useSubmissions are gone with their screens; no client calls
+    // /api/submission-ops/artifact-section-map or /api/submission-ops/packages now. The claims are kept, unchanged.
     // '/api/mdx/vault' was claimed here on 2026-09-26 for mdx/hooks/useVault.ts. That attribution
     // was a walker bug (fixed in f9eee2670): useVault renders only in the device kit's device-vault
     // surface, outside the catalog. The launch Vault reads the same stores through
     // /api/c2c/project-vault. Unclaimed 2026-10-22.
     // '/api/vault/legal-holds' (2026-10-01, P1-22; ADR-0014 §6): the legal-hold list, place and lift
-    // (server/routes/vault-legal-holds.ts). Setup's LegalHoldsCard now calls them;
-    // Vault retains the preservation API family for its records. Its /retention
-    // sub-path is Setup's, below.
+    // (server/routes/vault-legal-holds.ts). LegalHoldsCard calls them from Admin and access →
+    // Settings (Setup's, until it folded in, D2 2026-10-29), so admin-console claims them too;
+    // Vault retains the preservation API family for its records. Its /retention sub-path is
+    // admin-console's alone.
     // /api/regulatory/documents: a Vault version's review and approval, on the
     // one document lifecycle (VR-13).
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops/artifact-section-map', '/api/submission-ops/packages', '/api/vault/legal-holds', '/api/regulatory/documents'],
+    // 2026-10-29 (D2, fold F3 slice B): a governed artifact's leaf downloads the governed DOCX
+    // (/api/artifacts-center/:id/export). A shared claim, as a86ed04ed: the Artifacts center kept
+    // its own. It opens two reads to a Vault-only organization, both organization-scoped
+    // (docs/evidence/D2-ONE-ANA/2026-10-29/vault-artifact-leaf/README.md). The leaf's versions and
+    // audit report (/api/concept2cure/projects/...) are NOT claimed here: that prefix holds 97
+    // routes, 49 of them writes, and its claim is a decision of its own (same README).
+    // 2026-10-29 (fold F3 slice C): the Artifacts center folded in, so /api/artifacts-center is
+    // this claim alone. Its listing is the Vault's organization view, bound to the projects the
+    // caller can open (docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/README.md).
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops/artifact-section-map', '/api/submission-ops/packages', '/api/vault/legal-holds', '/api/regulatory/documents', '/api/artifacts-center'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -320,7 +320,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'review',
-    label: 'Review & approval',
+    label: 'The review board',
     navTier: 'project',
     layoutMode: 'review',
     icon: 'checkCircle',
@@ -338,7 +338,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'submission-center',
-    label: 'Submission center',
+    label: 'Submission Center',
     navTier: 'project',
     layoutMode: 'submissions',
     icon: 'rocket',
@@ -458,35 +458,34 @@ export const UI_SURFACES: UiSurface[] = [
     // standalone CSR/Module 2 content builders retain their launch fences.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
     apiPrefixes: ['/api/ectd-compile', '/api/ectd/export', '/api/ectd/validate', '/api/submission-orchestrator/runs', '/api/submission-orchestrator/csr/readiness',
-      '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract'],
+      '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract',
+      // The CSR card's build control and its board (2026-10-29, CSR slices 3 and 7): start a
+      // build bound to the run, read its sections, triage them, build narratives. Exactly the
+      // jobs router, not the /api/csr builder prefix.
+      '/api/csr/jobs',
+      // The CSR card's pivotal declarations (D5, 2026-10-29): exactly this endpoint. The rest of
+      // /api/csr-workflow (the board, claimed by the regulatory workspace) stays out of scope.
+      '/api/csr-workflow/pivotal',
+      // The eCTD reference (folded from ectd-publishing, D2 2026-10-29; EctdCompileReference.tsx):
+      // the vocabulary listing and its lists, and the spec-version register. Exactly these two,
+      // not ectd-publishing's whole /api/ectd: /api/ectd/v4 and the rest of /api/ectd/qualification
+      // stay refused at launch (launch-reproof-narrowing.test.ts).
+      '/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id.',
-    engineering: 'Routes: /api/ectd-compile.',
+    engineering: 'Routes: /api/ectd-compile; the eCTD reference reads /api/ectd/controlled-vocab and /api/ectd/qualification/spec-versions.',
   },
-  {
-    id: 'ectd-publishing',
-    label: 'Publishing center',
-    navTier: 'project',
-    layoutMode: 'submissions',
-    icon: 'gitBranch',
-    group: 'submission',
-    uiKit: 'ectd_coauthor',
-    apiPrefixes: ['/api/ectd'],
-    anaToolFamilies: [],
-    sharedContract: '@shared/types/submission-api',
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: deferredSurfaceDescription('ectd-publishing'),
-    engineering: 'Routes: /api/ectd/controlled-vocab, /api/ectd/v4/*, /api/ectd/qualification.',
-  },
+  // ectd-publishing folded into ectd-compile (D2, 2026-10-29): its spec versions, Regional IG
+  // OID and controlled vocabularies are eCTD Compile's eCTD reference, and `ectd-publishing` is an
+  // alias that opens it (registryModel.ts). Its claim on /api/ectd moved as the two reads the
+  // reference makes; /api/ectd/v4 had no caller (docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/).
   {
     id: 'device-510k',
-    label: '510(k) workbench',
+    label: '510(k) and eSTAR',
     navTier: 'project',
     layoutMode: 'section-workspace',
     icon: 'fileCheck',
@@ -497,7 +496,9 @@ export const UI_SURFACES: UiSurface[] = [
     // Project-first MDX, 2026-10-23: useK510 reads the existing document
     // preview, candidate and SE-matrix routes. Keep the predicate claim to
     // these endpoint families rather than the entire intelligence namespace.
-    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/510k/projects', '/api/predicate-intelligence/candidates', '/api/predicate-intelligence/se-matrix', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms', '/api/programs'],
+    // 2026-10-29 (trunk-red-sweep-2): '/api/mdx/audit' is the Audit trail tab its pathway screen
+    // reads (programTabsService.ts); it was served only through other features' '/api/mdx' root claims.
+    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/510k/projects', '/api/predicate-intelligence/candidates', '/api/predicate-intelligence/se-matrix', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms', '/api/programs', '/api/mdx/audit'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,
@@ -507,7 +508,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'device-cer',
-    label: 'CER generator (EU MDR)',
+    label: 'Clinical evaluation (CER)',
     navTier: 'project',
     layoutMode: 'section-workspace',
     icon: 'microscope',
@@ -515,7 +516,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: null,
     // Existing CER GSPR and PMS/PMCF panes (useCerGspr/useCerPostMarket/
     // useCerPmsFeeds); the program-scoped routes retain their own governance.
-    apiPrefixes: ['/api/cer', '/api/cerv2', '/api/gspr/catalog', '/api/gspr/programs', '/api/post-market/programs'],
+    // 2026-10-29 (trunk-red-sweep-2): '/api/mdx/audit' is the Audit trail tab its pathway screen
+    // reads (programTabsService.ts); it was served only through other features' '/api/mdx' root claims.
+    apiPrefixes: ['/api/cer', '/api/cerv2', '/api/gspr/catalog', '/api/gspr/programs', '/api/post-market/programs', '/api/mdx/audit'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -536,8 +539,11 @@ export const UI_SURFACES: UiSurface[] = [
     // CMC screens call, and the dead '/api/cmc/stability' mount dropped.
     // Attribution is by longest prefix, so the bare claim made every handler
     // under it answer as launch at the flip, called or not. Everything else
-    // under /api/cmc is unmapped, which production refuses: deliberately so
-    // for /projects/:id/process-capability until a launch screen calls it.
+    // under /api/cmc is unmapped, which production refuses.
+    // 2026-10-25: /projects/:id/process-capability was unmapped "until a launch
+    // screen calls it". The Batch records tab calls it now (CmProcessCapability
+    // in CmcModule.tsx), so it is claimed — and claimed at '/api/cmc/projects',
+    // which is the whole of what this router serves under that segment.
     // The deferred /variations/classify caller is claimed narrowly below,
     // with its own launch-scope refusal in the route. Each prefix needs a caller in the CMC
     // screens (server/middleware/__tests__/launch-scope-api-gate.test.ts;
@@ -566,6 +572,10 @@ export const UI_SURFACES: UiSurface[] = [
          prefix can claim, and the only prefix that would have covered it is the
          bare '/api/cmc' that P-28 deliberately does not claim. */
       '/api/cmc/register-history',
+      /* Pp/Ppk/Cp/Cpk over a program's recorded batch results, read by the
+         Batch records tab. The one route this router serves under
+         '/api/cmc/projects'. */
+      '/api/cmc/projects',
       '/api/cmc/quality/qbd',
       '/api/cmc/ich-compliance',
       '/api/cmc/control-strategy',
@@ -599,7 +609,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'ind-checklist',
-    label: 'IND lifecycle',
+    label: 'IND forms',
     navTier: 'project',
     layoutMode: 'ind-checklist',
     icon: 'clipboardList',
@@ -623,6 +633,13 @@ export const UI_SURFACES: UiSurface[] = [
     // the screen calls in place of the client copy it carried until 2026-10-15;
     // /readiness is not claimed — the screen's readiness verdict comes with the
     // checklist read.
+    // 2026-10-29: '/api/ind-lifecycle/briefing-book' removed. Since 5894e1aaa
+    // the briefing book is the project's meeting-package document in the
+    // editor, and no screen of this surface calls the form assembler or its
+    // /pdf. The only caller left is AgencyMeetings.tsx (/pdf), whose
+    // agency-meetings surface is outside the release. So the routes are
+    // unclaimed and refused in production as unattributed
+    // (docs/evidence/D2-ONE-ANA/2026-10-29/core-project-record-gating/).
     // Pinned by server/services/entitlements/__tests__/ind-launch-claim.test.ts.
     apiPrefixes: [
       '/api/ind-checklist',
@@ -630,7 +647,6 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/ind-master-data/sponsors',
       '/api/ind-lifecycle/clock',
       '/api/ind-lifecycle/cover-letter',
-      '/api/ind-lifecycle/briefing-book',
       '/api/ind-lifecycle/loa',
       '/api/ind-lifecycle/right-of-reference',
       '/api/ind-lifecycle/annual-report',
@@ -691,13 +707,15 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'tasks',
-    label: 'Tasks & collaboration',
+    label: 'Tasks',
     navTier: 'project',
     layoutMode: 'tasking',
     icon: 'checkSquare',
     group: 'collaboration',
     uiKit: 'tasking',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) and the shell's TaskTray call these.
+    // 2026-10-30 (D2, fold F5): useWorkbench and useSubmissions are gone with their screens; no client calls
+    // /api/submission-ops/artifact-section-map or /api/submission-ops/packages now. The claims are kept, unchanged.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): the task board and the shell's task tray.
     // /api/project-rules: the task board reads the rule definitions it shows
     // (TaskBoard.tsx); claimed by no surface until the gate saw it (2026-10-01).
@@ -710,26 +728,7 @@ export const UI_SURFACES: UiSurface[] = [
     compliance: [A11Y, TONE, 'motion-discipline'],
     notes: 'Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray.',
   },
-  {
-    id: 'dossier-map',
-    label: 'Dossier map',
-    navTier: 'project',
-    layoutMode: 'dossier-map',
-    icon: 'network',
-    group: 'submission',
-    uiKit: null,
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): DossierMap reads the map.
-    // 2026-09-29: '/api/rim' and '/api/global-ri' removed. DossierMap calls
-    // neither; they are the hidden Registrations and Global RI apps, and the
-    // claim made both answer as launch in production.
-    apiPrefixes: ['/api/dossier-map'],
-    anaToolFamilies: ['global_ri_dossier'],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: deferredSurfaceDescription('dossier-map'),
-  },
+
   {
     id: 'investigator-brochure',
     label: "Investigator's Brochure",
@@ -921,13 +920,21 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'device-diagnostics',
-    label: 'Device & diagnostics workbench',
+    label: 'IVDR evidence',
     navTier: 'specialist',
     layoutMode: 'device-diagnostics-workbench',
     icon: 'stethoscope',
     group: 'device',
     uiKit: 'risk',
-    apiPrefixes: ['/api/mdx', '/api/manufacturing', '/api/ivdr'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    // 2026-10-29 (ivd-board-under-diagnostics): the readiness panel's IVDR board and workbench read
+    // /api/ivd-completeness and /api/ivd-assessments.
+    // 2026-10-29 (fold F2): ivd-completeness folded in, and its two other claims moved here with it, so
+    // whoever was served is served still: /api/ivd-lifecycle and /api/validate-completeness. No screen
+    // calls either (AnA reaches the IVD lifecycle engines directly, ivdLifecycleTools.ts); whether to close
+    // them is a separate decision. /api/c2c/projects stays with projects and submission-center.
+    apiPrefixes: ['/api/mdx/audit', '/api/mdx/cdx', '/api/mdx/clia', '/api/mdx/ivdr', '/api/manufacturing', '/api/ivdr', '/api/ivd-completeness', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/validate-completeness'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -943,7 +950,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'tag',
     group: 'device',
     uiKit: 'labeling',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/labeling'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -958,28 +967,9 @@ export const UI_SURFACES: UiSurface[] = [
     notes: 'Labeling/IFU authoring and compliance. Documents, symbols and translations are read and written live — nothing is held only in the browser.',
     engineering: 'Routes: /api/mdx/labeling.',
   },
-  {
-    id: 'risk',
-    label: 'Risk management',
-    navTier: 'specialist',
-    layoutMode: 'risk',
-    icon: 'alertTriangle',
-    group: 'device',
-    uiKit: 'risk',
-    apiPrefixes: ['/api/mdx'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    // routes-ready: useLiveRows('/api/mdx/risk-items') at
-    // client/src/concept2cure/v2/surfaces/Risk.tsx:152, with apiRequest creating
-    // items, adding controls and changing status at :265/:298/:335 — against
-    // server/routes/mdx-risk-management.ts:98/126/280/183. sharedContract is
-    // still null, so this stops at routes-ready.
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'ISO 14971 risk file and hazard analysis. Risk items and their controls are read and written live — nothing is held only in the browser.',
-    engineering: 'Routes: /api/mdx/risk-items.',
-  },
+  // No `risk`: Risk management folded into Engineering evidence (D2, fold F1c,
+  // 2026-10-29). device-engineering claims /api/mdx/risk-items and mounts the
+  // register (RiskRegister.tsx); the id is an alias (registryModel.ts).
   {
     id: 'deep-research',
     label: 'Deep research',
@@ -998,26 +988,12 @@ export const UI_SURFACES: UiSurface[] = [
   },
 
   // ─── Tier: admin ─────────────────────────────────────────────────────────────
-  {
-    id: 'setup',
-    label: 'Admin / setup',
-    navTier: 'admin',
-    layoutMode: 'setup',
-    icon: 'settings',
-    group: 'admin',
-    uiKit: null,
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx Setup reads the GAMP 5 validation kit.
-    // 2026-10-01 (P1-22; ADR-0014 §6): Setup's Records retention card (RetentionPeriodCard.tsx)
-    // reads and sets the organisation's retention period. LegalHoldsCard (2026-10-14, D2)
-    // lists, places and lifts holds, using named project and Vault document choices.
-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/regulatory-programs', '/api/c2c/project-vault'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Org profile, users/roles, MFA policy, SSO/SCIM, module subscriptions, feature flags, API keys.',
-  },
+  // setup folded into admin-console (D2, 2026-10-29): the organisation's name and client
+  // type, the gateway, session, PDF/A, retention and legal-hold cards are on Admin and
+  // access → Settings, and `setup` is an alias that opens that tab (registryModel.ts). Its
+  // claims moved there or were never its own: /api/setup, /api/api-keys and the hold routes
+  // are admin-console's; /api/admin and /api/users are NEVER_GATED; /api/regulatory-programs
+  // and /api/c2c/project-vault stay the Vault's (docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/).
   {
     id: 'audit-trail',
     label: 'Audit trail',
@@ -1052,23 +1028,8 @@ export const UI_SURFACES: UiSurface[] = [
     notes: deferredSurfaceDescription('qmp'),
     engineering: 'Routes: /api/quality.',
   },
-  {
-    id: 'part11-console',
-    label: '21 CFR Part 11 console',
-    navTier: 'admin',
-    layoutMode: 'audit',
-    icon: 'lock',
-    group: 'admin',
-    uiKit: null,
-    apiPrefixes: ['/api/part11'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Read-only compliance console: audit hash-chain integrity, §11.10 control status, SOC 2 control grid.',
-    engineering: 'Routes: /api/part11.',
-  },
+  // part11-console folded into audit-trail (D2, 2026-10-29): Audit trail states both
+  // audit chains' verdicts, and its entry above already claims /api/part11.
   {
     id: 'identity-console',
     label: 'Enterprise identity (SSO / SCIM)',
@@ -1102,38 +1063,16 @@ export const UI_SURFACES: UiSurface[] = [
     notes: 'Sealed-report lifecycle: list, cryptographic integrity verify, provenance/attestation counts, seal and revoke with justification.',
     engineering: 'Routes: /api/intelligent-reports.',
   },
-  {
-    id: 'billing',
-    label: 'Billing',
-    navTier: 'admin',
-    layoutMode: 'billing',
-    icon: 'creditCard',
-    group: 'admin',
-    uiKit: null,
-    apiPrefixes: ['/api/billing/invoices', '/api/billing/budgets', '/api/billing/portal'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: 'Usage, invoices, budgets, alerts. See MDX_PAYING_CUSTOMER_VALUE_AND_ENTITLEMENTS.',
-  },
-  {
-    id: 'ana-memory',
-    label: 'AnA memory',
-    navTier: 'global',
-    layoutMode: 'ana-memory',
-    icon: 'database',
-    group: 'explore',
-    uiKit: null,
-    apiPrefixes: ['/api/mdx/ana/memory', '/api/mdx/ana/threads'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: deferredSurfaceDescription('ana-memory'),
-  },
+  /* No `billing`. Billing folded into Licensing (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-billing/): the invoice list,
+     checkout and the billing portal are Licensing's, for billing
+     administrators, and `licensing` already claims all of '/api/billing'
+     (ui-surface-registry.ui-v2.ts). The id is an alias of `licensing`. */
+  /* No `ana-memory`. AnA memory folded into the conversation (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/): its two real reads are
+     the conversation's "What AnA remembers", which claims the one route it reads
+     ('/api/mdx/ana/memory/profile', ui-surface-registry.ui-v2.ts). The atom list,
+     verify, supersede and thread routes went with the screen. */
 
 
   // ═══ ui-v2 kit reconciliation (2026-07-06) ═════════════════════════════════

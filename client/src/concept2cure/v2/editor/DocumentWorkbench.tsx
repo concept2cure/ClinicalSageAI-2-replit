@@ -76,6 +76,8 @@ import { DraftFigureLine } from './DraftFigureLine';
 import { DraftClaimsLine } from './DraftClaimsLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
+import { proposalTargetOf } from './draftAlternatives';
+import type { OfferedPassage, PassageRequest } from './draftPassage';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } from './RichSectionEditor';
 import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
@@ -86,6 +88,7 @@ import { captureAssemblySourceIntent, captureSourceDocumentStartIntent, type Ass
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, workbenchNavigationRefusal, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
 import { ImportSourceNotice } from './ImportSourceNotice';
+import { CsrNarrativeReferenceView, narrativeReferenceFor } from './CsrNarrativeReferenceView';
 import { authoringCurrentReadPath, authoringReadRefused, useAuthoringReadSession } from './authoringCurrentRead';
 import { TemplateGuidance } from './TemplateGuidance';
 import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
@@ -111,6 +114,7 @@ import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFiling
 import { outlineReadState, unboundNodeTitle, unboundNodeToast } from './outlineReadState';
 import { useStartOutlineSection, unstartedRowProps } from './startOutlineSection';
 import { FilingMarkets, FilingGaps, useCreateMarketCopy } from './FilingMarkets';
+import { linkedSectionPickFor, type LinkedSectionPick } from './linkedSectionPick';
 import {
   editorTargetDocLabel,
   clearEditorTarget,
@@ -137,6 +141,7 @@ import { AuthoringSignatures } from '../surfaces/AuthoringSignatures';
 import { useDialog } from '../useDialog';
 import { AuthoredHtml } from './AuthoredHtml';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { getSurfaceMeta } from '../registryModel';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
@@ -903,7 +908,7 @@ export function filingCommitNote(filing: unknown): string {
   if (f.committed === true) return ' The text was committed to the filing.';
   if (f.committed === false) {
     const why = typeof f.reason === 'string' && f.reason.trim() ? f.reason.trim() : 'the server gave no reason.';
-    return ` The text is saved in Authoring but not in the filing: ${why}`;
+    return ` The text is saved in the editor but not in the filing: ${why}`;
   }
   return '';
 }
@@ -1263,7 +1268,7 @@ export function DocumentWorkbench({
   // survives only as the value AuthoringCreateExport needs when creating a new
   // document, and it now follows the selected section instead of a dropdown
   // that defaulted every filing type to "M3".
-  const [module, setModule] = useState('M3');
+  const [module, setModule] = useState('');
   const [creationNoticeContainer, setCreationNoticeContainer] = useState<HTMLDivElement | null>(null);
 
   /* ── The project's governed filing outline ──
@@ -1368,6 +1373,11 @@ export function DocumentWorkbench({
      draft, because a draft that outlives its own panel is a draft whose
      section scope nobody is enforcing. */
   const [aiDraftOpen, setAiDraftOpen] = useState(false);
+  /* A passage the editor offered for alternatives: the same panel, for that passage alone
+     (CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 4). It belongs to its section. */
+  const [draftPassage, setDraftPassage] = useState<PassageRequest | null>(null);
+  useEffect(() => { setDraftPassage(null); }, [activeSectionId]);
+  useEffect(() => { if (!aiDraftOpen) setDraftPassage(null); }, [aiDraftOpen]);
   const editorRef = useRef<RichSectionEditorHandle | null>(null);
 
   /* ── A comment being anchored to a text range ──
@@ -1610,7 +1620,9 @@ export function DocumentWorkbench({
   const docSealed =
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
   const editRefusal = actRefusal(docAccess.edit ?? null);
-  const contentReadOnly = docSealed || !!editRefusal;
+  /* §14.3.3 of an imported CSR is held by reference to the build's narrative store, not as text: read-only here (2026-10-30). */
+  const narrativeReference = narrativeReferenceFor(docProvenance?.importSource, activeSection?.code);
+  const contentReadOnly = docSealed || !!editRefusal || !!narrativeReference;
   const dirty = activeSection != null && editorDirty && !docSealed;
   const docScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -1677,7 +1689,7 @@ export function DocumentWorkbench({
     if (adopt) setAcceptedAssemblyIntent(intent); return true;
   }, [programId, programSwitchHeld]);
   const sectionLoaderRef = useRef<((id: string) => Promise<void>) | null>(null);
-  const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: 'Authoring' });
+  const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: getSurfaceMeta('document-authoring').label });
   const confirmedSaveVersionRef = useRef<SavedSectionVersion | null>(null);
 
   const applyStatusFilter = useCallback((value: string) => onStatusChange?.(value), [onStatusChange]);
@@ -1912,6 +1924,9 @@ export function DocumentWorkbench({
   const editorSectionLabelsRef = useRef<Record<string, string>>({});
   editorSectionLabelsRef.current = Object.fromEntries(sections.map(s => [s.id, `${s.code} ${s.title}`.trim()]));
   const onEditorBridge = embedded?.onEditorBridge;
+  /* The same bridge, for the workbench's own draft panel: chosen paragraphs use this door. */
+  const draftBridgeRef = useRef<EditorBridge | null>(null);
+  const draftProposals = useMemo(() => proposalTargetOf(() => draftBridgeRef.current), []);
   useEffect(() => {
     if (!activeSection || !activeDocId) {
       onEditorBridge?.(null);
@@ -1975,8 +1990,10 @@ export function DocumentWorkbench({
       canPropose: () => live && editorRef.current?.canProposeReplacement() === true,
     };
     onEditorBridge?.(bridge);
+    draftBridgeRef.current = bridge;
     return () => {
       live = false;
+      if (draftBridgeRef.current === bridge) draftBridgeRef.current = null;
       onEditorBridge?.(null);
     };
   }, [onEditorBridge, activeDocId, activeSection, docSealed, contentReadOnly, editRefusal, viewMode, insertAnaText, anaProposeRefusal]);
@@ -2025,7 +2042,7 @@ export function DocumentWorkbench({
     availableActions: ['Review section', 'Review document', 'Reconcile project evidence', 'Prepare targeted fixes'],
   });
   oversightOriginRef.current = {
-    surfaceId: 'document-authoring', label: 'Authoring', moduleContext, authoringContext,
+    surfaceId: 'document-authoring', label: getSurfaceMeta('document-authoring').label, moduleContext, authoringContext,
     ...(activeDoc && programId ? { authoringDocument: {
       docId: activeDoc.id, programId, ...(activeSection ? { sectionId: activeSection.id } : {}),
     } } : {}),
@@ -2042,6 +2059,11 @@ export function DocumentWorkbench({
   const askAnaToDraft = useCallback(() => {
     askAna(askAnaToDraftPrompt(programName(program)));
   }, [askAna, program]);
+  const offerPassageAlternatives = useCallback((passage: OfferedPassage) => {
+    if (!activeSectionId) return;
+    setDraftPassage({ ...passage, sectionId: activeSectionId });
+    setAiDraftOpen(true);
+  }, [activeSectionId]);
 
   /* 2026-09-28, coverage-gap sweep GA-4: six record rails had no close control,
      so the way out of History,
@@ -2355,7 +2377,10 @@ export function DocumentWorkbench({
     if (refusal) setTargetNotice(refusal);
     return !refusal;
   }, [linkedTargetRefusal]);
-  const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
+  /* A linked document's section, chosen by `pick` from the sections read for
+     it on this editor's read path (linkedSectionPick.ts: an exact code, or the
+     first section within a module). */
+  const openLinkedSection = useCallback(async (docId: string, pick: (sections: AuthSection[] | null) => LinkedSectionPick) => {
     const scope = creationScopeRef.current;
     const sequence = navigationSequence.current;
     const revision = authService.captureSessionReadGuard().sameRevision;
@@ -2366,13 +2391,15 @@ export function DocumentWorkbench({
       setTargetNotice('Finish or cancel the open governed form, then retry the linked document.');
       return;
     }
-    const matches = (reply.body?.sections ?? []).filter(s => s.code.toLowerCase() === code.toLowerCase());
-    if (!reply.ok || matches.length !== 1) {
-      setTargetNotice(`The linked document's section ${code} could not be resolved uniquely. Nothing else was opened.`);
-      return;
+    const chosen = pick(reply.ok ? reply.body?.sections ?? [] : null);
+    if ('notice' in chosen) {
+      setTargetNotice(chosen.notice);
+      if (!chosen.openDocument) return;
+      requestLeaveRef.current({ kind: 'document', id: docId });
+    } else {
+      setTargetNotice(null);
+      requestLeaveRef.current({ kind: 'document', id: docId, sectionId: chosen.sectionId });
     }
-    setTargetNotice(null);
-    requestLeaveRef.current({ kind: 'document', id: docId, sectionId: matches[0].id });
     setTreeScrollNonce(n => n + 1);
   }, [programId, readKey, readSession, linkedReadStillCurrent]);
   const rejectLinkedTarget = useCallback((target: EditorTarget): boolean => {
@@ -2384,7 +2411,7 @@ export function DocumentWorkbench({
     }
     if (target.programId && target.programId !== projectIdForOutline) {
       targetAttemptedRef.current = true;
-      setTargetNotice(`Couldn’t open the linked document — it belongs to ${target.programTitle ?? 'a different program'}. Open that program and retry.`);
+      setTargetNotice(`Couldn’t open the linked document — it belongs to ${target.programTitle ?? 'a different project'}. Open that project and retry.`);
       return true;
     }
     return false;
@@ -2447,10 +2474,8 @@ export function DocumentWorkbench({
       }
       const linked = docs.find((d) => d.id === t.docId);
       if (linked) {
-        if (t.sectionCode) {
-          void openExactDocumentSection(linked.id, t.sectionCode);
-          return;
-        }
+        const pick = linkedSectionPickFor(t);
+        if (pick) { void openLinkedSection(linked.id, pick); return; }
         // A docs-error notice posted moments ago must not outlive the open.
         setTargetNotice(null);
         /* Through the unsaved-work gate, not a bare setActiveDocId: a doc
@@ -2485,7 +2510,7 @@ export function DocumentWorkbench({
     const wanted = describeEditorTarget(t);
     if (t.programId && t.programId !== projectIdForOutline) {
       setTargetNotice(
-        `Couldn’t open ${wanted} — it belongs to ${t.programTitle ?? 'a different program'}, ` +
+        `Couldn’t open ${wanted} — it belongs to ${t.programTitle ?? 'a different project'}, ` +
           'which is not the project this editor is scoped to. Open that project and retry. ' +
           'Showing the editor’s default view instead.'
       );
@@ -2555,7 +2580,7 @@ export function DocumentWorkbench({
     requestLeave,
     fireToast,
     programId,
-    openExactDocumentSection,
+    openLinkedSection,
     programSwitchHeld,
     readKey, readSession,
     rejectLinkedTarget,
@@ -4234,7 +4259,7 @@ export function DocumentWorkbench({
         {filing.reason === 'no-governed-document' && (
           <div className="scaf-note" style={{ padding: '10px 12px', fontSize: 12 }}>
             This project has no governed filing document, so there is no section outline to show.
-            Projects created before scaffolding — and program types with no rule pack — fall here.
+            Projects created before scaffolding — and project types with no rule pack — fall here.
           </div>
         )}
 
@@ -4491,6 +4516,8 @@ export function DocumentWorkbench({
                 onChanged={() => {
                   void loadDocs();
                   if (activeDocId) void loadSections(activeDocId);
+                  /* RR5: a review signature closes its signer's task on the document's review route; the Tasks rail and its round are read again. */
+                  setTasksEpoch(e => e + 1);
                 }}
                 fireToast={fireToast}
                 signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
@@ -4532,6 +4559,9 @@ export function DocumentWorkbench({
               docStatus={activeDoc?.status ?? null}
               module={module}
               programId={programId}
+              filingContext={{ projectId: programId ?? '', filingDocumentId: filing.document?.id ?? null,
+                registryId: docTemplateContext?.templateSource?.filingContext?.registryId
+                  ?? (filing.document?.filing_scope === 'market' ? null : program?.id === programId ? program.registryId ?? null : null) }}
               programSwitchHeld={programSwitchHeld}
               documentStart={sourceDocumentStart}
               noticeContainer={creationNoticeContainer}
@@ -4727,7 +4757,7 @@ export function DocumentWorkbench({
                   dirty
                     ? 'Save the open section first — the vault files the saved document.'
                     : !programId
-                      ? 'This document is not filed under a program; the vault is program-scoped.'
+                      ? 'This document is not filed under a project; the vault is project-scoped.'
                       : 'Export this document and file the file into the project vault, with its SHA-256 recorded.'
                 }
                 data-testid="file-to-vault-open"
@@ -4767,6 +4797,7 @@ export function DocumentWorkbench({
                    state from here would be a click with no visible effect, so
                    it goes to the section it is about to draft instead. */
                 if (viewMode === 'document') {
+                  setDraftPassage(null);
                   setViewMode('section');
                   setAiDraftOpen(true);
                   return;
@@ -5311,7 +5342,7 @@ export function DocumentWorkbench({
                     {/* 2026-09-28 (GE-P-2, coverage-gap sweep): this said "Create a new
                         version to make further changes" — a capability nothing provides.
                         The remedy that exists is a new document; this one stays the record. */}
-                    To make further changes, start a new document in Authoring; this one remains the record.
+                    To make further changes, start a new document in the editor; this one remains the record.
                   </div>
                 )}
                 {/* Above the canvas, at reading width: the accept decision is
@@ -5334,8 +5365,14 @@ export function DocumentWorkbench({
                     onAccepted={onAiDraftAccepted}
                     onClose={() => setAiDraftOpen(false)}
                     fireToast={fireToast}
+                    savedContent={activeSection.content ?? ''}
+                    savedUpdatedAt={activeSection.updated_at ?? null}
+                    proposals={draftProposals}
+                    passage={draftPassage}
+                    onPassageClose={() => setDraftPassage(null)}
                   />
                 )}
+                {narrativeReference && <CsrNarrativeReferenceView reference={narrativeReference} />}
                 <div
                   style={{
                     minHeight: 460,
@@ -5400,6 +5437,7 @@ export function DocumentWorkbench({
                     storageKey={activeSection.id}
                     ariaLabel={`Section ${activeSection.code} — ${activeSection.title}`}
                     onAsk={askAna}
+                    onOfferAlternatives={selectedSourceReviewMissing ? null : offerPassageAlternatives}
                     /* The text this section's lineage was recorded against —
                        the last SAVED content, not the in-flight draft. With
                        it, "Data Origins" refuses to answer once the canvas
@@ -6104,6 +6142,8 @@ export function DocumentWorkbench({
             onOpenBoard={() => onNav('review')}
             onClose={closeRail}
             fireToast={fireToast}
+            meId={user?.id && /^\d+$/.test(String(user.id)) ? Number(user.id) : null}
+            admin={((user as { roles?: string[] } | null)?.roles ?? []).some((r) => String(r).toLowerCase() === 'admin')}
           />
         </aside>
       )}

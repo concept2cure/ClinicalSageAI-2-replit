@@ -1,0 +1,5 @@
+{
+  "receipt": "green.json",
+  "kind": "actual report transport defect",
+  "detail": "The larger inventory exposed process.exit(0) truncating asynchronous piped stdout before the JSON object closed. Await stdout completion before exit; retain original failed receipt. No suite assertion was relaxed."
+}

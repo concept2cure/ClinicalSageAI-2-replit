@@ -1,0 +1,29 @@
+{
+  "utc": "2026-10-26T15:29:50.684347+00:00",
+  "epoch": "Pre-latch historical44-case qualification; successor replay will be separate",
+  "passed": 44,
+  "failed": 0,
+  "sourcePins": 29,
+  "sharedPins": 3,
+  "fixturePins": 11,
+  "stageCount": 60,
+  "axeCaptureCount": 16,
+  "axeViolationCount": 0,
+  "axeIncompleteRuleCount": 0,
+  "modeCounts": {
+    "actual-catalogue-to-one-editor": 4,
+    "actual-catalogue-retired-launcher": 4,
+    "close-project": 4,
+    "close-session": 4,
+    "close-ceremony": 4,
+    "close-parent": 4,
+    "refresh": 4,
+    "late-project": 4,
+    "late-session": 4,
+    "late-raw": 4,
+    "escape": 4
+  },
+  "sourceDrift": [],
+  "sharedDrift": [],
+  "rawHashVerified": true
+}

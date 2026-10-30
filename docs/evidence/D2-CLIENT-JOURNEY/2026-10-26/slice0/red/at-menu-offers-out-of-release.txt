@@ -1,0 +1,167 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·······xx······
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/appMentions.test.tsx > the @ menu offers only what this viewer can open > a feature outside the release is not offered; one in it still is
+AssertionError: expected <button type="button" …(5)>…(2)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-selected="true"
+  class="ana-menu-item"
+  data-on="true"
+  role="option"
+  title="The full-screen deep-research chat surface."
+  type="button"
+>
+  <span
+    class="ico"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-layout-grid"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        height="7"
+        rx="1"
+        width="7"
+        x="3"
+        y="3"
+      />
+      <rect
+        height="7"
+        rx="1"
+        width="7"
+        x="14"
+        y="3"
+      />
+      <rect
+        height="7"
+        rx="1"
+        width="7"
+        x="14"
+        y="14"
+      />
+      <rect
+        height="7"
+        rx="1"
+        width="7"
+        x="3"
+        y="14"
+      />
+    </svg>
+  </span>
+  <span>
+    @Deep Research
+  </span>
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/appMentions.test.tsx:164:69
+    162|     const box = screen.getByLabelText('Message') as HTMLTextAreaElemen…
+    163|     type(box, '@Deep');
+    164|     expect(screen.queryByRole('option', { name: /Deep Research/ })).to…
+       |                                                                     ^
+    165|     type(box, '@Vault');
+    166|     expect(screen.getByRole('option', { name: /Vault/ })).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/appMentions.test.tsx > the @ menu offers only what this viewer can open > a navigation id is checked as the surface it opens
+AssertionError: expected <button type="button" …(5)>…(2)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-selected="true"
+  class="ana-menu-item"
+  data-on="true"
+  role="option"
+  title="The task board / list / kanban."
+  type="button"
+>
+  <span
+    class="ico"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-layout-grid"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        height="7"
+        rx="1"
+        width="7"
+        x="3"
+        y="3"
+      />
+      <rect
+        height="7"
+        rx="1"
+        width="7"
+        x="14"
+        y="3"
+      />
+      <rect
+        height="7"
+        rx="1"
+        width="7"
+        x="14"
+        y="14"
+      />
+      <rect
+        height="7"
+        rx="1"
+        width="7"
+        x="3"
+        y="14"
+      />
+    </svg>
+  </span>
+  <span>
+    @Tasking
+  </span>
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/appMentions.test.tsx:175:63
+    173|     const box = screen.getByLabelText('Message') as HTMLTextAreaElemen…
+    174|     type(box, '@Tasking');
+    175|     expect(screen.queryByRole('option', { name: /Tasking/ })).toBeNull…
+       |                                                               ^
+    176|   });
+    177|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed (15)
+   Start at  21:50:19
+   Duration  1.93s (transform 274ms, setup 231ms, import 346ms, tests 495ms, environment 653ms)
+

@@ -1,0 +1,216 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts
+{
+  "timestamp": "2026-10-26T15:18:48.155Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:18:48.156Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts
+{
+  "timestamp": "2026-10-26T15:18:48.157Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts
+{
+  "timestamp": "2026-10-26T15:18:48.475Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > does not establish validity or presume a cutoff when prespecification is unstated 9ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > refuses a table with no diseased subjects instead of returning sensitivity 0 1ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > refuses a table with no non-diseased subjects instead of returning specificity 0 0ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > refuses an empty table instead of reporting every metric as 0 0ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > reports the sensitivity, specificity and exact intervals computeDiagnosticAccuracy gives 1ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > reports PPV as undefined (null), not 0, when no subject tested positive 1ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > a null intended-use prevalence is not stated, not 0: no re-projection and no low-prevalence caution 1ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > no diseased subjects: needs_parameters, never a computed 0% sensitivity 2ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > no non-diseased subjects: needs_parameters, never a computed 0% specificity 1ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > an all-zero table: no computed metrics, and the reply names the empty table 1ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > a negative count: needs_parameters, not clamped to 0 0ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > an intended-use prevalence outside [0, 1]: needs_parameters, not clamped 0ms
+ ✓ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assess_biomarker_clinical_validation — the tool asks for what the table lacks > a complete table is computed, with exact intervals on both metrics 1ms
+stdout | server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts
+{
+  "timestamp": "2026-10-26T15:18:55.133Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:18:55.135Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts
+{
+  "timestamp": "2026-10-26T15:18:55.135Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts
+{
+  "timestamp": "2026-10-26T15:18:55.214Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > build_postmarket_report: a fault in the engine > is reported as the tool failing, not as "more details are needed" 16ms
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > build_postmarket_report: a fault in the engine > still asks for parameters when the engine names the parameter problem 1ms
+ × server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > determine_assay_cutoff asks for missing schema inputs even when its engine throws a TypeError 17ms
+   → expected 'Cannot read properties of undefined (…' to contain 'observations'
+ × server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > determine_assay_cutoff asks for missing schema inputs even when its engine throws a TypeError 1ms
+   → expected 'Cannot read properties of null (readi…' to contain 'observations'
+ × server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > assess_scientific_validity asks for missing schema inputs even when its engine throws a TypeError 5ms
+   → expected undefined to be 'needs_parameters' // Object.is equality
+ × server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > assess_shelf_life_stability asks for missing schema inputs even when its engine throws a TypeError 1ms
+   → expected 'Cannot read properties of undefined (…' to contain 'points'
+ × server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > assess_accelerated_stability asks for missing schema inputs even when its engine throws a TypeError 1ms
+   → expected 'Cannot read properties of undefined (…' to contain 'points'
+ × server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > a TypeError with all schema inputs stated remains an engine fault 0ms
+   → expected 'needs_parameters' not to be 'needs_parameters' // Object.is equality
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > determine_assay_cutoff with one class of case still asks for both 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts > assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0% > does not establish validity or presume a cutoff when prespecification is unstated
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/biomarker-clinical-validation-refuses-an-empty-stratum.test.ts:43:37
+     41|     const { cutoffPrespecified: _cutoff, ...input } = COMPLETE;
+     42|     const out = assessBiomarkerClinicalValidation(input);
+     43|     expect(out.validityEstablished).toBe(false);
+       |                                     ^
+     44|     expect(out.cutoffNote).toMatch(/not stated/i);
+     45|     expect(out.findings.some(f => /cutoff.*not stated/i.test(f.message…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > determine_assay_cutoff asks for missing schema inputs even when its engine throws a TypeError
+AssertionError: expected 'Cannot read properties of undefined (…' to contain 'observations'
+
+Expected: "observations"
+Received: "Cannot read properties of undefined (reading 'length')"
+
+ ❯ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts:72:74
+     70|     expect(out.status).toBe('needs_parameters');
+     71|     expect(out.error).toBeUndefined();
+     72|     for (const field of missing as string[]) expect(String(out.message…
+       |                                                                          ^
+     73|   });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > determine_assay_cutoff asks for missing schema inputs even when its engine throws a TypeError
+AssertionError: expected 'Cannot read properties of null (readi…' to contain 'observations'
+
+Expected: "observations"
+Received: "Cannot read properties of null (reading 'length')"
+
+ ❯ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts:72:74
+     70|     expect(out.status).toBe('needs_parameters');
+     71|     expect(out.error).toBeUndefined();
+     72|     for (const field of missing as string[]) expect(String(out.message…
+       |                                                                          ^
+     73|   });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > assess_scientific_validity asks for missing schema inputs even when its engine throws a TypeError
+AssertionError: expected undefined to be 'needs_parameters' // Object.is equality
+
+- Expected:
+"needs_parameters"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts:70:24
+     68|   ])('%s asks for missing schema inputs even when its engine throws a …
+     69|     const out = await run(tool as string, input as Record<string, unkn…
+     70|     expect(out.status).toBe('needs_parameters');
+       |                        ^
+     71|     expect(out.error).toBeUndefined();
+     72|     for (const field of missing as string[]) expect(String(out.message…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > assess_shelf_life_stability asks for missing schema inputs even when its engine throws a TypeError
+ FAIL  server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > assess_accelerated_stability asks for missing schema inputs even when its engine throws a TypeError
+AssertionError: expected 'Cannot read properties of undefined (…' to contain 'points'
+
+Expected: "points"
+Received: "Cannot read properties of undefined (reading 'length')"
+
+ ❯ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts:72:74
+     70|     expect(out.status).toBe('needs_parameters');
+     71|     expect(out.error).toBeUndefined();
+     72|     for (const field of missing as string[]) expect(String(out.message…
+       |                                                                          ^
+     73|   });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > a TypeError with all schema inputs stated remains an engine fault
+AssertionError: expected 'needs_parameters' not to be 'needs_parameters' // Object.is equality
+ ❯ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts:77:28
+     75|   it('a TypeError with all schema inputs stated remains an engine faul…
+     76|     const out = await run('determine_assay_cutoff', { observations: [n…
+     77|     expect(out.status).not.toBe('needs_parameters');
+       |                            ^
+     78|     expect(out.error).toMatch(/determine_assay_cutoff failed:/);
+     79|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 15 passed (22)
+   Start at  15:18:46
+   Duration  10.77s (transform 5.73s, setup 82ms, import 10.27s, tests 69ms, environment 0ms)
+

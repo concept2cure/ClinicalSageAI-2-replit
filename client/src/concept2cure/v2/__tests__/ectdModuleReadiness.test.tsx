@@ -26,7 +26,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { EctdCompile } from '../surfaces/EctdCompile';
 import { ok, STATUS, props } from './ectdCompile.fixtures';
 
-const NO_SEQUENCE = 'No sequence exists for this program yet, so nothing is counted as placed. Approved sections are on the project’s Author tab.';
+const NO_SEQUENCE = 'No sequence exists for this project yet, so nothing is counted as placed. Approved sections are on the project’s Author tab.';
 
 function serveStatus(body: unknown) {
   apiRequest.mockImplementation(async (method: string, url: string) => {

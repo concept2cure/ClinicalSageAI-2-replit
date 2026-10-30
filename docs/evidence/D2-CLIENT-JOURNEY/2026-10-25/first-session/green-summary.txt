@@ -1,0 +1,12 @@
+Affected set: every test that names a changed file by import or by path (85 files).
+⎯⎯⎯⎯⎯⎯ Failed Tests 25 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 83 passed (85)
+      Tests  25 failed | 1107 passed (1132)
+
+Failures, both identical at 2246406e4 (before this session's passes):
+  client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx (1, Vault search) — listed in pass3/preexisting-at-HEAD.txt
+  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts (24) — 24 failed | 187 passed at 2246406e4
+  server/startup/__tests__/shutdown-ana-runs.test.ts — an unhandled process.exit, identical at 2246406e4
+
+ci:typecheck-no-regression --incremental: 0 errors (baseline 0).
+ESLint on the changed files: no file gained a warning (taskManagement.routes.ts lost its unused import; the e2e file's new test is under the function-length limit).

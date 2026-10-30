@@ -1,0 +1,38 @@
+[
+  {
+    "file": "haq-ui-lint.json.gz",
+    "errors": 0,
+    "warnings": 23,
+    "qualification": "Intermediate discovery output; source hashes were not pinned, not final qualification or a baseline."
+  },
+  {
+    "file": "haq-new-ui-lint.json.gz",
+    "errors": 0,
+    "warnings": 1,
+    "qualification": "Intermediate discovery output; source hashes were not pinned, not final qualification or a baseline."
+  },
+  {
+    "file": "haq-bridge-lint.json.gz",
+    "errors": 0,
+    "warnings": 2,
+    "qualification": "Intermediate discovery output; source hashes were not pinned, not final qualification or a baseline."
+  },
+  {
+    "file": "haq-all-lint.json.gz",
+    "errors": 0,
+    "warnings": 24,
+    "qualification": "Intermediate discovery output; source hashes were not pinned, not final qualification or a baseline."
+  },
+  {
+    "file": "haq-render-lint.json.gz",
+    "errors": 0,
+    "warnings": 2,
+    "qualification": "Intermediate discovery output; source hashes were not pinned, not final qualification or a baseline."
+  },
+  {
+    "file": "haq-parent-lint.json.gz",
+    "errors": 0,
+    "warnings": 8,
+    "qualification": "Intermediate discovery output; source hashes were not pinned, not final qualification or a baseline."
+  }
+]

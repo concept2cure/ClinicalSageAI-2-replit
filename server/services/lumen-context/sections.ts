@@ -421,7 +421,8 @@ The briefing is a regulatory argument, not a marketing pitch. State your positio
  * Handles exact matches of, e.g., "3.2.S" or prefix matches
  * for sections like "3.2.S.1" → "3.2.S".
  */
-export function buildSectionSpecificPrompt(sectionCode: string): string | null {
+export function buildSectionSpecificPrompt(sectionCode: string, openDocumentRegistryId: string | null = null): string | null {
+  if (openDocumentRegistryId !== 'US_IND') return null;
   // A section the canonical overlay registers, or one beneath it, is briefed
   // from the overlay, so this playbook and the orchestrator's section line
   // can never name the open section differently.

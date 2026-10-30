@@ -1,0 +1,9 @@
+{
+  "urlPath": "/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx",
+  "httpStatus": 200,
+  "servedBytes": 16506,
+  "servedSha256": "37ccf15148ffdbb975ee11ade19280573c08f850f1266d0e80b9aea443c63519",
+  "scopedMockBound": true,
+  "oldOpaqueSessionRemoved": true,
+  "qualification": "Actual Vite transform proof; generated synthetic token intentionally omitted"
+}

@@ -18,6 +18,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
 import { I } from '../icons';
+import { ORGANIZATION_WIDE_RECORDS, OrganizationCountsNote, countsAreOrganizationWide } from './InsightsCatalogPanel';
 import {
   RUN_STATUS_LABEL,
   confidenceText,
@@ -91,6 +92,20 @@ function RunFilters({
   );
 }
 
+/**
+ * What a run's counts cover, from its carried `computedScope` only
+ * (run-history.ts reads it from the stored summary). A run whose engine
+ * counted the organization says so in the catalog card's words
+ * (InsightsCatalogPanel.tsx). Under a project it also says the counts are not
+ * narrowed to it, as the report's scope line does (Insights.tsx); an account
+ * run is the organization's by its own scope, so it keeps the first line only
+ * (D2, 2026-10-29).
+ */
+function RunScopeNote({ run }: { run: Pick<ReportRunRow, 'computedScope' | 'scopeType'> }) {
+  if (countsAreOrganizationWide(run)) return <OrganizationCountsNote className="rl-cell-sub" />;
+  return run.computedScope === 'organization' ? <div className="rl-cell-sub">{ORGANIZATION_WIDE_RECORDS}</div> : null;
+}
+
 function RunRow({
   run,
   pickable,
@@ -121,7 +136,7 @@ function RunRow({
         {run.reportTypeLabel}
         {market ? <div className="rl-cell-sub">{market}</div> : null}
       </td>
-      <td>{run.scopeLabel || `${run.scopeType} — ${run.scopeId}`}{run.computedScope === 'organization' && <div className="rl-cell-sub">Organization-wide records</div>}</td>
+      <td>{run.scopeLabel || `${run.scopeType} — ${run.scopeId}`}<RunScopeNote run={run} /></td>
       <td><StatusTag status={run.status} /></td>
       <td>{confidenceText(run.confidence)}</td>
       <td>{whenText(run.completedAt ?? run.createdAt)}</td>
@@ -221,7 +236,7 @@ function HistoryControls({ scopeLabel, scopeAvailable, currentScope, onScope, so
   const scopeId = React.useId();
   const sortId = React.useId();
   return <div className="rl-filters">
-    {scopeAvailable && <div className="rl-filter"><label className="gov-label" htmlFor={scopeId}>Reporting scope</label><select id={scopeId} className="rl-input" value={currentScope ? 'current' : 'all'} onChange={e => onScope(e.target.value === 'current')}><option value="all">All accessible reports</option><option value="current">{scopeLabel || 'Selected program'}</option></select></div>}
+    {scopeAvailable && <div className="rl-filter"><label className="gov-label" htmlFor={scopeId}>Reporting scope</label><select id={scopeId} className="rl-input" value={currentScope ? 'current' : 'all'} onChange={e => onScope(e.target.value === 'current')}><option value="all">All accessible reports</option><option value="current">{scopeLabel || 'Selected project'}</option></select></div>}
     <div className="rl-filter"><label className="gov-label" htmlFor={sortId}>Order by</label><select id={sortId} className="rl-input" value={sortBy} onChange={e => onSort(e.target.value as HistorySort)}><option value="createdAt">Newest first</option><option value="completedAt">Most recently computed</option><option value="confidence">Highest measured confidence</option><option value="reportType">Report type</option><option value="status">Status</option></select></div>
     <button type="button" className="btn ghost" onClick={onRefresh}>Refresh</button>
   </div>;

@@ -1,0 +1,659 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-27",
+  "purpose": "documentary_retention_and_reference_review",
+  "canonicalBaseCommit": "98da0f41520e6a7f429f44a862465af81c6ed167",
+  "implementationReviewCommit": "e6efa61109eddbe0d9e508642a28e710a48f3b1f",
+  "implementationReviewTree": "311538c0cc6e66cfb75383ea7dc50921d0c587bf",
+  "sourceManifestSha256": "c6bec0591a9421d3f3720a9797b9cac9d986dc22f8801bb20b7d99b96dbd7650",
+  "packagedManifestSha256": "cd4a1066ce4035a46d6d734986c8c64b0ff99d8a1b1387477a1789634552e9cc",
+  "verification": {
+    "uniqueSourceRecords": 78,
+    "includedUniqueOriginalPdfs": 22,
+    "includedOriginalBytes": 20449078,
+    "pdfPagesVerifiedWithPdfinfo": 718,
+    "pageDerivativeRecordsVerified": 718,
+    "catalogOnlySources": 56,
+    "restrictedSponsorOriginalsIncluded": 0,
+    "unchangedOriginalBytes": true,
+    "allAssetPathsResolveWithinPackage": true,
+    "allRelativeMarkdownLinksResolveWithinPackage": true,
+    "pageTextHashesVerified": true,
+    "pageReviewStatusCounts": {
+      "extracted_unreviewed": 684,
+      "ocr_unreviewed": 34
+    },
+    "pageExtractionMethodCounts": {
+      "native_pdf_text": 684,
+      "tesseract 5.3.4 / eng / psm3 / local-offline": 34
+    }
+  },
+  "admission": {
+    "applicationDatabaseImported": false,
+    "liveAnaAdmissionEstablished": false,
+    "modelTrainingRun": false,
+    "implementationWholeRepositoryTypecheck": "incomplete_resource_limit"
+  },
+  "originals": [
+    {
+      "sourceKey": "cdi-rbx2660-s12879-022-07256-y",
+      "originalPath": "originals/34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333.pdf",
+      "sha256": "34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333",
+      "bytes": 1595585,
+      "pageCount": 13,
+      "pagesPath": "pages/34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333.jsonl",
+      "pagesFileSha256": "59e8cba322b6c27bf853182565e151865a5d6679e97aee7ee1380f941c83dc0f"
+    },
+    {
+      "sourceKey": "cdi-rebyota-01-bioresearch-monitoring-final-discipline-review--october-20--2022---rebyota",
+      "originalPath": "originals/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.pdf",
+      "sha256": "d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474",
+      "bytes": 223512,
+      "pageCount": 4,
+      "pagesPath": "pages/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.jsonl",
+      "pagesFileSha256": "edc6660cd8cce4fbdd824129e02d605a364f2ab9056cfbbe6efe220fdab7c02c"
+    },
+    {
+      "sourceKey": "cdi-rebyota-02-cber-cmc-bla-review-memo---rebyota",
+      "originalPath": "originals/08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a.pdf",
+      "sha256": "08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a",
+      "bytes": 629053,
+      "pageCount": 51,
+      "pagesPath": "pages/08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a.jsonl",
+      "pagesFileSha256": "0763bbac2face1c4216b2bec04790a5dfb97f337bca94ed79ab644982f618c4a"
+    },
+    {
+      "sourceKey": "cdi-rebyota-03-cber-dmpq-cmc-facility-bla-review-memo---rebyota",
+      "originalPath": "originals/3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0.pdf",
+      "sha256": "3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0",
+      "bytes": 481775,
+      "pageCount": 30,
+      "pagesPath": "pages/3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0.jsonl",
+      "pagesFileSha256": "e8614c68effe87404de4c7d7ab39100fd120e16c858e26aefaf7fc6a1753bc64"
+    },
+    {
+      "sourceKey": "cdi-rebyota-04-clinical-review-memo--november-30--2022---rebyota",
+      "originalPath": "originals/696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2.pdf",
+      "sha256": "696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2",
+      "bytes": 1982384,
+      "pageCount": 135,
+      "pagesPath": "pages/696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2.jsonl",
+      "pagesFileSha256": "de6ee320a18df321a07a5b0afd3bcd225286fe2c5970c92fbc0e798983d313fa"
+    },
+    {
+      "sourceKey": "cdi-rebyota-05-cmc-statistical-review---rebyota",
+      "originalPath": "originals/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.pdf",
+      "sha256": "8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3",
+      "bytes": 284728,
+      "pageCount": 9,
+      "pagesPath": "pages/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.jsonl",
+      "pagesFileSha256": "4c361062048a06c01c7e39342c0b2a75870f81257f6d8b5b070e4e85f102737e"
+    },
+    {
+      "sourceKey": "cdi-rebyota-06-employee-officer-list-memo--november-21--2022---rebyota",
+      "originalPath": "originals/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.pdf",
+      "sha256": "c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8",
+      "bytes": 151141,
+      "pageCount": 2,
+      "pagesPath": "pages/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.jsonl",
+      "pagesFileSha256": "0ad523ba0eed5f010a71c86444457f249f891140bdc31cf7e5128e82be425edf"
+    },
+    {
+      "sourceKey": "cdi-rebyota-07-late-cycle-meeting-summary--august-30--2022---rebyota",
+      "originalPath": "originals/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.pdf",
+      "sha256": "11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e",
+      "bytes": 230334,
+      "pageCount": 9,
+      "pagesPath": "pages/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.jsonl",
+      "pagesFileSha256": "9553b507279eb4176575326208bdeed5fb37993e405b88c2d3d364620bef2880"
+    },
+    {
+      "sourceKey": "cdi-rebyota-08-mid-cycle-communication-summary--may-31--2022---rebyota",
+      "originalPath": "originals/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.pdf",
+      "sha256": "37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604",
+      "bytes": 210764,
+      "pageCount": 6,
+      "pagesPath": "pages/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.jsonl",
+      "pagesFileSha256": "925a01db2b20c0f739aafc93ce255d1ee767f5e045128c3ba00b031c99d22606"
+    },
+    {
+      "sourceKey": "cdi-rebyota-09-pharmacovigilance-plan-review-memo---rebyota",
+      "originalPath": "originals/39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7.pdf",
+      "sha256": "39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7",
+      "bytes": 357920,
+      "pageCount": 11,
+      "pagesPath": "pages/39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7.jsonl",
+      "pagesFileSha256": "78dd5a4b9cb6a75ea66e162fc6a0119a27c8412441fc78ee25ab836d0c1bccfc"
+    },
+    {
+      "sourceKey": "cdi-rebyota-10-statistical-review---rebyota",
+      "originalPath": "originals/abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9.pdf",
+      "sha256": "abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9",
+      "bytes": 1523729,
+      "pageCount": 42,
+      "pagesPath": "pages/abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9.jsonl",
+      "pagesFileSha256": "d3bd2ccba57bc19b2e54038b184a2930bb63a0d474f7d1058a7d84b8633cff8f"
+    },
+    {
+      "sourceKey": "cdi-vowst-01-analytical-method-review-memo---vowst",
+      "originalPath": "originals/6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81.pdf",
+      "sha256": "6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81",
+      "bytes": 353263,
+      "pageCount": 11,
+      "pagesPath": "pages/6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81.jsonl",
+      "pagesFileSha256": "010891196a4b40570a647caa3f649b97fc432d4ea84777f450c7a81eeff63fd9"
+    },
+    {
+      "sourceKey": "cdi-vowst-02-bioresearch-monitoring-final-discipline-review-memo---vowst",
+      "originalPath": "originals/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.pdf",
+      "sha256": "90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe",
+      "bytes": 196985,
+      "pageCount": 2,
+      "pagesPath": "pages/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.jsonl",
+      "pagesFileSha256": "f4d407e87c8a60db0909b87bfef914ffb96ac11ef2241c6ffe3566b99ce2b223"
+    },
+    {
+      "sourceKey": "cdi-vowst-03-cber-cmc-bla-review-memo---vowst",
+      "originalPath": "originals/07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd.pdf",
+      "sha256": "07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd",
+      "bytes": 792172,
+      "pageCount": 42,
+      "pagesPath": "pages/07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd.jsonl",
+      "pagesFileSha256": "cc82fd6b5bf854f28aa956a0701595d400fb0cc38993c28910d261a3724bdf55"
+    },
+    {
+      "sourceKey": "cdi-vowst-04-cber-dmpq-cmc-facility-bla-review-memo---vowst",
+      "originalPath": "originals/d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea.pdf",
+      "sha256": "d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea",
+      "bytes": 637534,
+      "pageCount": 47,
+      "pagesPath": "pages/d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea.jsonl",
+      "pagesFileSha256": "93072fc84314616b2f72196975cbea811cdfc2d3282b02111820e8c1935d2abd"
+    },
+    {
+      "sourceKey": "cdi-vowst-05-clinical-review-memo---vowst",
+      "originalPath": "originals/510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e.pdf",
+      "sha256": "510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e",
+      "bytes": 2149393,
+      "pageCount": 104,
+      "pagesPath": "pages/510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e.jsonl",
+      "pagesFileSha256": "4aa981e4d7fea3a2dfc5040a9358204d071041be3aad895d077dcb3c72034c3f"
+    },
+    {
+      "sourceKey": "cdi-vowst-06-cmc-statistical-review---vowst",
+      "originalPath": "originals/6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c.pdf",
+      "sha256": "6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c",
+      "bytes": 545791,
+      "pageCount": 19,
+      "pagesPath": "pages/6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c.jsonl",
+      "pagesFileSha256": "e59b266a7db929f518430ddb38ef9f510d79f3c70bc5dc8c6bcd6ce06e9584c1"
+    },
+    {
+      "sourceKey": "cdi-vowst-07-employee-officer-list-memo---vowst",
+      "originalPath": "originals/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.pdf",
+      "sha256": "0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525",
+      "bytes": 130456,
+      "pageCount": 1,
+      "pagesPath": "pages/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.jsonl",
+      "pagesFileSha256": "e135d01d806ba679ebf44975ecd7de00e702308883c8d2b33dd31dbe41d4c0d2"
+    },
+    {
+      "sourceKey": "cdi-vowst-08-mid-cycle-communication-agenda---vowst",
+      "originalPath": "originals/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.pdf",
+      "sha256": "a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263",
+      "bytes": 178500,
+      "pageCount": 3,
+      "pagesPath": "pages/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.jsonl",
+      "pagesFileSha256": "c3a61202215b7fd838ec831db24dfd9ea0166fe5b20e9616a2c377d5db83511f"
+    },
+    {
+      "sourceKey": "cdi-vowst-09-pharmacovigilance-plan-review-memo---vowst",
+      "originalPath": "originals/e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7.pdf",
+      "sha256": "e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7",
+      "bytes": 332632,
+      "pageCount": 15,
+      "pagesPath": "pages/e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7.jsonl",
+      "pagesFileSha256": "d87ccb867f2f670991cb5d0ef477f56ce85a12d84444e383b94ce6b5c3a32256"
+    },
+    {
+      "sourceKey": "cdi-vowst-10-statistical-review---vowst",
+      "originalPath": "originals/3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37.pdf",
+      "sha256": "3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37",
+      "bytes": 772030,
+      "pageCount": 36,
+      "pagesPath": "pages/3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37.jsonl",
+      "pagesFileSha256": "be842acfff0486beffbf2bfbd2f2bfeb9a68f25dfc383e0dd1bd75bc54be798c"
+    },
+    {
+      "sourceKey": "cdi-zinplava-761046-medical-review",
+      "originalPath": "originals/9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d.pdf",
+      "sha256": "9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d",
+      "bytes": 6689397,
+      "pageCount": 126,
+      "pagesPath": "pages/9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d.jsonl",
+      "pagesFileSha256": "488aa96157398e8f8ceaedb7c35244c81694185cdcd80f9bfc660a4f514b745f"
+    }
+  ],
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 43,
+      "sha256": "a9a458d22cc69491bf161b06e517dd5c0d18460438cb5b4795db764317b5471e"
+    },
+    {
+      "path": "README.md",
+      "bytes": 6654,
+      "sha256": "2b1aad1ddad5938095b899a24a00f8c1e2683d42372c6d27844b51a00b2d9cdf"
+    },
+    {
+      "path": "comparator-fit-matrix.json",
+      "bytes": 9184,
+      "sha256": "c504b2ded138c775e420da654b4805fd7371bb2c09f2aa00734b8f6d51a9aa2d"
+    },
+    {
+      "path": "implementation-review/README.md",
+      "bytes": 5322,
+      "sha256": "a2e89cfff9ff216ce4d68e75037cdaac98b2b8b8bf3d7acfc7d65b595e29d2d3"
+    },
+    {
+      "path": "implementation-review/agency-connectors-canada.md",
+      "bytes": 14668,
+      "sha256": "e845fb849f11a6be883d59ed9884ddea75f7adbf41609ed9d19bf7300344e12e"
+    },
+    {
+      "path": "implementation-review/agency-connectors-endpoint-receipts.json",
+      "bytes": 4851,
+      "sha256": "7547dc51fbd407f4d588a8f75a5f405d15e5944cd01b38a8cfd8c8b6d45e6cc0"
+    },
+    {
+      "path": "implementation-review/agency-connectors-fda-ema.md",
+      "bytes": 15078,
+      "sha256": "43524d85ad63f1856d88c9d90c64941b44dab70f5c08c72a66103b80fb337800"
+    },
+    {
+      "path": "implementation-review/ana-csr-reference-learning.md",
+      "bytes": 12615,
+      "sha256": "781fc11c835afbf4715675a52920e1bd9e61f86bd38c13bcc7ed3ca8d07b3959"
+    },
+    {
+      "path": "implementation-review/verification.md",
+      "bytes": 5762,
+      "sha256": "f9ad1a4613cf9cfa5983473dfc82b471386b4d965fa299c1605f71adda97290d"
+    },
+    {
+      "path": "lmn-target-profile.json",
+      "bytes": 3608,
+      "sha256": "303e3d30368cde59a8f9924b42fde7edcb45a71ed7840c6765f8cdd41182f541"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 162491,
+      "sha256": "cd4a1066ce4035a46d6d734986c8c64b0ff99d8a1b1387477a1789634552e9cc"
+    },
+    {
+      "path": "originals/07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd.pdf",
+      "bytes": 792172,
+      "sha256": "07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd"
+    },
+    {
+      "path": "originals/08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a.pdf",
+      "bytes": 629053,
+      "sha256": "08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a"
+    },
+    {
+      "path": "originals/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.pdf",
+      "bytes": 130456,
+      "sha256": "0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525"
+    },
+    {
+      "path": "originals/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.pdf",
+      "bytes": 230334,
+      "sha256": "11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e"
+    },
+    {
+      "path": "originals/34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333.pdf",
+      "bytes": 1595585,
+      "sha256": "34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333"
+    },
+    {
+      "path": "originals/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.pdf",
+      "bytes": 210764,
+      "sha256": "37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604"
+    },
+    {
+      "path": "originals/39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7.pdf",
+      "bytes": 357920,
+      "sha256": "39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7"
+    },
+    {
+      "path": "originals/3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37.pdf",
+      "bytes": 772030,
+      "sha256": "3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37"
+    },
+    {
+      "path": "originals/3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0.pdf",
+      "bytes": 481775,
+      "sha256": "3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0"
+    },
+    {
+      "path": "originals/510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e.pdf",
+      "bytes": 2149393,
+      "sha256": "510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e"
+    },
+    {
+      "path": "originals/6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c.pdf",
+      "bytes": 545791,
+      "sha256": "6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c"
+    },
+    {
+      "path": "originals/696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2.pdf",
+      "bytes": 1982384,
+      "sha256": "696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2"
+    },
+    {
+      "path": "originals/6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81.pdf",
+      "bytes": 353263,
+      "sha256": "6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81"
+    },
+    {
+      "path": "originals/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.pdf",
+      "bytes": 284728,
+      "sha256": "8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3"
+    },
+    {
+      "path": "originals/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.pdf",
+      "bytes": 196985,
+      "sha256": "90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe"
+    },
+    {
+      "path": "originals/9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d.pdf",
+      "bytes": 6689397,
+      "sha256": "9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d"
+    },
+    {
+      "path": "originals/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.pdf",
+      "bytes": 178500,
+      "sha256": "a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263"
+    },
+    {
+      "path": "originals/abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9.pdf",
+      "bytes": 1523729,
+      "sha256": "abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9"
+    },
+    {
+      "path": "originals/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.pdf",
+      "bytes": 151141,
+      "sha256": "c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8"
+    },
+    {
+      "path": "originals/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.pdf",
+      "bytes": 223512,
+      "sha256": "d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474"
+    },
+    {
+      "path": "originals/d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea.pdf",
+      "bytes": 637534,
+      "sha256": "d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea"
+    },
+    {
+      "path": "originals/e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7.pdf",
+      "bytes": 332632,
+      "sha256": "e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7"
+    },
+    {
+      "path": "pages/07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd.jsonl",
+      "bytes": 75947,
+      "sha256": "cc82fd6b5bf854f28aa956a0701595d400fb0cc38993c28910d261a3724bdf55"
+    },
+    {
+      "path": "pages/08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a.jsonl",
+      "bytes": 116273,
+      "sha256": "0763bbac2face1c4216b2bec04790a5dfb97f337bca94ed79ab644982f618c4a"
+    },
+    {
+      "path": "pages/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.jsonl",
+      "bytes": 1735,
+      "sha256": "e135d01d806ba679ebf44975ecd7de00e702308883c8d2b33dd31dbe41d4c0d2"
+    },
+    {
+      "path": "pages/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.jsonl",
+      "bytes": 18720,
+      "sha256": "9553b507279eb4176575326208bdeed5fb37993e405b88c2d3d364620bef2880"
+    },
+    {
+      "path": "pages/34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333.jsonl",
+      "bytes": 55510,
+      "sha256": "59e8cba322b6c27bf853182565e151865a5d6679e97aee7ee1380f941c83dc0f"
+    },
+    {
+      "path": "pages/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.jsonl",
+      "bytes": 11271,
+      "sha256": "925a01db2b20c0f739aafc93ce255d1ee767f5e045128c3ba00b031c99d22606"
+    },
+    {
+      "path": "pages/39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7.jsonl",
+      "bytes": 25846,
+      "sha256": "78dd5a4b9cb6a75ea66e162fc6a0119a27c8412441fc78ee25ab836d0c1bccfc"
+    },
+    {
+      "path": "pages/3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37.jsonl",
+      "bytes": 95036,
+      "sha256": "be842acfff0486beffbf2bfbd2f2bfeb9a68f25dfc383e0dd1bd75bc54be798c"
+    },
+    {
+      "path": "pages/3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0.jsonl",
+      "bytes": 46929,
+      "sha256": "e8614c68effe87404de4c7d7ab39100fd120e16c858e26aefaf7fc6a1753bc64"
+    },
+    {
+      "path": "pages/510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e.jsonl",
+      "bytes": 337593,
+      "sha256": "4aa981e4d7fea3a2dfc5040a9358204d071041be3aad895d077dcb3c72034c3f"
+    },
+    {
+      "path": "pages/6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c.jsonl",
+      "bytes": 30521,
+      "sha256": "e59b266a7db929f518430ddb38ef9f510d79f3c70bc5dc8c6bcd6ce06e9584c1"
+    },
+    {
+      "path": "pages/696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2.jsonl",
+      "bytes": 402753,
+      "sha256": "de6ee320a18df321a07a5b0afd3bcd225286fe2c5970c92fbc0e798983d313fa"
+    },
+    {
+      "path": "pages/6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81.jsonl",
+      "bytes": 11468,
+      "sha256": "010891196a4b40570a647caa3f649b97fc432d4ea84777f450c7a81eeff63fd9"
+    },
+    {
+      "path": "pages/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.jsonl",
+      "bytes": 11204,
+      "sha256": "4c361062048a06c01c7e39342c0b2a75870f81257f6d8b5b070e4e85f102737e"
+    },
+    {
+      "path": "pages/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.jsonl",
+      "bytes": 4375,
+      "sha256": "f4d407e87c8a60db0909b87bfef914ffb96ac11ef2241c6ffe3566b99ce2b223"
+    },
+    {
+      "path": "pages/9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d.jsonl",
+      "bytes": 279035,
+      "sha256": "488aa96157398e8f8ceaedb7c35244c81694185cdcd80f9bfc660a4f514b745f"
+    },
+    {
+      "path": "pages/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.jsonl",
+      "bytes": 5235,
+      "sha256": "c3a61202215b7fd838ec831db24dfd9ea0166fe5b20e9616a2c377d5db83511f"
+    },
+    {
+      "path": "pages/abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9.jsonl",
+      "bytes": 118348,
+      "sha256": "d3bd2ccba57bc19b2e54038b184a2930bb63a0d474f7d1058a7d84b8633cff8f"
+    },
+    {
+      "path": "pages/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.jsonl",
+      "bytes": 2081,
+      "sha256": "0ad523ba0eed5f010a71c86444457f249f891140bdc31cf7e5128e82be425edf"
+    },
+    {
+      "path": "pages/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.jsonl",
+      "bytes": 7645,
+      "sha256": "edc6660cd8cce4fbdd824129e02d605a364f2ab9056cfbbe6efe220fdab7c02c"
+    },
+    {
+      "path": "pages/d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea.jsonl",
+      "bytes": 81062,
+      "sha256": "93072fc84314616b2f72196975cbea811cdfc2d3282b02111820e8c1935d2abd"
+    },
+    {
+      "path": "pages/e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7.jsonl",
+      "bytes": 37153,
+      "sha256": "d87ccb867f2f670991cb5d0ef477f56ce85a12d84444e383b94ce6b5c3a32256"
+    },
+    {
+      "path": "source-directory.md",
+      "bytes": 26076,
+      "sha256": "f41311c6cf3bfdc2a8deb89154965829039d9df1c6e12ee0d1036229489904ad"
+    }
+  ],
+  "fileInventoryNote": "This receipt is excluded from its own hash inventory. Original, derivative and metadata hashes cover package content. Publication-hook results are recorded separately.",
+  "stagedGitBlobVerification": {
+    "originalPdfCount": 22,
+    "allStagedFileBytesMatchedWorkingFiles": true,
+    "stagedFileCount": 57,
+    "originals": [
+      {
+        "path": "originals/34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333.pdf",
+        "gitBlobId": "a687c80974ee101d460cbb5a5946244e84520d1f",
+        "sha256": "34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333",
+        "bytes": 1595585
+      },
+      {
+        "path": "originals/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.pdf",
+        "gitBlobId": "4d8176af9a17f29fcc44856da7da0c8d342be231",
+        "sha256": "d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474",
+        "bytes": 223512
+      },
+      {
+        "path": "originals/08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a.pdf",
+        "gitBlobId": "0931bd884686dabf916acf155e6ade50cede1016",
+        "sha256": "08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a",
+        "bytes": 629053
+      },
+      {
+        "path": "originals/3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0.pdf",
+        "gitBlobId": "a42920b4c221010541f8533c7ae8152294ec783f",
+        "sha256": "3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0",
+        "bytes": 481775
+      },
+      {
+        "path": "originals/696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2.pdf",
+        "gitBlobId": "ca4d25311ae291fddc0454657e07ce1f1cf7e1f8",
+        "sha256": "696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2",
+        "bytes": 1982384
+      },
+      {
+        "path": "originals/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.pdf",
+        "gitBlobId": "e97ab915b3f1600948489bad6efd2901ddb45826",
+        "sha256": "8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3",
+        "bytes": 284728
+      },
+      {
+        "path": "originals/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.pdf",
+        "gitBlobId": "ac6de3df4298db755c1d07c2ff2cd19c19ccba56",
+        "sha256": "c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8",
+        "bytes": 151141
+      },
+      {
+        "path": "originals/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.pdf",
+        "gitBlobId": "c3af8e376ceceb1f07cbfa8531ab52636d2bd262",
+        "sha256": "11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e",
+        "bytes": 230334
+      },
+      {
+        "path": "originals/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.pdf",
+        "gitBlobId": "4dd04e483b7e094996b8e7c68254b024655ee7ad",
+        "sha256": "37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604",
+        "bytes": 210764
+      },
+      {
+        "path": "originals/39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7.pdf",
+        "gitBlobId": "dd78b48097186023b818ea7635c90e36339ef980",
+        "sha256": "39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7",
+        "bytes": 357920
+      },
+      {
+        "path": "originals/abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9.pdf",
+        "gitBlobId": "48757eb0b1d6c5d25310b7cc8f14ee76bddb5cce",
+        "sha256": "abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9",
+        "bytes": 1523729
+      },
+      {
+        "path": "originals/6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81.pdf",
+        "gitBlobId": "09c96dc494a79167c61ac74db76f38093cb7c7d0",
+        "sha256": "6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81",
+        "bytes": 353263
+      },
+      {
+        "path": "originals/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.pdf",
+        "gitBlobId": "f25dcc4503b879f369b6e8ffd7e54eed94223a76",
+        "sha256": "90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe",
+        "bytes": 196985
+      },
+      {
+        "path": "originals/07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd.pdf",
+        "gitBlobId": "1cbf9ccd63674d4115427df646b271d032d31367",
+        "sha256": "07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd",
+        "bytes": 792172
+      },
+      {
+        "path": "originals/d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea.pdf",
+        "gitBlobId": "628d416ffa2b36a9d19831990ecbb1a542ce41bc",
+        "sha256": "d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea",
+        "bytes": 637534
+      },
+      {
+        "path": "originals/510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e.pdf",
+        "gitBlobId": "7edf98a6654d82bb815e2495f38f09682e0c6961",
+        "sha256": "510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e",
+        "bytes": 2149393
+      },
+      {
+        "path": "originals/6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c.pdf",
+        "gitBlobId": "8d35bbc2a31f430d1724fc65c575affb8a47a082",
+        "sha256": "6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c",
+        "bytes": 545791
+      },
+      {
+        "path": "originals/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.pdf",
+        "gitBlobId": "b556e6a75fc605644d6ec9f36d19ec6144f77cd8",
+        "sha256": "0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525",
+        "bytes": 130456
+      },
+      {
+        "path": "originals/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.pdf",
+        "gitBlobId": "6f3fc72594204a18e8baebd29365ba10af225b27",
+        "sha256": "a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263",
+        "bytes": 178500
+      },
+      {
+        "path": "originals/e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7.pdf",
+        "gitBlobId": "b2c10bed2d8728f1d6283223ed9cea968dcb1170",
+        "sha256": "e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7",
+        "bytes": 332632
+      },
+      {
+        "path": "originals/3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37.pdf",
+        "gitBlobId": "80702241f7a69c06ebfa892b894c6579d4d13965",
+        "sha256": "3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37",
+        "bytes": 772030
+      },
+      {
+        "path": "originals/9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d.pdf",
+        "gitBlobId": "eda9a3ae70d2f2b7eb0f3d64c39a965a592368ec",
+        "sha256": "9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d",
+        "bytes": 6689397
+      }
+    ]
+  }
+}

@@ -52,7 +52,12 @@ vi.mock('../../../middleware/tenantContext', () => ({
 vi.mock('../../../middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_q: unknown, _s: unknown, n: () => void) => n(),
 }));
-vi.mock('../project-access', () => ({ verifyProjectAccess: vi.fn(async () => true) }));
+vi.mock('../project-access', async () => {
+  const verifyProjectAccess = vi.fn(async () => true);
+  // The router's admission, decided by the same stub (c2c/__tests__/support/admission-double.ts).
+  const { admissionDecidedBy } = await import('./support/admission-double');
+  return { verifyProjectAccess, projectAdmissionMiddleware: admissionDecidedBy(verifyProjectAccess) };
+});
 
 import router from '../governance-ops';
 

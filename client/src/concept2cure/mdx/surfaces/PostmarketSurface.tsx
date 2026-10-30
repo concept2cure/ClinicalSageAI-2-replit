@@ -5,9 +5,9 @@
  * crosses a regulatory threshold becomes an MDR (FDA 5-day or 30-day)
  * or a 15-day report (EU MDR Art. 87); confirmed trends become FSCAs +
  * FSNs; investigations become CAPA records; every device-year produces
- * a PSUR. Documents are the primary zone; signal feed, MDR clock cards,
- * CAPA board, sparkline trends, and PMS plan execution collapse into a
- * "Situational awareness" accordion.
+ * a PSUR. Documents are the primary zone; the CAPA board, vigilance
+ * trending and PMS plan execution collapse into a "Situational awareness"
+ * accordion.
  *
  * Cross-program surface. Port basis:
  * ui_kits/mdx/surfaces/Postmarket.jsx.
@@ -21,7 +21,7 @@ import {
 } from '../data/postmarket';
 import { PV_DOC_FRAMEWORKS } from '../data/postmarket-docs';
 import { usePostmarket } from '../hooks/usePostmarket';
-import { useTriageQueue } from '../hooks/useTriageQueue';
+import { useTriageQueue, type TriageItem } from '../hooks/useTriageQueue';
 import { DataGate } from '../components/DataGate';
 import { readyRows } from '../lib/dataState';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
@@ -41,6 +41,43 @@ export interface PostmarketSurfaceProps {
 /** Stable identity: an empty list must not churn memo/effect deps. */
 const EMPTY_DOCS: KitDocument[] = [];
 
+/* Slice 0 (.design/client-journey/INFORMATION_ARCHITECTURE.md, the
+   `device-postmarket` row): GET /api/mdx/postmarket reads signals and CAPAs
+   for the whole organization, with no project key
+   (server/routes/mdx-postmarket.ts:43-91), and has no store for PMS plan
+   execution or trends (:111). Their rows may be another project's, so the
+   signals, CAPA board, vigilance trending and PMS plan execution panels are
+   not shown until that read takes the project (slice 21 turns this on).
+   Trends are gated too although none are computed yet: the day the route
+   computes them, another project's device must not draw a sparkline here. */
+const SURVEILLANCE_KEYED_TO_PROJECT = false;
+
+/* Slice 0, same row: `documents` is EMPTY_DOCS — nothing reads it — so the
+   panel drew an empty list with "All 0" filter counts, which reads as "no
+   MDR in flight". It says it is not read here until the existing
+   documentation-status read is wired (slice 21). That read reports the
+   project's PMS plan document (`pms_plan`); the PMS plan execution note
+   below is about the execution table, which has no store, and must not be
+   read as "no PMS plan". */
+const DOCUMENTS_READ_HERE = false;
+
+/* Slice 0: due within `days` and not past its due date. The lower bound keeps
+   the server's verdict: a past due date it did not mark overdue is an MDR
+   already filed, acknowledged or closed (getTriageQueueTx,
+   server/services/capa-mdr/capaMdr.service.ts), not a clock still running.
+   useTriageQueue's `dueSoon` has the same bound. */
+function dueWithin(i: TriageItem, days: number): boolean {
+  return !i.overdue && i.daysToDue !== null && i.daysToDue >= 0 && i.daysToDue <= days;
+}
+
+function NotKeyedNote({ panel, reason }: { panel: string; reason: string }) {
+  return (
+    <p className="eng-trace-summary" data-testid={`pm-not-keyed-${panel}`}>
+      Shown once this screen reads this project&apos;s records; {reason}.
+    </p>
+  );
+}
+
 export function PostmarketSurface({
   onAskAna,
   onOpenEditor,
@@ -53,8 +90,10 @@ export function PostmarketSurface({
      "0 critical signals" is indistinguishable from a genuine all-clear,
      so every panel below states which of loading / error / empty / real
      it is showing. */
-  const signals = readyRows(live.signals);
-  const capas = readyRows(live.capas);
+  /* Slice 0: an organization-wide read contributes no rows here, so another
+     project's signals and CAPAs reach no panel or count. */
+  const signals = SURVEILLANCE_KEYED_TO_PROJECT ? readyRows(live.signals) : [];
+  const capas = SURVEILLANCE_KEYED_TO_PROJECT ? readyRows(live.capas) : [];
 
   /* Complaints, MDR events and CAPAs merged into one queue ordered by
      regulatory urgency, with the reporting clocks computed server-side.
@@ -107,14 +146,18 @@ export function PostmarketSurface({
      flight 0", "PSURs 0 · 0 signed": statutory-clock and quality findings
      stated about data nobody read. Each card now comes from the read that
      actually holds it, and says "—" until that read is ready. */
-  const triageRows = triage.items.status === 'ready' ? triage.items.data : null;
+  /* Slice 0: a read that answered with nothing is a read — 0, not "Not yet read". */
+  const triageRows =
+    triage.items.status === 'ready' || triage.items.status === 'empty' ? readyRows(triage.items) : null;
   const mdrDue = triageRows
-    ? triageRows.filter((t) => t.kind === 'mdr' && (t.overdue || (t.daysToDue !== null && t.daysToDue <= 3))).length
+    ? triageRows.filter((t) => t.kind === 'mdr' && (t.overdue || dueWithin(t, 3))).length
     : null;
   const openCapas = triageRows ? triageRows.filter((t) => t.kind === 'capa') : null;
   const overdueCapas = openCapas ? openCapas.filter((t) => t.overdue).length : null;
-  const pmsEntries = live.pmsPlan.status === 'ready' || live.pmsPlan.status === 'empty' ? readyRows(live.pmsPlan).length : null;
-  const signalsRead = live.signals.status === 'ready' || live.signals.status === 'empty';
+  const pmsEntries = SURVEILLANCE_KEYED_TO_PROJECT && (live.pmsPlan.status === 'ready' || live.pmsPlan.status === 'empty') ? readyRows(live.pmsPlan).length : null;
+  const signalsRead = SURVEILLANCE_KEYED_TO_PROJECT && (live.signals.status === 'ready' || live.signals.status === 'empty');
+  /* Slice 0: the PMS plan and open-signals cards say why they hold no figure. */
+  const notYetRead = SURVEILLANCE_KEYED_TO_PROJECT ? 'Not yet read' : 'Not read for this project yet';
   const openSignals = signals.filter((s) => s.state !== 'closed-trend');
   const criticalSignals = signals.filter((s) => s.severity === 'critical').length;
 
@@ -132,29 +175,44 @@ export function PostmarketSurface({
         <div>
           <div className="page-eyebrow">Workstream</div>
           <h1 className="page-title">Post-market vigilance</h1>
+          {/* Slice 0: no submission count here — `documents` is not read
+              (DOCUMENTS_READ_HERE), so it always said "0 … in flight". */}
           <div className="page-sub">
-            {documents.length} regulatory submissions in flight. 21 CFR 803 MDR ·
-            EU MDR Art. 87 · CAPA 21 CFR 820.100 · ISO 13485 §8.5.2/8.5.3 · PSUR.
+            21 CFR 803 MDR · EU MDR Art. 87 · CAPA 21 CFR 820.100 · ISO 13485
+            §8.5.2/8.5.3 · PSUR.
           </div>
+          {/* Slice 0: no scope is stated for PMS plan entries — the route has no
+              store for them (`pmsPlan: []`). The project is named by its title:
+              `program.code` is a class and pathway ("Class II · 510(k)",
+              useMdxPrograms.deriveCode) that many projects share. */}
           <div className="page-sub" data-testid="postmarket-scope">
-            Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization.{' '}
+            {SURVEILLANCE_KEYED_TO_PROJECT
+              ? ''
+              : "Surveillance signals and the CAPA board are read for every project in this organization and are not shown until this screen reads this project's records. PMS plan execution is not tracked yet. "}
             {program
-              ? `Reporting clocks and the MDR/CAPA deadline metrics are limited to ${program.code || program.title}.`
+              ? `Reporting clocks and the MDR/CAPA deadline metrics are limited to ${program.title}.`
               : 'Reporting clocks and the MDR/CAPA deadline metrics cover all projects.'}
           </div>
         </div>
         <div className="page-actions">
-          <button
-            className="btn ghost small"
-            onClick={() =>
-              onAskAna(
-                'Triage open vigilance signals across the portfolio and tell me which ones cross a 5-day or 30-day MDR clock today.',
-              )
-            }
-            type="button"
-          >
-            {I.sparkles} Triage signals
-          </button>
+          {/* Slice 0: AnA is asked only what its triage tool does —
+              triage_capa_mdr_queue (server/services/ana/capaMdrTools.ts) reads one
+              program's complaints, MDR events and CAPAs and requires its id. No
+              tool triages signals or the portfolio. The host mounts this leaf
+              only with a project. */}
+          {program && (
+            <button
+              className="btn ghost small"
+              onClick={() =>
+                onAskAna(
+                  `Triage the open complaints, MDR events and CAPAs for ${program.title} (project ${program.id}) and tell me which cross a 5-day or 30-day MDR clock today.`,
+                )
+              }
+              type="button"
+            >
+              {I.sparkles} Triage queue
+            </button>
+          )}
           {urgentMdr && urgentLabel && (
             <button
               className="btn primary small"
@@ -173,7 +231,10 @@ export function PostmarketSurface({
         <div className="metric-card" data-tone="err">
           <div className="metric-label">MDRs due ≤72h</div>
           <div className="metric-val" data-testid="pm-mdr-due">{mdrDue ?? '—'}</div>
-          <div className="metric-meta">FDA 5-day · 30-day · EU 15-day clocks</div>
+          {/* Slice 0: the triage read lists MDR events in every state, so an MDR
+              already filed whose due date is still ahead is counted here until
+              the read leaves it out (server, getTriageQueueTx). Say so. */}
+          <div className="metric-meta">FDA 5-day · 30-day · EU 15-day · filed MDRs not yet excluded</div>
         </div>
         <div className="metric-card" data-tone="warn">
           <div className="metric-label">CAPAs open</div>
@@ -186,34 +247,49 @@ export function PostmarketSurface({
           <div className="metric-label">PMS plan entries</div>
           <div className="metric-val" data-testid="pm-pms">{pmsEntries ?? '—'}</div>
           <div className="metric-meta">
-            {pmsEntries === null ? 'Not yet read' : pmsEntries === 0 ? 'No PMS plan recorded' : 'From the PMS plan'}
+            {/* Slice 0: what has no store is plan execution, not the PMS plan document (`pms_plan`). */}
+            {pmsEntries === null ? notYetRead : pmsEntries === 0 ? 'No PMS plan execution recorded' : 'From the PMS plan'}
           </div>
         </div>
         <div className="metric-card">
           <div className="metric-label">Open signals</div>
           <div className="metric-val" data-testid="pm-signals">{signalsRead ? openSignals.length : '—'}</div>
           <div className="metric-meta">
-            {signalsRead ? `${criticalSignals} critical · awaiting MDR roll-up` : 'Not yet read'}
+            {signalsRead ? `${criticalSignals} critical · awaiting MDR roll-up` : notYetRead}
           </div>
         </div>
       </div>
 
-      <DocumentsPanel
-        title="Regulatory submissions in flight"
-        subtitle="Tap any row to open in the MDR / CAPA / FSCA editor · sparkle to draft the narrative with AnA"
-        docs={documents}
-        frameworks={frameworks}
-        onOpenEditor={onOpenEditor}
-        onAskAna={(text) => onAskAna(text)}
-      />
+      {/* Slice 0: not an empty list for a list nobody read (DOCUMENTS_READ_HERE). */}
+      {DOCUMENTS_READ_HERE ? (
+        <DocumentsPanel
+          title="Regulatory submissions in flight"
+          subtitle="Tap any row to open in the MDR / CAPA / FSCA editor · sparkle to draft the narrative with AnA"
+          docs={documents}
+          frameworks={frameworks}
+          onOpenEditor={onOpenEditor}
+          onAskAna={(text) => onAskAna(text)}
+        />
+      ) : (
+        <section className="section">
+          <div className="section-head">
+            <h2>Regulatory submissions in flight</h2>
+          </div>
+          <p className="eng-trace-summary" data-testid="pm-docs-not-read">
+            This project&apos;s post-market documents are not read here yet.
+          </p>
+        </section>
+      )}
 
       <section className="section">
         <div className="section-head">
           <h2>Reporting clocks</h2>
           <span className="section-sub">
-            {program ? `${program.code} only` : 'All programs'} · complaints · MDR
+            {/* Slice 0: the project by its title, and what the MDR rows include. */}
+            {program ? `${program.title} only` : 'All projects'} · complaints · MDR
             events · CAPAs — overdue first, then soonest due. FDA 5-day and
-            30-day, EU MDR Article 87 15-day.
+            30-day, EU MDR Article 87 15-day. MDR events are listed in every
+            state, filed and closed included.
           </span>
         </div>
         <DataGate
@@ -228,19 +304,24 @@ export function PostmarketSurface({
                 <div className="metric-card" data-tone={triage.overdue.length > 0 ? 'err' : 'ok'}>
                   <div className="metric-label">Overdue</div>
                   <div className="metric-val">{triage.overdue.length}</div>
+                  {/* Slice 0: only what the server's `overdue` means — an MDR past its due date
+                      and not filed, or an open CAPA past its target date. The read never compares a
+                      filing date with its due date, so it cannot say a deadline was met. */}
                   <div className="metric-meta">
                     {triage.overdue.length === 0
-                      ? 'No reporting deadline passed'
-                      : 'Past a reporting deadline'}
+                      ? 'No unfiled MDR or open CAPA past its due date'
+                      : 'Past its due date'}
                   </div>
                 </div>
                 <div className="metric-card" data-tone={triage.dueSoon.length > 0 ? 'warn' : 'ok'}>
                   <div className="metric-label">Due within 7 days</div>
                   <div className="metric-val">{triage.dueSoon.length}</div>
-                  <div className="metric-meta">Clock running</div>
+                  {/* Slice 0: by due date, not a running clock — filed MDRs are in the read. */}
+                  <div className="metric-meta">By due date · filed MDRs not yet excluded</div>
                 </div>
                 <div className="metric-card">
-                  <div className="metric-label">Open items</div>
+                  {/* Slice 0: not "Open items" — MDR events arrive in every state. */}
+                  <div className="metric-label">In the queue</div>
                   <div className="metric-val">{items.length}</div>
                   <div className="metric-meta">
                     {items.filter((i) => i.kind === 'mdr').length} MDR ·{' '}
@@ -250,11 +331,14 @@ export function PostmarketSurface({
                 </div>
               </div>
               <div className="eng-blockers-feed">
-                {items.slice(0, 10).map((i) => (
+                {items.slice(0, 10).map((i) => {
+                  /* Slice 0: a past due date the server did not mark overdue is no warning (dueWithin). */
+                  const tone = i.overdue ? 'err' : dueWithin(i, 7) ? 'warn' : 'low';
+                  return (
                   <button
                     key={`${i.kind}-${i.id}`}
                     className="eng-blocker-row"
-                    data-sev={i.overdue ? 'err' : i.daysToDue !== null && i.daysToDue <= 7 ? 'warn' : 'low'}
+                    data-sev={tone}
                     data-kind={i.kind}
                     onClick={() =>
                       onAskAna(
@@ -264,27 +348,28 @@ export function PostmarketSurface({
                     }
                     type="button"
                   >
-                    <span
-                      className={`eng-blocker-dot tone-${
-                        i.overdue ? 'err' : i.daysToDue !== null && i.daysToDue <= 7 ? 'warn' : 'low'
-                      }`}
-                    />
+                    <span className={`eng-blocker-dot tone-${tone}`} />
                     <span className="eng-blocker-kind mono tiny">{i.kind}</span>
                     <span className="mono small eng-blocker-ref">{i.code}</span>
                     <span className="eng-blocker-title">{i.title}</span>
                     <span className="eng-blocker-note">{i.riskOrSeverity ?? i.state}</span>
                     <span className="eng-blocker-owner">{i.state}</span>
                     {/* The clock is whatever the server computed. A skewed
-                        browser clock must not move a statutory deadline. */}
+                        browser clock must not move a statutory deadline.
+                        Slice 0: the due date, not "Nd left" — a filed MDR has
+                        no time left to run, and a past one read "-12d left". */}
                     <span className="eng-blocker-age">
                       {i.dueAt === null
                         ? '—'
                         : i.overdue
                           ? `${Math.abs(i.daysToDue ?? 0)}d overdue`
-                          : `${i.daysToDue}d left`}
+                          : (i.daysToDue ?? 0) >= 0
+                            ? `due in ${i.daysToDue ?? 0}d`
+                            : `due ${Math.abs(i.daysToDue ?? 0)}d ago`}
                     </span>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
@@ -295,10 +380,14 @@ export function PostmarketSurface({
         <div className="section-head">
           <h2>Signal triage queue</h2>
           <span className="section-sub">
-            {triageQueue.length} critical or under-review signals not yet wrapped
+            {SURVEILLANCE_KEYED_TO_PROJECT ? `${triageQueue.length} critical` : 'Critical'} or under-review signals not yet wrapped
             in an MDR or CAPA · oldest first
           </span>
         </div>
+        {/* Slice 0: the signals read is organization-wide (SURVEILLANCE_KEYED_TO_PROJECT). */}
+        {!SURVEILLANCE_KEYED_TO_PROJECT ? (
+          <NotKeyedNote panel="signals" reason="today it reads every project's signals in this organization" />
+        ) : (
         <div className="eng-blockers-feed">
           {triageQueue.map((s) => (
             <button
@@ -331,6 +420,7 @@ export function PostmarketSurface({
             </button>
           ))}
         </div>
+        )}
       </section>
 
       <section className="section eng-awareness" data-open={awarenessOpen}>
@@ -344,9 +434,12 @@ export function PostmarketSurface({
             {awarenessOpen ? I.down : I.right}
           </span>
           <h2>Situational awareness</h2>
+          {/* Slice 0: only what the accordion holds. It never held a signals
+              feed or an MDR clock, and while its panels are not keyed it holds
+              the notes saying why. */}
           <span className="section-sub">
-            Full signals feed · MDR clock · CAPA board · trend sparklines · PMS
-            plan execution
+            CAPA board · vigilance trending · PMS plan execution
+            {SURVEILLANCE_KEYED_TO_PROJECT ? '' : ' — not shown for this project yet'}
           </span>
         </button>
 
@@ -356,9 +449,13 @@ export function PostmarketSurface({
               <div className="section-head" style={{ marginTop: 0 }}>
                 <h2 style={{ fontSize: 14 }}>CAPA workflow</h2>
                 <span className="section-sub">
-                  {capas.length} active · 5-stage
+                  {SURVEILLANCE_KEYED_TO_PROJECT ? `${capas.length} active · ` : ''}5-stage
                 </span>
               </div>
+              {/* Slice 0: the CAPA read is organization-wide (SURVEILLANCE_KEYED_TO_PROJECT). */}
+              {!SURVEILLANCE_KEYED_TO_PROJECT ? (
+                <NotKeyedNote panel="capas" reason="today it reads every project's CAPAs in this organization" />
+              ) : (
               <div className="pv-capa-board">
                 {PV_CAPA_STAGES.map((stage) => {
                   const inStage = capas.filter((c) => c.stage === stage.id);
@@ -398,6 +495,7 @@ export function PostmarketSurface({
                   );
                 })}
               </div>
+              )}
             </section>
 
             <div className="eng-grid eng-grid-awareness">
@@ -405,6 +503,10 @@ export function PostmarketSurface({
                 <div className="section-head" style={{ marginTop: 0 }}>
                   <h2 style={{ fontSize: 14 }}>Vigilance trending</h2>
                 </div>
+                {/* Slice 0: trends come from the same organization-wide read (SURVEILLANCE_KEYED_TO_PROJECT). */}
+                {!SURVEILLANCE_KEYED_TO_PROJECT ? (
+                  <NotKeyedNote panel="trends" reason="vigilance trends are not computed per project yet" />
+                ) : (
                 <DataGate
                   state={live.trends}
                   label="vigilance trends"
@@ -445,17 +547,23 @@ export function PostmarketSurface({
                 </div>
                 )}
                 </DataGate>
+                )}
               </section>
               <section>
                 <div className="section-head" style={{ marginTop: 0 }}>
                   <h2 style={{ fontSize: 14 }}>PMS plan execution</h2>
                 </div>
+                {/* Slice 0: PMS plan execution has no per-project store (SURVEILLANCE_KEYED_TO_PROJECT).
+                    The PMS plan itself is a per-project document (`pms_plan`); this says what is missing. */}
+                {!SURVEILLANCE_KEYED_TO_PROJECT ? (
+                  <NotKeyedNote panel="pms" reason="PMS plan execution is not tracked per project yet" />
+                ) : (
                 <DataGate
                   state={live.pmsPlan}
                   label="PMS plan rows"
                   onRetry={live.refresh}
                   dense
-                  emptyHint="Post-market surveillance plans are not yet tracked in this workspace."
+                  emptyHint="PMS plan execution is not yet tracked in this workspace."
                 >
                 {(pmsPlan) => (
                 <div className="ctable">
@@ -495,6 +603,7 @@ export function PostmarketSurface({
                 </div>
                 )}
                 </DataGate>
+                )}
               </section>
             </div>
           </div>

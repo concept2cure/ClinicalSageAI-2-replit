@@ -1,0 +1,4 @@
+# Layout checks run against the old order (AnA box above the steps):
+ × ProjectHome — conversations > the steps come first; the composer and the readiness ring sit in the aside beside the step 53ms
+ × Project home — the start box sits beside every step > the steps come first; the start box and the conversations sit beside the step and stay on every step 108ms
+      Tests  2 failed | 11 passed (13)

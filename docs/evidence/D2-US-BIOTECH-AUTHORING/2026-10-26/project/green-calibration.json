@@ -1,0 +1,5 @@
+{
+  "receipt": "green.json",
+  "kind": "Postpatch fixture setup correction",
+  "reason": "New Plan correctly reuses existing useScopedDocuments, which requires the real app AuthProvider. Isolated Plan fixture had no provider; add only useAuth context fixture while retaining actual authService session/token and scoped creation/read guards. Six failures are fixture setup, not production behavior. Existing RED missing Plan/context remains genuine."
+}

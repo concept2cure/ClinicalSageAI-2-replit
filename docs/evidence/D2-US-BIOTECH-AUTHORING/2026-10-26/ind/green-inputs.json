@@ -1,0 +1,7 @@
+{
+  "files": {
+    "server/services/authoring/ind-authoring-templates.ts": "9257c2ec3e49546ae80f2acbb31c6c2d96f113d07c12790b43f4b820f118a99c",
+    "server/services/authoring/ind-template-outlines-m4-m5.ts": "d4b59a1805cc46ca13b3fe74cc412f7cef497321f28169892d5554b1db4e7cbc",
+    "server/services/authoring/__tests__/ind-deliverable-clinical-source.test.ts": "63b4e8e05171c06eba59d0740ec7ac3d99c8fa03b7402aa4bcfbfed0e980f280"
+  }
+}

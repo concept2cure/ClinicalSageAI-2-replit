@@ -1,0 +1,75 @@
+{
+  "server/routes/concept2cure.ts": {
+    "removed": [
+      "post /projects",
+      "post /projects/:id/duplicate"
+    ],
+    "retainedHandlers": [
+      "get /projects",
+      "get /projects/:id",
+      "put /projects/:id",
+      "patch /projects/:id/ownership-preferences",
+      "get /projects/:projectId/collaborators",
+      "put /projects/:projectId/collaborators",
+      "delete /projects/:id",
+      "post /projects/:id/export",
+      "post /projects/:id/transfer",
+      "post /errors",
+      "get /audit-logs",
+      "get /templates",
+      "get /templates/:id",
+      "get /regulatory-catalog/regions",
+      "get /regulatory-catalog/agencies",
+      "get /regulatory-catalog/application-types",
+      "get /regulatory-catalog/families",
+      "post /regulatory-catalog/resolve",
+      "post /regulatory-catalog/bootstrap-preview",
+      "get /regulatory-catalog/search"
+    ],
+    "retainedHandlerCount": 20,
+    "allRetainedHandlerTextIdentical": true,
+    "transferSchemaUnchanged": true,
+    "updateSchemaFieldsUnchanged": true
+  },
+  "server/routes/device-projects.ts": {
+    "removed": [
+      "post /"
+    ],
+    "retainedHandlers": [
+      "get /",
+      "put /:id",
+      "delete /:id"
+    ],
+    "retainedHandlerCount": 3,
+    "allRetainedHandlerTextIdentical": true
+  },
+  "server/routes/projects-management.ts": {
+    "removed": [
+      "post /"
+    ],
+    "retainedHandlers": [
+      "get /",
+      "get /:projectId",
+      "delete /:projectId",
+      "patch /:projectId"
+    ],
+    "retainedHandlerCount": 4,
+    "allRetainedHandlerTextIdentical": true
+  },
+  "server/routes/project-hierarchy.ts": {
+    "removed": [
+      "post /:projectId/children"
+    ],
+    "retainedHandlers": [
+      "get /programs",
+      "get /:projectId/tree",
+      "get /:projectId/ancestors",
+      "get /:projectId/children",
+      "patch /:projectId/move",
+      "get /:projectId/rollup",
+      "get /flat"
+    ],
+    "retainedHandlerCount": 7,
+    "allRetainedHandlerTextIdentical": true
+  }
+}

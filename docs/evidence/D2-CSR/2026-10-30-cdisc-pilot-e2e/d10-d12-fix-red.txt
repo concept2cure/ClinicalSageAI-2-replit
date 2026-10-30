@@ -1,0 +1,375 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > shows each declared population under its declared label, between the built-in populations and Completed 29ms
+   → expected [ 'Randomized', 'Safety', 'ITT', …(1) ] to deeply equal [ 'Randomized', 'Safety', 'ITT', …(3) ]
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > never maps a declared population onto mITT or per-protocol 4ms
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > refuses a flag the table already reports, a missing flag and a non-Y/N value 2ms
+   → expected a refusal
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > refuses a duplicate declaration in the manifest 2ms
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > holds a hand-built source to its declared counts and flags 3ms
+   → expected [ …(4) ] to deeply equal []
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > has a Total column and states n, mean (SD), median and min, max for age 3ms
+   → expected [ 'Characteristic', 'Drug X', …(1) ] to deeply equal [ 'Characteristic', 'Statistic', …(3) ]
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > takes age groups from ADSL AGEGR1 in AGEGR1N order, and invents none without it 5ms
+   → expected [] to deeply equal [ [ 'Age group', '<65', …(3) ], …(1) ]
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > orders age groups by the youngest age in each when AGEGR1N is absent 4ms
+   → expected undefined to deeply equal [ '<65', '65+' ]
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > counts sex, race and ethnicity, and states an unrecorded ethnicity as not recorded 6ms
+   → expected [] to deeply equal [ [ 'Sex', 'Male', …(3) ], …(1) ]
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > summarises height and the declared characteristics, and omits weight and BMI the ADSL does not hold 5ms
+   → expected undefined to deeply equal [ 'Height (cm)', 'Mean (SD)', …(3) ]
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses a categorical value outside its declared categories and a non-numeric continuous value 4ms
+   → expected a refusal
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses descriptive-only fields on a source that does not declare the descriptive table 3ms
+   → expected [ Array(1) ] to include 'Declare demographicsPresentation "des…'
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > imports an armless dose-response result with its method and population, and shows them 2ms
+   → The source derived from these ADaM datasets does not meet the CSR input contract. No tables were saved.
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > refuses an armless result without its method or population, or with a comparator 1ms
+   → expected false to be true // Object.is equality
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > states “Efficacy results not supplied” in §11.4 when the manifest names no efficacy file 3ms
+   → expected [ { …(5) }, { …(5) } ] to deeply equal []
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > refuses a mismatch between the manifest and the efficacy file supplied 4ms
+   → expected TypeError: Cannot read properties of unde… to match object { code: 'CSR_ADAM_EFFICACY_MISSING' }
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > holds a hand-built source: empty efficacy needs the declaration, and the declaration needs empty efficacy 3ms
+   → expected [ …(2) ] to include 'Supply efficacy results, or declare e…'
+ ✓ server/services/csr/__tests__/csr-table-byte-identity.test.ts > a source that uses none of D10–D12 tabulates byte-identically to before > matches every digest pinned before the change 103ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > shows each declared population under its declared label, between the built-in populations and Completed
+AssertionError: expected [ 'Randomized', 'Safety', 'ITT', …(1) ] to deeply equal [ 'Randomized', 'Safety', 'ITT', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "Randomized",
+    "Safety",
+    "ITT",
+-   "Efficacy Population Flag",
+-   "Completers of Week 24 Population Flag",
+    "Completed",
+  ]
+
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:73:33
+     71|     const source = derive({ populations: POPULATIONS });
+     72|     const rows = buildCSRTables(source.studyData).analysisPopulations.…
+     73|     expect(rows.map(r => r[0])).toEqual(['Randomized', 'Safety', 'ITT'…
+       |                                 ^
+     74|     expect(rows[3]).toEqual(['Efficacy Population Flag', '4', '3', '7'…
+     75|     expect(rows[4]).toEqual(['Completers of Week 24 Population Flag', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > refuses a flag the table already reports, a missing flag and a non-Y/N value
+Error: expected a refusal
+ ❯ refusal server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:62:9
+     60| const refusal = (fn: () => unknown) => {
+     61|   try { fn(); } catch (error) { return error as { code: string; issues…
+     62|   throw new Error('expected a refusal');
+       |         ^
+     63| };
+     64| const issues = (source: unknown) => {
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:86:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > holds a hand-built source to its declared counts and flags
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Unrecognized key(s) in object: 'additionalPopulations'",
++   "Unrecognized key(s) in object: 'additionalPopulations'",
++   "Unrecognized key(s) in object: 'additionalPopulations'",
++   "Unrecognized key(s) in object: 'additionalPopulations'",
++ ]
+
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:102:28
+    100|     source.participants = source.participants.map(p => ({ ...p, additi…
+    101|     source.studyData.additionalPopulations = [{ key: 'EVAL', label: 'E…
+    102|     expect(issues(source)).toEqual([]);
+       |                            ^
+    103|     expect(buildCSRTables(CsrSourceEnvelopeSchema.parse(source).studyD…
+    104|     source.studyData.additionalPopulations = [{ key: 'EVAL', label: 'E…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > has a Total column and states n, mean (SD), median and min, max for age
+AssertionError: expected [ 'Characteristic', 'Drug X', …(1) ] to deeply equal [ 'Characteristic', 'Statistic', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "Characteristic",
+-   "Statistic",
+    "Drug X",
+    "Placebo",
+-   "Total",
+  ]
+
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:116:23
+    114|   it('has a Total column and states n, mean (SD), median and min, max …
+    115|     const t = table();
+    116|     expect(t.headers).toEqual(['Characteristic', 'Statistic', 'Drug X'…
+       |                       ^
+    117|     const age = t.rows.filter(r => r[0] === 'Age (years)');
+    118|     expect(age).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > takes age groups from ADSL AGEGR1 in AGEGR1N order, and invents none without it
+AssertionError: expected [] to deeply equal [ [ 'Age group', '<65', …(3) ], …(1) ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "Age group",
+-     "<65",
+-     "4 (100.0%)",
+-     "1 (25.0%)",
+-     "5 (62.5%)",
+-   ],
+-   [
+-     "Age group",
+-     "65+",
+-     "0 (0.0%)",
+-     "3 (75.0%)",
+-     "3 (37.5%)",
+-   ],
+- ]
++ []
+
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:128:60
+    126|
+    127|   it('takes age groups from ADSL AGEGR1 in AGEGR1N order, and invents …
+    128|     expect(table().rows.filter(r => r[0] === 'Age group')).toEqual([
+       |                                                            ^
+    129|       ['Age group', '<65', '4 (100.0%)', '1 (25.0%)', '5 (62.5%)'],
+    130|       ['Age group', '65+', '0 (0.0%)', '3 (75.0%)', '3 (37.5%)'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > orders age groups by the youngest age in each when AGEGR1N is absent
+AssertionError: expected undefined to deeply equal [ '<65', '65+' ]
+
+- Expected:
+[
+  "<65",
+  "65+",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:139:40
+    137|   it('orders age groups by the youngest age in each when AGEGR1N is ab…
+    138|     const source = derive({ demographics: DEMOGRAPHICS }, datasets(ads…
+    139|     expect(source.studyData.ageGroups).toEqual(['<65', '65+']);
+       |                                        ^
+    140|   });
+    141|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > counts sex, race and ethnicity, and states an unrecorded ethnicity as not recorded
+AssertionError: expected [] to deeply equal [ [ 'Sex', 'Male', …(3) ], …(1) ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "Sex",
+-     "Male",
+-     "2 (50.0%)",
+-     "2 (50.0%)",
+-     "4 (50.0%)",
+-   ],
+-   [
+-     "Sex",
+-     "Female",
+-     "2 (50.0%)",
+-     "2 (50.0%)",
+-     "4 (50.0%)",
+-   ],
+- ]
++ []
+
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:144:46
+    142|   it('counts sex, race and ethnicity, and states an unrecorded ethnici…
+    143|     const rows = table().rows;
+    144|     expect(rows.filter(r => r[0] === 'Sex')).toEqual([['Sex', 'Male', …
+       |                                              ^
+    145|     expect(rows.filter(r => r[0] === 'Race')).toEqual([['Race', 'ASIAN…
+    146|     expect(rows.filter(r => r[0] === 'Ethnicity')).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > summarises height and the declared characteristics, and omits weight and BMI the ADSL does not hold
+AssertionError: expected undefined to deeply equal [ 'Height (cm)', 'Mean (SD)', …(3) ]
+
+- Expected:
+[
+  "Height (cm)",
+  "Mean (SD)",
+  "161.5 (1.29)",
+  "165.5 (1.29)",
+  "163.5 (2.45)",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:153:76
+    151|   it('summarises height and the declared characteristics, and omits we…
+    152|     const rows = table().rows;
+    153|     expect(rows.find(r => r[0] === 'Height (cm)' && r[1] === 'Mean (SD…
+       |                                                                            ^
+    154|     expect(rows.filter(r => r[0] === 'Synthetic score')).toEqual([
+    155|       ['Synthetic score', 'n', '4', '4', '8'], ['Synthetic score', 'Me…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses a categorical value outside its declared categories and a non-numeric continuous value
+Error: expected a refusal
+ ❯ refusal server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:62:9
+     60| const refusal = (fn: () => unknown) => {
+     61|   try { fn(); } catch (error) { return error as { code: string; issues…
+     62|   throw new Error('expected a refusal');
+       |         ^
+     63| };
+     64| const issues = (source: unknown) => {
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:164:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses descriptive-only fields on a source that does not declare the descriptive table
+AssertionError: expected [ Array(1) ] to include 'Declare demographicsPresentation "des…'
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:174:28
+    172|     const source = sourceFixture() as CsrSourceEnvelope;
+    173|     source.studyData.demographics[0].height = 170;
+    174|     expect(issues(source)).toContain('Declare demographicsPresentation…
+       |                            ^
+    175|   });
+    176| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > imports an armless dose-response result with its method and population, and shows them
+CsrSourceInputError: The source derived from these ADaM datasets does not meet the CSR input contract. No tables were saved.
+ ❯ validated server/services/csr/adam-source-derivation.ts:212:9
+    210|   const parsed = CsrSourceEnvelopeSchema.safeParse(envelope);
+    211|   if (parsed.success) return parsed.data;
+    212|   throw new CsrSourceInputError(422, 'CSR_ADAM_SOURCE_INVALID', 'The s…
+       |         ^
+    213|     parsed.error.issues.slice(0, 30).map(issue => ({ path: issue.path.…
+    214|       message: issue.code === 'custom' ? issue.message : 'Invalid or m…
+ ❯ deriveCsrSourceFromAdam server/services/csr/adam-source-derivation.ts:243:10
+ ❯ derive server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:58:10
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:180:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 422, code: 'CSR_ADAM_SOURCE_INVALID', issues: [ { path: 'studyData.efficacy.2.armId', message: 'Invalid or missing derived value.' }, { path: 'studyData.efficacy.2', message: 'Invalid or missing derived value.' } ] }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > refuses an armless result without its method or population, or with a comparator
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:188:34
+    186|   it('refuses an armless result without its method or population, or w…
+    187|     const parse = (r: Record<string, unknown>) => CsrEfficacyResultsSc…
+    188|     expect(parse(DOSE_RESPONSE)).toBe(true);
+       |                                  ^
+    189|     expect(parse({ ...DOSE_RESPONSE, method: undefined })).toBe(false);
+    190|     expect(parse({ ...DOSE_RESPONSE, population: undefined })).toBe(fa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > states “Efficacy results not supplied” in §11.4 when the manifest names no efficacy file
+AssertionError: expected [ { …(5) }, { …(5) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "armId": "DRUG",
++     "display": "synthetic",
++     "endpointName": "Global cure at Week 8 (SYNTHETIC)",
++     "endpointType": "primary",
++     "value": 1,
++   },
++   {
++     "armId": "PBO",
++     "display": "synthetic",
++     "endpointName": "Global cure at Week 8 (SYNTHETIC)",
++     "endpointType": "primary",
++     "value": 2,
++   },
++ ]
+
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:196:39
+    194|   it('states “Efficacy results not supplied” in §11.4 when the manifes…
+    195|     const source = derive({}, datasets(), undefined);
+    196|     expect(source.studyData.efficacy).toEqual([]);
+       |                                       ^
+    197|     expect(source.studyData.efficacyStatus).toBe('not-supplied');
+    198|     const tables = buildCSRTables(source.studyData);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > refuses a mismatch between the manifest and the efficacy file supplied
+AssertionError: expected TypeError: Cannot read properties of unde… to match object { code: 'CSR_ADAM_EFFICACY_MISSING' }
+
+- Expected
++ Received
+
+- {
+-   "code": "CSR_ADAM_EFFICACY_MISSING",
++ TypeError {
++   "message": "Cannot read properties of undefined (reading 'protocolNumber')",
+  }
+
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:206:83
+    204|   it('refuses a mismatch between the manifest and the efficacy file su…
+    205|     const bundle = legacyBundle(minimal());
+    206|     expect(refusal(() => deriveCsrSourceFromAdam(bundle, datasets(), u…
+       |                                                                                   ^
+    207|     expect(refusal(() => deriveCsrSourceFromAdam({ ...bundle, efficacy…
+    208|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > holds a hand-built source: empty efficacy needs the declaration, and the declaration needs empty efficacy
+AssertionError: expected [ …(2) ] to include 'Supply efficacy results, or declare e…'
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:213:28
+    211|     const source = sourceFixture();
+    212|     source.studyData.efficacy = [];
+    213|     expect(issues(source)).toContain('Supply efficacy results, or decl…
+       |                            ^
+    214|     source.studyData.efficacyStatus = 'not-supplied';
+    215|     expect(issues(source)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  15 failed | 3 passed (18)
+   Start at  20:13:04
+   Duration  1.26s (transform 302ms, setup 132ms, import 305ms, tests 194ms, environment 0ms)
+

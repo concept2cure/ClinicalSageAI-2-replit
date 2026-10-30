@@ -1,0 +1,14 @@
+# C3 red, on 1d26bd1e8 (trunk): AnA's CTD chat outlines before they read the one record — 2026-10-26
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > ctd_2_2_introduction: every numbered section is a record heading below 2.2, in CTD order, titled as the record titles it
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > ctd_2_3_qos: every numbered section is a record heading below 2.3, in CTD order, titled as the record titles it
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > ctd_2_4_nonclinical_overview: every numbered section is a record heading below 2.4, in CTD order, titled as the record titles it
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > ctd_2_5_clinical_overview: every numbered section is a record heading below 2.5, in CTD order, titled as the record titles it
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > ctd_2_7_3_efficacy_summary: every numbered section is a record heading below 2.7.3, in CTD order, titled as the record titles it
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > ctd_2_7_4_safety_summary: every numbered section is a record heading below 2.7.4, in CTD order, titled as the record titles it
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > cmc_drug_substance: every numbered section is a record heading below 3.2.S, in CTD order, titled as the record titles it
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > cmc_drug_product: every numbered section is a record heading below 3.2.P, in CTD order, titled as the record titles it
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > the headings the hand copies invented are gone, and the ones they dropped are there
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > a word target is the record brief’s own range, never a number written here
+ × server/services/ana-ri/__tests__/document-templates-read-the-ctd-record.test.ts > a CTD chat outline is the record’s subtree > the prompt AnA receives for "draft a clinical overview" carries the record’s headings, with 2.5.6.4
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  11 failed (11)

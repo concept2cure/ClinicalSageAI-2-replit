@@ -1,0 +1,4 @@
+mdxDerivedFiguresAreDerived.test.ts:147, its regex now pinned to the recorded-phase line. Mutation: PmaSurface.tsx '{program ? `${phaseLine}' -> '{true ? `${phaseLine}' (the phase line off the program branch). Restored after the run (cmp).
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA surface names nothing the program did not supply > does not claim a current phase when no program is selected
+      Tests  1 failed | 6 passed (7)

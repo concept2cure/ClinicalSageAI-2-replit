@@ -1,0 +1,5 @@
+# Mutation: name-counts-as-details
+ × Home: set up your organisation > a new organisation: three steps to do, the company name alone not counted as details 5114ms
+ × Home: set up your organisation > each step opens where it is done 5023ms
+ × Home: set up your organisation > reads the profile from either response shape, and a saved address is what counts 2ms
+      Tests  3 failed | 3 passed (6)

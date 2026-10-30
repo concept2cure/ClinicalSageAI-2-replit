@@ -371,7 +371,7 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
               ? <>{drafts.length} pediatric {drafts.length === 1 ? 'plan is' : 'plans are'} still in draft — the closest gate is <b>{topDraft.kind} for {topDraft.product}</b> ({topDraft.due}).</>
               : <>Your pediatric plans are filed — the next thing to watch is the {nextMsLabel}.</>}
             body={drafts.length && topDraft
-              ? <>A pediatric plan usually gates the parent submission, so finishing the {topDraft.kind} rationale keeps your main program on track. The age-range extrapolation is the part reviewers scrutinize most — get that right and the plan moves.</>
+              ? <>A pediatric plan usually gates the parent submission, so finishing the {topDraft.kind} rationale keeps your main project on track. The age-range extrapolation is the part reviewers scrutinize most — get that right and the plan moves.</>
               /* BP-W0-3: `prea` being empty means no PREA milestone has been
                  RECORDED, which is not the same as none being overdue. The old
                  copy read "No milestones are overdue — you're in good standing",
@@ -580,7 +580,7 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
   return (
     <BpComposer
       eyebrow="Orphan drug · rare disease"
-      title="Orphan and rare programs"
+      title="Orphan and rare disease"
       state={<>Designations across FDA / EMA / PMDA, RPD vouchers and grants, and patient-advocacy engagements.</>}
       lead={
         !hasAnswer(desState) ? (

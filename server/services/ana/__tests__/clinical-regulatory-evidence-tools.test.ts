@@ -14,6 +14,8 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 let pglite: PGlite;
@@ -51,6 +53,10 @@ beforeAll(async () => {
   pglite = new PGlite();
   const here = path.dirname(fileURLToPath(import.meta.url));
   await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../db/migrations/20260724_clinical_regulatory_evidence_spine.sql'), 'utf8'));
+  // Public-reference reads use the later source-scope/version/text columns.
+  await pglite.exec(`ALTER TABLE cre_evidence_sources ADD COLUMN client_program_id UUID;
+    ALTER TABLE cre_evidence_sources ADD COLUMN is_current BOOLEAN DEFAULT TRUE;
+    ALTER TABLE cre_evidence_sources ADD COLUMN extracted_text TEXT;`);
   // The confirming principal (CTX) is an editor ('member') of the acting org —
   // project_csr_evidence is confirm-class and the registry reads this row.
   await pglite.exec(`CREATE TABLE organization_users (
@@ -136,6 +142,55 @@ describe('search_clinical_regulatory_evidence', () => {
     expect(r.note).toMatch(/not a prediction/i);
     expect(r.provenance?.sourceType).toBeTruthy();          // carries an auditable provenance envelope
     expect(r.provenance.citation.identifier).toBe('NSCLC');
+  });
+
+  it('reaches public source catalog metadata through the registered handler and applies query', async () => {
+    const source = await createSource(CTX.organizationId, { sourceType: 'csr', visibilityClass: 'global_public',
+      title: 'Cadazolid CSR synopsis', officialUrl: 'https://www.fda.gov/example',
+      metadata: { publicReference: { schemaVersion: 1, documentClass: 'csr_synopsis', studyFamily: 'AC-061A201',
+        evidenceRole: 'external_reference', clientStudyEvidence: false, trainingApproved: false,
+        permittedUse: { retrieval: 'review_required', basis: 'Catalog-only source; review outstanding.', sourceUrl: 'https://www.fda.gov/example' } } } });
+    const result = await call('search_clinical_regulatory_evidence', { query: 'Cadazolid', entity_types: ['sources'] });
+    expect(result.ok).toBe(true);
+    expect(result.sources.sources).toEqual([expect.objectContaining({ sourceId: source.id, documentClass: 'csr_synopsis',
+      evidenceRole: 'external_reference', trainingApproved: false, contentAccess: 'review_required' })]);
+    expect((await call('search_clinical_regulatory_evidence', { query: 'unrelated', entity_types: ['sources'] })).sources.sources).toEqual([]);
+    expect((await call('search_clinical_regulatory_evidence', {})).sources.sources).toHaveLength(1);
+  });
+
+  it('refuses invalid page requests before reading report content', async () => {
+    expect((await call('search_clinical_regulatory_evidence', { page_start: 2 })).error).toMatch(/invalid evidence search input/i);
+    expect((await call('search_clinical_regulatory_evidence', { source_id: 1, page_end: 5 })).error).toMatch(/invalid evidence search input/i);
+  });
+
+  it('reads retained pages through the registered handler with actual original-byte verification', async () => {
+    const hash = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
+    const original = Buffer.from('%PDF-1.7\nPublic reference test fixture\n%%EOF');
+    const text = 'Read-only public reference text.';
+    const checksum = hash(original);
+    const artifactPath = `server/data/public-csr-reference/originals/${checksum}.pdf`;
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'c2c-public-tool-'));
+    fs.mkdirSync(path.dirname(path.join(root, artifactPath)), { recursive: true });
+    fs.writeFileSync(path.join(root, artifactPath), original);
+    const currentDirectory = vi.spyOn(process, 'cwd').mockReturnValue(root);
+    try {
+      const source = await createSource(CTX.organizationId, { sourceType: 'fda_review_memo', visibilityClass: 'global_public',
+        title: 'Public reference reading example', officialUrl: 'https://www.fda.gov/example.pdf', checksum,
+        storedArtifactRef: `repository:${artifactPath}`, ingestionStatus: 'ingested', extractionStatus: 'extracted',
+        metadata: { publicReference: { schemaVersion: 1, documentClass: 'regulatory_review', studyFamily: 'TEST-1',
+          evidenceRole: 'external_reference', clientStudyEvidence: false, trainingApproved: false,
+          permittedUse: { retrieval: 'allowed', basis: 'Test-only disposition.', sourceUrl: 'https://www.fda.gov/example.pdf' },
+          retention: { status: 'retained', artifactPath, sha256: checksum, bytes: original.length },
+          extraction: { status: 'extracted_unreviewed', textSha256: hash(text), pageCount: 1,
+            pages: [{ page: 1, start: 0, end: text.length, sha256: hash(text) }] } } } });
+      await pool.query('UPDATE cre_evidence_sources SET extracted_text=$2 WHERE id=$1', [source.id, text]);
+      const result = await call('search_clinical_regulatory_evidence', { source_id: source.id });
+      expect(result.ok).toBe(true);
+      expect(result.source.pages[0]).toMatchObject({ page: 1, text, truncated: false });
+      expect(result.source).toMatchObject({ retentionStatus: 'original_verified', sourceSha256: checksum,
+        documentClass: 'regulatory_review', clientStudyEvidence: false, trainingApproved: false });
+      expect(result.provenance.citation).toMatchObject({ identifier: String(source.id), url: 'https://www.fda.gov/example.pdf' });
+    } finally { currentDirectory.mockRestore(); fs.rmSync(root, { recursive: true, force: true }); }
   });
 });
 

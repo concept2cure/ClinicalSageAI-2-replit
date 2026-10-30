@@ -49,7 +49,7 @@ import type { AnaFollow, AnaPlanChange, AnaPlanStep, AnaStoppedReason, AnaTurnRe
 import { formatElapsed, LENS_PHRASE, PLAN_TOOL } from '../components/ana/anaProgress';
 import { LiveAlert, statusGlyph, StepFactList } from './AnaWorkSections';
 import { orderedItems } from './turnSummaryRows';
-import { followPhaseLine, isContinuable, liveAlertLine, replacedNoteText, showsEngineGlyph, stepDuration, stepFacts, stoppedNoteText } from './anaWorkModel';
+import { foldedLine, followPhaseLine, isContinuable, liveAlertLine, replacedNoteText, showsEngineGlyph, stepDuration, stepFacts, stepNote, stoppedNoteText } from './anaWorkModel';
 import { useNow } from './useNow';
 import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { unknownStepLabel } from '@shared/ana/step-verbs';
@@ -179,7 +179,11 @@ export function hasReportableWork(a: AnaActivityProps): boolean {
       // A turn stopped short has something to say even with nothing else:
       // no host may drop it as a plain answer.
       stoppedNoteText(a.stoppedReason, a.rounds, a.pendingSteps, a.interruptedWithPartialResponse, a.runPolicy) ||
-      replacedNoteText(a.replacedSteps));
+      replacedNoteText(a.replacedSteps) ||
+      // A followed turn that ended with a line of its own (DT3 review 2.4,
+      // 2.5): the answer could not be loaded, the sign-in ended. With no step
+      // rows it was dropped here, and the person read an empty answer.
+      liveAlertLine({ follow: a.follow, stopUnconfirmed: a.stopUnconfirmed }, Date.now()));
 }
 
 /**
@@ -312,8 +316,8 @@ function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
       object={object}
       rest={rest}
       preview={c.preview ?? undefined}
-      trailing={hasStepResult(c.status) ? took || undefined : c.status}
-      note={c.status === 'unconfirmed' ? c.message || 'Completion not confirmed.' : c.status === 'error' ? c.message || 'did not complete' : undefined}
+      trailing={hasStepResult(c.status) ? took || undefined : c.status === 'not_run' ? 'not run' : c.status}
+      note={stepNote(c)}
       detail={facts.length > 0 ? <StepFactList facts={facts} /> : undefined}
     />
   );
@@ -322,49 +326,6 @@ function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
 /** True when a step that succeeded already carries the draft's title in its label. */
 function namedBySuccessfulStep(calls: AnaToolCall[], title: string): boolean {
   return calls.some((c) => c.status === 'success' && ((c.label ?? '').includes(title) || c.preview === title));
-}
-
-const unconfirmedSummary = (count: number) => count > 0 ? `${count} unconfirmed` : '';
-
-/**
- * The folded line. Failures and deliverables are OUTCOMES and appear here
- * rather than only inside the disclosure — an outcome you have to open a
- * twisty to discover is one the product is hiding. So is a fallback answer.
- */
-function foldedLine(o: {
-  changes: AnaPlanChange[];
-  finalPlan: AnaPlanStep[];
-  ran: number;
-  failed: number;
-  unconfirmed: number;
-  draftTitle?: string;
-  thinking?: string;
-  fallback?: boolean;
-  /** Set only for a turn with a recorded END; never read off the clock. */
-  duration: string;
-}): string {
-  // "Planned" only when the declaration was seen; a reopened thread knows the
-  // final list and not how it was built, so it says "Plan".
-  const persisted = o.changes.length === 0 && o.finalPlan.length > 0;
-  const planned = persisted ? o.finalPlan.length : o.changes.filter((c) => c.initial && c.kind === 'added').length;
-  const steps = (n: number) => `${n} ${n === 1 ? 'step' : 'steps'}`;
-  const parts = [
-    // With a plan, her plan's items are the steps and the tool calls are
-    // tools, so "3 steps" on the rail and "4 steps completed" here never read
-    // as a contradiction.
-    o.ran > 0 ? (planned > 0 ? `${o.ran} ${o.ran === 1 ? 'tool' : 'tools'} run` : `${steps(o.ran)} completed`) : '',
-    o.failed > 0 ? `${o.failed} failed` : '',
-    unconfirmedSummary(o.unconfirmed),
-    o.draftTitle ? `Drafted ${o.draftTitle}` : '',
-    o.thinking ? 'reasoning' : '',
-    o.fallback ? 'answered by a fallback provider' : '',
-  ].filter(Boolean);
-  // The plan is the record's first row, in the same words; leading with it
-  // here too made the opened record say it twice, three words apart. It leads
-  // only when it is all there is to say.
-  if (parts.length === 0 && planned > 0) parts.push(`${persisted ? 'Plan ·' : 'Planned'} ${steps(planned)}`);
-  if (o.duration) parts.push(`in ${o.duration}`);
-  return parts.length > 0 ? parts.join(' · ') : 'How this was read';
 }
 
 /**
@@ -464,6 +425,7 @@ export function AnaActivity({
   const ran = work.filter((c) => c.status === 'success' || c.status === 'error').length;
   const failed = work.filter((c) => c.status === 'error').length;
   const unconfirmed = work.filter((c) => c.status === 'unconfirmed').length;
+  const notRun = work.filter((c) => c.status === 'not_run').length;
   // Round headers say "she went back for more". With a declared plan the plan
   // is the structure, and every plan update takes a round of its own, so the
   // first step after "Planned 3 steps" would read "Went back · round 2" when
@@ -558,7 +520,7 @@ export function AnaActivity({
 
   const expanded = Boolean(streaming) || open;
   const summary = foldedLine({
-    changes, finalPlan, ran, failed, unconfirmed,
+    changes, finalPlan, ran, failed, unconfirmed, notRun,
     draftTitle, thinking, fallback,
     duration: elapsed && typeof completedAt === 'number' ? elapsed : '',
   });
@@ -571,6 +533,7 @@ export function AnaActivity({
     streaming && phaseLine ? phaseLine : null,
     alertText,
     failed > 0 ? `${failed} ${failed === 1 ? 'step' : 'steps'} did not complete` : null,
+    notRun > 0 ? `${notRun} ${notRun === 1 ? 'step' : 'steps'} did not run` : null,
     draftTitle ? `Drafted ${draftTitle}` : null,
     stoppedText,
   ]

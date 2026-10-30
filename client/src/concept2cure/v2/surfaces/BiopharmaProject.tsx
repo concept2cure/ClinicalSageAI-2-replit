@@ -19,6 +19,9 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
+import { CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
+import { StudyPivotalDeclarations, pivotalScopeOf } from './StudyPivotalDeclarations';
+import { CsrAssemblyControl } from './CsrAssemblyControl';
 import type { WorkflowImportSource } from '@shared/authoring/source-import';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
@@ -68,6 +71,8 @@ function PageHead({ eyebrow, title, sub, actions }: {
 interface CsrBoard {
   program: CsrProgram | null;
   sections: CsrSection[];
+  /** Every heading of the canonical ICH E3 tree with the job's review state (CSR slice 3). */
+  headings?: CsrBoardHeading[];
   meta?: Record<string, unknown>;
   generatedAt?: string;
 }
@@ -308,7 +313,7 @@ export function CsrWorkflow(props: SurfaceViewProps) {
   const programId = shellProgramId(selected);
   const numericProject = selected && /^\d+$/.test(String(selected.id)) && Number.isSafeInteger(Number(selected.id)) && Number(selected.id) > 0 ? String(selected.id) : null;
   const path = programId ? `/api/csr-workflow/board?programId=${encodeURIComponent(programId)}` : numericProject ? `/api/csr-workflow/board?projectId=${numericProject}` : selected ? null : '/api/csr-workflow/board';
-  if (!path) return <EmptyState icon={I.layers} title="Select a program for CSR work" hint="The selected context does not identify a program or project." />;
+  if (!path) return <EmptyState icon={I.layers} title="Select a project for CSR work" hint="The selected context does not identify a project." />;
   // Remount on scope changes: data and assistant context from the old program
   // disappear before the next read, and old in-flight replies are discarded.
   return <CsrWorkflowBoard key={path} {...props} boardPath={path} targetProgramId={programId} targetProgramName={selected?.title} />;
@@ -321,12 +326,15 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
   // CSR build job yet (the sections still come back as the real ICH E3 catalog,
   // not started), and any unreachable/failed read is an honest error. No
   // CSR_PROGRAM / CSR_SECTIONS stand-in, no "Sample data" pill.
-  const boardRes = useLiveData<CsrBoard>(boardPath);
+  const [boardVersion, setBoardVersion] = useState(0);
+  const boardRes = useLiveData<CsrBoard>(boardPath, [boardPath, boardVersion]);
   const board = boardRes.data;
   const program: CsrProgram | null = board?.program ?? null;
   const sections: CsrSection[] = Array.isArray(board?.sections) ? board!.sections : [];
   const jobId = Number(board?.meta?.jobId);
   const canImport = !!targetProgramId && Number.isSafeInteger(jobId) && jobId > 0;
+  // The sponsor's per-study pivotal declarations, for a board scoped to one project.
+  const pivotalScope = pivotalScopeOf(boardPath, targetProgramId);
   const [importSource, setImportSource] = useState<WorkflowImportSource | null>(null);
 
   /* ── Clinical-Regulatory Intelligence Graph (flag-gated) ──
@@ -490,6 +498,8 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
             </div>
           )}
 
+          {pivotalScope && <StudyPivotalDeclarations scope={pivotalScope} />}
+
           {graphOn && coverage && <CoverageStrip coverage={coverage} />}
 
           <div className="ctable" style={{ maxWidth: graphOn ? 1100 : 760 }}>
@@ -553,6 +563,13 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
           );
         })}
       </div>
+
+      {canImport && Array.isArray(board?.headings) && (<>
+        <CsrHeadingReview jobId={jobId} headings={board!.headings} onChanged={() => setBoardVersion(v => v + 1)}
+          onImport={(sectionNumbers) => setImportSource({ kind: 'csr', jobId, sectionNumbers })} />
+        <CsrNarrativeBuild jobId={jobId} headings={board!.headings} onChanged={() => setBoardVersion(v => v + 1)} />
+        <CsrAssemblyControl jobId={jobId} />
+      </>)}
 
       {graphOn && (
         <RegulatoryPanel

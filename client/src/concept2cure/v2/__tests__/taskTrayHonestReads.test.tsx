@@ -30,6 +30,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { TaskTray } from '../TaskTray';
+import { NOTIFICATION_PREFERENCES_CHANGED } from '../NotificationPreferences';
 import { setAuthToken, clearAuthToken } from '@/utils/authToken';
 import { registerSurfaceLeaveGuard } from '../navParams';
 
@@ -225,5 +226,20 @@ describe('TaskTray — navigation ownership', () => {
     await openTray();
     expect(screen.queryByText(/99 assigned/)).toBeNull();
     expect(document.querySelector('.tt-badge')).toBeNull();
+  });
+});
+
+
+describe('notification setup refresh ownership', () => {
+  it('refreshes counts for current-recipient preference changes and ignores a different organization', async () => {
+    serve({ unread: { payload: { data: { unread: 1 } } } });
+    render(<TaskTray onNav={vi.fn()} />);
+    await screen.findByRole('button', { name: /Your work.*1 item waiting/ });
+    const countReads = () => apiRequest.mock.calls.filter(([, url]) => url === '/api/mdx/notifications/unread-count').length;
+    const initial = countReads();
+    await act(async () => { window.dispatchEvent(new CustomEvent(NOTIFICATION_PREFERENCES_CHANGED, { detail: { userId: '42', organizationId: '8' } })); });
+    expect(countReads()).toBe(initial);
+    await act(async () => { window.dispatchEvent(new CustomEvent(NOTIFICATION_PREFERENCES_CHANGED, { detail: { userId: '42', organizationId: '7' } })); });
+    await waitFor(() => expect(countReads()).toBe(initial + 1));
   });
 });

@@ -62,7 +62,7 @@ vi.mock('../index', async (importOriginal) => ({
 }));
 
 import gatewayRouter from '../../../routes/mdx-submission-gateway';
-import { PreTransmitBlockedError, UnverifiedTransportError, ValidationError } from '../index';
+import { PreTransmitBlockedError, SentPackageNotArchivedError, UnverifiedTransportError, ValidationError } from '../index';
 import { FdaEsgGateway } from '../fda-esg';
 
 function app() {
@@ -101,6 +101,17 @@ describe('transmit refusals name their source and say what was sent', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(412);
     expect(res.body.error).toMatch(/nothing was transmitted/);
     expect(res.body.details).toEqual({ code: 'TRANSPORT_NOT_VERIFIED', transmitted: false });
+  });
+
+  // 2026-10-29 (W5/D7): the guard keeps the package's bytes before the wire
+  // (sent-package-archive.ts). When it cannot, nothing was sent, and the route
+  // says so as a 503, never a 500 that reads as "may have reached FDA".
+  it('a package that could not be kept is 503 with its own sentence: nothing was sent', async () => {
+    transmitFn.mockRejectedValueOnce(new SentPackageNotArchivedError('storage refused the write'));
+    const res = await transmit();
+    expect(res.status, JSON.stringify(res.body)).toBe(503);
+    expect(res.body.error).toMatch(/^Nothing was sent/);
+    expect(res.body.details).toEqual({ code: 'SENT_PACKAGE_NOT_ARCHIVED', transmitted: false });
   });
 
   // The real FdaEsgGateway in REST mode behind the route. Its sentence reaches

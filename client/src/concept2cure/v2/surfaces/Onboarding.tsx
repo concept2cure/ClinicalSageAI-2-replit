@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { openNewProject } from '../surfaceActions';
 import {
   LIC_ARCHETYPES,
   LIC_DTC,
@@ -9,12 +10,15 @@ import {
   licBundle as licBundleOf,
 } from '../fixtures/onboarding-data';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
+import { useAuthUser } from '@/services/portal/authService';
+import { canAdministerBilling } from '@shared/constants/permissions';
+import { getSurfaceMeta } from '../registryModel';
 import { probeAuditRowOutcome, serverMessage } from '@/lib/queryClient';
 import { useLiveData } from '../dataConnect';
 import { GatewayAccountsSetting } from './GatewayAccountsSetting';
 import { useOnboardingDiscovery } from '../useOnboardingDiscovery';
 import { DISCOVERY_FIELD_LABELS } from '@shared/types/onboarding-discovery';
-import { DiscoveryQuestions, DISCOVERY_CONTEXT_FIELDS, DISCOVERY_PROJECT_FIELDS } from './DiscoveryQuestions';
+import { DiscoveryQuestions, DiscoveryAnswersReview, DISCOVERY_CONTEXT_FIELDS, DISCOVERY_PROJECT_FIELDS } from './DiscoveryQuestions';
 import { OnboardingSecurity } from './OnboardingSecurity';
 import { DiscoveryNextSteps } from './DiscoveryNextSteps';
 import { OnboardingInvitations, invitationOutcome, type OnboardingInvitationOutcome } from './OnboardingInvitations';
@@ -284,6 +288,17 @@ export function Onboarding(props: SurfaceViewProps) {
   return <OnboardingWizard key={String(getOrgId())} {...props} />;
 }
 
+/* Choosing the subscription is billing administration: POST /api/billing/checkout
+   and /dtc-checkout refuse anyone the billing guard does not admit (fold billing
+   into Licensing, Part 1b). Activation is already an administrator's act (the
+   discovery save it starts with admits admin and owner, and a member is told so
+   above the steps), so this is the same rule read where the checkout is sent: a
+   session without the permission sends none, and a refusal (a session older than
+   its permissions) is reported as the role answer, not "did not return a
+   checkout link". */
+const CHECKOUT_NOT_YOURS =
+  'Choosing the subscription is for billing administrators: your organization\u2019s admins and owners. No plan was provisioned.';
+
 const STEPS = [
   'Organization', 'Client discovery', 'Project discovery', 'Pricing model',
   'Choose plan', 'Invite personnel', 'Modules', 'Security & setup',
@@ -292,6 +307,7 @@ const STEPS = [
 
 function OnboardingWizard({ onNav }: SurfaceViewProps) {
   const discovery = useOnboardingDiscovery();
+  const billingAdmin = canAdministerBilling(useAuthUser());
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [step, setStep] = useState(0);
@@ -606,6 +622,9 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
     if ('unavailable' in checkoutReq) {
       checkout = 'unavailable';
       checkoutNote = checkoutReq.unavailable;
+    } else if (!billingAdmin) {
+      checkout = 'unavailable';
+      checkoutNote = CHECKOUT_NOT_YOURS;
     } else {
       try {
         const res = await fetch(checkoutReq.path, {
@@ -622,7 +641,10 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
         // that URL would bounce the user to a "checkout=success" screen for a
         // checkout that never happened, so the wizard reports the plan as live
         // and stays put — the outcome panel already offers the next step.
-        if (data && data.sessionId === 'free') {
+        if (res.status === 403) {
+          checkout = 'unavailable';
+          checkoutNote = CHECKOUT_NOT_YOURS;
+        } else if (data && data.sessionId === 'free') {
           checkout = 'provisioned';
           checkoutNote = null;
         } else if (typeof url === 'string' && url) {
@@ -631,12 +653,12 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
         } else {
           checkout = 'failed';
           checkoutNote =
-            'The billing service did not return a checkout link — no plan was provisioned. Retry from Usage & Billing.';
+            `The billing service did not return a checkout link — no plan was provisioned. Retry from ${getSurfaceMeta('licensing').label}.`;
         }
       } catch {
         checkout = 'failed';
         checkoutNote =
-          'Could not reach the billing service — no plan was provisioned. Retry from Usage & Billing.';
+          `Could not reach the billing service — no plan was provisioned. Retry from ${getSurfaceMeta('licensing').label}.`;
       }
     }
 
@@ -674,6 +696,17 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
     if (!canNext) return;
     if (discovery.canEdit && [1, 2, 7].includes(step) && !(await discovery.save(false))) return;
     setStep((current) => current + 1);
+  };
+
+  const handoffPending = useRef(false);
+  const saveAndNavigate = (id: string) => {
+    if (handoffPending.current || discovery.busy || activating) return;
+    if (!discovery.dirty) { onNav(id); return; }
+    handoffPending.current = true;
+    const handoffOrg = getOrgId();
+    void discovery.save(false).then((saved) => {
+      if (saved && mounted.current && String(getOrgId()) === String(handoffOrg)) onNav(id);
+    }).finally(() => { handoffPending.current = false; });
   };
 
   /* WHAT ANA SEES HERE. Identity stays off the wire: invite addresses, the
@@ -881,7 +914,7 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
                     Two rows about one fact, disagreeing, is worse than either. */}
               </div>
               <OnboardingInvitations invitations={outcome.invitations} />
-              <DiscoveryNextSteps assessment={discovery.assessment} onNav={onNav} />
+              <DiscoveryNextSteps assessment={discovery.assessment} onNav={saveAndNavigate} />
               <div
                 className="cm-pushbar"
                 style={{ justifyContent: 'center', marginTop: 16 }}
@@ -889,7 +922,7 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
                 {outcome.checkout === 'ready' && outcome.checkoutUrl && <button type="button" className="sp-primary" onClick={() => window.location.assign(outcome.checkoutUrl!)}>Continue to secure checkout</button>}
                 <button
                   className={outcome.checkout === 'ready' ? 'sp-ask' : 'sp-primary'}
-                  onClick={() => { window.__C2C_NEW_PROJECT = true; onNav('projects'); }}
+                  onClick={() => openNewProject(onNav)}
                 >
                   {I.folder} Create your first project
                 </button>
@@ -955,7 +988,7 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
 
               {step === 1 && <DiscoveryQuestions discovery={discovery} section="context" />}
               {step === 2 && <DiscoveryQuestions discovery={discovery} section="project" />}
-              {step === 7 && <OnboardingSecurity discovery={discovery} onNav={onNav} />}
+              {step === 7 && <OnboardingSecurity discovery={discovery} onNav={saveAndNavigate} />}
               {step === 3 && (
                 <div className="ob-models">
                   <button
@@ -1203,16 +1236,12 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
 
               {step === 9 && (
                 <div className="ob-review">
-                  <DiscoveryNextSteps assessment={discovery.assessment} onNav={onNav} />
+                  <DiscoveryNextSteps assessment={discovery.assessment} onNav={saveAndNavigate} />
                   <div className="ob-rev-row">
                     <span className="k">Discovery questions</span>
                     <span className="v">{discovery.assessment.completionPercent}% answered{discovery.record?.completedAt && !discovery.dirty ? ' · saved as complete' : ' · completed on activation'}</span>
                   </div>
-                  <div className="ob-discovery-summary">
-                    {(['companyGoal', 'projectName', 'projectGoal', 'successCriteria'] as const).map((field) => <div className="ob-rev-row" key={field}>
-                      <span className="k">{DISCOVERY_FIELD_LABELS[field]}</span><span className="v">{discovery.answers[field] || 'Not answered'}</span>
-                    </div>)}
-                  </div>
+                  <DiscoveryAnswersReview answers={discovery.answers} onEdit={setStep} disabled={activating || discovery.busy} />
                   {(
                     [
                       ['Organization', org.name || '—'],

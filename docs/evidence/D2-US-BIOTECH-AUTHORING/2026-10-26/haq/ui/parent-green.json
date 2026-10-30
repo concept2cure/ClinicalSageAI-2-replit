@@ -1,0 +1,42 @@
+{
+  "startedAt": "2026-10-26T23:54:45.035781+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/agencyResponsesCurrentScope.test.tsx",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditorState.test.ts",
+    "client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx",
+    "client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 11.615,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "haq/ui/parent-green-pins.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx": "aa9e881ef6b18637a666d118c7c38db21e8207e0f812799c77ca0463fad9aa05",
+    "client/src/concept2cure/v2/__tests__/agencyResponsesCurrentScope.test.tsx": "bad896f34d477b2fd934675e2babbe8b32dc9cda4c94641817cb1af4fed4cc7c",
+    "client/src/concept2cure/v2/dataConnect.tsx": "e13d86de09dc2b0a8fe91f7485f178f2fe2a20ab69254a02407f6565b463a334",
+    "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts": "41b571c6f41ad23cc7fb7be5b18218b60b310e5b59e342e86d23d4c4cd79cce9",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx": "748323a7d01795856e3a8e49c17b7e2528e3e5323774c280c63350b6ba290688"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx": "aa9e881ef6b18637a666d118c7c38db21e8207e0f812799c77ca0463fad9aa05",
+    "client/src/concept2cure/v2/__tests__/agencyResponsesCurrentScope.test.tsx": "bad896f34d477b2fd934675e2babbe8b32dc9cda4c94641817cb1af4fed4cc7c",
+    "client/src/concept2cure/v2/dataConnect.tsx": "e13d86de09dc2b0a8fe91f7485f178f2fe2a20ab69254a02407f6565b463a334",
+    "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts": "41b571c6f41ad23cc7fb7be5b18218b60b310e5b59e342e86d23d4c4cd79cce9",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx": "748323a7d01795856e3a8e49c17b7e2528e3e5323774c280c63350b6ba290688"
+  },
+  "sourceDrift": [],
+  "rawOutput": "parent-green.log.gz",
+  "rawGzipSha256": "7db2ca87ee398bb14566b239448acb2a936fb6cc4a8b9ab21b1020a2fd816be6",
+  "testSummary": [
+    "Test Files  6 passed (6)",
+    "Tests  73 passed (73)",
+    "Duration  11.09s (transform 1.98s, setup 476ms, import 2.04s, tests 5.13s, environment 2.53s)"
+  ]
+}

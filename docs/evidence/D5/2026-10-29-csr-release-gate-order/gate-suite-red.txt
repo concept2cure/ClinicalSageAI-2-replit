@@ -1,0 +1,11 @@
+$ node scripts/ci/csr-scientific-review/run.mjs   # at HEAD 499a17b82
+#     throw new ERR_MODULE_NOT_FOUND(
+# Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/shared/authoring/csr-scientific-review.js' imported from /tmp/c2c-csr-evidence-OH7tR0/csr-scientific-review-core.js
+#   code: 'ERR_MODULE_NOT_FOUND',
+# tests 1
+
+$ node --test scripts/ci/csr-scientific-review/scientific-review.test.mjs   # as npm run test:ci-scripts reaches it, at HEAD
+# Error: Use the included test runner; no production services are substituted silently.
+# tests 1
+# pass 0
+# fail 1

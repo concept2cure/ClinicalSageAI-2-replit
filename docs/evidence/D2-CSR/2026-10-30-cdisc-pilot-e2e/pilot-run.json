@@ -1,0 +1,292 @@
+{
+ "sha256": {
+  "adsl": "c5139f873a93ef6add77bc4297beb6460a398bbdd036874382a9f39dfc92091d",
+  "adae": "b8678e70946473a753bb01d002917f478bf51b59bdd0dc19587b97128059b6a0",
+  "adlbc": "b9f6b5106965b5e2e3b33062a18710b58ceecc0c8cf1e54271849653037998ea",
+  "adlbh": "de568850f5585266844abe6eb7ef0290ea130d90c3f023efcb9f13c2a586455b",
+  "advs": "28233c8ed038d0f315a9538d910beb43cf1bb4b69f8f1c39b32463c7b018dff1",
+  "adtte": "68513fc4126744b6b2c7328eb70eb7b9683865d12c58b36539325f3c0c0ab93d",
+  "adqsadas": "ac3fa1217651810b0f15fe489fdda7d99eff10553ded025156ad7c1b89f84608",
+  "adqscibc": "16e7118f606d907e817f0a5885d662c2e7177c430d2b3ec6c0ba9096cb3d7bc1",
+  "adqsnpix": "90cf438913cfb976a34e9cf6c44291eab7a65c5c0146f8df092cd9ce2bd8c44a"
+ },
+ "steps": [
+  {
+   "step": "read adsl.xpt (readAdamDataset)",
+   "ok": true,
+   "ms": 17,
+   "heapBeforeMiB": 42.3,
+   "heapAfterMiB": 47.3,
+   "rssMaxMiB": 224.3,
+   "detail": {
+    "name": "ADSL",
+    "rows": 254,
+    "columns": 48,
+    "bytes": 114640
+   }
+  },
+  {
+   "step": "read adae.xpt (readAdamDataset)",
+   "ok": true,
+   "ms": 30,
+   "heapBeforeMiB": 43.4,
+   "heapAfterMiB": 50,
+   "rssMaxMiB": 224.9,
+   "detail": {
+    "name": "ADAE",
+    "rows": 1191,
+    "columns": 55,
+    "bytes": 713600
+   }
+  },
+  {
+   "step": "read adlbc.xpt (readAdamDataset)",
+   "ok": true,
+   "ms": 2598,
+   "heapBeforeMiB": 48.1,
+   "heapAfterMiB": 318.4,
+   "rssMaxMiB": 526.1,
+   "detail": {
+    "name": "ADLBC",
+    "rows": 74264,
+    "columns": 46,
+    "bytes": 34242960
+   }
+  },
+  {
+   "step": "read adlbh.xpt (readAdamDataset)",
+   "ok": true,
+   "ms": 1613,
+   "heapBeforeMiB": 313.7,
+   "heapAfterMiB": 502.8,
+   "rssMaxMiB": 694.3,
+   "detail": {
+    "name": "ADLBH",
+    "rows": 49932,
+    "columns": 46,
+    "bytes": 23025920
+   }
+  },
+  {
+   "step": "read advs.xpt (readAdamDataset)",
+   "ok": true,
+   "ms": 743,
+   "heapBeforeMiB": 492.7,
+   "heapAfterMiB": 569.2,
+   "rssMaxMiB": 753.7,
+   "detail": {
+    "name": "ADVS",
+    "rows": 32139,
+    "columns": 34,
+    "bytes": 13632480
+   }
+  },
+  {
+   "step": "read adtte.xpt (readAdamDataset)",
+   "ok": true,
+   "ms": 3,
+   "heapBeforeMiB": 558.7,
+   "heapAfterMiB": 560.9,
+   "rssMaxMiB": 756.3,
+   "detail": {
+    "name": "ADTTE",
+    "rows": 254,
+    "columns": 26,
+    "bytes": 91840
+   }
+  },
+  {
+   "step": "read adqsadas.xpt (readAdamDataset)",
+   "ok": true,
+   "ms": 297,
+   "heapBeforeMiB": 559.2,
+   "heapAfterMiB": 594,
+   "rssMaxMiB": 766.8,
+   "detail": {
+    "name": "ADQSADAS",
+    "rows": 12463,
+    "columns": 40,
+    "bytes": 5178480
+   }
+  },
+  {
+   "step": "read adqscibc.xpt (readAdamDataset)",
+   "ok": true,
+   "ms": 13,
+   "heapBeforeMiB": 584.2,
+   "heapAfterMiB": 593.3,
+   "rssMaxMiB": 769.3,
+   "detail": {
+    "name": "ADQSCIBC",
+    "rows": 730,
+    "columns": 36,
+    "bytes": 290480
+   }
+  },
+  {
+   "step": "read adqsnpix.xpt (readAdamDataset)",
+   "ok": true,
+   "ms": 840,
+   "heapBeforeMiB": 585.6,
+   "heapAfterMiB": 653.8,
+   "rssMaxMiB": 845.3,
+   "detail": {
+    "name": "ADQSNPIX",
+    "rows": 31140,
+    "columns": 41,
+    "bytes": 13147600
+   }
+  },
+  {
+   "step": "efficacy file against CsrEfficacyResultsSchema",
+   "ok": true,
+   "ms": 2,
+   "heapBeforeMiB": 652.3,
+   "heapAfterMiB": 652.4,
+   "rssMaxMiB": 943.5,
+   "detail": {
+    "results": 6
+   }
+  },
+  {
+   "step": "manifest against CsrAdamBundleSchema",
+   "ok": true,
+   "ms": 1,
+   "heapBeforeMiB": 652.4,
+   "heapAfterMiB": 652.4,
+   "rssMaxMiB": 943.5
+  },
+  {
+   "step": "A1 derive (ADSL, ADAE, ADLB=ADLBC, ADVS) as published",
+   "ok": false,
+   "ms": 1,
+   "heapBeforeMiB": 652.4,
+   "heapAfterMiB": 652.4,
+   "rssMaxMiB": 943.5,
+   "detail": {
+    "name": "AdamDerivationError",
+    "code": "CSR_ADAM_DATASET_MISMATCH",
+    "message": "The file supplied as ADLB is the ADLBC dataset.",
+    "issues": [
+     {
+      "path": "ADLB",
+      "message": "The file supplied as ADLB is the ADLBC dataset."
+     }
+    ]
+   }
+  },
+  {
+   "step": "A2 derive (ADSL, ADAE only) as published",
+   "ok": false,
+   "ms": 0,
+   "heapBeforeMiB": 652.4,
+   "heapAfterMiB": 652.4,
+   "rssMaxMiB": 943.5,
+   "detail": {
+    "name": "AdamDerivationError",
+    "code": "CSR_ADAM_VARIABLE_MISSING",
+    "message": "ADSL has no EOSSTT variable; the CSR derivation requires it.",
+    "issues": [
+     {
+      "path": "ADSL.EOSSTT",
+      "message": "ADSL has no EOSSTT variable; the CSR derivation requires it."
+     }
+    ]
+   }
+  },
+  {
+   "step": "A3 narrative selection (ADSL, ADAE) as published",
+   "ok": false,
+   "ms": 2,
+   "heapBeforeMiB": 652.4,
+   "heapAfterMiB": 652.6,
+   "rssMaxMiB": 943.5,
+   "detail": {
+    "name": "AdamDerivationError",
+    "code": "CSR_ADAM_VALUE_MISSING",
+    "message": "AEACN does not record the action taken with study treatment for a treatment-emergent event.",
+    "issues": [
+     {
+      "path": "ADAE[1].AEACN",
+      "message": "AEACN does not record the action taken with study treatment for a treatment-emergent event."
+     }
+    ]
+   }
+  },
+  {
+   "step": "B0 ADLBC/ADLBH column sets identical",
+   "ok": true,
+   "ms": 0,
+   "heapBeforeMiB": 0,
+   "heapAfterMiB": 0,
+   "rssMaxMiB": 0,
+   "detail": {
+    "adlbRows": 124196
+   }
+  },
+  {
+   "step": "B1 derive (ADSL+EOSSTT/DCSREAS view, ADAE, ADLB=ADLBC+ADLBH, ADVS)",
+   "ok": false,
+   "ms": 49,
+   "heapBeforeMiB": 653.9,
+   "heapAfterMiB": 654.8,
+   "rssMaxMiB": 943.5,
+   "detail": {
+    "name": "AdamDerivationError",
+    "code": "CSR_ADAM_VALUE_MISSING",
+    "message": "AEACN does not record the action taken with study treatment for a treatment-emergent event.",
+    "issues": [
+     {
+      "path": "ADAE[1].AEACN",
+      "message": "AEACN does not record the action taken with study treatment for a treatment-emergent event."
+     }
+    ]
+   }
+  },
+  {
+   "step": "B2 narrative selection (ADSL view, ADAE)",
+   "ok": false,
+   "ms": 1,
+   "heapBeforeMiB": 653.9,
+   "heapAfterMiB": 654.1,
+   "rssMaxMiB": 943.5,
+   "detail": {
+    "name": "AdamDerivationError",
+    "code": "CSR_ADAM_VALUE_MISSING",
+    "message": "AEACN does not record the action taken with study treatment for a treatment-emergent event.",
+    "issues": [
+     {
+      "path": "ADAE[1].AEACN",
+      "message": "AEACN does not record the action taken with study treatment for a treatment-emergent event."
+     }
+    ]
+   }
+  },
+  {
+   "step": "B3 ADAE treatment-emergent rows the derivation would refuse, by rule (static census over the engine rules)",
+   "ok": true,
+   "ms": 0,
+   "heapBeforeMiB": 0,
+   "heapAfterMiB": 0,
+   "rssMaxMiB": 0,
+   "detail": {
+    "teaeRows": 1126,
+    "aeacnBlankOrUnknown": 1126,
+    "aerelUnmapped": 156,
+    "aerelUnmappedValues": [
+     "REMOTE"
+    ],
+    "aerelBlank": 4,
+    "adlbHasOntrtfl": false,
+    "advsHasOntrtfl": false,
+    "adlbAnrindValues": [
+     "N",
+     "",
+     "H",
+     "L"
+    ]
+   }
+  }
+ ],
+ "note": "Product CSR code run on the CDISC pilot ADaM XPT files (scratch harness run-pilot.mts). No data values are recorded here: counts, refusal codes and row paths only."
+}

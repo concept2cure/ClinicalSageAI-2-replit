@@ -1,0 +1,19 @@
+-- P-72 slice 0: two tenants (p72-a, p72-b), each with an admin user, one program, and Vault documents (A: 2, B: 3). Run as the owner.
+\set ON_ERROR_STOP on
+BEGIN;
+INSERT INTO organizations (name, slug, status) VALUES ('p72 a','p72-a','active'),('p72 b','p72-b','active') ON CONFLICT (slug) DO NOTHING;
+INSERT INTO users (email, name, password_hash, status)
+SELECT 'p72-'||t||'-admin@example.invalid', 'p72 '||t||' admin', '$2a$10$abcdefghijklmnopqrstuuJ8bJ3xNnpGQwq5vYpQmB4M3Z8f1G2a', 'active' FROM unnest(array['a','b']) t
+ON CONFLICT DO NOTHING;
+INSERT INTO organization_users (organization_id, user_id, role)
+SELECT o.id, u.id, 'admin' FROM unnest(array['a','b']) t JOIN organizations o ON o.slug='p72-'||t JOIN users u ON u.email='p72-'||t||'-admin@example.invalid'
+ON CONFLICT DO NOTHING;
+INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
+SELECT 'p72 '||t||' program', 'P72-'||upper(t), (SELECT id FROM organizations WHERE slug='p72-'||t), 'IND','drug','FDA', t||' 5mg' FROM unnest(array['a','b']) t
+ON CONFLICT DO NOTHING;
+INSERT INTO vault.documents (program_id, organization_id, document_code, document_title, file_name, content_hash, status, source_type)
+SELECT rp.id, rp.organization_id, 'p72-'||t||'-doc-'||n, 'Sponsor '||t||' doc '||n, t||n||'.txt', rpad(t||n,64,'0'), 'completed','txt'
+FROM (VALUES ('a',1),('a',2),('b',1),('b',2),('b',3)) v(t,n) JOIN regulatory_programs rp ON rp.code='P72-'||upper(t);
+COMMIT;
+SELECT o.slug, o.id, o.uuid, rp.id AS program_id, (SELECT count(*) FROM vault.documents d WHERE d.organization_id = o.id) AS vault_docs
+  FROM organizations o JOIN regulatory_programs rp ON rp.organization_id=o.id WHERE o.slug LIKE 'p72-%' ORDER BY 1;

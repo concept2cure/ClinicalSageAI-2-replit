@@ -74,9 +74,11 @@ describe('EctdCompile — real eCTD assembly', () => {
 
   it('shows an honest empty state when no program is open (no fixture)', () => {
     render(<EctdCompile {...props()} />);
-    expect(screen.getByText(/Open a program to compile its eCTD/)).toBeTruthy();
-    // No compile/status calls fire without a project.
-    expect(apiRequest).not.toHaveBeenCalled();
+    expect(screen.getByText(/Open a project to compile its eCTD/)).toBeTruthy();
+    // No compile/status calls fire without a project. The eCTD reference is not
+    // project-scoped (folded from ectd-publishing, D2 2026-10-29): its two reads,
+    // and nothing else, go out.
+    expect(apiRequest.mock.calls.map((c) => c[1]).sort()).toEqual(['/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions']);
   });
 
   it('a program UUID ident is sent to the server (which resolves it) — the numeric-only dead-end is gone', async () => {

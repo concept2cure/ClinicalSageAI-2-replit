@@ -27,6 +27,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
+import { stubIngestXhr } from './_ingest-xhr-fake';
 import { PID, ok, uploadDoc, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
 
 const NEW_ID = '44444444-4444-4444-8444-444444444444';
@@ -55,7 +56,7 @@ function mockApi(before: unknown[], after: unknown[], state: { recorded: boolean
 
 /** POST /api/vault/ingest answers in order; a 2xx marks the document recorded, so the next tree read holds it. */
 function stubIngest(answers: Array<{ status: number; body: unknown }>, state: { recorded: boolean }) {
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+  stubIngestXhr(vi.fn(async (url: string) => {
     if (url !== '/api/vault/ingest') return { ok: true, status: 200, json: async () => ({}) } as Response;
     const a = answers.shift() ?? { status: 500, body: {} };
     if (a.status < 300) state.recorded = true;

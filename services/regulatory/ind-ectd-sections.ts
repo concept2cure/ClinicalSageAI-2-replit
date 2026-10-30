@@ -134,7 +134,7 @@ export interface INDSection {
 }
 
 /** Complete IND eCTD package definition */
-export interface INDPackageDefinition {
+interface INDPackageDefinition {
   submissionType: 'IND';
   ectdVersion: '4.0';
   agency: 'FDA';
@@ -2221,7 +2221,7 @@ function totalHours(modules: INDSection[]): number {
  * Build the complete IND eCTD Package Definition.
  * This is the single source of truth for every section in an IND filing.
  */
-export function buildINDPackageDefinition(): INDPackageDefinition {
+function buildINDPackageDefinition(): INDPackageDefinition {
   const modules = [MODULE_1, MODULE_2, MODULE_3, MODULE_4, MODULE_5];
   const counts = countSections(modules);
   return {
@@ -2244,13 +2244,6 @@ export function getAllINDSections(): INDSection[] {
 }
 
 /**
- * Get all sections that Lumen Cortex can AI-draft.
- */
-export function getAIDraftableSections(): INDSection[] {
-  return getAllINDSections().filter(s => s.aiDraftable);
-}
-
-/**
  * Get sections required for initial IND filing.
  */
 export function getRequiredSections(): INDSection[] {
@@ -2262,29 +2255,6 @@ export function getRequiredSections(): INDSection[] {
  */
 export function getSectionByCode(code: string): INDSection | undefined {
   return getAllINDSections().find(s => s.code === code);
-}
-
-/**
- * Get sections mapped to a specific pyramid task.
- */
-export function getSectionsForPyramidTask(taskId: string): INDSection[] {
-  return getAllINDSections().filter(s => s.pyramidTaskId === taskId);
-}
-
-/**
- * Bridge: Given an IND pyramid task, return the eCTD sections it produces.
- * This is the key connector between the workflow engine and the eCTD structure.
- */
-export function pyramidToECTDMap(): Map<string, INDSection[]> {
-  const map = new Map<string, INDSection[]>();
-  for (const section of getAllINDSections()) {
-    if (section.pyramidTaskId) {
-      const existing = map.get(section.pyramidTaskId) || [];
-      existing.push(section);
-      map.set(section.pyramidTaskId, existing);
-    }
-  }
-  return map;
 }
 
 /**

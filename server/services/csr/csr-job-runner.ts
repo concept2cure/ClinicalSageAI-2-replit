@@ -7,9 +7,9 @@
  * resumed after a section-level failure, and surface progress to the caller
  * without blocking an HTTP request.
  *
- * Phase 3b: NO new routes, NO UI. This module is consumed by
- * csr-builder.launchCSRBuildAsync (back-compat alongside the legacy
- * synchronous launchCSRBuild).
+ * Consumed by csr-builder.launchCSRBuildAsync, the one build path (the
+ * synchronous launchCSRBuild was deleted 2026-10-30; this runner's completion
+ * gate is the fail-closed status rule).
  *
  * State machine for csr_build_jobs.status:
  *   queued -> drafting -> complete
@@ -27,19 +27,23 @@ import { and, eq } from 'drizzle-orm';
 
 import { db } from '../../db';
 import { CsrScopeError, resolveCsrBuildContext, resolveCsrScope } from './project-scope';
+import { verifySavedCsrSectionIntegrity } from './csr-output-integrity';
 import {
   csrBuildJobs,
   csrSectionOutputs,
   type CsrSectionOutput,
 } from '@shared/schema';
 import {
-  ICH_E3_STRUCTURE,
+  csrSectionSelectionRefusal,
   draftCSRSectionWithProvenance,
-  flattenICHE3Sections,
   hasUnresolvedPlaceholders,
+  resolveCSRDraftTargets,
   type CSRBuildRequest,
   type CSRSection,
 } from '../csr-builder';
+import { CsrAuthoringContextError, csrSectionTableKeys, parseCsrEvidenceSelection,
+  type CsrAuthoringEvidence } from './cortex-authoring-context';
+import type { RequestSqlClient } from '../../db/requestDb';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -89,14 +93,22 @@ function requireDb(): NonNullable<typeof db> {
 interface CSRStudyInfoSnapshot {
   studyInfo: CSRBuildRequest['studyInfo'];
   deepResearchJobId?: number;
+  /** The retained run whose engine tables ground the results sections. */
+  evidenceSource?: CSRBuildRequest['evidenceSource'];
 }
 
-function readStudyInfoSnapshot(
-  raw: unknown
-): { studyInfo: CSRBuildRequest['studyInfo']; deepResearchJobId?: number } {
+type EvidenceSource = NonNullable<CSRBuildRequest['evidenceSource']>;
+
+/** A retained-run binding, normalised; throws CSR_EVIDENCE_SELECTION_INVALID. */
+function parseEvidenceSource(value: unknown): EvidenceSource {
+  const { programId, runId, studyId } = parseCsrEvidenceSelection({ ...(value as object), sectionNumber: '1' });
+  return { programId, runId, studyId };
+}
+
+function readStudyInfoSnapshot(raw: unknown): CSRStudyInfoSnapshot {
   if (raw && typeof raw === 'object') {
     const obj = raw as Record<string, unknown>;
-    // New shape: { studyInfo, deepResearchJobId }
+    // New shape: { studyInfo, deepResearchJobId, evidenceSource? }
     if (obj.studyInfo && typeof obj.studyInfo === 'object') {
       return {
         studyInfo: obj.studyInfo as CSRBuildRequest['studyInfo'],
@@ -104,6 +116,7 @@ function readStudyInfoSnapshot(
           typeof obj.deepResearchJobId === 'number'
             ? obj.deepResearchJobId
             : undefined,
+        ...(obj.evidenceSource !== undefined ? { evidenceSource: obj.evidenceSource as EvidenceSource } : {}),
       };
     }
     // Back-compat: legacy rows stored the raw studyInfo directly
@@ -116,6 +129,47 @@ function readStudyInfoSnapshot(
     studyInfo: {} as CSRBuildRequest['studyInfo'],
     deepResearchJobId: undefined,
   };
+}
+
+/**
+ * The headings a retained job drafts (ICH_E3_GUIDANCE's draftable headings, or
+ * those under its selection), or null when the retained selection is unusable:
+ * unknown, duplicated in a way the builder refuses, or naming a manual heading.
+ * Null or [] is the whole report.
+ */
+function retainedDraftTargets(persisted: unknown): CSRSection[] | null {
+  if (persisted != null && !Array.isArray(persisted)) return null;
+  const selection = Array.isArray(persisted) && persisted.length > 0 ? [...new Set(persisted as string[])] : undefined;
+  try {
+    const targets = resolveCSRDraftTargets(selection);
+    return targets.length ? targets : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The retained evidence pack for one results section of a run-bound job, or
+ * undefined for a section no engine table supports (§9.7, §10.2, §12.5).
+ * Loaded through the canonical project-authorized, receipt-verified reader
+ * as the job's requester, re-checked per section. A revoked or withdrawn
+ * source, a missing requester or a pack for another protocol throws, and the
+ * job fails closed rather than drafting the section from metadata.
+ */
+async function loadSectionEvidence(
+  source: EvidenceSource, sectionNumber: string,
+  job: { organizationId: number; requestedBy: number | null; studyId: string },
+): Promise<CsrAuthoringEvidence | undefined> {
+  if (!csrSectionTableKeys(sectionNumber).length) return undefined;
+  const [{ loadCsrAuthoringEvidence }, { pool }] = await Promise.all([
+    import('./cortex-authoring-reader'), import('../../db'),
+  ]);
+  const evidence = await loadCsrAuthoringEvidence(pool as unknown as RequestSqlClient,
+    { organizationId: job.organizationId, userId: job.requestedBy ?? 0 }, { ...source, sectionNumber });
+  if (evidence.source.protocolNumber !== job.studyId) {
+    throw new CsrAuthoringContextError('CSR_EVIDENCE_STUDY_MISMATCH', 409);
+  }
+  return evidence;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -131,8 +185,39 @@ export async function enqueueCSRBuildJob(
   req: CSRBuildRequest,
   ctx: CSRBuildJobContext
 ): Promise<EnqueueResult> {
+  // Validate identity before opening a database transaction or creating a job.
+  const protocolNumber = req.studyInfo?.protocolNumber;
+  if (typeof protocolNumber !== 'string' || !protocolNumber.trim()) {
+    throw new Error('CSR_STUDY_IDENTIFIER_REQUIRED: Record the study protocol number before starting CSR drafting. No job was created.');
+  }
+  // Reject malformed section selections before creating a persistent job.
+  // Undefined or [] retains the established whole-report behavior.
+  const requestedSections = req.sectionsToGenerate;
+  if (requestedSections !== undefined && requestedSections.length > 0) {
+    const refusal = csrSectionSelectionRefusal(requestedSections);
+    if (refusal) throw new CsrScopeError(refusal.code, 400, `${refusal.message} No job was created.`);
+  } else if (requestedSections !== undefined && !Array.isArray(requestedSections)) {
+    throw new CsrScopeError('CSR_SECTION_SELECTION_INVALID', 400,
+      'Choose unique ICH E3 section numbers from the CSR template. No job was created.');
+  }
+  let evidenceSource: EvidenceSource | undefined;
+  if (req.evidenceSource !== undefined) {
+    try { evidenceSource = parseEvidenceSource(req.evidenceSource); } catch {
+      throw new CsrScopeError('CSR_EVIDENCE_SELECTION_INVALID', 400, 'The retained run binding is invalid. No job was created.');
+    }
+  }
+  // A CSR build must belong to an explicit project, rather than silently
+  // creating an organization-wide job with no study dossier anchor.
+  if (req.projectId === undefined && ctx.projectId === undefined && ctx.programId === undefined) {
+    throw new CsrScopeError('CSR_PROJECT_REQUIRED', 400,
+      'Select a project before starting CSR drafting. No job was created.');
+  }
   const d = requireDb();
   const scope = await resolveCsrBuildContext(d, req, ctx);
+  if (scope.projectId === undefined) {
+    throw new CsrScopeError('CSR_PROJECT_REQUIRED', 400,
+      'The selected CSR project could not be resolved. No job was created.');
+  }
 
   // Preserve the caller's intent: NULL == "full build", a non-empty array
   // == "draft only these sections". We deliberately do NOT expand to
@@ -146,8 +231,9 @@ export async function enqueueCSRBuildJob(
       : null;
 
   const snapshot: CSRStudyInfoSnapshot = {
-    studyInfo: req.studyInfo,
+    studyInfo: { ...req.studyInfo, protocolNumber: protocolNumber.trim() },
     deepResearchJobId: req.deepResearchJobId,
+    ...(evidenceSource ? { evidenceSource } : {}),
   };
 
   const [row] = await d
@@ -155,10 +241,8 @@ export async function enqueueCSRBuildJob(
     .values({
       organizationId: ctx.organizationId,
       projectId: scope.projectId ?? null,
-      // studyId is non-null in the schema; protocolNumber is the natural key
-      // we have in CSRBuildRequest. Fall back to a stable synthetic id if it
-      // is missing so the insert never throws on the not-null constraint.
-      studyId: req.studyInfo?.protocolNumber || `study-${Date.now()}`,
+      // Preserve the recorded study protocol number without inventing an identifier.
+      studyId: protocolNumber.trim(),
       status: 'queued',
       progress: 0,
       sectionsToGenerate,
@@ -209,40 +293,76 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     return;
   }
 
-  // Permission is checked again when work starts, not retained from enqueue.
-  // Refuse before section/source reads or AI calls; preserve prior outputs.
-  if (job.projectId != null) {
-    try {
-      await resolveCsrScope(d, job.organizationId, { projectId: job.projectId }, { actorUserId: job.requestedBy ?? undefined });
-    } catch (error) {
-      await d.update(csrBuildJobs).set({ status: 'failed', updatedAt: new Date(), error: {
-        reason: error instanceof CsrScopeError ? 'project_access_refused' : 'project_access_verification_failed',
-        code: error instanceof CsrScopeError ? error.code : 'CSR_PROJECT_ACCESS_UNAVAILABLE',
-      } }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
-      return;
-    }
+  // Legacy unanchored jobs cannot resume into a regulated dossier.
+  // Refuse before any source reads or model calls.
+  if (job.projectId == null) {
+    await d.update(csrBuildJobs).set({
+      status: 'failed',
+      updatedAt: new Date(),
+      error: {
+        reason: 'project_anchor_missing',
+        message: 'This CSR job has no project anchor. Select a project and start a new build.',
+      },
+    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    return;
   }
 
-  // 3. Transition queued|failed -> drafting
-  await d
-    .update(csrBuildJobs)
-    .set({
-      status: 'drafting',
-      startedAt: new Date(),
-      updatedAt: new Date(),
-      error: null,
-    })
-    .where(eq(csrBuildJobs.id, jobId));
+  // Permission is checked again when work starts, not retained from enqueue.
+  // Refuse before section/source reads or AI calls; preserve prior outputs.
+  try {
+    await resolveCsrScope(d, job.organizationId, { projectId: job.projectId }, { actorUserId: job.requestedBy ?? undefined });
+  } catch (error) {
+    await d.update(csrBuildJobs).set({ status: 'failed', updatedAt: new Date(), error: {
+      reason: error instanceof CsrScopeError ? 'project_access_refused' : 'project_access_verification_failed',
+      code: error instanceof CsrScopeError ? error.code : 'CSR_PROJECT_ACCESS_UNAVAILABLE',
+    } }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    return;
+  }
 
-  // 4. Rebuild the CSRBuildRequest from the persisted snapshot
-  const { studyInfo, deepResearchJobId } = readStudyInfoSnapshot(
+  // 3. Rebuild the CSRBuildRequest from the persisted snapshot
+  const { studyInfo, deepResearchJobId, evidenceSource } = readStudyInfoSnapshot(
     job.studyInfoSnapshot
   );
+  // Resume must use the study identity recorded on the job, not an edited,
+  // missing, or legacy snapshot value. Refuse a mismatch rather than drafting
+  // sections for a different protocol under the original job identifier.
+  if (typeof studyInfo.protocolNumber !== 'string' ||
+      studyInfo.protocolNumber.trim() !== job.studyId) {
+    await d.update(csrBuildJobs).set({
+      status: 'failed',
+      updatedAt: new Date(),
+      error: {
+        reason: 'study_identity_mismatch',
+        message: 'The saved CSR study identity does not match this job. No additional sections were drafted.',
+      },
+    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    return;
+  }
+
+  // Claim the job only after identity validation, and only if its state
+  // remains runnable. A competing runner must not draft the same job.
+  const [claimed] = await d.update(csrBuildJobs).set({
+    status: 'drafting',
+    startedAt: new Date(),
+    updatedAt: new Date(),
+    error: null,
+  }).where(and(
+    eq(csrBuildJobs.id, jobId),
+    eq(csrBuildJobs.organizationId, job.organizationId),
+    eq(csrBuildJobs.status, job.status),
+  )).returning({ id: csrBuildJobs.id });
+  if (!claimed) return;
+
   const persistedSubset = job.sectionsToGenerate ?? null;
-  const subsetFilter =
-    persistedSubset && persistedSubset.length > 0
-      ? new Set(persistedSubset)
-      : null;
+  // Empty arrays retain the existing full-build meaning. An unusable retained
+  // selection must never become a vacuously complete job or discard unknown slots.
+  const allTargets = retainedDraftTargets(persistedSubset);
+  if (!allTargets) {
+    await d.update(csrBuildJobs).set({ status: 'failed', progress: 0, updatedAt: new Date(),
+      error: { reason: 'invalid_section_selection', message: 'The retained CSR selection does not identify supported report sections.' },
+    }).where(eq(csrBuildJobs.id, jobId));
+    return;
+  }
   const request: CSRBuildRequest = {
     organizationId: job.organizationId,
     userId: job.requestedBy ?? 0,
@@ -260,26 +380,52 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     userId: job.requestedBy ?? undefined,
   };
 
-  // 5. Build the work list: flatten the ICH-E3 tree, apply subset filter,
-  // then subtract sections that were already persisted on a previous attempt
-  // (resume support — avoids re-billing the AI for sections already drafted).
-  const fresh = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
-  const allTargets = flattenICHE3Sections(fresh).filter(s =>
-    subsetFilter ? subsetFilter.has(s.number) : true
-  );
+  // 5. Resume only missing/blank targets; preserve every nonblank saved target.
+  const targetNumbers = new Set(allTargets.map(section => section.number));
 
   const alreadyPersisted = await d
-    .select({ sectionNumber: csrSectionOutputs.sectionNumber })
+    .select({ sectionNumber: csrSectionOutputs.sectionNumber, content: csrSectionOutputs.content, contentHash: csrSectionOutputs.contentHash })
     .from(csrSectionOutputs)
-    .where(eq(csrSectionOutputs.jobId, job.id));
-  const persistedSet = new Set(alreadyPersisted.map(r => r.sectionNumber));
+    .where(and(eq(csrSectionOutputs.jobId, job.id), eq(csrSectionOutputs.organizationId, job.organizationId)));
+  // Resume only verified, non-placeholder content. A damaged or incomplete
+  // output must not be treated as finished merely because its row exists.
+  const persistedSet = new Set(alreadyPersisted.filter(row =>
+    targetNumbers.has(row.sectionNumber) &&
+    typeof row.content === 'string' &&
+    Boolean(row.content.trim()) &&
+    !hasUnresolvedPlaceholders(row.content) &&
+    typeof row.contentHash === 'string' &&
+    row.contentHash === sha256Hex(row.content)
+  ).map(row => row.sectionNumber));
+
+  // A stored hash mismatch is evidence of changed or damaged source output.
+  // Never overwrite that record during a resume: preserve it for investigation
+  // and require a governed correction rather than silently regenerating it.
+  const damaged = alreadyPersisted.filter(row =>
+    targetNumbers.has(row.sectionNumber) &&
+    (typeof row.content !== 'string' ||
+      typeof row.contentHash !== 'string' ||
+      row.contentHash !== sha256Hex(row.content))
+  );
+  if (damaged.length > 0) {
+    await d.update(csrBuildJobs).set({
+      status: 'failed',
+      updatedAt: new Date(),
+      error: {
+        reason: 'saved_section_integrity_failed',
+        sections: damaged.map(row => row.sectionNumber),
+        message: 'Saved CSR section integrity verification failed. Existing content was preserved; review the affected sections before restarting.',
+      },
+    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    return;
+  }
 
   const totalSections = allTargets.length;
   let sectionsCompleted = persistedSet.size;
   const currentSection = { number: '' as string };
 
   // Seed initial progress so a resumed run reports the right number
-  if (totalSections > 0 && sectionsCompleted > 0) {
+  if (totalSections > 0) {
     const initialProgress = Math.floor(
       (sectionsCompleted / totalSections) * 100
     );
@@ -299,16 +445,36 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
 
       currentSection.number = section.number;
 
+      // A job bound to a retained run drafts each results section over that
+      // section's engine tables; a refused or revoked source fails the job.
+      const evidence = evidenceSource
+        ? await loadSectionEvidence(evidenceSource, section.number, job)
+        : undefined;
       const drafted = await draftCSRSectionWithProvenance(
         section,
         request,
-        aiCtx
+        aiCtx,
+        evidence
       );
 
-      // Skip empty drafts (both AI and template returned nothing) rather
-      // than write a NOT-NULL-violating row. This matches the prior
-      // iterDraftedSections behavior which skipped empty leaves.
-      if (!drafted.content || drafted.content.length === 0) {
+      // A model response must target the section being drafted. An unexpected
+      // section identifier must not overwrite another section via the upsert.
+      if (drafted.number !== section.number) {
+        throw new Error('CSR_DRAFT_SECTION_MISMATCH: Generated section identifier differs from the requested ICH E3 section.');
+      }
+
+      // Model calls are long-running. A cancelled or superseded job cannot
+      // save a late model result into its previously governed section set.
+      const [stillDrafting] = await d.select({ id: csrBuildJobs.id })
+        .from(csrBuildJobs)
+        .where(and(eq(csrBuildJobs.id, jobId),
+          eq(csrBuildJobs.organizationId, job.organizationId),
+          eq(csrBuildJobs.status, 'drafting')))
+        .limit(1);
+      if (!stillDrafting) return;
+
+      // Missing output remains retryable work; never persist whitespace as a draft.
+      if (typeof drafted.content !== 'string' || !drafted.content.trim()) {
         continue;
       }
 
@@ -351,36 +517,49 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       await d
         .update(csrBuildJobs)
         .set({ progress, updatedAt: new Date() })
-        .where(eq(csrBuildJobs.id, jobId));
+        .where(and(eq(csrBuildJobs.id, jobId),
+          eq(csrBuildJobs.organizationId, job.organizationId),
+          eq(csrBuildJobs.status, 'drafting')));
     }
 
-    // 6. Placeholder gate (resume-safe). A section whose AI draft threw falls
-    // back to bracketed template prose that still contains unresolved fields —
-    // e.g. §13's "the benefit-risk profile … is considered [favorable/
-    // unfavorable]". Marking the job 'complete' would let the submission
-    // orchestrator assemble that literal placeholder into the filing package as
-    // a finished CSR section. The legacy synchronous path already gates on this
-    // via computeBuildCompleteness/hasUnresolvedPlaceholders; the async runner
-    // (the path production actually uses) did not. Re-read EVERY persisted
-    // section for this job — not just the ones drafted this attempt — so a
-    // placeholder left by a prior run is caught on resume too.
+    // 6. Re-read saved target coverage, including prior attempts. Missing rows
+    // cannot pass a placeholder-only check; unrelated rows do not cover targets.
     const persistedOutputs = await d
       .select({
         sectionNumber: csrSectionOutputs.sectionNumber,
         content: csrSectionOutputs.content,
+        contentHash: csrSectionOutputs.contentHash,
       })
       .from(csrSectionOutputs)
-      .where(eq(csrSectionOutputs.jobId, job.id));
-    const placeholderSections = persistedOutputs
+      .where(and(eq(csrSectionOutputs.jobId, job.id), eq(csrSectionOutputs.organizationId, job.organizationId)));
+    const integrity = verifySavedCsrSectionIntegrity([...targetNumbers], persistedOutputs);
+    const savedTargets = persistedOutputs.filter(row => targetNumbers.has(row.sectionNumber) && typeof row.content === 'string' && row.content.trim());
+    const missingSections = integrity.missing;
+    const finalProgress = Math.floor((integrity.covered.length / totalSections) * 100);
+    if (integrity.mismatched.length) {
+      await d.update(csrBuildJobs).set({ status: 'failed', progress: finalProgress, updatedAt: new Date(),
+        error: { reason: 'saved_section_integrity_failed', sections: integrity.mismatched,
+          message: 'A saved CSR section changed or failed checksum verification. No completed report was issued.' },
+      }).where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, job.organizationId),
+        eq(csrBuildJobs.status, 'drafting')));
+      return;
+    }
+    if (missingSections.length) {
+      await d.update(csrBuildJobs).set({ status: 'failed', progress: finalProgress, updatedAt: new Date(),
+        error: { reason: 'missing_section_outputs', sections: missingSections,
+          message: 'Requested CSR sections have no nonblank saved output; retained sections are preserved for resume.' },
+      }).where(and(eq(csrBuildJobs.id, jobId),
+          eq(csrBuildJobs.organizationId, job.organizationId),
+          eq(csrBuildJobs.status, 'drafting')));
+      return;
+    }
+    const placeholderSections = savedTargets
       .filter(r => hasUnresolvedPlaceholders(r.content))
       .map(r => r.sectionNumber)
       .sort();
 
     if (placeholderSections.length > 0) {
-      // Fail closed — a CSR with unresolved template placeholders is NOT
-      // submission-ready. Surface it as failed with the exact sections so the
-      // orchestrator holds the package and a reviewer can re-draft them, rather
-      // than shipping placeholder prose under a 'complete' status.
+      // Retain the existing placeholder refusal and its exact target codes.
       console.warn(
         `[csr-job-runner] Job ${jobId} has unresolved placeholders in section(s) ${placeholderSections.join(
           ', ',
@@ -400,20 +579,29 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
             at: new Date().toISOString(),
           },
         })
-        .where(eq(csrBuildJobs.id, jobId));
+        .where(and(eq(csrBuildJobs.id, jobId),
+          eq(csrBuildJobs.organizationId, job.organizationId),
+          eq(csrBuildJobs.status, 'drafting')));
       return;
     }
 
-    // 6b. Success — every persisted section is placeholder-free.
-    await d
+    // 6b. Success — only the actively claimed drafting job may transition
+    // to complete. A revoked, cancelled, or superseded job must not be
+    // resurrected by a late section-drafting worker.
+    const completed = await d
       .update(csrBuildJobs)
       .set({
         status: 'complete',
         progress: 100,
+        error: null,
         completedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(csrBuildJobs.id, jobId));
+      .where(and(eq(csrBuildJobs.id, jobId),
+        eq(csrBuildJobs.organizationId, job.organizationId),
+        eq(csrBuildJobs.status, 'drafting')))
+      .returning({ id: csrBuildJobs.id });
+    if (completed.length !== 1) return;
     // Continue dependent submission work only after the CSR completion is durable.
     // This callback has its own failure boundary: a release/readiness refusal
     // must never relabel successfully generated CSR sections as a failed job.
@@ -445,8 +633,34 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
           at: new Date().toISOString(),
         },
       })
-      .where(eq(csrBuildJobs.id, jobId));
+      .where(and(eq(csrBuildJobs.id, jobId),
+        eq(csrBuildJobs.organizationId, job.organizationId),
+        eq(csrBuildJobs.status, 'drafting')));
   }
+}
+
+/**
+ * Counts the verifiable, non-placeholder saved sections of a job, and says
+ * whether a job recorded as complete fails its saved-output integrity check.
+ */
+function savedSectionsVerdict(
+  row: { status: string; sectionsToGenerate: string[] | null },
+  sectionRows: Array<{ sectionNumber: string; content: string; contentHash: string | null }>,
+): { sectionsComplete: number; integrityFailure: boolean } {
+  const resolvedTargets = retainedDraftTargets(row.sectionsToGenerate ?? null);
+  const targetCodes = resolvedTargets?.map(section => section.number) ?? row.sectionsToGenerate ?? [];
+  const validTargets = !!resolvedTargets && targetCodes.length > 0;
+  const integrity = validTargets
+    ? verifySavedCsrSectionIntegrity(targetCodes, sectionRows)
+    : { covered: [], missing: targetCodes, mismatched: [] };
+  const verified = new Set(integrity.covered);
+  const sectionsComplete = sectionRows.filter(section =>
+    verified.has(section.sectionNumber) && !hasUnresolvedPlaceholders(section.content)
+  ).length;
+  const integrityFailure = row.status === 'complete' &&
+    (sectionRows.length === 0 || integrity.mismatched.length > 0 || integrity.missing.length > 0 ||
+      sectionsComplete !== targetCodes.length);
+  return { sectionsComplete, integrityFailure };
 }
 
 /**
@@ -466,6 +680,7 @@ export async function getCSRBuildJobStatus(
       status: csrBuildJobs.status,
       progress: csrBuildJobs.progress,
       error: csrBuildJobs.error,
+      sectionsToGenerate: csrBuildJobs.sectionsToGenerate,
     })
     .from(csrBuildJobs)
     .where(
@@ -478,10 +693,14 @@ export async function getCSRBuildJobStatus(
 
   if (!row) return null;
 
-  // sectionsComplete is derived from the section_outputs table so it
-  // reflects what's actually persisted, not just the progress counter.
+  // Only count verifiable, non-placeholder sections. A persisted row alone
+  // does not mean its content is complete or safe to reuse.
   const sectionRows = await d
-    .select({ sectionNumber: csrSectionOutputs.sectionNumber })
+    .select({
+      sectionNumber: csrSectionOutputs.sectionNumber,
+      content: csrSectionOutputs.content,
+      contentHash: csrSectionOutputs.contentHash,
+    })
     .from(csrSectionOutputs)
     .where(
       and(
@@ -489,12 +708,15 @@ export async function getCSRBuildJobStatus(
         eq(csrSectionOutputs.organizationId, organizationId)
       )
     );
+  const { sectionsComplete, integrityFailure } = savedSectionsVerdict(row, sectionRows);
 
   return {
-    status: row.status,
-    progress: row.progress,
-    sectionsComplete: sectionRows.length,
-    error: row.error ?? null,
+    status: integrityFailure ? 'failed' : row.status,
+    progress: integrityFailure ? 0 : row.progress,
+    sectionsComplete,
+    error: integrityFailure
+      ? { reason: 'saved_section_integrity_failed', message: 'Saved CSR outputs require integrity review.' }
+      : row.error ?? null,
   };
 }
 

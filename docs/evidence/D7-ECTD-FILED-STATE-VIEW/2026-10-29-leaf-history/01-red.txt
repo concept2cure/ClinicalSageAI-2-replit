@@ -1,0 +1,31 @@
+# RED at 65f57f2d7: a document on file says nothing of how it came to be there (2026-10-29T04:28:23Z)
+## Real PostgreSQL 16, RLS_ENFORCE=on, app_service
+ × tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 4684ms
+   → expected [ …(2) ] to deeply equal [ …(2) ]
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 16ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+
+## Client
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > groups what is on file by module, naming each document’s section, holding sequence and act 412ms
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says how a replaced document came to be on file, and adds nothing for one filed once (gap 6.2) 43ms
+   → Unable to find an element by: [data-testid="ectd-filed-history"]
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it folds and the ones it does not, with the reason 30ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says a failed read, never an empty dossier, and retries 60ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed" 19ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+
+## Unit, against the fold without history (2026-10-29T04:29:23Z)
+ × server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > a replace under the same name keeps both acts, oldest first 5ms
+   → Cannot read properties of undefined (reading 'map')
+ × server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > a document withdrawn and filed again says so 1ms
+   → Cannot read properties of undefined (reading 'map')
+ × server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > an append is its own document on file; the one it adds to keeps its own history 1ms
+   → Cannot read properties of undefined (reading 'map')
+ ✓ server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > the lifecycle read compile uses is the same fold, and carries no history 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed (4)

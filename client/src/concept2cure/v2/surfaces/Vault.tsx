@@ -1,14 +1,42 @@
 import React, { useState, useMemo, useId } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
 import { VaultCatalogRecord } from './VaultCatalogRecord';
+import { VaultHoldNotice, type VaultHoldNoticeShape } from './VaultHoldNotice';
+import { FolderExportButton } from './VaultFolderExport';
 import { VaultVersions } from './VaultVersions';
 import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
+import {
+  ARTIFACTS_BRANCH,
+  ArtifactAuditReport,
+  ArtifactGovernanceDetail,
+  ArtifactVersions,
+  GovernedArtifactsLane,
+  artifactAskPrompt,
+  artifactSelectionFacts,
+  fetchGovernedArtifactDocx,
+  governedArtifactManifestRows,
+  governedArtifactsFacts,
+  type GovernedArtifactsBlock,
+} from './VaultGovernedArtifacts';
+import {
+  OrganizationGovernedArtifacts,
+  fetchOrganizationArtifactDocx,
+  findOrganizationArtifact,
+  organizationArtifactAskPrompt,
+  organizationArtifactsFacts,
+  organizationManifestRows,
+  organizationViewContext,
+  useOrganizationArtifacts,
+  type OrganizationArtifactRow,
+} from './VaultOrganizationArtifacts';
+import { downloadArtifactManifest } from '../artifactManifest';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
 import { useSurfaceAvailable } from '../surfaceAvailable';
@@ -31,13 +59,18 @@ import {
   isVaultDoc,
   flattenDocs,
   type VaultDoc,
+  type VaultDocFiling,
   type VaultFolder,
 } from '../fixtures/vault-data';
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
+import { VaultSeals } from './VaultSeals';
 import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
-import { VaultLibraryResults, facetCounts, isVaultSearchShape, searchHitToDoc, vaultFilterParams, type VaultFindFilters, type VaultSearchShape } from './VaultLibraryResults';
+import {
+  VaultLibraryResults, facetCounts, isSavedViewsShape, isVaultSearchShape, pendingSearchNote, savedViewKey, savedViewState, searchHitToDoc,
+  vaultFilterParams, type SavedVaultView, type SavedViewState, type SavedViewsShape, type VaultFindFilters, type VaultSearchShape,
+} from './VaultLibraryResults';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { VaultFixityCheck } from './VaultFixityCheck';
 import { VaultRelationships } from './VaultRelationships';
@@ -51,10 +84,11 @@ import {
   type EditorTargetDocType,
 } from '../editorTarget';
 import { readShellProject } from '../shellProject';
-import { locateVaultDocument, takeVaultTarget, type TakenVaultTarget } from '../vaultTarget';
+import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
 import '../styles/project-home-v2.css';
+import { getSurfaceMeta } from '../registryModel';
 
 /* ── GET /api/c2c/project-vault/:id display contract ──
    Real, org-scoped read-model (server/routes/c2c/project-vault.ts, mounted at
@@ -145,12 +179,15 @@ interface VaultDisplayShape {
   spine: string;
   standard: string;
   /** Documents, counted by the server: authored documents (one each, however
-   *  many sections), CMC artifacts, and the programme's uploads — not the
-   *  leaves of the tree, and not the capped uploads page. */
+   *  many sections), the project's governed artifacts, and the programme's
+   *  uploads — not the leaves of the tree, and not the capped uploads page. */
   documentCount: number;
   /** What documentCount is made of; a branch that could not be read is null. */
-  documentCounts?: { authored: number; cmcArtifacts: number | null; uploads: number | null };
+  documentCounts?: { authored: number; artifacts: number | null; uploads: number | null };
   tree: VaultFolder[];
+  /** The "Governed artifacts" branch's counts (fold F3 slice A). Absent when
+   *  the branch could not be read, which `unavailable` says, or from an older server. */
+  artifacts?: GovernedArtifactsBlock;
   pendingStore?: boolean;
   /** Uploads awaiting a person's filing decision (visible queue, not a black hole).
    *  Counted over the whole programme by the server, NOT over `uploadsWindow` —
@@ -158,6 +195,8 @@ interface VaultDisplayShape {
   unfiledCount?: number;
   /** Suggested filings no person has confirmed, program-wide (VR-11b). Absent on an older server. */
   awaitingConfirmationCount?: number;
+  /** The active legal holds covering the project or a version in it (MR-08 Stage 5): reference and date. */
+  legalHolds?: VaultHoldNoticeShape[];
   /** How much of the filing cabinet the tree actually carries. The server caps
    *  that read (the vault is unbounded), so rendering the page without saying
    *  so would state a partial cabinet as the whole one. */
@@ -219,7 +258,7 @@ function currentProjectId(): string | null {
  * The read-model nests every authored leaf inside `vaultdoc-<c2c_documents.id>`
  * whose `code` is that row's `doc_type` uppercased
  * (server/routes/c2c/project-vault.ts documentFolder). Branches with no
- * governed document above them — the Module 3 artifact branch, the filing
+ * governed document above them — the governed-artifacts branch, the filing
  * cabinet — inherit null, and null is reported as null: a family this cannot
  * see must never be guessed, because naming the wrong one turns a resolvable
  * section into a refusal in the editor.
@@ -244,6 +283,37 @@ export function vaultDocFamilyCode(
     if (hit !== undefined) return hit;
   }
   return undefined;
+}
+
+/**
+ * The one leaf of the tree a name picks out, for vault.focus-document: the
+ * title exactly (case and spacing aside), else the section code exactly, else
+ * the one title that contains it. More than one is a miss to be named, never a
+ * guess. `folder` is the leaf's own folder; `ancestors`, the folders above it.
+ */
+export function findNamedVaultDocument(
+  nodes: readonly (VaultFolder | VaultDoc)[],
+  name: string,
+):
+  | { kind: 'one'; doc: VaultDoc; folder: VaultFolder; ancestors: string[] }
+  | { kind: 'many'; count: number }
+  | { kind: 'none' } {
+  const leaves: Array<{ doc: VaultDoc; folder: VaultFolder; ancestors: string[] }> = [];
+  const walk = (folder: VaultFolder, ancestors: string[]) => {
+    for (const child of folder.children) {
+      if (isVaultDoc(child)) leaves.push({ doc: child, folder, ancestors });
+      else walk(child as VaultFolder, [...ancestors, folder.id]);
+    }
+  };
+  for (const n of nodes) if (!isVaultDoc(n)) walk(n as VaultFolder, []);
+  const norm = (t: string) => t.toLowerCase().replace(/\s+/g, ' ').trim();
+  const want = norm(name);
+  const exact = leaves.filter((l) => norm(l.doc.title) === want);
+  const byCode = exact.length ? exact : leaves.filter((l) => l.doc.num && l.doc.num !== '—' && norm(l.doc.num) === want);
+  const pool = byCode.length ? byCode : leaves.filter((l) => norm(l.doc.title).includes(want));
+  const distinct = [...new Map(pool.map((l) => [l.doc.id, l])).values()];
+  if (distinct.length === 1) return { kind: 'one', ...distinct[0] };
+  return distinct.length > 1 ? { kind: 'many', count: distinct.length } : { kind: 'none' };
 }
 
 /* ── File icon resolver (maps key to I[key]) ── */
@@ -289,7 +359,7 @@ const plural = (n: number, one: string, many: string): string => `${n} ${n === 1
  * build the wizard scaffolds — an authored document, every section not started
  * — and a bare "1 document" reads as a file someone put here. The read names
  * its parts (`documentCounts`), so the header states them: authored documents,
- * Module 3 artifacts when there are any, and uploads when that branch was read.
+ * governed artifacts when there are any, and uploads when that branch was read.
  * A branch that could not be read (null) is left out rather than shown as 0;
  * the read's `unavailable` list says why. Without the parts (the pending-store
  * answer), the total stands as it was.
@@ -299,7 +369,7 @@ export function vaultCountLabel(v: Pick<VaultDisplayShape, 'documentCount' | 'do
   if (!parts) return plural(v.documentCount, 'document', 'documents');
   return [
     plural(parts.authored, 'authored document', 'authored documents'),
-    parts.cmcArtifacts ? plural(parts.cmcArtifacts, 'Module 3 artifact', 'Module 3 artifacts') : null,
+    parts.artifacts ? plural(parts.artifacts, 'governed artifact', 'governed artifacts') : null,
     parts.uploads == null ? null : plural(parts.uploads, 'uploaded file', 'uploaded files'),
   ]
     .filter(Boolean)
@@ -315,6 +385,19 @@ export function vaultCountLabel(v: Pick<VaultDisplayShape, 'documentCount' | 'do
 export function isSettled(d: VaultDoc): boolean {
   if (d.src === 'upload') return APPROVED_STAGES.includes(d.lifecycleStage ?? '');
   return ['final', 'approved', 'reviewed'].includes(d.status);
+}
+
+/**
+ * Who made a filing decision, and when: "Fern Filer, 2026-10-29 05:00 UTC"
+ * (Part 11 review F4). A suggestion names nobody, so it gets no line; a filing
+ * with no person recorded says so rather than leaving the reader to assume
+ * one. Nothing from a server that predates the fields.
+ */
+export function filingDecisionLine(f: VaultDocFiling): string | null {
+  if (f.placedAt === undefined || f.placementStatus === 'suggested') return null;
+  if (!f.placedByRecorded && !f.placedAt) return f.placementStatus === 'confirmed' ? 'Not recorded' : null;
+  const who = f.placedBy ?? (f.placedByRecorded ? 'Recorded; name not available' : 'Not recorded');
+  return f.placedAt ? `${who}, ${f.placedAt.slice(0, 10)} ${f.placedAt.slice(11, 16)} UTC` : who;
 }
 
 function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: VaultTreeProps) {
@@ -457,7 +540,7 @@ function DataRoomLane({
       {block.sources.length === 0 && (
         <div className="vd-dr-empty">
           Nothing captured for this project yet. Files attached in AnA chat or dropped on
-          Project home pass through the data room; files uploaded on this page go straight to
+          the project’s Evidence step pass through the data room; files uploaded on this page go straight to
           the filing cabinet and are listed under Uploaded files.
         </div>
       )}
@@ -539,7 +622,7 @@ function UploadsLane({
       <div className="vd-dr-head">
         <span className="vd-dr-title">{I.folder} Uploaded files</span>
         <span className="vd-dr-meta">
-          {total} uploaded file{total === 1 ? '' : 's'} in this programme
+          {total} uploaded file{total === 1 ? '' : 's'} in this project
           {win?.truncated ? ` · ${win.shown} in this window` : ''}
         </span>
         <button className="vd-dr-toggle" onClick={() => onOpen(cabinet.id, null)}>
@@ -548,7 +631,7 @@ function UploadsLane({
       </div>
       {rows.length === 0 && (
         <div className="vd-dr-empty">
-          No files uploaded to this programme yet. A file uploaded here, or filed through the
+          No files uploaded to this project yet. A file uploaded here, or filed through the
           API, is listed here and in the filing cabinet.
         </div>
       )}
@@ -560,11 +643,12 @@ function UploadsLane({
               {/* The title is the point of this lane. `.vd-dr-name` caps at 32%
                   of its container, which inside a shrink-wrapped button is a
                   few characters — so the cap moves to the button, a flex item
-                  of the row, and the name fills it. */}
+                  of the row, and the name fills it. The cap is `.vd-dr-open`,
+                  not an inline style, so a narrow screen can lift it: at
+                  390 px the row's fixed parts left the name 0 px wide. */}
               <button
                 type="button"
-                className="vd-crumb"
-                style={{ minWidth: 0, maxWidth: '45%', flexShrink: 1 }}
+                className="vd-crumb vd-dr-open"
                 title={doc.preview || doc.title}
                 onClick={() => onOpen(folder.id, doc.id)}
               >
@@ -634,6 +718,32 @@ const CLASSIFICATION_OPTIONS: FilterOption[] = VAULT_CLASSIFICATIONS.map((c) => 
 const KIND_OPTIONS: FilterOption[] = VAULT_DOC_KINDS.map((k) => ({ value: k.value, label: k.one }));
 const STAGE_OPTIONS: FilterOption[] = VAULT_STAGE_CHOICES.map((c) => ({ value: c.value, label: c.label, covers: c.stages }));
 
+/** The dimensions a select shows one value of, with the words for their values. */
+const SINGLE_VALUE_SELECTS: ReadonlyArray<[keyof VaultFindFilters, string, readonly FilterOption[] | null]> = [
+  ['documentType', 'Type', TYPE_OPTIONS], ['placementStatus', 'Filing', FILING_OPTIONS],
+  ['classification', 'Classification', CLASSIFICATION_OPTIONS], ['evidenceKind', 'Evidence kind', KIND_OPTIONS],
+  ['ctdSection', 'CTD section', null],
+];
+
+/**
+ * What the filters hold that the selects cannot show: a folder, several values
+ * in one dimension, or a review set that no choice names. A saved view can hold
+ * any of these, and a filter that narrows the list is never out of sight.
+ */
+export function hiddenFindFilters(value: VaultFindFilters, folderLabel: (id: string) => string): Array<{ key: keyof VaultFindFilters; text: string }> {
+  const out: Array<{ key: keyof VaultFindFilters; text: string }> = [];
+  if (value.folderId?.length) out.push({ key: 'folderId', text: `Folder: ${value.folderId.map(folderLabel).join(', ')}` });
+  for (const [key, label, options] of SINGLE_VALUE_SELECTS) {
+    const values = value[key] ?? [];
+    const words = values.map((v) => options?.find((o) => o.value === v)?.label ?? v);
+    if (values.length > 1) out.push({ key, text: `${label}: ${words.join(', ')}` });
+  }
+  const stages = value.lifecycleStage ?? [];
+  const named = VAULT_STAGE_CHOICES.some((c) => c.stages.length === stages.length && c.stages.every((s) => stages.includes(s)));
+  if (stages.length > 0 && !named) out.push({ key: 'lifecycleStage', text: `Review: ${stages.map(stageLabel).join(', ')}` });
+  return out;
+}
+
 /**
  * The find view's metadata filters (VR-18): type, filing status,
  * classification, evidence kind, review stage and CTD section, each sent to the
@@ -641,11 +751,14 @@ const STAGE_OPTIONS: FilterOption[] = VAULT_STAGE_CHOICES.map((c) => ({ value: c
  * field is left, and only once it reads as a section code; until then the row
  * says it is not applied, rather than filtering by something else.
  */
-function VaultFindFilterRow({ value, onChange, onClear, facets }: {
+function VaultFindFilterRow({ value, onChange, onClear, facets, folderLabel = (id) => id }: {
   value: VaultFindFilters; onChange: (next: VaultFindFilters) => void; onClear: () => void;
   /** The verified read's facet counts, or null when there are none to show. */
   facets?: unknown;
+  /** A cabinet folder's words, for a folder the filters hold. */
+  folderLabel?: (id: string) => string;
 }) {
+  const hidden = hiddenFindFilters(value, folderLabel);
   const counts = (key: keyof VaultFindFilters) => (facets ? facetCounts(facets, key) : null);
   const [ctd, setCtd] = useState(value.ctdSection?.[0] ?? '');
   const [ctdRefused, setCtdRefused] = useState<string | null>(null);
@@ -695,6 +808,12 @@ function VaultFindFilterRow({ value, onChange, onClear, facets }: {
           Clear filters
         </button>
       )}
+      {hidden.length > 0 && <span className="vd-filter-note">Also filtering by:</span>}
+      {hidden.map((h) => (
+        <button key={h.key} type="button" className="vd-crumb" aria-label={`Remove the filter ${h.text}`} onClick={() => set(h.key, null)}>
+          {h.text} &times;
+        </button>
+      ))}
       {ctdRefused && (
         <span id="vd-filter-ctd-note" className="vd-filter-note" role="status">
           &ldquo;{ctdRefused}&rdquo; is not a CTD section code (for example 3.2.P or 2.7.3), so it is not applied.
@@ -704,7 +823,289 @@ function VaultFindFilterRow({ value, onChange, onClear, facets }: {
   );
 }
 
-/* ── Vault (DMS) surface ──
+/* ── Saved views (D2, P-46; docs/design/VAULT_SAVED_VIEWS_2026-10-29.md §3.9) ──
+   A view is a search remembered: the text, the filters, earlier versions, and
+   this project or the accessible ones. Applying one sets the find view's state
+   and the existing search runs it under the reader's current access; nothing
+   here runs a view or keeps its results. The list is read only while the
+   control is open, and a failed read is said, never shown as no views. */
+
+const SAVED_VIEWS_PATH = '/api/c2c/project-vault/saved-views';
+const FORMER_MEMBER = 'a former member';
+
+/** One saved-view change. A refusal comes back as the server's own sentence. */
+async function sendViewChange(
+  method: 'POST' | 'PATCH' | 'DELETE', url: string, body: unknown, failed: string,
+): Promise<{ data: SavedVaultView | null } | { error: string }> {
+  try {
+    const res = await apiRequest(method, url, body);
+    const json = (await res.json().catch(() => null)) as { data?: SavedVaultView } | null;
+    if (!res.ok) return { error: redactInternals(serverMessage(json), failed) };
+    return { data: json?.data ?? null };
+  } catch (e) {
+    return { error: redactInternals(e instanceof ApiRequestError ? serverMessage(e.payload) : null, failed) };
+  }
+}
+
+function savedViewOptionText(v: SavedVaultView): string {
+  const label = v.applies ? v.label : `${v.label} (no longer applies)`;
+  const scope = v.programId === null ? ' · all projects' : '';
+  if (!v.mine) return `${label}${scope} · by ${v.createdBy.name ?? FORMER_MEMBER}`;
+  return `${label}${scope}${v.visibility === 'org_public' ? ' · shared' : ''}`;
+}
+
+/** Why "Update view" cannot run now, or null when it can. */
+function updateViewBlocker(v: SavedVaultView, applied: SavedVaultView | null, current: SavedViewState): string | null {
+  const library = v.programId === null;
+  if (library !== current.library) {
+    return library
+      ? 'This view searches accessible projects; save a new view to search this project.'
+      : 'This view searches one project; save a new view to search accessible projects.';
+  }
+  if (!applied || applied.id !== v.id) return 'Apply this view and change the search to update it.';
+  if (savedViewKey(current) === savedViewKey(savedViewState(applied))) return 'The search has not changed since this view was applied.';
+  return null;
+}
+
+/** Who shared an organisation view someone else made, and who renamed it. */
+function sharedByNote(v: SavedVaultView | null): string | null {
+  if (!v || v.mine) return null;
+  const renamed = v.updatedBy && v.updatedBy.userId !== v.createdBy.userId
+    ? ` Renamed by ${v.updatedBy.name ?? FORMER_MEMBER}.` : '';
+  return `Shared by ${v.createdBy.name ?? FORMER_MEMBER}.${renamed}`;
+}
+
+function SavedViewOptions({ views, loading }: { views: SavedVaultView[] | null; loading: boolean }) {
+  if (!views) return <option value="">{loading ? 'Loading saved views…' : 'Saved views could not be loaded'}</option>;
+  if (views.length === 0) return <option value="" disabled>No saved views yet.</option>;
+  const mine = views.filter((v) => v.mine);
+  const others = views.filter((v) => !v.mine);
+  const option = (v: SavedVaultView) => <option key={v.id} value={String(v.id)}>{savedViewOptionText(v)}</option>;
+  return (
+    <>
+      <option value="">Choose a view</option>
+      {mine.length > 0 && <optgroup label="Mine">{mine.map(option)}</optgroup>}
+      {others.length > 0 && <optgroup label="Organisation">{others.map(option)}</optgroup>}
+    </>
+  );
+}
+
+/** Save the current search: a name, and who sees it. No dialog; nothing changes until Save. */
+function SaveViewForm({ defaultName, canWrite, busy, onSave, onCancel }: {
+  defaultName: string; canWrite: boolean; busy: boolean;
+  onSave: (label: string, visibility: SavedVaultView['visibility']) => void; onCancel: () => void;
+}) {
+  const [label, setLabel] = useState(defaultName.slice(0, 120));
+  const [visibility, setVisibility] = useState<SavedVaultView['visibility']>('private');
+  const name = useId();
+  const reasonId = useId();
+  return (
+    <div className="vd-filters" role="group" aria-label="Save current search">
+      <label className="vd-filter">
+        <span className="vd-filter-l">Name</span>
+        <input className="c2c-input" value={label} maxLength={120} onChange={(e) => setLabel(e.target.value)} />
+      </label>
+      <label className="vd-filter">
+        <input type="radio" name={name} checked={visibility === 'private'} onChange={() => setVisibility('private')} /> Only me
+      </label>
+      <label className="vd-filter">
+        <input
+          type="radio" name={name} checked={visibility === 'org_public'} disabled={!canWrite} aria-describedby={reasonId}
+          onChange={() => setVisibility('org_public')}
+        /> Everyone in the organisation
+      </label>
+      <span id={reasonId} className="vd-filter-note">
+        {canWrite ? 'Everyone in the organisation sees this view\'s name.' : 'Your role can save views for yourself only.'}
+      </span>
+      <button type="button" className="vd-crumb" disabled={busy || !label.trim()} onClick={() => onSave(label.trim(), visibility)}>Save</button>
+      <button type="button" className="vd-crumb" onClick={onCancel}>Cancel</button>
+    </div>
+  );
+}
+
+function RenameViewForm({ view, busy, onRename, onCancel }: {
+  view: SavedVaultView; busy: boolean; onRename: (label: string) => void; onCancel: () => void;
+}) {
+  const [label, setLabel] = useState(view.label);
+  return (
+    <div className="vd-filters" role="group" aria-label="Rename view">
+      <label className="vd-filter">
+        <span className="vd-filter-l">New name</span>
+        <input className="c2c-input" value={label} maxLength={120} onChange={(e) => setLabel(e.target.value)} />
+      </label>
+      <button type="button" className="vd-crumb" disabled={busy || !label.trim()} onClick={() => onRename(label.trim())}>Save name</button>
+      <button type="button" className="vd-crumb" onClick={onCancel}>Cancel</button>
+    </div>
+  );
+}
+
+function DeleteViewConfirm({ view, busy, onDelete, onCancel }: {
+  view: SavedVaultView; busy: boolean; onDelete: () => void; onCancel: () => void;
+}) {
+  const question = view.visibility === 'org_public'
+    ? `Delete “${view.label}” for everyone in the organisation? Documents are not affected.`
+    : `Delete your view “${view.label}”? Documents are not affected.`;
+  return (
+    <div className="vd-filters" role="group" aria-label="Delete view">
+      <span className="vd-filter-note">{question}</span>
+      <button type="button" className="vd-crumb" disabled={busy} onClick={onDelete}>Delete view</button>
+      <button type="button" className="vd-crumb" onClick={onCancel}>Cancel</button>
+    </div>
+  );
+}
+
+/** What the selected view lets this reader do: only the acts its flags allow are offered. */
+function SavedViewActs({ view, applied, current, busy, onMode, onShare, onUpdate }: {
+  view: SavedVaultView; applied: SavedVaultView | null; current: SavedViewState; busy: boolean;
+  onMode: (mode: 'rename' | 'delete') => void; onShare: () => void; onUpdate: () => void;
+}) {
+  const blockerId = useId();
+  const blocker = view.canEdit ? updateViewBlocker(view, applied, current) : null;
+  return (
+    <>
+      {view.canRename && <button type="button" className="vd-crumb" disabled={busy} onClick={() => onMode('rename')}>Rename</button>}
+      {view.canShare && (
+        <button type="button" className="vd-crumb" disabled={busy} onClick={onShare}>
+          {view.visibility === 'private' ? 'Share with organisation' : 'Make personal'}
+        </button>
+      )}
+      {view.canEdit && (
+        <button type="button" className="vd-crumb" disabled={busy || blocker !== null} aria-describedby={blocker ? blockerId : undefined} onClick={onUpdate}>
+          Update view
+        </button>
+      )}
+      {blocker && <span id={blockerId} className="vd-filter-note">{blocker}</span>}
+      {view.canDelete && <button type="button" className="vd-crumb" disabled={busy} onClick={() => onMode('delete')}>Delete</button>}
+    </>
+  );
+}
+
+type ViewMode = 'idle' | 'save' | 'rename' | 'delete';
+type ViewNote = { text: string; tone: 'status' | 'alert' };
+
+/** The list, and one change at a time against it; each success re-reads the list. */
+function useSavedViews(projectId: string) {
+  const [epoch, setEpoch] = useState(0);
+  const path = `/api/c2c/project-vault/${encodeURIComponent(projectId)}/saved-views`;
+  const read = useLiveData<SavedViewsShape>(path, [path, epoch], isSavedViewsShape);
+  const failed = Boolean(read.error) || (!read.loading && !read.data);
+  const [mode, setMode] = useState<ViewMode>('idle');
+  const [note, setNote] = useState<ViewNote | null>(null);
+  const [busy, setBusy] = useState(false);
+  const change = async (method: 'POST' | 'PATCH' | 'DELETE', url: string, body: unknown, failedText: string, done: (v: SavedVaultView | null) => string) => {
+    setBusy(true);
+    setNote(null);
+    const r = await sendViewChange(method, url, body, failedText);
+    setBusy(false);
+    if ('error' in r) return setNote({ text: r.error, tone: 'alert' });
+    setEpoch((n) => n + 1);
+    setMode('idle');
+    setNote({ text: done(r.data), tone: 'status' });
+  };
+  return {
+    views: failed ? null : read.data?.views ?? null, loading: read.loading, failed,
+    retry: () => setEpoch((n) => n + 1), mode, setMode, note, setNote, busy, change,
+  };
+}
+
+function VaultSavedViews({ projectId, canWrite, current, searching, defaultName, applied, onApply, onChanged, onDeleted }: {
+  projectId: string; canWrite: boolean; current: SavedViewState; searching: boolean; defaultName: string;
+  applied: SavedVaultView | null;
+  onApply: (v: SavedVaultView) => void;
+  /** A view saved or changed; `adopt` when it is new and so is now the applied one. */
+  onChanged: (v: SavedVaultView, adopt: boolean) => void;
+  onDeleted: (id: number) => void;
+}) {
+  const sv = useSavedViews(projectId);
+  const [selectedId, setSelectedId] = useState<number | null>(applied?.id ?? null);
+  const selected = sv.views?.find((v) => v.id === selectedId) ?? null;
+  const saveReasonId = useId();
+  const one = (id: number) => `${SAVED_VIEWS_PATH}/${id}`;
+  const keep = (v: SavedVaultView | null, adopt = false) => { if (v) onChanged(v, adopt); };
+  const apply = () => {
+    if (!selected) return;
+    sv.setMode('idle');
+    if (selected.applies) { sv.setNote(null); onApply(selected); return; }
+    const why = redactInternals(selected.refusal?.message, 'the search would refuse what it holds.');
+    sv.setNote({ text: `“${selected.label}” no longer applies: ${why} Nothing was changed.`, tone: 'status' });
+  };
+  const save = (label: string, visibility: SavedVaultView['visibility']) => void sv.change('POST', SAVED_VIEWS_PATH,
+    { label, visibility, programId: current.library ? null : projectId, q: current.q, filters: current.filters, includeSuperseded: current.includeSuperseded },
+    'The view was not saved. Nothing was changed.', (v) => { if (v) setSelectedId(v.id); keep(v, true); return `Saved “${label}”.`; });
+  const rename = (view: SavedVaultView, label: string) => void sv.change('PATCH', one(view.id), { label },
+    'The view was not renamed. Nothing was changed.', (v) => { keep(v); return `Renamed to “${label}”.`; });
+  const share = (view: SavedVaultView) => {
+    const visibility = view.visibility === 'private' ? 'org_public' : 'private';
+    void sv.change('PATCH', one(view.id), { visibility }, 'Who sees the view was not changed.', (v) => {
+      keep(v);
+      return visibility === 'org_public' ? `“${view.label}” is now shared with the organisation.` : `“${view.label}” is now yours only.`;
+    });
+  };
+  const update = (view: SavedVaultView) => void sv.change('PATCH', one(view.id),
+    { q: current.q, filters: current.filters, includeSuperseded: current.includeSuperseded },
+    'The view was not updated. Nothing was changed.', (v) => { keep(v); return `Updated “${view.label}”.`; });
+  const remove = (view: SavedVaultView) => void sv.change('DELETE', one(view.id), undefined,
+    'The view was not deleted. Nothing was changed.', () => { onDeleted(view.id); setSelectedId(null); return `Deleted “${view.label}”.`; });
+  const sharedNote = sharedByNote(selected);
+  return (
+    <div id="vd-saved-views" role="group" aria-label="Saved views">
+      <div className="vd-filters">
+        <label className="vd-filter">
+          <span className="vd-filter-l">Saved view</span>
+          <select
+            className="c2c-input" value={selected ? String(selected.id) : ''} disabled={!sv.views?.length}
+            onChange={(e) => { setSelectedId(Number(e.target.value) || null); sv.setMode('idle'); sv.setNote(null); }}
+          >
+            <SavedViewOptions views={sv.views} loading={sv.loading} />
+          </select>
+        </label>
+        <button type="button" className="vd-crumb" disabled={!selected || sv.busy} onClick={apply}>Apply</button>
+        {selected && (
+          <SavedViewActs
+            view={selected} applied={applied} current={current} busy={sv.busy}
+            onMode={(m) => { sv.setNote(null); sv.setMode(m); }} onShare={() => share(selected)} onUpdate={() => update(selected)}
+          />
+        )}
+        <button
+          type="button" className="vd-crumb" disabled={!searching || !sv.views || sv.busy}
+          aria-describedby={searching ? undefined : saveReasonId}
+          onClick={() => { sv.setNote(null); sv.setMode('save'); }}
+        >
+          Save current search…
+        </button>
+        {!searching && <span id={saveReasonId} className="vd-filter-note">Type a search or choose a filter, then save it as a view.</span>}
+        {sharedNote && <span className="vd-filter-note">{sharedNote}</span>}
+      </div>
+      <SavedViewPanels sv={sv} selected={selected} defaultName={defaultName} canWrite={canWrite} onSave={save} onRename={rename} onDelete={remove} />
+    </div>
+  );
+}
+
+/** Under the row: a failed read, the one open form, and what the last act did. */
+function SavedViewPanels({ sv, selected, defaultName, canWrite, onSave, onRename, onDelete }: {
+  sv: ReturnType<typeof useSavedViews>; selected: SavedVaultView | null; defaultName: string; canWrite: boolean;
+  onSave: (label: string, visibility: SavedVaultView['visibility']) => void;
+  onRename: (view: SavedVaultView, label: string) => void;
+  onDelete: (view: SavedVaultView) => void;
+}) {
+  const close = () => sv.setMode('idle');
+  return (
+    <>
+      {sv.failed && (
+        <div className="vd-dr-err" role="alert">
+          {I.alertTriangle} Saved views could not be loaded. This is not an empty list.{' '}
+          <button type="button" className="vd-crumb" onClick={sv.retry}>Try again</button>
+        </div>
+      )}
+      {sv.mode === 'save' && <SaveViewForm defaultName={defaultName} canWrite={canWrite} busy={sv.busy} onSave={onSave} onCancel={close} />}
+      {sv.mode === 'rename' && selected && <RenameViewForm view={selected} busy={sv.busy} onRename={(l) => onRename(selected, l)} onCancel={close} />}
+      {sv.mode === 'delete' && selected && <DeleteViewConfirm view={selected} busy={sv.busy} onDelete={() => onDelete(selected)} onCancel={close} />}
+      {sv.note && <div className="vd-filter-note" role={sv.note.tone}>{sv.note.text}</div>}
+    </>
+  );
+}
+
+/* ── Vault surface ──
    Document management aligned to the real dossier structure. The folder tree IS
    the project's live eCTD / eSTAR / IVDR / TMF spine (segment- and
    build-type-aware), served by GET /api/c2c/project-vault/:id straight from the
@@ -712,7 +1113,34 @@ function VaultFindFilterRow({ value, onChange, onClear, facets }: {
 
 /** The Vault shows one program's documents; with none open there is no vault
  *  to operate, and "no documents" or "no such folder" would misstate why. */
-const NO_PROGRAM_OPEN = 'No program is open, so there is no vault here yet — open a program first.';
+/**
+ * The governed-artifact leaf of the tree whose registry id is `artifactId`, for
+ * vault.focus-document by id (the Live Drive hand-off). One id is one leaf.
+ */
+export function findVaultArtifactLeaf(
+  nodes: readonly (VaultFolder | VaultDoc)[],
+  artifactId: string,
+): { kind: 'one'; doc: VaultDoc; folder: VaultFolder; ancestors: string[] } | { kind: 'none' } {
+  const walk = (folder: VaultFolder, ancestors: string[]): { doc: VaultDoc; folder: VaultFolder; ancestors: string[] } | null => {
+    for (const child of folder.children) {
+      if (isVaultDoc(child)) {
+        if (child.artifact?.artifactId === artifactId) return { doc: child, folder, ancestors };
+      } else {
+        const hit = walk(child as VaultFolder, [...ancestors, folder.id]);
+        if (hit) return hit;
+      }
+    }
+    return null;
+  };
+  for (const n of nodes) {
+    if (isVaultDoc(n)) continue;
+    const hit = walk(n as VaultFolder, []);
+    if (hit) return { kind: 'one', ...hit };
+  }
+  return { kind: 'none' };
+}
+
+const NO_PROGRAM_OPEN = 'No project is open, so there is no vault here yet — open a project first.';
 
 /** Keep the recorded refusal with the action rather than only in a hover hint. */
 function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (source: VaultDoc) => void }) {
@@ -912,6 +1340,54 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
+  /* A governed artifact's DOCX (fold F3 slice B): the Artifacts center's
+     governed export, recorded before it is delivered. A refusal is said in the
+     same banner as an upload's, with its reason. */
+  const downloadArtifact = async (doc: VaultDoc) => {
+    if (!doc.artifact || downloading) return;
+    setDownloading(doc.id);
+    setDownloadNote(null);
+    try {
+      const out = await fetchGovernedArtifactDocx(doc);
+      if (!out.ok) {
+        setDownloadNote({ text: out.text, tone: 'error' });
+        return;
+      }
+      const saved = downloadBlob(out.name, out.blob);
+      setDownloadNote(saved ? null : { text: `${doc.title} was fetched but the browser refused the download.`, tone: 'error' });
+    } finally {
+      setDownloading('');
+    }
+  };
+
+  /* The governed artifacts across the projects the caller can open (fold F3
+     slice C): the Artifacts center's gallery, folded in. Shown with no project
+     open; read only when a person opens it while a project is. */
+  const [orgOpen, setOrgOpen] = useState(false);
+  const orgActive = !projectId || orgOpen;
+  const orgRead = useOrganizationArtifacts(orgActive);
+  const [orgFocusId, setOrgFocusId] = useState<string | null>(null);
+  const downloadOrganizationArtifact = async (row: OrganizationArtifactRow) => {
+    if (downloading) return;
+    setDownloading(row.id);
+    setDownloadNote(null);
+    try {
+      const out = await fetchOrganizationArtifactDocx(row);
+      if (!out.ok) {
+        setDownloadNote({ text: out.text, tone: 'error' });
+        return;
+      }
+      const saved = downloadBlob(out.name, out.blob);
+      setDownloadNote(saved ? null : { text: `${row.name} was fetched but the browser refused the download.`, tone: 'error' });
+    } finally {
+      setDownloading('');
+    }
+  };
+  const exportOrganizationManifest = () => {
+    const saved = downloadArtifactManifest('governed-artifacts-across-projects.csv', organizationManifestRows(orgRead.rows));
+    if (!saved) setDownloadNote({ text: 'The manifest was built but the browser refused the download.', tone: 'error' });
+  };
+
   const fileDocument = async (
     docId: string,
     body: { confirm?: boolean; folderId?: string | null; ctdSection?: string; note?: string },
@@ -1010,8 +1486,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      with them. */
   const [findFilters, setFindFilters] = useState<VaultFindFilters>({});
   const [filterReset, setFilterReset] = useState(0);
-  /** Leave the find view for the tree: the text and the filters go together. */
-  const leaveFind = () => { setQ(''); setFindFilters({}); setFilterReset((n) => n + 1); };
+  /* Saved views (P-46): the control is read only while open, and the view last
+     applied is held so the breadcrumb can say when the search has moved off it. */
+  const [viewsOpen, setViewsOpen] = useState(false);
+  const [appliedView, setAppliedView] = useState<SavedVaultView | null>(null);
+  /** Leave the find view for the tree: the text, the filters and the applied view go together. */
+  const leaveFind = () => { setQ(''); setFindFilters({}); setFilterReset((n) => n + 1); setAppliedView(null); };
   const [selId, setSel] = useState<string | null>(null);
   const toggle = (id: string) =>
     setExpanded((e) => ({ ...e, [id]: e[id] === false ? true : false }));
@@ -1024,6 +1504,24 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     setExpanded((e) => ({ ...e, cabinet: true, [folderId]: true }));
     if (docId) setSel(docId);
   };
+  /* From the governed-artifacts lane: browse the branch in the tree. */
+  const openArtifacts = () => {
+    leaveFind();
+    setActiveFolder('artifacts');
+    setExpanded((e) => ({ ...e, artifacts: true }));
+  };
+  /* The branch's CSV manifest (slice B): the shared builder the Artifacts
+     center uses, over the rows the tree lists. */
+  const exportArtifactManifest = () => {
+    const branch = tree.find((f) => f.id === 'artifacts');
+    if (!branch) return;
+    const project = vault?.program || 'project';
+    const saved = downloadArtifactManifest(
+      `${safeFileName(project, 'project')}-governed-artifacts.csv`,
+      governedArtifactManifestRows(branch, project),
+    );
+    if (!saved) setDownloadNote({ text: 'The manifest was built but the browser refused the download.', tone: 'error' });
+  };
   /* "Open in Vault" after File to Vault names the document it filed
      (vaultTarget.ts): open on that row, where "Place into filing…" is,
      instead of the first node. A document this tree does not hold, or one
@@ -1034,6 +1532,16 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const [pendingTarget, setPendingTarget] = useState<
     TakenVaultTarget | { kind: 'uploaded'; documentId: string; after: VaultDisplayShape | null } | null
   >(() => takeVaultTarget(projectId));
+  // A target published while this Vault is already on screen (a notice opened from the tray).
+  React.useEffect(() => {
+    const take = () => {
+      if (!vaultTargetIsFor(projectId ?? null)) return;
+      const taken = takeVaultTarget(projectId);
+      if (taken?.kind === 'here') setPendingTarget(taken);
+    };
+    window.addEventListener(VAULT_TARGET_EVENT, take);
+    return () => window.removeEventListener(VAULT_TARGET_EVENT, take);
+  }, [projectId]);
   const [missingTarget, setMissingTarget] = useState<{ documentId: string; act: 'filed' | 'uploaded' } | null>(null);
   const [otherProjectTarget] = useState(() => pendingTarget?.kind === 'other-project');
   React.useEffect(() => {
@@ -1045,6 +1553,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         setQ('');
         setFindFilters({});
         setFilterReset((n) => n + 1);
+        setAppliedView(null);
         setActiveFolder(at.folderId);
         setExpanded((e) => ({ ...e, cabinet: true, [at.folderId]: true }));
         setSel(at.rowId);
@@ -1076,6 +1585,34 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       }
     }
     return null;
+  };
+
+  /* Artifact ids given one re-read by vault.focus-document, while it waits for it. */
+  const rereadFor = React.useRef(new Set<string>());
+  /* vault.focus-document with no project open: the organization view's row,
+     by id or by name, as the Artifacts center's focus-artifact did. */
+  const focusOrganizationArtifact = (wantedId: string, wanted: string) => {
+    if (orgRead.loading)
+      return { ok: false as const, reason: 'The governed artifacts across your projects are still loading.', retry: true };
+    if (orgRead.error)
+      return { ok: false as const, reason: 'The governed artifacts across your projects could not be read.' };
+    const found = findOrganizationArtifact(orgRead.rows, wantedId ? { artifactId: wantedId } : { name: wanted });
+    if (found.kind === 'none' && wantedId) {
+      if (!rereadFor.current.has(wantedId)) {
+        rereadFor.current.add(wantedId);
+        orgRead.reload();
+        return { ok: false as const, reason: 'Reading the governed artifacts again for that artifact.', retry: true };
+      }
+      rereadFor.current.delete(wantedId);
+      return { ok: false as const, reason: `No governed artifact ${wantedId} in the projects you can open.` };
+    }
+    if (wantedId) rereadFor.current.delete(wantedId);
+    if (found.kind === 'none') return { ok: false as const, reason: `No governed artifact named "${wanted}" in the projects you can open.` };
+    if (found.kind === 'many') {
+      return { ok: false as const, reason: `"${wanted}" matches ${found.count} governed artifacts across your projects — name one exactly.` };
+    }
+    setOrgFocusId(found.row.id);
+    return { ok: true as const, detail: `Focused “${found.row.name}” (${found.row.prog}) in governed artifacts across your projects` };
   };
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
@@ -1146,12 +1683,53 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       });
       return { ok: true, detail: `Opened ${target.folder.label}` };
     },
+    /* Selects a document, the state a person's click on its row drives (slice
+       B: the Vault's counterpart of artifacts-center.focus-artifact). By title
+       or section code, or, since slice C, by a governed artifact's id: the Live
+       Drive hand-off (V2App followWork) names the artifact AnA just saved.
+       With no project open it focuses the row in the organization view. An id
+       the tree does not hold yet (saved after the tree was read) gets one
+       re-read before it is a miss. */
+    'vault.focus-document': (params) => {
+      const wantedId = (params.artifactId ?? '').trim();
+      const wanted = (params.document ?? '').trim();
+      if (!wantedId && !wanted) return { ok: false, reason: 'No document named.' };
+      if (!projectId) return focusOrganizationArtifact(wantedId, wanted);
+      if (vaultState.loading)
+        return { ok: false, reason: 'The vault is still loading.', retry: true };
+      if (vaultState.error) return { ok: false, reason: 'The vault could not be read.' };
+      const found = wantedId ? findVaultArtifactLeaf(tree, wantedId) : findNamedVaultDocument(tree, wanted);
+      if (found.kind === 'none' && wantedId) {
+        if (!rereadFor.current.has(wantedId)) {
+          rereadFor.current.add(wantedId);
+          setVaultEpoch((n) => n + 1);
+          return { ok: false, reason: 'Reading the vault again for that artifact.', retry: true };
+        }
+        rereadFor.current.delete(wantedId);
+        return { ok: false, reason: `The artifact ${wantedId} is not in this project’s Vault: it belongs to another project, or it is archived.` };
+      }
+      if (wantedId) rereadFor.current.delete(wantedId);
+      if (found.kind === 'none') return { ok: false, reason: `No document named "${params.document}" in this vault.` };
+      if (found.kind === 'many') {
+        return { ok: false, reason: `"${params.document}" matches ${found.count} documents — name one exactly.` };
+      }
+      leaveFind();
+      setActiveFolder(found.folder.id);
+      setExpanded((e) => {
+        const next = { ...e };
+        for (const a of found.ancestors) next[a] = true;
+        next[found.folder.id] = true;
+        return next;
+      });
+      setSel(found.doc.id);
+      return { ok: true, detail: `Selected “${found.doc.title}” in ${found.folder.label}` };
+    },
   });
   /* The ready signal for the retry contract above: when the read settles, a
      held not-ready directive gets its one re-attempt. */
   React.useEffect(() => {
-    if (!vaultState.loading) notifySurfaceActionReady('vault');
-  }, [vaultState.loading]);
+    if (!vaultState.loading && !orgRead.loading) notifySurfaceActionReady('vault');
+  }, [vaultState.loading, orgRead.loading]);
 
   // No live selection yet → fall back to the first folder / first doc so the
   // surface shows something without seeding local state from the async tree.
@@ -1187,6 +1765,20 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   /** What is narrowing the list, in words, for AnA: "filtered to N by …" and "the search for …". */
   const findLabel = trimmedQ ? `the search "${trimmedQ}"${filtering ? ' and the filters' : ''}` : 'the filters';
   const findSubject = trimmedQ ? `"${trimmedQ}"${filtering ? ' with the filters' : ''}` : 'the filters';
+  /* The find view's state as a saved view holds it, and whether it has moved
+     off the view last applied (one comparison, savedViewKey). */
+  const findState: SavedViewState = { q: trimmedQ, filters: findFilters, includeSuperseded: includeEarlier, library: allProjects };
+  const viewChanged = appliedView !== null && savedViewKey(findState) !== savedViewKey(savedViewState(appliedView));
+  const folderHeld = (findFilters.folderId?.length ?? 0) > 0;
+  /** Apply a saved view: the whole of it, or (when it no longer applies) nothing. */
+  const applySavedView = (v: SavedVaultView) => {
+    setAllProjects(v.programId === null);
+    setQ(v.q);
+    setFindFilters(v.filters);
+    setIncludeEarlier(v.includeSuperseded);
+    setFilterReset((n) => n + 1);
+    setAppliedView(v);
+  };
   const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath], isVaultSearchShape);
   const verifiedSearch = !searchState.loading && !searchState.error && searchState.data !== null;
   const searchUnavailable = searching && !libraryMode && !searchState.loading && !verifiedSearch;
@@ -1229,7 +1821,20 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      when the vault is genuinely empty and when the read threw, and a summary
      saying "0 documents" over an outage would make AnA confidently wrong about
      a customer's repository. Loading says loading for the same reason. */
+  // Memoized on the read's own fields (the wrapper is new each render), so the context below changes only when they do.
+  const { rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta } = orgRead;
+  const organizationArtifacts = useMemo(
+    () => organizationArtifactsFacts({ rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta }, orgActive),
+    [orgRows, orgLoading, orgError, orgMeta, orgActive],
+  );
+  const orgFocused = orgFocusId ? orgRead.rows.find((r) => r.id === orgFocusId) ?? null : null;
+  const savedViewFact = useMemo(() => (appliedView
+    ? { label: appliedView.label, visibility: appliedView.visibility, scope: appliedView.programId ? 'project' : 'library', changed: viewChanged }
+    : null), [appliedView, viewChanged]);
   const anaContext = useMemo(() => {
+    /* No project open: no tree, and the organization view is what is on screen
+       (fold F3 slice C). Its failure is published as a failure, never as zero. */
+    if (!projectId) return organizationViewContext({ loading: orgLoading, error: orgError }, organizationArtifacts, orgFocused);
     if (vaultState.loading) {
       return { summary: 'The document vault is still loading; nothing on screen is final yet.' };
     }
@@ -1243,19 +1848,19 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     if (libraryMode) {
       return {
         summary: `An accessible-project search for ${findSubject} is open. Its separate library panel must be read before describing matches; this context does not verify its result count.`,
-        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, requestedSearchScope: 'accessible-projects' },
+        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, savedView: savedViewFact, requestedSearchScope: 'accessible-projects' },
       };
     }
     if (searching && searchState.loading) {
       return {
         summary: `The vault search is still loading for ${findSubject}; no match count or selection is verified.`,
-        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, searchState: 'loading' },
+        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, savedView: savedViewFact, searchState: 'loading' },
       };
     }
     if (searchUnavailable) {
       return {
         summary: `The vault search for ${findSubject} could not be verified; this is a failed read, not a result of zero matches.`,
-        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, searchState: 'unavailable' },
+        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, savedView: savedViewFact, searchState: 'unavailable' },
         availableActions: ['Retry the vault search'],
       };
     }
@@ -1290,10 +1895,16 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           : vault?.unavailable?.some((u) => u.branch === 'Data room')
             ? 'unavailable — counts unknown, not zero'
             : null,
+        // The project's governed artifacts (fold F3 slice A), or that they could not be read.
+        governedArtifacts: governedArtifactsFacts(vault?.artifacts, vault?.unavailable),
+        // Across the projects the caller can open, when a person opened that view (slice C).
+        organizationArtifacts,
         unavailableBranches: vault?.unavailable?.map((u) => u.branch) ?? [],
         shownInList: shown,
         searchQuery: trimmedQ || null,
         filters: filtering ? findFilters : null,
+        // The saved view last applied (P-46), and whether the search has moved off it.
+        savedView: savedViewFact,
         openFolder: folder ? { id: folder.id, code: folder.code, label: folder.label } : null,
         selected: sel
           ? {
@@ -1305,6 +1916,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               percentComplete: sel.src === 'upload' ? null : sel.pct,
               blocker: sel.blocker ?? false, flag: sel.flag ?? null,
               filing: sel.filing ?? null,
+              // A governed artifact's state, as the registry records it.
+              artifact: artifactSelectionFacts(sel),
             }
           : null,
       },
@@ -1315,9 +1928,14 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         'Browse a folder in the document tree',
         'Upload files into the vault, each with its own type, classification and folder (virus-scanned; a file given no folder is classified to a suggested one)',
         'Confirm or move an upload’s suggested filing (governed, audited)',
+        'Read a governed artifact’s kind, origin, signature on the current version and human review',
+        'Read a governed artifact’s versions and, on request, its audit report (reading the report is recorded in its provenance)',
+        'Download a governed artifact as DOCX (recorded; it needs a recorded human review or signature on the current version)',
+        'Export the governed artifacts’ manifest as CSV (their governance, not the files)',
+        'Select a named document in the tree, so its detail is shown',
       ],
     };
-  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, sel, vault]);
+  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, organizationArtifacts, orgFocused]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -1376,13 +1994,36 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     }
     onNav && onNav('document-authoring');
   };
+  /* A governed artifact opens in the editor the way the Artifacts center opens
+     one (slice B): the authoring.open-document directive, by title. The editor
+     resolves the title against its own list with honest misses; a title the
+     registry cannot address still lands on the editor, never on a guess. */
+  const openArtifactInEditor = (doc: Pick<VaultDoc, 'title'>) => {
+    const res = resolveSurfaceAction('authoring.open-document', { title: doc.title });
+    if (res.ok) applySurfaceAction(res.directive, (t) => onNav && onNav(t));
+    else onNav && onNav('document-authoring');
+  };
+
+  const organizationView = (
+    <OrganizationGovernedArtifacts
+      read={orgRead}
+      open={orgActive}
+      onToggle={projectId ? () => setOrgOpen((o) => !o) : undefined}
+      focusId={orgFocusId}
+      downloadingId={downloading}
+      onDownload={(row) => void downloadOrganizationArtifact(row)}
+      onOpenInEditor={(row) => openArtifactInEditor({ title: row.name })}
+      onAsk={(row) => onAsk(organizationArtifactAskPrompt(row))}
+      onExportManifest={exportOrganizationManifest}
+    />
+  );
 
   return (
     <div className="vd-wrap">
       <div className="vd-top">
         <div>
           <div className="sp-eyebrow">Documents {I.dot} project vault</div>
-          <h1 className="vd-title">Vault (DMS)</h1>
+          <h1 className="vd-title">{getSurfaceMeta('vault').label}</h1>
           <div className="vd-sub">
             <span className="vd-sub-x">
               {vault && vault.spine ? <>{vault.spine} {I.dot} </> : null}
@@ -1476,7 +2117,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 title={
                   projectId
                     ? 'Choose files to file into this project’s Vault'
-                    : 'Open a project first — a Vault document is filed against a program.'
+                    : 'Open a project first — a Vault document is filed against a project.'
                 }
                 data-testid="vault-upload-button"
               >
@@ -1576,7 +2217,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
           Uploaded files: showing the {vault.uploadsWindow.shown.toLocaleString()} most
           recently updated of {vault.uploadsWindow.total.toLocaleString()} documents in
-          this programme. Search to reach the rest.
+          this project. Search to reach the rest.
         </div>
       ) : null}
 
@@ -1611,14 +2252,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           `.vd-wrap` they ran edge to edge, flush against the nav rail and out
           of line with everything above them. */}
       {!projectId ? (
-        <div style={{ padding: '16px 24px' }}>
-          <EmptyState
-            icon={I.folder}
-            title="Open a project to see its vault"
-            hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine."
-            action={onNav ? { label: 'Go to Projects', onAct: () => onNav('projects') } : undefined}
-          />
-        </div>
+        <>
+          <div style={{ padding: '16px 24px' }}>
+            <EmptyState
+              icon={I.folder}
+              title="Open a project to see its vault"
+              hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine. The governed artifacts of every project you can open are listed below."
+              action={onNav ? { label: 'Go to Projects', onAct: () => onNav('projects') } : undefined}
+            />
+          </div>
+          {organizationView}
+        </>
       ) : vaultState.loading && !vault ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 24px' }}>
           Loading the project vault…
@@ -1655,6 +2299,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             }
             busy={filing}
           />
+          {/* The Vault's seals (VR-19): an e-signed record of every current
+              document as it stood, and its verification. */}
+          {projectId ? <VaultSeals projectId={projectId} /> : null}
           {/* The lane is a BROWSE aid — every upload in the programme. While a
               search is running it would sit above the results listing files the
               search excluded, contradicting the very list the person asked for,
@@ -1667,6 +2314,18 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               onOpen={openUpload}
             />
           )}
+          {/* The project's governed artifacts (fold F3 slice A): a breakdown of
+              the tree's branch, not a second list. Steps aside while a search
+              runs, like the uploads lane. */}
+          {!searching && (
+            <GovernedArtifactsLane
+              block={vault?.artifacts}
+              unavailableReason={vault?.unavailable?.find((u) => u.branch === ARTIFACTS_BRANCH)?.reason ?? null}
+              onOpen={openArtifacts}
+              onExportManifest={exportArtifactManifest}
+            />
+          )}
+          {!searching && organizationView}
           {/* Fixity (plan critique 15): re-prove every stored version on demand. */}
           {!searching && vault ? <VaultFixityCheck projectId={projectId ?? null} /> : null}
           {filingNote && (
@@ -1731,6 +2390,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 <>
                   <span className="vd-crumb-sep" aria-hidden="true">&rsaquo;</span>
                   <span className="vd-crumb cur">
+                    {appliedView ? <>View &ldquo;{appliedView.label}&rdquo;{viewChanged ? ' (changed)' : ''} · </> : null}
                     {trimmedQ ? <>Search &quot;{q}&quot;{filtering ? ', filtered' : ''}</> : 'Filtered'}
                     {!libraryMode && verifiedSearch && searchState.data && searchState.data.total > results.length
                       ? ` — ${results.length} of ${searchState.data.total}`
@@ -1765,17 +2425,49 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 <input
                   type="checkbox"
                   checked={allProjects}
+                  disabled={folderHeld}
+                  aria-describedby={folderHeld ? 'vd-folder-held' : undefined}
                   onChange={(e) => setAllProjects(e.target.checked)}
                 />{' '}
                 Accessible projects
               </label>
+              {folderHeld && (
+                <span id="vd-folder-held" className="vd-filter-note">
+                  A folder is one project&rsquo;s cabinet. Remove the folder filter to search accessible projects.
+                </span>
+              )}
+              {projectId && (
+                <button
+                  type="button"
+                  className="vd-crumb"
+                  aria-expanded={viewsOpen}
+                  aria-controls={viewsOpen ? 'vd-saved-views' : undefined}
+                  onClick={() => setViewsOpen((open) => !open)}
+                >
+                  Saved views
+                </button>
+              )}
             </div>
+            {viewsOpen && projectId && (
+              <VaultSavedViews
+                projectId={projectId}
+                canWrite={canWrite}
+                current={findState}
+                searching={searching}
+                defaultName={trimmedQ ? (filtering ? `${trimmedQ}, filtered` : trimmedQ) : 'Filtered documents'}
+                applied={appliedView}
+                onApply={applySavedView}
+                onChanged={(v, adopt) => { if (adopt || appliedView?.id === v.id) setAppliedView(v); }}
+                onDeleted={(id) => { if (appliedView?.id === id) setAppliedView(null); }}
+              />
+            )}
             <VaultFindFilterRow
               key={filterReset}
               value={findFilters}
               onChange={setFindFilters}
               onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
               facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
+              folderLabel={(id) => (findFolder(tree, `cab-${id}`) ?? findFolder(tree, id))?.label ?? `the folder ${id}`}
             />
             {searchUnavailable && (
               /* An error is not an empty result. Without this the screen reads
@@ -1786,12 +2478,21 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 {' '}{redactInternals(searchState.error ?? '', 'The search did not complete.')}
               </div>
             )}
+            {searching && !libraryMode && verifiedSearch && pendingSearchNote(searchState.data?.pendingCount) && (
+              <div className="scaf-note" role="status" style={{ margin: '8px 0 0' }} data-testid="vault-search-pending">
+                {pendingSearchNote(searchState.data?.pendingCount)}
+              </div>
+            )}
             {searching && !libraryMode && searchState.loading && (
               <div className="scaf-note" role="status" style={{ margin: '8px 0 0' }}>
                 Searching…
               </div>
             )}
             {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
+            {!searching && projectId && folder ? (
+              <FolderExportButton projectId={projectId} treeFolderId={folder.id} label={folder.label}
+                documentCount={folderDocs.filter((d) => d.src === 'upload' && d.docId).length} />
+            ) : null}
             {libraryMode ? (
               <VaultLibraryResults
                 query={trimmedQ}
@@ -1895,6 +2596,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                     {I.alertTriangle} {sel.flag}
                   </div>
                 )}
+                {sel.src === 'upload' && sel.docId && (
+                  <VaultHoldNotice holds={vault?.legalHolds} documentId={sel.docId}
+                    unreadable={vault?.unavailable?.some((u) => u.branch === 'legalHolds')} />
+                )}
 
                 {sel.src === 'upload' && sel.docId && projectId && (!sel.disposition || sel.disposition === 'keep_data') && <DocumentDisposition
                   key={`disposition-${sel.docId}`} projectId={projectId} targetType="vault_document" targetId={sel.docId}
@@ -1961,6 +2666,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                             : 'Unfiled'}
                         </span>
                       </div>
+                      {filingDecisionLine(sel.filing) && (
+                        <div className="vd-d-filing-row" data-testid="vault-filing-decided">
+                          <span className="k">{sel.filing.placementStatus === 'unfiled' ? 'Unfiled by' : 'Filed by'}</span>
+                          <span className="v">{filingDecisionLine(sel.filing)}</span>
+                        </div>
+                      )}
                       {sel.filing.evidenceKind && (
                         <div className="vd-d-filing-row">
                           <span className="k">Looks like</span>
@@ -2103,6 +2814,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                         onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
                         uploading={uploading}
                         onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                        onOpenSection={(docId, code) => openImportedDocument(docId, projectId, onNav, code ?? undefined)}
                       />
                     ) : null}
                     {projectId && sel.docId ? (
@@ -2146,6 +2858,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                       onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
                       uploading={uploading}
                       onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                        onOpenSection={(docId, code) => openImportedDocument(docId, projectId, onNav, code ?? undefined)}
                     />
                     <VaultAnnotations
                       key={`annotations-${sel.docId}`}
@@ -2161,6 +2874,19 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                       onChanged={() => setVaultEpoch((n) => n + 1)}
                     />
                     <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
+                  </>
+                ) : sel.src === 'artifact' && sel.artifact ? (
+                  /* A governed artifact: its governance as the registry records
+                     it, its versions, and its audit report on request (slice B:
+                     the reads c2c/artifacts.ts serves under the project). */
+                  <>
+                    <ArtifactGovernanceDetail doc={sel} />
+                    {projectId ? (
+                      <ArtifactVersions key={`artifact-versions-${sel.artifact.artifactId}-${vaultEpoch}`} projectId={projectId} doc={sel} />
+                    ) : null}
+                    {projectId ? (
+                      <ArtifactAuditReport key={`artifact-audit-${sel.artifact.artifactId}`} projectId={projectId} doc={sel} />
+                    ) : null}
                   </>
                 ) : (
                   <>
@@ -2212,7 +2938,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                     <button
                       className="sp-primary"
                       style={{ padding: '8px 12px' }}
-                      onClick={() => openDoc(sel)}
+                      onClick={() => (sel.src === 'artifact' ? openArtifactInEditor(sel) : openDoc(sel))}
                     >
                       {I.penLine || I.fileText} Open in editor
                     </button>
@@ -2221,9 +2947,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                     className="sp-ask"
                     onClick={() =>
                       onAsk(
-                        'Summarize ' +
-                          sel.title +
-                          ' and list the claims that still need evidence.',
+                        sel.src === 'artifact' && sel.artifact
+                          ? artifactAskPrompt(sel)
+                          : 'Summarize ' + sel.title + ' and list the claims that still need evidence.',
                       )
                     }
                   >
@@ -2238,10 +2964,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                       precisely so a content hash never describes bytes nobody
                       holds.
 
-                      Only an uploaded document HAS bytes: the other vault nodes
-                      are authored sections and governed artifacts, which are
-                      records rather than files. Those say so instead of
-                      offering a download that could not produce one. */}
+                      Only an uploaded document HAS bytes. A governed artifact
+                      is a record whose governed export renders its stored
+                      content (slice B, below). An authored section says so
+                      instead of offering a download that could not produce one. */}
                   {sel.src === 'upload' && sel.docId ? (
                     <button
                       className="sp-ask"
@@ -2250,6 +2976,19 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                       title={sel.originalFileAvailable === false ? 'The original file is unavailable after the recorded retention decision' : undefined}
                     >
                       {I.download} {downloading === sel.docId ? 'Downloading…' : 'Download'}
+                    </button>
+                  ) : sel.src === 'artifact' && sel.artifact ? (
+                    /* The governed export (slice B): rendered from the stored
+                       content, recorded before it is delivered, and refused
+                       without a recorded review or signature on the current
+                       version. A refusal says why, in the banner above. */
+                    <button
+                      className="sp-ask"
+                      onClick={() => void downloadArtifact(sel)}
+                      disabled={downloading === sel.id}
+                      title="The governed DOCX of the current version. Downloading it is recorded, and it needs a recorded human review or signature on that version."
+                    >
+                      {I.download} {downloading === sel.id ? 'Downloading…' : 'Download DOCX'}
                     </button>
                   ) : (
                     <button

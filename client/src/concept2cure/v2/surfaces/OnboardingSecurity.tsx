@@ -58,14 +58,14 @@ export function OnboardingSecurity({ discovery, onNav }: {
           <button ref={accountButton} type="button" className="sp-ask" onClick={() => setAccountOpen(true)}>Open Account and security</button>
           <button type="button" className="sp-ask" onClick={() => setRefresh((v) => v + 1)} disabled={session.loading}>Recheck account</button>
         </div>
-        <p className="scaf-note">Account includes password and authenticator setup, membership invitations, and your personal reporting role.</p>
+        <p className="scaf-note">Account includes password and authenticator setup, membership invitations, your personal reporting role, and in-app notification choices.</p>
         {admin && <SessionPolicySetting />}
         <div className="ob-discovery-actions">
           <button type="button" className="sp-ask" onClick={() => onNav('setup')}>Organization setup</button>
           <button type="button" className="sp-ask" onClick={() => onNav('admin-console')}>Roles and access</button>
           {discovery.answers.securityNeeds.includes('sso') && <button type="button" className="sp-ask" onClick={() => onNav('identity-console')}>Identity configuration</button>}
         </div>
-        <p className="scaf-note">Save your discovery draft before leaving the wizard. Organization and identity configuration require the appropriate administrator role. Retention, residency and SSO requirements need administrator review.</p>
+        <p className="scaf-note">Opening organization, access or identity setup saves any changed discovery answers first. Other wizard choices are saved during activation. Organization and identity configuration require the appropriate administrator role. Retention, residency and SSO requirements need administrator review.</p>
       </div>
       {accountOpen && <AccountPanel onClose={() => { setAccountOpen(false); setRefresh((v) => v + 1); accountButton.current?.focus(); }} />}
     </div>

@@ -120,4 +120,32 @@ export function verticalForIndustry(industry: string): Vertical | null {
   return getClientTypeProfile(industry)?.vertical ?? null;
 }
 
-export default { getClientTypeProfile, verticalForIndustry };
+/** `organizations.client_type`, the client category the shell's lane and AnA's welcome read. */
+export type ClientType = 'medtech' | 'biotech' | 'pharma' | 'diagnostics' | 'cro' | 'health';
+
+/**
+ * The client type a sign-up states, or null when its industry names none unambiguously.
+ * Null leaves the column at its default. A device company that says it works in IVD is
+ * diagnostics. Regulatory consultancies, academia and medical writing serve every
+ * category, so they state none.
+ *
+ * Sign-up stored `industry_mode` and never this. So every self-serve organisation started
+ * as 'pharma', a device company included (the slice 0 launch walk,
+ * docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice0/README.md).
+ */
+export function clientTypeForSignup(industry: string, mdxSpecialization?: string | null): ClientType | null {
+  switch ((industry ?? '').trim().toLowerCase()) {
+    case 'medtech':
+      return mdxSpecialization === 'ivd_diagnostics' ? 'diagnostics' : 'medtech';
+    case 'biotech':
+      return 'biotech';
+    case 'pharma':
+      return 'pharma';
+    case 'cro':
+      return 'cro';
+    default:
+      return null;
+  }
+}
+
+export default { getClientTypeProfile, verticalForIndustry, clientTypeForSignup };

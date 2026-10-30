@@ -33,10 +33,11 @@
  * and give each request `req.dbClient`, which the production request scope
  * supplies.
  */
-import type { CurrentAccessibleProgramScope, CurrentProgramActor, ProgramReadAccessError } from '../../../../services/c2c/current-program-access';
+import type { CurrentAccessibleProgramScope, CurrentProgramActor, ProgramReadAccessError, VerifiedProgramAnchor } from '../../../../services/c2c/current-program-access';
 
 const members = new Map<string, string>();
 const programs = new Map<string, number>();
+const anchors = new Map<string, VerifiedProgramAnchor>();
 
 /** Seat `userId` as a current active member of `organizationId` with `role`. */
 export function seatMember(organizationId: number, userId: number, role: string): void {
@@ -44,13 +45,16 @@ export function seatMember(organizationId: number, userId: number, role: string)
 }
 
 /** Record `programId` as a program of `organizationId`, with one accessible anchor. */
-export function seatProgram(organizationId: number, programId: string): void {
+export function seatProgram(organizationId: number, programId: string,
+  anchor: {projectId:number;clientWorkspaceId:number|null} = {projectId:1,clientWorkspaceId:null}): void {
   programs.set(programId.toLowerCase(), organizationId);
+  anchors.set(programId.toLowerCase(), {programId:programId.toLowerCase(),...anchor});
 }
 
 export function clearSeats(): void {
   members.clear();
   programs.clear();
+  anchors.clear();
 }
 
 /** The gate's four reads, answered from the seats. */
@@ -66,7 +70,7 @@ export function currentAccessDouble(Err: typeof ProgramReadAccessError) {
     requireCurrentProgramAccess: async (_q: unknown, input: Who & { programId: string }) => {
       const programId = input.programId.toLowerCase();
       if (programs.get(programId) !== input.organizationId) throw new Err(404, 'PROJECT_NOT_FOUND', 'Project not found.');
-      return { actor: actor(input.organizationId, input.userId), programId, projectId: 1, clientWorkspaceId: null };
+      return { actor: actor(input.organizationId, input.userId), ...anchors.get(programId)! };
     },
     getCurrentAccessibleProgramScope: async (_q: unknown, input: Who & { programId?: string | null }): Promise<CurrentAccessibleProgramScope> => {
       const seated = [...programs].filter(([, org]) => org === input.organizationId).map(([id]) => id);
@@ -76,5 +80,12 @@ export function currentAccessDouble(Err: typeof ProgramReadAccessError) {
         programIds: one === null ? seated : [one], reconciliationRequired: false };
     },
     requireProgramScopeStillCurrent: async (_q: unknown, input: Who) => { actor(input.organizationId, input.userId); },
+    verifiedProgramAnchors: (_q: unknown, input: Who, scope: CurrentAccessibleProgramScope): readonly VerifiedProgramAnchor[] => {
+      actor(input.organizationId,input.userId);
+      return scope.programIds.map(id => {
+        if (programs.get(id) !== input.organizationId || !anchors.has(id)) throw new Err(404,'PROJECT_NOT_FOUND','Project not found.');
+        return anchors.get(id)!;
+      });
+    },
   };
 }

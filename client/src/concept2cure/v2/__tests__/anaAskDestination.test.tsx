@@ -131,10 +131,10 @@ describe('admin-console — governed mutations reach the rail that draws the sig
        org-admin gated and audits the create, so the button now opens the form
        that calls it.
 
-       The file's contract is unchanged and still enforced by "Grant access"
-       below: a control on a surface that draws the rail may reach the rail,
-       and no control may write into a rail the surface hides. This one now
-       answers in place, which satisfies it the other way. */
+       The file's contract is unchanged: a control on a surface that draws the
+       rail may reach the rail, and no control may write into a rail the
+       surface hides. This one now answers in place, which satisfies it the
+       other way, as does "Audit activity" below. */
     const p = props('admin-console');
     render(<AdminAccess {...p} />);
     fireEvent.click(await screen.findByRole('button', { name: /Invite member/ }));
@@ -145,12 +145,21 @@ describe('admin-console — governed mutations reach the rail that draws the sig
     expect(p.onAsk).not.toHaveBeenCalled();
   });
 
-  it('a member-level grant is a governed ask, not a local mutation', async () => {
+  it("a member's activity opens the audit trail rather than asking the rail", async () => {
+    /* This asserted that "Grant access" handed the rail a sentence ending in
+       "emit the Part 11 audit entry". No AnA tool grants project access, so the
+       conversation could not do what the button said (slice 0 of
+       .design/client-journey/INFORMATION_ARCHITECTURE.md). Project access is
+       granted on the project's Plan, under Project sharing, and the button is
+       gone (adminAccessNoDeadActions.test.tsx). The member drawer's remaining
+       hand-off navigates to the surface that answers it. */
     const p = props('admin-console');
     render(<AdminAccess {...p} />);
-    fireEvent.click(await screen.findByRole('button', { name: /Grant access/ }));
-    expect(p.onAsk).toHaveBeenCalledTimes(1);
-    expect(String((p.onAsk as ReturnType<typeof vi.fn>).mock.calls[0][0])).toMatch(/Part 11 audit entry/);
+    fireEvent.click((await screen.findAllByText('Ada Byron'))[0]);
+    expect(screen.queryByRole('button', { name: /Grant access/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Audit activity/ }));
+    expect(p.onNav).toHaveBeenCalledWith('audit-trail');
+    expect(p.onAsk).not.toHaveBeenCalled();
   });
 });
 

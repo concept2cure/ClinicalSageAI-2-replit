@@ -1,0 +1,5 @@
+{
+  "status": "Not run",
+  "reason": "Capture subprocess could not locate vitest on inherited PATH; no test process started. The pre-run input snapshots are retained.",
+  "error": "FileNotFoundError: [Errno 2] No such file or directory: vitest"
+}

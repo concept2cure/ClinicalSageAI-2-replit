@@ -56,7 +56,7 @@ async function registerCopiedDocument(req: Request, source: CompanyLegalDocument
       agencies: source.agencies, countries: source.countries, submissionTypes: source.submissionTypes,
       language: source.language, effectiveOn: source.effectiveOn, expiresOn: source.expiresOn });
     return { document: target, library, reviewRequired: true,
-      message: 'The original bytes were copied and registered. Review and approve this program’s copy in the Vault before filing it.' };
+      message: 'The original bytes were copied and registered. Review and approve this project’s copy in the Vault before filing it.' };
   } catch {
     return { document: target, registered: false, reviewRequired: true,
       message: 'The original bytes were copied into the Vault, but library registration was not confirmed. Review and register the new version there before filing.' };
@@ -71,7 +71,7 @@ router.post('/legal-documents/:id/copy-to-program', requireEditorAccess, async (
     if (profile.revision !== parsed.data.expectedRevision) throw new CompanyDocumentsError(409, 'COMPANY_DOCUMENTS_CONFLICT', 'The company library changed. Reload it before copying.');
     const refusal = basicRefusal(document);
     if (refusal) throw new CompanyDocumentsError(409, 'LEGAL_DOCUMENT_NOT_USABLE', refusal);
-    if (document.programId === parsed.data.programId) throw new CompanyDocumentsError(409, 'ALREADY_IN_PROGRAM', 'This version is already in the target program.');
+    if (document.programId === parsed.data.programId) throw new CompanyDocumentsError(409, 'ALREADY_IN_PROGRAM', 'This version is already in the target project.');
     await requireCurrentVaultProgramWrite(q, { organizationId, userId, programId: parsed.data.programId });
     const original = await originalLegalPdf(document, organizationId, q);
     const outcome = await ingestVaultDocument({ organizationId, userId, programId: parsed.data.programId,

@@ -1,6 +1,6 @@
 /**
  * ui-v2 shell chrome, first ported from kit app/Shell.jsx:
- * Rail (the places · account menu with Apps and the client type)
+ * Rail (the places, then the work areas · account menu with the client type)
  * · TopBar (breadcrumb · the open project · org · ⌘K · task/collab/bell/help)
  * · CmdK palette. The rail's list is decided in docs/design/ONE_ANA_ONE_CANVAS.md
  * §5, not ported from the kit (registryModel.ts, RAIL_CORE).
@@ -20,18 +20,23 @@ import { useAuth } from '@/services/portal/authService';
 import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
+import { isOrgAdminRole } from './orgAdmin';
+import { canAdministerBilling } from '@shared/constants/permissions';
 import { TaskTray } from './TaskTray';
-import { useShellProject } from './shellProject';
-import { useActiveSurfaceContext } from './surfaceContext';
+import { useShellProject, type ShellProject } from './shellProject';
 
 import {
   AI_ACTIONS,
   CLIENT_CATEGORIES,
   RAIL_CORE,
+  RAIL_WORK_AREAS_LABEL,
+  PROJECTS_CRUMB,
   breadcrumbTierOf,
   resolveSegmentId,
+  type SurfaceApplies,
 } from './registryModel';
 import { flagAllowsSurface } from './clinicalRegulatoryGraphFlag';
+import { PJ_LIFECYCLE } from './fixtures/project-home-data';
 import {
   isLaunchScopeLocked,
   isLocked,
@@ -43,14 +48,9 @@ import { NavUnlockPanel } from './NavUnlockPanel';
 import { AccountPanel } from './AccountPanel';
 import { OrganizationAccess } from './OrganizationAccess';
 import { applySurfaceAction } from './surfaceActions';
+import { useSurfaceAvailable } from './surfaceAvailable';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
-
-function currentRailItem(activeId: string, target: string, sectionId: string, myWork: boolean): boolean {
-  if (activeId !== target) return false;
-  if (target !== 'tasks') return true;
-  return sectionId === (myWork ? 'tasks' : 'tasking');
-}
 
 export interface ShellSurfaceRef {
   id: string;
@@ -59,26 +59,6 @@ export interface ShellSurfaceRef {
   readiness?: string;
 }
 
-/**
- * Does this viewer hold an organization-administrator role?
- *
- * One implementation, because two entry points now consume it. It began inline
- * in `Rail` — the account menu offers Admin and Access requests only to admins — and
- * ⌘K needs the same answer: both open {@link NavUnlockPanel} for a locked
- * destination, and that panel's copy branches on it (an admin is offered the
- * Workflows or workspace setup; a member is told to ask an administrator).
- * A second copy of this role list would let one customer get two different next
- * steps for one lock depending on whether they came from the rail or the
- * palette, which is exactly the inconsistency the panel exists to prevent.
- *
- * `String(r)` rather than trusting the declared `string[]`: roles arrive from a
- * JWT claim, and a numeric or null entry there must not throw inside the shell.
- */
-function isOrgAdminRole(roles: readonly string[] | undefined): boolean {
-  return (roles ?? []).some((r) =>
-    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(r).toLowerCase()),
-  );
-}
 
 /** Where "Get help" goes, from the account menu and the header alike: AnA, which answers
  *  questions about the product in the governed conversation. */
@@ -92,7 +72,8 @@ type RailEntry = {
   label: string;
   icon: string;
   target?: string;
-  applies?: { actionId: string; params: Record<string, string> };
+  applies?: SurfaceApplies;
+  group?: 'work-areas';
 };
 
 export function Rail({
@@ -111,7 +92,6 @@ export function Rail({
   setSegment: (id: string) => void;
 }) {
   const { user, logout } = useAuth();
-  const taskView = useActiveSurfaceContext(activeId);
   const [acct, setAcct] = React.useState(false);
   const acctBtnRef = React.useRef<HTMLButtonElement>(null);
   const acctMenuId = React.useId();
@@ -141,15 +121,19 @@ export function Rail({
   /* Launch scope is a release boundary, not a licence: a greyed rail entry
      for an app nobody can enable is a dead affordance. Every place is in the
      launch scope today (shellNav.test.tsx); this keeps an entry out if a
-     deployment's verdicts say otherwise. The Workflows still lists the app
-     with the reason. A feature flag that is off hides its entry as well: the
+     deployment's verdicts say otherwise. Subscription & features still lists the
+     feature with the reason. A feature flag that is off hides its entry as well: the
      one predicate every list of destinations reads (flagAllowsSurface, QA
      2026-10-08 j1), so the rail and Project home's grids never disagree. */
   const railVisible = (s: { id: string; target?: string }) =>
     flagAllowsSurface(s.id) && !isLaunchScopeLocked(verdictFor(s.target ?? s.id));
+  const visible: RailEntry[] = RAIL_CORE.filter(railVisible);
+  const places = visible.filter((s) => !s.group);
+  const workAreas = visible.filter((s) => s.group === 'work-areas');
+  const workAreasId = React.useId();
   /* An entry that `applies` a screen action asks it of the screen as it opens
-     it, through the validated bus AnA's moves use: My work opens the task
-     board on the signed-in person's tasks (registryModel.ts RAIL_CORE). The
+     it, through the validated bus AnA's moves use: Tasks opens the task
+     board on everyone's tasks (registryModel.ts RAIL_CORE). The
      bus stashes the action, opens the screen, and the screen performs it once
      its read has landed. */
   const open = (s: RailEntry, target: string) => {
@@ -166,7 +150,7 @@ export function Rail({
        looking up an id the catalog has never heard of. */
     const verdict = verdictFor(target);
     const locked = isLocked(verdict);
-    const current = currentRailItem(activeId, target, s.id, taskView?.facts?.mine === true);
+    const current = activeId === target;
     return (
       <button
         key={s.id}
@@ -234,11 +218,18 @@ export function Rail({
         </button>
         {!collapsed && collapseToggle}
       </div>
-      {/* The places (docs/design/ONE_ANA_ONE_CANVAS.md §5). One list, the same
-          for every client type; Apps and the client type are in the account
-          menu below. */}
+      {/* The places, then the work areas under their heading
+          (registryModel.ts RAIL_CORE). One list, the same for every client
+          type; the client type is in the account menu below. Collapsed, the
+          heading is a rule, so the two groups still read as two. */}
       <div className="rail-scroll">
-        <div className="rail-nav">{RAIL_CORE.filter(railVisible).map(navItem)}</div>
+        <div className="rail-nav">{places.map(navItem)}</div>
+        {workAreas.length > 0 && (
+          <div className="rail-nav rail-group" role="group" aria-labelledby={workAreasId}>
+            <div className="rail-group-h" id={workAreasId}>{RAIL_WORK_AREAS_LABEL}</div>
+            {workAreas.map(navItem)}
+          </div>
+        )}
       </div>
       <div className="rail-foot">
         {collapsed && collapseToggle}
@@ -267,6 +258,7 @@ export function Rail({
             initials={initials}
             role={role}
             isOrgAdmin={isOrgAdmin}
+            billingAdmin={canAdministerBilling(user)}
             platformAdmin={platformAdmin}
             segment={segment}
             onClose={dismissAcct}
@@ -314,8 +306,17 @@ type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' |
 
 /**
  * The account menu: settings, the client type, help and sign-out
- * (docs/design/ONE_ANA_ONE_CANVAS.md §5, "Account menu"). The Workflows and
- * the client type moved here from the rail's list on 2026-10-08.
+ * (docs/design/ONE_ANA_ONE_CANVAS.md §5, "Account menu"). The client type
+ * moved here from the rail's list on 2026-10-08; the module catalog is here as
+ * "Subscription & features", for organization administrators, since 2026-10-25
+ * (named so on 2026-10-26: "Plan" is the project's first step, the
+ * subscription is "subscription", section 9 of
+ * .design/client-journey/INFORMATION_ARCHITECTURE.md). Each entry carries its
+ * surface's registry label, as the breadcrumb and ⌘K do, except a billing
+ * administrator's one entry to Licensing, "Subscription & billing" (P-68); they are written out
+ * because config/ui-surface-registry.json's audit (npm run audit:ui-authority)
+ * reads this menu's labels from this file, and shellNav.test.tsx and
+ * clientNamesSlice1.test.tsx hold them to the registry.
  *
  * It is a menu by the WAI-ARIA menu pattern, since the button says it opens
  * one: focus moves to the first item when it opens; ArrowUp and ArrowDown (and
@@ -330,6 +331,7 @@ function AccountMenu({
   initials,
   role,
   isOrgAdmin,
+  billingAdmin,
   platformAdmin,
   segment,
   onClose,
@@ -343,6 +345,9 @@ function AccountMenu({
   initials: string;
   role: string;
   isOrgAdmin: boolean;
+  /** The session carries the billing-administration permission, derived from
+   *  the invoice route's own role list (shared/constants/permissions.ts). */
+  billingAdmin: boolean;
   platformAdmin: boolean;
   segment: string;
   onClose: () => void;
@@ -352,6 +357,7 @@ function AccountMenu({
   onSegment: (id: string) => void;
   onLogout: () => void;
 }) {
+  const available = useSurfaceAvailable();
   const items: AccountItem[] = [
     // Each person's own account, first, as in Claude's account menu (P-25).
     { label: 'Account', ic: 'user', action: 'account' },
@@ -360,13 +366,27 @@ function AccountMenu({
     // itself renders a non-leaky denied state, but we hide the entry entirely
     // for non-admins to mirror Claude exactly.
     ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
-    // Licensing is the PLATFORM operator's console, not the customer's plan
-    // page (that is "View all plans" below). It is offered only when the server
+    /* What the organization's subscription includes, and the switches for it.
+       It was "Plan & features", and before that "Workflows" (and the Apps
+       catalog), on the rail and in this menu for everyone, and it read as
+       dozens of separate applications: a client testing the product could not
+       tell what to use or when (docs/design/CLIENT_JOURNEY_2026-10-25.md).
+       Features open from inside a project; this page is the administrator's
+       licensing view of them. */
+    ...(isOrgAdmin ? [{ label: 'Subscription & features', ic: 'grid', to: 'apps' }] : []),
+    // Platform licensing is the PLATFORM operator's console, not the customer's
+    // subscription page (that is "Compare subscriptions" below). It is offered only when the server
     // says its guard admits this viewer — `platformAdmin` is that guard's own
     // function (resolvePlatformAdmin). It used to be offered on `isOrgAdmin`, so
     // every customer org admin opened seven tabs that each refused them. The
     // guard still re-checks every read and write; this only decides the offer.
-    ...(platformAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
+    ...(platformAdmin ? [{ label: 'Platform licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
+    /* An engineering view of the surface registry, not a customer capability,
+       and outside the release. It was in every member's menu, where the launch
+       scope turned it into a "not in this release" lock (slice 0 of
+       .design/client-journey/INFORMATION_ARCHITECTURE.md). Beside Platform licensing,
+       for the platform's administrators, and only when it can be opened. */
+    ...(platformAdmin && available('coverage') ? [{ label: 'Codebase coverage', ic: 'grid', to: 'coverage' }] : []),
     /* Where a member's request for a locked module lands. Without this entry the
        lock panel's one instruction — "ask an administrator" — points at nobody:
        the request is recorded, and the person who can approve it has no way to
@@ -374,16 +394,21 @@ function AccountMenu({
        the entry is offered. */
     ...(isOrgAdmin ? [{ label: 'Access requests', ic: 'clipboardList', to: 'access-requests' }] : []),
     { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
-    { label: 'Billing', ic: 'creditCard', to: 'billing' },
-    /* Every app, with the reason a locked one is locked. It was an entry in
-       the rail's "Explore" section. */
-    { label: 'Workflows', ic: 'grid', to: 'apps' },
     { sep: true },
     { clientType: true },
     { sep: true },
-    { label: 'View all plans', ic: 'checkSquare', to: 'licensing' },
+    /* Licensing, by who uses it for what (decision P-68). A billing
+       administrator reads the invoices, checks out and manages billing there
+       (fold billing into Licensing, 2026-10-29), and has ONE entry to it,
+       "Subscription & billing" (INFORMATION_ARCHITECTURE.md section 9). Part 1
+       had pointed a separate "Billing" entry at it, which gave them two doors
+       to one screen. Everyone else compares the subscriptions there, under the
+       registry label. `billingAdmin` is the permission the server derives from
+       the billing routes' own role list, not the broader org-admin test. */
+    billingAdmin
+      ? { label: 'Subscription & billing', ic: 'creditCard', to: 'licensing' }
+      : { label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' },
     { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
-    { label: 'Codebase coverage', ic: 'grid', to: 'coverage' },
     { label: 'Get help', ic: 'help', to: HELP_SURFACE },
     { sep: true },
     { label: 'Log out', ic: 'logOut', action: 'logout' },
@@ -483,6 +508,11 @@ function AccountMenu({
 
 /* ── Topbar ───────────────────────────────────────────────────────────── */
 
+/** The open project's name as the top bar reads it: its code, or its title when it has none. */
+function shellProjectName(project: ShellProject | null): string {
+  return String(project?.code ?? '').trim() || String(project?.title ?? '').trim();
+}
+
 /**
  * The open project, named (FILING_SPINE F8). No screen said which filing a
  * person was in, and the top bar's control here was "Switch client domain": a
@@ -507,7 +537,7 @@ function ProjectChip({ here, onNav }: { here: string; onNav?: (id: string) => vo
   }
   const code = String(openProject.code ?? '').trim();
   const title = String(openProject.title ?? '').trim();
-  const name = code || title;
+  const name = shellProjectName(openProject);
   return (
     <button
       type="button"
@@ -552,6 +582,20 @@ export function TopBar({
     .slice(0, 2)
     .toUpperCase();
   const tier = breadcrumbTierOf(surface);
+  /* The project's page is named by the project, not by "Project home" (section
+     9 of .design/client-journey/INFORMATION_ARCHITECTURE.md): a registry label
+     cannot hold a project's name, so the breadcrumb reads the shell's one
+     project channel, as the project chip beside it does. With no project open,
+     or one opened by id alone, it keeps the registry label. */
+  const openProject = useShellProject();
+  const projectName = shellProjectName(openProject);
+  const here = (surface.id === 'project-home' && projectName) || surface.label;
+  /* A project feature (a device discipline or pathway, under the Projects app
+     since 2026-10-23) reads as a feature of the open project: Projects › the
+     project › the feature, the project named as the chip and the project page
+     name it. With none open, or one opened by id alone, it reads Projects ›
+     the feature: the crumb never invents a name. */
+  const projectCrumb = tier?.id === PROJECTS_CRUMB.id ? projectName : '';
   return (
     <header className="topbar">
       <div className="crumbs">
@@ -566,7 +610,13 @@ export function TopBar({
             <span className="sep" aria-hidden="true">›</span>
           </>
         )}
-        <span className="here">{surface.label}</span>
+        {projectCrumb && (
+          <>
+            <span className="crumb-tier">{projectCrumb}</span>
+            <span className="sep" aria-hidden="true">›</span>
+          </>
+        )}
+        <span className="here">{here}</span>
       </div>
       <div className="tb-spacer" />
       <ProjectChip here={surface.id} onNav={onNav} />
@@ -639,6 +689,30 @@ interface CmdKItem {
    * carries no row for the id (navEntitlements.tsx rules 1 and 2).
    */
   lock?: NavSurfaceEntitlement;
+  /** A screen action asked of the destination as it opens: a rail place's
+   *  (Tasks opens on everyone's tasks), or a project step's. */
+  applies?: SurfaceApplies;
+}
+
+/**
+ * Administration pages, by who the account menu offers them to (AccountMenu). The
+ * palette reads the same rule, so a search never offers a page the menu withholds:
+ * the slice 0 launch walk found it offering Platform licensing to a customer's
+ * administrator and the Admin console to members. The server still guards each.
+ */
+export const ADMIN_AUDIENCE: Readonly<Record<string, 'org-admin' | 'platform-admin'>> = {
+  'admin-console': 'org-admin',
+  apps: 'org-admin',
+  'access-requests': 'org-admin',
+  'master-licensing': 'platform-admin',
+  coverage: 'platform-admin',
+};
+
+function offeredTo(id: string, viewer: { isOrgAdmin: boolean; platformAdmin: boolean }): boolean {
+  const audience = ADMIN_AUDIENCE[id];
+  if (audience === 'org-admin') return viewer.isOrgAdmin;
+  if (audience === 'platform-admin') return viewer.platformAdmin;
+  return true;
 }
 
 export function CmdK({
@@ -664,8 +738,10 @@ export function CmdK({
      and the palette would then describe one contract two ways. Until it answers
      — and permanently if it cannot — `verdictFor` returns null for everything
      and the palette behaves exactly as it did before this gate existed. */
-  const { verdictFor } = useNavEntitlements();
+  const { verdictFor, platformAdmin } = useNavEntitlements();
   const isOrgAdmin = isOrgAdminRole(user?.roles);
+  /** The open project, whose steps the palette lists. */
+  const project = useShellProject();
   /** The locked destination the human just activated from the palette. */
   const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   React.useEffect(() => {
@@ -704,7 +780,8 @@ export function CmdK({
         id: s.id,
         kind: 'nav',
         label: s.label,
-        /* The hint column normally carries the destination's domain group. For
+        /* The hint column normally carries the destination's domain group, the
+           breadcrumb's parent crumb: Projects for a project feature. For
            a locked one it carries the REASON instead: once the row cannot be
            opened, which domain it belongs to is the less useful of the two
            facts, and the reason has to be visible without hovering. It is the
@@ -721,10 +798,34 @@ export function CmdK({
     // NOTE(Phase 3): the kit also searches filings, documents, conversations,
     // pathways, people and templates from its fixture files — those categories
     // join as their surface families port.
+    /* ⌘K reaches what a person can already see; it is not a catalogue (slice 0
+       of .design/client-journey/INFORMATION_ARCHITECTURE.md, section 2). "Jump
+       to" listed the first eight registry rows (Plan & features, Artifacts
+       center, a locked Regulatory workspace among them); it lists the places,
+       as the rail does, by the rail's own rule. */
+    const places: CmdKItem[] = RAIL_CORE
+      .filter((s) => flagAllowsSurface(s.id) && !isLaunchScopeLocked(verdictFor(s.target ?? s.id)))
+      .map((s) => ({
+        ...navResult({ id: s.target ?? s.id, label: s.label, icon: s.icon }),
+        applies: 'applies' in s && s.applies ? { actionId: s.applies.actionId, params: { ...s.applies.params } } : undefined,
+      }));
+    /* The open project's six steps, each opening the project on it through the
+       validated action AnA and the rest of the product use. */
+    const steps: CmdKItem[] = project
+      ? PJ_LIFECYCLE.map((step) => ({
+          id: `step:${step.id}`,
+          kind: 'nav',
+          label: step.label,
+          hint: project.code || project.title || 'This project',
+          icon: step.icon,
+          applies: { actionId: 'project-home.set-stage', params: { stage: step.id } },
+        }))
+      : [];
     if (!q.trim()) {
       return [
         { id: '_hd_jump', kind: 'header', label: 'Jump to' },
-        ...UI_SURFACES.slice(0, 8).map(navResult),
+        ...places,
+        ...(steps.length ? [{ id: '_hd_project', kind: 'header', label: 'This project' }, ...steps] : []),
         { id: '_hd_actions', kind: 'header', label: 'Quick actions' },
         { id: 'run_validation', kind: 'action', label: 'Run validation', hint: 'Action', icon: 'zap' },
         { id: 'export_document', kind: 'action', label: 'Export document', hint: 'Action · e-sign', icon: 'zap' },
@@ -740,12 +841,22 @@ export function CmdK({
       }));
     }
     const results: CmdKItem[] = [];
+    const stepHits = steps.filter((st) => st.label.toLowerCase().includes(term));
+    if (stepHits.length) {
+      results.push({ id: '_hd_project', kind: 'header', label: 'This project' });
+      results.push(...stepHits);
+    }
     // Match across every meaningful field, not just label/notes: the kebab id
     // (de-hyphenated so "submission center" matches "submission-center"), the
     // domain group, and the AnA tool families the surface exposes. Cap high —
     // .cmdk-list scrolls (app.css) — so ⌘K reaches the full ~99-surface registry
     // rather than stopping at the first 8 label/notes hits.
     const navs = UI_SURFACES.filter((s) => {
+      /* A surface outside the release is not listed: it was, as a "not in this
+         release" lock nobody can open (slice 0). A licence lock still is: its
+         unlock panel says what to do. */
+      if (isLaunchScopeLocked(verdictFor(s.id))) return false;
+      if (!offeredTo(s.id, { isOrgAdmin, platformAdmin })) return false;
       const haystack = [
         s.label,
         s.notes ?? '',
@@ -787,7 +898,7 @@ export function CmdK({
     return results;
     /* `verdictFor` is memoised by the provider on the payload, so this list
        rebuilds once — when the verdicts land — and not on every render. */
-  }, [q, term, isCmd, verdictFor]);
+  }, [q, term, isCmd, verdictFor, project, isOrgAdmin, platformAdmin]);
 
   const selectable = React.useMemo(() => items.filter((it) => it.kind !== 'header'), [items]);
 
@@ -805,7 +916,12 @@ export function CmdK({
         onClose();
         return;
       }
-      if (it.kind === 'nav') onNav(it.id);
+      if (it.kind === 'nav' && it.applies) {
+        const res = resolveSurfaceAction(it.applies.actionId, it.applies.params);
+        const target = it.id.startsWith('step:') ? 'project-home' : it.id;
+        if (res.ok) applySurfaceAction(res.directive, () => onNav(target));
+        else onNav(target);
+      } else if (it.kind === 'nav') onNav(it.id);
       else if (it.kind === 'action') onAct(it.id);
       else onAsk(q.trim());
       onClose();

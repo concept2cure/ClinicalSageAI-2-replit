@@ -120,3 +120,117 @@ node of the outline; 20/20 pass.
     `authoringTemplateStartFrom` (2) and `ind-pharmacology-leaf-drafting` (1).
   - The last one pins an old snapshot of the record (115 heading rows; trunk had 121 before this
     change).
+
+## e. The 3a review (2026-10-25), and the fixes
+
+This was a four-lens adversarial review of `e1c63ae9`: regulatory, drafting, blast radius and provenance (workflow
+`wf_063b65a0-b6d`). A skeptic tried to refute each finding. The red run, on trunk `c47af6fbb`, is in
+`review-3a-red.txt`: 12 cases.
+
+| Finding | Skeptic | Fix |
+|---|---|---|
+| **AnA could not read the deepened Clinical Summary.** `get_document_template` repeated the template's metadata and the preparation brief on every page. With 2.7.4's 25 nodes that was over the 7,800-character budget, so the default call (registry_id, prepare on) failed at 2.7.4. The same defect, from increment 2, stopped `US_NDA_SUPP`, `US_BLA_SUPP` and `US_NDA_ANNUAL`. | confirmed (×2) | The metadata and the brief go on the first page only. When the brief does not fit beside the first section, it moves to the page at offset 1, and the first page says so (`preparationAt`). New test: every registry outline pages to its last node, with the brief on exactly one page. |
+| **2.5.6.5 Appendix and 2.7.4.6 Post-marketing Data were served as required.** The record calls both conditional ("when used", "if available"). | confirmed | The record's rows gain `condition`. A heading with a condition is not required, and its purpose states the condition. |
+| **The outline's basis note claimed an extract for every heading.** For 36 of the Clinical Summary's 49 headings the record says none was seen. | confirmed | The note is counted from the rows: "7 of 49 were matched against a search extract; the rest are recall." |
+| **The fallback purpose said "the X brief states its content"** for headings the brief never mentions (2.7.4.5.8, the Appendix headings, the literature references). | confirmed | It now says: "the record holds no brief of its own for it. Draft it to the X brief." |
+| **2.6.4.10 and 2.6.6.10 Tables and Figures were typed `narrative`.** | confirmed | They take the type the record gives the same heading in 2.6.2.7 (`mixed`). |
+| **The 2.6 note said all 20 new leaves were matched against an extract.** | open when filed | Corrected: the facts file says 2.6.4.2, 2.6.6.2 and 2.6.6.10 were. |
+| **The outline limitation said the record states each required flag.** | open when filed | Reworded: a heading the record holds no brief for takes its nearest brief's flag. That is a platform rule. |
+| **A brief's line was attached to a sibling's or parent's heading.** Deaths got the discontinuations line, Overdose the whole special-situations list. | refuted: every line is the brief's own words | Tightened anyway: the clause that opens with the code, or the one element that opens with the title, names no other heading and does not narrow it ("Adverse events *of special interest*"). |
+| **The tool description still listed these three outlines as kept by hand.** | refuted: errs in the safe direction | Corrected anyway. They are listed as record-derived (M4), and the description stays at 1,023 characters, inside the 1,024 trim. |
+| **The 2.5.6.x note claimed a table-of-contents extract.** | refuted on wording | Rewritten to what was seen, and the search filed verbatim: `m4e-r2-2.5.6-search-2026-10-20.md`. |
+
+A defect in the record itself, older than 3a, surfaced along the way. `SEARCH_EXTRACT_NOTE` was on every ICH M4 and
+M4S heading row. The facts file (`docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-ich-m4-headings-facts.md`)
+says only twelve of those rows were shown by an extract. Every other row now says it was numbered by the guideline's
+pattern, and a test pins the twelve.
+
+### Pins moved on purpose
+
+| Test | What it pins | What moved, and the proof that nothing else did |
+|---|---|---|
+| `server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts` | A fingerprint of every record row. | **The fixture** (`tests/regulatory/fixtures/ind-pharmacology/preexisting-records.json`): exactly 40 rows were re-hashed. 39 had their note corrected; 2.7.4.6 gained its condition. Its `rehashed` note says so. **The 2.4.x and 2.5.6.x additions:** the test now checks them against the corrected notes. |
+| `server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts` | One digest over 392 builtin template snapshots. | Re-recorded. `builtin-snapshot-delta.txt` diffs every snapshot against trunk: 10 changed, none added or removed, and every other snapshot is byte-identical. The 10 are the four registry and three component outlines, plus the IND lane's `2.4:work:5/6` rows, which read 2.4.5/2.4.6's purpose. |
+
+## f. Gates (the 3a review fixes)
+
+- **Typecheck:** `typecheck-no-regression --incremental`: 0 errors, matching the baseline of 0.
+- **ESLint on the changed files:** one warning, max-lines in `submission-center-tool-defs.ts`, which was already over.
+- **Affected suites:** the 142 test files that name the changed modules, 3,149 tests. 3,144 pass; the five failures are:
+  - **Three pre-existing.** These fail identically on clean trunk `c47af6fbb`:
+    - `authoringFromDraft.pglite`: 2;
+    - `tool-selection-biotech-workflows` ("retains authoring peer: … EU clinical trial application"): 1.
+  - **Two from this change**, the two pins above, now green:
+    - `ind-pharmacology-leaf-drafting`: 18/18;
+    - `cross-sector-builtin-authoring-templates`: 22/22.
+
+## g. 3b Slice 1 — AnA's 2.5 and 2.7 composers read the open project as the person asking
+
+**The plan.** 3b was designed by workflow `wf_016de3ea-3b7`, read at `79d9913f1` and refreshed at `0c69304aa`. Three
+readers covered the class mechanism, routing and offers, and authoring inside a class project. A planner followed,
+then an adversarial critic who re-derived the claims and wrote the corrected plan. It is filed beside this README as
+`3b-plan.md`, with its own "What already exists" table (E1–E37, N1–N4). Slices 1–4 need no migration. Slices 5–7
+reach 2.5/2.4, then 2.7, then 2.6 as author-only classes.
+
+**What already exists (Rule 3):**
+- `server/services/ana/module2-csr-inputs.ts`, the precedent: figures come from completed CSR builds, never from the
+  tool input.
+- `csr/load-csr-inputs-for-project.ts` and `csr/project-scope.ts` `resolveCsrScope`, which the CSR workflow uses.
+- `lib/project-id.ts` `looksLikeProgramUuid`.
+
+**The defect.** `loadModule2CsrInputs` failed for every real project, in one of two ways:
+- **A numeric project threw.** It passed no actor to `loadCsrInputsForProject`, and the CSR scope refuses a read it
+  cannot attribute (`readCsrProjectActor`, 403). The 2.5 handler did not catch the throw, and the 2.7 handler answered
+  "M2.7 summary drafting failed".
+- **A v2 project was never seen.** The module read only the integer `ctx.projectId`. The v2 shell leaves that null and
+  sends the open project as a regulatory_programs uuid in `ctx.projectRef`, so the answer was "Open the program".
+
+So AnA's data-driven Module 2.5 and 2.7 never composed. The suites stayed green because they mocked the loader.
+
+**What changed:**
+- **`module2-csr-inputs.ts`:**
+  - The open project is resolved through `resolveCsrScope`, with the actor: a uuid `projectRef`, else
+    `ctx.projectId`. A project named in the input is read only when none is open.
+  - Another project named while one is open is refused (`cross_project`, P-14).
+  - A scope refusal is answered as one (`access_denied` for 403), never thrown.
+  - Every arm carries the resolved project.
+  - The messages say "project" (decision 12).
+- **The 2.5 handler:**
+  - It reads the program's artifacts for citation from the resolved project, never from the `project_id` the model
+    passes.
+  - An `access_denied` or `cross_project` answer is returned as it is (`answersBeforeOutline`). The outline mode
+    would otherwise read that project's artifacts.
+- **`m2-summary-builders.ts`:** 2.5.1 no longer counts toward completeness because the caller passed a rationale.
+  AnA writes that text, so a model could raise the figure with prose (Rule 2). The text is still printed.
+
+**Red first:** `3b-s1-csr-inputs-red.txt`.
+- The new `module2-csr-inputs.pglite.test.ts`, run against a database with neither the loader nor the scope mocked:
+  5 of 6 red (the uuid project read as `needs_project`; four cases threw `CSR_PROJECT_ACCESS_DENIED`).
+- The completeness case: 83, expected 67.
+
+All pass after.
+
+**Pins moved on purpose:**
+- `nonclinical-clinpharm-tools.test.ts` also mocks `resolveCsrScope` to resolve the named project. Each expectation
+  keeps its meaning; the new pglite test runs both for real.
+- The two 2.5 completeness pins (`m2-summary-builders.test.ts`, `m2-summary-conclusions-from-recorded-fields.test.ts`)
+  go from 83 to 67 (4 of 6).
+
+**Gates:**
+- the 23 test files that reach the change: 400 pass;
+- typecheck: 0 errors;
+- ESLint ratchet: no file changed its warning count. The loader was split into `readScopedCsrs` to keep it there.
+
+**What a person sees:** in a project with completed CSR builds, AnA's 2.5 and 2.7 composers compose. In one with none,
+they say so. A person who may not read the project is told so, and no outline is built from it.
+
+## h. 3b Slice 2: AnA's 2.4 and 2.6 drafts stop composing from model-written studies
+
+This is the same change as Rule 2 audit slice S2. Its evidence, with "What already exists", the red, the green and the gates, is in
+`docs/evidence/RULE2/2026-10-26-model-figures-audit/s2-nonclinical-drafts/`.
+
+- The project boundary that Slice 1 wrote for 2.5/2.7 is now one module, `ana/record-source-project.ts`, with two consumers.
+- The 2.5 outline helper is now `ana/ctd-component-outline.ts`, which serves 2.4, 2.5 and 2.6 from the record.
+
+**What a person sees:** a 2.4 or 2.6 request returns the record's ICH M4S outline and says no nonclinical study is recorded against the project. Studies typed in the conversation are refused and named as not used.
+

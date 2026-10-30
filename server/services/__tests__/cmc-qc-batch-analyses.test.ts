@@ -156,7 +156,7 @@ describe('review closure: batch attribution and process capability over recorded
     const { composeModule3FromCanonicalSources } = await import('../module3Composer');
     const result = (batch: string, value: string) =>
       ({ id: `qc-${batch}`, sourceType: 'qc_result', sourceHash: 'h', sourcePayload: mapQcTestingPayload(qcRow({
-        sampleId: `S-${batch}`, batchNumber: batch, sampleType: 'drug substance', testMethod: 'Assay (AM-001)',
+        sampleId: `S-${batch}`, batchNumber: batch, sampleType: 'raw-material', testMethod: 'Assay (AM-001)',
         testResults: { value, unit: '%' }, specifications: { acceptanceCriteria: '98.0-102.0%' }, passFailStatus: 'pass',
       })) }) as never;
     const six = ['B-001', 'B-002', 'B-003', 'B-004', 'B-005', 'B-006'].map((b, i) => result(b, String(99.5 + (i % 3) * 0.3)));
@@ -179,7 +179,7 @@ describe('review closure: batch attribution and process capability over recorded
     const { composeModule3FromCanonicalSources } = await import('../module3Composer');
     const result = (batch: string, value: string, spec: string) =>
       ({ id: `qc-${batch}`, sourceType: 'qc_result', sourceHash: 'h', sourcePayload: mapQcTestingPayload(qcRow({
-        sampleId: `S-${batch}`, batchNumber: batch, sampleType: 'drug substance', testMethod: 'Assay',
+        sampleId: `S-${batch}`, batchNumber: batch, sampleType: 'raw-material', testMethod: 'Assay',
         testResults: { value, unit: '%' }, specifications: { acceptanceCriteria: spec }, passFailStatus: 'pass',
       })) }) as never;
     const mixed = [1, 2, 3, 4, 5, 6].map((i) => result(`B-00${i}`, '99.8', i < 4 ? '98.0-102.0%' : '95.0-105.0%'));

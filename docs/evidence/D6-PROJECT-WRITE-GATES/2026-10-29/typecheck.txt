@@ -1,0 +1,6 @@
+# typecheck.txt — scoped tsc over this change's files (typecheck-tsconfig.json, <repo> = the checkout)
+#   NODE_OPTIONS=--max-old-space-size=6144 npx tsc -p typecheck-tsconfig.json
+# at 46db6c762 + this change. Exit 0; the compiler printed nothing:
+
+error TS count: 0
+files checked from this change: 24 (listed in typecheck-tsconfig.json)

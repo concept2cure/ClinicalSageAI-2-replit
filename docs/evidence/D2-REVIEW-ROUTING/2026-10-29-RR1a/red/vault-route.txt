@@ -1,0 +1,756 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-29T05:52:08.866Z","pid":22556,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-29T05:52:08.868Z","pid":22556,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-29T05:52:08.868Z","pid":22556,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+[database] Database connection successful
+
+stderr | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-29T05:52:16.096Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+Warning: Indexing all PDF objects
+
+{"level":40,"time":"2026-10-29T05:52:16.528Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:16.536Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+{
+  "timestamp": "2026-10-29T05:52:17.538Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "772e524d-4d17-409f-a1f1-e48ec3491bbc",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-NOREASON",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:17.656Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:17.669Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:17.669Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without an approver (ROUTE_APPROVER_REQUIRED)
+{
+  "timestamp": "2026-10-29T05:52:17.692Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "21fe25f6-1da6-4cfe-877c-e20f581df80d",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-NOAPPROVER",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED) 8710ms
+   → expected 200 to be 400 // Object.is equality
+{"level":40,"time":"2026-10-29T05:52:17.757Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:17.770Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:17.771Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming another organization’s user
+{
+  "timestamp": "2026-10-29T05:52:17.790Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fd902463-35b5-44f5-a117-2955871b897d",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-REFUSE-MEMBER_NOT_IN_ORGANIZATION",
+    "type": "OTHER",
+    "size": 105,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:17.854Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:17.868Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:17.868Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a member without signing authority
+{
+  "timestamp": "2026-10-29T05:52:17.889Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e1a49701-5cbc-48f7-8667-2fe39b5a9f1b",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-REFUSE-MEMBER_CANNOT_SIGN",
+    "type": "OTHER",
+    "size": 97,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without an approver (ROUTE_APPROVER_REQUIRED) 102ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming another organization’s user 92ms
+   → {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"1d3bafc9-4ab7-4ad0-98ca-a5c2076fc268","version":1,"from":"authoring","to":"in_review","actor":"140","reason":"Ready for named review","at":"2026-10-29T05:52:17.821Z","contentHash":"c5f1a4054848155e456ef2643757f0a33a40e8d51c51208964780e7b592c65bb","prevEventHash":"","eventHash":"38a5eb1669c235f2bf1e507220b04b7640469acf07c95135a18b713946783611"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+{"level":40,"time":"2026-10-29T05:52:17.944Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:17.958Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:17.958Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a signer who cannot open the project
+{
+  "timestamp": "2026-10-29T05:52:17.977Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f2280a31-75bf-4686-b368-9e09f0c9bd56",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-REFUSE-MEMBER_NO_PROJECT_ACCESS",
+    "type": "OTHER",
+    "size": 103,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a member without signing authority 92ms
+   → {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"3839b234-312d-4ace-b9e9-2756ec68505a","version":1,"from":"authoring","to":"in_review","actor":"140","reason":"Ready for named review","at":"2026-10-29T05:52:17.915Z","contentHash":"3577e4deba8666af362ca9dd49bc209496e127ee34ad89422a8d2515dfe0b53c","prevEventHash":"","eventHash":"707363e413b48a2142d76180e5c989ebae9033bde78e364d741bc1ebb9e49933"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+ × tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a signer who cannot open the project 89ms
+   → {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"5f5d8835-8026-4d60-a63b-3911d11d9fc5","version":1,"from":"authoring","to":"in_review","actor":"140","reason":"Ready for named review","at":"2026-10-29T05:52:18.002Z","contentHash":"43082b3badee0292224c8937400e4980b43cb3ed7612e6314717ed4e05d141b9","prevEventHash":"","eventHash":"5741f2151dc2c59f1cd13d2f904b5fe2d0fd45a54737158a60088ce7f8517f26"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+{"level":40,"time":"2026-10-29T05:52:18.030Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:18.046Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:18.047Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the uploader (an author)
+{
+  "timestamp": "2026-10-29T05:52:18.071Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "08ddbcb8-c190-43f0-a742-4b4ec8223394",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-REFUSE-MEMBER_IS_AUTHOR",
+    "type": "OTHER",
+    "size": 95,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:18.160Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:18.171Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:18.172Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the sender
+{
+  "timestamp": "2026-10-29T05:52:18.189Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e2f1a389-c639-4a37-9c16-093f6d7cd0e6",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-REFUSE-MEMBER_IS_SENDER",
+    "type": "OTHER",
+    "size": 95,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:18.238Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:18.253Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:18.254Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the same person twice
+{
+  "timestamp": "2026-10-29T05:52:18.273Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "088c89ac-db55-4f68-89df-e99d0efb7812",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-REFUSE-MEMBER_ALREADY_NAMED",
+    "type": "OTHER",
+    "size": 99,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the uploader (an author) 125ms
+   → {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"5ee480d4-70ff-4248-9183-db650df08027","version":1,"from":"authoring","to":"in_review","actor":"140","reason":"Ready for named review","at":"2026-10-29T05:52:18.121Z","contentHash":"cf7a9cbab991c0d5704b6e07b6b3346f8ea9bc7d571c1f6315f8491999e8a774","prevEventHash":"","eventHash":"99d043024fbf26f5eaf14d71d0602a727ccf68db1695c56dc9787b937abc5b17"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+ × tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the sender 83ms
+   → {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"f1880ce0-ef81-4920-b7f6-32d9448a7bb1","version":1,"from":"authoring","to":"in_review","actor":"144","reason":"Ready for named review","at":"2026-10-29T05:52:18.211Z","contentHash":"b5730ba518c72c6afe1729bdd8c50c017ebba66a06c380a8906f439766c07ef3","prevEventHash":"","eventHash":"fc9d567783fd1e363d7fd5f686d2ea4514e3bf4c1ef07e62c1e680f71159c532"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+{"level":40,"time":"2026-10-29T05:52:18.331Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:18.342Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:18.343Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming, as approver, a reviewer who signed this content on a withdrawn route (MEMBER_REVIEWED_THIS_CONTENT)
+{
+  "timestamp": "2026-10-29T05:52:18.361Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "7ec30ac2-2453-425d-9c50-cb72357dcfc0",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-STAGEROUND",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the same person twice 90ms
+   → {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"d4baa7b0-8f70-4d31-83cd-ae5337e1703b","version":1,"from":"authoring","to":"in_review","actor":"140","reason":"Ready for named review","at":"2026-10-29T05:52:18.302Z","contentHash":"1942ce8a07c8a26bc873ee84cde2033c49197241ca72dcdb6aa4f5d8e15a2e9f","prevEventHash":"","eventHash":"91f6efdb6af718ccaf35fc8a1c18af578f0a652716a4d6984ede2668ade787d3"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+{"level":40,"time":"2026-10-29T05:52:18.451Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:18.460Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:18.461Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > two reviewers and one approver > first review: no sign-off yet; second: the sign-off and the approver’s turn; approval: approved and complete
+{
+  "timestamp": "2026-10-29T05:52:18.484Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3de11e8f-2d9a-435c-821c-d3ccbb08085d",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-FLOW",
+    "type": "OTHER",
+    "size": 76,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:18.526Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:18.537Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+ × tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming, as approver, a reviewer who signed this content on a withdrawn route (MEMBER_REVIEWED_THIS_CONTENT) 122ms
+   → expected 404 to be 200 // Object.is equality
+ × tests/db/review-route-vault.dbtest.ts > two reviewers and one approver > first review: no sign-off yet; second: the sign-off and the approver’s turn; approval: approved and complete 78ms
+   → expected undefined to be truthy
+{"level":40,"time":"2026-10-29T05:52:18.538Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > a signature counts only on its own route > a reviewer who signed a withdrawn route signs again on the new one
+{
+  "timestamp": "2026-10-29T05:52:18.554Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b486f5be-99af-4e54-a933-0111497c75ed",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-BOUND",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:18.630Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:18.640Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:18.640Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > withdraw > after the review is complete clears review_signature; the old review does not satisfy REVIEW_SIGNOFF_REQUIRED
+{
+  "timestamp": "2026-10-29T05:52:18.658Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "cb25f75f-d31a-4809-9425-e4863a271582",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-WITHDRAWDONE",
+    "type": "OTHER",
+    "size": 84,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault.dbtest.ts > a signature counts only on its own route > a reviewer who signed a withdrawn route signs again on the new one 103ms
+   → expected 404 to be 200 // Object.is equality
+{"level":40,"time":"2026-10-29T05:52:18.748Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:18.759Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:18.759Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > withdraw > while withdrawn, every signature is refused (ROUTE_WITHDRAWN)
+{
+  "timestamp": "2026-10-29T05:52:18.781Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e04d308b-6093-4b11-b0d4-70633ee230f9",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-WITHDRAWN",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:18.828Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+ × tests/db/review-route-vault.dbtest.ts > withdraw > after the review is complete clears review_signature; the old review does not satisfy REVIEW_SIGNOFF_REQUIRED 118ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/review-route-vault.dbtest.ts > withdraw > while withdrawn, every signature is refused (ROUTE_WITHDRAWN) 79ms
+   → expected undefined to be 'ROUTE_WITHDRAW_NOT_PERMITTED' // Object.is equality
+{"level":40,"time":"2026-10-29T05:52:18.839Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:18.840Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > Return for revision: authoring, route returned, the returner’s act stamped, the others cancelled
+{
+  "timestamp": "2026-10-29T05:52:18.861Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d6e19408-31b4-4e99-b259-a83cea4cb778",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-RETURN",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:18.920Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:18.933Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:18.933Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to authoring withdraws the route with the advance’s reason (and needs one)
+{
+  "timestamp": "2026-10-29T05:52:18.952Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "00a3dd58-1979-4993-a1fc-feee6e3f4909",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-EXIT-authoring",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > Return for revision: authoring, route returned, the returner’s act stamped, the others cancelled 91ms
+   → expected undefined to be 'ROUTE_RETURN_NOT_PERMITTED' // Object.is equality
+{"level":40,"time":"2026-10-29T05:52:19.009Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:19.019Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:19.020Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to withdrawn withdraws the route with the advance’s reason (and needs one)
+{
+  "timestamp": "2026-10-29T05:52:19.035Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2f445d27-b4d3-44d0-8f7c-230c5f0c8ea8",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-EXIT-withdrawn",
+    "type": "OTHER",
+    "size": 86,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:19.088Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:19.097Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+ × tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to authoring withdraws the route with the advance’s reason (and needs one) 93ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to withdrawn withdraws the route with the advance’s reason (and needs one) 77ms
+   → expected 200 to be 400 // Object.is equality
+{"level":40,"time":"2026-10-29T05:52:19.098Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+{
+  "timestamp": "2026-10-29T05:52:19.112Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "db142967-a3fa-4fcd-b436-d327e8a2572f",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-CHECKIN",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:19.154Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:19.180Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:19.181Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+{
+  "timestamp": "2026-10-29T05:52:19.205Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "af0f7ea6-97e2-4430-a95c-e485f636aa8a",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-CHECKIN",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-29T05:52:19.251Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:19.263Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:19.263Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > two concurrent reviewer sign-offs both complete; the review is complete once
+{
+  "timestamp": "2026-10-29T05:52:19.278Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "24806fef-74b2-4268-86f6-dce24116acb4",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-CONCURRENT",
+    "type": "OTHER",
+    "size": 82,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0" 139ms
+   → expected [] to deeply equal [ [ 'withdrawn', …(1) ] ]
+ ✓ tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > routeStanding throws on a failed read, never "none" 20ms
+{"level":40,"time":"2026-10-29T05:52:19.361Z","pid":22556,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-29T05:52:19.374Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-29T05:52:19.375Z","pid":22556,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > another organization cannot sign, withdraw or return (404, nothing changed)
+{
+  "timestamp": "2026-10-29T05:52:19.410Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "413aa912-99b6-4a39-bd29-d97fe6f07fea",
+    "code": "DBTEST-RR1A-mvt4m02e_5282f1b9-CROSS",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ × tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > two concurrent reviewer sign-offs both complete; the review is complete once 103ms
+   → expected [ 200, 409 ] to deeply equal [ 200, 200 ]
+ × tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > another organization cannot sign, withdraw or return (404, nothing changed) 126ms
+   → expected [] to deeply equal [ 'open' ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without a reason (REASON_REQUIRED)
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/db/review-route-vault.dbtest.ts:168:22
+    166|     const { id } = await started('NOREASON');
+    167|     const r = await send('uploader', id, route(['r1'], ['approver']), …
+    168|     expect(r.status).toBe(400);
+       |                      ^
+    169|     expect(r.body.error).toBe('REASON_REQUIRED');
+    170|     await nothingSent(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > without an approver (ROUTE_APPROVER_REQUIRED)
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/db/review-route-vault.dbtest.ts:176:22
+    174|     const { id } = await started('NOAPPROVER');
+    175|     const r = await send('uploader', id, route(['r1'], []));
+    176|     expect(r.status).toBe(400);
+       |                      ^
+    177|     expect(r.body.error).toBe('ROUTE_APPROVER_REQUIRED');
+    178|     await nothingSent(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming another organization’s user
+AssertionError: {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"1d3bafc9-4ab7-4ad0-98ca-a5c2076fc268","version":1,"from":"authoring","to":"in_review","actor":"140","reason":"Ready for named review","at":"2026-10-29T05:52:17.821Z","contentHash":"c5f1a4054848155e456ef2643757f0a33a40e8d51c51208964780e7b592c65bb","prevEventHash":"","eventHash":"38a5eb1669c235f2bf1e507220b04b7640469acf07c95135a18b713946783611"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/review-route-vault.dbtest.ts:191:46
+    189|     const { id } = await started(`REFUSE-${code}`);
+    190|     const r = await send(sender, id, route(reviewers, approvers));
+    191|     expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                              ^
+    192|     expect(r.body.error).toBe(code);
+    193|     await nothingSent(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a member without signing authority
+AssertionError: {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"3839b234-312d-4ace-b9e9-2756ec68505a","version":1,"from":"authoring","to":"in_review","actor":"140","reason":"Ready for named review","at":"2026-10-29T05:52:17.915Z","contentHash":"3577e4deba8666af362ca9dd49bc209496e127ee34ad89422a8d2515dfe0b53c","prevEventHash":"","eventHash":"707363e413b48a2142d76180e5c989ebae9033bde78e364d741bc1ebb9e49933"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/review-route-vault.dbtest.ts:191:46
+    189|     const { id } = await started(`REFUSE-${code}`);
+    190|     const r = await send(sender, id, route(reviewers, approvers));
+    191|     expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                              ^
+    192|     expect(r.body.error).toBe(code);
+    193|     await nothingSent(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming a signer who cannot open the project
+AssertionError: {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"5f5d8835-8026-4d60-a63b-3911d11d9fc5","version":1,"from":"authoring","to":"in_review","actor":"140","reason":"Ready for named review","at":"2026-10-29T05:52:18.002Z","contentHash":"43082b3badee0292224c8937400e4980b43cb3ed7612e6314717ed4e05d141b9","prevEventHash":"","eventHash":"5741f2151dc2c59f1cd13d2f904b5fe2d0fd45a54737158a60088ce7f8517f26"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/review-route-vault.dbtest.ts:191:46
+    189|     const { id } = await started(`REFUSE-${code}`);
+    190|     const r = await send(sender, id, route(reviewers, approvers));
+    191|     expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                              ^
+    192|     expect(r.body.error).toBe(code);
+    193|     await nothingSent(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the uploader (an author)
+AssertionError: {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"5ee480d4-70ff-4248-9183-db650df08027","version":1,"from":"authoring","to":"in_review","actor":"140","reason":"Ready for named review","at":"2026-10-29T05:52:18.121Z","contentHash":"cf7a9cbab991c0d5704b6e07b6b3346f8ea9bc7d571c1f6315f8491999e8a774","prevEventHash":"","eventHash":"99d043024fbf26f5eaf14d71d0602a727ccf68db1695c56dc9787b937abc5b17"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/review-route-vault.dbtest.ts:191:46
+    189|     const { id } = await started(`REFUSE-${code}`);
+    190|     const r = await send(sender, id, route(reviewers, approvers));
+    191|     expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                              ^
+    192|     expect(r.body.error).toBe(code);
+    193|     await nothingSent(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the sender
+AssertionError: {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"f1880ce0-ef81-4920-b7f6-32d9448a7bb1","version":1,"from":"authoring","to":"in_review","actor":"144","reason":"Ready for named review","at":"2026-10-29T05:52:18.211Z","contentHash":"b5730ba518c72c6afe1729bdd8c50c017ebba66a06c380a8906f439766c07ef3","prevEventHash":"","eventHash":"fc9d567783fd1e363d7fd5f686d2ea4514e3bf4c1ef07e62c1e680f71159c532"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/review-route-vault.dbtest.ts:191:46
+    189|     const { id } = await started(`REFUSE-${code}`);
+    190|     const r = await send(sender, id, route(reviewers, approvers));
+    191|     expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                              ^
+    192|     expect(r.body.error).toBe(code);
+    193|     await nothingSent(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming the same person twice
+AssertionError: {"ok":true,"from":"authoring","to":"in_review","stage":"in_review","auditEvent":{"documentId":"d4baa7b0-8f70-4d31-83cd-ae5337e1703b","version":1,"from":"authoring","to":"in_review","actor":"140","reason":"Ready for named review","at":"2026-10-29T05:52:18.302Z","contentHash":"1942ce8a07c8a26bc873ee84cde2033c49197241ca72dcdb6aa4f5d8e15a2e9f","prevEventHash":"","eventHash":"91f6efdb6af718ccaf35fc8a1c18af578f0a652716a4d6984ede2668ade787d3"},"superseded":[]}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/review-route-vault.dbtest.ts:191:46
+    189|     const { id } = await started(`REFUSE-${code}`);
+    190|     const r = await send(sender, id, route(reviewers, approvers));
+    191|     expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                              ^
+    192|     expect(r.body.error).toBe(code);
+    193|     await nothingSent(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > sending a route refuses, with nothing written > naming, as approver, a reviewer who signed this content on a withdrawn route (MEMBER_REVIEWED_THIS_CONTENT)
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/review-route-vault.dbtest.ts:200:60
+    198|     expect((await send('uploader', id, route(['r1', 'r2'], ['approver'…
+    199|     expect((await sign('r1', id, 'reviewed')).status).toBe(200);
+    200|     expect((await act('uploader', id, 'withdraw')).status).toBe(200);
+       |                                                            ^
+    201|     expect((await stage(id)).stage).toBe('in_review');
+    202|     const before = await routes(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > two reviewers and one approver > first review: no sign-off yet; second: the sign-off and the approver’s turn; approval: approved and complete
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/db/review-route-vault.dbtest.ts:216:31
+    214|     const sent = await send('uploader', id, route(['r1', 'r2'], ['appr…
+    215|     expect(sent.status, JSON.stringify(sent.body)).toBe(200);
+    216|     expect(sent.body.routeId).toBeTruthy();
+       |                               ^
+    217|     expect((await tasks(id)).map((t) => [Number(t.assignee_id), t.revi…
+    218|       [[users.r1, 'reviewer', 'pending'], [users.r2, 'reviewer', 'pend…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > a signature counts only on its own route > a reviewer who signed a withdrawn route signs again on the new one
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/review-route-vault.dbtest.ts:276:60
+    274|     await send('uploader', id, route(['r1', 'r2'], ['approver']));
+    275|     expect((await sign('r1', id, 'reviewed')).status).toBe(200);
+    276|     expect((await act('uploader', id, 'withdraw')).status).toBe(200);
+       |                                                            ^
+    277|     const resent = await post('uploader', `/${id}/review-route`, { rou…
+    278|     expect(resent.status, JSON.stringify(resent.body)).toBe(201);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > withdraw > after the review is complete clears review_signature; the old review does not satisfy REVIEW_SIGNOFF_REQUIRED
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/review-route-vault.dbtest.ts:296:46
+    294|     expect((await stage(id)).review_signature).not.toBeNull();
+    295|     const w = await act('uploader', id, 'withdraw', 'Wrong approver na…
+    296|     expect(w.status, JSON.stringify(w.body)).toBe(200);
+       |                                              ^
+    297|     expect(await stage(id)).toMatchObject({ stage: 'authoring', review…
+    298|     expect((await routes(id)).map((r) => [r.status, r.status_reason]))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > withdraw > while withdrawn, every signature is refused (ROUTE_WITHDRAWN)
+AssertionError: expected undefined to be 'ROUTE_WITHDRAW_NOT_PERMITTED' // Object.is equality
+
+- Expected:
+"ROUTE_WITHDRAW_NOT_PERMITTED"
+
++ Received:
+undefined
+
+ ❯ tests/db/review-route-vault.dbtest.ts:317:62
+    315|     await send('uploader', id, route(['r1', 'r2'], ['approver']));
+    316|     // Not the sender, and not an administrator of the organization.
+    317|     expect((await act('member', id, 'withdraw')).body.error).toBe('ROU…
+       |                                                              ^
+    318|     expect((await act('uploader', id, 'withdraw')).status).toBe(200);
+    319|     for (const [who, meaning] of [['r1', 'reviewed'], ['r3', 'reviewed…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > Return for revision: authoring, route returned, the returner’s act stamped, the others cancelled
+AssertionError: expected undefined to be 'ROUTE_RETURN_NOT_PERMITTED' // Object.is equality
+
+- Expected:
+"ROUTE_RETURN_NOT_PERMITTED"
+
++ Received:
+undefined
+
+ ❯ tests/db/review-route-vault.dbtest.ts:332:56
+    330|     const { id } = await started('RETURN');
+    331|     await send('uploader', id, route(['r1', 'r2'], ['approver']));
+    332|     expect((await act('r3', id, 'return')).body.error).toBe('ROUTE_RET…
+       |                                                        ^
+    333|     const r = await act('r1', id, 'return', 'Section 2 cites the wrong…
+    334|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to authoring withdraws the route with the advance’s reason (and needs one)
+ FAIL  tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > an /advance to withdrawn withdraws the route with the advance’s reason (and needs one)
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/db/review-route-vault.dbtest.ts:346:25
+    344|     await send('uploader', id, route(['r1'], ['approver']));
+    345|     const bare = await post('uploader', `/${id}/advance`, { to });
+    346|     expect(bare.status).toBe(400);
+       |                         ^
+    347|     expect(bare.body.error).toBe('REASON_REQUIRED');
+    348|     const r = await post('uploader', `/${id}/advance`, { to, reason: `…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > every Vault exit closes the route > a check-in of a newer version withdraws the route, "Superseded by version 2.0"
+AssertionError: expected [] to deeply equal [ [ 'withdrawn', …(1) ] ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "withdrawn",
+-     "Superseded by version 2.0",
+-   ],
+- ]
++ []
+
+ ❯ tests/db/review-route-vault.dbtest.ts:357:72
+    355|     await send('uploader', id, route(['r1'], ['approver']));
+    356|     await ingest('CHECKIN', pdf('checkin-v2'), vaultId);
+    357|     expect((await routes(id)).map((x) => [x.status, x.status_reason]))…
+       |                                                                        ^
+    358|     expect((await sign('r1', id, 'reviewed')).body.error).toBe('ROUTE_…
+    359|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > two concurrent reviewer sign-offs both complete; the review is complete once
+AssertionError: expected [ 200, 409 ] to deeply equal [ 200, 200 ]
+
+- Expected
++ Received
+
+  [
+    200,
+-   200,
++   409,
+  ]
+
+ ❯ tests/db/review-route-vault.dbtest.ts:373:34
+    371|     await send('uploader', id, route(['r1', 'r2'], ['approver']));
+    372|     const [a, b] = await Promise.all([sign('r1', id, 'reviewed'), sign…
+    373|     expect([a.status, b.status]).toEqual([200, 200]);
+       |                                  ^
+    374|     expect((await stage(id)).review_signature).not.toBeNull();
+    375|     expect((await taskOf(id, 'approver')).status).toBe('pending');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯
+
+ FAIL  tests/db/review-route-vault.dbtest.ts > honest reads and concurrency > another organization cannot sign, withdraw or return (404, nothing changed)
+AssertionError: expected [] to deeply equal [ 'open' ]
+
+- Expected
++ Received
+
+- [
+-   "open",
+- ]
++ []
+
+ ❯ tests/db/review-route-vault.dbtest.ts:384:53
+    382|     expect((await act('outsider', id, 'withdraw', 'Cross-tenant attemp…
+    383|     expect((await act('outsider', id, 'return', 'Cross-tenant attempt'…
+    384|     expect((await routes(id)).map((r) => r.status)).toEqual(['open']);
+       |                                                     ^
+    385|   });
+    386| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/19]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  19 failed | 1 passed (20)
+   Start at  05:52:05
+   Duration  13.72s (transform 7.05s, setup 124ms, import 283ms, tests 12.85s, environment 0ms)
+

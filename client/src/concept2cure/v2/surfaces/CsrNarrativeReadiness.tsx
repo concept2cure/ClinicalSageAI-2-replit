@@ -58,7 +58,7 @@ export function CsrNarrativeReadiness({ programId, onNav, interactionBusy }: {
     {!current && <p role="status">Checking CSR inputs…</p>}
     {current?.error && <p role="alert">Couldn’t confirm CSR inputs. <button type="button" onClick={() => setRefresh(value => value + 1)}>Retry CSR readiness</button></p>}
     {data && <>
-      <p>{data.completedSummaryCount === null ? 'Completed CSR summary count is unavailable for this program.' : `${data.completedSummaryCount} completed CSR ${data.completedSummaryCount === 1 ? 'summary is' : 'summaries are'} available for package reuse.`}</p>
+      <p>{data.completedSummaryCount === null ? 'Completed CSR summary count is unavailable for this project.' : `${data.completedSummaryCount} completed CSR ${data.completedSummaryCount === 1 ? 'summary is' : 'summaries are'} available for package reuse.`}</p>
       <p>Raw clinical observations are not linked to the narrative generator. First-study AI narrative generation remains unavailable. The separate source-table controls can prepare deterministic tables for an explicitly selected source.</p>
       <p>Retain original source material in Vault and prepare governed narrative content in Authoring. A source-table preview does not generate a clinical narrative.</p>
       <div style={{ display: 'flex', gap: 8 }}>

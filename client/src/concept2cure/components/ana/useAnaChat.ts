@@ -513,6 +513,9 @@ export function hydrateToolTrace(trace: PersistedTraceEntry[] | undefined): AnaT
       // ids out of it). Never rendered. Absent when the trace carried none.
       const result = typeof t.resultSummary === 'string' && t.resultSummary ? t.resultSummary : undefined;
       calls.push({ name, label, status: 'success', ...shown, ...(result ? { result } : {}) });
+    } else if (t.status === 'not_run') {
+      // Never dispatched (D-7's refused screen action): it did not run, it did not fail.
+      calls.push({ name, label, status: 'not_run', ...shown, message: shown.message ?? `${label} did not run.` });
     } else {
       calls.push({ name, label, status: 'error', ...shown, message: shown.message ?? legacyTraceMessage(t, label) });
     }
@@ -2460,7 +2463,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         // The finished label (done form when it succeeded), its facts and usedModel.
                         ...(typeof event.label === 'string' && event.label ? { label: event.label } : {}),
                         ...framePresentation(event),
-                        status: failed ? 'error' : 'success',
+                        status: event.status === 'not_run' ? 'not_run' : failed ? 'error' : 'success',
                         endedAt: Date.now(),
                         ...(typeof event.latencyMs === 'number' && event.latencyMs >= 0
                           ? { latencyMs: event.latencyMs }

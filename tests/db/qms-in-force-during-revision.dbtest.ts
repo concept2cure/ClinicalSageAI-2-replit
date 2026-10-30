@@ -53,6 +53,8 @@ async function account(key: string, role: string): Promise<Actor> {
     activeJwtSecret(), { expiresIn: '1h' }) };
 }
 
+/** The review route a send names (RR4): the signer as the QMS approver, no reviewers, due in five days. */
+const qaRoute = () => ({ reviewers: [], approvers: [signer.id], approvalDueDate: new Date(Date.now() + 5 * 86_400_000).toISOString().slice(0, 10) });
 const http = (by: Actor, method: 'get' | 'post' | 'patch', path: string, body?: Record<string, unknown>) =>
   request(app)[method](path).set('Authorization', `Bearer ${by.token}`).send(body);
 const sign = (id: number, by = signer) =>
@@ -92,6 +94,9 @@ beforeAll(async () => {
   const approved = await sign(documentId);
   expect(approved.status, JSON.stringify(approved.body)).toBe(200);
   v1SignatureId = Number(approved.body.meta.signature.id);
+  // The trainees, by name (P-49): compliance counts the people assigned to the document, not the roster.
+  await owner.query(`INSERT INTO qms_training_assignments (organization_id, document_id, user_id, assigned_by)
+    VALUES ($1, $2, $3, $5), ($1, $2, $4, $5)`, [orgId, documentId, viewer.id, secondViewer.id, author.id]);
   const read = await http(viewer, 'get', `/api/mdx/qms/documents/${documentId}`);
   v1 = read.body.meta.training;
   expect(read.body.meta.training).toMatchObject({ eligible: true, documentVersion: '1.0' });
@@ -178,7 +183,8 @@ describe('when the successor is signed', () => {
     await withNativeCatalogClient({ organizationId: orgId, organizationUuid: orgUuid, userId: author.id, role: 'member', caller: 'qms-in-force-share' },
       (sqlClient) => grantAuthoringPermission({ pool: sqlClient, tenantId: orgId, docId: String(row.authoring_document_id),
         principalId: String(viewer.id), role: 'VIEWER', grantedBy: String(author.id), reason: 'Trainee on v2.0' }));
-    const review = await http(author, 'patch', `/api/mdx/qms/documents/${documentId}`, { status: 'in_review', reason: 'Saved v2.0 text ready for review' });
+    // RR4 (docs/design/REVIEW_ROUTING_2026-10-23.md §2.7): sending for review names its route, the QMS approver (here the Approver-role signer, who stands in while the organization has designated none).
+    const review = await http(author, 'patch', `/api/mdx/qms/documents/${documentId}`, { status: 'in_review', reason: 'Saved v2.0 text ready for review', route: qaRoute() });
     expect(review.status, JSON.stringify(review.body)).toBe(200);
     const approved = await sign(documentId);
     expect(approved.status, JSON.stringify(approved.body)).toBe(200);
@@ -208,7 +214,7 @@ describe('a periodic review date set when the document is created', () => {
     await withNativeCatalogClient({ organizationId: orgId, organizationUuid: orgUuid, userId: author.id, role: 'member', caller: 'qms-review-date-share' },
       (sqlClient) => grantAuthoringPermission({ pool: sqlClient, tenantId: orgId, docId, principalId: String(signer.id),
         role: 'APPROVER', grantedBy: String(author.id), reason: 'Independent approver' }));
-    expect((await http(author, 'patch', `/api/mdx/qms/documents/${id}`, { status: 'in_review', reason: 'Saved text ready for review' })).status).toBe(200);
+    expect((await http(author, 'patch', `/api/mdx/qms/documents/${id}`, { status: 'in_review', reason: 'Saved text ready for review', route: qaRoute() })).status).toBe(200);
     const signed = await sign(id);
     expect(signed.status, JSON.stringify(signed.body)).toBe(200);
     const { rows: [version] } = await owner.query(

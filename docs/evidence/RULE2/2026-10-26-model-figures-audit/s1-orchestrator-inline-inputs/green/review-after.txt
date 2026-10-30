@@ -1,0 +1,19 @@
+# S1 review green: orchestrator-inline-run-inputs-refused.test.ts after the fix. The 12-file orchestrator neighbourhood (131 tests) also passes.
+
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline csrInputs on POST /runs, before anything is read, and names the route to use 45ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline nonclinicalStudies on POST /runs, before anything is read, and names the route to use 13ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline clinicalStudyData on POST /runs, before anything is read, and names the route to use 7ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses clinicalStudyData in a Mode A body too 7ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses a projectId beside inline csrInputs with the same code and field 8ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses a projectId beside inline nonclinicalStudies with the same code and field 5ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses a Mode A ctdProgramId: the extractor’s rows are not a record 7ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses csrInputs on the regenerate route: the same door one level down 8ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses nonclinicalStudies on the regenerate route: the same door one level down 9ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses clinicalStudyData on the regenerate route: the same door one level down 5ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses projectId on the regenerate route: the same door one level down 4ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > the regenerate refusal does not depend on the run > refuses inline figures for a run that does not exist, without reading it 4ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > does not refuse EMPTY arrays: they carry no figures 7ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > runs a plain Mode A body, reading the project’s own records 6ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > keeps the fixture door open in development 8ms
+ Test Files  1 passed (1)
+      Tests  15 passed (15)

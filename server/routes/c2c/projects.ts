@@ -22,7 +22,7 @@ import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { readProjectActivity } from '../../services/c2c/project-activity.js';
-import { readDossier, readDossierFigures, type DossierFigure } from '../../services/c2c/dossier-read.js';
+import { readDossier, readDossierFigures, readDossierSupporting, type DossierFigure } from '../../services/c2c/dossier-read.js';
 import { requestPgClient } from '../../db/requestDb';
 import type { PoolClient } from 'pg';
 import {
@@ -42,7 +42,7 @@ import {
 import { checkProgramQuota } from '../../services/license-manager.js';
 import { computeAuditChainSealed, hashPayload } from '../../services/audit/chain.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { workstreamSqlCase, isIvdFamily } from '../../../shared/constants/domain/product-types.js';
+import { isIvdFamily } from '../../../shared/constants/domain/product-types.js';
 import { resolveFilingCatalogEntry, deviceClassScopeForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
 import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
 import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
@@ -87,13 +87,14 @@ import { loadUploadedFile, sha256Hex, UploadedFileError, type UploadedFile } fro
 import { supersededSql } from '../../services/vault/vault-version-family.js';
 import { documentAgencyFor, marketOfferGivenOutline, type FilingOffer, type MarketInput } from '../../services/regulatory/market-support.js';
 import { installProjectRouteAccess, requireProjectRouteAccess, requireProjectCreationAccess, withProjectWriteReservation, sendProjectAccessFailure } from './project-route-access';
-import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, ProgramReadAccessError } from '../../services/c2c/current-program-access';
+import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, verifiedProgramAnchors, ProgramReadAccessError } from '../../services/c2c/current-program-access';
 import { assertAnaUploadAccess } from '../../services/ana/source-context-admission';
 import { AnaProjectScopeError } from '../../services/ana/project-scope-admission';
 import { readProjectAuthoringRecords } from '../../services/c2c/project-authoring-records';
 import { readProjectTeam } from '../../services/c2c/project-team';
 import { projectWorkspaceInput, ProjectWorkspaceInputError } from './project-intake-workspace';
 import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
+import { PROJECT_CARD_LIST_SQL, PROJECT_CARD_CREATED_SQL, portfolioAnchorJson, portfolioClientFilter, portfolioWorkstreamFilter, portfolioPathwayFilter, readPortfolioClients, readPortfolioCounts } from '../../services/c2c/project-portfolio';
 
 /** A filing the market verdict does not offer, found once the scaffold has
  *  resolved its outline. Thrown inside the creation transaction so it rolls
@@ -436,12 +437,6 @@ function allowProgramMutation(
   return false;
 }
 
-/** Present a program_type as the portfolio workstream bucket.
- *  Case-insensitive: the store holds mixed casing ('510K', 'BLA', 'nda'), so
- *  match on lower() — otherwise every real row falls through to the ELSE branch
- *  and none bucket into MDX / Biotech / Pharma (the surface's filter tabs). */
-const WS_CASE = workstreamSqlCase('p.program_type', 'p.product_type');
-
 // ── The program DETAIL — one projection, one serializer ──────────────────────
 //
 // GET /api/c2c/projects/:id and the create's 201 both answer through these, so
@@ -470,9 +465,13 @@ const PROGRAM_DETAIL_SQL = `
     p.application_number,
     p.product_type, p.device_class, p.regulatory_path, p.product_code,
     p.predicate_devices, p.metadata,
-    o.name AS sponsor_name
+    o.name AS sponsor_name,
+    cw.id AS client_workspace_id, cw.name AS client_name
   FROM regulatory_programs p
   LEFT JOIN organizations o ON o.id = p.organization_id
+  JOIN projects anchor ON anchor.id=$3 AND anchor.organization_id=p.organization_id
+    AND anchor.regulatory_program_id=p.id AND anchor.status IS DISTINCT FROM 'deleted'
+  LEFT JOIN client_workspaces cw ON cw.id=anchor.client_workspace_id AND cw.organization_id=p.organization_id
   WHERE p.id = $1 AND p.organization_id = $2 AND p.deleted_at IS NULL
   LIMIT 1`;
 
@@ -482,7 +481,15 @@ function jsonColumn(v: unknown): unknown {
   try { return JSON.parse(v); } catch { return null; }
 }
 
-/** The detail read model: the stored row plus the device fields intake keeps in
+/** Return only an exact recorded catalogue choice, never a legacy alias. */
+function exactRecordedFiling(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const stated = value.trim();
+  const entry = resolveFilingCatalogEntry(stated);
+  return entry && stated.toLowerCase() === entry.id ? entry.id : null;
+}
+
+/** The detail read model: the stored row plus the filing identity/device fields intake keeps in
  *  `metadata`, lifted to first-class keys. Nothing is invented: a program
  *  without a device taxonomy answers null for each field, and `metadata` itself
  *  is not exposed (it holds internal provenance such as createdVia). */
@@ -494,8 +501,13 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
     : {};
   const predicates = jsonColumn(rawPredicates);
   const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null);
+  // submission_type_id carries only the exact recorded catalogue choice;
+  // registry_id separately retains canonical program/agency fallback semantics.
   return {
     ...rest,
+    registry_id: meta.submissionTypeId != null && typeof meta.submissionTypeId !== 'string' ? null : registryContextForProgram({ submissionTypeId: str(meta.submissionTypeId),
+      programType: str(rest.program_type), primaryAgency: str(rest.primary_agency) })?.registryId ?? null,
+    submission_type_id: exactRecordedFiling(meta.submissionTypeId),
     product_type: str(rest.product_type),
     device_class: str(rest.device_class),
     regulatory_path: str(rest.regulatory_path),
@@ -518,8 +530,8 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
  * projection: a column nothing maintains is not offered to a reader.
  * `readinessAsOf` is when this read measured it, null with no figure.
  */
-async function readProgramDetail(id: string, orgId: number): Promise<Record<string, unknown> | null> {
-  const { rows } = await pool.query(PROGRAM_DETAIL_SQL, [id, orgId]);
+async function readProgramDetail(id: string, orgId: number, projectId: number): Promise<Record<string, unknown> | null> {
+  const { rows } = await pool.query(PROGRAM_DETAIL_SQL, [id, orgId, projectId]);
   if (!rows.length) return null;
   const figure = (await homeFigures([id], orgId)).get(id) ?? unread();
   return {
@@ -552,11 +564,12 @@ function readinessOfDetail(program: Record<string, unknown> | null): ReturnType<
 // Paged: ?limit= (default 50, max 200) and ?offset=. The read previously had no
 // LIMIT at all, so one org with a few thousand programs serialized its entire
 // portfolio into a single response on every render of the Projects surface.
-// meta.count means rows in THIS response. No client currently reads `meta` at
-// all — dataConnect's unwrapEnvelope returns `obj.data` and discards the rest —
-// so limit/offset/hasMore are there for the paging control the portfolio still
-// needs, not for something already consuming them. See the truncation note on
-// the handler below.
+// meta.count remains rows in THIS response; meta.counts holds complete
+// access-scoped counts and facets. Dossier readiness is bounded to this page.
+
+function missingPortfolioStore(err: unknown, pageRead: boolean): boolean {
+  return !pageRead && (err as {code?:string})?.code === '42P01';
+}
 
 router.get('/', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
@@ -568,34 +581,32 @@ router.get('/', async (req: Request, res: Response) => {
   // a portfolio that keeps showing finished submissions beside live ones is the
   // reason nobody archives anything.
   const includeArchived = String((req.query as any).includeArchived ?? '') === 'true';
+  let clientWorkspaceId: number | null;
+  try { clientWorkspaceId = portfolioClientFilter(req.query.clientWorkspaceId); }
+  catch { return send400(res, 'Client workspace must be a positive integer.'); }
+  let workstream: ReturnType<typeof portfolioWorkstreamFilter>;
+  let pathway: ReturnType<typeof portfolioPathwayFilter>;
+  try {
+    workstream = portfolioWorkstreamFilter(req.query.ws);
+    pathway = portfolioPathwayFilter(req.query.pathway);
+  } catch { return send400(res, 'Choose a listed workstream and pathway.'); }
+  let pageRead = false;
 
   try {
-    const scope = await getCurrentAccessibleProgramScope(pool, { organizationId: orgId, userId: resolveUserId(req) ?? undefined });
+    const identity = { organizationId: orgId, userId: resolveUserId(req) ?? undefined };
+    const scope = await getCurrentAccessibleProgramScope(pool, identity);
+    const anchors = verifiedProgramAnchors(pool, identity, scope);
+    if (clientWorkspaceId !== null) {
+      const workspace = await pool.query('SELECT id FROM client_workspaces WHERE id=$1 AND organization_id=$2 LIMIT 1', [clientWorkspaceId,orgId]);
+      if (workspace.rows.length === 0) return send404(res);
+    }
     // Fetch one row beyond the page so hasMore is a fact, not a second COUNT(*)
     // over the same predicate.
     const { rows } = await pool.query(
-      `SELECT p.id::text                                            AS id,
-              p.name                                                AS title,
-              ${WS_CASE}                                            AS ws,
-              COALESCE(p.code, '—')                                 AS code,
-              initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
-              p.status                                              AS status,
-              COALESCE(u.name, u.email, '—')                        AS lead,
-              NULL::text                                            AS blocker,
-              COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
-              -- The date itself, so the screen can count days to filing. \`due\`
-              -- is display text, and the "Filing < 60 days" figure that matched
-              -- it against /days/ could never be anything but 0.
-              to_char(p.target_submission_date, 'YYYY-MM-DD')      AS due_date,
-              'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
-         FROM regulatory_programs p
-         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
-        WHERE p.organization_id = $1 AND p.deleted_at IS NULL AND p.id=ANY($5::uuid[])
-          AND ($4::boolean OR p.status <> 'archived')
-        ORDER BY p.updated_at DESC
-        LIMIT $2 OFFSET $3`,
-      [orgId, limit + 1, offset, includeArchived, scope.programIds],
+      PROJECT_CARD_LIST_SQL,
+      [orgId, limit + 1, offset, includeArchived, scope.programIds, portfolioAnchorJson(anchors), clientWorkspaceId, workstream, pathway],
     );
+    pageRead = true;
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
 
@@ -609,14 +620,16 @@ router.get('/', async (req: Request, res: Response) => {
       Object.assign(p, readinessFields(figures.get(p.id) ?? unread()));
     }
 
-    await requireProgramScopeStillCurrent(pool, { organizationId: orgId, userId: resolveUserId(req) ?? undefined }, scope);
+    const counts = await readPortfolioCounts(pool, {organizationId:orgId, anchors, includeArchived, clientWorkspaceId, workstream, pathway});
+    const clients = await readPortfolioClients(pool, orgId, anchors, includeArchived);
+    await requireProgramScopeStillCurrent(pool, identity, scope);
     return res.json({
       data: page,
-      meta: { count: page.length, limit, offset, hasMore, scope: scope.scope, reconciliationRequired: scope.reconciliationRequired },
+      meta: { count: page.length, limit, offset, hasMore, counts, ...clients, scope: scope.scope, reconciliationRequired: scope.reconciliationRequired },
     });
   } catch (err: unknown) {
     if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
-    if ((err as { code?: string })?.code === '42P01') {
+    if (missingPortfolioStore(err, pageRead)) {
       return res.json({
         data: [],
         meta: { count: 0, limit, offset, hasMore: false, pendingStore: true },
@@ -703,9 +716,9 @@ router.post('/', async (req: Request, res: Response) => {
     : [];
 
   if (!name) return send400(res, 'name is required');
-  if (!programType) return send400(res, 'programType is required');
+  if (!programType) return send400(res, 'A filing type is required.');
   if (!VALID_PROGRAM_TYPES.has(programType)) {
-    return send400(res, `programType must be one of: ${[...VALID_PROGRAM_TYPES].join(', ')}`);
+    return send400(res, `The filing type must be one of: ${[...VALID_PROGRAM_TYPES].join(', ')}`);
   }
   // A filing the product does not offer in this market is refused, with the
   // verdict's own reason (WORKFLOW_DECISION_2026-10-08 §4 Q2; FILING_SPINE F19,
@@ -756,9 +769,9 @@ router.post('/', async (req: Request, res: Response) => {
     // documented PENDING_STORE contract rather than reporting a missing table
     // as a billing refusal.
     if ((e as { code?: string })?.code === '42P01') {
-      const pending = await pendingStore(e, 'the licensed-program quota check', req);
+      const pending = await pendingStore(e, 'the licensed-project quota check', req);
       if (pending) return res.status(503).json(pending);
-      return serverError(res, logger, 'the licensed-program quota check', e);
+      return serverError(res, logger, 'checking the licensed-project quota', e);
     }
     throw e;
   }
@@ -768,7 +781,7 @@ router.post('/', async (req: Request, res: Response) => {
         error: 'QUOTA_EXCEEDED',
         message:
           `This organization has ${quota.currentCount} of ${quota.maxAllowed} licensed ` +
-          'programs. Archive a program or raise the plan limit to create another.',
+          'projects. Archive a project or raise the plan limit to create another.',
       });
     }
     logger.warn(
@@ -1048,30 +1061,14 @@ router.post('/', async (req: Request, res: Response) => {
     // Re-read through the EXACT projection the list uses, so the client receives
     // the new card in its display contract (id, title, ws, code, stage, …).
     const { rows } = await pool.query(
-      `SELECT p.id::text                                            AS id,
-              p.name                                                AS title,
-              ${WS_CASE}                                            AS ws,
-              COALESCE(p.code, '—')                                 AS code,
-              initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
-              p.status                                              AS status,
-              COALESCE(u.name, u.email, '—')                        AS lead,
-              NULL::text                                            AS blocker,
-              COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
-              -- The date itself, so the screen can count days to filing. \`due\`
-              -- is display text, and the "Filing < 60 days" figure that matched
-              -- it against /days/ could never be anything but 0.
-              to_char(p.target_submission_date, 'YYYY-MM-DD')      AS due_date,
-              'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
-         FROM regulatory_programs p
-         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
-        WHERE p.id = $1 AND p.organization_id = $2`,
-      [newId, orgId],
+      PROJECT_CARD_CREATED_SQL,
+      [newId, orgId, portfolioAnchorJson([{programId:newId,projectId:projectAnchor.projectId,clientWorkspaceId:projectAnchor.clientWorkspaceId ?? null}])],
     );
     // The stored program through the SAME projection and serializer the read
     // uses — so a client that just created a 510(k) sees its class, product
     // code and predicate without a second round trip, and the create can never
     // return a field the read then omits.
-    const program = await readProgramDetail(newId, orgId);
+    const program = await readProgramDetail(newId, orgId, projectAnchor.projectId);
     if (!rows[0] || !program) throw new Error('The committed project details could not be read');
     return res.status(201).json({
       data: rows[0] ? { ...rows[0], ...readinessOfDetail(program) } : rows[0],
@@ -1139,7 +1136,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   try {
     // One projection and one serializer, shared with the create's 201 — see
     // PROGRAM_DETAIL_SQL / serializeProgramDetail above.
-    const program = await readProgramDetail(id, orgId);
+    const program = await readProgramDetail(id, orgId, res.locals.currentProgramAccess.projectId);
     if (!program) return send404(res);
     // Whether this caller may change the project (add a market, close it out), by the same decision the
     // writes take, so a screen can say so before a form rather than meet a 403 after it.
@@ -1165,9 +1162,26 @@ router.get('/:id/dossier', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
-    return res.json(await readDossier(pool, orgId, String(req.params.id)));
+    const q = requestPgClient(req);
+    const identity = { organizationId: orgId, userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) };
+    const scope = await getCurrentAccessibleProgramScope(q, identity);
+    const anchors = verifiedProgramAnchors(q, identity, scope);
+    const anchor = anchors[0];
+    const admitted = res.locals.currentProgramAccess;
+    // A fresh scope must still name the exact relationship admitted by the
+    // param middleware before any source is read. Never switch anchors/clients.
+    if (!admitted || anchors.length !== 1 || !anchor ||
+        anchor.programId !== admitted.programId || anchor.projectId !== admitted.projectId ||
+        anchor.clientWorkspaceId !== admitted.clientWorkspaceId ||
+        scope.actor.userId !== admitted.actor.userId || scope.actor.role !== admitted.actor.role) {
+      throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed during the read. No project data was supplied.');
+    }
+    const dossier = await readDossier(q, orgId, identity.programId);
+    const { artifactReadiness, sectionTracking } = await readDossierSupporting(q, orgId, admitted);
+    await requireProgramScopeStillCurrent(q, identity, scope);
+    return res.json({ ...dossier, artifactReadiness, supportingReadiness: { sectionTracking } });
   } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
     return serverError(res, logger, 'reading the dossier', err, { programId: String(req.params.id) });
   }
 });

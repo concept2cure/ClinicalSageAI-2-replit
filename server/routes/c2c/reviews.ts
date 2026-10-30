@@ -30,6 +30,7 @@ import {
   concept2cureArtifacts,
   concept2cureNotifications,
   concept2cureProvenanceEvents,
+  concept2cureReviewAssignments,
   concept2cureReviewTasks,
   concept2cureReviewThreads,
   concept2cureThreadComments,
@@ -46,7 +47,7 @@ import {
   sendError,
   sendSuccess,
 } from './shared';
-import { verifyProjectAccess } from './project-access';
+import { admittedProjectId, projectAdmissionMiddleware, verifyProjectAccess } from './project-access';
 import { looksLikeProgramUuid } from '../../lib/project-id';
 import { resolveProgramProjectAnchor } from '../../services/c2c/program-project-anchor';
 import { createNotification, upsertProjectWorkItem } from './notifications';
@@ -63,6 +64,20 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+
+/* Every /projects/:projectId route admits the project first (D6,
+   docs/evidence/D6-PROJECT-WRITE-GATES/2026-10-29/). Creating a review thread
+   or task checked read access and the role table only, so a member without
+   edit permission and any caller of an archived project wrote them. Both are
+   review acts and are admitted in review mode: a viewer and an archived
+   project are refused, and the reviewer a live assignment admits is not. The
+   reads keep read mode. */
+router.param('projectId', projectAdmissionMiddleware({
+  routes: {
+    'POST /projects/:projectId/artifacts/:artifactId/review-threads': 'review',
+    'POST /projects/:projectId/artifacts/:artifactId/review-tasks': 'review',
+  },
+}));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PHASE 13 — REVIEW THREADS, COMMENTS & TASKS
@@ -183,7 +198,9 @@ router.get(
         .where(
           and(
             eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            // The admitted project's own artifact, never another project's through this URL.
+            eq(concept2cureArtifacts.projectId, admittedProjectId(req))
           )
         )
         .limit(1);
@@ -287,7 +304,9 @@ router.post(
         .where(
           and(
             eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            // The admitted project's own artifact, never another project's through this URL.
+            eq(concept2cureArtifacts.projectId, projectDbId)
           )
         )
         .limit(1);
@@ -1115,7 +1134,9 @@ router.get('/projects/:projectId/artifacts/:artifactId/review-record/export', as
       .where(
         and(
           eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-          eq(concept2cureArtifacts.organizationId, organizationId)
+          eq(concept2cureArtifacts.organizationId, organizationId),
+          // The admitted project's own artifact, never another project's through this URL.
+          eq(concept2cureArtifacts.projectId, admittedProjectId(req))
         )
       )
       .limit(1);
@@ -1153,7 +1174,9 @@ router.get(
         .where(
           and(
             eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            // The admitted project's own artifact, never another project's through this URL.
+            eq(concept2cureArtifacts.projectId, admittedProjectId(req))
           )
         )
         .limit(1);
@@ -1233,7 +1256,9 @@ router.post(
         .where(
           and(
             eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            // The admitted project's own artifact, never another project's through this URL.
+            eq(concept2cureArtifacts.projectId, projectDbId)
           )
         )
         .limit(1);
@@ -1751,7 +1776,7 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const onProject = await inboxProjectFilter(req.query.programId, organizationId);
-    if (onProject === false) return sendError(res, 400, 'programId must be a program id');
+    if (onProject === false) return sendError(res, 400, 'The project id is not valid.');
     // A program with no project record has no review threads or tasks to read.
     const unanchored = onProject === null;
 
@@ -2279,5 +2304,68 @@ async function suppressNotificationsForSource(params: {
     logger.warn('Failed to suppress notifications', { error: (err as Error).message });
   }
 }
+
+/* Moved verbatim from routes/c2c/haq-sessions.ts (P-39 step 4, 2026-10-30), which is
+   deleted: the HAQ session store converged onto the project inbox
+   (docs/design/HAQ_SIGNED_ANSWERS_2026-10-15.md §3). */
+/**
+ * GET /api/concept2cure/reviews/pending
+ * Reviewer dashboard: list all pending review assignments for the current user.
+ */
+router.get('/reviews/pending', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+
+    const pendingAssignments = await db
+      .select({
+        assignmentId: concept2cureReviewAssignments.assignmentId,
+        artifactId: concept2cureArtifacts.artifactId,
+        artifactTitle: concept2cureArtifacts.title,
+        artifactStatus: concept2cureArtifacts.status,
+        artifactVersion: concept2cureArtifacts.version,
+        reviewRound: concept2cureReviewAssignments.reviewRound,
+        status: concept2cureReviewAssignments.status,
+        dueDate: concept2cureReviewAssignments.dueDate,
+        notes: concept2cureReviewAssignments.notes,
+        createdAt: concept2cureReviewAssignments.createdAt,
+        projectId: concept2cureArtifacts.projectId,
+      })
+      .from(concept2cureReviewAssignments)
+      .innerJoin(
+        concept2cureArtifacts,
+        eq(concept2cureArtifacts.id, concept2cureReviewAssignments.artifactId)
+      )
+      .where(
+        and(
+          eq(concept2cureReviewAssignments.reviewerId, userId),
+          eq(concept2cureReviewAssignments.organizationId, organizationId),
+          inArray(concept2cureReviewAssignments.status, ['pending', 'in_progress']),
+          eq(concept2cureArtifacts.status, 'review')
+        )
+      )
+      .orderBy(concept2cureReviewAssignments.dueDate, concept2cureReviewAssignments.createdAt);
+
+    return sendSuccess(res, {
+      totalPending: pendingAssignments.length,
+      assignments: pendingAssignments.map(a => ({
+        assignmentId: a.assignmentId,
+        artifactId: a.artifactId,
+        artifactTitle: a.artifactTitle,
+        artifactStatus: a.artifactStatus,
+        artifactVersion: a.artifactVersion,
+        projectId: a.projectId,
+        reviewRound: a.reviewRound,
+        status: a.status,
+        dueDate: a.dueDate,
+        notes: a.notes,
+        createdAt: a.createdAt,
+      })),
+    });
+  } catch (error: any) {
+    logConcept2cureError('pending reviews', error);
+    return sendError(res, 500, 'Failed to fetch pending reviews');
+  }
+});
 
 export default router;

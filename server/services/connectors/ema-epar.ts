@@ -54,14 +54,18 @@ export class EMAEPARConnector implements DataConnector {
 
   async fetch(resourceId: string): Promise<ConnectorDocument> {
     const id = resourceId.replace('ema:', '');
+    const result = await searchEmaEpar({ query: id, pageSize: 1 });
+    if (result.status !== 'ok') throw new Error(result.message ?? 'EMA EPAR search failed');
+    const medicine = result.medicines.find(m => m.productNumber === id);
+    if (!medicine) throw new Error(`EMA product ${id} not found`);
     return {
       id: resourceId,
       sourceConnector: this.id,
-      title: `EMA EPAR ${id}`,
-      type: 'epar',
-      content: JSON.stringify({ id, note: 'Full EPAR document retrieval requires PDF download from EMA website' }),
-      metadata: { productNumber: id },
-      url: `https://www.ema.europa.eu/en/medicines/human/EPAR/`,
+      title: medicine.medicineName,
+      type: 'epar_metadata',
+      content: JSON.stringify(medicine),
+      metadata: { ...medicine, source: EMA_EPAR_SOURCE, acquisitionStatus: 'listed_only' },
+      url: medicine.url,
       retrievedAt: new Date(),
     };
   }

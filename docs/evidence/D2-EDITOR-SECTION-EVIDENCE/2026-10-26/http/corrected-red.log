@@ -1,0 +1,175 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-10-26T17:36:30.858Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T17:36:30.860Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-10-26T17:36:30.860Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-10-26T17:36:31.207Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
+✅ Template tables initialized
+
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > previews an ordered mixed unfiled Data Room/Vault set without copying source prose or writing rows
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > records reference intent even when every selected section is preserved, with no new text or genesis
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > rejects a same-length data-room extraction correction and rolls back the entire source-bound build
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > rejects a same-length vault extraction correction and rolls back the entire source-bound build
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > reuses the exact bounded preview span despite a later query and rejects a forged excerpt receipt
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > refuses another project source and never reads its body
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > fails the selected set when one source becomes unreadable instead of silently dropping it
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a withdrawn selected Data Room record without appending anything
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a superseded selected Data Room record without appending anything
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a checksum selected Data Room record without appending anything
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rechecks current source-parent access after reading and withholds an asynchronously revoked source
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses an explicitly empty catalogue selection instead of silently building without its sources
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > previews without writes and preserves normalized existing identities/content/order
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > assembles one selected section and a later unchanged preserved-only plan writes nothing
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale text without changing any saved row
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale order without changing any saved row
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale title without changing any saved row
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale template without changing any saved row
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale guidance without changing any saved row
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses viewer changes after preview
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses disabled changes after preview
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses private changes after preview
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses grant changes after preview
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses frozen changes after preview
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses a foreign template, foreign project and a same-organization different project target
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order null without renumbering
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order 2147483647 without renumbering
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses normalized duplicate template codes and a missing selected code
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > preserves builtin empty structure and exact recorded guidance without changing the parent template identity
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > uses Canadian drafting scope and refuses a module mismatch instead of assuming FDA
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > keeps preparation templates in manual mode and rejects a recorded regional conflict
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses common sections in a bound market copy using the canonical filing rule
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > refuses both preview and direct commit for a Japanese template on the Canadian home filing without writes or source reads
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact ninsho / jp_rcb preparation outline manually
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > refuses a recorded binding in another tenant
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > refuses a recorded binding in another project
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > refuses a stale plan when the binding class changes even though the common template remains applicable
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_STRATEGY with retained source intent and parent identity
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_GAP_ANALYSIS with retained source intent and parent identity
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_COMPETITIVE with retained source intent and parent identity
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_HA_MEETING with retained source intent and parent identity
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > refuses an internal outline on a bound ind/fda filing before sources or writes
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > refuses an internal outline on a bound mdl/hc filing before sources or writes
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_STRATEGY section source and limit after HTTP assembly into a blank no-parent document
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_GAP_ANALYSIS section source and limit after HTTP assembly into a blank no-parent document
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_COMPETITIVE section source and limit after HTTP assembly into a blank no-parent document
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_HA_MEETING section source and limit after HTTP assembly into a blank no-parent document
+ × server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later data-room excerpt from canonical template title through preview, commit and replay 318ms
+   → expected 0 to be greater than 8000
+ × server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later vault excerpt from canonical template title through preview, commit and replay 147ms
+   → expected 0 to be greater than 8000
+ × server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later data-room excerpt from canonical template guidance through preview, commit and replay 243ms
+   → expected 31 to be greater than 8000
+ × server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later vault excerpt from canonical template guidance through preview, commit and replay 214ms
+   → expected 31 to be greater than 8000
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > whole-document and unmatched section excerpts retain opening fallback > keeps the opening for document without copying source prose 217ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > whole-document and unmatched section excerpts retain opening fallback > keeps the opening for unmatched section without copying source prose 152ms
+ × server/routes/__tests__/authoring-assembly.pglite.test.ts > invalid assembly structure is refused before selected source bodies are read > refuses missing section before reading source content 102ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/authoring-assembly.pglite.test.ts > invalid assembly structure is refused before selected source bodies are read > refuses duplicate template codes before reading source content 91ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/authoring-assembly.pglite.test.ts > invalid assembly structure is refused before selected source bodies are read > refuses ambiguous saved codes before reading source content 96ms
+   → expected true to be false // Object.is equality
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact US_IND drafting region FDA
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact CA_CTA drafting region Health Canada
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact EU_MAA drafting region EMA
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact JP_CTN drafting region PMDA
+ ↓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later data-room excerpt from canonical template title through preview, commit and replay
+ FAIL  server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later vault excerpt from canonical template title through preview, commit and replay
+AssertionError: expected 0 to be greater than 8000
+ ❯ server/routes/__tests__/_authoring-assembly-section-source-cases.ts:71:28
+     69|         else expect(planned.rows[0].draftingGuidance).toContain('preci…
+     70|         const entry = planned.sources!.entries[0]; const span = entry.…
+     71|         expect(span.start).toBeGreaterThan(8000);
+       |                            ^
+     72|         expect(span.end - span.start).toBeLessThanOrEqual(8000);
+     73|         expect(span.totalChars).toBe(text.length);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later data-room excerpt from canonical template guidance through preview, commit and replay
+ FAIL  server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later vault excerpt from canonical template guidance through preview, commit and replay
+AssertionError: expected 31 to be greater than 8000
+ ❯ server/routes/__tests__/_authoring-assembly-section-source-cases.ts:71:28
+     69|         else expect(planned.rows[0].draftingGuidance).toContain('preci…
+     70|         const entry = planned.sources!.entries[0]; const span = entry.…
+     71|         expect(span.start).toBeGreaterThan(8000);
+       |                            ^
+     72|         expect(span.end - span.start).toBeLessThanOrEqual(8000);
+     73|         expect(span.totalChars).toBe(text.length);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/routes/__tests__/authoring-assembly.pglite.test.ts > invalid assembly structure is refused before selected source bodies are read > refuses missing section before reading source content
+ FAIL  server/routes/__tests__/authoring-assembly.pglite.test.ts > invalid assembly structure is refused before selected source bodies are read > refuses duplicate template codes before reading source content
+ FAIL  server/routes/__tests__/authoring-assembly.pglite.test.ts > invalid assembly structure is refused before selected source bodies are read > refuses ambiguous saved codes before reading source content
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/__tests__/_authoring-assembly-section-source-cases.ts:121:102
+    119|       const response = await f.preview({ ...args, sources: [source] });
+    120|       expect(response.status, JSON.stringify(response.body)).toBe(prob…
+    121|       expect(f.getStatements().some(sql => /\bFROM (?:public\.)?cre_ev…
+       |                                                                                                      ^
+    122|       expect(f.getStatements().some(sql => /^\s*(INSERT|UPDATE|DELETE)…
+    123|       expect(await f.stored()).toEqual(before); expect(await f.evidenc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed | 65 skipped (74)
+   Start at  17:36:28
+   Duration  10.20s (transform 4.20s, setup 128ms, import 4.19s, tests 5.50s, environment 0ms)
+

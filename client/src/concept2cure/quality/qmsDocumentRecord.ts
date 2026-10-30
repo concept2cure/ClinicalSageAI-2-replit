@@ -1,4 +1,5 @@
-import type {DocStatus,DocType,PeriodicReviewSummary,QmsDoc} from './data';
+import type {DocStatus,DocType,PeriodicReviewSummary,QmsDoc,RegisterSignature} from './data';
+import type {RouteRoundView} from '../v2/reviewRoute/routeRound';
 export interface ServerDoc {
   id:number;doc_number:string;title:string;doc_type:string;category:string|null;version:string;status:string;
   effective_date:string|null;next_review_date:string|null;updated_at:string|null;authoring_document_id?:string|null;
@@ -9,6 +10,10 @@ export interface ServerDoc {
   next_review_due?:string|null;
   periodic_review?:{signatureId:number;outcome:PeriodicReviewSummary['outcome'];reviewedAt:string;reviewerName:string|null;reason?:string|null;
     nextReviewDate:string|null;version:string}|null;
+  /** The latest review route and its round (RR4); `review_route_unread` when it could not be read. */
+  review_route?:RouteRoundView|null;review_route_unread?:boolean;
+  /** §11.50 (server register-signatures.ts): the approval in force, and a retired document's retirement. */
+  approval_signature?:RegisterSignature|null;retirement_signature?:RegisterSignature|null;
 }
 /** The last signed periodic review, as the register shows it. */
 export function adaptPeriodicReview(r:ServerDoc):PeriodicReviewSummary|null {
@@ -24,5 +29,6 @@ export function adaptDoc(r:ServerDoc):QmsDoc {
     version:r.version,status:r.status as DocStatus,effectiveDate:r.effective_date,nextReviewDate:nextReviewDueOf(r),
     updatedAt:r.updated_at,authoringDocumentId:r.authoring_document_id??null,programId:r.metadata?.programId??null,
     inForce:r.in_force?{version:r.in_force.version,effectiveDate:r.in_force.effectiveDate??null}:null,lastReview:adaptPeriodicReview(r),
-    signedReviewDate:r.next_review_date};
+    signedReviewDate:r.next_review_date,reviewRoute:r.review_route??null,reviewRouteUnread:r.review_route_unread===true,
+    approvalSignature:r.approval_signature??null,retirementSignature:r.retirement_signature??null};
 }

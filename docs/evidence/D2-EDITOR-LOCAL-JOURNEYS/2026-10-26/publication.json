@@ -1,0 +1,32 @@
+{
+  "utc": "2026-10-26T15:48:15.260255+00:00",
+  "acceptedCodeCommit": "2af4894eebb52fe83ff16a1d14f5796bbab21adc",
+  "fetchedCanonicalCommit": "2af4894eebb52fe83ff16a1d14f5796bbab21adc",
+  "branch": "concept2cure-v2",
+  "normalPushReceipt": "canonical-push.json",
+  "pushExit": 0,
+  "compilerErrors": 0,
+  "compilerExit": 0,
+  "gitBlobVerification": "accepted-git-blobs.json",
+  "rootDeclaredInputs": 50,
+  "browserDeclaredInputs": {
+    "production": 29,
+    "shared": 3,
+    "fixtures": 11
+  },
+  "distinctGitInputsVerified": 77,
+  "inputDrift": [],
+  "sourceCommit": "4d8cf50d0",
+  "normalIncoming": "b3661f72d",
+  "ancestryVerified": true,
+  "tests": {
+    "selectedSource": 161,
+    "editorIntegration": 221,
+    "disjointTotal": 382
+  },
+  "browserCases": 44,
+  "humanCasesNotRun": 106,
+  "ownedBrowserServersStopped": true,
+  "verificationHelperNote": "Fixture keys are relative to browser/; normalized before Git-object reads after initial bare-path lookup failure. No source or qualification change.",
+  "scope": "Local automated component/browser synthetic HTTP; no human/provider/agency/deployment qualification."
+}

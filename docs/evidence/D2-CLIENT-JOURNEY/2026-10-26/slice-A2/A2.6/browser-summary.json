@@ -1,0 +1,20 @@
+{
+  "stats": {
+    "startTime": "2026-10-26T19:08:02.517Z",
+    "duration": 28377.583,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "tests": [
+    {
+      "title": "Author shows its governed section details and hands the critical path to AnA",
+      "status": "expected"
+    },
+    {
+      "title": "the project chip and a reload remember Plan after starting a document",
+      "status": "expected"
+    }
+  ]
+}

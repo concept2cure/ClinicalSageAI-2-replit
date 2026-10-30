@@ -119,7 +119,7 @@ export function applicationNotReadable(): CompositionRefusal {
   return {
     code: 'CMC_APPLICATION_NOT_READABLE',
     message:
-      `This program's submission could not be read, so whether it files a US IND is not established, and ` +
+      `This project's submission could not be read, so whether it files a US IND is not established, and ` +
       `Module 3 is not composed on an unestablished application type — a marketing application's content ` +
       `differs from an IND's. Try again; if it persists, the failure is in the server log.`,
   };
@@ -136,9 +136,9 @@ export function programNotRecorded(): CompositionRefusal {
   return {
     code: 'CMC_PROGRAM_NOT_RECORDED',
     message:
-      `This project is not one of this organisation's regulatory programs, so the application it files is not ` +
-      `recorded, and Module 3 is composed here only for a program recorded as filing a US IND. Open the ` +
-      `program this project belongs to and work on its Module 3 there.`,
+      `This tracking record is not one of this organisation's projects, so the application it files is not ` +
+      `recorded, and Module 3 is composed here only for a project recorded as filing a US IND. Open the ` +
+      `project this tracking record belongs to and work on its Module 3 there.`,
   };
 }
 
@@ -214,9 +214,9 @@ export function studyFiledUnderNoProgram(studyIds: readonly number[]): Compositi
     code: 'CMC_MODALITY_NOT_ESTABLISHED',
     modality: 'unknown',
     message:
-      `${which} filed under no program, so whether the product is a small molecule is not established, and an ` +
+      `${which} filed under no project, so whether the product is a small molecule is not established, and an ` +
       `ICH Q1E shelf life is produced here only for a small-molecule product of a US IND. File the study under ` +
-      `its program, then estimate again.`,
+      `its project, then estimate again.`,
   };
 }
 
@@ -266,7 +266,7 @@ export function compositionRefusal(
       code: 'CMC_PRODUCT_CLASS_OUT_OF_SCOPE',
       productType,
       message:
-        `This program records its product as a ${declared}, and Module 3 is composed here only for a drug ` +
+        `This project records its product as a ${declared}, and Module 3 is composed here only for a drug ` +
         `(a small-molecule medicinal product). A biologic's quality requirements are ICH Q6B, Q5A(R2) and Q5C ` +
         `and its cell-bank sections; a device or IVD files no CTD Module 3 at all. ${AUTHORED_INSTEAD}`,
     };
@@ -280,7 +280,7 @@ export function compositionRefusal(
       code: 'CMC_MODALITY_OUT_OF_SCOPE',
       modality: 'biologic',
       message:
-        `This program's drug substance is biologically derived — ${verdict.basis} — and Module 3 for a biologic ` +
+        `This project's drug substance is biologically derived — ${verdict.basis} — and Module 3 for a biologic ` +
         `is not composed here. The quality requirements are ICH Q6B (specifications), Q5A(R2) (viral safety), ` +
         `Q5C (stability) and the cell-bank sections, none of which this composer models; composing anyway would ` +
         `apply small-molecule impurity reasoning (ICH Q3A) to a biologic. ${AUTHORED_INSTEAD}`,
@@ -293,11 +293,11 @@ export function compositionRefusal(
       modality: 'unknown',
       message:
         substance
-          ? `Whether this program's drug substance is a small molecule is not established — ${verdict.basis}. ` +
+          ? `Whether this project's drug substance is a small molecule is not established — ${verdict.basis}. ` +
             `Module 3 is composed only for a small-molecule substance, and that is not a question this platform ` +
             `will answer by assumption. Record the manufacturing route on the drug substance, and the source ` +
             `organism or cell line where one is used, then compile again.`
-          : `This program records no drug substance, so whether its Module 3 is composable here is not ` +
+          : `This project records no drug substance, so whether its Module 3 is composable here is not ` +
             `established. Record the drug substance in the CMC registers, then compile again.`,
     };
   }
@@ -325,7 +325,7 @@ export function applicationRefusal(
   }
 
   if (!isUsClinicalTrialApplication(filed)) {
-    const subject = filer === 'program' ? 'This program files' : 'This submission files';
+    const subject = filer === 'program' ? 'This project files' : 'This submission files';
     const verb = filer === 'program' ? 'composed' : 'composed and placed';
     return {
       code: 'CMC_APPLICATION_OUT_OF_SCOPE',

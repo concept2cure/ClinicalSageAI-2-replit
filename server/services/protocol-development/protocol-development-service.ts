@@ -202,14 +202,14 @@ export async function fileProtocolProgramTx(client: Queryable, orgId: number, do
   assertEditable(doc.status);
   await requireProtocolProgramWriteTx(client, orgId, actorUserId, programId);
   if (doc.programId && doc.programId.toLowerCase() !== programId.toLowerCase()) {
-    throw new ProtocolDevError('BAD_INPUT', 'This protocol is already filed in another program and cannot be moved here.');
+    throw new ProtocolDevError('BAD_INPUT', 'This protocol is already filed in another project and cannot be moved here.');
   }
   const bound = await client.query(`SELECT study_design_id FROM protocol_documents WHERE id=$1 AND organization_id=$2`, [docId, orgId]);
   const studyId = bound.rows[0]?.study_design_id;
   if (studyId) {
     const design = await client.query(`SELECT to_jsonb(cdisc_prm_studies)->>'program_id' AS program_id FROM cdisc_prm_studies WHERE study_id=$1 AND tenant_id=$2`, [studyId, orgId]);
     if (design.rows.length !== 1 || String(design.rows[0].program_id ?? '').toLowerCase() !== programId.toLowerCase()) {
-      throw new ProtocolDevError('BAD_INPUT', 'The bound study design is not filed in this program. Unbind it before filing this protocol, then bind a design from this program.');
+      throw new ProtocolDevError('BAD_INPUT', 'The bound study design is not filed in this project. Unbind it before filing this protocol, then bind a design from this project.');
     }
   }
   await client.query(`UPDATE protocol_documents SET program_id=$3, updated_at=now() WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL`, [docId, orgId, programId]);
@@ -252,7 +252,7 @@ export async function bindStudyDesignTx(
     throw new ProtocolDevError('NOT_FOUND', 'Study design not found for this organization.');
   }
   if (doc.programId && String(design.rows[0].program_id ?? '').toLowerCase() !== doc.programId.toLowerCase()) {
-    throw new ProtocolDevError('BAD_INPUT', 'The study design must belong to the same program as this protocol.');
+    throw new ProtocolDevError('BAD_INPUT', 'The study design must belong to the same project as this protocol.');
   }
 
   await client.query(

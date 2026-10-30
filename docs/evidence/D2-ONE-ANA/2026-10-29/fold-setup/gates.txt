@@ -1,0 +1,97 @@
+# Gates — Part 1, on 984913ea5 + this change
+
+=== ci:launch-scope-api
+ci:launch-scope-api: 547 API paths named by launch and shell screens; none refused. {"launch":497,"infrastructure":2,"never-gated":48}
+exit=0
+=== ci:ana-surface-context
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (75 surface file(s) hold a call).
+
+exit=0
+=== ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit=0
+=== ci:surface-discoverability
+
+[ci:surface-discoverability] OK — 115 renderable surface(s): 88 in the Apps catalog, 27 declared contextual.
+
+exit=0
+=== ci:launch-scope
+[ci:launch-scope] 7 apps · 50 surfaces · 12 modules · 33 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit=0
+=== check:microcopy
+[ci:microcopy] OK — scanned 730 customer-facing files, no exclamations or pictographs.
+exit=0
+=== ci:unreferenced-modules
+Unreferenced modules: 73 (baseline 73)
+
+OK: no new unreachable modules.
+exit=0
+
+# Gates — Part 2, on a254c975a + this change
+
+=== ci:launch-scope
+[ci:launch-scope] 7 apps · 49 surfaces · 12 modules · 33 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit=0
+=== ci:launch-scope:selftest
+✅ selftest: gate exits 1 and names 'ectd-compile' when it is missing from the 20260810 keep-list
+✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route
+✅ selftest: gate passes on the real tree
+exit=0
+=== ci:launch-scope-api
+ci:launch-scope-api: 547 API paths named by launch and shell screens; none refused. {"launch":497,"infrastructure":2,"never-gated":48}
+exit=0
+=== ci:launch-scope-api:selftest
+  ✓ an MDX feature with no component mapping fails closed
+
+selftest PASSED — the gate flags a launch screen that production would refuse.
+exit=0
+=== ci:ana-surface-context
+  several, and a child can publish for a parent that has no call of its own
+  (75 surface file(s) hold a call).
+
+exit=0
+=== ci:surface-discoverability
+
+[ci:surface-discoverability] OK — 114 renderable surface(s): 88 in the Apps catalog, 26 declared contextual.
+
+exit=0
+=== ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 440 migrations, 42 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+=== ci:migration-drop-safety:selftest
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+exit=0
+=== ci:migration-set-order
+[ci:migration-set-order] OK — 440 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit=0
+=== ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 103 baselined file(s) on no deploy path, none new.
+exit=0
+=== check:catalog-copy
+[ci:catalog-copy] OK — 114 catalog description(s) across 3 migration(s) read as product copy.
+exit=0
+=== ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+exit=0
+=== ci:sql-interpolation
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1058 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+exit=0
+=== ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit=0
+=== ci:unreferenced-modules
+Unreferenced modules: 73 (baseline 73)
+
+OK: no new unreachable modules.
+exit=0
+=== check:microcopy
+[ci:microcopy] OK — scanned 730 customer-facing files, no exclamations or pictographs.
+exit=0

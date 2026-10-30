@@ -1,0 +1,202 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5211/api/mdx/qms/documents/3/approve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "mfaToken": "[REDACTED]",
+      "meaning": "APPROVED",
+      "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+      "effectiveDate": "2026-10-29"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 541,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 3,
+        "organization_id": 2,
+        "doc_number": "SOP-OQ-B-20261029202431",
+        "title": "OQ-006 Second SOP 20261029202431",
+        "doc_type": "sop",
+        "category": "production",
+        "version": "1.0",
+        "status": "effective",
+        "effective_date": "2026-10-29T00:00:00.000Z",
+        "next_review_date": "2026-11-03T00:00:00.000Z",
+        "author_id": 1,
+        "approver_id": 2,
+        "approved_at": "2026-10-29T20:26:30.809Z",
+        "superseded_by_id": null,
+        "artifact_id": null,
+        "metadata": {
+          "approval": {
+            "at": "2026-10-29T20:26:30.809+00:00",
+            "by": 2,
+            "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+            "meaning": "APPROVED",
+            "bindingBasis": "qms-document-version-content-sha256",
+            "contentDigest": "587d6861f91d9f9ae3a73125d2c533673e15ca5ab621444162f81345f0b6318a",
+            "twoPersonRule": "enforced"
+          },
+          "sections": [
+            {
+              "key": "purpose",
+              "hint": "Why this document exists and what it governs.",
+              "label": "Purpose",
+              "order": 1
+            },
+            {
+              "key": "scope",
+              "hint": "What and who it applies to, with explicit exclusions.",
+              "label": "Scope",
+              "order": 2
+            },
+            {
+              "key": "responsibilities",
+              "hint": "Roles accountable for each step.",
+              "label": "Responsibilities",
+              "order": 3
+            },
+            {
+              "key": "definitions",
+              "hint": "Terms, abbreviations, and acronyms used.",
+              "label": "Definitions",
+              "order": 4
+            },
+            {
+              "key": "procedure",
+              "hint": "The step-by-step controlled process.",
+              "label": "Procedure",
+              "order": 5
+            },
+            {
+              "key": "references",
+              "hint": "Regulations, standards, and linked documents.",
+              "label": "References",
+              "order": 6
+            },
+            {
+              "key": "attachments",
+              "hint": "Forms, templates, and records this document produces.",
+              "label": "Attachments",
+              "order": 7
+            },
+            {
+              "key": "revision_history",
+              "hint": "Version, date, author, and a summary of each change.",
+              "label": "Revision history",
+              "order": 8
+            },
+            {
+              "key": "approval",
+              "hint": "Author, reviewer, and approver signatures.",
+              "label": "Approval",
+              "order": 9
+            }
+          ],
+          "programId": "8f0b7b0c-e896-4923-b9a3-36743c9cf472",
+          "templateKey": "sop",
+          "authoringContent": {
+            "title": "OQ-006 Second SOP 20261029202431",
+            "sections": [
+              {
+                "id": "e94b5b2c-d702-42a1-9b59-9c77c1b5589f",
+                "code": "qms-purpose",
+                "title": "Purpose",
+                "content": "<p>OQ-006 Second SOP 20261029202431: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+                "orderIndex": 1
+              },
+              {
+                "id": "3f919c9b-ef88-406c-a4dc-7c0f59eb576d",
+                "code": "qms-scope",
+                "title": "Scope",
+                "content": "",
+                "orderIndex": 2
+              },
+              {
+                "id": "2cc00486-3fb5-4228-bfec-babeb8ffe518",
+                "code": "qms-responsibilities",
+                "title": "Responsibilities",
+                "content": "",
+                "orderIndex": 3
+              },
+              {
+                "id": "5e4b4280-73ba-4e04-bd06-49486bc5b792",
+                "code": "qms-definitions",
+                "title": "Definitions",
+                "content": "",
+                "orderIndex": 4
+              },
+              {
+                "id": "67b3d835-3a58-4007-bf0b-fa6913d5d139",
+                "code": "qms-procedure",
+                "title": "Procedure",
+                "content": "",
+                "orderIndex": 5
+              },
+              {
+                "id": "60e446e2-c743-4e62-a239-efda8f006ffc",
+                "code": "qms-references",
+                "title": "References",
+                "content": "",
+                "orderIndex": 6
+              },
+              {
+                "id": "ddb822ac-a972-4f77-ae0c-52f897905933",
+                "code": "qms-attachments",
+                "title": "Attachments",
+                "content": "",
+                "orderIndex": 7
+              },
+              {
+                "id": "c417abc5-566a-434a-9fd6-e807798233b6",
+                "code": "qms-revision_history",
+                "title": "Revision history",
+                "content": "",
+                "orderIndex": 8
+              },
+              {
+                "id": "9cb7bb65-3e06-4731-bbd7-90c0aa0d1284",
+                "code": "qms-approval",
+                "title": "Approval",
+                "content": "",
+                "orderIndex": 9
+              }
+            ],
+            "programId": "8f0b7b0c-e896-4923-b9a3-36743c9cf472",
+            "documentId": "a8ea8403-b396-466b-a058-ae7c0ffb1844"
+          }
+        },
+        "created_at": "2026-10-29T20:25:32.282Z",
+        "updated_at": "2026-10-29T20:26:30.791Z",
+        "deleted_at": null,
+        "authoring_document_id": "a8ea8403-b396-466b-a058-ae7c0ffb1844"
+      },
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        },
+        "signature": {
+          "id": 7,
+          "signedAt": "2026-10-29T20:26:30.809Z",
+          "actionId": "act_36e0d9c1764444b59db4520e79813ba7",
+          "auditId": "be7e05e4-34a2-4a8e-8e67-e9108b2fad00",
+          "sha256Chain": "e964dba9024836c2d87f457ad45e80f1bc2a591fd9200f3db68fc4aeaf08ccb5",
+          "meaning": "APPROVED",
+          "boundPayloadDigest": "587d6861f91d9f9ae3a73125d2c533673e15ca5ab621444162f81345f0b6318a",
+          "bindingBasis": "qms-document-version-content-sha256",
+          "authenticationMethod": "password+totp",
+          "secondFactorVerified": true
+        },
+        "approvalComplete": true
+      }
+    }
+  }
+}

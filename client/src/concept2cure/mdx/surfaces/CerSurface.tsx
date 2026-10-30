@@ -39,9 +39,11 @@ export interface CerSurfaceProps {
   /** Open the one document editor; a section ref deep-links to that section
    *  (Generator tab rows, DossierDrawer hand-off). */
   onOpenEditor?: (section?: EditorSectionRef) => void;
+  /** Open a letter in Communication on its record (P-39 step 3, S2). */
+  onOpenLetter?: (letterId: string) => void;
 }
 
-export function CerSurface({ program, onAskAna, onOpenEditor }: CerSurfaceProps) {
+export function CerSurface({ program, onAskAna, onOpenEditor, onOpenLetter }: CerSurfaceProps) {
   const programId = program?.id ?? null;
   const [tab, setTab] = React.useState<CerTabId>('signals');
 
@@ -83,14 +85,14 @@ export function CerSurface({ program, onAskAna, onOpenEditor }: CerSurfaceProps)
           <div className="section-sub">
             {program
               ? `EU MDR Article 61 · ${program.dueLabel}`
-              : 'EU MDR Article 61 · select a CER program to load its evaluation'}
+              : 'EU MDR Article 61 · select a CER project to load its evaluation'}
           </div>
         </div>
         <button
           className="section-more"
           onClick={() =>
             onAskAna(
-              `Generate the CER draft for ${program ? program.title : 'the selected program'} — pull from the included ` +
+              `Generate the CER draft for ${program ? program.title : 'the selected project'} — pull from the included ` +
                 'safety signals, the literature corpus, and the equivalence data. Mark gaps in narrative form.',
             )
           }
@@ -167,6 +169,7 @@ export function CerSurface({ program, onAskAna, onOpenEditor }: CerSurfaceProps)
       onAskAna={onAskAna}
       onOpenEditor={onOpenEditor}
       programId={programId}
+      onOpenLetter={onOpenLetter}
     />
   );
 }

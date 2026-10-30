@@ -21,7 +21,8 @@ const STYLES = resolve(__dirname, '../styles');
 const OWN = 'project-home-v2.css';
 /* The generated text ramp restates other sheets' selectors by design. */
 const SKIP = new Set([OWN, 'surface-text-ramp.css']);
-const MARKER = /Project home: the filing['’]s five tabs/;
+/* "five tabs" until Plan returned on 2026-10-25 (CLIENT_JOURNEY pass 3). */
+const MARKER = /Project home: the filing['’]s (five tabs|six steps)/;
 
 /** The classes a block of CSS defines rules for (selector side only). */
 function definedClasses(css: string): Set<string> {

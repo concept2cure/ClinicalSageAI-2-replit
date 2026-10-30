@@ -121,7 +121,10 @@ jobs:
       - name: Run the WO-06 governed golden journey
         # governed evidence draft → citation gate → denied pre-review export →
         # reviewer assignment → approval under separation of duties →
-        # persistence, in a real browser against the same fresh database.
+        # persistence, in a real browser against the same fresh database. The
+        # same file holds the first-session journey (CLIENT_JOURNEY_2026-10-25.md
+        # decision 13): an IND created, a source added, a document assigned,
+        # drafted with AnA and sent for review, all through the screens.
         # Still runs if only the first browser spec fails, never over an incomplete install.
         if: "!cancelled() && steps.provision.outcome == 'success'"
         run: npm run test:e2e:smoke -- tests/e2e/golden-customer-journey.e2e.ts

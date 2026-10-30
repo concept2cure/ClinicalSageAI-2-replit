@@ -1,0 +1,336 @@
+Gates on the working tree over a254c975a, 2026-10-29T16:32:15Z
+=== npm run ci:launch-scope-api
+ci:launch-scope-api: 3 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+
+  [out-of-scope] /api/ectd/qualification/spec-versions
+    called by ectd-compile
+    in client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+  [out-of-scope] /api/ectd/controlled-vocab
+    called by ectd-compile
+    in client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+  [out-of-scope] /api/ectd/controlled-vocab/:p
+    called by ectd-compile
+    in client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx
+=== exit 1 (ci:launch-scope-api)
+=== npm run ci:launch-scope-api:selftest
+  ✓ flags a launch screen calling a prefix only an out-of-scope surface claims
+  ✓ names the surface and the file
+  ✓ does not flag the launch prefix, or a never-gated shell call
+  ✓ passes once the launch surface declares the prefix it calls
+  ✓ flags a launch call no surface claims (unmapped)
+  ✓ resolves every registration it was given
+  ✓ reads the surface's own registration, not a longer id ending in it
+  ✓ flags a launch screen that computes the /api namespace
+  ✓ resolves a project MDX feature to its actual host import
+  ✓ keeps unrelated optional workbench imports outside that feature graph
+  ✓ an MDX feature with no component mapping fails closed
+
+selftest PASSED — the gate flags a launch screen that production would refuse.
+=== exit 0 (ci:launch-scope-api:selftest)
+=== npm run ci:launch-scope
+[ci:launch-scope] 7 apps · 49 surfaces · 12 modules · 33 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+=== exit 0 (ci:launch-scope)
+=== npm run ci:ana-surface-context
+
+[ci:ana-surface-context] OK — 108 of 112 routable surface ids publish screen state (baseline 108 exact), 4 exempt, 0 still blind.
+  105 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (conversation-thread, ectd-coauthor, rbm) — full-width surfaces may
+  publish saved context and hand requests to the canonical conversation.
+  114 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router
+  rewrites before the shell has an active id, so they are not routable and cannot be
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (75 surface file(s) hold a call).
+
+=== exit 0 (ci:ana-surface-context)
+=== npm run ci:surface-discoverability
+
+[ci:surface-discoverability] OK — 114 renderable surface(s): 88 in the Apps catalog, 26 declared contextual.
+
+=== exit 0 (ci:surface-discoverability)
+=== npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+=== exit 0 (ci:undefined-css-classes)
+=== npm run ci:fixture-fallback
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+=== exit 0 (ci:fixture-fallback)
+=== npm run ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 74 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+=== exit 0 (ci:unauthenticated-fetch)
+=== npm run audit:repo-health:ceiling
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+- content-duplicate groups: 0 (0 files)   [gated]
+- duplicate basenames: 252   [reported, not gated]
+- files over byte threshold: 55
+- files over line threshold: 113
+
+✅ repo health strict gate passed.
+=== exit 0 (audit:repo-health:ceiling)
+
+=== The Part 2 claim, proven in memory (tools/claim-proof.ts.txt): launchScopeApiVerdict today, and with '/api/ectd/controlled-vocab' and '/api/ectd/qualification/spec-versions' added to ectd-compile's apiPrefixes
+/api/ectd/controlled-vocab                   today: out-of-scope  with claims: launch
+/api/ectd/controlled-vocab/contextOfUse      today: out-of-scope  with claims: launch
+/api/ectd/qualification/spec-versions        today: out-of-scope  with claims: launch
+/api/ectd/qualification                      today: out-of-scope  with claims: out-of-scope
+/api/ectd/qualification/x                    today: out-of-scope  with claims: out-of-scope
+/api/ectd/v4                                 today: out-of-scope  with claims: out-of-scope
+/api/ectd/v4/validate                        today: out-of-scope  with claims: out-of-scope
+/api/ectd/templates                          today: out-of-scope  with claims: out-of-scope
+/api/ectd/CONTROLLED-VOCAB                   today: out-of-scope  with claims: launch
+/api/ectd/Qualification/x                    today: out-of-scope  with claims: out-of-scope
+
+=== Scoped tsc (the 8 changed TS files and their imports, tsconfig.json's options, every *.d.ts under client/src, shared, server/types)
+3 error(s), none in this change's files:
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+
+======================== Part 2 ========================
+Gates on the working tree over 70c9e75ad (after the push that carried the setup retirement and three upstream merges), 2026-10-29T18:09:07Z.
+Run with GIT_INDEX_FILE pointing at a scratch copy of the index with this change staged (git add -A on the copy; the real index untouched), because 23 gates list files with git ls-files: on the real index, PublishingCenter.tsx (deleted, unstaged) is still listed and the new files are not, and ci:class-vocabulary then fails opening the deleted file. That is what the gates see once the change is committed.
+Every npm gate in .husky/pre-push except ci:pushed-typecheck (full-repo typecheck, barred here) and the two pushed-lint gates (they lint unpushed commits; there are none; see eslint.txt), plus the checklist's.
+
+=== npm run ci:ectd-stubs
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+=== exit 0 (ci:ectd-stubs)
+=== npm run ci:risk-codes
+OK: Generated risk code types are up to date.
+=== exit 0 (ci:risk-codes)
+=== npm run ci:migration-set-order
+[ci:migration-set-order] OK — 442 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+=== exit 0 (ci:migration-set-order)
+=== npm run ci:migration-guard-order:selftest
+[ci:migration-guard-order] selftest OK — reports public.qms_documents when the Part 11 triggers precede its CREATE, and nothing when they follow it.
+=== exit 0 (ci:migration-guard-order:selftest)
+=== npm run ci:migration-guard-order
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+=== exit 0 (ci:migration-guard-order)
+=== npm run ci:install-fresh-overlay-deps:selftest
+  ✓ the exact named literal array, beside an unrelated inline array
+  ✓ a computed filename must not be mistaken for its literal prefix
+  ✓ a spread must not silently hide creator entries
+  ✓ duplicate declarations cannot choose a convenient first list
+  ✓ THE REAL CASE — an unguarded FK to a db/migrations-only table — expected 1, got 1
+  ✓ guarded — to_regclass IS NULL short-circuits, so it no-ops instead of deferring — expected 0, got 0
+  ✓ a non-public schema qualifier is not the table name — expected 0, got 0
+  ✓ reachable because step 2 pushed it — expected 0, got 0
+  ✓ a table nothing in the repo creates is another gate's question — expected 0, got 0
+  ✓ the file creating it itself is never its own missing dependency — expected 0, got 0
+
+[ci:install-fresh-overlay-deps] selftest passed: it fails on the unguarded case and only on that case.
+=== exit 0 (ci:install-fresh-overlay-deps:selftest)
+=== npm run ci:install-fresh-overlay-deps
+[ci:install-fresh-overlay-deps] 369 overlay file(s) · 694 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s).
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+=== exit 0 (ci:install-fresh-overlay-deps)
+=== npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 442 migrations, 42 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+=== exit 0 (ci:migration-drop-safety)
+=== npm run ci:class-vocabulary
+[ci:class-vocabulary] OK — 5780 file(s) scanned, no restated class vocabulary.
+=== exit 0 (ci:class-vocabulary)
+=== npm run ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+=== exit 0 (ci:migration-deploy-path)
+=== npm run ci:column-reachability
+[ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+=== exit 0 (ci:column-reachability)
+=== npm run ci:runtime-ddl
+[ci:runtime-ddl] 75 DDL statement(s) in 11 runtime server file(s); 13 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+=== exit 0 (ci:runtime-ddl)
+=== npm run ci:json-operator-types
+[ci:json-operator-types] 960 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3504 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+=== exit 0 (ci:json-operator-types)
+=== npm run db:sync-manifest:check
+Manifest is in sync.
+=== exit 0 (db:sync-manifest:check)
+=== npm run ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 90 site(s), all baselined.
+=== exit 0 (ci:drizzle-tenant-scope)
+=== npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+=== exit 0 (ci:undefined-css-classes)
+=== npm run ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 74 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+=== exit 0 (ci:unauthenticated-fetch)
+=== npm run ci:session-scoped-rls-bypass
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 4 baselined occurrence(s) remain in 1 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+=== exit 0 (ci:session-scoped-rls-bypass)
+=== npm run ci:sql-interpolation
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1058 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+=== exit 0 (ci:sql-interpolation)
+=== npm run check:catalog-copy
+[ci:catalog-copy] OK — 114 catalog description(s) across 3 migration(s) read as product copy.
+=== exit 0 (check:catalog-copy)
+=== npm run ci:fixture-fallback
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+=== exit 0 (ci:fixture-fallback)
+=== npm run ci:no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+=== exit 0 (ci:no-mock-in-prod-routes)
+=== npm run ci:fabricated-identity
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+=== exit 0 (ci:fabricated-identity)
+=== npm run ci:program-ownership-single-source:selftest
+[self-test] OK — 10 copies found, 6 reads passed.
+=== exit 0 (ci:program-ownership-single-source:selftest)
+=== npm run ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+=== exit 0 (ci:program-ownership-single-source)
+=== npm run ci:project-creation-owners:selftest
+[ci:project-creation-owners:selftest] OK { planted: 25, readsAndComments: 5, owners: 4 }
+=== exit 0 (ci:project-creation-owners:selftest)
+=== npm run ci:project-creation-owners
+[ci:project-creation-owners] OK — one canonical program writer and three explicit, bounded PM writers (4 sites).
+=== exit 0 (ci:project-creation-owners)
+=== npm run ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+=== exit 0 (ci:discarded-audit-write)
+=== npm run ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+=== exit 0 (ci:client-ip-single-source)
+=== npm run ci:filing-exit-agreement:selftest
+[ci:filing-exit-agreement:selftest] ✓ a new seal with no agreement check fails, naming the file and the kind
+[ci:filing-exit-agreement:selftest] ✓ the same seal passes once it asks the question
+[ci:filing-exit-agreement:selftest] ✓ a new device package built from the filing fails
+[ci:filing-exit-agreement:selftest] ✓ a baseline entry with no written reason fails, so it cannot be a snooze
+[ci:filing-exit-agreement:selftest] ✓ a baseline allowing more than exists fails, so freed allowance cannot absorb a new door
+[ci:filing-exit-agreement:selftest] ✓ a door baselined with a real reason passes, and the count is reported
+[ci:filing-exit-agreement:selftest] ✓ the module that defines the question is not read as a door
+[ci:filing-exit-agreement:selftest] ✓ an empty tree passes
+[ci:filing-exit-agreement:selftest] OK — the gate fails on every shape it exists to catch, and stays quiet on the rest.
+=== exit 0 (ci:filing-exit-agreement:selftest)
+=== npm run ci:filing-exit-agreement
+[ci:filing-exit-agreement] OK — every seal and every filing-built package asks the agreement question, or is baselined with a reason. 5 baselined site(s) in 2 file(s), exactly as baselined.
+=== exit 0 (ci:filing-exit-agreement)
+=== npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+=== exit 0 (ci:sign-ceremony)
+=== npm run ci:upload-guards
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 20 file(s) build uploads.
+=== exit 0 (ci:upload-guards)
+=== npm run ci:trivyignore-hygiene
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+=== exit 0 (ci:trivyignore-hygiene)
+=== npm run audit:repo-health:ceiling
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+- content-duplicate groups: 0 (0 files)   [gated]
+- duplicate basenames: 253   [reported, not gated]
+- files over byte threshold: 55
+- files over line threshold: 113
+
+✅ repo health strict gate passed.
+=== exit 0 (audit:repo-health:ceiling)
+=== npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+=== exit 0 (ci:server-error-leaks)
+=== npm run ci:untracked-imports
+[ci:untracked-imports] OK — every relative import in 9 file(s) resolves to a tracked file.
+=== exit 0 (ci:untracked-imports)
+=== npm run ci:launch-scope
+[ci:launch-scope] 7 apps · 49 surfaces · 12 modules · 33 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+=== exit 0 (ci:launch-scope)
+=== npm run ci:launch-scope:selftest
+✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+✅ selftest: gate exits 1 and names 'ectd-compile' when it is missing from the 20260810 keep-list
+✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route
+✅ selftest: gate passes on the real tree
+=== exit 0 (ci:launch-scope:selftest)
+=== npm run ci:launch-scope-api
+ci:launch-scope-api: 558 API paths named by launch and shell screens; none refused. {"launch":508,"infrastructure":2,"never-gated":48}
+=== exit 0 (ci:launch-scope-api)
+=== npm run ci:launch-scope-api:selftest
+  ✓ flags a launch screen calling a prefix only an out-of-scope surface claims
+  ✓ names the surface and the file
+  ✓ does not flag the launch prefix, or a never-gated shell call
+  ✓ passes once the launch surface declares the prefix it calls
+  ✓ flags a launch call no surface claims (unmapped)
+  ✓ resolves every registration it was given
+  ✓ reads the surface's own registration, not a longer id ending in it
+  ✓ flags a launch screen that computes the /api namespace
+  ✓ resolves a project MDX feature to its actual host import
+  ✓ keeps unrelated optional workbench imports outside that feature graph
+  ✓ an MDX feature with no component mapping fails closed
+
+selftest PASSED — the gate flags a launch screen that production would refuse.
+=== exit 0 (ci:launch-scope-api:selftest)
+=== npm run ci:ana-surface-context
+
+[ci:ana-surface-context] OK — 107 of 111 routable surface ids publish screen state (baseline 107 exact), 4 exempt, 0 still blind.
+  104 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (conversation-thread, ectd-coauthor, rbm) — full-width surfaces may
+  publish saved context and hand requests to the canonical conversation.
+  113 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router
+  rewrites before the shell has an active id, so they are not routable and cannot be
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (74 surface file(s) hold a call).
+
+=== exit 0 (ci:ana-surface-context)
+=== npm run ci:surface-discoverability
+
+[ci:surface-discoverability] OK — 113 renderable surface(s): 87 in the Apps catalog, 26 declared contextual.
+
+=== exit 0 (ci:surface-discoverability)
+=== npm run ci:unreferenced-modules
+Unreferenced modules: 73 (baseline 73)
+
+OK: no new unreachable modules.
+=== exit 0 (ci:unreferenced-modules)
+=== npm run check:microcopy
+[ci:microcopy] OK — scanned 735 customer-facing files, no exclamations or pictographs.
+=== exit 0 (check:microcopy)
+
+=== Summary: 45 of 45 exit 0
+
+=== History: on the real index, before staging the copy, ci:class-vocabulary exited 1:
+}
+
+Node.js v22.22.0
+=== exit 1 (ci:class-vocabulary)
+
+=== Scoped tsc (the 19 changed TS files and their imports, tsconfig.json's options, every *.d.ts under client/src, shared, server/types)
+3 error(s), none in this change's files:
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.

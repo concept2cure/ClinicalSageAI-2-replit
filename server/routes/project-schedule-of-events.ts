@@ -155,7 +155,7 @@ async function requireOwnedProject(req: Request, res: Response): Promise<OwnedSc
 function scheduleRouteError(res: Response, operation: string, error: unknown) {
   if (error instanceof ProgramReadAccessError) {
     if (error.code === 'PROJECT_ANCHOR_UNRESOLVED') {
-      return res.status(error.status).json({ error: 'This program needs one verified project record before its schedule or tasks can be supplied.', code: 'PROGRAM_UNANCHORED' });
+      return res.status(error.status).json({ error: 'This project needs one verified tracking record before its schedule or tasks can be supplied.', code: 'PROGRAM_UNANCHORED' });
     }
     return res.status(error.status).json({ error: error.message, code: error.code });
   }

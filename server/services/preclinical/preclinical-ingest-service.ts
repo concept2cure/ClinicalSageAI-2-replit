@@ -15,6 +15,7 @@ import { extractFromPdf } from './preclinical-extractor';
 import { bridgeIngestedStudyTx } from './preclinical-governed-bridge';
 import { recordGovernedAction } from '../../routes/c2c/actions';
 import type { PreclinicalStudy } from './preclinical-extraction-schema';
+import type { PoolClient } from 'pg';
 
 const log = createScopedLogger('preclinical-ingest');
 
@@ -46,9 +47,30 @@ export interface IngestStudyResult {
   extractionConfidence: number;
   model: string;
   data: PreclinicalStudy;
-  /** Governed nonclinical_studies.id when a governance context was supplied. */
+  /** Registration does not establish scientific review or submission readiness. */
+  registration: GovernedRegistrationOutcome;
+  /** Governed nonclinical_studies.id only after registration COMMIT is confirmed. */
   governedStudyId?: number;
   ctdSection?: string;
+}
+
+export type GovernedRegistrationOutcome =
+  | { status: 'not_requested' }
+  | { status: 'registered'; governedStudyId: number; ctdSection: string; reviewRequired: true }
+  | { status: 'failed'; code: 'PRECLINICAL_GOVERNED_REGISTRATION_FAILED' };
+
+const INPUT_ERROR_MESSAGES = {
+  PRECLINICAL_INGEST_BAD_PROGRAM_ID: 'programId is required and must be a positive integer',
+  PRECLINICAL_INGEST_GOVERNANCE_CONTEXT_REQUIRED: 'Valid organization and user context is required for governed registration',
+  PRECLINICAL_INGEST_BAD_SUBMISSION_ID: 'submissionId must be a positive integer when supplied',
+  PRECLINICAL_INGEST_BAD_IACUC_PROTOCOL_ID: 'iacucProtocolId must be a positive integer when supplied',
+} as const;
+
+export class PreclinicalIngestInputError extends Error {
+  constructor(readonly code: keyof typeof INPUT_ERROR_MESSAGES) {
+    super(INPUT_ERROR_MESSAGES[code]);
+    this.name = 'PreclinicalIngestInputError';
+  }
 }
 
 export class PreclinicalIngestDisabledError extends Error {
@@ -62,6 +84,8 @@ export async function ingestStudy(input: IngestStudyInput): Promise<IngestStudyR
   if (!PRECLINICAL_INGEST_ENABLED) {
     throw new PreclinicalIngestDisabledError();
   }
+
+  validateIngestInput(input);
 
   const { data, model } = await extractFromPdf(input.pdfBuffer, {
     sourcePdfId: input.sourcePdfId,
@@ -116,39 +140,109 @@ export async function ingestStudy(input: IngestStudyInput): Promise<IngestStudyR
     extractionConfidence: data.extractionConfidence,
     model,
     data,
+    registration: { status: 'not_requested' },
   };
 
   // Governed bridge: thread the digested study into the governed registry + Module 4.
   if (input.governance) {
-    const g = input.governance;
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      const bridged = await bridgeIngestedStudyTx(client, g.organizationId, g.userId, {
-        ctdStudyId: row.id, data, sourcePdfId: input.sourcePdfId,
-        submissionId: g.submissionId ?? null, iacucProtocolId: g.iacucProtocolId ?? null,
-      });
-      await recordGovernedAction(client, {
-        orgId: g.organizationId, userId: g.userId, command: 'create',
-        target: `nonclinical-study:${bridged.governedStudyId}`,
-        reason: g.reason && g.reason.trim().length >= 8 ? g.reason : 'Digested nonclinical study bridged to governed registry',
-        payload: { ctdStudyId: row.id, sourcePdfId: input.sourcePdfId, ctdSection: bridged.ctdSection, studyType: mapStudyTypeLabel(data.studyType) },
-        domain: 'nonclinical', surface: 'preclinical-ingest',
-      });
-      await client.query('COMMIT');
-      result.governedStudyId = bridged.governedStudyId;
-      result.ctdSection = bridged.ctdSection;
-      log.info('Bridged digested study to governed registry', { ctdStudyId: row.id, governedStudyId: bridged.governedStudyId, ctdSection: bridged.ctdSection });
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      // Digestion already succeeded and is persisted; surface the bridge failure without losing the extraction.
-      log.error('Governed bridge failed (digestion retained)', { ctdStudyId: row.id, message: err instanceof Error ? err.message : String(err) });
-    } finally {
-      client.release();
-    }
+    await registerGovernedStudy(input, result, input.governance);
   }
 
   return result;
+}
+
+/** Validate before making a provider request or retaining a study. */
+function validateIngestInput(input: IngestStudyInput): void {
+  // The route validates multipart strings; direct callers supply actual IDs.
+  if (!isPositiveId(input.programId)) {
+    throw new PreclinicalIngestInputError('PRECLINICAL_INGEST_BAD_PROGRAM_ID');
+  }
+  if (input.governance === undefined) return;
+  const g = input.governance;
+  if (!g || !isPositiveId(g.organizationId) || !isPositiveId(g.userId)) {
+    throw new PreclinicalIngestInputError('PRECLINICAL_INGEST_GOVERNANCE_CONTEXT_REQUIRED');
+  }
+  if (g.submissionId != null && !isPositiveId(g.submissionId)) {
+    throw new PreclinicalIngestInputError('PRECLINICAL_INGEST_BAD_SUBMISSION_ID');
+  }
+  if (g.iacucProtocolId != null && !isPositiveId(g.iacucProtocolId)) {
+    throw new PreclinicalIngestInputError('PRECLINICAL_INGEST_BAD_IACUC_PROTOCOL_ID');
+  }
+}
+
+/** Record registration separately so its failure cannot lose retained extraction. */
+async function registerGovernedStudy(input: IngestStudyInput, result: IngestStudyResult, g: IngestGovernance): Promise<void> {
+  const ctdStudyId = result.studyId;
+  let client: PoolClient | undefined;
+  let releaseError: Error | undefined;
+  let phase = 'connect';
+  try {
+    client = await pool.connect();
+    phase = 'begin';
+    await client.query('BEGIN');
+    phase = 'bridge';
+    const bridged = await bridgeIngestedStudyTx(client, g.organizationId, g.userId, {
+      ctdStudyId, data: result.data, sourcePdfId: input.sourcePdfId,
+      submissionId: g.submissionId ?? null, iacucProtocolId: g.iacucProtocolId ?? null,
+    });
+    phase = 'audit';
+    await recordGovernedAction(client, {
+      orgId: g.organizationId, userId: g.userId, command: 'create',
+      target: `nonclinical-study:${bridged.governedStudyId}`,
+      reason: g.reason && g.reason.trim().length >= 8 ? g.reason : 'Digested nonclinical study bridged to governed registry',
+      payload: { ctdStudyId, sourcePdfId: input.sourcePdfId, ctdSection: bridged.ctdSection, studyType: mapStudyTypeLabel(result.data.studyType) },
+      domain: 'nonclinical', surface: 'preclinical-ingest',
+    });
+    phase = 'commit';
+    const committed = await client.query('COMMIT');
+    if (committed.command !== 'COMMIT') {
+      throw new Error('Governed registration commit was not confirmed');
+    }
+    result.governedStudyId = bridged.governedStudyId;
+    result.ctdSection = bridged.ctdSection;
+    // The existing bridge creates a planned row. Registration is never a
+    // scientific approval, even when the transaction completed successfully.
+    result.registration = {
+      status: 'registered', governedStudyId: bridged.governedStudyId,
+      ctdSection: bridged.ctdSection, reviewRequired: true,
+    };
+    log.info('Bridged digested study to governed registry', { ctdStudyId, governedStudyId: bridged.governedStudyId, ctdSection: bridged.ctdSection });
+  } catch (err) {
+    result.registration = { status: 'failed', code: 'PRECLINICAL_GOVERNED_REGISTRATION_FAILED' };
+    let rollback = 'not_attempted';
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+        rollback = 'succeeded';
+      } catch (rollbackError) {
+        rollback = 'failed';
+        // A client with an unconfirmed rollback must not return to the pool.
+        releaseError = rollbackError instanceof Error ? rollbackError : new Error('Rollback failed');
+        log.error('Governed registration rollback failed', { ctdStudyId, message: releaseError.message });
+      }
+    }
+    // A lost COMMIT response can leave the outcome uncertain. Report that
+    // registration was not confirmed, without claiming nothing was written.
+    log.error('Governed registration was not confirmed (extraction retained)', {
+      ctdStudyId, phase, rollback, message: err instanceof Error ? err.message : String(err),
+    });
+  } finally {
+    if (client) {
+      try {
+        client.release(releaseError);
+      } catch (err) {
+        // A cleanup failure cannot erase the extraction ID or a confirmed
+        // COMMIT. The registration outcome remains the transaction's outcome.
+        log.error('Governed registration client release failed', {
+          ctdStudyId, message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+  }
+}
+
+function isPositiveId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
 }
 
 function mapStudyTypeLabel(t: PreclinicalStudy['studyType']): string { return String(t); }

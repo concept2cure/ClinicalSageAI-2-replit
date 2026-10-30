@@ -1,0 +1,515 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5211/api/mdx/qms/documents",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 35,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": 1,
+          "organization_id": 2,
+          "doc_number": "SOP-OQ-20261029202431",
+          "title": "OQ-006 Document control SOP 20261029202431",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-11-08T00:00:00.000Z",
+          "author_id": 1,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "8f0b7b0c-e896-4923-b9a3-36743c9cf472",
+            "templateKey": "sop",
+            "lastRevision": {
+              "by": 1,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference",
+              "sourceDocumentId": "f992fab3-1653-418a-89e0-dcf589a80f88"
+            },
+            "retainedAuthoringDocuments": [
+              "f992fab3-1653-418a-89e0-dcf589a80f88"
+            ]
+          },
+          "created_at": "2026-10-29T20:24:32.418Z",
+          "updated_at": "2026-10-29T20:26:31.713Z",
+          "deleted_at": null,
+          "authoring_document_id": "6281b728-e140-48ba-8bbf-b7497216ae54",
+          "in_force": {
+            "version": "1.0",
+            "effectiveDate": "2026-10-29T00:00:00.000Z",
+            "approvedAt": "2026-10-29T20:25:00.849Z",
+            "approverId": 2
+          },
+          "periodic_review": null,
+          "next_review_due": "2026-11-08",
+          "review_route": {
+            "route": {
+              "id": "53e42043-b59d-4aba-97f7-b13634460d77",
+              "round": 1,
+              "senderId": 1,
+              "senderName": "Oona Runner",
+              "order": "parallel",
+              "status": "complete",
+              "statusReason": "OQ-006 step 05: SOP approved for validation (signed)",
+              "statusBy": 2,
+              "statusAt": "2026-10-29T20:25:00.833Z",
+              "contentDigest": "bcf770013dec6e9cb1d1729c2bbf0b8aeeb0eda7e89c5d139e0042e0f62a5e19",
+              "reviewDueAt": null,
+              "approvalDueAt": "2026-11-03T23:59:59.999Z",
+              "createdAt": "2026-10-29T20:24:35.454Z"
+            },
+            "members": [
+              {
+                "taskId": "ROUTE-53e42043-2",
+                "userId": 2,
+                "role": "approver",
+                "step": 1,
+                "printedName": "Sid Signer",
+                "outcome": "signed",
+                "stepOpen": true,
+                "dueDate": "2026-11-03T23:59:59.999Z",
+                "signature": {
+                  "id": 6,
+                  "printedName": "Sid Signer",
+                  "meaning": "APPROVED",
+                  "signedAt": "2026-10-29T20:25:00.849Z"
+                },
+                "actId": null
+              }
+            ],
+            "reviewComplete": true,
+            "approvalComplete": true,
+            "history": [
+              {
+                "action": "send",
+                "at": "2026-10-29T20:24:35.519Z",
+                "actorId": 1,
+                "actorName": "Oona Runner",
+                "reason": "OQ-006 step 04b: SOP A ready for QA approval",
+                "members": [
+                  {
+                    "userId": 2,
+                    "role": "approver",
+                    "printedName": "Sid Signer"
+                  }
+                ]
+              }
+            ]
+          },
+          "approval_signature": {
+            "version": "1.0",
+            "state": "valid",
+            "signatureId": 6,
+            "reason": null,
+            "signerName": "Sid Signer",
+            "signedAt": "2026-10-29T20:25:00.849Z",
+            "meaning": "APPROVED"
+          },
+          "retirement_signature": null
+        },
+        {
+          "id": 5,
+          "organization_id": 2,
+          "doc_number": "SOP-OQ-20261029202832",
+          "title": "OQ-006 Document control SOP 20261029202832",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-11-08T00:00:00.000Z",
+          "author_id": 1,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "8f0b7b0c-e896-4923-b9a3-36743c9cf472",
+            "templateKey": "sop"
+          },
+          "created_at": "2026-10-29T20:28:33.222Z",
+          "updated_at": "2026-10-29T20:28:33.222Z",
+          "deleted_at": null,
+          "authoring_document_id": "589f99b8-a370-4207-a148-24370b54d26f",
+          "in_force": null,
+          "periodic_review": null,
+          "next_review_due": "2026-11-08",
+          "review_route": null,
+          "approval_signature": null,
+          "retirement_signature": null
+        },
+        {
+          "id": 3,
+          "organization_id": 2,
+          "doc_number": "SOP-OQ-B-20261029202431",
+          "title": "OQ-006 Second SOP 20261029202431",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "1.0",
+          "status": "effective",
+          "effective_date": "2026-10-29T00:00:00.000Z",
+          "next_review_date": "2026-11-03T00:00:00.000Z",
+          "author_id": 1,
+          "approver_id": 2,
+          "approved_at": "2026-10-29T20:26:30.809Z",
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "approval": {
+              "at": "2026-10-29T20:26:30.809+00:00",
+              "by": 2,
+              "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "587d6861f91d9f9ae3a73125d2c533673e15ca5ab621444162f81345f0b6318a",
+              "twoPersonRule": "enforced"
+            },
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "8f0b7b0c-e896-4923-b9a3-36743c9cf472",
+            "templateKey": "sop"
+          },
+          "created_at": "2026-10-29T20:25:32.282Z",
+          "updated_at": "2026-10-29T20:26:30.791Z",
+          "deleted_at": null,
+          "authoring_document_id": "a8ea8403-b396-466b-a058-ae7c0ffb1844",
+          "in_force": null,
+          "periodic_review": null,
+          "next_review_due": "2026-11-03",
+          "review_route": {
+            "route": {
+              "id": "89fbfb57-9e58-4f7b-b121-25bad349ed7d",
+              "round": 1,
+              "senderId": 1,
+              "senderName": "Oona Runner",
+              "order": "parallel",
+              "status": "complete",
+              "statusReason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+              "statusBy": 2,
+              "statusAt": "2026-10-29T20:26:30.791Z",
+              "contentDigest": "587d6861f91d9f9ae3a73125d2c533673e15ca5ab621444162f81345f0b6318a",
+              "reviewDueAt": null,
+              "approvalDueAt": "2026-11-03T23:59:59.999Z",
+              "createdAt": "2026-10-29T20:25:33.260Z"
+            },
+            "members": [
+              {
+                "taskId": "ROUTE-89fbfb57-2",
+                "userId": 2,
+                "role": "approver",
+                "step": 1,
+                "printedName": "Sid Signer",
+                "outcome": "signed",
+                "stepOpen": true,
+                "dueDate": "2026-11-03T23:59:59.999Z",
+                "signature": {
+                  "id": 7,
+                  "printedName": "Sid Signer",
+                  "meaning": "APPROVED",
+                  "signedAt": "2026-10-29T20:26:30.809Z"
+                },
+                "actId": null
+              }
+            ],
+            "reviewComplete": true,
+            "approvalComplete": true,
+            "history": [
+              {
+                "action": "send",
+                "at": "2026-10-29T20:25:33.336Z",
+                "actorId": 1,
+                "actorName": "Oona Runner",
+                "reason": "OQ-006 step 06a: SOP B ready for QA approval",
+                "members": [
+                  {
+                    "userId": 2,
+                    "role": "approver",
+                    "printedName": "Sid Signer"
+                  }
+                ]
+              }
+            ]
+          },
+          "approval_signature": {
+            "version": "1.0",
+            "state": "valid",
+            "signatureId": 7,
+            "reason": null,
+            "signerName": "Sid Signer",
+            "signedAt": "2026-10-29T20:26:30.809Z",
+            "meaning": "APPROVED"
+          },
+          "retirement_signature": null
+        },
+        {
+          "id": 4,
+          "organization_id": 2,
+          "doc_number": "SOP-OQ-C-20261029202431",
+          "title": "OQ-006 Self-approval SOP 20261029202431",
+          "doc_type": "sop",
+          "category": "production",
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-11-28T00:00:00.000Z",
+          "author_id": 2,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "sections": [
+              {
+                "key": "purpose",
+                "hint": "Why this document exists and what it governs.",
+                "label": "Purpose",
+                "order": 1
+              },
+              {
+                "key": "scope",
+                "hint": "What and who it applies to, with explicit exclusions.",
+                "label": "Scope",
+                "order": 2
+              },
+              {
+                "key": "responsibilities",
+                "hint": "Roles accountable for each step.",
+                "label": "Responsibilities",
+                "order": 3
+              },
+              {
+                "key": "definitions",
+                "hint": "Terms, abbreviations, and acronyms used.",
+                "label": "Definitions",
+                "order": 4
+              },
+              {
+                "key": "procedure",
+                "hint": "The step-by-step controlled process.",
+                "label": "Procedure",
+                "order": 5
+              },
+              {
+                "key": "references",
+                "hint": "Regulations, standards, and linked documents.",
+                "label": "References",
+                "order": 6
+              },
+              {
+                "key": "attachments",
+                "hint": "Forms, templates, and records this document produces.",
+                "label": "Attachments",
+                "order": 7
+              },
+              {
+                "key": "revision_history",
+                "hint": "Version, date, author, and a summary of each change.",
+                "label": "Revision history",
+                "order": 8
+              },
+              {
+                "key": "approval",
+                "hint": "Author, reviewer, and approver signatures.",
+                "label": "Approval",
+                "order": 9
+              }
+            ],
+            "programId": "8f0b7b0c-e896-4923-b9a3-36743c9cf472",
+            "templateKey": "sop"
+          },
+          "created_at": "2026-10-29T20:25:35.526Z",
+          "updated_at": "2026-10-29T20:25:35.526Z",
+          "deleted_at": null,
+          "authoring_document_id": "ecc80206-f8f7-4fc3-bd7c-e74d542c5ea4",
+          "in_force": null,
+          "periodic_review": null,
+          "next_review_due": "2026-11-28",
+          "review_route": null,
+          "approval_signature": null,
+          "retirement_signature": null
+        }
+      ],
+      "meta": {
+        "count": 4
+      }
+    }
+  }
+}

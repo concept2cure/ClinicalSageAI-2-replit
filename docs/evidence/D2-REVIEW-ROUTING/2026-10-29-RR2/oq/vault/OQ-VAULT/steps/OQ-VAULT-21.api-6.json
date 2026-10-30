@@ -1,0 +1,50 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5201/api/submissions/sequences/2/leaves",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sectionCode": "2.5",
+      "title": "Clinical overview",
+      "documentTable": "vault_documents",
+      "documentUuid": "6a0d0442-bae3-4cdc-917c-416c5f1fd53d",
+      "lifecycleOp": "new",
+      "reason": "Placed by the validation run to show where it is used"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 77,
+    "rateLimitRetries": 0,
+    "body": {
+      "id": 2,
+      "sequenceId": 2,
+      "sectionCode": "2.5",
+      "title": "Clinical overview",
+      "granularity": null,
+      "lifecycleOp": "new",
+      "documentTable": "vault_documents",
+      "documentId": null,
+      "documentUuid": "6a0d0442-bae3-4cdc-917c-416c5f1fd53d",
+      "documentType": null,
+      "studyId": null,
+      "stfFileTag": null,
+      "leafGuid": null,
+      "parentLeafId": null,
+      "checksum": null,
+      "documentContentSha256": "bca65a8ca494d09f7028347fa30d37dbafd1347d4660c28079b33dc8082f04e1",
+      "documentPinnedAt": "2026-10-29T18:29:15.959Z",
+      "organizationId": 6,
+      "createdBy": 6,
+      "createdAt": "2026-10-29T18:29:15.956Z",
+      "updatedAt": "2026-10-29T18:29:15.956Z",
+      "deletedAt": null,
+      "auditTrail": {
+        "persisted": true,
+        "chained": true
+      }
+    }
+  }
+}

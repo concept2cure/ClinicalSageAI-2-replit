@@ -82,6 +82,7 @@ import { verifyClaim, type VerifierFlag } from './verifier.js';
 import { evidencePromptBlock, type RetrievalStatus } from './retrieval-evidence-block';
 import { admitAnaProjectScope, AnaProjectScopeError } from '../../services/ana/project-scope-admission';
 import { assertAnaUploadAccess } from '../../services/ana/source-context-admission';
+import { jsonOpenDocumentContext } from './open-document-context';
 
 // ── Retrieval + generation tuning (externalized for runtime changes) ────────
 const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
@@ -534,6 +535,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       // orchestrator so AnA can ground responses on the active project /
       // artifact instead of guessing from message text alone.
       const clientCtx = (req.body.context ?? {}) as Record<string, any>;
+      const openDocument = await jsonOpenDocumentContext(req, numericOrgId, numericUserId, admittedProject);
       const orchestratorProjectContext = project_id
         ? {
             productName: clientCtx.activeProject || clientCtx.productName,
@@ -543,14 +545,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
             phase: clientCtx.phase,
           }
         : undefined;
-      const orchestratorDocumentContext =
-        clientCtx.artifactId || clientCtx.sectionCode || clientCtx.module
-          ? {
-              documentType: clientCtx.documentType || clientCtx.artifactType,
-              section: clientCtx.sectionCode,
-              module: clientCtx.module || clientCtx.moduleCode,
-            }
-          : undefined;
+      const orchestratorDocumentContext = openDocument.documentContext;
 
       orchestratorResult = orchestrate({
         message,
@@ -561,9 +556,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         authoringContext: project_id
           ? {
               projectId: String(project_id),
-              sectionCode: clientCtx.sectionCode,
-              moduleCode: clientCtx.module || clientCtx.moduleCode,
-              artifactStatus: clientCtx.artifactStatus,
+              sectionCode: openDocument.authoringContext?.sectionCode,
+              moduleCode: openDocument.authoringContext?.moduleCode,
+              artifactStatus: openDocument.artifactStatus,
               _decisionContext: decisionContext,
             }
           : undefined,
@@ -731,6 +726,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         intelligencePrefix +
         projectInstructionsBlock +
         basePrompt +
+        (openDocument.openDocumentBlock ? `\n\n${openDocument.openDocumentBlock}\n` : '') +
         submissionContextBlock +
         deviceContextBlock +
         projectKnowledgeCorpusBlock +

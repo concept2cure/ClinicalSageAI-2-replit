@@ -1,0 +1,15 @@
+# npx vitest run client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx  (after the IvdReadinessBoard.tsx change)
+ ✓ reads the board with the project's id and draws its families 157ms
+ ✓ mounts the IVD assessment workbench for the same project 198ms
+ ✓ a response for the organization is not drawn under a project 81ms
+ ✓ a response for another project is not drawn 83ms
+ ✓ a project the organization does not own (404) says so 94ms
+ ✓ an ownership check that could not run (503) says so 73ms
+ ✓ a failed read (500) says so 56ms
+ ✓ a refusal by the module gate (403 MODULE_NOT_LICENSED) says the feature is not enabled, not that the organization is unconfirmed 70ms
+ ✓ a refusal outside the release (403 LAUNCH_SCOPE) says so 50ms
+ ✓ an organization the route could not confirm (403 IVD_NO_TENANT) says so 51ms
+ ✓ a family that could not be read is "Not read", and no overall figure is shown 220ms
+ ✓ a project with no records reads empty, as a read that succeeded 33ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)

@@ -9,7 +9,10 @@ import { createHash } from 'node:crypto';
 import { ingestPdf, ingestText } from '../../lib/fixtures.mjs';
 
 const TEXT = 'Section 4. The dosing table states 5 mg once daily.';
-const QUOTE = 'the dosing table';
+// The passage as it appears in TEXT, capital T included. Until OQ-002 v0.15 it
+// read 'the dosing table', which TEXT does not contain: indexOf answered -1, the
+// offset sent was 50, and the server rightly refused QUOTE_MISMATCH.
+const QUOTE = 'The dosing table';
 
 /** Post one annotation on a version; the response. */
 const annotate = (api, programId, docId, body) =>
@@ -29,6 +32,7 @@ async function passageThread(api, expect, programId, txt) {
   expect(read.status === 200 && read.json?.data?.text === TEXT, `text read: expected 200 with the text, got ${read.status}`, read.json);
   const textSha256 = read.json.data.textSha256;
   expect(textSha256 === createHash('sha256').update(TEXT, 'utf8').digest('hex'), 'the text read names another SHA-256', read.json.data);
+  expect(TEXT.includes(QUOTE), 'the runner\'s quote is not a passage of its own text');
   const charStart = Array.from(TEXT.slice(0, TEXT.indexOf(QUOTE))).length;
   const posted = await annotate(api, programId, txt.document.id, {
     kind: 'request_changes', body: 'Give the dose per kilogram.', anchor: { kind: 'text', quote: QUOTE, charStart, textSha256 },

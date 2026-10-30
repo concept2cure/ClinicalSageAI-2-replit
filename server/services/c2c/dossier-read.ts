@@ -47,8 +47,13 @@
 import { C2C_SECTION_COMPLETE_STATUSES, markCountedSections } from './section-content.js';
 import { readDocumentOutline } from './document-outline.js';
 import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
-import { normalizeCtdCode } from '../../../shared/regulatory/section-code.js';
+import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code.js';
 import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes.js';
+import { readDossierArtifactReadiness } from './dossier-artifact-read';
+import type { ArtifactReadiness } from '../../../shared/types/dossier-artifact-readiness';
+import { readProjectSectionTracking } from '../dossier/dossier-map-view-assembler';
+import type { DossierSectionTracking } from '../../../shared/types/dossier-section-tracking';
+import { ProgramReadAccessError, requireCurrentProgramAccess, type CurrentProgramAccess } from './current-program-access';
 
 interface Queryable { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> }
 
@@ -75,6 +80,8 @@ export interface DossierRow extends DossierCounts {
   documentId: string;
   figure: DossierFigure;
   lastUpdated: string | null;
+  /** Only the governed sections included in this row's counts, in filing order. */
+  sections: Array<{ key: string; label: string; status: string }>;
 }
 
 export interface DossierMarket {
@@ -94,6 +101,29 @@ export interface DossierRead {
   home: DossierFigure;
   markets: DossierMarket[];
   rows: DossierRow[];
+  artifactReadiness?: ArtifactReadiness;
+  supportingReadiness?: DossierSupportingReadiness;
+}
+
+export interface DossierSupportingReadiness {
+  sectionTracking: DossierSectionTracking;
+}
+
+async function requireSupportingScopeCurrent(db: Queryable, organizationId: number, access: CurrentProgramAccess): Promise<void> {
+  const current = await requireCurrentProgramAccess(db, { organizationId, userId: access.actor.userId, programId: access.programId });
+  if (current.programId !== access.programId || current.projectId !== access.projectId || current.clientWorkspaceId !== access.clientWorkspaceId ||
+      current.actor.userId !== access.actor.userId || current.actor.role !== access.actor.role) {
+    throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed during the read. No project data was supplied.');
+  }
+}
+
+/** One read of each source, bound to and revalidated against the accepted mapping. */
+export async function readDossierSupporting(db: Queryable, organizationId: number, access: CurrentProgramAccess): Promise<DossierSupportingReadiness & { artifactReadiness: ArtifactReadiness }> {
+  await requireSupportingScopeCurrent(db, organizationId, access);
+  const artifactReadiness = await readDossierArtifactReadiness(db, organizationId, access.projectId, access);
+  const sectionTracking = await readProjectSectionTracking(db, organizationId, access.projectId, access);
+  await requireSupportingScopeCurrent(db, organizationId, access);
+  return { artifactReadiness, sectionTracking };
 }
 
 const UNPROVISIONED = new Set(['42P01', '42703']);
@@ -147,6 +177,15 @@ export function ctdModuleOfKey(key: string): string | null {
 
 const iso = (v: string | Date | null): string | null => (v == null ? null : new Date(v).toISOString());
 const later = (a: string | null, b: string | null) => (a == null ? b : b == null ? a : a > b ? a : b);
+
+/** The same counted rows as the figure, without bodies or a second read.
+ *  Normalize M-prefixed CTD keys for ordering, while preserving their stored
+ *  spelling in the response. Non-CTD filing outlines retain their own keys. */
+function countedSections(rows: readonly SectionRow[]): DossierRow['sections'] {
+  return rows.filter((s) => s.counted)
+    .sort((a, b) => compareSectionCode(normalizeCtdCode(a.section_key) ?? a.section_key, normalizeCtdCode(b.section_key) ?? b.section_key))
+    .map((s) => ({ key: s.section_key, label: s.label?.trim() || s.section_key, status: s.status }));
+}
 
 /** Whether a document is an application (a CTD filing) rather than a filing document class. */
 const isApplication = (docType: string) => filingDocumentClassOf(docType) == null;
@@ -240,24 +279,25 @@ function moduleRows(doc: DocGroup, keep: (key: string) => boolean, agency: strin
     }
     return k;
   };
-  const groups = new Map<string, { module: string | null; heading: string; order: string; c: DossierCounts; last: string | null }>();
+  const groups = new Map<string, { module: string | null; heading: string; order: string; c: DossierCounts; last: string | null; sections: SectionRow[] }>();
   for (const s of doc.sections) {
     if (!keep(s.section_key)) continue;
     const module = ctdModuleOfKey(s.section_key);
     const heading = module ? `M${module}` : rootOf(s.section_key);
     const id = module ? `ctd:${module}` : `root:${heading}`;
-    const g = groups.get(id) ?? { module, heading, order: module ?? `~${heading}`, c: emptyCounts(), last: null };
+    const g = groups.get(id) ?? { module, heading, order: module ?? `~${heading}`, c: emptyCounts(), last: null, sections: [] as SectionRow[] };
     add(g.c, s);
+    g.sections.push(s);
     g.last = later(g.last, iso(s.updated_at));
     groups.set(id, g);
   }
   const market = agency ? ` · ${agency.toUpperCase()} ${doc.docType.toUpperCase()}` : '';
   return [...groups.values()]
-    .sort((a, b) => a.order.localeCompare(b.order, undefined, { numeric: true }))
+    .sort((a, b) => compareSectionCode(a.order, b.order))
     .map((g) => ({
       group: 'module' as const, module: g.module, agency, documentId: doc.id,
       label: (byKey.get(g.heading)?.label?.trim() || (g.module ? `Module ${g.module}` : g.heading)) + market,
-      ...g.c, figure: figureOf(g.c), lastUpdated: g.last,
+      ...g.c, figure: figureOf(g.c), lastUpdated: g.last, sections: countedSections(g.sections),
     }));
 }
 
@@ -273,6 +313,7 @@ function documentRow(doc: DocGroup): DossierRow {
   return {
     group: 'document', module: null, agency: null, documentId: doc.id,
     label: cls?.label ?? doc.title ?? doc.docType, ...c, figure: figureOf(c), lastUpdated: last,
+    sections: countedSections(doc.sections),
   };
 }
 

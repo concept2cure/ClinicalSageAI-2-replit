@@ -1,0 +1,53 @@
+Red run against EngineeringSurface.tsx as slice 0's first pass left it in the working tree (before the audit fixes), filtered with -t to this item's tests.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+---xx·---------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not claim change requests or non-conformances were checked when they were not read for the project
+AssertionError: expected 'No blockers in the records read for t…' not to match /No unverified risks were found/
+
+- Expected:
+/No unverified risks were found/
+
++ Received:
+"No blockers in the records read for this projectNo unverified risks were found. DHF sections, change requests and non-conformances are left out until this screen reads this project's records."
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx:191:44
+    189|     expect(allClear.textContent ?? '').not.toMatch(/open change reques…
+    190|     // An empty risk file is nothing assessed, not "no unverified risk…
+    191|     expect(allClear.textContent ?? '').not.toMatch(/No unverified risk…
+       |                                            ^
+    192|     expect(blockerSub(container)).not.toMatch(/0 hard blockers/);
+    193|     expect(blockerSub(container)).toMatch(/hard blockers not counted/i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says an empty risk file has nothing to check, not that every risk is verified
+AssertionError: expected 'No blockers in the records read for t…' to match /No risk records for this project yet/
+
+- Expected:
+/No risk records for this project yet/
+
++ Received:
+"No blockers in the records read for this projectNo unverified risks were found. DHF sections, change requests and non-conformances are left out until this screen reads this project's records."
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx:202:40
+    200|
+    201|     const allClear = screen.getByTestId('eng-no-blockers');
+    202|     expect(allClear.textContent ?? '').toMatch(/No risk records for th…
+       |                                        ^
+    203|     expect(allClear.textContent ?? '').toMatch(
+    204|       /Nothing has been recorded in this project's risk file, so there…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 12 skipped (15)
+   Start at  03:13:10
+   Duration  1.46s (transform 376ms, setup 179ms, import 438ms, tests 131ms, environment 528ms)
+

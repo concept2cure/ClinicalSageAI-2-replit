@@ -93,6 +93,7 @@ import { createOnConnection, insertRegisterRow } from '../../services/cmc/regist
    (services/cmc/register-edit-audit.ts). */
 import { updateOnConnection, updateRegisterRow } from '../../services/cmc/register-edit-audit';
 import { type CmcRegisterHistoryPath } from '../../../shared/constants/cmc-register-history';
+import { QC_SAMPLE_TYPES, isKnownSampleType } from '../../../shared/cmc/qc-sample-types';
 import {
   MissingAuditStore,
   REGISTER_HISTORY_PATHS,
@@ -295,6 +296,23 @@ const stabilityStudyBody = withoutTenantKey(insertStabilityStudySchema).extend({
 const qcTestingBody = withoutTenantKey(insertQcTestingSchema).extend({
   testDate: requiredDate,
   releaseDate: optionalDate,
+  /* The register's vocabulary, closed at the write (2026-10-26).
+     `sample_type` is a free `text` column and nothing refused a value outside
+     it, while the write-through reads the value as
+     `=== FINISHED_PRODUCT ? 'drug_product' : 'drug_substance'` — so every
+     unrecognised string became drug-SUBSTANCE batch evidence and composed into
+     §3.2.S.4.4. Measured on a real database: seven `finished_product` results
+     (underscore) classified as drug substance. A misattributed batch analysis
+     is a false statement about which material was tested, in a filed section,
+     so the value is refused here with the list of accepted ones rather than
+     reinterpreted. Lower-cased first: every reader of the column compares it
+     that way, and `Finished-Product` means what it says. */
+  sampleType: z
+    .string()
+    .transform((v) => v.trim().toLowerCase())
+    .refine(isKnownSampleType, {
+      message: `Sample type must be one of: ${QC_SAMPLE_TYPES.join(', ')}.`,
+    }),
 });
 const changeControlBody = withoutTenantKey(insertCmcChangeControlSchema).extend({
   implementationDate: optionalDate,
@@ -2337,7 +2355,7 @@ async function answeredUnknownProgram(res: express.Response, orgId: number, proj
   if (await projectBelongsToTenant({ organizationId: orgId, projectId })) return false;
   res.status(404).json({
     success: false,
-    error: 'No such program in this organization — nothing was assessed.',
+    error: 'No such project in this organization — nothing was assessed.',
   });
   return true;
 }
@@ -2598,7 +2616,7 @@ router.get('/projects/:projectId/process-capability', async (req, res) => {
       [orgId, projectId],
     );
     const payloads = rows.map((r: { sourcePayload: Record<string, unknown> | null }) => r.sourcePayload || {});
-    const { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor } = await import(
+    const { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor, unattributableSampleType } = await import(
       '../../services/cmc/recorded-capability'
     );
     const sides = ['drug_substance', 'drug_product'] as const;
@@ -2616,19 +2634,44 @@ router.get('/projects/:projectId/process-capability', async (req, res) => {
        reads as a set of tests that passed, which is the one thing this endpoint
        must never produce. */
     const seriesCount = sides.reduce((n, side) => n + bySide[side].series.length, 0);
+    /* A result the register cannot attribute to a material is NAMED, not
+       dropped. Its sample type is outside the register's vocabulary, so it
+       belongs to neither §3.2.S.4.4 nor §3.2.P.5.4 — and before 2026-10-26 it
+       was silently read as drug substance. A row that simply vanished from
+       this report would read as a project with less data than it has, and the
+       correction (record the sample type the register knows) would never be
+       prompted. */
+    const unattributable = [
+      ...new Set(
+        payloads
+          /* Read from the sample type itself, not from the `sampleTypeRecognised`
+             flag the mapper writes: a row persisted before that flag existed
+             carries neither it nor a usable attribution, and is exactly the row
+             a reader needs named. */
+          .map((p) => unattributableSampleType(p as Parameters<typeof unattributableSampleType>[0]))
+          .filter((t): t is string => Boolean(t)),
+      ),
+    ].sort();
+    const unattributableNote = unattributable.length
+      ? ` ${unattributable.length} recorded sample type(s) are outside this register's vocabulary ` +
+        `(${unattributable.join(', ')}); a result recorded against one is evidence for neither the substance ` +
+        'nor the product until its sample type is corrected.'
+      : '';
     const data = {
       projectId,
       resultsOnFile: payloads.length,
       assessed: seriesCount > 0,
+      unattributableSampleTypes: unattributable,
       statement:
         seriesCount > 0
-          ? null
-          : payloads.length === 0
-            ? 'No batch results are recorded for this project, so process capability is NOT assessed. ' +
-              'Record the QC results, each with its batch number and the acceptance criterion it was judged against.'
-            : `${payloads.length} QC result(s) are on file for this project and none of them is batch-analysis ` +
-              'evidence with a named test method — cleaning-verification and reference-standard results are not ' +
-              'batch data, and a result with no test method opens no series. Process capability is NOT assessed.',
+          ? unattributableNote.trim() || null
+          : (payloads.length === 0
+              ? 'No batch results are recorded for this project, so process capability is NOT assessed. ' +
+                'Record the QC results, each with its batch number and the acceptance criterion it was judged against.'
+              : `${payloads.length} QC result(s) are on file for this project and none of them is batch-analysis ` +
+                'evidence with a named test method — cleaning-verification and reference-standard results are not ' +
+                'batch data, and a result with no test method opens no series. Process capability is NOT assessed.') +
+            unattributableNote,
       sides: bySide,
     };
     return res.json({ success: true, data });
@@ -2783,6 +2826,10 @@ router.get('/register-history/:register/:id', async (req, res) => {
       data: {
         register: target.register,
         recordId,
+        /* Which store answered. The specification register's history comes from
+           its own revision log, and a reader must never be left to infer the
+           difference from a per-row marker that means two things. */
+        store: history.store,
         entries,
         /* A record with more acts than one read returns loses its OLDEST,
            possibly its create — so the reader is told, rather than shown a

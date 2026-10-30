@@ -48,6 +48,23 @@
  * @module server/services/clinical-outcome-assessment/coa-knowledge
  */
 
+import { refuseUnlessStated } from '../ana-biostats/computation-engine';
+import { booleanInputStates, statedNumber, statedOneOf } from '../immunogenicity/immunogenicity-reference';
+
+/** The shared refusal checks the context used by these existing worksheets at runtime. */
+function requireCOAContext(fn: string, params: object, fields: readonly ('coaType' | 'population' | 'conceptOfInterest')[]): void {
+  const values = params as Record<string, unknown>;
+  const checks = {
+    coaType: { field: 'coaType', value: values.coaType,
+      ok: typeof values.coaType === 'string' && Object.keys(COA_TYPE_REGISTRY).includes(values.coaType), expected: 'PRO, ClinRO, ObsRO or PerfO' },
+    population: { field: 'population', value: values.population,
+      ok: typeof values.population === 'string' && Object.keys(POPULATION_REPORTER_REGISTRY).includes(values.population), expected: 'a recognized population' },
+    conceptOfInterest: { field: 'conceptOfInterest', value: values.conceptOfInterest,
+      ok: typeof values.conceptOfInterest === 'string' && values.conceptOfInterest.trim().length > 0, expected: 'non-empty text' },
+  };
+  refuseUnlessStated(fn, fields.map(field => checks[field]), 'assessed');
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 // SECTION 0 — Shared types
 // ═════════════════════════════════════════════════════════════════════════════
@@ -72,6 +89,8 @@ export type EndpointPosition =
   | 'secondary'
   | 'exploratory'
   | 'not_recommended';
+
+const ENDPOINT_POSITIONS: readonly EndpointPosition[] = ['primary', 'key_secondary', 'secondary', 'exploratory', 'not_recommended'];
 
 /** Qualitative adequacy grade used throughout the engines. */
 export type AdequacyGrade =
@@ -617,6 +636,10 @@ export interface SelectCOATypeResult {
  * feasibility rules in the FDA PRO Guidance (2009) and PFDD Guidance 3 (2023).
  */
 export function selectCOAType(params: SelectCOATypeParams): SelectCOATypeResult {
+  requireCOAContext('selectCOAType', params, ['conceptOfInterest', 'population']);
+  refuseUnlessStated('selectCOAType', [{ field: 'conceptObservability', value: params.conceptObservability,
+    ok: ['patient_subjective', 'observable_sign', 'clinical_judgment', 'functional_capacity'].includes(params.conceptObservability),
+    expected: 'patient_subjective, observable_sign, clinical_judgment or functional_capacity' }], 'selected');
   const pop = POPULATION_REPORTER_REGISTRY[params.population];
   const selfReportFeasible = pop.selfReportFeasible;
   const cautions: string[] = [];
@@ -679,9 +702,6 @@ export function selectCOAType(params: SelectCOATypeParams): SelectCOATypeResult 
       add('ClinRO', 'acceptable', 'A clinician can rate observed functional status as a complement to the performed task.');
       add('ObsRO', 'acceptable', 'An observer can report functional behaviors witnessed in daily life as a complement.');
       break;
-    }
-    default: {
-      add('PRO', 'acceptable', 'Concept observability not specified; default to PRO if the concept is patient-experienced and self-report is feasible.');
     }
   }
 
@@ -758,6 +778,7 @@ export interface ValidationPropertyResult {
 
 export interface AssessCOAValidationResult {
   coaType: COAType;
+  inputStates: Record<string, boolean | 'not_stated'>;
   overallAdequacy: AdequacyGrade;
   properties: ValidationPropertyResult[];
   gaps: string[];
@@ -777,21 +798,27 @@ const INTER_RATER_THRESHOLD = 0.7;
  * ISOQOL minimum standards (2013).
  */
 export function assessCOAValidation(params: AssessCOAValidationParams): AssessCOAValidationResult {
+  requireCOAContext('assessCOAValidation', params, ['coaType']);
+  const inputStates = booleanInputStates(params, ['contentValidityEstablished', 'contentValidityInTargetPopulation',
+    'constructValidityConfirmed', 'isMultiItem', 'abilityToDetectChangeDemonstrated']);
+  const testRetestICC = statedNumber('testRetestICC', params.testRetestICC, value => value >= 0 && value <= 1, 'a finite value between 0 and 1');
+  const cronbachAlpha = statedNumber('cronbachAlpha', params.cronbachAlpha, value => value >= 0 && value <= 1, 'a finite value between 0 and 1');
+  const interRaterICC = statedNumber('interRaterICC', params.interRaterICC, value => value >= 0 && value <= 1, 'a finite value between 0 and 1');
   const props: ValidationPropertyResult[] = [];
   const gaps: string[] = [];
   const recommendations: string[] = [];
 
   // ── Content validity (most important) ─────────────────────────────────────
   let contentGrade: AdequacyGrade;
-  if (params.contentValidityEstablished && params.contentValidityInTargetPopulation) {
+  if (inputStates.contentValidityEstablished === true && inputStates.contentValidityInTargetPopulation === true) {
     contentGrade = 'adequate';
-  } else if (params.contentValidityEstablished && params.contentValidityInTargetPopulation === false) {
+  } else if (inputStates.contentValidityEstablished === true && inputStates.contentValidityInTargetPopulation === false) {
     contentGrade = 'partially_adequate';
     gaps.push('Content validity exists but was not established in the specific target population / context of use; relevance and comprehension must be reconfirmed.');
     recommendations.push('Conduct concept elicitation and cognitive interviews in the actual target population to confirm content validity for this context of use (FDA PRO Guidance 2009; PFDD Guidance 2).');
-  } else if (params.contentValidityEstablished === undefined) {
+  } else if (inputStates.contentValidityEstablished !== false) {
     contentGrade = 'not_assessed';
-    gaps.push('Content validity evidence was not provided — this is the single most important property and cannot be assumed.');
+    gaps.push('Content validity or its target-population context was not stated — this is the single most important property and cannot be assumed.');
     recommendations.push('Document content validity: qualitative concept elicitation to saturation plus cognitive debriefing in the target population.');
   } else {
     contentGrade = 'inadequate';
@@ -804,7 +831,9 @@ export function assessCOAValidation(params: AssessCOAValidationParams): AssessCO
     finding:
       contentGrade === 'adequate'
         ? 'Content validity established in the target population.'
-        : 'Content validity is incomplete for this context of use.',
+        : contentGrade === 'not_assessed'
+          ? 'Content validity cannot be assessed until its evidence and target-population context are stated.'
+          : 'Content validity is incomplete for this context of use.',
     benchmark: 'Concept elicitation to saturation + cognitive interviews in the target population.',
   });
 
@@ -831,13 +860,13 @@ export function assessCOAValidation(params: AssessCOAValidationParams): AssessCO
   // ── Test-retest reliability ───────────────────────────────────────────────
   let retestGrade: AdequacyGrade;
   let retestFinding: string;
-  if (typeof params.testRetestICC === 'number') {
-    if (params.testRetestICC >= TEST_RETEST_ICC_THRESHOLD) {
+  if (testRetestICC !== undefined) {
+    if (testRetestICC >= TEST_RETEST_ICC_THRESHOLD) {
       retestGrade = 'adequate';
-      retestFinding = `Test-retest ICC = ${params.testRetestICC.toFixed(2)} meets the ICC ≥ ${TEST_RETEST_ICC_THRESHOLD.toFixed(2)} benchmark.`;
+      retestFinding = `Test-retest ICC = ${testRetestICC.toFixed(2)} meets the ICC ≥ ${TEST_RETEST_ICC_THRESHOLD.toFixed(2)} benchmark.`;
     } else {
       retestGrade = 'inadequate';
-      retestFinding = `Test-retest ICC = ${params.testRetestICC.toFixed(2)} is below the ICC ≥ ${TEST_RETEST_ICC_THRESHOLD.toFixed(2)} benchmark.`;
+      retestFinding = `Test-retest ICC = ${testRetestICC.toFixed(2)} is below the ICC ≥ ${TEST_RETEST_ICC_THRESHOLD.toFixed(2)} benchmark.`;
       gaps.push('Test-retest reliability below threshold; scores are not sufficiently reproducible over a stable period.');
       recommendations.push('Investigate sources of instability (recall period, item wording, administration) and re-assess reliability.');
     }
@@ -850,20 +879,20 @@ export function assessCOAValidation(params: AssessCOAValidationParams): AssessCO
   props.push({ property: 'Test-retest reliability', grade: retestGrade, finding: retestFinding, benchmark: `ICC ≥ ${TEST_RETEST_ICC_THRESHOLD.toFixed(2)}` });
 
   // ── Internal consistency ──────────────────────────────────────────────────
-  if (params.isMultiItem) {
+  if (inputStates.isMultiItem === true) {
     let icGrade: AdequacyGrade;
     let icFinding: string;
-    if (typeof params.cronbachAlpha === 'number') {
-      if (params.cronbachAlpha >= CRONBACH_ALPHA_THRESHOLD && params.cronbachAlpha < CRONBACH_ALPHA_REDUNDANCY) {
+    if (cronbachAlpha !== undefined) {
+      if (cronbachAlpha >= CRONBACH_ALPHA_THRESHOLD && cronbachAlpha < CRONBACH_ALPHA_REDUNDANCY) {
         icGrade = 'adequate';
-        icFinding = `Cronbach’s alpha = ${params.cronbachAlpha.toFixed(2)} is within the acceptable range.`;
-      } else if (params.cronbachAlpha >= CRONBACH_ALPHA_REDUNDANCY) {
+        icFinding = `Cronbach’s alpha = ${cronbachAlpha.toFixed(2)} is within the acceptable range.`;
+      } else if (cronbachAlpha >= CRONBACH_ALPHA_REDUNDANCY) {
         icGrade = 'partially_adequate';
-        icFinding = `Cronbach’s alpha = ${params.cronbachAlpha.toFixed(2)} exceeds 0.90, which may indicate item redundancy.`;
+        icFinding = `Cronbach’s alpha = ${cronbachAlpha.toFixed(2)} exceeds 0.90, which may indicate item redundancy.`;
         recommendations.push('Very high alpha (> 0.90) may indicate redundant items; review item content for over-overlap.');
       } else {
         icGrade = 'inadequate';
-        icFinding = `Cronbach’s alpha = ${params.cronbachAlpha.toFixed(2)} is below the 0.70 benchmark.`;
+        icFinding = `Cronbach’s alpha = ${cronbachAlpha.toFixed(2)} is below the 0.70 benchmark.`;
         gaps.push('Internal consistency below threshold; items in the domain may not measure a single concept.');
         recommendations.push('Re-examine domain structure (factor analysis/IRT) and item-total correlations.');
       }
@@ -874,26 +903,32 @@ export function assessCOAValidation(params: AssessCOAValidationParams): AssessCO
       recommendations.push('Report Cronbach’s alpha and item-total correlations for each multi-item domain.');
     }
     props.push({ property: 'Internal consistency', grade: icGrade, finding: icFinding, benchmark: `Cronbach’s alpha ≥ ${CRONBACH_ALPHA_THRESHOLD.toFixed(2)} (and < 0.90)` });
-  } else {
+  } else if (inputStates.isMultiItem === false) {
     props.push({
       property: 'Internal consistency',
       grade: 'not_assessed',
       finding: 'Single-item instrument — internal consistency does not apply; rely on test-retest reliability.',
       benchmark: 'Not applicable to single-item PROs.',
     });
+  } else {
+    props.push({ property: 'Internal consistency', grade: 'not_assessed',
+      finding: 'isMultiItem was not stated; internal-consistency applicability cannot be assessed.',
+      benchmark: 'Establish whether the instrument has multiple items before applying Cronbach’s alpha.' });
+    gaps.push('isMultiItem was not stated; a single-item instrument cannot be assumed.');
+    recommendations.push('State whether the instrument is multi-item.');
   }
 
   // ── Inter-rater reliability (ClinRO / administered PerfO) ──────────────────
   if (params.coaType === 'ClinRO' || params.coaType === 'PerfO') {
     let irGrade: AdequacyGrade;
     let irFinding: string;
-    if (typeof params.interRaterICC === 'number') {
-      if (params.interRaterICC >= INTER_RATER_THRESHOLD) {
+    if (interRaterICC !== undefined) {
+      if (interRaterICC >= INTER_RATER_THRESHOLD) {
         irGrade = 'adequate';
-        irFinding = `Inter-rater ICC/kappa = ${params.interRaterICC.toFixed(2)} meets the ≥ ${INTER_RATER_THRESHOLD.toFixed(2)} benchmark.`;
+        irFinding = `Inter-rater ICC/kappa = ${interRaterICC.toFixed(2)} meets the ≥ ${INTER_RATER_THRESHOLD.toFixed(2)} benchmark.`;
       } else {
         irGrade = 'inadequate';
-        irFinding = `Inter-rater ICC/kappa = ${params.interRaterICC.toFixed(2)} is below the ≥ ${INTER_RATER_THRESHOLD.toFixed(2)} benchmark.`;
+        irFinding = `Inter-rater ICC/kappa = ${interRaterICC.toFixed(2)} is below the ≥ ${INTER_RATER_THRESHOLD.toFixed(2)} benchmark.`;
         gaps.push('Inter-rater reliability below threshold; rater training/standardization or central rating needed.');
         recommendations.push('Strengthen rater training/certification or implement central rating to reduce inter-rater variability.');
       }
@@ -927,17 +962,17 @@ export function assessCOAValidation(params: AssessCOAValidationParams): AssessCO
   });
 
   // ── Overall adequacy roll-up ──────────────────────────────────────────────
-  const grades = props.map((p: ValidationPropertyResult) => p.grade);
+  const grades = props.filter(p => !(p.property === 'Internal consistency' && inputStates.isMultiItem === false))
+    .map((p: ValidationPropertyResult) => p.grade);
   const anyInadequate = grades.some((g: AdequacyGrade) => g === 'inadequate');
-  const contentInadequate = contentGrade === 'inadequate' || contentGrade === 'not_assessed';
   const anyNotAssessed = grades.some((g: AdequacyGrade) => g === 'not_assessed');
   const anyPartial = grades.some((g: AdequacyGrade) => g === 'partially_adequate');
 
   let overallAdequacy: AdequacyGrade;
-  if (contentInadequate || anyInadequate) {
+  if (anyInadequate) {
     overallAdequacy = 'inadequate';
   } else if (anyNotAssessed) {
-    overallAdequacy = 'partially_adequate';
+    overallAdequacy = 'not_assessed';
   } else if (anyPartial) {
     overallAdequacy = 'partially_adequate';
   } else {
@@ -950,6 +985,7 @@ export function assessCOAValidation(params: AssessCOAValidationParams): AssessCO
 
   return {
     coaType: params.coaType,
+    inputStates,
     overallAdequacy,
     properties: props,
     gaps,
@@ -996,7 +1032,7 @@ export interface DetermineMeaningfulChangeParams {
 export interface DetermineMeaningfulChangeResult {
   method: 'anchor_based_primary' | 'distribution_based_supportive_only' | 'insufficient_evidence';
   anchorBasedThreshold?: number;
-  usableAnchors: { anchorLabel: string; thresholdContribution: number; usable: boolean; note: string }[];
+  usableAnchors: { anchorLabel: string; thresholdContribution: number | null; usable: boolean | 'not_stated'; note: string }[];
   distributionBasedEstimates: { basis: string; value: number; note: string }[];
   recommendedThreshold?: number;
   responderDefinition?: string;
@@ -1006,6 +1042,16 @@ export interface DetermineMeaningfulChangeResult {
 
 const MIN_USABLE_ANCHOR_CORRELATION = 0.3;
 
+/** Required anchor-row evidence uses the same refusal as the tool's required context. */
+function requireAnchorEstimate(a: AnchorEstimate, index: number): void {
+  refuseUnlessStated('determineMeaningfulChange', [
+    { field: `anchorEstimates[${index}].anchorLabel`, value: a?.anchorLabel,
+      ok: typeof a?.anchorLabel === 'string' && a.anchorLabel.trim().length > 0, expected: 'non-empty text' },
+    { field: `anchorEstimates[${index}].meanChangeInImprovedGroup`, value: a?.meanChangeInImprovedGroup,
+      ok: typeof a?.meanChangeInImprovedGroup === 'number' && Number.isFinite(a.meanChangeInImprovedGroup), expected: 'a finite number' },
+  ], 'computed');
+}
+
 /**
  * Determine a meaningful within-patient change threshold and a responder
  * definition. Anchor-based methods are PRIMARY; distribution-based methods are
@@ -1014,6 +1060,8 @@ const MIN_USABLE_ANCHOR_CORRELATION = 0.3;
  * WITHIN-PATIENT change.
  */
 export function determineMeaningfulChange(params: DetermineMeaningfulChangeParams): DetermineMeaningfulChangeResult {
+  refuseUnlessStated('determineMeaningfulChange', [{ field: 'improvementDirection', value: params.improvementDirection,
+    ok: ['increase', 'decrease'].includes(params.improvementDirection), expected: 'increase or decrease' }], 'computed');
   const cautions: string[] = [];
   const usableAnchors: DetermineMeaningfulChangeResult['usableAnchors'] = [];
   const distributionBasedEstimates: DetermineMeaningfulChangeResult['distributionBasedEstimates'] = [];
@@ -1022,20 +1070,25 @@ export function determineMeaningfulChange(params: DetermineMeaningfulChangeParam
   let anchorBasedThreshold: number | undefined;
   const usableValues: number[] = [];
   if (params.anchorEstimates && params.anchorEstimates.length > 0) {
-    for (const a of params.anchorEstimates) {
-      const corr = a.anchorCorrelation;
-      const usable = corr === undefined || Math.abs(corr) >= MIN_USABLE_ANCHOR_CORRELATION;
-      const note = usable
-        ? (corr === undefined
-            ? 'Anchor correlation not provided; confirm the anchor correlates with the COA change (≥ 0.30 recommended).'
-            : `Anchor correlation |r| = ${Math.abs(corr).toFixed(2)} ≥ ${MIN_USABLE_ANCHOR_CORRELATION.toFixed(2)} — usable.`)
-        : `Anchor correlation |r| = ${Math.abs(corr ?? 0).toFixed(2)} < ${MIN_USABLE_ANCHOR_CORRELATION.toFixed(2)} — too weak to anchor a threshold; excluded.`;
-      if (!usable) {
+    for (const [index, a] of params.anchorEstimates.entries()) {
+      requireAnchorEstimate(a, index);
+      const corr = statedNumber(`anchorEstimates[${index}].anchorCorrelation`, a.anchorCorrelation,
+        value => value >= -1 && value <= 1, 'a finite correlation between -1 and 1');
+      const usable = corr === undefined ? 'not_stated' : Math.abs(corr) >= MIN_USABLE_ANCHOR_CORRELATION;
+      const note = corr === undefined
+        ? 'Anchor correlation was not stated; usability is not assessed and this anchor does not contribute to a threshold.'
+        : usable
+          ? `Anchor correlation |r| = ${Math.abs(corr).toFixed(2)} ≥ ${MIN_USABLE_ANCHOR_CORRELATION.toFixed(2)} — usable.`
+          : `Anchor correlation |r| = ${Math.abs(corr).toFixed(2)} < ${MIN_USABLE_ANCHOR_CORRELATION.toFixed(2)} — too weak to anchor a threshold; excluded.`;
+      if (usable === 'not_stated') {
+        cautions.push(`Anchor "${a.anchorLabel}" not assessed: state its correlation with COA change before using it.`);
+      } else if (!usable) {
         cautions.push(`Anchor "${a.anchorLabel}" excluded: correlation with COA change is too weak to be interpretable.`);
       } else {
         usableValues.push(a.meanChangeInImprovedGroup);
       }
-      usableAnchors.push({ anchorLabel: a.anchorLabel, thresholdContribution: a.meanChangeInImprovedGroup, usable, note });
+      usableAnchors.push({ anchorLabel: a.anchorLabel,
+        thresholdContribution: usable === true ? a.meanChangeInImprovedGroup : null, usable, note });
     }
     if (usableValues.length > 0) {
       // Use the mean of usable anchor estimates as the central anchor-based threshold.
@@ -1048,18 +1101,22 @@ export function determineMeaningfulChange(params: DetermineMeaningfulChangeParam
 
   // ── Distribution-based (supportive only) ──────────────────────────────────
   if (params.distributionEstimate) {
-    if (typeof params.distributionEstimate.baselineSD === 'number') {
-      const halfSD = 0.5 * params.distributionEstimate.baselineSD;
+    const baselineSD = statedNumber('distributionEstimate.baselineSD', params.distributionEstimate.baselineSD,
+      value => value >= 0, 'a finite nonnegative number');
+    const sem = statedNumber('distributionEstimate.sem', params.distributionEstimate.sem,
+      value => value >= 0, 'a finite nonnegative number');
+    if (baselineSD !== undefined) {
+      const halfSD = 0.5 * baselineSD;
       distributionBasedEstimates.push({
         basis: '0.5 × baseline SD (Norman half-SD heuristic)',
         value: halfSD,
         note: 'Supportive triangulation only; reflects distribution, not patient-perceived meaning.',
       });
     }
-    if (typeof params.distributionEstimate.sem === 'number') {
+    if (sem !== undefined) {
       distributionBasedEstimates.push({
         basis: '1 × SEM (standard error of measurement)',
-        value: params.distributionEstimate.sem,
+        value: sem,
         note: 'A change exceeding ~1 SEM is beyond measurement error; supportive of, not a substitute for, anchor-based meaning.',
       });
     }
@@ -1089,7 +1146,7 @@ export function determineMeaningfulChange(params: DetermineMeaningfulChangeParam
     responderDefinition = undefined;
   } else {
     method = 'insufficient_evidence';
-    cautions.push('Neither anchor-based nor distribution-based evidence was provided; a meaningful change threshold cannot be derived.');
+    cautions.push('No usable anchor-based or distribution-based evidence is available; a meaningful change threshold cannot be derived.');
   }
 
   return {
@@ -1136,13 +1193,14 @@ export interface AssessCOAFitForPurposeParams {
 
 export interface FitForPurposeCriterion {
   criterion: string;
-  status: 'met' | 'partially_met' | 'not_met' | 'unknown';
+  status: 'met' | 'partially_met' | 'not_met' | 'not_stated';
   finding: string;
 }
 
 export interface AssessCOAFitForPurposeResult {
   coaType: COAType;
-  fitForPurpose: 'fit' | 'conditionally_fit' | 'not_fit';
+  inputStates: Record<string, boolean | 'not_stated'>;
+  fitForPurpose: 'fit' | 'conditionally_fit' | 'not_fit' | 'not_assessed';
   criteria: FitForPurposeCriterion[];
   blockingIssues: string[];
   recommendations: string[];
@@ -1157,6 +1215,10 @@ export interface AssessCOAFitForPurposeResult {
  * for another.
  */
 export function assessCOAFitForPurpose(params: AssessCOAFitForPurposeParams): AssessCOAFitForPurposeResult {
+  requireCOAContext('assessCOAFitForPurpose', params, ['coaType', 'conceptOfInterest', 'population']);
+  const inputStates = booleanInputStates(params, ['contentValidityInContextOfUse', 'conceptMatchesClaim',
+    'meaningfulChangeDefined', 'recallPeriodAppropriate', 'modeOfAdministrationValidated']);
+  const position = statedOneOf('intendedEndpointPosition', params.intendedEndpointPosition, ENDPOINT_POSITIONS);
   const criteria: FitForPurposeCriterion[] = [];
   const blockingIssues: string[] = [];
   const recommendations: string[] = [];
@@ -1181,7 +1243,7 @@ export function assessCOAFitForPurpose(params: AssessCOAFitForPurposeParams): As
   let cvStatus: FitForPurposeCriterion['status'];
   if (params.contentValidityInContextOfUse === true) cvStatus = 'met';
   else if (params.contentValidityInContextOfUse === false) cvStatus = 'not_met';
-  else cvStatus = 'unknown';
+  else cvStatus = 'not_stated';
   criteria.push({
     criterion: 'Content validity established in this context of use',
     status: cvStatus,
@@ -1195,7 +1257,7 @@ export function assessCOAFitForPurpose(params: AssessCOAFitForPurposeParams): As
   if (cvStatus === 'not_met') {
     blockingIssues.push('Content validity is not established for the specific context of use — fit-for-purpose cannot be claimed.');
     recommendations.push('Run concept elicitation + cognitive interviews in the actual target population (FDA PFDD Guidance 2–3).');
-  } else if (cvStatus === 'unknown') {
+  } else if (cvStatus === 'not_stated') {
     recommendations.push('Confirm and document content validity in the actual context of use before locking the endpoint.');
   }
 
@@ -1203,7 +1265,7 @@ export function assessCOAFitForPurpose(params: AssessCOAFitForPurposeParams): As
   let claimStatus: FitForPurposeCriterion['status'];
   if (params.conceptMatchesClaim === true) claimStatus = 'met';
   else if (params.conceptMatchesClaim === false) claimStatus = 'not_met';
-  else claimStatus = 'unknown';
+  else claimStatus = 'not_stated';
   criteria.push({
     criterion: 'Measured concept aligns with the intended claim',
     status: claimStatus,
@@ -1221,20 +1283,26 @@ export function assessCOAFitForPurpose(params: AssessCOAFitForPurposeParams): As
 
   // Meaningful within-patient change defined (needed for primary/key-secondary).
   const needsMeaningfulChange =
-    params.intendedEndpointPosition === 'primary' || params.intendedEndpointPosition === 'key_secondary';
+    position === 'primary' || position === 'key_secondary';
+  const changeRequirementNotStated = position === undefined && inputStates.meaningfulChangeDefined === false;
+  if (changeRequirementNotStated) {
+    recommendations.push('intendedEndpointPosition was not stated; confirm it to assess whether the missing meaningful-change definition blocks this use.');
+  }
   let mcStatus: FitForPurposeCriterion['status'];
   if (params.meaningfulChangeDefined === true) mcStatus = 'met';
   else if (params.meaningfulChangeDefined === false) mcStatus = needsMeaningfulChange ? 'not_met' : 'partially_met';
-  else mcStatus = 'unknown';
+  else mcStatus = 'not_stated';
   criteria.push({
     criterion: 'Meaningful within-patient change threshold defined',
     status: mcStatus,
     finding:
       mcStatus === 'met'
         ? 'A responder threshold anchored to meaningful within-patient change is defined.'
-        : 'A meaningful within-patient change threshold is not yet defined.',
+        : mcStatus === 'not_stated'
+          ? 'meaningfulChangeDefined was not stated; a responder threshold cannot be assumed present or absent.'
+          : 'A meaningful within-patient change threshold is not yet defined.',
   });
-  if (needsMeaningfulChange && mcStatus !== 'met') {
+  if (needsMeaningfulChange && mcStatus === 'not_met') {
     blockingIssues.push('A primary/key-secondary COA endpoint requires a pre-defined, anchor-based meaningful within-patient change threshold.');
     recommendations.push('Derive a meaningful change threshold via anchor-based methods (determineMeaningfulChange) before lock.');
   }
@@ -1243,7 +1311,7 @@ export function assessCOAFitForPurpose(params: AssessCOAFitForPurposeParams): As
   let recallStatus: FitForPurposeCriterion['status'];
   if (params.recallPeriodAppropriate === true) recallStatus = 'met';
   else if (params.recallPeriodAppropriate === false) recallStatus = 'not_met';
-  else recallStatus = 'unknown';
+  else recallStatus = 'not_stated';
   criteria.push({
     criterion: 'Recall period appropriate for the concept and treatment timing',
     status: recallStatus,
@@ -1260,7 +1328,7 @@ export function assessCOAFitForPurpose(params: AssessCOAFitForPurposeParams): As
   let modeStatus: FitForPurposeCriterion['status'];
   if (params.modeOfAdministrationValidated === true) modeStatus = 'met';
   else if (params.modeOfAdministrationValidated === false) modeStatus = 'not_met';
-  else modeStatus = 'unknown';
+  else modeStatus = 'not_stated';
   criteria.push({
     criterion: 'Data-collection mode validated / equated (e.g., paper-to-ePRO migration)',
     status: modeStatus,
@@ -1277,7 +1345,10 @@ export function assessCOAFitForPurpose(params: AssessCOAFitForPurposeParams): As
   let fitForPurpose: AssessCOAFitForPurposeResult['fitForPurpose'];
   if (blockingIssues.length > 0) {
     fitForPurpose = 'not_fit';
-  } else if (criteria.some((c: FitForPurposeCriterion) => c.status === 'unknown' || c.status === 'partially_met' || c.status === 'not_met')) {
+  } else if (changeRequirementNotStated || criteria.some(c => c.status === 'not_stated')) {
+    fitForPurpose = 'not_assessed';
+    recommendations.push('State the unanswered validation facts before making a fit-for-purpose determination.');
+  } else if (criteria.some((c: FitForPurposeCriterion) => c.status === 'partially_met' || c.status === 'not_met')) {
     fitForPurpose = 'conditionally_fit';
   } else {
     fitForPurpose = 'fit';
@@ -1290,6 +1361,7 @@ export function assessCOAFitForPurpose(params: AssessCOAFitForPurposeParams): As
 
   return {
     coaType: params.coaType,
+    inputStates,
     fitForPurpose,
     criteria,
     blockingIssues,
@@ -1326,8 +1398,9 @@ export interface PositionCOAEndpointParams {
 
 export interface PositionCOAEndpointResult {
   coaType: COAType;
-  recommendedPosition: EndpointPosition;
-  labelClaimFeasibility: 'feasible' | 'feasible_with_conditions' | 'not_feasible';
+  inputStates: Record<string, boolean | 'not_stated'>;
+  recommendedPosition: EndpointPosition | 'not_assessed';
+  labelClaimFeasibility: 'feasible' | 'feasible_with_conditions' | 'not_feasible' | 'not_assessed';
   multiplicityConsiderations: string[];
   rationale: string[];
   recommendations: string[];
@@ -1342,20 +1415,31 @@ export interface PositionCOAEndpointResult {
  * endpoints, plus the FDA multiple-endpoints guidance principles.
  */
 export function positionCOAEndpoint(params: PositionCOAEndpointParams): PositionCOAEndpointResult {
+  requireCOAContext('positionCOAEndpoint', params, ['coaType', 'conceptOfInterest']);
+  const inputStates = booleanInputStates(params, ['isCoreToFeelFunctionSurvive', 'fitForPurpose',
+    'meaningfulChangeDefined', 'blinded', 'labelClaimSought']);
+  const others = statedNumber('otherKeyEndpointsCount', params.otherKeyEndpointsCount,
+    value => Number.isInteger(value) && value >= 0, 'a nonnegative integer');
   const rationale: string[] = [];
   const recommendations: string[] = [];
   const multiplicityConsiderations: string[] = [];
 
-  const core = params.isCoreToFeelFunctionSurvive === true;
-  const fit = params.fitForPurpose === true;
-  const mc = params.meaningfulChangeDefined === true;
+  const core = inputStates.isCoreToFeelFunctionSurvive;
+  const fit = inputStates.fitForPurpose;
+  const mc = inputStates.meaningfulChangeDefined;
+  const subjective = params.coaType === 'PRO' || params.coaType === 'ObsRO';
 
-  let recommendedPosition: EndpointPosition;
+  let recommendedPosition: PositionCOAEndpointResult['recommendedPosition'];
 
-  if (!fit) {
+  if (fit === false) {
     recommendedPosition = 'exploratory';
     rationale.push('The COA is not yet fit-for-purpose for this context of use, so it cannot anchor a confirmatory (primary/key-secondary) endpoint; position it as exploratory until validation is complete.');
     recommendations.push('Complete fit-for-purpose validation (content validity in context, meaningful change, mode equivalence) before elevating the endpoint.');
+  } else if (fit === 'not_stated' || core === 'not_stated' || mc === 'not_stated'
+      || (subjective && core === true && mc === true && inputStates.blinded === 'not_stated')) {
+    recommendedPosition = 'not_assessed';
+    rationale.push('Endpoint position is not assessed because one or more deciding COA facts were not stated.');
+    recommendations.push('State fitForPurpose, isCoreToFeelFunctionSurvive and meaningfulChangeDefined; for a subjective COA also state blinded.');
   } else if (core && mc) {
     recommendedPosition = 'primary';
     rationale.push('The concept is core to how patients feel/function (and may survive), the COA is fit-for-purpose, and a meaningful within-patient change/responder definition is pre-specified — supporting a primary endpoint.');
@@ -1372,6 +1456,9 @@ export function positionCOAEndpoint(params: PositionCOAEndpointParams): Position
   }
 
   // Blinding caution for subjective (PRO/ObsRO) endpoints.
+  if (subjective && inputStates.blinded === 'not_stated') {
+    multiplicityConsiderations.push('blinded was not stated; confirm the design before judging bias in the subjective endpoint.');
+  }
   if ((params.coaType === 'PRO' || params.coaType === 'ObsRO') && params.blinded === false) {
     multiplicityConsiderations.push('Open-label design materially weakens interpretation of subjective PRO/ObsRO endpoints (knowledge of assignment can bias self/observer report); a confirmatory claim from an unblinded subjective endpoint is difficult to support.');
     if (recommendedPosition === 'primary') {
@@ -1383,12 +1470,17 @@ export function positionCOAEndpoint(params: PositionCOAEndpointParams): Position
 
   // Label-claim feasibility.
   let labelClaimFeasibility: PositionCOAEndpointResult['labelClaimFeasibility'];
-  if (!params.labelClaimSought) {
+  if (inputStates.labelClaimSought === 'not_stated') {
+    labelClaimFeasibility = 'not_assessed';
+    rationale.push('labelClaimSought was not stated; claim intent is not inferred.');
+  } else if (inputStates.labelClaimSought === false) {
     labelClaimFeasibility = 'not_feasible';
     rationale.push('No label claim is sought for this COA; it can still provide supportive/exploratory evidence.');
-  } else if (!fit) {
+  } else if (fit === false) {
     labelClaimFeasibility = 'not_feasible';
     rationale.push('A label claim requires a fit-for-purpose, adequately validated COA; this COA does not yet meet that bar.');
+  } else if (recommendedPosition === 'not_assessed') {
+    labelClaimFeasibility = 'not_assessed';
   } else if (recommendedPosition === 'primary' || recommendedPosition === 'key_secondary') {
     labelClaimFeasibility = mc ? 'feasible' : 'feasible_with_conditions';
     if (!mc) rationale.push('A label claim is feasible only once a pre-specified, anchor-based responder definition is in place.');
@@ -1400,8 +1492,9 @@ export function positionCOAEndpoint(params: PositionCOAEndpointParams): Position
   // Multiplicity / hierarchy.
   if (params.labelClaimSought) {
     multiplicityConsiderations.push('Any COA endpoint intended to support a labeling claim must be included in the pre-specified statistical testing hierarchy with Type I error control (FDA Multiple Endpoints guidance).');
-    const others = params.otherKeyEndpointsCount ?? 0;
-    if (others > 0) {
+    if (others === undefined) {
+      multiplicityConsiderations.push('otherKeyEndpointsCount was not stated; the number of competing endpoints is not assumed to be zero.');
+    } else if (others > 0) {
       multiplicityConsiderations.push(`There ${others === 1 ? 'is' : 'are'} ${others} other key endpoint(s); place the COA endpoint explicitly in the hierarchy (e.g., gatekeeping/fixed-sequence) and define the alpha allocation.`);
     }
     multiplicityConsiderations.push('Pre-specify handling of missing data and intercurrent events for the COA endpoint under the ICH E9(R1) estimand framework.');
@@ -1409,6 +1502,7 @@ export function positionCOAEndpoint(params: PositionCOAEndpointParams): Position
 
   return {
     coaType: params.coaType,
+    inputStates,
     recommendedPosition,
     labelClaimFeasibility,
     multiplicityConsiderations,
@@ -1458,9 +1552,10 @@ export interface COADevelopmentStep {
 export interface PlanCOADevelopmentResult {
   conceptOfInterest: string;
   coaType: COAType;
-  strategy: 'select_existing' | 'modify_existing' | 'develop_de_novo';
+  inputStates: Record<string, boolean | 'not_stated'>;
+  strategy: 'select_existing' | 'modify_existing' | 'develop_de_novo' | 'not_assessed';
   steps: COADevelopmentStep[];
-  totalEstimatedDurationMonths: number;
+  totalEstimatedDurationMonths: number | null;
   fdaEngagementPlan: string[];
   keyRisks: string[];
   citations: CitationRef[];
@@ -1473,20 +1568,28 @@ export interface PlanCOADevelopmentResult {
  * provided flags. Timelines are planning estimates, not commitments.
  */
 export function planCOADevelopment(params: PlanCOADevelopmentParams): PlanCOADevelopmentResult {
+  requireCOAContext('planCOADevelopment', params, ['coaType', 'conceptOfInterest', 'population']);
+  const inputStates = booleanInputStates(params, ['existingInstrumentAvailable', 'existingHasContentValidityInPopulation',
+    'modificationPlanned', 'seekingQualificationOrClaim']);
+  const position = statedOneOf('intendedEndpointPosition', params.intendedEndpointPosition, ENDPOINT_POSITIONS);
   const steps: COADevelopmentStep[] = [];
   const fdaEngagementPlan: string[] = [];
   const keyRisks: string[] = [];
 
   // Determine strategy.
   let strategy: PlanCOADevelopmentResult['strategy'];
-  if (params.existingInstrumentAvailable && params.existingHasContentValidityInPopulation && !params.modificationPlanned) {
+  if (inputStates.existingInstrumentAvailable === true && inputStates.existingHasContentValidityInPopulation === true
+      && inputStates.modificationPlanned === false) {
     strategy = 'select_existing';
-  } else if (params.existingInstrumentAvailable && params.modificationPlanned) {
+  } else if (inputStates.existingInstrumentAvailable === true && inputStates.modificationPlanned === true) {
     strategy = 'modify_existing';
-  } else if (params.existingInstrumentAvailable && params.existingHasContentValidityInPopulation === false) {
+  } else if (inputStates.existingInstrumentAvailable === true && inputStates.existingHasContentValidityInPopulation === false) {
     strategy = 'modify_existing';
-  } else {
+  } else if (inputStates.existingInstrumentAvailable === false) {
     strategy = 'develop_de_novo';
+  } else {
+    strategy = 'not_assessed';
+    keyRisks.push('Instrument strategy is not assessed: state existingInstrumentAvailable and, if available, its content validity and modification plan.');
   }
 
   const pfdd1: CitationRef = { source: 'FDA PFDD Guidance 1 (2020)', detail: 'Collecting comprehensive and representative patient input' };
@@ -1550,7 +1653,7 @@ export function planCOADevelopment(params: PlanCOADevelopmentParams): PlanCOADev
       citations: [pfdd3, proGuidance, ispCV],
     });
     keyRisks.push('Modifying a validated instrument can invalidate prior measurement evidence; budget for re-validation.');
-  } else {
+  } else if (strategy === 'develop_de_novo') {
     steps.push({
       phase: 'Phase 3 — De Novo Development',
       step: 'Draft new items and response scales from elicited concepts',
@@ -1612,11 +1715,13 @@ export function planCOADevelopment(params: PlanCOADevelopmentParams): PlanCOADev
     fdaEngagementPlan.push('Seek early FDA input on the concept of interest and context of use (e.g., Critical Path Innovation Meeting).');
     fdaEngagementPlan.push('Request a Type C / outcome-assessment meeting on the validation and meaningful-change plan.');
     fdaEngagementPlan.push('Confirm endpoint positioning, estimand, multiplicity, and claim language at a pre-pivotal meeting.');
-  } else {
+  } else if (inputStates.seekingQualificationOrClaim === false) {
     fdaEngagementPlan.push('FDA engagement optional but recommended if the COA may later support a labeling claim.');
+  } else {
+    fdaEngagementPlan.push('seekingQualificationOrClaim was not stated; confirm that goal before deciding the qualification/claim engagement plan. If sought, discuss the validation and meaningful-change plan with FDA.');
   }
 
-  if (params.intendedEndpointPosition === 'primary' || params.intendedEndpointPosition === 'key_secondary') {
+  if (position === 'primary' || position === 'key_secondary') {
     keyRisks.push('A confirmatory COA endpoint requires a locked, fit-for-purpose instrument and pre-specified responder definition before the pivotal trial.');
   }
   if (POPULATION_REPORTER_REGISTRY[params.population].selfReportFeasible === false && params.coaType === 'PRO') {
@@ -1624,7 +1729,7 @@ export function planCOADevelopment(params: PlanCOADevelopmentParams): PlanCOADev
   }
   keyRisks.push('Translation/linguistic validation and ePRO migration add time; plan equivalence evidence early.');
 
-  const totalEstimatedDurationMonths = steps.reduce(
+  const totalEstimatedDurationMonths = strategy === 'not_assessed' ? null : steps.reduce(
     (acc: number, s: COADevelopmentStep) => acc + s.estimatedDurationMonths,
     0,
   );
@@ -1632,6 +1737,7 @@ export function planCOADevelopment(params: PlanCOADevelopmentParams): PlanCOADev
   return {
     conceptOfInterest: params.conceptOfInterest,
     coaType: params.coaType,
+    inputStates,
     strategy,
     steps,
     totalEstimatedDurationMonths,

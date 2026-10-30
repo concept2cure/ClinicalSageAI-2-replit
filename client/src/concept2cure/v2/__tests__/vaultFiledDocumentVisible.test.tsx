@@ -22,6 +22,8 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -174,7 +176,7 @@ describe('Vault — a document filed through the API is on the page', () => {
 
     // Breadcrumb now names the cabinet folder, and the folder list carries the row.
     const list = document.querySelector('.vd-list') as HTMLElement;
-    expect(within(list).getByText(/Module 5 · Clinical/)).toBeTruthy();
+    expect(within(list.querySelector('.vd-breadcrumb') as HTMLElement).getByText(/Module 5 · Clinical/)).toBeTruthy();
     expect(within(list).getAllByText(DOC_TITLE).length).toBeGreaterThan(0);
     // The detail pane shows the selected document (its filing decision is a
     // real column, rendered as such).
@@ -194,6 +196,78 @@ describe('Vault — a document filed through the API is on the page', () => {
     render(<Vault {...props()} />);
 
     const lane = await screen.findByTestId('vault-uploads-lane');
-    expect(lane.textContent).toMatch(/No files uploaded to this programme yet/i);
+    expect(lane.textContent).toMatch(/No files uploaded to this project yet/i);
+  });
+});
+
+/**
+ * At a phone's width the lane's names rendered 0 px wide, so no document could
+ * be opened from the lane (RR3 acceptance, 390x844). Every other part of the
+ * row is fixed-width or nowrap ("Auto-filed · confirm" alone is 146 px), and
+ * the name's button, the one part allowed to shrink to nothing, took the whole
+ * shortfall. Its cap was an inline style, which no media query can lift.
+ *
+ * jsdom does no layout, so this pins the mechanism; the measured widths at
+ * 390x844 and 1440x900 are docs/evidence/D2-VAULT-PHONE-LIST/2026-10-29/.
+ */
+describe('Vault — the uploads lane at a phone width', () => {
+  const css = fs
+    .readFileSync(path.resolve(__dirname, '..', 'styles', 'misc-surfaces-v2.css'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+
+  /** Declarations of `selector` in the top-level rules, or inside `@media (max-width:Npx)` blocks with N <= maxPx. */
+  function rulesOf(selector: string, where: 'base' | { maxPx: number }): string[] {
+    const out: string[] = [];
+    const walk = (text: string, inNarrow: boolean) => {
+      let i = 0;
+      while (i < text.length) {
+        const open = text.indexOf('{', i);
+        if (open < 0) break;
+        const head = text.slice(i, open).split(';').pop()!.trim();
+        let depth = 1;
+        let j = open + 1;
+        for (; j < text.length && depth > 0; j++) {
+          if (text[j] === '{') depth++;
+          else if (text[j] === '}') depth--;
+        }
+        const body = text.slice(open + 1, j - 1);
+        const media = /^@media\s*\(max-width:\s*(\d+)px\)$/.exec(head);
+        if (media) {
+          if (where !== 'base' && Number(media[1]) <= where.maxPx) walk(body, true);
+        } else if (head.startsWith('@')) {
+          // another at-rule: not this check's
+        } else if (body.includes('{')) {
+          walk(body, inNarrow); // a nested wrapper such as `.c2c-v2 { … }`
+        } else if (head.split(',').some((s) => s.trim() === selector) && (where === 'base' ? !inNarrow : inNarrow)) {
+          out.push(body);
+        }
+        i = j;
+      }
+    };
+    walk(css, false);
+    return out;
+  }
+
+  it('the name button carries its cap as a class, not an inline style', async () => {
+    render(<Vault {...props()} />);
+    const lane = await screen.findByTestId('vault-uploads-lane');
+    const button = within(lane).getByText(DOC_TITLE).closest('button') as HTMLButtonElement;
+    expect(button.classList.contains('vd-dr-open')).toBe(true);
+    expect(button.getAttribute('style')).toBeNull();
+  });
+
+  it('on a desktop the cap is unchanged: at most 45% of the row, and it may shrink', () => {
+    const base = rulesOf('.vd-dr-open', 'base').join(';');
+    expect(base).toMatch(/max-width:\s*45%/);
+    expect(base).toMatch(/min-width:\s*0/);
+    expect(base).toMatch(/flex-shrink:\s*1/);
+  });
+
+  it('at a phone width the row wraps, so the name keeps a line of its own width', () => {
+    const row = rulesOf('.vd-dr-row', { maxPx: 900 }).join(';');
+    const open = rulesOf('.vd-dr-open', { maxPx: 900 }).join(';');
+    expect(row).toMatch(/flex-wrap:\s*wrap/);
+    expect(open).toMatch(/max-width:\s*none/);
+    expect(open).toMatch(/flex:\s*1 1 \d+%/);
   });
 });

@@ -28,8 +28,17 @@ const CRO_LIFECYCLE: LifecycleState[] = [
 const CRO_TYPE: Record<string, { l: string; tone: string }> = {
   biotech: { l: 'Biotech', tone: 'ok' },
   pharma: { l: 'Pharma', tone: 'warn' },
-  medtech: { l: 'Med Device', tone: 'ai' },
+  medtech: { l: 'Medical device', tone: 'ai' },
+  medical_device: { l: 'Medical device', tone: 'ai' },
+  diagnostic: { l: 'Diagnostics', tone: 'ai' },
 };
+
+/** The engagement's recorded company type, never a default biotech claim. */
+function companyTypeOf(raw: unknown): { l: string; tone: string } {
+  if (typeof raw !== 'string' || !raw.trim()) return { l: 'Not recorded', tone: 'idle' };
+  return Object.prototype.hasOwnProperty.call(CRO_TYPE, raw)
+    ? CRO_TYPE[raw] : { l: raw, tone: 'idle' };
+}
 
 const SOW_TONE: Record<string, string> = {
   'on-track': 'ok',
@@ -381,7 +390,7 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
                 Sponsor clients <span>{sponsors.length}</span>
               </div>
               {sponsors.map((s) => {
-                const t = CRO_TYPE[s.type] || CRO_TYPE.biotech;
+                const t = companyTypeOf(s.type);
                 /* Counted, not printed — a row whose child lists never came
                    back has nothing to count rather than no row. */
                 const nStudies = (s.studies ?? []).length;
@@ -430,9 +439,9 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
                   <div className="cro-detail-name">
                     {sel.name}{' '}
                     <span
-                      className={`rd-chip tone-${(CRO_TYPE[sel.type] || CRO_TYPE.biotech).tone}`}
+                      className={`rd-chip tone-${companyTypeOf(sel.type).tone}`}
                     >
-                      {(CRO_TYPE[sel.type] || CRO_TYPE.biotech).l}
+                      {companyTypeOf(sel.type).l}
                     </span>
                   </div>
                   <div className="cro-detail-sub">
@@ -447,10 +456,10 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
                 <button
                   className="btn ghost"
                   onClick={() => onNav && onNav('projects')}
-                  title="Open the organisation's programme portfolio"
+                  title="Open the organisation's project portfolio"
                   data-testid="cro-open-programs"
                 >
-                  Open programme portfolio {I.arrowRight}
+                  Open project portfolio {I.arrowRight}
                 </button>
               </div>
 

@@ -1,0 +1,11 @@
+{
+  "changedTools": [
+    "design_vaccine_clinical_program",
+    "design_vaccine_cmc",
+    "assess_lot_consistency",
+    "assess_correlate_of_protection",
+    "assess_vaccine_platform",
+    "plan_vaccine_special_populations"
+  ],
+  "toolsAdded": 0
+}

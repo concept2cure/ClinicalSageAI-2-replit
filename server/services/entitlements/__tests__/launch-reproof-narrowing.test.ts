@@ -20,7 +20,7 @@ const prefixMap = buildPrefixMap();
 const verdict = (p: string) => launchScopeApiVerdict(p, prefixMap, NEVER_GATED);
 
 /** The 79 upheld findings, as the sub-namespace the gate served. */
-const NOT_SERVED_AT_LAUNCH = [
+const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 since two are device features' calls; 74 with /api/programs; 75 with /api/mdx/vault again (fold F3); 74 since eCTD Compile reads the vocabulary (fold ectd-publishing)
   '/api/authoring-actions/authority-map',
   '/api/authoring-actions/body-aware-gaps',
   '/api/authoring-actions/compare-versions',
@@ -63,16 +63,13 @@ const NOT_SERVED_AT_LAUNCH = [
   '/api/corpus/benchmark',
   '/api/corpus/extract',
   '/api/corpus/ingest',
-  '/api/ectd/controlled-vocab',
+  /* /api/ectd/controlled-vocab: served since the ectd-publishing fold (2026-10-29),
+     below. /api/ectd/qualification stays: eCTD Compile claims its one route,
+     /spec-versions, and neither the root nor any other child. */
   '/api/ectd/qualification',
   '/api/ectd/templates',
   '/api/ectd/v4',
-  '/api/mdx/qms/internal-audits',
-  '/api/mdx/qms/management-reviews',
-  '/api/mdx/qms/nonconforming',
   '/api/mdx/qms/readiness',
-  '/api/mdx/qms/suppliers',
-  '/api/mdx/vault',
   '/api/project-sections',
   '/api/project-sections/dependencies',
   '/api/project-sections/initialize',
@@ -85,7 +82,6 @@ const NOT_SERVED_AT_LAUNCH = [
   '/api/regulatory/tasks/sync',
   '/api/submission-ops/approval-bottlenecks',
   '/api/submission-ops/automation',
-  '/api/submission-ops/blockers',
   '/api/submission-ops/command-center',
   '/api/submission-ops/digests',
   '/api/submission-ops/due-soon',
@@ -100,6 +96,13 @@ const NOT_SERVED_AT_LAUNCH = [
   '/api/workflow/proofs',
   '/api/workflow/status',
   '/api/workflow/tasks',
+  /* Found 2026-10-29 (trunk-red-sweep-2): device-510k claims the root and is a
+     Projects feature since 62a8d5e7, and no launch screen calls a route under it. */
+  '/api/programs',
+  /* Upheld on 2026-10-15, served from 62a8d5e7 while the device vault was a
+     Projects feature, and not served again since it folded into the Vault (D2,
+     fold F3, 2026-10-29): its router and its one screen are gone. */
+  '/api/mdx/vault',
 ];
 
 /** What a launch screen calls or a launch app uses under the same prefixes (the route inventory's 'called' list). */
@@ -117,11 +120,23 @@ const STILL_SERVED = [
   '/api/concept2cure/reviews/my-queue',
   '/api/ectd/export',
   '/api/ectd/validate',
+  /* Upheld as HIDDEN APP on 2026-10-15 (claimed by ectd-publishing alone); the
+     reference folded into eCTD Compile (D2, 2026-10-29), whose panel reads both
+     (EctdCompileReference.tsx). Claimed exactly, so /api/ectd/v4 and the rest of
+     /api/ectd/qualification stay refused. */
+  '/api/ectd/controlled-vocab',
+  '/api/ectd/qualification/spec-versions',
   '/api/mdx/qms',
   '/api/mdx/qms/changes',
   '/api/mdx/qms/documents',
   '/api/mdx/qms/templates',
   '/api/mdx/qms/training',
+  /* Upheld as HIDDEN APP on 2026-10-15; admitted to the QMS app by decision P-48
+     (2026-10-29), and called by the Quality records (quality/QmsRecords.tsx). */
+  '/api/mdx/qms/internal-audits',
+  '/api/mdx/qms/management-reviews',
+  '/api/mdx/qms/nonconforming',
+  '/api/mdx/qms/suppliers',
   '/api/realtime-collab/locks',
   '/api/realtime-collab/rooms',
   '/api/regulatory/tasks',
@@ -130,6 +145,10 @@ const STILL_SERVED = [
   '/api/regulatory/tasks/unified',
   '/api/submission-ops/artifact-section-map',
   '/api/submission-ops/packages',
+  /* Upheld on 2026-10-15; the device features became Projects features in
+     62a8d5e7 (2026-10-23), and their screens call this: the validation and
+     submission work queues (mdx/hooks/useWorkbench.ts). */
+  '/api/submission-ops/blockers',
   '/api/task-management/assignees',
   '/api/task-management/board',
   '/api/task-management/filings',
@@ -143,7 +162,7 @@ const STILL_SERVED = [
   '/api/tasks/templates',
 ];
 
-describe('the 79 sub-namespaces the re-proof upheld are not served at launch', () => {
+describe('the sub-namespaces the re-proof upheld (79, less the four P-48 admitted, the one a device feature calls and the one eCTD Compile reads) are not served at launch', () => {
   it.each(NOT_SERVED_AT_LAUNCH)('%s', (path) => {
     expect(verdict(path)).not.toBe('launch');
     // Their children too: a claim covers what is under it.

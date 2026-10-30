@@ -200,7 +200,7 @@ router.get('/projects/:programId/industry-profile', async (req: Request, res: Re
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const programId = String(req.params.programId);
-  if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
+  if (!UUID_RE.test(programId)) return clientError(res, 422, 'The project id must be a UUID.');
   try {
     const db = requestDb(req);
     const [row] = await db
@@ -225,7 +225,7 @@ router.patch('/projects/:programId/industry-profile', async (req: Request, res: 
       'Changing a project industry profile requires an organization administrator role.');
   }
   const programId = String(req.params.programId);
-  if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
+  if (!UUID_RE.test(programId)) return clientError(res, 422, 'The project id must be a UUID.');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const parsed = projPatch.safeParse(body);
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
@@ -291,7 +291,7 @@ router.get('/effective-context', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const programId = typeof req.query.programId === 'string' ? req.query.programId : null;
   if (programId && !UUID_RE.test(programId)) {
-    return clientError(res, 422, 'programId must be a UUID');
+    return clientError(res, 422, 'The project id must be a UUID.');
   }
   try {
     const ctx = await resolveEffectiveProjectContext({

@@ -33,16 +33,16 @@ Every QMS controlled document has an immutable history of approved versions. Eac
 
 | Finding | Status at head | Severity (pilot) | Tester impact | Evidence at head |
 |---|---|---|---|---|
-| CAT2-18 | STILL_OPEN | P0 | Degrades | Revise UPDATEs the same row at `mdx-qms.ts:669-683` and `AnaToolExecutor.ts:14322-14332`; no `qms_document_versions` anywhere; `superseded_by_id` never written |
-| CAT2-19 | STILL_OPEN | P1 | Degrades | `document-approval-signature.ts:272` `COALESCE($4::date, effective_date, $6::date)`; date excluded from digest at `:128-146`; `approveBody` accepts optional past dates at `mdx-qms.ts:526` |
-| CAT2-20 | STILL_OPEN | P1 | Not observable | Digest at `document-approval-signature.ts:128-146` covers `artifactId` only; artifact content rewritten in place at `artifactVersionStore.ts:350-355` |
+| CAT2-18 | FIXED (2026-10-30) | P0 | Degrades | Immutable `qms_document_versions` (20261014); prior version in force through a revision (`readInForceReleases`); one revise service; each version's standing (in force, pending, superseded by, retired) shown in the history. `docs/evidence/MR-12/2026-10-30-version-standing/` |
+| CAT2-19 | FIXED (2026-10-29) | P1 | Degrades | The approval signs its effective date (never inherited, never before today), bound in the signature manifest; a future date is pending and its predecessor stays in force. `docs/evidence/MR-12/2026-10-29-effective-date-signed/` |
+| CAT2-20 | FIXED (2026-10-29) | P1 | Not observable | The signed text is authored sections or `metadata.sections`, never the artifact; no writer sets `artifact_id`; artifact versions refuse UPDATE/TRUNCATE (`20261029k`). `docs/evidence/MR-12/2026-10-29-artifact-versions-no-rewrite/` |
 | CAT2-21 | PARTIALLY_FIXED | P1 | Blocks | acks CTE at `mdx-qms.ts:838-845` has no version filter; training-ack `:757-792` accepts non-effective docs and client `method`/`quizScore`; no client caller |
-| CAT2-22 | STILL_OPEN | P2 | Degrades | `quality/data.ts:103` `TODAY='2026-06-04'`; `SopRegister.tsx:378` flags overdue client-side; no review-complete action |
-| CAT2-23 | PARTIALLY_FIXED | P2 | Not observable | `document-approval-signature.ts:120` `APPROVABLE_STATES={'in_review'}`; still one signer, no routing |
-| CAT2-24 | STILL_OPEN | P2 | Not observable | No "controlled copy", "uncontrolled" or watermark in `server/services/qms`, `mdx-qms.ts` or `client/src/concept2cure/quality` |
-| CAT2-25 | STILL_OPEN | P2 | Not observable | `changeControl.service.ts:330` inserts `linked_ref/linked_id` with no FK or validation; hard `DELETE FROM qms_change_links` at `:343` |
-| CAT2-26 | STILL_OPEN | P2 | Degrades | 17 `onAsk(...)` write call sites, e.g. `SopRegister.tsx:216,227,450`, `ChangeControl.tsx:162,173,433` |
-| P11-03 | PARTIALLY_FIXED | P1 | Degrades | Retire signs `approveBody`'s `'APPROVED'` (`mdx-qms.ts:528`; `SopRegister.tsx:617`); register row `SopRegister.tsx:377-470` shows no signer/time/meaning; PATCH audit after commit, field names only (`mdx-qms.ts:496-506`) |
+| CAT2-22 | FIXED (2026-10-29) | P2 | Degrades | No fixed TODAY: `isReviewOverdue` reads today; signed periodic review at `POST /qms/documents/:id/periodic-review`. See the findings file. |
+| CAT2-23 | FIXED (2026-10-29) | P2 | Not observable | Review routing RR2/RR4: every named approver signs; only the last makes the document effective, under the row lock. See the findings file. |
+| CAT2-24 | FIXED (2026-10-29) | P2 | Not observable | Controlled copy of the version in force, banner on every page, QMS approval printed (31877bd79, d886d49bc). `docs/evidence/MR-12/2026-10-29-controlled-copy/` |
+| CAT2-25 | FIXED (2026-10-29) | P2 | Not observable | A link names a record of this organisation or is refused; a removed link is kept with who and why (5e7bcdd27). `docs/evidence/MR-12/2026-10-29-change-links-kept/` |
+| CAT2-26 | FIXED (2026-10-29) | P2 | Degrades | Create, revise and transition are native governed forms in Quality. See the findings file. |
+| P11-03 | FIXED (2026-10-29) | P1 | Degrades | Approval only from in_review (cf950eeb9); DB refuses effective/retired without a signature (5726976d0); register signature block and edit values. See the findings file. |
 
 ## Already done at head — do not redo
 
@@ -223,11 +223,14 @@ P11-03's draft-to-effective and unsigned-effective points are fixed at head, its
    - make `retireBody` (`mdx-qms.ts:528`, today `approveBody.omit(...)` with `z.literal('APPROVED')`) accept only that literal;
    - change `meanings={['approval']}` at `SopRegister.tsx:617` to the retirement meaning.
    Stored retirements keep the meaning they were signed with; do not rewrite them.
+   **Done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-retirement-meaning/`). The word is in `GOVERNED_SIGN_MEANINGS`, not `TASK_SIGNATURE_MEANINGS`, because the task board shares that list and a task checkpoint is never a retirement. Labeling supersession, which declares itself the QMS retirement's meaning, follows.
 4. Signature manifestation (§11.50):
    - extend `GET /qms/documents` (`mdx-qms.ts:340`) and `GET /qms/documents/:id` (`:433`) with a `LEFT JOIN LATERAL` to the standing approval and retirement signature, reusing the STANDING predicate from `server/services/audit/compliance-reports/queries/controlled-documents.ts:24-26` (`signer_name`, `signed_at`, `signature_meaning`, `bound_payload_digest`); once Stage 2 has landed, join through the snapshot's `approval_signature_id`;
    - add "Approved by", "Signed (UTC)" and "Meaning" to the row grid in `SopRegister.tsx:377-470` and a detail panel. The toast in `quality/qmsApproval.ts:40-54` stays as confirmation, not as the record.
    - A printable record of a version with its signature block is delivered by Stage 8's controlled copy; do not build a second renderer here.
+   **Done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-signature-block/`). The block is read through the exact approval reader that training uses, batched (`readQmsReleaseApprovals`), not a second join, and shown under each row's title and on `GET /:id`.
 5. PATCH audit: move the audit write of `PATCH /qms/documents/:id` (`mdx-qms.ts:448-510`, after-commit at `:496-506`) into the same transaction as the UPDATE through `recordGovernedAction(client, …)`, with before and after values. Apply the same change to the create route (`:361-399`).
+   **Done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-register-edit-values/`). The create and the PATCH already wrote their ledger rows on their own transactions (`controlled-document-service.ts`). The PATCH's row now records each change from and to. Stage 5 is complete, and P11-03 is FIXED.
 6. Go green. File red and green output under `docs/evidence/MR-12/<date>/`.
 
 **Acceptance**
@@ -287,6 +290,8 @@ P11-03's draft-to-effective and unsigned-effective points are fixed at head, its
 4. Change-control links in `server/services/qms/changeControl.service.ts`:
    - At insert (`:330`), validate `linked_id` against the CAPA or deviation table named by `linked_ref`, in the same organization; refuse otherwise. The link is polymorphic, so validation lives in the service, not in a foreign key.
    - Replace the hard `DELETE FROM qms_change_links` (`:343`) with an unlink that sets `removed_at` and `removed_by` and writes an audit row. Add the columns by amending the creating migration in place with `ADD COLUMN IF NOT EXISTS` and a dated header note (Rule 1). Readers filter `removed_at IS NULL`.
+   **Done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-change-links-kept/`). Links are checked by reference against the deviation, CAPA and supplier registers, and by id against `qms_documents`. A removal keeps the row, with who removed it and their reason. The controlled-copy half (step 3) is open.
+   **Step 3 done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-controlled-copy/`). `GET /qms/documents/:id/controlled-copy` renders the version in force, through the one renderer, with the CONTROLLED COPY banner on every page and the QMS approval's manifestation, and delivers it through the audited download. Authoring's own controlled export of a QMS-bound document is refused, because it printed "no signatures" over an approved SOP and exported a retired one.
 5. File red and green output under `docs/evidence/MR-12/<date>/`.
 
 **Acceptance**
@@ -309,9 +314,9 @@ P11-03's draft-to-effective and unsigned-effective points are fixed at head, its
 - **F-12 — signing roles and segregation of duties.** Author ≠ approver and the `approver`/`qa` roles set who may sign in Stages 2, 3, 5 and 7. Training acknowledgment (Stage 1) is signed by the trainee and needs no signing authority.
 - **F-13 — second factor for signers.** Sets whether `mfaToken` is required in the Stage 1, 3, 5 and 7 signing ceremonies.
 - **NEW-1: system of record for SOP body text** — the linked Authoring artifact (recommended) or a body stored on the QMS version. Blocks Stage 2 step 4 and Stage 3 step 4; it also decides what Stage 8 renders.
-- **NEW-2: training assignment model** — role-based or curriculum-based. Blocks Stage 4 step 4.
-- **NEW-3: training before the effective date** — may a user acknowledge an approved-pending version before D? Blocks Stage 4 step 6.
-- **NEW-4: signature meanings and review routing** — the word for retirement (blocks Stage 5 step 3), whether "send for review" is a signed `REVIEWED` act, and the default reviewer and approver quorum per document type (block Stage 7).
+- **NEW-2: training assignment model** — role-based or curriculum-based. Blocks Stage 4 step 4. **Decided 2026-10-29 (P-49):** job roles (an organisation-managed list of job functions) and named people per document; a document assigned to nobody reads "not assigned"; curricula later.
+- **NEW-3: training before the effective date** — may a user acknowledge an approved-pending version before D? Blocks Stage 4 step 6. **Decided 2026-10-29 (P-49):** yes, once approved; the acknowledgment counts once that version is in force.
+- **NEW-4: signature meanings and review routing** — the word for retirement (blocks Stage 5 step 3), whether "send for review" is a signed `REVIEWED` act, and the default reviewer and approver quorum per document type (block Stage 7). **Decided 2026-10-29:** the quorum is `docs/design/REVIEW_ROUTING_2026-10-23.md` §4 (a designated QMS approver who is not the author or a contributor; optional reviewers; sending is not a signature), carried by RR4. Retirement's meaning is `retirement` (P-51).
 
 ## Do not
 

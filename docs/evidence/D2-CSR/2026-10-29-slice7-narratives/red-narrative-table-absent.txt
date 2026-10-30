@@ -1,0 +1,10 @@
+# RED: the store against migrations/20260628_csr_job_state.sql at HEAD (before the in-place amendment), 2026-10-29T09:32:05Z
+ × server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > replays and enforces its row shape: a composed row has text and hash, a refused row has neither 40ms
+ × server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > persists, resumes and lands the sections; a drafted §12.3.2 is kept 39ms
+ × server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > stops on a cancelled build and saves nothing for it 7ms
+ × server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > reads the QC list without the narrative text, organization-scoped 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [Function] to throw error matching /csr_narrative_outputs_content_check/ but got 'relation "csr_narrative_outputs" does…'
+error: relation "csr_narrative_outputs" does not exist
+Serialized Error: { length: 120, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '91', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT subject_id, sequence, status, content, content_hash, facts_digest, qc\n        FROM csr_narrative_outputs WHERE organization_id = $1 AND job_id = $2 ORDER BY sequence, subject_id', params: [ 7, 1 ], queryOptions: undefined }
+      Tests  4 failed (4)

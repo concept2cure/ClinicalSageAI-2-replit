@@ -64,13 +64,13 @@ export const LAUNCH_PLATFORM_API: Readonly<Record<string, string>> = {
   '/api/v1/auth': 'the session the shell reads on load',
   '/api/tenants': 'tenant context (TenantContext.tsx) on load',
   '/api/clients': 'the client workspace list tenant context reads on load',
-  '/api/organizations': "the shell's organisation read (V2App.tsx), Setup's profile and settings, onboarding",
+  '/api/organizations': "the shell's organisation read (V2App.tsx), the profile and settings on Admin and access → Settings (Setup's until it folded in, D2 2026-10-29), onboarding",
   '/api/user': 'identity: the users router mounted a second time (register-platform-routes.ts), beside /api/users, which NEVER_GATED already passes',
-  '/api/mdx/industry-profile': "the organisation's industry profile (useIndustryProfile.ts), read by the shell's surfaces and written by Setup and onboarding",
+  '/api/mdx/industry-profile': "the organisation's industry profile (useIndustryProfile.ts), read by the shell's surfaces and written from Admin and access → Settings and onboarding",
   '/api/mdx/notifications': "the shell's task tray (TaskTray.tsx): the list, the unread count, mark read",
   '/api/mdx/notification-subscriptions': 'the task tray NotificationPreferences: actual organization-scoped in-app category preferences; unsupported channels are refused',
-  '/api/client-branding/company-documents': 'Shared Company settings in Setup/Admin and saved identity, letterhead and legal originals in submissions/reports; current tenant/member, administrator, program and governed export checks remain in the company router and services',
-  '/api/gateway-accounts': "the agency gateway account choice (GatewayAccountsSetting.tsx): admin Setup, the onboarding wizard's Agency accounts step every organisation passes, and each transmittal (D7); bound to no one surface's module so an organisation is never refused it at onboarding",
+  '/api/client-branding/company-documents': 'Shared Company settings on Admin and access → Settings and saved identity, letterhead and legal originals in submissions/reports; current tenant/member, administrator, program and governed export checks remain in the company router and services',
+  '/api/gateway-accounts': "the agency gateway account choice (GatewayAccountsSetting.tsx): Admin and access → Settings, the onboarding wizard's Agency accounts step every organisation passes, and each transmittal (D7); bound to no one surface's module so an organisation is never refused it at onboarding",
 };
 
 /**
@@ -100,10 +100,6 @@ export const LAUNCH_INFRASTRUCTURE_API: Readonly<Record<string, string>> = {
  * `ci:launch-scope-api` fails if a launch screen ever calls one.
  */
 export const LAUNCH_EXCLUDED_API: Readonly<Record<string, string>> = {
-  '/api/mdx/qms/suppliers': "HIDDEN APP: the full device QMS's supplier management (21 CFR 820); the launch QMS app is controlled documents only",
-  '/api/mdx/qms/internal-audits': "HIDDEN APP: the full device QMS's internal audits",
-  '/api/mdx/qms/nonconforming': "HIDDEN APP: the full device QMS's nonconforming product control",
-  '/api/mdx/qms/management-reviews': "HIDDEN APP: the full device QMS's management reviews",
   '/api/mdx/qms/readiness': "DEAD: the deleted MDX device shell's quality-readiness panel (consumer removed in 4aa204390)",
   '/api/regulatory/tasks/dashboard': 'DEAD: a legacy cross-module progress dashboard; nothing calls it, and it is not Submission Readiness',
   '/api/regulatory/tasks/sync': "DEAD: a legacy cross-module task importer, its device branch reading the device app's tables",
@@ -114,6 +110,7 @@ export const LAUNCH_EXCLUDED_API: Readonly<Record<string, string>> = {
   '/api/chat/send-message': 'DEAD: a non-streaming AnA turn no client has ever called; AnA answers through /api/ana-ri',
   '/api/chat/stream': 'DEAD: an alias of POST /api/ana-ri/stream kept for callers that do not exist',
   '/api/chat/thread': 'DEAD: one transcript read/rename/delete no client calls (the handler says so); threads are /api/chat/threads',
+  '/api/programs': "HIDDEN APP: the device 510(k) app's predicate-intelligence defense packet and renders, SE-matrix render and RTM exports (routes/predicate-intelligence.ts, se-matrix.ts, rtm-export.ts). device-510k claims the root and became a Projects feature in 62a8d5e7; no launch screen calls any route under it (trunk-red-sweep-2, 2026-10-29)",
 };
 
 function onPrefix(path: string, prefix: string): boolean {

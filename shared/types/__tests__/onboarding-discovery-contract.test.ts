@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { LAUNCH_SURFACE_IDS } from '../../constants/launch-scope';
+/* A recommendation is followed with onNav, which resolves a retired id through
+   the shell's aliases (routing.ts destinationFor) — as demo-scripts.test.ts reads them. */
+import { DEEP_LINK_ALIASES } from '../../../client/src/concept2cure/v2/registryModel';
 import {
   assessOnboardingDiscovery,
   emptyDiscoveryAnswers,
@@ -91,7 +94,8 @@ describe('organization-wide discovery contract', () => {
       assessOnboardingDiscovery(completeSponsor()).recommendations,
       assessOnboardingDiscovery({ ...completeSponsor(), productModalities: ['medical_device'], securityNeeds: ['sso', 'retention'], workflowNeeds: ['quality', 'analytics'] }).recommendations,
     ]) {
-      for (const item of recommendations) expect(LAUNCH_SURFACE_IDS.has(item.surface)).toBe(true);
+      // `setup` folded into admin-console (D2, 2026-10-29); its alias opens the Settings tab.
+      for (const item of recommendations) expect(LAUNCH_SURFACE_IDS.has(DEEP_LINK_ALIASES[item.surface] ?? item.surface), item.surface).toBe(true);
       expect(recommendations.some(item => item.id === 'security-review')).toBe(true);
       expect(recommendations.some(item => item.id === 'define-project')).toBe(true);
     }

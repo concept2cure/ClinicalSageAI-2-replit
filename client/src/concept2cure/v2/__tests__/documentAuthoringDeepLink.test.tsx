@@ -284,6 +284,31 @@ describe('an exact document target keeps its returned section identity', () => {
   });
 });
 
+describe('a target within a module lands on the document\'s first section in it (F3, a Project home module row)', () => {
+  const ctd = (id: string, code: string, order: number, content: string) => ({ ...D2_SECTIONS.sections[0], id, code, title: code, content, order_index: order });
+  const serveD2 = (sections: unknown[]) => {
+    const baseline = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string) => url.split('?')[0] === '/api/authoring/docs/D2/sections'
+      ? Promise.resolve(ok({ sections })) : baseline(method, url));
+  };
+  it('opens the module\'s first section by order, not the document\'s first', async () => {
+    serveD2([ctd('S10', '1.1', 0, 'Cover letter.'), ctd('S25', '2.5', 2, 'Clinical overview.'), ctd('S24', '2.4', 1, 'Nonclinical overview.')]);
+    setEditorTarget({ docId: 'D2', docType: null, within: 'M2' }); render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(canvasText()).toBe('Nonclinical overview.'));
+  });
+  it('an exact code wins over a module when a target carries both', async () => {
+    serveD2([ctd('S24', '2.4', 0, 'Nonclinical overview.'), ctd('S21', '11', 1, 'SE discussion body.')]);
+    setEditorTarget({ docId: 'D2', docType: null, code: '11', within: 'M2' }); render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(canvasText()).toBe('SE discussion body.'));
+  });
+  it('with nothing of the module started, opens the document and says so', async () => {
+    serveD2([ctd('S10', '1.1', 0, 'Cover letter.')]);
+    setEditorTarget({ docId: 'D2', docType: null, within: 'M5' }); render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(canvasText()).toBe('Cover letter.'));
+    expect(await screen.findByText(/No section of Module 5 has been started in this document yet/)).toBeTruthy();
+  });
+});
+
 it('a saved copy with no assigned module is labelled as an unbound draft', async () => {
   const baseline = apiRequest.getMockImplementation()!;
   apiRequest.mockImplementation((method: string, url: string) => url.startsWith('/api/authoring/docs?')

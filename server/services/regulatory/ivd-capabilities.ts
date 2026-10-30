@@ -48,7 +48,7 @@ export const IVD_CAPABILITIES: readonly Capability[] = Object.freeze([
   // Classification & CDx
   { path: '/classify/ivdr', method: 'POST', category: 'classification', title: 'IVDR Annex VIII classification', description: 'Rule-based EU IVD class (A–D) with rule trace, NB requirement, confidence, and FDA-pathway mapping.', deterministic: true, cited: true },
   { path: '/cdx/pair', method: 'POST', category: 'companion-diagnostic', title: 'CDx pairing', description: 'Biomarker-aware drug↔Dx co-development readiness, dual FDA/EU scores, confidence.', deterministic: true, cited: true },
-  { path: '/study-design', method: 'POST', category: 'clinical', title: 'Study-program designer', description: 'Analytical + clinical study plan with sample sizes, effort, and a phased timeline.', deterministic: true, cited: true },
+  { path: '/study-design', method: 'POST', category: 'clinical', title: 'Study-plan designer', description: 'Analytical + clinical study plan with sample sizes, effort, and a phased timeline.', deterministic: true, cited: true },
 
   // Simulation
   { path: '/review-simulation', method: 'POST', category: 'simulation', title: 'Reviewer simulation', description: 'Mock FDA/NB deficiencies, readiness score, strengths, remediation roadmap.', deterministic: true, cited: true, persistable: true },
@@ -66,11 +66,11 @@ export const IVD_CAPABILITIES: readonly Capability[] = Object.freeze([
   { path: '/benchmark', method: 'POST', category: 'decision-analytics', title: 'Benchmark vs norms', description: 'Readiness/timeline/cost percentiles and bands against pathway norms.', deterministic: true },
 
   // Orchestration & portfolio
-  { path: '/program-plan', method: 'POST', category: 'simulation', title: 'Program-plan orchestrator', description: 'Chains classify→design→readiness→ROI→timeline into one executive summary.', deterministic: false, seeded: true, cited: true, persistable: true },
-  { path: '/program-plan/brief', method: 'POST', category: 'authoring', title: 'Executive brief', description: 'Renders a program plan to a structured Markdown brief artifact.', deterministic: false, seeded: true, persistable: true },
+  { path: '/program-plan', method: 'POST', category: 'simulation', title: 'Project-plan orchestrator', description: 'Chains classify→design→readiness→ROI→timeline into one executive summary.', deterministic: false, seeded: true, cited: true, persistable: true },
+  { path: '/program-plan/brief', method: 'POST', category: 'authoring', title: 'Executive brief', description: 'Renders a project plan to a structured Markdown brief artifact.', deterministic: false, seeded: true, persistable: true },
   { path: '/scenarios/compare', method: 'POST', category: 'portfolio', title: 'Scenario comparison', description: 'Ranks candidate evidence plans by readiness × time × cost.', deterministic: false, seeded: true },
-  { path: '/portfolio/simulate', method: 'POST', category: 'portfolio', title: 'Portfolio simulation', description: 'Rolls program profiles into readiness mix, worklist, and deficiency themes.', deterministic: true, persistable: true },
-  { path: '/portfolio/batch', method: 'POST', category: 'portfolio', title: 'Batch portfolio runner', description: 'Builds full plans for many programs and aggregates a portfolio dashboard.', deterministic: false, seeded: true, persistable: true },
+  { path: '/portfolio/simulate', method: 'POST', category: 'portfolio', title: 'Portfolio simulation', description: 'Rolls project profiles into readiness mix, worklist, and deficiency themes.', deterministic: true, persistable: true },
+  { path: '/portfolio/batch', method: 'POST', category: 'portfolio', title: 'Batch portfolio runner', description: 'Builds full plans for many projects and aggregates a portfolio dashboard.', deterministic: false, seeded: true, persistable: true },
 
   // Governance
   { path: '/calibration/backtest', method: 'POST', category: 'governance', title: 'Model back-test', description: 'Validates the readiness→approval model against labeled outcomes (Brier/AUC/reliability).', deterministic: true },

@@ -11,6 +11,7 @@ import {
   documentTemplateIds,
   getRegistryDocumentTemplate,
   registryDocumentTemplateCoverage,
+  type TemplateSection,
 } from '../document-template-library';
 import { getRequirements } from '../submission-requirements';
 import { LABELING_RULES_KNOWLEDGE } from '../../ivd-knowledge/regulatory/labeling-rules';
@@ -88,13 +89,22 @@ describe('document template library — canonical structures', () => {
  * g-ivdr-gspr-checklist-facts.md).
  */
 describe('document template library — one GSPR checklist per EU device regulation', () => {
-  const text = (t: { sections: Array<{ heading: string; purpose: string }> }) =>
-    t.sections.map((s) => `${s.heading} ${s.purpose}`).join(' | ');
+  const text = (t: { sections: TemplateSection[] }): string =>
+    t.sections.map((s) => `${s.heading} ${s.purpose} ${s.subsections ? text({ sections: s.subsections }) : ''}`).join(' | ');
 
   it('no template serves both eu_mdr and eu_ivdr under one Annex I numbering', () => {
     for (const t of DOCUMENT_TEMPLATES) {
+      if (!/\bAnnex I\b/.test(`${t.regulatoryBasis} | ${text(t)}`)) continue;
       expect(t.families.includes('eu_mdr') && t.families.includes('eu_ivdr'), t.id).toBe(false);
     }
+  });
+
+  it.each(['blank_crf', 'crf_annotation_worksheet'])('shares %s across MDR and IVDR without claiming their Annex I numbering', id => {
+    const template = getDocumentTemplate(id)!;
+    expect(templatesForFamily('eu_mdr')).toContain(template);
+    expect(templatesForFamily('eu_ivdr')).toContain(template);
+    expect(`${template.regulatoryBasis} | ${text(template)}`).not.toMatch(/\bAnnex I\b/);
+    expect(template.sections.every(section => /^(crf|annotation)\./.test(section.number))).toBe(true);
   });
 
   it('no eu_ivdr template cites MDR Annex I numbering', () => {
@@ -202,12 +212,19 @@ describe('document template library — lookups', () => {
 });
 
 describe('document template library — existing biotech structures are reachable honestly', () => {
+  // drug_substance and drug_product read the one ICH M2–M5 record since 2026-10-25 (D2 cleanup C2),
+  // not the project blueprint's copies: pinned in tests/regulatory/ctd-component-outlines.test.ts.
   const projected = [
     ['statistical_analysis_plan', 'ICH_SAP'],
     ['informed_consent', 'ICH_ICF'],
-    ['drug_substance', 'ICH_M3_DS'],
-    ['drug_product', 'ICH_M3_DP'],
   ] as const;
+
+  it.each([['drug_substance', '3.2.S'], ['drug_product', '3.2.P']] as const)('%s reads the record\'s %s subtree, not a project blueprint copy', (id, root) => {
+    const t = getDocumentTemplate(id)!;
+    expect(t.outlineSource).toEqual({ kind: 'document-outline', registryId: id === 'drug_substance' ? 'ICH_M3_DS' : 'ICH_M3_DP', record: `CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:${root}` });
+    expect(t.basis?.confidence).toBe('recall');
+    expect(t.outlineLimitations?.join(' ')).toMatch(/CMC \/ Module 3/);
+  });
 
   it.each(projected)('%s reads the existing %s project blueprint rather than another heading tree', (id, registryId) => {
     const t = getDocumentTemplate(id);

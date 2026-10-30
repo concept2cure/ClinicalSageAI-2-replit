@@ -268,16 +268,24 @@ await step(
 await step(
   {
     id: 'OQ-SUBC-10',
-    urs: ['URS-SUBC-009'],
-    title: 'Dossier map for the open program',
-    action: 'GET /api/dossier-map?projectId=<program id as the shell supplies it>',
-    expected: 'HTTP 200 with per-module (M1–M5) completeness for the program',
+    urs: ['URS-SUBC-009a'],
+    title: 'Canonical dossier for the accepted project',
+    action: 'GET /api/c2c/projects/<program UUID>/dossier',
+    expected: 'HTTP 200 with governed readiness and independent artifact/tracking states',
     dependsOn: ['OQ-SUBC-00'],
   },
   async ({ api, expect }) => {
-    const r = await api('GET', `/api/dossier-map?projectId=${encodeURIComponent(state.programId)}`);
-    expect(r.status === 200, `expected 200, got ${r.status} — the route requires an integer projectId while the shell's program id is a UUID (server/routes/dossier-map.routes.ts:46-53 vs client/src/concept2cure/v2/surfaces/DossierMap.tsx readShellProjectId)`, r.json);
-    return `HTTP 200: ${JSON.stringify(r.json?.meta)}`;
+    const r = await api('GET', `/api/c2c/projects/${encodeURIComponent(state.programId)}/dossier`);
+    expect(r.status === 200, `expected accepted project dossier HTTP 200, got ${r.status}`, r.json);
+    expect(r.json?.projectId === state.programId, 'dossier does not name the accepted program', r.json);
+    expect(['measured', 'no_sections', 'unavailable'].includes(r.json?.home?.state), 'governed readiness state missing', r.json);
+    for (const key of ['artifactReadiness', 'sectionTracking']) {
+      const detail = r.json?.supportingReadiness?.[key];
+      expect(['read', 'unavailable'].includes(detail?.state), `${key} must state its own read outcome`, detail);
+      if (detail?.state === 'unavailable') expect(typeof detail.reason === 'string' && detail.reason.length > 0, `${key} lacks its refusal reason`, detail);
+      else expect(Array.isArray(detail[key === 'artifactReadiness' ? 'sections' : 'modules']), `${key} lacks its recorded rows`, detail);
+    }
+    return `HTTP 200: program ${state.programId}; governed ${r.json.home.state}; artifacts ${r.json.supportingReadiness.artifactReadiness.state}; tracking ${r.json.supportingReadiness.sectionTracking.state}`;
   },
 );
 
@@ -424,6 +432,46 @@ await step(
     const after = await shadowRuns(api, expect, seq);
     expect(!after.some((r) => r.status === 'waived'), 'a waived run was recorded without a signature', after);
     return `review POST ${ran.status}; newest run ${describeRun(newest)}; waiver none; ${offered}; waive refused ${waive.status} ${waive.json?.error?.code ?? ''}; no waived run`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-SUBC-16',
+    urs: ['URS-SUBC-014'],
+    title: 'A submission run takes no clinical or nonclinical figures from the request',
+    action: 'POST /api/submission-orchestrator/runs with a non-empty csrInputs; then with a projectId and a ctdProgramId',
+    expected:
+      'inline csrInputs 400 INLINE_RUN_INPUTS_REFUSED naming the field and /runs/for-program, without the refused figure; ' +
+      'ctdProgramId 400 CTD_PROGRAM_INPUTS_REFUSED',
+  },
+  async (ctx) => {
+    const { api, expect } = ctx;
+    const code = (r) => r.json?.error?.code ?? r.json?.error ?? '';
+    /* No applicationNumber: outside development the refusal comes before the
+       body is parsed, and on a development server, where inline inputs are a
+       fixture door by design, the incomplete body is refused as invalid and no
+       run starts. */
+    const inline = await api('POST', '/api/submission-orchestrator/runs', {
+      csrInputs: [{ studyId: 'OQ-301', protocolNumber: 'OQ-301', phase: '3', studyDesign: 'randomized', primaryEndpoint: 'ORR', primaryResult: 'ORR 42% (OQ figure)', sampleSize: 312 }],
+    });
+    const program = await api('POST', '/api/submission-orchestrator/runs', { projectId: 1, ctdProgramId: 77 });
+    /* A deviation only on a development server, which this run knows from its
+       own sign-in (dev-login is answered only there). Anywhere else a missing
+       refusal is a failure of the control, never a deviation (S1 review). */
+    if (code(inline) !== 'INLINE_RUN_INPUTS_REFUSED' && ctx.auth.method === 'dev-login') {
+      ctx.deviation(
+        `not executed — this is a development server (dev-login), which allows inline run inputs by design (it answered ${inline.status} ${code(inline)} and ${program.status} ${code(program)}). ` +
+          'The refusal is a production control; observe it under the W3 posture.',
+        { inline: inline.json, program: program.json },
+      );
+    }
+    expect(inline.status === 400 && code(inline) === 'INLINE_RUN_INPUTS_REFUSED', `inline csrInputs: expected 400 INLINE_RUN_INPUTS_REFUSED, got ${inline.status} ${code(inline)}`, inline.json);
+    expect(inline.json?.field === 'csrInputs', 'the refusal names the field', inline.json);
+    expect(String(inline.json?.message ?? '').includes('/api/submission-orchestrator/runs/for-program'), 'the refusal names the route to use', inline.json);
+    expect(!JSON.stringify(inline.json ?? {}).includes('OQ figure'), 'the refusal echoes the refused figure', inline.json);
+    expect(program.status === 400 && code(program) === 'CTD_PROGRAM_INPUTS_REFUSED', `ctdProgramId: expected 400 CTD_PROGRAM_INPUTS_REFUSED, got ${program.status} ${code(program)}`, program.json);
+    return `inline 400 ${code(inline)}; ctdProgramId 400 ${code(program)}`;
   },
 );
 

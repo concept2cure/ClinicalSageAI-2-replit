@@ -1,0 +1,51 @@
+RED, before the rename: the slice guard's IND catalogue cases (clientNamesSlice1.test.tsx -t 'IND catalogue'). Run on HEAD 7d1f7f316 plus the uncommitted tree; no pyramid file changed yet.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+-----------------xx---------------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > phase 1 is "Planning", in the catalogue, so Plan and AnA read one name
+AssertionError: expected '1. Program Planning' to be '1. Planning' // Object.is equality
+
+Expected: "1. Planning"
+Received: "1. Program Planning"
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:546:49
+    544|     const catalog = buildIndDocumentCatalogSource();
+    545|     const phase1 = catalog.phases.find((p) => p.id === 'phase1');
+    546|     expect(`${phase1?.order}. ${phase1?.name}`).toBe('1. Planning');
+       |                                                 ^
+    547|     expect(buildIndPyramid().phases.find((p) => p.id === 'phase1')?.na…
+    548|     expect([...new Set(catalog.deliverables.filter((d) => d.phaseId ==…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > no phase name uses a word from "Not in client copy"
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "phase1: \"1. Program Planning\" (program)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:552:121
+    550|
+    551|   it('no phase name uses a word from "Not in client copy"', () => {
+    552|     expect(offending(buildIndDocumentCatalogSource().phases.map((p) =>…
+       |                                                                                                                         ^
+    553|   });
+    554| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 32 skipped (34)
+   Start at  12:08:48
+   Duration  3.39s (transform 1.55s, setup 179ms, import 2.36s, tests 46ms, environment 630ms)
+

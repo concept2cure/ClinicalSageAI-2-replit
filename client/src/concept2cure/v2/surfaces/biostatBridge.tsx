@@ -193,7 +193,7 @@ const gradeLabel: Record<BridgePlacement['required'], string> = {
 function scopeLabel(): string {
   const p = readShellProject();
   const name = p ? String(p.product ?? p.code ?? p.title ?? '').trim() : '';
-  return p ? (name ? `program ${name}` : 'the open program') : 'org-scoped';
+  return p ? (name ? `project ${name}` : 'the open project') : 'org-scoped';
 }
 
 // ─── Study picker (designer left rail) ───────────────────────────────────────
@@ -249,15 +249,15 @@ function FilingSentence({ filing }: { filing: DesignAssessment['filing'] }) {
     return (
       <div style={{ fontSize: 12 }}>
         Files as a <b>{APP_LABELS[app] ?? app}</b>
-        {filing.projectId === null ? <span style={muted}> — the program has no project record, so tasks and documents cannot be bound to it yet</span> : null}.
+        {filing.projectId === null ? <span style={muted}> — the project has no tracking record yet, so tasks and documents cannot be bound to it</span> : null}.
       </div>
     );
   }
   return (
     <div style={{ fontSize: 12, ...muted }}>
       {filing.programId
-        ? `The program's type (${filing.programType ?? 'unknown'}) does not map to a filing type, so no placements are shown.`
-        : 'This design is not linked to a program, so filing placements and task binding are unavailable.'}
+        ? `The project's type (${filing.programType ?? 'unknown'}) does not map to a filing type, so no placements are shown.`
+        : 'This design is not linked to a project, so filing placements and task binding are unavailable.'}
     </div>
   );
 }
@@ -546,7 +546,7 @@ export function StudyDesignStatisticsTab({ onNav, boundStudyId, onChanged }: {
         <div><h2 className="pd-pane-t">Statistics</h2><div className="pd-pane-s">The study design bound to this protocol: what the design record holds, what the deterministic engine computes for it, and the governed write that puts the computed size onto the design.</div></div>
       </div>
       {!bound ? (
-        <div style={{ padding: 12 }}><EmptyState icon={I.fileText} title="No study design is bound to this protocol" hint="A protocol's statistics live on its study design (CDISC PRM). Bind one on the Study design tab and its readiness appears here. Other designs in this program are not shown, because they are not this protocol's." /></div>
+        <div style={{ padding: 12 }}><EmptyState icon={I.fileText} title="No study design is bound to this protocol" hint="A protocol's statistics live on its study design (CDISC PRM). Bind one on the Study design tab and its readiness appears here. Other designs in this project are not shown, because they are not this protocol's." /></div>
       ) : loading ? (
         <div role="status" className="scaf-note" style={{ margin: 12 }}>Loading the bound study design…</div>
       ) : error ? (

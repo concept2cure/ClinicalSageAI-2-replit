@@ -1,0 +1,17 @@
+Mutation M7-migration-off-the-set
+File: scripts/db/migration-set.mjs
+-   'migrations/20261029_hf_engineering_files_program_key.sql',
++ 
+Test: tests/schema-contract/hf-engineering-files-program-key.pglite.test.ts
+
+× tests/schema-contract/hf-engineering-files-program-key.pglite.test.ts > 20261029 on the applier > runs after the files that create its table and the program key, and before the uuid and tenant sweeps 5ms
+Test Files  1 failed (1)
+Tests  1 failed | 6 passed (7)
+
+Test: tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+
+Test Files  1 failed (1)
+Error: pass 1: migrations/20261027_cdi_public_reference_seed.sql failed — CDI reference seed requires the canonical CRE source store
+Tests  17 passed | 3 skipped (20)
+
+Restored byte for byte: yes

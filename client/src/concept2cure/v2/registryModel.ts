@@ -29,6 +29,7 @@
  * particular organization's programmes — that comes from the API.
  */
 import { getSurface, UI_SURFACES, type UiSurface } from '@shared/constants/ui-surface-registry';
+import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
 // ANA_SURFACE_CTX is the large per-surface AnA context table; it lives in a
 // companion module (split to keep this file under the repo-health line gate)
 // and is re-exported below so consumers still import it from registryModel.
@@ -36,7 +37,11 @@ import { ANA_SURFACE_CTX } from './registryModel.surfaceCtx';
 import { AUTO_ACTIVE_MS, AUTO_MAX_ROUNDS, AUTO_WALL_MS, MAX_PAUSE_MS, type AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { minutesWords } from '@shared/ana/run-policy';
 
-/** Client-type rail tiers (kit NAV_TIERS — distinct from the registry's structural navTier) */
+/** Client-type rail tiers (kit NAV_TIERS — distinct from the registry's structural navTier).
+ *  The breadcrumb and ⌘K no longer name the `mdx` tier: every surface grouped
+ *  under it is a feature of the client's project and is crumbed under Projects
+ *  (breadcrumbTierOf, below). The entry stays for its other reader,
+ *  KitSurfaceScaffold's eyebrow (surfaces/Surfaces.tsx). */
 export const NAV_TIERS_V2 = [
   { id: 'mdx', label: 'Medical Device & IVD' },
   { id: 'biopharma', label: 'Biotech & Pharma' },
@@ -46,8 +51,6 @@ export const NAV_TIERS_V2 = [
 export const NAV_GROUP_OF: Record<string, string> = {
   'device-workstream': 'mdx',
   labeling: 'mdx',
-  risk: 'mdx',
-  'design-controls': 'mdx',
   'human-factors': 'mdx',
   'labeling-pi': 'biopharma',
   'program-journey': 'biopharma',
@@ -67,14 +70,12 @@ export const NAV_GROUP_OF: Record<string, string> = {
   quality: 'both',
   'nda-cockpit': 'biopharma',
   'maa-cockpit': 'biopharma',
-  'agency-meetings': 'both',
   'shadow-review': 'both',
   'dispatch-readiness': 'both',
   'communication-center': 'both',
   insights: 'both',
   'market-access': 'both',
   'reg-change': 'both',
-  dossier: 'both',
   'ind-checklist': 'biopharma',
   cmc: 'biopharma',
   'csr-workflow': 'biopharma',
@@ -85,9 +86,7 @@ export const NAV_GROUP_OF: Record<string, string> = {
   'ectd-coauthor': 'biopharma',
   'ectd-compile': 'biopharma',
   pdev: 'biopharma',
-  setup: 'admin',
   'audit-trail': 'admin',
-  billing: 'admin',
   licensing: 'admin',
   training: 'admin',
 };
@@ -109,9 +108,9 @@ export const NAV_GROUP_OF: Record<string, string> = {
  *    features of Project home and clinical operations; the CRL library's
  *    precedents reach AnA in the conversation.
  *  - "Explore": AnA Command and AnA memory are locked (SURFACE_DECISIONS:
- *    scrap / later); Workflows is on the rail and in the account menu; Artifacts Center's
+ *    scrap / later); the module catalog is in the account menu; Artifacts Center's
  *    list moves to the conversation's canvas (slice 25) and stays reachable
- *    meanwhile from ⌘K, the Workflows, and Live Drive, which opens it when
+ *    meanwhile from ⌘K, Subscription & features, and Live Drive, which opens it when
  *    AnA saves a draft (V2App followWork). "Conversation" stays, last, as the
  *    stand-in for Recents (§5 item 10, slice 3) until Recents is built: it
  *    opens the conversation in progress. "New conversation" opens Home, which
@@ -138,27 +137,41 @@ export const NAV_GROUP_OF: Record<string, string> = {
  *    Reports, Compliance and Integrity as its tabs) rename and regroup
  *    surfaces, which is the surface registry's change, not this list's.
  *  - "Search ⌘K" is the top bar's search button, not a row here.
- *  - My work has no count yet (GET /api/task-management/my-work, §5 item 9).
+ *
+ * What changed, 2026-10-25, by the founder's decision after testing the product
+ * as a client (docs/design/CLIENT_JOURNEY_2026-10-25.md): twelve entries in no
+ * order of work, one of them a catalog of 87 features presented as apps, left a
+ * client unable to tell where to start. The rail is now the five places every
+ * client works in, then the durable work areas, under their own heading. Each
+ * entry that left is still reached, from where its work happens:
+ *  - Workflows (the module catalog) is "Subscription & features" in the account menu,
+ *    for organization administrators. Features open from inside a project.
+ *  - Submission Center opens from a project's Submit step.
+ *  - Tasking and My work are one entry, Tasks; the board's own "My tasks"
+ *    filter, and Home's "Your tasks", give the person's own.
+ *  - Conversation: Home lists the person's recent conversations, and each
+ *    project lists its own.
+ * Risk-based monitoring and Biostatistics are work areas by the founder's model
+ * but stay off the rail until each is in the launch catalog (Rule 2).
  *
  * `target` is the screen an entry opens when it is not its own id. `applies`
  * is a screen action the entry asks of that screen as it opens it, through the
- * same validated bus AnA's moves use (surfaceActions.applySurfaceAction): My
- * work opens the task board on the signed-in person's own tasks, which is what
- * its name says (the board alone opens on everyone's).
+ * same validated bus AnA's moves use (surfaceActions.applySurfaceAction): Tasks
+ * opens the board on everyone's tasks, whatever filter it was last left on.
+ * `group` puts an entry under a heading; entries without one are the places.
  */
+export const RAIL_WORK_AREAS_LABEL = 'Work areas';
+/** The same validated screen-action request used by rail entries and aliases. */
+export interface SurfaceApplies { actionId: string; params: Record<string, string> }
 export const RAIL_CORE = [
   { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'apps', label: 'Workflows', icon: 'grid' },
   { id: 'projects', label: 'Projects', icon: 'folder' },
-  { id: 'tasking', label: 'Tasking', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } },
+  { id: 'tasking', label: 'Tasks', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } satisfies SurfaceApplies },
   { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
-  { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
-  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker' },
-  { id: 'quality', label: 'Quality', icon: 'shieldCheck' },
-  { id: 'insights', label: 'Reporting & analytics', icon: 'barChart' },
-  { id: 'tasks', label: 'My work', icon: 'checkSquare', applies: { actionId: 'tasking.filter', params: { mine: 'true' } } },
-  { id: 'conversation-thread', label: 'Conversation', icon: 'messageSquare' },
+  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker', group: 'work-areas' as const },
+  { id: 'quality', label: 'Quality', icon: 'shieldCheck', group: 'work-areas' as const },
+  { id: 'insights', label: 'Reporting & analytics', icon: 'barChart', group: 'work-areas' as const },
 ];
 /** Surfaces reachable via ⌘K/deep-link but intentionally not rail entries */
 export const NAV_HIDDEN: ReadonlySet<string> = new Set([
@@ -168,13 +181,10 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   // screen. They are real, distinct surfaces now, so they are navigable.
   'ectd-coauthor',
   'csr-workflow',
-  'filings-catalog',
-  'dossier-map',
   'nda-cockpit',
   'maa-cockpit',
   'ind-checklist',
   'template-library',
-  'dossier',
   'review-approve',
   'doc-journey',
   'change-assessment',
@@ -182,15 +192,12 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'filing-strategy',
   'tasks',
   'review',
-  'agency-meetings',
   'vault',
   'evidence-search',
   'haq-manager',
   'global-ri',
   'safety-narrative',
   'labeling',
-  'risk',
-  'design-controls',
   'human-factors',
   'regulatory-workspace',
   'labeling-pi',
@@ -210,8 +217,6 @@ export const SEGMENTS = [
     focus: [
       'device-workstream',
       'labeling',
-      'risk',
-      'design-controls',
       'human-factors',
       'precedent-intelligence',
     ],
@@ -229,7 +234,6 @@ export const SEGMENTS = [
     defaultSurface: 'projects',
     focus: [
       'device-diagnostics',
-      'ivd-completeness',
       'labeling',
       'precedent-intelligence',
       'evidence-search',
@@ -262,7 +266,7 @@ export const SEGMENTS = [
       'biostatistics',
       'safety-narrative',
     ],
-    ana: 'Small-molecule and biologic programs, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
+    ana: 'Small-molecule and biologic projects, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
   },
   {
     id: 'cro',
@@ -284,7 +288,7 @@ export const SEGMENTS = [
       'submission-center',
       'insights',
     ],
-    ana: 'Multi-sponsor programs, tenant-isolated by organization.',
+    ana: 'Multi-sponsor projects, tenant-isolated by organization.',
   },
   {
     id: 'health',
@@ -343,6 +347,17 @@ export const SEGMENT_ALIASES: Record<string, string> = {
 };
 export const resolveSegmentId = (id: string) => SEGMENT_ALIASES[id] ?? id;
 export const getSegment = (id: string) => SEGMENTS.find((s) => s.id === resolveSegmentId(id));
+/**
+ * The shell's lane. A lane the person chose wins; otherwise it is the organisation's own
+ * client type (`organizations.client_type`), and the stored default only when the
+ * organisation's is not known yet or names no lane. The lane used to be the browser's
+ * default alone, so a device company saw the biopharma rail and "Tailored for
+ * biopharma" in New project (the slice 0 launch walk).
+ */
+export function shellSegment(stored: string, chosen: boolean, tenantClientType: string | null): string {
+  if (chosen || !tenantClientType) return stored;
+  return getSegment(tenantClientType) ? resolveSegmentId(tenantClientType) : stored;
+}
 
 /**
  * Client-category selector at the top of the rail — the client-type axis of the
@@ -578,8 +593,10 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
     'save_document_version',
     'export_document',
   ],
-  'ivd-completeness': ['assess_filing_readiness', 'run_validation', 'refine_with_validation', 'export_document'],
+  /* assess_filing_readiness moved here with the IVDR readiness board when
+     ivd-completeness folded into device-diagnostics (D2, fold F2, 2026-10-29). */
   'device-diagnostics': [
+    'assess_filing_readiness',
     'run_validation',
     'refine_with_validation',
     'attach_sources_to_document',
@@ -589,7 +606,6 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
   'submission-center': ['compile_dossier', 'route_document_to_module', 'export_document', 'save_document_version'],
   'submission-twin': ['run_validation', 'compile_dossier'],
   'decision-lineage': ['get_document', 'export_document', 'run_validation'],
-  dossier: ['compile_dossier', 'route_document_to_module', 'export_document'],
   vault: ['promote_artifact', 'attach_sources_to_document', 'export_document'],
   review: ['save_document_version', 'export_document', 'route_document_to_module'],
   'haq-manager': ['attach_sources_to_document', 'refine_with_validation', 'save_document_version'],
@@ -606,7 +622,6 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
   'crl-library': ['attach_sources_to_document', 'promote_artifact'],
   cmc: ['run_validation', 'refine_with_validation', 'save_document_version'],
   'ind-checklist': ['run_validation', 'compile_dossier', 'route_document_to_module'],
-  risk: ['attach_sources_to_document', 'save_document_version'],
   labeling: ['run_validation', 'refine_with_validation', 'save_document_version'],
   'evidence-search': ['attach_sources_to_document', 'promote_artifact'],
   tasks: ['route_document_to_module'],
@@ -639,24 +654,25 @@ export const SEGMENT_MODULES = {
       label: 'Evidence & data',
       items: [
         'vault',
-        'device-vault',
         'device-clinical-studies',
         'device-engineering',
         'device-software',
         'evidence-search',
-        'artifacts-center',
         'decision-lineage',
       ],
     },
-    { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    // 2026-10-29 (D2, fold F5 item 2): the organization-wide blocker list retired; each filing's readiness is its own.
+    // 2026-10-30 (D2, fold F5 item 1): the device submission packages folded into Submission Center's device filings.
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       // 2026-10-11: the device segment had no biostatistics surface either,
       // while the engines a 510(k) or PMA sponsor needs — device performance
       // sizing, Bayesian device sizing, MRMC, group-sequential operating
       // characteristics — were reachable only from the two pharma segments.
-      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'biostat-workbench', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), which this segment lists under Evidence & data.
+      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
   ],
@@ -666,7 +682,6 @@ export const SEGMENT_MODULES = {
       label: 'Author & assemble',
       items: [
         'device-diagnostics',
-        'ivd-completeness',
         'device-cer',
         'device-510k',
         'device-presub',
@@ -679,10 +694,10 @@ export const SEGMENT_MODULES = {
     },
     {
       label: 'Evidence & data',
-      items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
+      items: ['vault', 'evidence-search', 'decision-lineage'],
     },
-    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       // 2026-10-11: this segment had no biostatistics surface at all, and the
@@ -691,7 +706,8 @@ export const SEGMENT_MODULES = {
       // FOR an IVD sponsor, and this segment could reach none of them. The
       // workbench is the surface that delivers the outcome
       // (docs/SURFACE_DECISIONS_2026-10-08.md).
-      items: ['precedent-intelligence', 'biostat-workbench', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), a device-engineering project feature.
+      items: ['precedent-intelligence', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -699,7 +715,7 @@ export const SEGMENT_MODULES = {
      accidental ordering swap (labeling-pi moved from position 10 to 7);
      deleting the duplicate removes the divergence as a side effect. */
   biopharma: [
-    { label: 'Program journey', items: ['program-journey'] },
+    { label: 'Project journey', items: ['program-journey'] },
     {
       label: 'Author & assemble',
       items: [
@@ -707,8 +723,7 @@ export const SEGMENT_MODULES = {
         'batch-draft',
         'inconsistency',
         'source-tracer',
-        'dossier',
-        'document-authoring',
+              'document-authoring',
         'cmc',
         'nonclinical',
         'csr-workflow',
@@ -721,19 +736,17 @@ export const SEGMENT_MODULES = {
     },
     {
       label: 'Evidence & data',
-      items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage', 'insights'],
+      items: ['vault', 'evidence-search', 'decision-lineage', 'insights'],
     },
     {
       label: 'Applications & filing',
       items: [
-        'filings-catalog',
         'nda-cockpit',
         'maa-cockpit',
         'ind-checklist',
         'submission-center',
         'communication-center',
         'pyramid',
-        'dossier-map',
         'pdev',
         'haq-manager',
       ],
@@ -746,7 +759,6 @@ export const SEGMENT_MODULES = {
         'shadow-review',
         'dispatch-readiness',
         'tasks',
-        'agency-meetings',
         'audit-trail',
         'quality',
       ],
@@ -787,14 +799,14 @@ export const SEGMENT_MODULES = {
       label: 'Author & assemble',
       items: ['protocol-dev', 'document-authoring', 'csr-workflow', 'template-library'],
     },
-    { label: 'Research administration', items: ['research-admin', 'agency-meetings'] },
+    { label: 'Research administration', items: ['research-admin'] },
     {
       label: 'Evidence & data',
-      items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage', 'insights'],
+      items: ['vault', 'evidence-search', 'decision-lineage', 'insights'],
     },
     {
       label: 'Submit & file',
-      items: ['submission-center', 'ind-checklist', 'dossier-map', 'haq-manager'],
+      items: ['submission-center', 'ind-checklist', 'haq-manager'],
     },
     {
       label: 'Science & intelligence',
@@ -813,10 +825,10 @@ export const SEGMENT_MODULES = {
   ],
   health: [
     { label: 'Author & assemble', items: ['protocol-dev', 'document-authoring', 'template-library'] },
-    { label: 'Research administration', items: ['research-admin', 'agency-meetings'] },
+    { label: 'Research administration', items: ['research-admin'] },
     {
       label: 'Evidence & data',
-      items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
+      items: ['vault', 'evidence-search', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['ind-checklist', 'submission-center'] },
     {
@@ -854,7 +866,10 @@ export const SEGMENT_MODULES = {
 
 /**
  * Per-client-category REFERENCE CONFIG: the category label, its regulatory
- * pathway vocabulary, AnA's framing sentence and the quick-action targets.
+ * pathway vocabulary and AnA's framing sentence. The quick-action targets Home
+ * rendered as shortcuts left on 2026-10-25: one opened an empty Program
+ * journey, and Home now leads with the client's projects instead
+ * (docs/design/CLIENT_JOURNEY_2026-10-25.md).
  *
  * Each entry also used to carry a `program` string — biotech's was
  * 'BX-301 — BLA · 351(a)' — which the Home surface rendered under a branch icon
@@ -875,56 +890,30 @@ export const SEGMENT_CONTEXT = {
     tagline: '510(k) · De Novo · PMA · EU MDR',
     pathways: ['510(k)', 'De Novo', 'PMA', 'EU MDR / CER'],
     ana: 'Predicate & substantial-equivalence reasoning, eSTAR, ISO 14971 risk, EU MDR / CER.',
-    actions: [
-      { id: 'project', label: 'Open a device project', icon: 'folder', surface: 'projects' },
-    ],
   },
   biopharma: {
     label: 'Biotech & Pharma',
     tagline: 'IND · NDA · BLA · MAA · Lifecycle',
     pathways: ['IND', 'NDA', '505(b)(2)', 'BLA', 'MAA', 'J-NDA', 'Lifecycle'],
-    ana: 'Small-molecule and biologic programs, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
-    actions: [
-      { id: 'journey', label: 'Program journey', icon: 'workflow', surface: 'program-journey' },
-      { id: 'author', label: 'Draft Clinical Overview', icon: 'penLine', surface: 'document-authoring' },
-      { id: 'cmc', label: 'CMC Module 3', icon: 'beaker', surface: 'cmc' },
-      /* 'BLA readiness' assumed the biologic; the merged lane says what the
-         control is, and the pathway comes from the program's modality. */
-      { id: 'submit', label: 'Submission readiness', icon: 'rocket', surface: 'submission-center' },
-    ],
+    ana: 'Small-molecule and biologic projects, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
   },
   diagnostics: {
     label: 'Diagnostics',
     tagline: '510(k) · EU IVDR · CLIA · CDx',
     pathways: ['510(k)', 'EU IVDR', 'CLIA', 'CDx'],
     ana: 'IVD analytical & clinical performance, IVDR Annex, companion-diagnostic linkage.',
-    actions: [
-      { id: 'project', label: 'Open a diagnostic project', icon: 'folder', surface: 'projects' },
-    ],
   },
   cro: {
     label: 'CRO / Research',
     tagline: 'Multi-sponsor · protocol-led · org-isolated',
-    pathways: ['Protocol development', 'Cross-sponsor', 'IND', '510(k)'],
+    pathways: ['Protocols', 'Cross-sponsor', 'IND', '510(k)'],
     ana: 'Multi-sponsor portfolio. Protocol authoring + committee governance, org-isolated across sponsors.',
-    actions: [
-      { id: 'protocol', label: 'Protocol development', icon: 'clipboardList', surface: 'protocol-dev' },
-      { id: 'research', label: 'Research administration', icon: 'network', surface: 'research-admin' },
-      { id: 'portfolio', label: 'Sponsor portfolio', icon: 'folder', surface: 'cro-portfolio' },
-      { id: 'tasks', label: 'Cross-sponsor tasks', icon: 'checkSquare', surface: 'tasks' },
-    ],
   },
   health: {
     label: 'Health Systems',
     tagline: 'IIT · IRB · Investigator IND',
     pathways: ['IIT', 'IRB', 'Investigator IND'],
     ana: 'Investigator-initiated trials. IRB, investigator INDs, site governance.',
-    actions: [
-      { id: 'author', label: 'Draft protocol', icon: 'clipboardList', surface: 'protocol-dev' },
-      { id: 'research', label: 'Research administration', icon: 'network', surface: 'research-admin' },
-      { id: 'submit', label: 'IRB submission', icon: 'rocket', surface: 'submission-center' },
-      { id: 'tasks', label: 'Site governance', icon: 'checkSquare', surface: 'tasks' },
-    ],
   },
 };
 export const getSegmentContext = (id: string) =>
@@ -955,20 +944,112 @@ export const ESIGN_MEANINGS = [
 ] as const;
 
 /** Deep-link aliases — SURFACE_VIEWS-only ids, intentionally not rail/registry
- * entries (BUILD_STATE): task-board → tasks board view · device-submission →
- * governed editor (eSTAR pathway) · ind-lifecycle → deliverable-first IND view. */
+ * entries (BUILD_STATE): task-board → tasks board view · ind-lifecycle →
+ * deliverable-first IND view, and every folded screen's old id → its home. */
 export const DEEP_LINK_ALIASES: Record<string, string> = {
+  /* Agency Meetings retired into Communication (P-39 step 4, 2026-10-30;
+     docs/evidence/D2-AGENCY-MEETINGS-RETIRED/2026-10-30/). A meeting is recorded,
+     moved and given its minutes letter on Communication's Meetings tab
+     (HaMeetings.tsx); its briefing book is the meeting package in the editor, on
+     the IND screen. Old links, skills and demo steps land there. */
+  'agency-meetings': 'communication-center',
+  // Filing discovery and its authored reference now live in canonical intake.
+  'filings-catalog': 'projects',
+  // Former dossier screens now reach all three recorded reads on Author.
+  dossier: 'project-home',
+  'dossier-map': 'project-home',
   'task-board': 'tasks',
-  // No `device-submission` alias. It pointed at `document-authoring` while
-  // SURFACE_VIEWS routed the same id to the device kit — the registry and the
-  // deep-link table disagreeing about what one id means. `device-submission` is
-  // the kit's submission-ops package view and resolves to itself.
+  /* Subscription & features keeps its id `apps`; the address a person sees
+     and copies is /concept2cure/features (section 12 of
+     .design/client-journey/INFORMATION_ARCHITECTURE.md). routing.ts
+     SURFACE_ADDRESSES writes it; this reads it back. */
+  features: 'apps',
   'ind-lifecycle': 'ind-checklist',
-  // `/concept2cure/mdx` was the device kit's own route before it became
-  // surfaces. Existing links and bookmarks still point at it, so the segment
-  // resolves to the kit's entry surface rather than silently falling through to
-  // home. `pdev` needs no alias — it is a real registered surface id now.
-  mdx: 'device-workstream',
+  // Legacy MDX links reach the existing device-filtered Projects view.
+  // The device-workstream screen retains its separate A2.10 parity work.
+  mdx: 'projects',
+  /* The device task workbench folded into Tasks (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/). Tasks reads the
+     same submission-ops work item by item, beside every other store, and marks
+     what another store records as blocking. Old links, ⌘K hits and AnA's
+     `device-tasks` target land there. */
+  'device-tasks': 'tasks',
+  /* The Artifacts center and the device kit's vault folded into the Vault (D2,
+     fold F3, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/).
+     Each project's Governed artifacts branch lists every artifact of the
+     project with its versions, audit report and governed DOCX, and with no
+     project open the Vault lists the governed artifacts of every project the
+     person can open. Old links, ⌘K hits and AnA's targets land there. */
+  'artifacts-center': 'vault',
+  'device-vault': 'vault',
+  /* The Part 11 console folded into Audit trail (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/). Audit trail's
+     chain banner states both audit chains' verdicts, the ledger's (audit_logs)
+     and the audit_events chain's from the console's own route, and AnA reads
+     both in its facts. Old links, ⌘K hits and AnA's target land there. */
+  'part11-console': 'audit-trail',
+  /* AnA memory folded into the conversation (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/). Its two real reads,
+     how AnA is tuned to the person and the "Things I got wrong" ledger, are the
+     conversation's "What AnA remembers" (WhatAnaRemembers.tsx), with the
+     project-scoped notes for the conversation's project. Old links land there. */
+  'ana-memory': 'conversation-thread',
+  /* Setup folded into Admin and access (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/). The organisation's name
+     and client type, and the gateway, session, PDF/A, retention and legal-hold
+     cards, are on admin-console's Settings tab; the Identity console door is on
+     its SSO tab; AnA reads the configuration in admin-console's context. Old
+     links and the screens that still say `setup` (Audit & compliance reports'
+     letterhead link, onboarding's "Organization setup", the locked-feature
+     notice) land on Settings through ALIAS_APPLIES below. */
+  setup: 'admin-console',
+  /* The eCTD publishing reference folded into eCTD Compile (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/). Its spec
+     versions sit beside the validation findings, and its version choice,
+     Regional IG OID and controlled vocabularies are the eCTD reference panel
+     (EctdCompileReference.tsx), on screen with or without a project open. Old
+     links, ⌘K hits and AnA's `ectd-publishing` target land there. */
+  'ectd-publishing': 'ectd-compile',
+  /* Billing folded into Licensing (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-billing/). The invoice list is on
+     Licensing under the plan status, with checkout and the billing portal, for
+     billing administrators (LicensingInvoices.tsx); usage keeps the session
+     window, the weekly caps and the enforced rate limits (P-68). Old links,
+     Stripe's earlier return addresses and AnA's `billing` target land there. */
+  billing: 'licensing',
+  /* Risk management and Design controls folded into Engineering evidence (D2,
+     fold F1c, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/).
+     Engineering holds the open project's whole ISO 14971 risk file and its
+     design-control trace (RiskRegister.tsx, DesignControlsTrace.tsx, fold F1
+     slice B), and AnA drives the matrix there. Old links, ⌘K hits and AnA's
+     `risk` target land there; a subscription to either carries to it
+     (decision P-61 item 4,
+     server/services/entitlements/folded-module-successors.ts). */
+  risk: 'device-engineering',
+  'design-controls': 'device-engineering',
+  /* IVD completeness folded into IVDR evidence (D2, fold F2, 2026-10-29). The
+     IVDR readiness board and the IVD assessment workbench are device-diagnostics'
+     readiness panel, for the open project (IvdSurface.tsx). */
+  'ivd-completeness': 'device-diagnostics',
+  /* The organization-wide blocker list retired (D2, fold F5 item 2, 2026-10-29;
+     decision P-61 item 2; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/).
+     A blocker belongs to a filing, from that filing's deterministic readiness
+     (EstarFilingPanel, on the device pathway screens), and is closed by fixing
+     it; the list's "Pass" for a low-severity blocker is not carried. Submission
+     Center lists every tracked device filing. Old links, ⌘K hits and AnA's
+     `device-validation` target land there; a subscription carries to it
+     (decision P-61 item 4, server/services/entitlements/folded-module-successors.ts). */
+  'device-validation': 'submission-center',
+  /* The device submission-packages screen folded into Submission Center (D2,
+     fold F5 item 1, 2026-10-30; decision P-61 item 1: one device-filing store,
+     estar_submissions). Submission Center's device filings list every tracked
+     filing, packages migrated from c2c_submission_packages among them, with a
+     status filter and each draft filing's gate from its own readiness; each
+     filing's history is on its record. Old links, ⌘K hits and AnA's
+     `device-submission` target land there; a subscription carries to it
+     (decision P-61 item 4). It once aliased to `document-authoring`, while
+     SURFACE_VIEWS routed the same id to the kit; now there is one meaning. */
+  'device-submission': 'submission-center',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate
@@ -976,8 +1057,14 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      KitSurfaceScaffold fallback: AnA saying "taking you to Intelligence" and
      the person arriving at a scaffold. Each maps to the surface that IS that
      capability today. Guarded by __tests__/navigationReachability.test.ts,
-     which fails the moment a registry id and this table drift apart again. */
-  biopharma: 'program-journey',
+     which fails the moment a registry id and this table drift apart again.
+     `biopharma` opened program-journey, outside the release: Projects is the
+     module's entry, and each project's six steps are its own (slice 0 of
+     .design/client-journey/INFORMATION_ARCHITECTURE.md). `intelligence` and
+     `safety` still resolve to screens outside the release; under the launch
+     scope those carry a lock AnA is given, so navigate_to refuses them in the
+     conversation (the same test file pins that every target is one or the other). */
+  biopharma: 'projects',
   documents: 'vault',
   submissions: 'submission-center',
   'section-workspace': 'document-authoring',
@@ -987,6 +1074,15 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   intelligence: 'global-ri',
   authoring: 'document-authoring',
   safety: 'pv-cockpit',
+};
+
+/** Alias visits may ask the destination for an existing action as it opens. */
+export const ALIAS_APPLIES: Readonly<Record<string, SurfaceApplies>> = {
+  'filings-catalog': { actionId: 'projects.new-project', params: {} },
+  dossier: { actionId: 'project-home.set-stage', params: { stage: 'author' } },
+  'dossier-map': { actionId: 'project-home.set-stage', params: { stage: 'author' } },
+  mdx: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
+  setup: { actionId: 'admin-console.open-tab', params: { tab: 'settings' } },
 };
 
 /** Home is the shell's landing, not a registry surface (V2App renders it for
@@ -1013,12 +1109,23 @@ export function navGroupOf(id: string): string {
 }
 
 /**
- * The breadcrumb's client-category crumb for a surface: its tier when it
+ * The parent the breadcrumb (and ⌘K's hint) names for a project feature: the
+ * Projects app. The device disciplines and pathways are features of the
+ * client's project, not a "Medical Device & IVD" app (founder request,
+ * 2026-10-23: shared/constants/launch-scope.ts, pinned to
+ * MDX_PROJECT_FEATURE_SURFACE_IDS). The shell adds the open project after it.
+ */
+export const PROJECTS_CRUMB = { id: 'projects', label: getSurface('projects')?.label ?? 'Projects' } as const;
+
+/**
+ * The breadcrumb's parent crumb for a surface, which ⌘K's hint also reads:
+ * Projects for a project feature; otherwise its client category when it
  * belongs to exactly one, "Admin" for an admin surface, and null when it
  * belongs to both — or when the tier would only repeat the surface's own
- * name ("Medical Device & IVD › Medical Device & IVD").
+ * name.
  */
 export function breadcrumbTierOf(surface: { id: string; label: string }): { id: string; label: string } | null {
+  if (isMdxProjectFeature(surface.id)) return PROJECTS_CRUMB;
   const group = getSurface(surface.id)?.navTier === 'admin' ? 'admin' : navGroupOf(surface.id);
   const tier = NAV_TIERS_V2.find((t) => t.id === group) ?? null;
   return tier && tier.label !== surface.label ? tier : null;
@@ -1057,7 +1164,7 @@ export const ANA_SUGGESTIONS: Record<string, string[]> = {
   'global-ri': ['Compute NCE exclusivity for FDA', 'Classify an IVD for EU MDR', 'Build a cross-market strategy brief'],
   'submission-center': ['Validate the OR-902 package', 'What gates transmit?', 'Compare ESG vs eSTAR export'],
   'document-authoring': ['Draft §2.5 from the predicate', 'Check claims against evidence', 'Rewrite for FDA tone'],
-  projects: ['Which programs are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
+  projects: ['Which projects are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
   vault: ['Find the latest biocompat report', 'What is still unfiled in the cabinet?', 'Search by SHA-256'],
   tasks: ['What is due this week?', 'Open reviews assigned to me', 'Summarize blockers'],
   'crl-library': [

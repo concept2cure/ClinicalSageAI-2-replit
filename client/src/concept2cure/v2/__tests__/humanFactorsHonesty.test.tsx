@@ -51,6 +51,11 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { ApiRequestError } from '@/lib/queryClient';
 import { HumanFactors } from '../surfaces/HumanFactors';
+import { clearShellProject, publishShellProject } from '../shellProject';
+
+/** The open project. The screen reads its file by project, and draws a file only when the route says it is this
+ *  project's (D2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/device-features-human-factors/). */
+const PROJECT = '0b6f1c1e-4d2a-4c55-9a1e-3f7b2d9c8e10';
 
 /* ── The three sentences the surface is no longer entitled to say ──────────── */
 const RESIDUAL_ACCEPTABLE = /residual use-related risk is acceptable/i;
@@ -74,7 +79,10 @@ const NO_SCENARIOS = {
     present: { useSpecification: true, userProfiles: true },
     scenarios: [],
   },
-  meta: { count: 0, source: 'hf_engineering_files' },
+  // Slice 0: the screen shows the file only when the route reports the read keyed
+  // to the project. The route cannot send `scope: 'program'` today (slice 19 keys
+  // hf_engineering_files); humanFactorsProjectKeyed.test.tsx covers today's response.
+  meta: { count: 0, source: 'hf_engineering_files', scope: 'program', programId: PROJECT },
 };
 
 /**
@@ -102,7 +110,7 @@ const ANALYSED_AND_MITIGATED = {
       },
     ],
   },
-  meta: { count: 2, source: 'hf_engineering_files' },
+  meta: { count: 2, source: 'hf_engineering_files', scope: 'program', programId: PROJECT },
 };
 
 /** The same file analysed and NOT controlled — the blocked state, for contrast. */
@@ -111,7 +119,7 @@ const ANALYSED_UNMITIGATED = {
     ...NO_SCENARIOS.data,
     scenarios: [{ ...ANALYSED_AND_MITIGATED.data.scenarios[0], mitigated: false }],
   },
-  meta: { count: 1, source: 'hf_engineering_files' },
+  meta: { count: 1, source: 'hf_engineering_files', scope: 'program', programId: PROJECT },
 };
 
 function mount() {
@@ -133,8 +141,8 @@ const serve = (payload: unknown) =>
     method === 'GET' ? ok(payload) : ok({ data: null }),
   );
 
-afterEach(() => cleanup());
-beforeEach(() => apiRequest.mockReset());
+afterEach(() => { cleanup(); clearShellProject(); });
+beforeEach(() => { apiRequest.mockReset(); publishShellProject({ id: PROJECT, title: 'Aurora' }); });
 
 describe('HumanFactors — an unexamined HFE/UE file says so', () => {
   it('states that no use-related risk analysis has run', async () => {
@@ -191,7 +199,7 @@ describe('HumanFactors — an unexamined HFE/UE file says so', () => {
 describe('HumanFactors — a failed read reads as a failure', () => {
   it('never renders an unreadable file as an empty or a cleared one', async () => {
     apiRequest.mockImplementation(async (method: string, path: string) => {
-      if (method === 'GET' && path === '/api/human-factors') {
+      if (method === 'GET' && path === `/api/human-factors?program_id=${PROJECT}`) {
         throw new ApiRequestError('Human-factors store is not provisioned yet.', 503, null, 'PENDING_STORE');
       }
       return ok({ data: null });

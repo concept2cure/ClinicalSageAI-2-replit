@@ -1,0 +1,249 @@
+[
+  {
+    "study_ids": [
+      "NCT01241552",
+      "NCT01513239"
+    ],
+    "name": "MODIFY I / MODIFY II (bezlotoxumab / actoxumab)",
+    "priority": "highest clinical-design match",
+    "acquired_documents": [
+      "csr_synopsis",
+      "csr_synopsis"
+    ],
+    "similarities": [
+      "Adults with primary or recurrent active CDI; adjunct antitoxin with SOC antibiotics",
+      "Separates initial clinical cure, recurrence, and global cure",
+      "Randomized blinded placebo comparisons; stratified SOC antibiotic",
+      "Sponsor report synopsis gives methods, analysis populations, efficacy and safety reporting"
+    ],
+    "differences": [
+      "Single intravenous infusion rather than repeated oral biologic",
+      "Phase3 larger trials; recurrence primary and global cure secondary",
+      "Week12 window and population definitions must not be imported into LMN-201",
+      "MODIFY I multiarm adaptive design; MODIFY II different arm structure"
+    ],
+    "best_for": [
+      "E3 Section2 synopsis",
+      "E3 Section9 trial plan and endpoint definitions",
+      "E3 Section11 analysis populations and global cure versus recurrence denominators",
+      "E3 Section12 safety reporting"
+    ],
+    "source_urls": [
+      "https://portal.dimdi.de/data/ctr/O-2672933-1-0-55531B-20170320163525.pdf",
+      "https://portal.dimdi.de/data/ctr/O-2672933-1-0-0C69AC-20170320165835.pdf"
+    ],
+    "do_not_use_for": [
+      "LMN treatment effects",
+      "Bayesian priors",
+      "cross-trial efficacy superiority claims"
+    ]
+  },
+  {
+    "study_ids": [
+      "NCT03244644"
+    ],
+    "name": "PUNCH CD3 (RBX2660/Rebyota)",
+    "priority": "high statistical-reporting value",
+    "acquired_documents": [
+      "protocol",
+      "statistical_analysis_plan"
+    ],
+    "similarities": [
+      "CDI recurrence prevention after antibacterial treatment",
+      "Blinded randomized placebo design",
+      "Prespecified Bayesian hierarchical efficacy analysis"
+    ],
+    "differences": [
+      "Rectal microbiota rather than oral antitoxin/lysin",
+      "Treatment after successful SOC; baseline must be controlled",
+      "Primary no-CDI-diarrhea success at8weeks; prior phase2b borrowing is study-specific",
+      "Eligibility recurrent/severe CDI rather than same LMN target population"
+    ],
+    "best_for": [
+      "E3 Section9.7 statistical plan and amendments",
+      "E3 Section11 sensitivity analyses and participant accounting",
+      "How to document Bayesian prior/borrowing, posterior criterion, and sensitivity assumptions"
+    ],
+    "source_urls": [
+      "https://cdn.clinicaltrials.gov/large-docs/44/NCT03244644/Prot_000.pdf",
+      "https://cdn.clinicaltrials.gov/large-docs/44/NCT03244644/SAP_001.pdf"
+    ],
+    "do_not_use_for": [
+      "Transferring Bayesian prior or success threshold to LMN",
+      "Replacing Lumen final SAP"
+    ]
+  },
+  {
+    "study_ids": [
+      "NCT03183128"
+    ],
+    "name": "ECOSPOR III (SER-109/Vowst)",
+    "priority": "high oral recurrence-prevention value",
+    "acquired_documents": [
+      "protocol",
+      "statistical_analysis_plan"
+    ],
+    "similarities": [
+      "Oral capsules with placebo after CDI antibiotics",
+      "Randomized double-blind trial",
+      "Stratification by age and vancomycin/fidaxomicin",
+      "Toxin-based recurrence and planned follow-up windows"
+    ],
+    "differences": [
+      "Microbiota spores rather than antitoxin/lysin",
+      "At least3CDI episodes in12months including qualifying episode",
+      "Qualifying CDI already responded to antibiotics before investigational dosing",
+      "Primary recurrence up to8weeks; secondary4/12/24weeks; does not study active-CDI initial cure adjunct in same way"
+    ],
+    "best_for": [
+      "E3 Section9 recurrence adjudication and diagnostic requirements",
+      "E3 Section10 disposition and missing follow-up",
+      "E3 Section11 estimand/population/sensitivity reporting"
+    ],
+    "source_urls": [
+      "https://cdn.clinicaltrials.gov/large-docs/28/NCT03183128/Prot_000.pdf",
+      "https://cdn.clinicaltrials.gov/large-docs/28/NCT03183128/SAP_001.pdf"
+    ],
+    "extraction_warning": "Protocol and SAP native text garbled; OCR required; cannot rely on text length to declare success"
+  },
+  {
+    "study_ids": [
+      "NCT03183141"
+    ],
+    "name": "ECOSPOR IV (SER-109)",
+    "priority": "supporting open-label cohort reporting",
+    "acquired_documents": [
+      "protocol",
+      "statistical_analysis_plan"
+    ],
+    "similarities": [
+      "Oral microbiota after successful CDI antibiotics",
+      "Separate enrolled cohorts; one rolls over from ECOSPOR III",
+      "Open-label disposition/safety accounting relevant to documenting LMN PartA separately"
+    ],
+    "differences": [
+      "Single-arm open-label; no randomized concurrent comparator",
+      "Cohort1 patients from ECOSPORIII recurrence; cohort2 broader recurrence history",
+      "Mechanism and timing differ from LMN"
+    ],
+    "best_for": [
+      "Cohort-specific disposition",
+      "Separate open-label and randomized populations",
+      "Do not combine related studies across training/test partitions"
+    ],
+    "source_urls": [
+      "https://cdn.clinicaltrials.gov/large-docs/41/NCT03183141/Prot_000.pdf",
+      "https://cdn.clinicaltrials.gov/large-docs/41/NCT03183141/SAP_001.pdf"
+    ],
+    "leakage_group": "SERES-012/013: linked cohorts, shared participants possible"
+  },
+  {
+    "study_ids": [
+      "NCT03788434"
+    ],
+    "name": "CONSORTIUM (VE303)",
+    "priority": "high phase2 oral recurrence-prevention value",
+    "acquired_documents": [
+      "redacted_protocol",
+      "redacted_statistical_analysis_plan"
+    ],
+    "similarities": [
+      "Phase2 randomized double-blind placebo-controlled",
+      "Oral14day dosing",
+      "Recurrence after SOC with safety/microbiome measures",
+      "Explicit planned-analysis changes and dose-selection reporting"
+    ],
+    "differences": [
+      "Eight-strain live commensal bacterial consortium, not nonviable spirulina biologic",
+      "Dosing after completing successful SOC",
+      "Prior recurrence or high-risk first CDI; three arms",
+      "Primary recurrence at8weeks uses toxin-positive/lab-confirmed/clinically treated definitions whose hierarchy must be preserved"
+    ],
+    "best_for": [
+      "E3 Section9 amendments and dose groups",
+      "E3 Section11 diagnostic sensitivity definitions",
+      "E3 Section12 safety/PD organization"
+    ],
+    "source_urls": [
+      "https://cdn.clinicaltrials.gov/large-docs/34/NCT03788434/Prot_002.pdf",
+      "https://cdn.clinicaltrials.gov/large-docs/34/NCT03788434/SAP_003.pdf"
+    ]
+  },
+  {
+    "study_ids": [
+      "NCT01259726"
+    ],
+    "name": "VP20621 / NTCD-M3",
+    "priority": "secondary oral prevention comparator; registry only",
+    "acquired_documents": [
+      "official_registry_snapshot"
+    ],
+    "similarities": [
+      "Phase2 oral treatment after successful CDI antibiotics",
+      "First CDI episode or first recurrence",
+      "Randomized blinded dose groups"
+    ],
+    "differences": [
+      "Nontoxigenic live C. difficile spores; oral suspension",
+      "Primary safety/colonization and recurrence secondary to6weeks",
+      "No actual CSR or companion PDF located during bounded search"
+    ],
+    "best_for": [
+      "Contextual comparator selection only until sponsor original acquired"
+    ],
+    "source_urls": [
+      "https://clinicaltrials.gov/api/v2/studies/NCT01259726",
+      "https://www.clinicaltrialsregister.eu/ctr-search/trial/2010-020484-20/results"
+    ]
+  },
+  {
+    "study_ids": [
+      "NCT03182907"
+    ],
+    "name": "MODIFY III (pediatric bezlotoxumab)",
+    "priority": "supporting report structure only",
+    "acquired_documents": [
+      "csr_synopsis"
+    ],
+    "similarities": [
+      "Sponsor CSR synopsis for antitoxin adjunct to CDI antibiotics",
+      "Safety, PK, immunogenicity and recurrence reporting"
+    ],
+    "differences": [
+      "Pediatric ages1to<18; LMN target adults",
+      "IV dose; primary PK/safety rather than LMN primary global cure",
+      "3:1randomization and historical adult PK comparison"
+    ],
+    "best_for": [
+      "E3 synopsis structure and safety tabulation organization"
+    ],
+    "source_urls": [
+      "https://portal.dimdi.de/data/ctr/O-3708_01-2-0-6A5234-20230220143759.pdf"
+    ]
+  },
+  {
+    "study_ids": [
+      "NCT04893239"
+    ],
+    "name": "LMN-201 CDI01 exploratory ostomy study",
+    "priority": "same-product background, separate study",
+    "acquired_documents": [
+      "protocol"
+    ],
+    "similarities": [
+      "Same LMN-201 product family and oral formulation background",
+      "Sponsor terminology/mechanism and prior clinical experience"
+    ],
+    "differences": [
+      "Phase1 exploratory open-label ostomy delivery study",
+      "12participants, not RePreve population",
+      "Protocol supports planned methods only; cannot substitute for study CSR or final data"
+    ],
+    "best_for": [
+      "Cross-reference product rationale and earlier clinical study while preserving trial identity"
+    ],
+    "source_urls": [
+      "https://cdn.clinicaltrials.gov/large-docs/39/NCT04893239/Prot_000.pdf"
+    ]
+  }
+]

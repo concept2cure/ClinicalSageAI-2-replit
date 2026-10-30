@@ -16,6 +16,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { apiRequest, ApiRequestError, redactInternals } from '@/lib/queryClient';
 import type { FilingMarket } from '../useFilingOutline';
+import { editingCopyOf } from './editingCopy';
 
 export interface FilingMarketsProps {
   home: FilingMarket | null;
@@ -36,14 +37,15 @@ const nameOf = (f: FilingMarket) => `${f.agency.toUpperCase()} · ${f.doc_type.t
    see (WCAG 2.5.3; accessibility review, 2026-10-15). */
 function FilingAction({ filing, isMarket, nameId, props }: { filing: FilingMarket; isMarket: boolean; nameId: string; props: FilingMarketsProps }) {
   if (filing.id === props.shownId) return <span className="ed-basis-d">Shown in the outline</span>;
-  const copy = props.docs.find((d) => d.c2c_document_id === filing.id);
-  if (copy) {
+  const copy = editingCopyOf(props.docs, filing.id, (d) => d.c2c_document_id);
+  if (copy.kind === 'one') {
     return (
-      <button type="button" className="btn ghost" aria-describedby={nameId} onClick={() => props.onOpen(copy.id)}>
+      <button type="button" className="btn ghost" aria-describedby={nameId} onClick={() => props.onOpen(copy.doc.id)}>
         Open
       </button>
     );
   }
+  if (copy.kind === 'several') return <span className="ed-basis-d">{copy.docs.length} documents are bound to this filing</span>;
   if (!isMarket) return <span className="ed-basis-d">No editing copy yet</span>;
   const busy = props.creatingId === filing.id;
   const held = props.creatingId != null;

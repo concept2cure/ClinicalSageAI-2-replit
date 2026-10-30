@@ -8,7 +8,7 @@ import { CompanyDocumentsError } from './validation';
 async function readEvidenceVersion(q: RequestSqlClient, organizationId: number, programId: string, vaultId: string): Promise<CompanyLegalEvidenceRef> {
   const source = await readVaultLifecycleSource(q, organizationId, vaultId);
   if (!source || source.programId !== programId || !source.current || !source.version || !/^[a-f0-9]{64}$/i.test(source.contentHash)) {
-    throw new CompanyDocumentsError(409, 'LEGAL_EVIDENCE_UNAVAILABLE', 'Use a current, verified Vault evidence version in the same program as this legal document.');
+    throw new CompanyDocumentsError(409, 'LEGAL_EVIDENCE_UNAVAILABLE', 'Use a current, verified Vault evidence version in the same project as this legal document.');
   }
   const refusal = await vaultVersionNotTransmittable(q, organizationId, source.id, source.contentHash);
   if (refusal) throw new CompanyDocumentsError(409, 'LEGAL_EVIDENCE_UNAPPROVED', `The linked evidence must be reviewed and approved in the Vault. ${refusal}`);

@@ -35,11 +35,14 @@ import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest, serverMessage, redactInternals, type ApiRequestError } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import { authoringPdfPrewriteRefusal } from '../authoringPdfRefusal';
-import { shellProgramId, useShellProject } from '../shellProject';
+import { captureShellProjectGuard, shellProgramId, useShellProject } from '../shellProject';
 import { DownloadMenu, CONTROLLED_EXPORT_REASON, isSealedStatus } from '../editor/DownloadMenu';
+import { authService } from '@/services/portal/authService';
+import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
+import { useLiveData, type DataReadOwner } from '../dataConnect';
 import { useAuthoringCreation, type AuthoringDocumentStart, type CreationKind, type CreationState } from '../editor/useAuthoringCreation';
 import { AuthoringRecoveryNotice } from '../AuthoringRecoveryNotice';
-import { AuthoringTemplatePicker, BLANK_DOCUMENT, templateLabel, type AuthoringTemplate, type TemplateCatalogState } from './AuthoringTemplatePicker';
+import { AuthoringTemplatePicker, BLANK_DOCUMENT, templateLabel, type AuthoringTemplate, type AuthoringFilingContext, type TemplateCatalogState } from './AuthoringTemplatePicker';
 
 export interface AuthoringCreateExportProps {
   /** Currently open document (null when none). */
@@ -54,6 +57,7 @@ export interface AuthoringCreateExportProps {
   noticeContainer?: HTMLElement | null;
   /** One deliberate source start, kept in this existing creation host. */
   documentStart?: AuthoringDocumentStart | null;
+  filingContext?: AuthoringFilingContext | null;
   /** The document's lifecycle status. Export of a filing artifact is refused
    *  server-side (409) unless it is FROZEN or APPROVED; the menu says so
    *  instead of offering an act that can only fail. A working copy is
@@ -76,8 +80,9 @@ export interface AuthoringCreateExportProps {
 }
 
 const NONE = BLANK_DOCUMENT;
-function creationModule(template: AuthoringTemplate | undefined, entered: string, fallback: string): string | null {
-  return template?.module === undefined ? entered || fallback : template.module;
+const RETIRED_FORM_REASON = 'The project or filing changed, or your signed-in session changed. Close this form and open New document again before choosing a template.';
+function creationModule(template: AuthoringTemplate | undefined, entered: string): string | null {
+  return template?.module === undefined ? entered || null : template.module;
 }
 
 function templateStartDescription(template: AuthoringTemplate | undefined): string | undefined {
@@ -122,7 +127,7 @@ function documentCreationForm({ templates, selectedTemplate, module, globalCatal
     notice: [progress.notice, sourceNotice].filter(Boolean).join(' ') || undefined,
     fields: [
       { key: 'title', label: 'Document title', type: 'text', required: true, placeholder: 'e.g. 2.6.6 Toxicology Written Summary' },
-      { key: 'module', label: 'CTD module', type: selectedTemplate?.module === undefined ? 'seg' : 'text', options: ['M1', 'M2', 'M3', 'M4', 'M5'], default: module, half: true,
+      { key: 'module', label: 'CTD module', type: selectedTemplate?.module === undefined ? 'seg' : 'text', options: [{ value: '', label: 'No CTD placement' }, 'M1', 'M2', 'M3', 'M4', 'M5'], default: '', half: true,
         derive: values => { const selected = templates.find(t => String(t.id) === values.template);
           return selected?.module === undefined ? null : selected.module ?? 'No CTD placement (preparation)'; } },
       { key: 'template', label: 'Start from', type: 'select', options: [{ value: NONE, label: NONE },
@@ -154,7 +159,31 @@ function AuthoringRecoveryNotices({ creation, recovery }: {
   </>;
 }
 
-export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported, onCheckExports, programId, programSwitchHeld = false, onCheckCreation, noticeContainer, documentStart }: AuthoringCreateExportProps) {
+function useCreationFilingScope(programId: string | null | undefined, openProject: string | null, context?: AuthoringFilingContext | null) {
+  const session = useAuthoringReadSession(authService.getUser());
+  const effectiveProgram = programId === undefined ? openProject : programId;
+  const currentFiling = context?.projectId === effectiveProgram ? context : null;
+  const scope = JSON.stringify([effectiveProgram, openProject, currentFiling?.registryId, currentFiling?.filingDocumentId, session.actor, session.key]);
+  const visit = useRef({ scope, generation: 0, projectCurrent: captureShellProjectGuard() });
+  if (visit.current.scope !== scope || !visit.current.projectCurrent()) {
+    visit.current = { scope, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
+  }
+  const currentVisit = visit.current;
+  const [formVisit, setFormVisit] = useState<object | null>(null);
+  const current = () => visit.current === currentVisit && session.sameRevision() && currentVisit.projectCurrent();
+  return { programId: effectiveProgram, filingContext: currentFiling,
+    owner: { key: JSON.stringify([scope, currentVisit.generation]), current }, retired: formVisit !== currentVisit || !current(),
+    formCurrent: () => formVisit === currentVisit && current(), capture: () => { if (current()) setFormVisit(currentVisit); } };
+}
+
+function useCreationTemplateCatalog(owner: DataReadOwner) {
+  const read = useLiveData<{ templates: AuthoringTemplate[]; globalCatalog?: string }>('/api/authoring/templates', ['/api/authoring/templates'],
+    (body): body is { templates: AuthoringTemplate[]; globalCatalog?: string } => Boolean(body && typeof body === 'object' && Array.isArray((body as { templates?: unknown }).templates)), owner);
+  const catalog: TemplateCatalogState = read.loading ? 'loading' : read.error ? 'failed' : read.data?.globalCatalog === 'unavailable' ? 'unavailable' : 'ok';
+  return { templates: read.data?.templates ?? [], catalog };
+}
+
+export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported, onCheckExports, programId, programSwitchHeld = false, onCheckCreation, noticeContainer, documentStart, filingContext }: AuthoringCreateExportProps) {
   /* Sealed, or not offered. An unknown status used to count as exportable,
      which offered the controlled act on a document whose status nobody had
      read; the server would refuse it, and the working copy is the act that
@@ -165,17 +194,18 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
   const closeDialog = () => { setDialog(null); setFormDocumentStart(null); };
   // Re-renders when a surface opens or switches project, so the control follows.
   const openProject = shellProgramId(useShellProject());
-  const creation = useAuthoringCreation({ programId: programId === undefined ? openProject : programId,
+  const filingScope = useCreationFilingScope(programId, openProject, filingContext);
+  const creation = useAuthoringCreation({ programId: filingScope.programId,
     openProject, docId, programSwitchHeld, fireToast, onDocCreated, onSectionCreated, onCheckCreation, documentStart: formDocumentStart });
   const openDocument = () => {
     if (creation.blocked('document')) {
       fireToast(creation.refusal ?? creation.state('document')?.message ?? 'Wait for the current creation request.', 'error');
       return;
     }
-    setFormDocumentStart(null); setDialog('doc');
+    filingScope.capture(); setFormDocumentStart(null); setDialog('doc');
   };
   useDocumentStartCommand(documentStart, dialog !== null, creation.canStartDocument,
-    request => { setFormDocumentStart(request); setDialog('doc'); });
+    request => { filingScope.capture(); setFormDocumentStart(request); setDialog('doc'); });
   const { exportDoc, blockedReason, recovery } = useAuthoringExport({
     docId, docTitle, exportable, openProject, fireToast, onExported, onCheckExports,
   });
@@ -191,47 +221,26 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
     window.addEventListener(NEW_DOCUMENT_EVENT, openDocument);
     return () => window.removeEventListener(NEW_DOCUMENT_EVENT, openDocument);
   });
-  const [templates, setTemplates] = useState<AuthoringTemplate[]>([]);
+  const { templates, catalog: globalCatalog } = useCreationTemplateCatalog(filingScope.owner);
   const [templateChoice, setTemplateChoice] = useState('');
   const [templateQuery, setTemplateQuery] = useState('');
   useEffect(() => { if (dialog !== 'doc') { setTemplateChoice(''); setTemplateQuery(''); } }, [dialog]);
-  // 'unavailable' = the server said the shared reference catalog failed to
-  // read (its fail-soft still lists the org's own templates). A SHORT list
-  // and a FAILED half are different facts; the dialog states which.
-  // 'failed' = the whole read failed (401, throw). It used to collapse into
-  // the ok/short-list case, so an author started a filing document blank
-  // believing the org had no templates.
-  const [globalCatalog, setGlobalCatalog] = useState<TemplateCatalogState>('loading');
-
-  // Template roster for create-from-template; an unavailable list simply means
-  // the picker offers only a blank document — never a fabricated template.
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await apiRequest('GET', '/api/authoring/templates');
-        const body = await res.json().catch(() => null);
-        if (res.ok && Array.isArray(body?.templates)) {
-          setTemplates(body.templates as AuthoringTemplate[]);
-          setGlobalCatalog(body.globalCatalog === 'unavailable' ? 'unavailable' : 'ok');
-        } else {
-          setGlobalCatalog('failed');
-        }
-      } catch { setGlobalCatalog('failed'); }
-    })();
-  }, []);
 
   const selectedTemplate = templates.find(t => String(t.id) === templateChoice);
 
   const DOC_FORM = documentCreationForm({ templates, selectedTemplate, module, globalCatalog, state: creation.state('document'), documentStart: formDocumentStart });
+  const retiredForm = dialog === 'doc' && filingScope.retired;
+  if (retiredForm) DOC_FORM.notice = RETIRED_FORM_REASON;
   const SECTION_FORM = sectionCreationForm(docTitle, creation.state('section'));
 
   const createDoc = (values: Record<string, string>) => {
+    if (retiredForm || !filingScope.formCurrent()) { fireToast(RETIRED_FORM_REASON, 'error'); return; }
     const template = templates.find(row => String(row.id) === values.template);
     if (values.template && values.template !== NONE && !template) {
       fireToast('The selected template is unavailable. Choose a listed template before creating the document.', 'error');
       return;
     }
-    creation.create('document', { title: values.title, module: creationModule(template, values.module, module),
+    creation.create('document', { title: values.title, module: creationModule(template, values.module),
       ...(template ? { template_id: template.id } : {}) }, closeDialog, template ? templateLabel(template) : undefined);
   };
   const createSection = (values: Record<string, string>) => {
@@ -241,10 +250,7 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
 
   return (
     <>
-      <button
-        className="btn ghost"
-        style={{ height: 30 }}
-        onClick={openDocument}
+      <button className="btn ghost" style={{ height: 30 }} onClick={openDocument}
         disabled={creation.blocked('document')}
         title={creation.refusal ?? creation.state('document')?.message}
       >
@@ -274,7 +280,7 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
       {dialog === 'doc' && <C2CForm config={DOC_FORM} onCancel={closeDialog} onSubmit={createDoc}
         onFieldChange={(key, value) => { if (key === 'template') setTemplateChoice(value); }}
         renderField={(field, control) => field.key === 'template'
-          ? <AuthoringTemplatePicker templates={templates} catalog={globalCatalog} query={templateQuery} onQueryChange={setTemplateQuery} control={control} />
+          ? <AuthoringTemplatePicker templates={templates} catalog={globalCatalog} query={templateQuery} onQueryChange={setTemplateQuery} control={control} filingContext={filingScope.filingContext} />
           : undefined} />}
       {dialog === 'section' && docId && <C2CForm config={SECTION_FORM} onCancel={closeDialog} onSubmit={createSection} />}
     </>

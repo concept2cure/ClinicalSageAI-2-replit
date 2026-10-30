@@ -1,0 +1,19 @@
+{
+  "head": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+  "scope": "Independent lifecycle HTTP/PGlite test and named current implementation/fixture owners; full combined import closure is root qualification.",
+  "files": {
+    "server/routes/__tests__/usBiotechLifecycleEditor.pglite.integration.test.ts": "595270bf185b69fad837944abd114987537e7cda9dae696203d7eba860095868",
+    "server/routes/__tests__/_template-editor-fixture.ts": "9040f01e26558cc1e42ddaee338901c0a2ff106403e5ef31aa3c502b32395f8e",
+    "server/routes/__tests__/_authoring-canvas-fixture.ts": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+    "server/routes/authoring.router.ts": "e3ead64714604191d6419bba4f82d09e01be658e1771e20c1a1fd6e876f5b22b",
+    "server/services/authoring/builtin-authoring-templates.ts": "cdc285281d18f3499472758cc61422b0322527817001c019e68d1d03f02392be",
+    "server/services/authoring/document-template-outline-sections.ts": "7b0695664e2d560950054d1dccc476ff2683f282dae2f3456fb62aa4ddee2eb7",
+    "server/services/market-specs/document-template-library.ts": "92c4a879b42b3a2c2169bbf79c2932abe7eb89bc7bf364bc738f55759b950ef1",
+    "server/services/market-specs/document-preparation.ts": "3e0746ed2ae09af567549a6354f9371bf3bd090d548cff6576b254523156df32",
+    "server/services/market-specs/us-biotech-lifecycle-templates.ts": "0b75a289be0a65eec8a191a052324165585c52cdaeca208361bb3bc2993c6703",
+    "server/services/regulatory/templateCatalog.ts": "a888dabfa4fb67d18e25cca20a4d9577fea3f9eb31c4c8d7aef44c431a25ef8d",
+    "server/services/authoring/authoring-draft-template.ts": "897cb654b852f3482f22730043e3e69d579b899f67e20f5d5e72335daef9f991",
+    "server/services/ana/saved-template-review.ts": "c940769329ca1356fa8117f9e75f443dde6d0729855f4e77d4f0681ecfbacc65",
+    "server/services/authoring/authoring-template-guidance.ts": "aa6344e50e0d2cfcf472770a8830b82f2a0a631cf9d42b37582c1a23a9a8095b"
+  }
+}

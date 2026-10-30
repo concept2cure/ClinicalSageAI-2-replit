@@ -3,7 +3,10 @@ import React from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const { adoptSession, endSession } = vi.hoisted(() => ({ adoptSession: vi.fn(), endSession: vi.fn() }));
-vi.mock('@/services/portal/authService', () => ({ authService: { adoptSession, endSession } }));
+vi.mock('@/services/portal/authService', () => ({ authService: { adoptSession, endSession, getUser: () => sourceUser } }));
+const sourceUser = { id: '33', organizationId: '7' };
+const SOURCE_TOKEN = `test.${btoa(JSON.stringify({ userId: 33, organizationId: 7 }))}.synthetic`;
+import { releaseSessionChange } from '@/lib/sessionChangeGuard';
 import { switchOrganization } from '../switchOrganization';
 import { GlobalMutationErrors } from '../GlobalMutationErrors';
 import { consumeOrganizationSwitchAuditNotice, rememberOrganizationSwitchAuditNotice } from '../organizationSwitchAuditNotice';
@@ -17,11 +20,11 @@ function respond(auditTrail: unknown, status = 200) {
   });
 }
 beforeEach(() => {
-  vi.clearAllMocks(); localStorage.clear(); sessionStorage.clear();
-  sessionStorage.setItem('trialsage_access_token', 'previous-secret-token');
-  adoptSession.mockImplementation(async () => { sessionStorage.setItem('trialsage_access_token', 'rotated-secret-token'); return { organizationId: '9' }; });
+  vi.clearAllMocks(); releaseSessionChange(); localStorage.clear(); sessionStorage.clear();
+  sessionStorage.setItem('trialsage_access_token', SOURCE_TOKEN);
+  adoptSession.mockImplementation(async () => { sessionStorage.setItem('trialsage_access_token', 'rotated-secret-token'); return { id: '33', organizationId: '9' }; });
 });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); localStorage.clear(); sessionStorage.clear(); });
+afterEach(() => { releaseSessionChange(); cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); localStorage.clear(); sessionStorage.clear(); });
 
 describe('the current organization switch carries its actual audit warning through reload', () => {
   it.each([
@@ -32,7 +35,7 @@ describe('the current organization switch carries its actual audit warning throu
     render(<GlobalMutationErrors />);
     const navigate = vi.fn();
     await act(async () => { await switchOrganization(9, navigate); });
-    expect(adoptSession).toHaveBeenCalledWith('rotated-secret-token', false);
+    expect(adoptSession).toHaveBeenCalledWith('rotated-secret-token', false, { userId: '33', organizationId: '9' }, expect.any(Function));
     expect(navigate).toHaveBeenCalledOnce();
     expect(navigate).toHaveBeenCalledWith('/concept2cure/projects');
     expect(screen.getByTestId('global-audit-row-notice').textContent).toContain('switch-request-123');
@@ -94,7 +97,7 @@ describe('the current organization switch carries its actual audit warning throu
     vi.stubGlobal('fetch', vi.fn(async () => respond(lost)));
     adoptSession.mockResolvedValueOnce({ organizationId: 'other' });
     const navigate = vi.fn(); await expect(switchOrganization(9, navigate)).rejects.toThrow(/could not be verified/);
-    expect(endSession).toHaveBeenCalledWith(null);
+    expect(endSession).toHaveBeenCalledWith(null, true);
     expect(navigate).not.toHaveBeenCalled(); expect(sessionStorage.getItem(KEY)).toBeNull();
   });
 });

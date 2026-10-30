@@ -1,0 +1,63 @@
+# Mutations. Each variant was copied over authoringCurrentRead.ts and the test run alone under timeout 240.
+# The fixed file was then copied back and checked with sha256sum -c (restored-ok after each).
+
+## M0: the head hook (per-render minting), the final test
+ × the authoring read session across a pending session adoption > keeps one fenced session for the whole window, then mints exactly one for the adopted account 25ms
+   → expected [ 2, 3, 4, 5, 6, 7, 8, 9, 10, …(16) ] to deeply equal [ 2 ]
+ × the authoring read session across a pending session adoption > a refused adoption leaves the account; the window session never becomes current, and one session follows 3ms
+   → expected 3 to be 2 // Object.is equality
+ ✓ the authoring read session across a pending session adoption > an ordinary bearer refresh keeps the session; a new sign-in of the same account replaces it 6ms
+Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
+ × the workbench during a pending session adoption > holds its sections on one click, reads once, and reads again only as the adopted account 681ms
+   → Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx:76:23
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx:99:22
+Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+ ❯ client/src/concept2cure/v2/surfaces/filingTarget.tsx:113:5
+ ❯ client/src/concept2cure/v2/surfaces/filingTarget.tsx:157:5
+      Tests  3 failed | 1 passed (4)
+EXIT 1
+elapsed=6s peak_tree_rss_mb=683
+head restored-ok
+
+## M1: per-render minting put back into the fixed file. Only the hold is removed:
+41c41
+<   if (!owned || owned.session.actor !== actor || !(owned.session.sameRevision() || owned.held())) {
+---
+>   if (!owned || owned.session.actor !== actor || !owned.session.sameRevision()) {
+ × the authoring read session across a pending session adoption > keeps one fenced session for the whole window, then mints exactly one for the adopted account 25ms
+   → expected [ 2, 3, 4, 5, 6, 7, 8, 9, 10, …(16) ] to deeply equal [ 2 ]
+ × the authoring read session across a pending session adoption > a refused adoption leaves the account; the window session never becomes current, and one session follows 3ms
+   → expected 3 to be 2 // Object.is equality
+ ✓ the authoring read session across a pending session adoption > an ordinary bearer refresh keeps the session; a new sign-in of the same account replaces it 5ms
+Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
+ × the workbench during a pending session adoption > holds its sections on one click, reads once, and reads again only as the adopted account 655ms
+   → Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx:76:23
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx:99:22
+Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+ ❯ client/src/concept2cure/v2/surfaces/filingTarget.tsx:113:5
+ ❯ client/src/concept2cure/v2/surfaces/filingTarget.tsx:157:5
+      Tests  3 failed | 1 passed (4)
+EXIT 1
+elapsed=7s peak_tree_rss_mb=680
+M1 restored-ok
+
+## M2: the window session turns current once a refused adoption clears the pending flag (the guard's own rule):
+29c29
+<   return { session: { actor, key, sameRevision: () => false },
+---
+>   return { session: { actor, key, sameRevision: guard.sameRevision },
+ ✓ the authoring read session across a pending session adoption > keeps one fenced session for the whole window, then mints exactly one for the adopted account 23ms
+ × the authoring read session across a pending session adoption > a refused adoption leaves the account; the window session never becomes current, and one session follows 9ms
+   → expected true to be false // Object.is equality
+ ✓ the authoring read session across a pending session adoption > an ordinary bearer refresh keeps the session; a new sign-in of the same account replaces it 3ms
+ ✓ the workbench during a pending session adoption > holds its sections on one click, reads once, and reads again only as the adopted account 506ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx:104:33
+      Tests  1 failed | 3 passed (4)
+EXIT 1
+elapsed=6s peak_tree_rss_mb=657
+M2 restored-ok

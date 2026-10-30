@@ -131,7 +131,7 @@ export async function listRetainedEstarArtifacts(
 }
 
 export const NO_PROGRAM_VAULT_REASON =
-  'This export is anchored to a legacy 510(k) project, which has no program vault. ' +
+  'This export is anchored to a legacy 510(k) project, which has no project vault. ' +
   'The delivered file is audited by its SHA-256 but not retained.';
 
 /**

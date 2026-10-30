@@ -1,0 +1,3 @@
+# Mutation (TZ=America/Los_Angeles): assign-again-same-label
+ × what Plan says, and when (design review, pass 3) > a deliverable someone already has offers "Assign another person", and a finished task is the task’s, not the deliverable’s 122ms
+      Tests  1 failed | 18 passed (19)

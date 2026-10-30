@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-10-26T23:46:50.922930+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx",
+    "-t",
+    "masks the preceding question"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.744,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "haq/ui/render-red-pins.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts": "5fef8c42f1191ec19821ea866ad82ef2d0ddded513305b0280993de9ab4a7061",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx": "c12af7ced1bddae9c3bb19a51db76d6f0c444d8961c5264d722311a5c6a078b6"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts": "5fef8c42f1191ec19821ea866ad82ef2d0ddded513305b0280993de9ab4a7061",
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx": "c12af7ced1bddae9c3bb19a51db76d6f0c444d8961c5264d722311a5c6a078b6"
+  },
+  "sourceDrift": [],
+  "rawOutput": "render-red.log.gz",
+  "rawGzipSha256": "7924bdde4fdf727c58200d653ac7c378962a6c63cc6141f524783a01dc388e21",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 6 skipped (7)",
+    "Duration  1.29s (transform 467ms, setup 119ms, import 581ms, tests 44ms, environment 404ms)"
+  ]
+}

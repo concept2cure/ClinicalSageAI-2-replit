@@ -24,8 +24,8 @@ import { EmptyState, ErrorState } from '../../../v2/dataConnect';
 import { useSectionVersions } from '../../hooks/useSectionVersions';
 import { DossierStore, useSection } from '../../store/dossierStore';
 import { DataGate } from '../../components/DataGate';
+import type { DataState } from '../../lib/dataState';
 import { FilesTreePane } from './FilesTreePane';
-import { AnaDrafter } from '../../components/AnaDrafter';
 import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
 import { useDossierHydration } from '../../hooks/useDossier';
 import { useElectronicSignature } from '../../hooks/useElectronicSignature';
@@ -48,12 +48,21 @@ type OpenSection = (t: SectionTarget) => void;
  *  nothing is plain navigation. */
 type OpenEditor = (section?: EditorSectionRef) => void;
 
+/* Slice 0 (audit 2): null is "not read" (in flight, failed or idle) and the tab
+   shows "—". These used to be `.length` of arrays that are empty until a read
+   finishes, so a failed audit read was announced as "Audit trail 0". Approvals
+   carry no count: see the Approvals tab below. */
 interface PaneCounts {
-  audit: number;
-  correspondence: number;
+  audit: number | null;
+  correspondence: number | null;
   corrOpen: number;
-  approvals: number;
-  apPending: number;
+}
+
+/** Rows a finished read returned; null while the read is not finished or failed. */
+function finishedCount<T>(state: DataState<T[]>): number | null {
+  if (state.status === 'ready') return state.data.length;
+  if (state.status === 'empty') return 0;
+  return null;
 }
 
 /* ── Time formatters ─────────────────────────────────────────── */
@@ -89,11 +98,15 @@ function daysUntil(iso: string | undefined): number | null {
 /* ── PathwayTabBar ───────────────────────────────────────────── */
 function PathwayTabBar({ tab, setTab, pathway, counts }: { tab: PaneTab; setTab: (t: PaneTab) => void; pathway: PathwayKey; counts: PaneCounts }) {
   const corrLabel = PATHWAY_TABS_DATA[pathway]?.corrLabel || 'Correspondence';
-  const tabs: Array<{ id: PaneTab; label: string; sub: string; count?: number; badge?: boolean }> = [
+  const tabs: Array<{ id: PaneTab; label: string; sub: string; count?: number | null; badge?: boolean }> = [
     { id: 'workspace',      label: 'Workspace',   sub: pathway === 'k510' ? 'Predicate · SE · eSTAR' : pathway === 'pma' ? 'Phases · modules' : pathway === 'ivd' ? 'Class · validation · GSPR' : 'Signals · literature' },
     { id: 'audit',          label: 'Audit trail', sub: '21 CFR Part 11', count: counts.audit },
     { id: 'correspondence', label: corrLabel,     sub: 'Agency / NB queries', count: counts.correspondence, badge: counts.corrOpen > 0 },
-    { id: 'approvals',      label: 'Approvals',   sub: 'Pending e-sign', count: counts.approvals, badge: counts.apPending > 0 },
+    /* Slice 0 (audit 2): /api/approval-workflows/pending is the viewer's queue
+       across the organisation and its rows name no project, so the count and
+       badge on this project's bar were other projects' e-signatures under this
+       project's name. The pane stays (signing works); the tab says what it holds. */
+    { id: 'approvals',      label: 'Approvals',   sub: 'Your pending e-sign · all projects' },
     { id: 'files',          label: 'Files',       sub: 'Full filesystem' },
   ];
   return (
@@ -109,6 +122,9 @@ function PathwayTabBar({ tab, setTab, pathway, counts }: { tab: PaneTab; setTab:
           <span className="pwt-label">{t.label}</span>
           {typeof t.count === 'number' && (
             <span className={`pwt-count ${t.badge ? 'badge' : ''}`}>{t.count}</span>
+          )}
+          {t.count === null && (
+            <span className="pwt-count" title="Not read">—</span>
           )}
           <span className="pwt-sub">{t.sub}</span>
         </button>
@@ -337,14 +353,12 @@ function AuditDetail({ e, onOpenSection }: { e: AuditEvent; onOpenSection: OpenS
 }
 
 /* ── CorrespondencePane ──────────────────────────────────────── */
-function CorrespondencePane({ pathway, items, onOpenSection, onAskAna, onDraftResponse }: {
+function CorrespondencePane({ pathway, items, onOpenSection, onOpenLetter }: {
   pathway: PathwayKey;
   items: Correspondence[];
   onOpenSection: OpenSection;
-  onAskAna: (text: string) => void;
-  /** Returns true when the drafter took ownership of this letter. False means
-      the caller must fall back to asking AnA — never a silent no-op. */
-  onDraftResponse?: (c: Correspondence) => boolean;
+  /** Open the letter in Communication, where its questions, responses and signed approvals are worked (P-39 step 3, S2). */
+  onOpenLetter?: (letterId: string) => void;
 }) {
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [selectedId, setSelectedId] = React.useState<string | undefined>(items[0]?.id);
@@ -423,20 +437,17 @@ function CorrespondencePane({ pathway, items, onOpenSection, onAskAna, onDraftRe
         </div>
 
         <div className="corr-detail">
-          {selected && <CorrDetail c={selected} onOpenSection={onOpenSection} onAskAna={onAskAna} onDraftResponse={onDraftResponse} />}
+          {selected && <CorrDetail c={selected} onOpenSection={onOpenSection} onOpenLetter={onOpenLetter} />}
         </div>
       </div>
     </div>
   );
 }
 
-function CorrDetail({ c, onOpenSection, onAskAna, onDraftResponse }: {
+function CorrDetail({ c, onOpenSection, onOpenLetter }: {
   c: Correspondence;
   onOpenSection: OpenSection;
-  onAskAna: (text: string) => void;
-  /** Returns true when the drafter took ownership of this letter. False means
-      the caller must fall back to asking AnA — never a silent no-op. */
-  onDraftResponse?: (c: Correspondence) => boolean;
+  onOpenLetter?: (letterId: string) => void;
 }) {
   const days = daysUntil(c.due);
   const overdue = days !== null && days < 0;
@@ -492,19 +503,18 @@ function CorrDetail({ c, onOpenSection, onAskAna, onDraftResponse }: {
         </div>
       )}
 
-      <div className="audit-det-actions">
-        <button
-          className="audit-act primary"
-          onClick={() => {
-            if (onDraftResponse?.(c)) return;
-            onAskAna(`Draft response to ${c.kind}: ${c.subject}`);
-          }}
-        >
-          {I.sparkles} Draft response with AnA
-        </button>
-        <button className="audit-act">{I.userPlus} Assign</button>
-        <button className="audit-act">{I.check} Mark closed</button>
-      </div>
+      {/* One place answers a letter: Communication records its questions, each
+          response and its signed approval, and closes it (P-39 step 3, S2). The
+          drafter that stood here could not send, and Assign and Mark closed did
+          nothing. */}
+      {onOpenLetter && (
+        <div className="audit-det-actions">
+          <button className="audit-act primary" onClick={() => onOpenLetter(c.id)}
+            title="Open this letter in Communication to record its questions, draft and sign each response, and close it">
+            {I.arrowRight} Respond in Communication
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -523,6 +533,12 @@ function ApprovalsPane({ approvals, onOpenSection, currentUser = 'You' }: { appr
             <div className="ap-sec-sub">{pending.filter((a) => a.signer === currentUser).length} require your e-sign · {pending.length} total open</div>
           </div>
           <span className="ap-cfr">21 CFR Part 11 · §11.50 · §11.70</span>
+        </div>
+        {/* Slice 0 (audit 2): the feed is the viewer's queue across the organisation;
+            its rows name no project, so this list cannot be narrowed to this one. */}
+        <div className="ap-sec-sub" data-testid="ap-scope-note">
+          Your pending e-signatures across all projects in this organization. This list is not limited to this
+          project.
         </div>
 
         {pending.length === 0 && <div className="audit-empty">No pending approvals.</div>}
@@ -1076,12 +1092,13 @@ export interface PathwayPanesProps {
   /** Canonical project id — anchors live audit + scopes correspondence. When
    *  absent, live panes render an explicit empty state. */
   programId?: string | null;
+  /** Open a letter in Communication on its record (the host's navigation; P-39 step 3, S2). */
+  onOpenLetter?: (letterId: string) => void;
 }
 
-export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, programId }: PathwayPanesProps) {
+export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, programId, onOpenLetter }: PathwayPanesProps) {
   const [tab, setTab] = React.useState<PaneTab>('workspace');
   const [drawerTarget, setDrawerTarget] = React.useState<SectionTarget | null>(null);
-  const [drafterCorr, setDrafterCorr] = React.useState<Correspondence | null>(null);
   // Live backend data (audit / correspondence / approvals), honest empty
   // states otherwise.
   const data = usePathwayTabsData(pathway, programId);
@@ -1089,27 +1106,15 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
   const dossier = useDossierHydration(pathway, programId);
 
   const counts: PaneCounts = {
-    audit: data.audit.length,
-    correspondence: data.correspondence.length,
-    corrOpen: data.correspondence.filter((c) => c.status === 'open').length,
-    approvals: data.approvals.length,
-    apPending: data.approvals.filter((a) => a.status === 'pending').length,
+    audit: finishedCount(data.states.audit),
+    correspondence: finishedCount(data.states.correspondence),
+    corrOpen:
+      data.states.correspondence.status === 'ready'
+        ? data.states.correspondence.data.filter((c) => c.status === 'open').length
+        : 0,
   };
 
   const openSection: OpenSection = (t) => setDrawerTarget(t);
-
-  /* The drafter takes over the surface area while active. */
-  if (drafterCorr) {
-    return (
-      <AnaDrafter
-        correspondence={drafterCorr}
-        pathway={pathway}
-        onClose={() => setDrafterCorr(null)}
-        onOpenSection={(t) => { setDrafterCorr(null); setDrawerTarget(t); }}
-        onAskAna={onAskAna}
-      />
-    );
-  }
 
   return (
     <>
@@ -1132,25 +1137,15 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
             state={data.states.correspondence}
             label="correspondence"
             onRetry={data.refresh.correspondence}
-            emptyHint="Agency and notified-body letters appear here once received for this program."
+            emptyHint="Agency and notified-body letters appear here once received for this project."
           >
             {(items) => {
-              /* Every live letter opens the drafter now. It used to open only
-                 for the ids of four invented letters (CORRESP_DETAIL), which a
-                 live letter never matched — so live letters fell through to a
-                 bare AnA prompt, and the drafter only ever showed fiction. It
-                 reads the letter's own record and parsed issues, and hands
-                 drafting to AnA with that real content. */
               return (
               <CorrespondencePane
                 pathway={pathway}
                 items={items}
                 onOpenSection={openSection}
-                onAskAna={onAskAna}
-                onDraftResponse={c => {
-                  setDrafterCorr(c);
-                  return true;
-                }}
+                onOpenLetter={onOpenLetter}
               />
               );
             }}
@@ -1198,8 +1193,8 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
                   it. The copy names who can fix it instead. */
               <ErrorState
                 variant="panel"
-                title="You don't have access to this program's dossier files"
-                message="Ask a program administrator to grant you access."
+                title="You don't have access to this project's dossier files"
+                message="Ask an administrator of this project to grant you access."
                 testId="dossier-forbidden"
               />
             )}
@@ -1207,7 +1202,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
               <EmptyState
                 icon={I.folder}
                 title="No dossier sections yet"
-                hint="Sections appear here once the submission outline is scaffolded for this program."
+                hint="Sections appear here once the submission outline is scaffolded for this project."
                 action={{ label: 'Check again', onAct: dossier.refresh }}
                 testId="dossier-empty"
               />

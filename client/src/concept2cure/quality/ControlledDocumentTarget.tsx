@@ -35,7 +35,7 @@ export function ControlledDocumentTargetStatus({target,editing,onRevise}:{target
     <button className="qms-btn ghost" onClick={target.clear}>Dismiss target</button></div>;
   return <DialogPanel title={`Controlled document ${d.docNumber}`} busy={false} onClose={target.clear}>
     <p>{d.title} · version {d.version} · {d.status}</p>
-    <p>This earlier register record has no editing copy. Its next authored revision starts from an explicit program and template; the prior record is retained.</p>
+    <p>This earlier register record has no editing copy. Its next authored revision starts from an explicit project and template; the prior record is retained.</p>
     <div className="qms-dialog-actions"><button className="qms-btn ghost" onClick={target.clear}>Close</button>
       <button className="qms-btn primary" onClick={()=>onRevise(d)}>Start authored revision</button></div>
   </DialogPanel>;

@@ -5,6 +5,9 @@ import { and, eq } from 'drizzle-orm';
 import { anaObservationTerms } from '@shared/schema';
 import { requireAuth } from '../middleware/auth.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId.js';
+import { parseCsrIndexOptions } from '../services/clinical-regulatory-evidence/csr-index-batch.js';
+import { CsrAuthoringContextError, CSR_AUTHORING_EVIDENCE_RULES, reconcileCsrTableClaims,
+  type CsrAuthoringEvidence } from '../services/csr/cortex-authoring-context.js';
 
 const router = express.Router();
 router.use((req, res, next) => {
@@ -217,6 +220,24 @@ router.post('/harvest/10k', requireAuth, async (req, res) => {
   }
 });
 
+// Reuse the existing CRE evidence spine and retrieval writer; no second corpus.
+router.post('/csr/index', requireAuth, async (req, res) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  let options: ReturnType<typeof parseCsrIndexOptions>;
+  try { options = parseCsrIndexOptions({ limit: req.body?.limit, afterId: req.body?.afterId }); }
+  catch { return res.status(400).json({ success: false, error: 'limit must be 1–500 and afterId a nonnegative safe integer' }); }
+  try {
+    const { atomizeOrgCsrReports } = await import('../services/clinical-regulatory-evidence/csr-adapter.service');
+    const result = await atomizeOrgCsrReports(guard.orgId, options);
+    const success = result.failed === 0 && result.empty === 0 && result.partial === 0;
+    res.status(success ? 200 : 207).json({ success, ...result });
+  } catch (error) {
+    console.error('Cortex CSR indexing failed:', error);
+    res.status(500).json({ success: false, error: 'CSR indexing could not be completed' });
+  }
+});
+
 router.post('/observation-terms/csr', requireAuth, async (req, res) => {
   try {
     const guard = requireAuthedOrgId(req, res);
@@ -268,8 +289,37 @@ router.get('/observation-terms', requireAuth, async (req, res) => {
   }
 });
 
+/** Same project ACL and retained-source reader as Submission Center. Request
+ * supplies identifiers only, never authoritative statistics or organization. */
+async function readCsrContextForRequest(req: express.Request, organizationId: number, selection: unknown) {
+  const user = (req as express.Request & { user?: { id?: unknown; userId?: unknown } }).user;
+  const userId = Number(user?.id ?? user?.userId);
+  const [{ requestPgClient }, { loadCsrAuthoringEvidence }] = await Promise.all([
+    import('../db/requestDb.js'), import('../services/csr/cortex-authoring-reader.js'),
+  ]);
+  const evidence = await loadCsrAuthoringEvidence(requestPgClient(req), { organizationId, userId }, selection);
+  return { evidence, userId };
+}
+async function csrContextFailure(res: express.Response, error: unknown) {
+  if (error instanceof CsrAuthoringContextError) return res.status(error.status).json({ success: false, error: error.code });
+  try {
+    const { CsrSourceInputError } = await import('../services/csr/vault-source-input.js');
+    if (error instanceof CsrSourceInputError) return res.status(error.status).json({ success: false, error: error.code });
+  } catch { /* A dependency failure must still produce a safe error response. */ }
+  return res.status(503).json({ success: false, error: 'CSR_EVIDENCE_UNAVAILABLE', message: 'Source evidence could not be verified; no answer was generated.' });
+}
+router.post('/csr/evidence-context', requireAuth, async (req, res) => {
+  const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+  res.setHeader('Cache-Control', 'no-store');
+  try {
+    const { evidence } = await readCsrContextForRequest(req, guard.orgId, req.body?.selection);
+    const reconciliation = req.body?.claims === undefined ? undefined : reconcileCsrTableClaims(evidence, req.body.claims);
+    return res.json({ success: true, evidence, ...(reconciliation ? { reconciliation } : {}) });
+  } catch (error) { return csrContextFailure(res, error); }
+});
+
 // ── Chat endpoint — connects Ana to the AI gateway ───────────
-router.post('/chat', async (req, res) => {
+router.post('/chat', requireAuth, async (req, res) => {
   try {
     const { message, chatMode, context, conversationHistory, preferred_provider, source_surface } = req.body || {};
     if (!message || typeof message !== 'string') {
@@ -284,6 +334,19 @@ router.post('/chat', async (req, res) => {
     // Use canonical AnA personality
     const { ANA_COMPACT_PROMPT } = await import('../services/ana-personality');
     let systemPrompt = ANA_COMPACT_PROMPT;
+    let csrEvidence: CsrAuthoringEvidence | undefined;
+    let evidenceActor: { organizationId: number; userId: number } | undefined;
+    if (context?.csrEvidence !== undefined) {
+      const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+      res.setHeader('Cache-Control', 'no-store');
+      try {
+        const read = await readCsrContextForRequest(req, guard.orgId, context.csrEvidence);
+        csrEvidence = read.evidence;
+        if (csrEvidence.status === 'unavailable') throw new CsrAuthoringContextError('CSR_SECTION_EVIDENCE_UNAVAILABLE', 409);
+        evidenceActor = { organizationId: guard.orgId, userId: read.userId };
+      } catch (error) { return csrContextFailure(res, error); }
+      systemPrompt += '\n\n' + CSR_AUTHORING_EVIDENCE_RULES;
+    }
 
     // Add document context if user is working on a specific document
     if (context?.activeDocument) {
@@ -319,6 +382,10 @@ ${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumen
         }
       }
 
+      if (csrEvidence) {
+        // Evidence is quoted data at user priority, never a system instruction.
+        messages.push({ role: 'user', content: JSON.stringify({ type: 'retained_csr_evidence', evidence: csrEvidence }) });
+      }
       messages.push({ role: 'user', content: message });
 
       // Validate preferred_provider
@@ -329,13 +396,19 @@ ${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumen
           : undefined;
 
       const result = await gateway.route({
-        taskType: 'chat',
+        taskType: csrEvidence ? 'document_drafting' : 'chat',
+        ...(evidenceActor ? { organizationId: evidenceActor.organizationId, userId: evidenceActor.userId,
+          callerModule: 'ana-cortex/csr-evidence' } : {}),
         messages: messages as any,
         maxTokens: 4096,
-        temperature: 0.7,
+        temperature: csrEvidence ? 0.2 : 0.7,
         ...(validProvider ? { provider: validProvider } : {}),
       });
 
+      if (csrEvidence && (typeof result.content !== 'string' || !result.content.trim())) {
+        return res.status(502).json({ success: false, error: 'CSR_DRAFT_EMPTY',
+          message: 'The drafting service returned no content; no draft was produced.' });
+      }
       aiResponse = result.content || 'I can help with that. Could you share more details?';
       aiProvider = result.provider;
       aiModel = result.model;
@@ -369,6 +442,11 @@ ${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumen
       },
       _meta: {
         correlationId,
+        ...(csrEvidence ? { csrEvidence: { evidenceDigest: csrEvidence.evidenceDigest,
+          source: csrEvidence.source, runId: csrEvidence.runId, studyId: csrEvidence.studyId,
+          sectionNumber: csrEvidence.sectionNumber, status: csrEvidence.status,
+          historical: true, clinicalVerification: 'not-established', approvalRequired: true,
+          missingTables: csrEvidence.missingTables, omittedTables: csrEvidence.omittedTables } } : {}),
         ...(source_surface ? { sourceSurface: source_surface } : {}),
       },
     });

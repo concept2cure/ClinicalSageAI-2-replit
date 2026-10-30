@@ -43,7 +43,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { CC_SOURCE_TYPES, CC_TONE, CC_CLOSURE } from '../fixtures/commcenter';
 import type { C2CFormFieldOption } from '../C2CForm';
 import type { SourceRow } from './projectSources';
-import type { LinkedSubmission } from '@shared/types/communication-center';
+import type { InboxResponseClock, LinkedSubmission } from '@shared/types/communication-center';
 import { AgencyResponses } from './AgencyResponses';
 import '../styles/commcenter-v2.css';
 import { CompanyLegalCommunicationLinks } from './CompanyLegalCommunicationLinks';
@@ -74,6 +74,9 @@ export interface CommRow {
   extractedIssues: string[];
   humanReviewStatus: string;
   closureStatus: string;
+  /** The letter's class (AGENCY_LETTER_CLASSES), and the response clock the server read from it (P-39 step 3, S4). */
+  letterClass?: string | null;
+  responseClock?: InboxResponseClock;
   auditMetadata?: { visibilityTier?: string | null; companyLegalDocuments?: CompanyLegalCommunicationLink[] } | null;
   taskId?: string | null; // not returned by the list read; never fabricated
   _new?: boolean; // client-only optimistic marker
@@ -89,6 +92,7 @@ export interface LogCommunicationBody {
   /** A submission of this project's program; the server refuses any other. */
   linkedSubmissionId?: string;
   dueDate?: string;
+  letterClass?: string;
   urgency: CommRow['urgency'];
   responseRequired: boolean;
   extractedIssues: string[];
@@ -281,6 +285,24 @@ export function daysTo(d: string | null | undefined, now: Date = new Date()): nu
  * overdue is the server's verdict (its questions not all approved), not the
  * calendar's.
  */
+/**
+ * The letter's due date as its response clock reads it (P-39 step 3, S4): the
+ * agency's date, or one derived from its class's window with the window's
+ * authority, or "owed, no date". A letter with no clock shows its typed due
+ * date, as before.
+ */
+export function clockLine(c: Pick<CommRow, 'dueDate' | 'responseClock'>): string {
+  const k = c.responseClock;
+  if (k?.state === 'dated') {
+    const day = k.dueDate.slice(0, 10);
+    const words = dueInWords(day, true);
+    const source = k.dueDateSource === 'agency_stated' ? '' : `, ${k.windowDays} days from receipt${k.citation ? ` (${k.citation})` : ''}`;
+    return ` · due ${day}${words != null ? ` (${words})` : ''}${source}`;
+  }
+  if (k?.state === 'undated') return ' · response owed; the letter states no date and none is codified for its class';
+  return c.dueDate ? ' · due ' + c.dueDate + (dueInWords(c.dueDate, true) != null ? ' (' + dueInWords(c.dueDate, true) + ')' : '') : '';
+}
+
 export function dueInWords(d: string | null | undefined, short = false): string | null {
   const n = daysTo(d);
   if (n === null) return null;
@@ -293,6 +315,7 @@ export function dueInWords(d: string | null | undefined, short = false): string 
 export interface InboxResponses {
   projectId: string;
   fire: (m: string, tone?: 'ok' | 'error') => void;
+  onNav?: (id: string) => void;
 }
 
 /** A request, from another screen, to open one letter (and one of its questions). */
@@ -368,9 +391,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, projectId, responses
         </div>
         <div className="cc-comm-meta mono">
           {c.sourceChannel} · received {c.receivedDate}
-          {c.dueDate
-            ? ' · due ' + c.dueDate + (dueInWords(c.dueDate, true) != null ? ' (' + dueInWords(c.dueDate, true) + ')' : '')
-            : ''}
+          {clockLine(c)}
           {/* linkedSectionCodes / extractedIssues are absent, not [], on rows
               the list read narrows or that predate the columns. */}
           {c.linkedSectionCodes?.length ? ' · §' + c.linkedSectionCodes.join(' §') : ''}
@@ -418,6 +439,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, projectId, responses
               projectId={responses.projectId}
               letter={c}
               fire={responses.fire}
+              onNav={responses.onNav}
               focusQuestionId={targeted ? opening?.questionId ?? null : null}
             />
           </div>

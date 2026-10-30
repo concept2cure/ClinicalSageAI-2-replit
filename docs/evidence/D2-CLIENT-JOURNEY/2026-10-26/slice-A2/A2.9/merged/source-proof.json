@@ -1,0 +1,86 @@
+{
+  "mergeParents": [
+    "eec779ddba227fe9197a984e11d9b9adea09c719",
+    "a0d4ada6f683539639161421199c1e34cefb5f7b"
+  ],
+  "sha256": {
+    ".github/workflows/ci.yml": "4f969e682f76c563c3a0e067b68c23ce81f600e68ce7611db8fc26829102c879",
+    ".husky/pre-push": "65dfa385a6d1710d0c0450fe1c40668c6411f7b4fb429ec79ab9543d982b2ff7",
+    "client/src/concept2cure/v2/programAction.ts": "12d02e3afdfebe25b7ea71ae70b4a85f00c6d671ea41b075dbbf4edc349aa717",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "aea799e3cafcf97ad7180fe6c3431a09026a90b40c5589bc240deb76e47b8ba0",
+    "package.json": "60a8cca1f2a62620f8bfe5e07bbbaa5f23fe096db7f3269363ed214a1511bb9a",
+    "scripts/ci/check-project-creation-owners.mjs": "da3a0af5f2f89f9591120919380e478afbf27f6dcff98e39d656549b2452d872",
+    "scripts/ci/sql-interpolation-baseline.json": "189f8daabf39f119cdfd652034311a1d132fdcec35b59342575487c0ebe4850f",
+    "server/__tests__/routes/ana-platform-control.test.ts": "dc518b45eb55c0cbaf1bc6d30d6e7f6bbe016519875ee539e83547122f91495b",
+    "server/bootstrap/register-advanced-platform-routes.ts": "94b3b2c7ee6c3e76fd2e255c4d2e3b942642a1bb86ea9a3371be35cefa39c54c",
+    "server/routes/__tests__/ctd-project-creator-retired.test.ts": "e67956743233701421058172aa635454b4feaf8ae9f218e20b295f6a2d78341f",
+    "server/routes/__tests__/device-projects-class-not-invented.test.ts": "5d9122778102899931b00b55e945ca8513c57e4710882903df1c778df007ac87",
+    "server/routes/__tests__/legacy-secondary-project-creators-retired.test.ts": "2116752021bed4ab8bd658ea0989fcd595650bc49eb46991e160cf9ae01ec0cc",
+    "server/routes/__tests__/o01-core-project-audits.pglite.test.ts": "0bdb95b5a5ee0f49042d988016ff2ec2b26ea1a1c0f575ada76a10f9b15f92f0",
+    "server/routes/__tests__/program-journey-read.test.ts": "69602861554dd236414f568bd4af9c426023e7297e72083f7bf60d1af72001d0",
+    "server/routes/__tests__/projects-management-create-retired.test.ts": "77a823a9d7c7e9a8c9a2a3c90f1bb01a21e8fcb9ddd81480a0122a483caf7436",
+    "server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts": "a542dd45bb0dc15bbbd756a6976012c35517cb0b5683bff6db912236397ead6d",
+    "server/routes/ana-platform-control.ts": "ce014bc8a0114fc1929e12e175e4cb580c9c78509f44b95e415f9a917a627986",
+    "server/routes/c2c/projects.ts": "7558d3d7a8621d643b3a979a19102866f4b84d64feaf5050ae36831f0b08492d",
+    "server/routes/concept2cure.ts": "98ef97d887730c30ed515b5940ccf0fbafc6bbc4a1ec8827ec37ce556cf8e68b",
+    "server/routes/ctd-onboarding.ts": "83970a5920494f6d35b781f41b4194f85f354187d925749611a77d57419e9437",
+    "server/routes/device-projects.ts": "2e3f4f90e327c0175c93677cd884cd6a8901af10e6c194dfb933c80a47bb8644",
+    "server/routes/program-journey.routes.ts": "e88bb7e02daa9e5a0f835247b145bab2e0dff65ff68e26e03502ee79060b0938",
+    "server/routes/project-hierarchy.ts": "2b053f449af4047f09eb22ba8757628b7ce2a9130e4f31812656aa069f09cb22",
+    "server/routes/projects-management.ts": "4e0d279c06454e5ee58ccc45ef5e6637ef3040c389df819e8e33d58be8be98cc",
+    "server/services/__tests__/ana-platform-project-creator-retired.test.ts": "2602cb5e9bc48b7937b321eedbbcc46118a3a040f73c7f865e02bf912def05e6",
+    "server/services/ana-platform-controller.ts": "f627839b6afa3c1fe50f605aae090f280c5dddae3469464d95489f3c959432a4",
+    "server/services/c2c/program-project-anchor.ts": "feee4a39a6147b595e058682b4ac97f1cba23b10cfe5ffda6012b76e3d1585f3",
+    "server/services/ctd-ingestion-service.ts": "872d69efdd15df806b7335c8d827ab793f498b6c7fabc477b7538b9fda06a616",
+    "server/services/program-journey/__tests__/program-journey-service.pglite.integration.test.ts": "affa20bd313dc71a75502d3afb914760969f188626583b1a3c216a626b025770",
+    "server/services/program-journey/program-journey-service.ts": "120673d80182dc1ecfb625d5c4fdb02dc69b943223db84c27ece2a93e34d0532",
+    "tests/ci/project-creation-owners.contract.test.ts": "2dfeaac7af9c7974cf8ce30428cdd12c4baf54802b5b34ff2a9087bfd6946d50",
+    "tests/db/role-config-change-audit.dbtest.ts": "18101d16dcf888b690c4bc490267497d03f57704295ea35f671f7bd1c3746999",
+    "tests/e2e/project-creator-retirement.e2e.ts": "b037e9ea4397a744e2990d70ab5a287e7094a5991400adf1a8ed010b2bf3c2e8",
+    "tests/routes/concept2cure-project-bootstrap.test.ts": "6a7d726350f46544abba6ea861a21f56d412296a84519ae4e7f0c6a79064cd6d",
+    "tests/routes/concept2cure.test.ts": "05755222129099790f0c25ac0ec21d4d79e43c0ff67765bb788f4019f57464f1",
+    "tests/routes/device-projects-governed-writes.test.ts": "44892c075b6dc974ac6eacbbc769be1a705323512ea66865cff13bc7abfe6797",
+    "tests/routes/project-hierarchy-creator-retirement.test.ts": "0bee02253089fa58be9cf03c376df5971a7c4f9469dffd9b1d9b783b243d09e4",
+    "tests/routes/projects-management-tenant-boundary.test.ts": "e0b1565b9be59393c3e25c3d3c676a19362705742de9be299f8a24bff0ca7e13"
+  },
+  "deleted": [
+    "server/routes/__tests__/projects-management-quota-not-recorded-is-403.test.ts",
+    "tests/ci/project-creation-ownership.contract.test.ts"
+  ],
+  "focusedRegression": {
+    "tests": 523,
+    "suites": 33,
+    "disjointGroups": [
+      {
+        "tests": 161,
+        "suites": 16,
+        "log": "server.log.gz"
+      },
+      {
+        "tests": 39,
+        "suites": 1,
+        "log": "contract.log.gz"
+      },
+      {
+        "tests": 323,
+        "suites": 16,
+        "log": "remaining.log.gz"
+      }
+    ]
+  },
+  "nativePostgreSQL": {
+    "tests": 24,
+    "mockedPg": false,
+    "runtimeNonSuperuser": true,
+    "runtimeBypassRls": false
+  },
+  "nativeBrowser": {
+    "startTime": "2026-10-26T22:44:21.888Z",
+    "duration": 18804.14,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "build": "passed; frontend23.05s"
+}

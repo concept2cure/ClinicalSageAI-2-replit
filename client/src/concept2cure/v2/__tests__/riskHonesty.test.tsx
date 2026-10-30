@@ -3,6 +3,12 @@
  * The ISO 14971 surface may not clear a risk file nobody has evaluated, and may
  * not conclude benefit-risk at all.
  *
+ * 2026-10-29 (D2, fold F1c): the Risk screen folded into Engineering evidence.
+ * These cases pinned the register it drew (v2/surfaces/RiskRegister.tsx), and
+ * now run against that register as Engineering mounts it, for the open project
+ * (./engineeringPanels.harness.tsx). The findings and fixtures are unchanged;
+ * the read names the project and the answer is keyed to it.
+ *
  * ── Finding 1 — clearance selected by two empty filters ──────────────────────
  * The lead's third branch was reached by `highResidual === 0 && open === 0`,
  * both of which are `rows.filter(...).length`:
@@ -61,7 +67,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { Risk } from '../surfaces/Risk';
+import { EngineeringRiskPanel, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
 
 /**
  * A real `risk_items` row. severity 3 x probability 3 = 9, and with no residual
@@ -96,8 +102,8 @@ const accepted = (n: number) =>
 
 function respondWith(rows: unknown[]) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (String(method) === 'GET' && String(url) === '/api/mdx/risk-items') {
-      return { ok: true, status: 200, json: async () => ({ success: true, data: rows }) };
+    if (String(method) === 'GET' && String(url) === RISK_READ) {
+      return { ok: true, status: 200, json: async () => ({ success: true, ...keyedToPanelProject(rows) }) };
     }
     return { ok: true, status: 200, json: async () => ({ success: true, data: null }) };
   });
@@ -105,7 +111,7 @@ function respondWith(rows: unknown[]) {
 
 function respondWithFailure() {
   apiRequest.mockImplementation(async (_m: string, url: string) => {
-    if (String(url) === '/api/mdx/risk-items') {
+    if (String(url) === RISK_READ) {
       return { ok: false, status: 500, json: async () => ({ error: 'INTERNAL' }) };
     }
     return { ok: true, status: 200, json: async () => ({ success: true, data: null }) };
@@ -113,7 +119,7 @@ function respondWithFailure() {
 }
 
 function mount() {
-  render(<Risk {...({ surface: { id: 'risk' }, onAsk: vi.fn(), onNav: vi.fn() } as any)} />);
+  render(<EngineeringRiskPanel onAsk={vi.fn()} />);
 }
 
 const text = () => document.body.textContent ?? '';
@@ -150,8 +156,7 @@ describe('Risk (ISO 14971) — an unexamined register is not a controlled one', 
   it('never renders a benefit-risk determination, in any state', async () => {
     respondWith([row(1), row(2), row(3)]);
     mount();
-    // The page subtitle names benefit-risk as one of this surface's subjects,
-    // so the wait is on a row: "Benefit-risk:" with the colon is the band.
+    // The wait is on a row: "Benefit-risk:" with the colon is the band.
     await waitFor(() => expect(text()).toMatch(/Inaccurate glucose reading 1/));
 
     expect(/favorable/i.test(text()), 'benefit-risk is not concluded by a count of zero').toBe(false);

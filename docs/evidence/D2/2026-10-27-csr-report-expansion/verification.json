@@ -1,0 +1,53 @@
+{
+  "counts": {
+    "new_main_csr_body_pdfs": 12,
+    "new_main_csr_body_pages": 4712,
+    "new_main_csr_body_bytes": 88050085,
+    "nih_main_report_pdfs": 11,
+    "nih_main_report_pages": 3821,
+    "nih_explicit_item_public_domain_records": 8,
+    "nih_conditional_source_package_rights_records": 3,
+    "new_full_cdi_csrs": 0,
+    "mixed_identity_csr_compilations": 1,
+    "mixed_identity_compilation_pages": 8027,
+    "csr_tables_listings_results": 1,
+    "new_cdi_csr_synopsis_pdfs": 2,
+    "new_cdi_csr_synopsis_pages": 48,
+    "other_csr_synopsis_pdfs": 1,
+    "registry_basic_results_docx": 1,
+    "new_regulatory_reviews": 5,
+    "new_ich_guidelines": 2,
+    "new_regulatory_and_guideline_pages": 372,
+    "excluded_false_full_csr_protocol_leads": 1,
+    "download_bundle_new_original_files": 25,
+    "download_bundle_new_pdf_pages": 13255,
+    "download_bundle_new_original_bytes": 158657022,
+    "previously_retained_supporting_pdfs": 4,
+    "nih_original_source_archives": 11,
+    "nih_archive_pdf_member_records": 77,
+    "nih_archive_unique_pdf_hashes": 76,
+    "nih_unique_non_main_companion_pdfs": 65,
+    "nih_companion_pdf_pages": 6199,
+    "new_application_admissions": 0,
+    "new_model_training_runs": 0,
+    "reacquired_previous_main_report_pdfs": 1,
+    "reacquired_previous_main_report_pages": 87
+  },
+  "completed_checks": [
+    "Every included original file SHA-256 and byte length recomputed.",
+    "All included new PDF page counts rechecked with PyMuPDF.",
+    "All acquired originals compared by hash against the prior application/candidate manifest; the exact ReSTART duplicate was removed from new counts.",
+    "NIH main reports match original tar members byte-for-byte; original archives and companion inventory are retained.",
+    "Source class, inherited pagination traps, missing appendices, rights and family grouping recorded.",
+    "Readiness matrix distinguishes source observation from proposed LMN-201 checks."
+  ],
+  "limitations": [
+    "No comprehensive visual/scientific qualification of all pages.",
+    "Image-only pages and table semantics require further extraction review.",
+    "No source has become client study evidence.",
+    "No application admission, embedding run, fine-tune or deployment occurred."
+  ],
+  "source_archives_retained_outside_main_bundle": true,
+  "independentReview": "Counts, eight final artifact hashes, original hashes, license notices, R01\u2013R17 presence, source links and physical PDF anchors independently reviewed.",
+  "scopeOfCommit": "Documentation and acquisition evidence only; canonical runtime seed, application records and release gates unchanged."
+}

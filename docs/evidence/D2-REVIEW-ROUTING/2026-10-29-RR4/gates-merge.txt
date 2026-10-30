@@ -1,0 +1,45 @@
+RR4 gates on the merge of origin/concept2cure-v2 (MERGE_HEAD 8999fa94a) into 4e054413d, run 2026-10-29 on the staged merge tree
+
+=== npm run --silent ci:pushed-lint-warnings  (exit 0)
+    -1  server/routes/mdx-vault.ts  (1 -> 0)
+    -2  client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx  (11 -> 9)
+    -3  client/src/concept2cure/v2/surfaces/Part11Console.tsx  (3 -> 0)
+[ci:eslint-warning-ratchet] net -6 warning(s) across the files changed since 67b61128facedff009ed7994a6bb32e807318258.
+
+=== npm run --silent ci:pushed-lint-errors  (exit 0)
+[ci:pushed-lint-errors] OK — no ESLint errors in 51 changed file(s) against origin/concept2cure-v2.
+
+=== npm run --silent ci:sql-interpolation  (exit 0)
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:190:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1062 baselined interpolation(s) in 224 file(s); the baseline may only shrink.
+
+=== npm run --silent ci:undefined-css-classes  (exit 0)
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+=== npm run --silent ci:untracked-imports  (exit 0)
+[ci:untracked-imports] OK — every relative import in 51 file(s) resolves to a tracked file.
+
+=== npm run --silent ci:sign-ceremony  (exit 0)
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+
+=== npm run --silent ci:tenant-isolation:no-regression  (exit 0)
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+
+=== npm run --silent ci:migration-set-order  (exit 0)
+[ci:migration-set-order] OK — 441 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+
+=== npm run --silent ci:migration-drop-safety  (exit 0)
+[ci:migration-drop-safety] OK — 441 migrations, 42 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+=== npm run --silent ci:launch-scope-api  (exit 0)
+ci:launch-scope-api: 554 API paths named by launch and shell screens; none refused. {"launch":504,"infrastructure":2,"never-gated":48}
+
+=== npm run --silent ci:validation-traceability  (exit 0)
+✓ validation traceability: every file cited by 7 URS document(s) resolves; every OQ step carries its protocol's kind
+
+=== NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.check.json
+exit 0

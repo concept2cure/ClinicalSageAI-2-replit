@@ -13,7 +13,11 @@
  *     and counted as cleared on the Overview while still under review;
  *   - useWorkbenchValidation: every program showed 0 errors and the summary
  *     said "All programs filing-ready", because the blocker→program join
- *     could never match (c2c_blockers references projects, not programs);
+ *     could never match (c2c_blockers references projects, not programs).
+ *     Its screen retired with the organization-wide blocker list (D2, fold F5
+ *     item 2, 2026-10-29; decision P-61 item 2), and its case with it: a
+ *     filing's blockers are its own readiness's (EstarFilingPanel), whose
+ *     verdict the engine computes (estar-filing-readiness.test.ts);
  *   - PostmarketSurface: "MDRs due ≤72h", "CAPAs in flight" and "PSURs · N
  *     signed" were counted from a document list with no feed — always 0.
  */
@@ -23,7 +27,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useK510SeMatrix } from '../hooks/useK510';
 import { adaptClassification } from '../hooks/useIvd';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
-import { useWorkbenchValidation } from '../hooks/useWorkbench';
 import { PostmarketSurface } from '../surfaces/PostmarketSurface';
 import type { Program } from '../data/programs';
 
@@ -68,17 +71,6 @@ describe('no favourable default for a missing regulatory value', () => {
     expect(byId.submitted.stageIdx).toBe(6);
     expect(byId.approved.status).toBe('complete');
   });
-
-  it('states no per-program blocker count, and does not call the portfolio filing-ready', async () => {
-    serve(() => ({ data: [{ blockerId: 'B1', severity: 'critical', description: 'Missing biocompat report', blockerType: 'evidence' }] }));
-    const programs = [{ id: 'p1', code: 'Class II · 510(k)', title: 'Device', pathway: 'k510', status: 'active', readiness: 40 }] as never;
-    const { result } = renderHook(() => useWorkbenchValidation(programs));
-    await waitFor(() => expect(result.current.summary).not.toBeNull());
-    expect(result.current.programs![0].errs).toBeNull();
-    const text = JSON.stringify(result.current.summary);
-    expect(text).not.toContain('All programs filing-ready');
-    expect(result.current.summary!.find((m) => m.label === 'Open errors')!.metric).toBe('1');
-  });
 });
 
 describe('PostmarketSurface — statutory-clock cards come from the reads that hold them', () => {
@@ -94,11 +86,15 @@ describe('PostmarketSurface — statutory-clock cards come from the reads that h
       return url.includes('/api/capa-mdr/triage') ? { items: [], count: 0 }
         : { data: { metrics: [], signals: [], capas: [], pmsPlan: [], trends: [] } };
     });
-    const project = { id: 'project-a', code: 'MDX-42', title: 'Device project' } as Program;
+    /* `code` as useMdxPrograms.deriveCode builds it: a class and pathway many
+       projects share. The scope names the project by its title. */
+    const project = { id: 'project-a', code: 'Class II · 510(k)', title: 'Device project' } as Program;
     const { getByTestId, getByText } = mount(project);
-    expect(getByTestId('postmarket-scope').textContent).toContain('Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization.');
-    expect(getByTestId('postmarket-scope').textContent).toContain('Reporting clocks and the MDR/CAPA deadline metrics are limited to MDX-42.');
-    expect(getByText(/MDX-42 only/)).toBeTruthy();
+    /* Slice 0: PMS plan entries have no store (`pmsPlan: []`), so no scope is stated for them. */
+    expect(getByTestId('postmarket-scope').textContent).toContain("Surveillance signals and the CAPA board are read for every project in this organization and are not shown until this screen reads this project's records.");
+    expect(getByTestId('postmarket-scope').textContent).toContain('Reporting clocks and the MDR/CAPA deadline metrics are limited to Device project.');
+    expect(getByTestId('postmarket-scope').textContent).not.toContain('Class II · 510(k)');
+    expect(getByText(/Device project only/)).toBeTruthy();
     await waitFor(() => expect(seen.some(url => url.includes('/api/capa-mdr/triage?program_id=project-a'))).toBe(true));
     expect(seen).toContain('/api/mdx/postmarket');
     expect(seen).not.toContain('/api/capa-mdr/triage');
@@ -107,7 +103,12 @@ describe('PostmarketSurface — statutory-clock cards come from the reads that h
   it('shows no count while the triage read has failed', async () => {
     serve((u) => (u.includes('/api/capa-mdr/triage') ? null : { data: { metrics: [], signals: [], capas: [], pmsPlan: [], trends: [] } }));
     const { getByTestId } = mount();
-    await waitFor(() => expect(getByTestId('pm-signals').textContent).toBe('0'));
+    /* Slice 0 (IA map, `device-postmarket` row): `pm-signals` no longer counts
+       the organisation-wide read, so it reads '—' on first render, while
+       loading and here alike. Wait on the triage gate's own error state (the
+       only top-level DataGate with the accordion closed), so the two '—'
+       below are asserted after the read has failed, not before it settled. */
+    await waitFor(() => getByTestId('data-gate-error'));
     expect(getByTestId('pm-mdr-due').textContent).toBe('—');
     expect(getByTestId('pm-capas').textContent).toBe('—');
   });

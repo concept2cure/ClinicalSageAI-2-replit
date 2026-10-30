@@ -284,7 +284,7 @@ export function unassignedObservations(points: StabilityPointRecord[]): Unassign
   return points.flatMap((point, index) => {
     const present = point.result != null && !(typeof point.result === 'string' && !point.result.trim());
     return present && !String(point.parameter ?? '').trim()
-      ? [{ row: index + 1, reason: 'A present recorded result has no assigned parameter. Clarify its attribute before making a programme shelf-life claim.' }]
+      ? [{ row: index + 1, reason: 'A present recorded result has no assigned parameter. Clarify its attribute before making a shelf-life claim for this project.' }]
       : [];
   });
 }

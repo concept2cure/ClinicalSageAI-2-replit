@@ -1,0 +1,48 @@
+{
+  "base": "01dbd4eb385dc34c8abc9eaa9735cd632c2b6121",
+  "red": {
+    "failed": 7,
+    "passed": 27,
+    "files": 4
+  },
+  "routingGreen": {
+    "passed": 34,
+    "files": 4
+  },
+  "regression": {
+    "passed": 257,
+    "files": 23,
+    "durationSeconds": 41.96
+  },
+  "nativeBrowser": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 15.8,
+    "runtimeRole": "app_service",
+    "rls": true,
+    "developmentAuth": true,
+    "database": "fresh local concept_handoff",
+    "creators": [
+      201,
+      201
+    ],
+    "filter": "ws=MDX before paging",
+    "recordedIvdProjectPlanReached": true
+  },
+  "build": "client, server and audit-chain verifier passed",
+  "scopedLint": {
+    "errors": 0,
+    "warnings": 1,
+    "note": "Existing registryModel file-length warning; normal no-growth gate still required."
+  },
+  "independentReview": "No material routing/action/scope regression found.",
+  "typecheck": {
+    "passed": true,
+    "errors": 0,
+    "baseline": 0,
+    "wholeProgram": true
+  },
+  "retained": "device-workstream surface, target, catalogue, functions and commercial admission rules unchanged",
+  "filterLifetime": "Existing Projects view-local lifetime; a canonical Projects reload uses its ordinary defaults."
+}

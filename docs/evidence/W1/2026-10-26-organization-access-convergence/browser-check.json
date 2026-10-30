@@ -1,0 +1,141 @@
+{
+  "basis": "Actual OrganizationAccess drawer, C2CForm, shared consent contracts, switchOrganization helper, AuthService adoption/probe, API transport, session reservation and canonical CSS. Synthetic JWTs/user records and HTTP responses; navigation sink captures the real helper destination instead of reloading. No hosted authenticated journey tested.",
+  "results": [
+    {
+      "width": 1440,
+      "dark": false,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "POST",
+          "path": "/api/tenant-users/invitations/52/accept",
+          "actorHeadersMatched": true
+        }
+      ],
+      "staleSwitchRefused": true,
+      "staleConsentRefused": true,
+      "lateConsentWithheld": true,
+      "rotation": {
+        "id": "33",
+        "organizationId": "9",
+        "held": true,
+        "refreshStored": false,
+        "navigations": [
+          "/concept2cure/projects"
+        ],
+        "writes": [
+          {
+            "method": "POST",
+            "path": "/api/auth/enterprise/select-organization",
+            "actorHeadersMatched": true
+          }
+        ]
+      },
+      "memoryBearerCleared": true,
+      "screenshot": "organization-access-1440-light.png"
+    },
+    {
+      "width": 1440,
+      "dark": true,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "POST",
+          "path": "/api/tenant-users/invitations/52/accept",
+          "actorHeadersMatched": true
+        }
+      ],
+      "staleSwitchRefused": true,
+      "staleConsentRefused": true,
+      "lateConsentWithheld": true,
+      "rotation": {
+        "id": "33",
+        "organizationId": "9",
+        "held": true,
+        "refreshStored": false,
+        "navigations": [
+          "/concept2cure/projects"
+        ],
+        "writes": [
+          {
+            "method": "POST",
+            "path": "/api/auth/enterprise/select-organization",
+            "actorHeadersMatched": true
+          }
+        ]
+      },
+      "memoryBearerCleared": true,
+      "screenshot": "organization-access-1440-dark.png"
+    },
+    {
+      "width": 390,
+      "dark": false,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "POST",
+          "path": "/api/tenant-users/invitations/52/accept",
+          "actorHeadersMatched": true
+        }
+      ],
+      "staleSwitchRefused": true,
+      "staleConsentRefused": true,
+      "lateConsentWithheld": true,
+      "rotation": {
+        "id": "33",
+        "organizationId": "9",
+        "held": true,
+        "refreshStored": false,
+        "navigations": [
+          "/concept2cure/projects"
+        ],
+        "writes": [
+          {
+            "method": "POST",
+            "path": "/api/auth/enterprise/select-organization",
+            "actorHeadersMatched": true
+          }
+        ]
+      },
+      "memoryBearerCleared": true,
+      "screenshot": "organization-access-390-light.png"
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "POST",
+          "path": "/api/tenant-users/invitations/52/accept",
+          "actorHeadersMatched": true
+        }
+      ],
+      "staleSwitchRefused": true,
+      "staleConsentRefused": true,
+      "lateConsentWithheld": true,
+      "rotation": {
+        "id": "33",
+        "organizationId": "9",
+        "held": true,
+        "refreshStored": false,
+        "navigations": [
+          "/concept2cure/projects"
+        ],
+        "writes": [
+          {
+            "method": "POST",
+            "path": "/api/auth/enterprise/select-organization",
+            "actorHeadersMatched": true
+          }
+        ]
+      },
+      "memoryBearerCleared": true,
+      "screenshot": "organization-access-390-dark.png"
+    }
+  ]
+}

@@ -1,0 +1,327 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a valid token yields an active scope for the downstream handler
+{
+  "timestamp": "2026-10-26T15:12:48.181Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:12:48.182Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a valid token yields an active scope for the downstream handler
+{
+  "timestamp": "2026-10-26T15:12:48.183Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope)
+{
+  "timestamp": "2026-10-26T15:12:48.229Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)",
+  "context": {
+    "userId": 7,
+    "organizationId": 2
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:12:48.234Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a valid token yields an active scope for the downstream handler 155ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > no token → 401 and the handler never runs (no scope) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope) 3ms
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:12:48.293Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:12:48.346Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in warn mode
+{
+  "timestamp": "2026-10-26T15:12:48.347Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in warn mode 62ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in warn mode 53ms
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:12:48.400Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:12:48.454Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in warn mode 54ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/qms/documents permits a scoped read in enforce mode 54ms
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:12:48.508Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in enforce mode
+{
+  "timestamp": "2026-10-26T15:12:48.509Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > both answer 503, never a pass, when the standing cannot be read
+{
+  "timestamp": "2026-10-26T15:12:48.579Z",
+  "level": "error",
+  "message": "[auth] Account standing could not be read",
+  "context": {}
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization
+{
+  "timestamp": "2026-10-26T15:12:48.585Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization
+{
+  "timestamp": "2026-10-26T15:12:48.585Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization
+{
+  "timestamp": "2026-10-26T15:12:48.586Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization
+{
+  "timestamp": "2026-10-26T15:12:48.586Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+{
+  "timestamp": "2026-10-26T15:12:48.589Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle] Tenant posture requested for an organization that does not exist",
+  "context": {
+    "organizationId": 2
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+{
+  "timestamp": "2026-10-26T15:12:48.589Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+{
+  "timestamp": "2026-10-26T15:12:48.590Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "purged",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authenticateToken
+{
+  "timestamp": "2026-10-26T15:12:48.591Z",
+  "level": "warn",
+  "message": "[storage-quota-guard] Storage quota exceeded — refusing upload",
+  "context": {
+    "organizationId": 2,
+    "path": "/probe",
+    "usedBytes": 5368709120,
+    "limitBytes": 5368709120,
+    "incomingBytes": 10485760
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authMiddleware (the global /api gate)
+{
+  "timestamp": "2026-10-26T15:12:48.592Z",
+  "level": "warn",
+  "message": "[storage-quota-guard] Storage quota exceeded — refusing upload",
+  "context": {
+    "organizationId": 2,
+    "path": "/probe",
+    "usedBytes": 5368709120,
+    "limitBytes": 5368709120,
+    "incomingBytes": 10485760
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk
+{
+  "timestamp": "2026-10-26T15:12:48.595Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk
+{
+  "timestamp": "2026-10-26T15:12:48.596Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/probe"
+  }
+}
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb
+{
+  "timestamp": "2026-10-26T15:12:48.596Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb
+{
+  "timestamp": "2026-10-26T15:12:48.597Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "past_due",
+    "decision": "read_only",
+    "method": "POST",
+    "path": "/probe"
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/mdx/notifications/unread-count permits a scoped read in enforce mode 53ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the auth boundary retains the request database client > /api/concept2cure/projects/12/unified-work permits a scoped read in enforce mode 55ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a suspended account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a suspended account, before a scope opens 15ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a inactive account, before a scope opens 0ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a inactive account, before a scope opens 0ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > both answer 503, never a pass, when the standing cannot be read 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authenticateToken 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware (global /api gate) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware behind authenticateToken leaves the published context carrying it 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > a valid token yields an active scope for the downstream handler 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > no token → 401 and the handler never runs (no scope) 0ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > a past-due organization still reaches the handler on a safe verb 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authenticateToken 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authMiddleware (the global /api gate) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > admits an upload that fits, with the scope still open for the handler 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > does not evaluate storage on a small JSON write 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb 1ms
+
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+   Start at  15:12:46
+   Duration  2.37s (transform 903ms, setup 75ms, import 1.50s, tests 529ms, environment 0ms)
+

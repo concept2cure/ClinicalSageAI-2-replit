@@ -8,6 +8,8 @@
  */
 import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/services/portal/authService';
+import { useAuthoringReadSession } from './authoringCurrentRead';
 
 export interface ProgramSummary {
   id: string;
@@ -15,6 +17,7 @@ export interface ProgramSummary {
   code: string | null;
   phase: string | null;
   programType: string | null;
+  registryId?: string | null;
   status: string | null;
 }
 
@@ -39,6 +42,7 @@ export function programFromBody(body: unknown, id: string): ProgramSummary | nul
     phase: str(raw.phase),
     programType: str(raw.program_type) ?? str(raw.programType),
     status: str(raw.status),
+    ...(raw.registry_id !== undefined ? { registryId: raw.id === id ? str(raw.registry_id) : null } : {}),
   };
 }
 
@@ -49,11 +53,17 @@ export function programFromBody(body: unknown, id: string): ProgramSummary | nul
  * "Reading the program…" forever after a 500, a 404 or an expired session.
  */
 export function useProgramRead(programId: string | null): { program: ProgramSummary | null; state: ProgramSummaryState } {
+  const { user } = useAuth();
+  const session = useAuthoringReadSession(user);
+  const scope = JSON.stringify([programId, session.actor, session.key]);
+  const [readScope, setReadScope] = useState<string | null>(null);
   const [program, setProgram] = useState<ProgramSummary | null>(null);
   const [state, setState] = useState<ProgramSummaryState>('idle');
   useEffect(() => {
     let alive = true;
+    const current = () => alive && session.sameRevision();
     setProgram(null);
+    setReadScope(scope);
     if (!programId) {
       setState('idle');
       return undefined;
@@ -63,23 +73,24 @@ export function useProgramRead(programId: string | null): { program: ProgramSumm
       try {
         const res = await apiRequest('GET', `/api/c2c/projects/${encodeURIComponent(programId)}`);
         if (!res.ok) {
-          if (alive) setState('error');
+          if (current()) setState('error');
           return;
         }
         const body = await res.json().catch(() => null);
-        if (!alive) return;
+        if (!current()) return;
         const read = programFromBody(body, programId);
         setProgram(read);
         setState(read ? 'ready' : 'error');
       } catch {
-        if (alive) setState('error');
+        if (current()) setState('error');
       }
     })();
     return () => {
       alive = false;
     };
-  }, [programId]);
-  return { program, state };
+  }, [programId, scope, session]);
+  return readScope === scope && session.sameRevision()
+    ? { program, state } : { program: null, state: programId ? 'loading' : 'idle' };
 }
 
 /** The program alone, for headers that show nothing until it is read. */
@@ -91,8 +102,8 @@ export function useProgramSummary(programId: string | null): ProgramSummary | nu
 export function programLineFor(program: ProgramSummary | null, state: ProgramSummaryState): string | null {
   const line = programHeadline(program);
   if (line) return line;
-  if (state === 'loading') return 'Reading the program…';
-  if (state === 'error') return 'Program details could not be read';
+  if (state === 'loading') return 'Reading the project…';
+  if (state === 'error') return 'Project details could not be read';
   return null;
 }
 

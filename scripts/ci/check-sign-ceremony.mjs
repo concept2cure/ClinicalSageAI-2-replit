@@ -95,6 +95,12 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { callSpan, skipString, stripComments, topLevelArgs } from './check-sign-ceremony-source.mjs';
+import {
+  STATUS_CEREMONY, decisionStatusesFrom, evaluateSignedPairs, findStatusActs, signedPairsOf,
+} from './check-sign-ceremony-status-acts.mjs';
+
+export { stripComments };
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BASELINE = path.join(ROOT, 'scripts/ci/sign-ceremony-baseline.json');
@@ -105,97 +111,20 @@ const REAUTH = /\b(?:verifyReauth|reverifySigner)\s*\(/;
 // row the baseline's authoring.router.ts reason already names as the ceremony's.
 // Added 2026-10-08 when the e-sign handler began stamping approved_at beside it
 // (QA j4); the selftest shows the same stamp failing without it.
-const SIGNATURE_ROW = /\b(?:persistGovernedActionSignature|persistGovernedSignSignature|persistElectronicSignature|writeMutation|insertAuthoringSignature)\s*\(/;
+// signGovernedAct is the composed ceremony, in both of its places
+// (server/routes/governed-signed-act.ts and
+// server/services/part11/governed-signature-ceremony.ts). Each re-verifies the
+// signer and writes persistGovernedSignSignature on the transaction that runs
+// the caller's domain write, so a stamp made inside that write is signed. Added
+// 2026-10-29 when the labeling translation approval moved its approved_by stamp
+// into one (D5). No other file's count changed. The selftest shows the same stamp
+// failing without it. Limit: the scanner measures a handler, not a callback, so a
+// handler that calls signGovernedAct for one act and stamps another outside it
+// would pass.
+const SIGNATURE_ROW = /\b(?:persistGovernedActionSignature|persistGovernedSignSignature|persistElectronicSignature|writeMutation|insertAuthoringSignature|signGovernedAct)\s*\(/;
 
 /** Top-level statement starts: the unit a "handler" is measured over. */
 const HANDLER_START = /^(?:router\s*\.\s*\w+\s*\(|registerToolHandler\s*\(|(?:export\s+)?(?:default\s+)?(?:async\s+)?function\b|(?:export\s+)?const\s+[\w$]+\s*=\s*(?:async\b|\()|app\s*\.\s*\w+\s*\()/;
-
-/**
- * Blank out comments, keeping string literals and newlines. A quoted or
- * commented occurrence is documentation; a string literal is how `'sign'` is
- * passed, so strings must survive.
- */
-export function stripComments(src) {
-  let out = '';
-  let i = 0;
-  const blank = (s) => s.replace(/[^\n]/g, ' ');
-  while (i < src.length) {
-    const two = src.slice(i, i + 2);
-    if (two === '//') {
-      const end = src.indexOf('\n', i);
-      const stop = end === -1 ? src.length : end;
-      out += blank(src.slice(i, stop));
-      i = stop;
-      continue;
-    }
-    if (two === '/*') {
-      const end = src.indexOf('*/', i + 2);
-      const stop = end === -1 ? src.length : end + 2;
-      out += blank(src.slice(i, stop));
-      i = stop;
-      continue;
-    }
-    const c = src[i];
-    if (c === '"' || c === "'" || c === '`') {
-      let j = i + 1;
-      while (j < src.length) {
-        if (src[j] === '\\') { j += 2; continue; }
-        if (src[j] === c) { j += 1; break; }
-        j += 1;
-      }
-      out += src.slice(i, j);
-      i = j;
-      continue;
-    }
-    out += c;
-    i += 1;
-  }
-  return out;
-}
-
-/** Index of the quote that closes the string literal opening at `i`. */
-function skipString(s, i) {
-  const q = s[i];
-  let j = i + 1;
-  while (j < s.length) {
-    if (s[j] === '\\') { j += 2; continue; }
-    if (s[j] === q) return j;
-    j += 1;
-  }
-  return j;
-}
-
-/** The argument text of the call whose `(` is at `open`, balanced; parentheses inside strings do not count. */
-function callSpan(code, open) {
-  let depth = 0;
-  for (let j = open; j < code.length; j++) {
-    const ch = code[j];
-    if (ch === '"' || ch === "'" || ch === '`') { j = skipString(code, j); continue; }
-    if (ch === '(') depth++;
-    else if (ch === ')') {
-      depth--;
-      if (depth === 0) return code.slice(open, j + 1);
-    }
-  }
-  return code.slice(open);
-}
-
-/** A call's arguments (span includes its parens), split at top-level commas. */
-function topLevelArgs(span) {
-  const inner = span.slice(1, span.endsWith(')') ? -1 : undefined);
-  const args = [];
-  let depth = 0;
-  let start = 0;
-  for (let j = 0; j < inner.length; j++) {
-    const ch = inner[j];
-    if (ch === '"' || ch === "'" || ch === '`') { j = skipString(inner, j); continue; }
-    if ('([{'.includes(ch)) depth++;
-    else if (')]}'.includes(ch)) depth--;
-    else if (ch === ',' && depth === 0) { args.push(inner.slice(start, j)); start = j + 1; }
-  }
-  args.push(inner.slice(start));
-  return args.map((a) => a.trim());
-}
 
 /** Every value given to a `command:` property in `text`, up to its top-level `,` or closing brace. */
 function commandValues(text) {
@@ -271,6 +200,24 @@ export function findSignSites(code) {
  * and from HTTP, and this gate saw neither.
  */
 const APPROVAL_STAMP = /\b(?:approver_id|approved_by|approved_by_user_id|approved_at)\s*=\s*(?!NULL\b)(?:\$\d+|NOW\(\)|now\(\)|CURRENT_TIMESTAMP|COALESCE\()/g;
+const HAS_APPROVAL_STAMP = new RegExp(APPROVAL_STAMP.source);
+
+
+/**
+ * Status acts (2026-10-29, D5): a SQL write of a governed status or flag, held to
+ * the stamp's rule. What is governed, and why, is check-sign-ceremony-status-acts.mjs.
+ */
+const inCeremony = (code) => (index) => STATUS_CEREMONY.test(handlerBody(code, index).text);
+
+let repoDecision;
+/** The repository's declared signed statuses (source 2), read once. */
+export function repoDecisionStatuses() {
+  repoDecision ??= decisionStatusesFrom((f) => {
+    const abs = path.join(ROOT, f);
+    return existsSync(abs) ? readFileSync(abs, 'utf8') : null;
+  });
+  return repoDecision;
+}
 
 /** The enclosing top-level statement: from its column-0 start to the next one. */
 export function handlerBody(code, index) {
@@ -287,19 +234,33 @@ export function handlerBody(code, index) {
   return { text: lines.slice(start, end).join('\n'), startLine: start + 1 };
 }
 
-/** Scan one file's source. Returns every site with its verdict. */
-export function scanSource(src) {
+/**
+ * Scan one file's source. Returns every site with its verdict.
+ *
+ * `opts.signedPairs`: the repository's signed pairs (scanRepo passes them); the
+ * file's own are always added, so a source scanned alone still learns what its
+ * own ceremonies sign. `opts.decisionStatuses`: defaults to the repository's
+ * declared ones.
+ */
+export function scanSource(src, opts = {}) {
   const code = stripComments(src);
-  return findSignSites(code).map((s) => {
+  const signedPairs = new Set([...(opts.signedPairs ?? []), ...signedPairsOf(code, inCeremony(code))]);
+  const decisionStatuses = opts.decisionStatuses ?? repoDecisionStatuses().statuses;
+  const statusActs = findStatusActs(code, { decisionStatuses, signedPairs, isStamped: (t) => HAS_APPROVAL_STAMP.test(t) });
+  const sites = [...findSignSites(code), ...statusActs].sort((a, b) => a.index - b.index);
+  return sites.map((s) => {
     const body = handlerBody(code, s.index);
     const reauth = REAUTH.test(body.text);
-    const signatureRow = s.kind === 'writeMutation' || SIGNATURE_ROW.test(body.text);
+    // A status act's signature row is a ceremony's (STATUS_CEREMONY): a
+    // writeMutation other than 'sign' writes none.
+    const signatureRow = s.kind === 'writeMutation' || (s.kind === 'status-act' ? STATUS_CEREMONY : SIGNATURE_ROW).test(body.text);
     // An approval stamp is held to the signature row only. The re-verification
     // for an approval is usually the route's, one function boundary away (the QMS
     // approvals call reverifySigner in the route, then the signed service), which
     // this scanner cannot see. The row is what an inspector reads as the signature.
-    const ok = s.kind === 'approval-stamp' ? signatureRow : reauth && signatureRow;
-    return { line: lineOf(code, s.index), kind: s.kind, handlerLine: body.startLine, reauth, signatureRow, ok };
+    // A status act is an approval without a stamp column, held to the same rule.
+    const ok = s.kind === 'approval-stamp' || s.kind === 'status-act' ? signatureRow : reauth && signatureRow;
+    return { line: lineOf(code, s.index), kind: s.kind, ...(s.act ? { act: s.act } : {}), handlerLine: body.startLine, reauth, signatureRow, ok };
   });
 }
 
@@ -360,14 +321,37 @@ export function scanRepoAuthority() {
   return results;
 }
 
-export function scanRepo() {
-  const results = {};
+const SQL_WRITE = /\b(?:UPDATE|INSERT)\b/i;
+
+/** Every server file the gate reads, by path. */
+export function repoSources() {
+  const sources = new Map();
   for (const f of serverFiles()) {
     const abs = path.join(ROOT, f);
-    if (!existsSync(abs)) continue;
-    const src = readFileSync(abs, 'utf8');
-    if (!/['"]sign['"]/.test(src) && !/\b(?:approver_id|approved_by|approved_by_user_id|approved_at)\s*=/.test(src)) continue;
-    const sites = scanSource(src);
+    if (existsSync(abs)) sources.set(f, readFileSync(abs, 'utf8'));
+  }
+  return sources;
+}
+
+/** Source 1 over the repository: every pair a ceremony signs now, with the first file that signs it. */
+export function repoSignedPairs(sources) {
+  const pairs = new Map();
+  for (const [f, src] of sources) {
+    if (!SQL_WRITE.test(src) || !STATUS_CEREMONY.test(src)) continue;
+    const code = stripComments(src);
+    for (const p of signedPairsOf(code, inCeremony(code))) if (!pairs.has(p)) pairs.set(p, f);
+  }
+  return pairs;
+}
+
+/** Scan every server file. `signedPairs`: the governed pairs (derived and recorded); by default the derived ones. */
+export function scanRepo({ sources = repoSources(), signedPairs } = {}) {
+  const governed = signedPairs ?? new Set(repoSignedPairs(sources).keys());
+  const decisionStatuses = repoDecisionStatuses().statuses;
+  const results = {};
+  for (const [f, src] of sources) {
+    if (!/['"]sign['"]/.test(src) && !/\b(?:approver_id|approved_by|approved_by_user_id|approved_at)\s*=/.test(src) && !SQL_WRITE.test(src)) continue;
+    const sites = scanSource(src, { signedPairs: governed, decisionStatuses });
     if (sites.length) results[f] = sites;
   }
   return results;
@@ -396,51 +380,84 @@ export function evaluate(scan, baseline) {
   return { failures, unreasoned, baselined, shrinkable };
 }
 
+/** Why a site fails, for the gate's report. */
+function siteWhy(s) {
+  if (s.kind === 'approval-stamp') return 'approval stamp with no signature-row write in its handler';
+  if (s.kind === 'status-act') return `status act ${s.act} with no signature-row write in its handler`;
+  return [!s.reauth && 'no verifyReauth/reverifySigner', !s.signatureRow && 'no signature-row write'].filter(Boolean).join(', ');
+}
+
+/** A site's verdict, as --list prints it. */
+function listWhy(s) {
+  if (s.ok) return 'ok';
+  if (s.kind === 'approval-stamp' || s.kind === 'status-act') return 'no signature row';
+  return [!s.reauth && 'no signer re-verification', !s.signatureRow && 'no signature row'].filter(Boolean).join(', ');
+}
+
+function printList(scan, authorityScan, declared, pairs) {
+  for (const [f, sites] of Object.entries(scan)) {
+    for (const s of sites) console.log(`${f}:${s.line}  ${s.kind}  ${listWhy(s)}${s.act ? `  (${s.act})` : ''}`);
+  }
+  for (const [f, sites] of Object.entries(authorityScan)) {
+    for (const s of sites) console.log(`${f}:${s.line}  re-authentication  ${s.authority ? 'ok' : 'no signing-authority check in its handler'}`);
+  }
+  console.info(`declared signed statuses, governed on every table: ${[...declared.statuses].sort().join(', ')}`);
+  for (const m of declared.missing) console.info(`declared signed statuses NOT FOUND: ${m}`);
+  for (const [p, f] of pairs.derived) console.info(`signed pair ${p}  signed in ${f}${pairs.recorded.includes(p) ? '' : '  NOT RECORDED'}`);
+  for (const p of evaluateSignedPairs(pairs.derived, pairs.recorded).unsigned) console.info(`signed pair ${p}  recorded; no ceremony signs it now, still governed`);
+}
+
+function writeBaseline(scan, authorityScan, pairs) {
+  const prior = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')) : { files: {} };
+  const files = {};
+  for (const [f, sites] of Object.entries(scan)) {
+    const n = sites.filter((s) => !s.ok).length;
+    if (n) files[f] = { count: n, reason: prior.files?.[f]?.reason ?? 'TODO: write why this file may keep an unceremonied sign write' };
+  }
+  const authorityFiles = {};
+  for (const [f, sites] of Object.entries(authorityScan)) {
+    const n = sites.filter((s) => !s.authority).length;
+    if (n) authorityFiles[f] = { count: n, reason: prior.authority?.files?.[f]?.reason ?? 'TODO: write why this re-authentication signs nothing, or fix it' };
+  }
+  // A recorded pair is kept when no ceremony signs it now: dropping one is a deliberate edit.
+  const signedPairs = { $note: prior.signedPairs?.$note, pairs: [...new Set([...pairs.recorded, ...pairs.derived.keys()])].sort() };
+  writeFileSync(BASELINE, JSON.stringify({ $note: prior.$note, files, authority: { $note: prior.authority?.$note, files: authorityFiles }, signedPairs }, null, 2) + '\n');
+  console.log(`[ci:sign-ceremony] wrote ${Object.keys(files).length} file(s) to the baseline. Replace every TODO with a reason.`);
+}
+
+/** The status-act sources' own failures: a declaration not found, a signed pair not recorded. True when one fails. */
+function reportStatusSources(declared, pairs) {
+  if (declared.missing.length) {
+    console.error('[ci:sign-ceremony] FAIL — a declaration of the statuses only a signed act may set was not found where the gate reads it:');
+    for (const m of declared.missing) console.error(`  ✗ ${m}`);
+    console.error('  Point DECLARED_SIGNED_STATUS_SOURCES at where it moved; the gate keeps no copy of it.');
+  }
+  const { unrecorded } = evaluateSignedPairs(pairs.derived, pairs.recorded);
+  if (unrecorded.length) {
+    console.error('[ci:sign-ceremony] FAIL — a ceremony signs a status or flag the baseline does not record (signedPairs.pairs):');
+    for (const u of unrecorded) console.error(`  ✗ ${u.pair}  (signed in ${u.file})`);
+    console.error('  Record it, so it stays governed if that ceremony is ever removed: --write-baseline adds it.');
+  }
+  return declared.missing.length > 0 || unrecorded.length > 0;
+}
+
 function main() {
   const args = process.argv.slice(2);
-  const scan = scanRepo();
-  const authorityScan = scanRepoAuthority();
-  if (args.includes('--list')) {
-    for (const [f, sites] of Object.entries(scan)) {
-      for (const s of sites) {
-        const why = s.ok ? 'ok' : s.kind === 'approval-stamp' ? 'no signature row' : [!s.reauth && 'no signer re-verification', !s.signatureRow && 'no signature row'].filter(Boolean).join(', ');
-        console.log(`${f}:${s.line}  ${s.kind}  ${why}`);
-      }
-    }
-    for (const [f, sites] of Object.entries(authorityScan)) {
-      for (const s of sites) console.log(`${f}:${s.line}  re-authentication  ${s.authority ? 'ok' : 'no signing-authority check in its handler'}`);
-    }
-    return;
-  }
-  if (args.includes('--write-baseline')) {
-    const prior = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')) : { files: {} };
-    const files = {};
-    for (const [f, sites] of Object.entries(scan)) {
-      const n = sites.filter((s) => !s.ok).length;
-      if (n) files[f] = { count: n, reason: prior.files?.[f]?.reason ?? 'TODO: write why this file may keep an unceremonied sign write' };
-    }
-    const authorityFiles = {};
-    for (const [f, sites] of Object.entries(authorityScan)) {
-      const n = sites.filter((s) => !s.authority).length;
-      if (n) authorityFiles[f] = { count: n, reason: prior.authority?.files?.[f]?.reason ?? 'TODO: write why this re-authentication signs nothing, or fix it' };
-    }
-    writeFileSync(BASELINE, JSON.stringify({ $note: prior.$note, files, authority: { $note: prior.authority?.$note, files: authorityFiles } }, null, 2) + '\n');
-    console.log(`[ci:sign-ceremony] wrote ${Object.keys(files).length} file(s) to the baseline. Replace every TODO with a reason.`);
-    return;
-  }
   const baseline = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')) : { files: {} };
+  const sources = repoSources();
+  const pairs = { derived: repoSignedPairs(sources), recorded: baseline.signedPairs?.pairs ?? [] };
+  const scan = scanRepo({ sources, signedPairs: new Set([...pairs.derived.keys(), ...pairs.recorded]) });
+  const authorityScan = scanRepoAuthority();
+  const declared = repoDecisionStatuses();
+  if (args.includes('--list')) return printList(scan, authorityScan, declared, pairs);
+  if (args.includes('--write-baseline')) return writeBaseline(scan, authorityScan, pairs);
   const { failures, unreasoned, baselined, shrinkable } = evaluate(scan, baseline);
-  let failed = false;
+  let failed = reportStatusSources(declared, pairs);
   if (failures.length) {
     failed = true;
-    console.error('[ci:sign-ceremony] FAIL — a `sign` ledger write, or an approval stamp, without the signature ceremony:');
+    console.error('[ci:sign-ceremony] FAIL — a `sign` ledger write, an approval stamp, or a governed status act, without the signature ceremony:');
     for (const f of failures) {
-      for (const s of f.sites) {
-        const why = s.kind === 'approval-stamp'
-          ? 'approval stamp with no signature-row write in its handler'
-          : [!s.reauth && 'no verifyReauth/reverifySigner', !s.signatureRow && 'no signature-row write'].filter(Boolean).join(', ');
-        console.error(`  ✗ ${f.file}:${s.line}  (${why})`);
-      }
+      for (const s of f.sites) console.error(`  ✗ ${f.file}:${s.line}  (${siteWhy(s)})`);
       if (f.allowed) console.error(`    ${f.file}: ${f.count} site(s), baseline allows ${f.allowed}.`);
     }
     console.error('\n  A `sign` row is read as an electronic signature. Route the act through the');
@@ -448,6 +465,10 @@ function main() {
     console.error('  pair + persistGovernedSignSignature on one transaction, as');
     console.error('  server/services/protocol-development/protocol-signature.ts does), or record');
     console.error('  it under a command that does not claim a signature.');
+    console.error('  A governed status act (a status the product declares only a signed act sets,');
+    console.error('  or one a ceremony signs on that table) is a signature too: make the write');
+    console.error("  signGovernedAct's run, on its transaction, as routes/mdx-risk-management.ts");
+    console.error('  acceptResidualSigned does.');
   }
   if (unreasoned.length) {
     failed = true;

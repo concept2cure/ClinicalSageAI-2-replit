@@ -39,12 +39,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { PURGE_CHILD_TABLES } from '../../server/services/tenant/tenant-offboarding';
+import { PURGE_CHILD_TABLES, PURGE_PARENT_SCOPED } from '../../server/services/tenant/tenant-offboarding';
 import {
   canonicalize,
   digestOf,
   discoverTenantTables,
   EXPORT_EXCLUDED_TABLES,
+  PARENT_SCOPED_TENANT_COLUMN,
 } from '../../server/services/tenant-export/tenant-full-export.service';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -78,6 +79,18 @@ beforeAll(async () => {
   // lineage under test is the one a deploy produces.
   await safe(
     fs.readFileSync(path.join(REPO_ROOT, 'migrations/20260813b_tenant_export_receipts.sql'), 'utf8')
+  );
+  // The same for the task graph's tenant column: the journal predates it, and
+  // the set adds it on every deploy. The purge lists both tables since
+  // 2026-10-29, by that column.
+  await safe(
+    fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260807_task_graph_org_columns.sql'), 'utf8')
+  );
+  // And the signatures' tenant column (P-58, 2026-10-29): the purge erases a
+  // tenant's electronic_signatures by it since then, and the set adds it on
+  // every deploy.
+  await safe(
+    fs.readFileSync(path.join(REPO_ROOT, 'migrations/20260813c2_electronic_signatures_tenant_key.sql'), 'utf8')
   );
 
   discovered = await discoverTenantTables(asClient());
@@ -145,6 +158,12 @@ describe('export coverage vs purge destruction', () => {
     const tables = discovered.map(d => d.table);
     expect(new Set(tables).size).toBe(tables.length);
     for (const d of discovered) {
+      // A table with no tenant column is exported only through its parent, by
+      // the predicate the purge deletes it by (purge-parent-scope.ts, 2026-10-29).
+      if (d.tenantColumn === PARENT_SCOPED_TENANT_COLUMN) {
+        expect(Object.keys(PURGE_PARENT_SCOPED), d.table).toContain(d.table);
+        continue;
+      }
       expect(['organization_id', 'org_id', 'tenant_id']).toContain(d.tenantColumn);
     }
   });

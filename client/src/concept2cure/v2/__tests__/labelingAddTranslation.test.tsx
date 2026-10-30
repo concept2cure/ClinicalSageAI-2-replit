@@ -19,6 +19,10 @@
  * The CHAIN, not the render: filling in only the fields the write actually uses
  * reaches the transport with the real body. Against the old config that chain
  * breaks at the form — no request is made at all — which is exactly the defect.
+ *
+ * Slice 0 (.design/client-journey/INFORMATION_ARCHITECTURE.md, `labeling`):
+ * the screen reads labeling records only with a project key, so this mounts it
+ * with one and serves the project-keyed read.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -34,17 +38,20 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Labeling } from '../surfaces/Labeling';
+import { clearShellProject, publishShellProject } from '../shellProject';
 
 const DOC = {
   id: 4, device_name: 'Aurora CGM', doc_kind: 'ifu', version: '3',
   organization_id: 7, status: 'draft',
 };
+const PROGRAM_ID = '0b6f1c1e-4d2a-4c55-9a1e-3f7b2d9c8e10';
+const KEYED = `/api/mdx/labeling?program_id=${PROGRAM_ID}`;
 
 beforeEach(() => {
   calls.length = 0;
   apiRequest.mockReset();
   responder = (_m, path) => {
-    if (path === '/api/mdx/labeling') return { ok: true, status: 200, json: { data: [DOC] } };
+    if (path === KEYED) return { ok: true, status: 200, json: { data: [DOC] } };
     if (path.endsWith('/translations')) return { ok: true, status: 200, json: { data: [] } };
     if (path.endsWith('/symbols')) return { ok: true, status: 200, json: { data: [] } };
     return { ok: true, status: 200, json: { data: [] } };
@@ -55,7 +62,7 @@ beforeEach(() => {
     return { ok: r.ok, status: r.status, json: async () => r.json ?? {} };
   });
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); clearShellProject(); });
 
 /** The drawer's own submit button — not the surface's "Add translation" opener. */
 function submitButton(): HTMLElement {
@@ -64,6 +71,8 @@ function submitButton(): HTMLElement {
 }
 
 async function openForm() {
+  /* The screen reads the shell's open project (device-features-reach-three, 2026-10-29); it has no programId prop. */
+  publishShellProject({ id: PROGRAM_ID });
   render(
     <Labeling
       {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof Labeling>)}

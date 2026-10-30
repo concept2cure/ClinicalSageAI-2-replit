@@ -1,0 +1,11 @@
+Negative qualification before the corresponding fix. Full lossless log in safety-red.txt.gz. JWTs are synthetic.
+
+ FAIL  client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > refuses profile preflight when bearer claims differ from the retained auth context
+ FAIL  client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > refuses memberships preflight when bearer claims differ from the retained auth context
+ FAIL  client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > withholds a late profile read after bearer replacement
+ FAIL  client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > withholds a late memberships read after bearer replacement
+ FAIL  client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > does not cache an unmounted persona request
+ FAIL  client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > rechecks persona ownership after JSON decoding
+ FAIL  client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > refuses a stale source bearer before spending a workspace session
+ Test Files  1 failed (1)
+      Tests  7 failed | 3 passed (10)

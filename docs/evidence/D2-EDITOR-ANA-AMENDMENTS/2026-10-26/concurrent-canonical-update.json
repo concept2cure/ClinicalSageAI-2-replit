@@ -1,0 +1,11 @@
+{
+  "revision": "301ca385c8eb194cc0e29c8db360b65c25a81e3c",
+  "incomingPaths": [
+    ".design/client-journey/HANDOFF_2026-10-26.md",
+    ".design/client-journey/INFORMATION_ARCHITECTURE.md",
+    "AGENTS.md",
+    "docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/core-workflow-direction/README.md"
+  ],
+  "qualifiedInputIntersection": [],
+  "priorPush": "all hooks and tsc0 passed; remote advanced; normal fetch-first refusal"
+}

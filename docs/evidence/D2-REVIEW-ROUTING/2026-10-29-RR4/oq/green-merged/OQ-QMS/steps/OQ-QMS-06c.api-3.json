@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "http://localhost:5198/api/authoring/sections/0ef7975b-4f50-428d-be74-5cdded86ef81",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "content": "<p>OQ-006 Self-approval SOP 20261029153957: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+      "changeReason": "OQ-006: write the controlled procedure text before review"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 77,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "section": {
+        "id": "0ef7975b-4f50-428d-be74-5cdded86ef81",
+        "doc_id": "8bfc34ba-98dc-4187-a02e-483f0e641b7c",
+        "code": "qms-purpose",
+        "title": "Purpose",
+        "content": "<p>OQ-006 Self-approval SOP 20261029153957: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+        "order_index": 1,
+        "track_changes": false,
+        "tenant_id": 6,
+        "created_at": "2026-10-29T15:41:05.068Z",
+        "updated_at": "2026-10-29T15:41:05.776Z"
+      },
+      "message": "Section updated successfully",
+      "revision_created": true,
+      "filing": {
+        "committed": false,
+        "reason": "This document is not bound to a filing, so there is no governed section to update."
+      }
+    }
+  }
+}

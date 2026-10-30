@@ -12,10 +12,14 @@ vi.mock('@/lib/queryClient', async (original) => ({
   ...(await original<typeof import('@/lib/queryClient')>()),
   apiRequest: mocks.request,
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: mocks.user }) }));
-vi.mock('@/utils/authToken', () => ({ getAuthToken: () => mocks.token }));
+vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: mocks.user }), authService: { getUser: () => mocks.user } }));
+vi.mock('@/utils/authToken', () => ({ getAuthToken: () => mocks.token, capturedActorHeaders: (scope: { userId: number; organizationId: number }) => {
+  if (!mocks.token || scope.userId !== Number(mocks.user?.id) || scope.organizationId !== Number(mocks.user?.organizationId)) throw new Error('Session changed');
+  return { Authorization: `Bearer ${mocks.token}`, 'x-organization-id': String(scope.organizationId) };
+} }));
 
 import { AccountOnboardingSettings } from '../AccountOnboardingSettings';
+import { TaskTray } from '../TaskTray';
 import { REPORT_PERSONAS } from '@shared/constants/domain/report-personas';
 
 const INBOX = '/api/tenant-users/invitations/mine';
@@ -74,7 +78,7 @@ describe('self-service onboarding in Account', () => {
     expect(await screen.findByText(/Invitation accepted for Inviting sponsor/)).toBeTruthy();
     expect(await screen.findByText('No pending invitations.')).toBeTruthy();
     expect(await screen.findByRole('option', { name: 'Inviting sponsor' })).toBeTruthy();
-    expect(mocks.request).toHaveBeenCalledWith('POST', '/api/tenant-users/invitations/52/accept', undefined);
+    expect(mocks.request).toHaveBeenCalledWith('POST', '/api/tenant-users/invitations/52/accept', undefined, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
     expect(mocks.user?.organizationId).toBe('1');
     expect(screen.getByText(/Your current session stays in its existing organisation/)).toBeTruthy();
   });
@@ -116,7 +120,7 @@ describe('self-service invitation recovery', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Decline invitation to Inviting sponsor' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm decline' }));
     expect(await screen.findByText(/Invitation declined for Inviting sponsor/)).toBeTruthy();
-    expect(mocks.request).toHaveBeenCalledWith('POST', '/api/tenant-users/invitations/52/decline', undefined);
+    expect(mocks.request).toHaveBeenCalledWith('POST', '/api/tenant-users/invitations/52/decline', undefined, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
   });
 
   it('shows quota or authorization refusals without claiming the invitation was accepted', async () => {
@@ -200,7 +204,7 @@ describe('reporting role in Account', () => {
     fireEvent.change(field, { target: { value: 'qa' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save reporting role' }));
     expect(await screen.findByText('Reporting role saved. Your access role is unchanged.')).toBeTruthy();
-    expect(mocks.request).toHaveBeenCalledWith('PUT', PERSONA, { persona: 'qa' });
+    expect(mocks.request).toHaveBeenCalledWith('PUT', PERSONA, { persona: 'qa' }, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
   });
 
   it('can clear the reporting role without changing the membership role', async () => {
@@ -210,7 +214,7 @@ describe('reporting role in Account', () => {
     fireEvent.change(field, { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save reporting role' }));
     await screen.findByText('Reporting role saved. Your access role is unchanged.');
-    expect(mocks.request).toHaveBeenCalledWith('PUT', PERSONA, { persona: null });
+    expect(mocks.request).toHaveBeenCalledWith('PUT', PERSONA, { persona: null }, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
   });
 
   it('does not offer persona controls if membership is refused or the server vocabulary is unknown', async () => {
@@ -236,5 +240,27 @@ describe('self-service onboarding refuses unavailable sessions', () => {
     open();
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(mocks.request).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('Account reaches existing in-app alert setup', () => {
+  it('loads on request, saves the current recipient preference and refreshes the existing inbox badge', async () => {
+    let enabled = true;
+    const path = '/api/mdx/notification-subscriptions';
+    routes.set(`GET ${path}`, () => json(200, { data: [{ category: 'system', in_app_enabled: enabled }] }));
+    routes.set(`PUT ${path}/system`, () => { enabled = false; return json(200, { data: { organization_id: 1, user_id: 33, category: 'system', in_app_enabled: false } }); });
+    routes.set('GET /api/task-management/my-work', () => json(200, { data: { items: [], total: 0, overdue: 0, dueSoon: 0, blocked: 0, approvalsPending: 0 } }));
+    routes.set('GET /api/mdx/notifications/unread-count', () => json(200, { data: { unread: enabled ? 1 : 0 } }));
+    render(<><TaskTray onNav={vi.fn()} /><AccountOnboardingSettings userId="33" organizationId="1" /></>);
+    await screen.findByRole('button', { name: /Your work.*1 item waiting/ });
+    expect(mocks.request.mock.calls.some(([, url]) => url === path)).toBe(false);
+    fireEvent.click(within(section('In-app notifications')).getByRole('button', { name: 'Open notification choices' }));
+    const checkbox = await within(section('In-app notifications')).findByRole('checkbox', { name: 'System notices' });
+    fireEvent.click(checkbox);
+    await screen.findByText('Notification choice saved.');
+    await waitFor(() => expect((within(section('In-app notifications')).getByRole('checkbox', { name: 'System notices' }) as HTMLInputElement).checked).toBe(false));
+    await screen.findByRole('button', { name: 'Your work' });
+    expect(mocks.request).toHaveBeenCalledWith('PUT', `${path}/system`, { inAppEnabled: false }, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
   });
 });

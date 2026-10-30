@@ -424,10 +424,12 @@
   .c2c-v2 .pd-aside{border-left:none;border-top:1px solid var(--border);overflow:visible;}
 }
 
-/* ── Project home: the filing's five tabs (docs/design/FILING_SPINE.md F2) ──
-   The start box and the project's conversations sit above the tabs, outside
-   the stage switch, so a half-typed message survives a change of tab. */
-.c2c-v2 .pj-start{display:flex;flex-direction:column;gap:14px;margin:0 0 20px;}
+/* ── Project home: the filing's six steps (FILING_SPINE.md F2; Plan, CLIENT_JOURNEY pass 3) ──
+   The steps come first. AnA's start box and the project's conversations sit
+   beside every step (pass 4), outside the step switch, so a half-typed message
+   survives a change of step. The column can be taller than the window, so it
+   scrolls with the page instead of sticking. */
+.c2c-v2 aside.pj-step-side{position:static;}
 /* What a tab does not do in this release: one line of words, no button. */
 .c2c-v2 .pj-later{margin:12px 0 0;max-width:none;}
 /* A tab whose body is more than one section (Evidence: files and data room;
@@ -445,6 +447,22 @@
    section figure is not read as that document's progress. */
 .c2c-v2 .pj-lmodrow{display:flex;flex-direction:column;gap:0;}
 .c2c-v2 .pj-lmod-doc{font-size:11px;color:var(--text-400);padding:0 2px 6px;}
+.c2c-v2 .pj-lmod-sections{font-size:12px;margin:0 2px 10px;}
+.c2c-v2 .pj-lmod-sections summary{cursor:pointer;color:var(--text-200);}
+.c2c-v2 .pj-lmod-sections ul{list-style:none;margin:8px 0;padding:0;}
+.c2c-v2 .pj-lmod-sections li{display:flex;justify-content:space-between;gap:16px;padding:4px 0;}
+.c2c-v2 .pj-lmod-sections li span:first-child{min-width:0;overflow-wrap:anywhere;}
+.c2c-v2 .pj-lmod-sections li span:last-child{flex-shrink:0;color:var(--text-400);}
+.c2c-v2 .pj-dossier-supporting{display:flex;flex-direction:column;gap:14px;margin-top:16px;min-width:0;}
+.c2c-v2 .pj-artifact-table{max-width:100%;overflow-x:auto;}
+.c2c-v2 .pj-artifact-table caption{text-align:left;margin:8px 0;}
+.c2c-v2 .pj-artifact-table th,.c2c-v2 .pj-artifact-table td{vertical-align:top;}
+.c2c-v2 .pj-tracking-module{padding:12px 0;border-top:1px solid var(--border);}
+.c2c-v2 .pj-tracking-module h3{margin:0 0 8px;}
+.c2c-v2 .pj-tracking-code{display:block;font-size:11px;color:var(--text-400);overflow-wrap:anywhere;}
+.c2c-v2 .pj-tracking-unmapped{padding-left:20px;}
+.c2c-v2 .pj-tracking-unmapped li{margin:8px 0;overflow-wrap:anywhere;}
+.c2c-v2 .pj-tracking-module .pj-lmod-sections li span:last-child{max-width:45%;overflow-wrap:anywhere;}
 /* Review tab: this filing's reviews, grouped by what they need from the
    person (FILING_SPINE.md F7). The rows are the canvas list's own rows. */
 .c2c-v2 .pj-rv-group + .pj-rv-group{margin-top:14px;}
@@ -481,3 +499,33 @@
 .c2c-v2 .pj-respond-step{display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
 .c2c-v2 .pj-respond-pick{width:100%;max-width:480px;}
 .c2c-v2 .pj-respond-t{margin:0;font-size:13px;font-weight:600;color:var(--text-100);}
+
+/* Plan (CLIENT_JOURNEY_2026-10-25 pass 3): what the filing needs, by phase.
+   Each phase opens to its deliverables, which are the IND library's entries. */
+.c2c-v2 .pj-plan{display:flex;flex-direction:column;margin-top:12px;}
+.c2c-v2 .pj-plan-phase{border-top:1px solid var(--border);}
+.c2c-v2 .pj-plan-phase>summary{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:12px 0;cursor:pointer;list-style:disclosure-closed;}
+.c2c-v2 .pj-plan-phase>summary::before{content:'›';width:12px;color:var(--text-300);}
+.c2c-v2 .pj-plan-phase[open]>summary::before{content:'⌄';}
+.c2c-v2 .pj-plan-phase>summary:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+.c2c-v2 .pj-plan-phase-t{flex:1;font-size:13px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .pj-plan-phase-n{font-size:12px;color:var(--text-300);white-space:nowrap;}
+/* Classes another sheet owns are reached by element, never named here (projectHomeStageCss.test.tsx). */
+.c2c-v2 .pj-plan-phase>details{border-radius:var(--radius-sm);}
+.c2c-v2 .pj-plan-assigned{margin-left:8px;font-size:12px;font-weight:400;color:var(--text-300);}
+.c2c-v2 .pj-plan-assigned::before{content:'·';margin-right:8px;color:var(--text-400);}
+.c2c-v2 .pj-plan-assign-msg{flex-basis:100%;order:10;margin:0;}
+.c2c-v2 .pj-plan-door{margin:4px 0 10px;}
+/* A door names its job in a sentence, so it wraps rather than overflow (as .pj-sec-acts does). */
+.c2c-v2 .pj-plan-door>button{height:auto;min-height:32px;padding-top:6px;padding-bottom:6px;white-space:normal;text-align:left;}
+/* The device workstreams sit in the step body, whose gap spaces them. */
+.c2c-v2 .pj-plan-device>section{margin:0;}
+@media(max-width:600px){.c2c-v2 .pj-plan-phase>summary{flex-wrap:wrap;gap:2px 8px;}.c2c-v2 .pj-plan-phase-n{width:100%;padding-left:20px;}.c2c-v2 .pj-plan-assigned{display:block;margin-left:0;}.c2c-v2 .pj-plan-assigned::before{content:none;}}
+
+/* Existing filing reference material, reached in intake and project Plan. */
+.c2c-v2 .filing-lifecycle-reference { margin: 14px 0; padding: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; overflow-wrap: anywhere; }
+.c2c-v2 .filing-lifecycle-reference summary { cursor: pointer; font-weight: 600; }
+.c2c-v2 .filing-lifecycle-reference ol { padding-left: 1.4rem; }
+.c2c-v2 .filing-reference-facts > div { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(0, 3fr); gap: 12px; margin-bottom: 4px; }
+.c2c-v2 .filing-reference-facts dt { font-weight: 600; }
+.c2c-v2 .filing-reference-facts dd { margin: 0; overflow-wrap: anywhere; }

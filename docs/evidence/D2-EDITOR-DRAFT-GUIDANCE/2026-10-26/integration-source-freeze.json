@@ -1,0 +1,29 @@
+{
+  "head": "c7f2745a655aba0d6be88638bb22be0d02762df6",
+  "files": {
+    "server/routes/authoring.router.ts": "157ae82d75faa213e4dadb6e20678297dbc2edb2d17e8e4eeea926dbd9a9eb3a",
+    "server/services/ana/saved-template-review.ts": "ab7ad8856a2057805428c723380b4643b3cba18170a215121d99ae29d1ee0a4c",
+    "server/services/authoring/authoring-template-guidance.ts": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172",
+    "shared/authoring/recorded-template-source.ts": "56c8e19a2ca0740232df86ee4e80f5ed89025bb7d4840040fa95440c4a985bb6",
+    "server/services/ana/turn-record-draft.ts": "990163b4d6571639acfbb8155d8abb15b2c856b8df5414892cf7ecbd30c9c398",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "server/services/authoring/authoring-draft-template.ts": "3a1289acbd60aae3058072b549b710dc409147fcf4229a9b537a0d28e51d534c",
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "ce0ff65f928052d74970cf205a01cd74993f531875dbb0e1dc3cdc7e4e39f301",
+    "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685",
+    "server/routes/__tests__/authoring-draft-program-sources.test.ts": "d24e01912213c3338f184b93bc919377ee858acaa3ff21dad31c83a0c19cfd47",
+    "server/routes/__tests__/authoringSelectedSources.pglite.test.ts": "6004eaf6ee1eaf02f81c58ff616ce036cb98ba28f9b0e6fe3a266fde92b729cd",
+    "server/routes/__tests__/authoringAiDraftNoProvider.test.ts": "9e03406cd481ebd34a76238dc0951cb9a2aaa9dcf2f91153183f480a9ef4ef09",
+    "server/routes/__tests__/authoringAiDraftStructured.test.ts": "5e057325c444ba7cdbd4fc136f2dd2b67e9dd38823bdb0faaac34325633989ae",
+    "server/services/ana/__tests__/saved-document-critique.test.ts": "5c2f76141cf78da2b971291c10f30fef831207fe303bad4309ac609b632ae8d0",
+    "server/services/ana/__tests__/saved-document-critique.pglite.test.ts": "269d74386ed5a9ebb33ef8167a73ff5428fc31ac723ef89db1b9719492fa64c7",
+    "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts": "42feb9593b89f5767a16656f7ae028fba6611d46af1c45d1cf636c48e290a4a4",
+    "client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx": "23b4e7a8d87b3fad7d34c7c111f32f427df50fd054d364dd040d7d946f718de1",
+    "client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx": "7b7b30933a81f1a412ecb78cfde3d49833c97d5b6f7750344a5e1326b7ba03c9",
+    "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx": "0fb1db4d6b5e48a5abc5ae8678789b86509b50d41027d702202e13dde79211f3",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": "800cd585e14701a17ad3075b324b7483f3f46f785b14bf63b59a3dd6a66d4503",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts": "c01919d4c1649f6f6d27e612c2c4aed0cc39078a303d747b9608235db6bbf204"
+  }
+}

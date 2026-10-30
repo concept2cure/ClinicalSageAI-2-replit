@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a member is offered neither the Admin console, Subscription & features, Access requests nor Platform licensing
+AssertionError: expected [ 'Subscription & features', …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Subscription & features",
++   "Platform licensing",
++   "Access requests",
++   "Admin console",
++   "Platform licensing",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx:60:116
+     58|     serve(false);
+     59|     const rows = [...await search('admin'), ...await (async () => { cl…
+     60|     expect(rows.filter((r) => /Admin console|Subscription & features|A…
+       |                                                                                                                    ^
+     61|   });
+     62|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a customer's administrator is offered the Admin console, not Platform licensing
+AssertionError: expected [ 'Platform licensing' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Platform licensing",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx:68:82
+     66|     expect(await search('admin')).toContain('Admin console');
+     67|     cleanup();
+     68|     expect((await search('licens')).filter((r) => /Platform licensing/…
+       |                                                                                  ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  13:33:00
+   Duration  2.79s (transform 1.08s, setup 186ms, import 1.28s, tests 502ms, environment 660ms)
+

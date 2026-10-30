@@ -46,7 +46,7 @@ const P = '0b6f0f86-6f2d-4c1b-9a2e-0d1c7f5d0a11';
 const MAB: CompositionRefusal = {
   code: 'CMC_MODALITY_OUT_OF_SCOPE',
   modality: 'biologic',
-  message: "This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.",
+  message: "This project's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.",
 };
 
 function app() {

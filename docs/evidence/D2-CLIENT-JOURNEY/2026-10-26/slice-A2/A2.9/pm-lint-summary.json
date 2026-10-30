@@ -1,0 +1,57 @@
+[
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/device-projects-class-not-invented.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/o01-core-project-audits.pglite.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/projects-management-quota-not-recorded-is-403.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/concept2cure.ts",
+    "errorCount": 0,
+    "warningCount": 10
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/device-projects.ts",
+    "errorCount": 0,
+    "warningCount": 4
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts",
+    "errorCount": 0,
+    "warningCount": 2
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/server/routes/projects-management.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/tests/routes/concept2cure.test.ts",
+    "errorCount": 0,
+    "warningCount": 3
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/tests/routes/device-projects-governed-writes.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/tests/routes/project-hierarchy-creator-retirement.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/workspace/ClinicalSageAI-2-replit/tests/routes/projects-management-tenant-boundary.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  }
+]

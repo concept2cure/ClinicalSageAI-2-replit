@@ -125,7 +125,7 @@ describe('the application number an exported package carries', () => {
     expect(refused).toBeInstanceOf(PackageIdentityMissingError);
     expect(refused).toMatchObject({ code: 'PACKAGE_IDENTITY_MISSING', missing: ['applicationNumber'] });
     expect(refused.message).toMatch(/records no agency application number/);
-    expect(refused.message).toMatch(/program code is not one/);
+    expect(refused.message).toMatch(/project code is not one/);
     expect(refused.message).toMatch(/Nothing was built\.$/);
     expect(refused.message).not.toMatch(/BX-900/);
   });

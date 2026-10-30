@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates PMDA with its retained inputs and ignores conflicting optional metadata 89ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates EMA with its retained inputs and ignores conflicting optional metadata 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates Health Canada with its retained inputs and ignores conflicting optional metadata 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates FDA with its retained inputs and ignores conflicting optional metadata 43ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > keeps standalone defaults compatible with initialRegion=undefined 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > keeps standalone defaults compatible with initialRegion=Health Canada 16ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > keeps a legacy controlled candidate compatible with initialRegion rather than provider metadata 10ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > Discard exposes the retained inputs in the same existing four controls 11ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > keeps all four manual options through generation, Discard and a controlled Close/reopen 154ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > isolates manual options for each section across actual controlled remounts 74ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > merges synchronous edits to different fields without overwriting earlier values 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a transport regeneration refusal preserves the reviewed candidate, reason and options 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a truncated regeneration refusal preserves the reviewed candidate, reason and options 37ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a provider regeneration refusal preserves the reviewed candidate, reason and options 44ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > unknown acceptance prevents another generation and preserves the retained inputs 8ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > a no-longer-current retained session cannot generate from its options 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed session change 13ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed project-round-trip change 10ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed section-switch change 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed unmount change 8ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  17:10:32
+   Duration  2.79s (transform 696ms, setup 278ms, import 831ms, tests 678ms, environment 770ms)
+

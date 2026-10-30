@@ -102,23 +102,24 @@ describe('Account menu — Master Administration licensing entry', () => {
     // The org-admin entries are still there; only the platform console is not.
     expect(menuItems()).toContain('Admin');
     expect(menuItems()).toContain('Access requests');
-    expect(menuItems()).not.toContain('Licensing');
-    // The customer's own plan page stays reachable.
-    expect(menuItems()).toContain('View all plans');
+    expect(menuItems()).not.toContain('Platform licensing');
+    // The customer's own subscription page stays reachable: for an
+    // administrator it is "Subscription & billing" (P-68; accountMenuBilling.test.tsx).
+    expect(menuItems()).toContain('Subscription & billing');
   });
 
   it('is not offered on masterAdmin alone — the commercial unlock is not console access', async () => {
     mockNav(async () => ok(payload({ masterAdmin: true, platformAdmin: false })));
     const { menuItems } = await openAccountMenu();
-    expect(menuItems()).not.toContain('Licensing');
+    expect(menuItems()).not.toContain('Platform licensing');
   });
 
   it('is offered when the server says the console guard admits this viewer, and opens it', async () => {
     mockNav(async () => ok(payload({ platformAdmin: true })));
     const { menuItems, onNav } = await openAccountMenu();
 
-    expect(menuItems()).toContain('Licensing');
-    fireEvent.click(screen.getByRole('menuitem', { name: /Licensing/ }));
+    expect(menuItems()).toContain('Platform licensing');
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Platform licensing' }));
     expect(onNav).toHaveBeenCalledWith('master-licensing');
   });
 
@@ -126,14 +127,14 @@ describe('Account menu — Master Administration licensing entry', () => {
     auth.roles = ['member'];
     mockNav(async () => ok(payload({ platformAdmin: true })));
     const { menuItems } = await openAccountMenu();
-    expect(menuItems()).toContain('Licensing');
+    expect(menuItems()).toContain('Platform licensing');
     expect(menuItems()).not.toContain('Admin');
   });
 
   it('survives resolved:false — the answer does not depend on the catalog read', async () => {
     mockNav(async () => ok(payload({ resolved: false, platformAdmin: true })));
     const { menuItems } = await openAccountMenu();
-    expect(menuItems()).toContain('Licensing');
+    expect(menuItems()).toContain('Platform licensing');
   });
 
   it('is not offered when the navigation fetch fails', async () => {
@@ -141,7 +142,7 @@ describe('Account menu — Master Administration licensing entry', () => {
       throw new Error('Failed to fetch');
     });
     const { menuItems } = await openAccountMenu();
-    expect(menuItems()).not.toContain('Licensing');
+    expect(menuItems()).not.toContain('Platform licensing');
     expect(menuItems()).toContain('Admin');
   });
 
@@ -150,6 +151,36 @@ describe('Account menu — Master Administration licensing entry', () => {
     delete legacy.platformAdmin;
     mockNav(async () => ok(legacy));
     const { menuItems } = await openAccountMenu();
-    expect(menuItems()).not.toContain('Licensing');
+    expect(menuItems()).not.toContain('Platform licensing');
+  });
+});
+
+/* Codebase coverage (slice 0 of .design/client-journey/INFORMATION_ARCHITECTURE.md):
+   an engineering view of the surface registry, not a customer capability, and
+   outside the release. It was in every member's menu, and under the launch
+   scope it opened a "not in this release" lock. It is offered beside Platform licensing
+   to the platform's administrators, and only when it can be opened. */
+describe('Account menu — Codebase coverage', () => {
+  const coverageLocked = { id: 'coverage', label: 'Codebase coverage', entitled: false, source: 'launch-scope' as const, requiredTier: null };
+
+  it('is not offered to a member or an organisation administrator', async () => {
+    mockNav(async () => ok(payload({ platformAdmin: false })));
+    const { menuItems } = await openAccountMenu();
+    expect(menuItems()).not.toContain('Codebase coverage');
+  });
+
+  it('is offered to a platform administrator when it can be opened', async () => {
+    mockNav(async () => ok(payload({ platformAdmin: true })));
+    const { menuItems, onNav } = await openAccountMenu();
+    expect(menuItems()).toContain('Codebase coverage');
+    fireEvent.click(screen.getByRole('menuitem', { name: /Codebase coverage/ }));
+    expect(onNav).toHaveBeenCalledWith('coverage');
+  });
+
+  it('is not offered, even to a platform administrator, when the release locks it', async () => {
+    mockNav(async () => ok(payload({ platformAdmin: true, surfaces: [coverageLocked] })));
+    const { menuItems } = await openAccountMenu();
+    expect(menuItems()).toContain('Platform licensing');
+    expect(menuItems()).not.toContain('Codebase coverage');
   });
 });

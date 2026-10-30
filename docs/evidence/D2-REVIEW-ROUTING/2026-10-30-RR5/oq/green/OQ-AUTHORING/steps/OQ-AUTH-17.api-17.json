@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5241/api/authoring/docs/5bdf2248-39a4-404b-9b5c-4689aed1bf16/workflow",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 28,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "workflowId": "56b9e1ee-a1f7-4772-980a-8b5c03d2c75c",
+      "steps": [
+        {
+          "workflow_id": "56b9e1ee-a1f7-4772-980a-8b5c03d2c75c",
+          "doc_id": "5bdf2248-39a4-404b-9b5c-4689aed1bf16",
+          "step_no": 1,
+          "role": "QA",
+          "approver_email": "oq-runner@validation.local",
+          "status": "PENDING",
+          "decision_note": null,
+          "decided_at": null,
+          "created_at": "2026-10-30T15:05:04.377Z",
+          "tenant_id": 5
+        }
+      ]
+    }
+  }
+}

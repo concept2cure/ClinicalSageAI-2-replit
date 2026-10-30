@@ -1,0 +1,22 @@
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > a CMC capability we built is reachable from the product > measures enough routes to be measuring anything 77ms
+ × client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > every CMC destination says what it is and what to do on it > declares all nine, with both sentences 9ms
+ × client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > every CMC destination says what it is and what to do on it > keeps the shape the project steps carry, so one band renders both 7ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > every CMC destination says what it is and what to do on it > gives guidance about the destination and never a claim about the program 1ms
+ × client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > every CMC destination says what it is and what to do on it > tells a client where to start 1ms
+ × client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > the three engines that had no screen now have one > assesses a stability study for drift from the Stability register 5ms
+ × client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > the three engines that had no screen now have one > shows process capability where the batches are 4ms
+ × client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > the three engines that had no screen now have one > reads a specification’s recorded changes through the one history panel 7ms
+ × client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > the three engines that had no screen now have one > says which store a history came from, because the two attest differently 4ms
+ × client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > a client told to open a program is given a way to open one > offers the door on every CMC empty state that asks for a program 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > a CMC capability we built is reachable from the product > still names the caller for every route the sweep cannot see 91ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > a CMC capability we built is reachable from the product > would notice a route nothing calls 83ms
+ FAIL  client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > every CMC destination says what it is and what to do on it > declares all nine, with both sentences
+ FAIL  client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > every CMC destination says what it is and what to do on it > keeps the shape the project steps carry, so one band renders both
+ FAIL  client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > every CMC destination says what it is and what to do on it > tells a client where to start
+ FAIL  client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > the three engines that had no screen now have one > assesses a stability study for drift from the Stability register
+ FAIL  client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > the three engines that had no screen now have one > shows process capability where the batches are
+ FAIL  client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > the three engines that had no screen now have one > reads a specification’s recorded changes through the one history panel
+ FAIL  client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > the three engines that had no screen now have one > says which store a history came from, because the two attest differently
+ FAIL  client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > a client told to open a program is given a way to open one > offers the door on every CMC empty state that asks for a program
+ FAIL  client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.tsx > a CMC capability we built is reachable from the product > has a client caller, or a named door that serves the same purpose
+      Tests  9 failed | 4 passed (13)

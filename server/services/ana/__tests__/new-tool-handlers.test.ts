@@ -169,9 +169,14 @@ describe('AnA new tool handlers — input validation (no DB needed)', () => {
       )
     );
     expect(result.structure?.ich_reference).toBe('ICH M4E(R2)');
-    expect(result.structure?.sections).toHaveLength(6);
+    // The served Clinical Overview, read from the ICH M2–M5 record: 2.5.7 Literature References included (D2 cleanup C4a).
     const sectionNumbers = result.structure.sections.map((s: any) => s.number);
-    expect(sectionNumbers).toEqual(['2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.5', '2.5.6']);
+    expect(sectionNumbers).toEqual(['2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.5', '2.5.6', '2.5.7']);
+    // C4c: the template's own limits travel with it, and with no clinical data the model is told to scale, not to fill.
+    expect(result.structure.outline_limitations.join(' ')).toMatch(/Scale content to the development phase/);
+    expect(result.clinical_data?.status).toBeTruthy();
+    expect(result.next_step).toMatch(/state a section with no data as such/);
+    expect(result.next_step).not.toMatch(/to its guidance and target_words/);
   });
 
   it('draft_fda_ir_response extracts numbered questions from realistic IR text', async () => {

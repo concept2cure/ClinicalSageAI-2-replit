@@ -254,9 +254,10 @@ export const shapeMismatch = (path: string) => `unexpected response shape for ${
 export async function liveGetOrNull<T>(
   path: string,
   guard?: ShapeGuard<T>,
+  headers?: Record<string, string>,
 ): Promise<DataResult<T>> {
   try {
-    const res = await apiRequest('GET', path);
+    const res = headers ? await apiRequest('GET', path, undefined, headers) : await apiRequest('GET', path);
     if (!res.ok) {
       return { data: null, error: `HTTP ${res.status} ${path}`, status: res.status };
     }
@@ -350,6 +351,24 @@ export interface DataState<T> {
   empty: boolean;
 }
 
+/** Optional ownership of a read, supplied by the caller's existing session/visit guard. */
+export interface DataReadOwner { key: string; current: () => boolean }
+interface DataReadVisit { key: string; path: string | null; retired: boolean }
+function currentDataOwner(owner: DataReadOwner): boolean {
+  try { return owner.current() === true; } catch { return false; }
+}
+function useDataReadVisit(path: string | null, owner?: DataReadOwner) {
+  const visit = React.useRef<DataReadVisit | null>(null);
+  if (!owner) { visit.current = null; return { visit: null, current: () => visit.current === null }; }
+  const valid = currentDataOwner(owner), previous = visit.current;
+  if (!previous || previous.key !== owner.key || previous.path !== path || (previous.retired && valid)) {
+    visit.current = { key: owner.key, path, retired: false };
+  }
+  const captured = visit.current!;
+  if (!valid) captured.retired = true;
+  return { visit: captured, current: () => visit.current === captured && !captured.retired && currentDataOwner(owner) };
+}
+
 /**
  * Fixture-free object-payload hook. `empty` is true only when the fetch
  * succeeded and the payload is absent/blank — distinct from `error`, so a
@@ -360,11 +379,11 @@ export function useLiveData<T>(
   path: string | null,
   deps: React.DependencyList = [path],
   guard?: ShapeGuard<T>,
+  owner?: DataReadOwner,
 ): DataState<T> {
-  const [state, setState] = React.useState<DataState<T>>({
-    data: null,
-    loading: Boolean(path),
-    empty: false,
+  const owned = useDataReadVisit(path, owner);
+  const [read, setRead] = React.useState<{ visit: DataReadVisit | null; state: DataState<T> }>({
+    visit: null, state: { data: null, loading: Boolean(path), empty: false },
   });
   // `guard` is deliberately not a dependency. It is read through a ref so an
   // inline arrow at the call site cannot re-trigger the fetch on every render,
@@ -373,17 +392,20 @@ export function useLiveData<T>(
   guardRef.current = guard;
   React.useEffect(() => {
     let cancelled = false;
+    const current = () => !cancelled && owned.current();
+    if (!current()) return undefined;
     if (!path) {
-      setState({ data: null, loading: false, empty: false });
+      setRead({ visit: owned.visit, state: { data: null, loading: false, empty: false } });
       return undefined;
     }
-    setState((s) => ({ ...s, loading: true }));
+    setRead(previous => ({ visit: owned.visit, state: owned.visit && previous.visit !== owned.visit
+      ? { data: null, loading: true, empty: false } : { ...previous.state, loading: true } }));
     liveGetOrNull<T>(path, guardRef.current).then((r) => {
-      if (cancelled) return;
+      if (!current()) return;
       const isEmpty =
         !r.error &&
         (r.data == null || (Array.isArray(r.data) && r.data.length === 0));
-      setState({
+      setRead({ visit: owned.visit, state: {
         data: r.data,
         loading: false,
         error: r.error,
@@ -391,14 +413,15 @@ export function useLiveData<T>(
         status: r.status,
         ...(r.code ? { code: r.code } : {}),
         empty: isEmpty,
-      });
+      } });
     });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-  return state;
+  }, [...deps, owned.visit]);
+  return owned.visit && (read.visit !== owned.visit || !owned.current())
+    ? { data: null, loading: Boolean(path), empty: false } : read.state;
 }
 
 export interface ListState<T> {
@@ -408,6 +431,9 @@ export interface ListState<T> {
   /** The HTTP status the read returned. See {@link DataState.status}: a list
    *  surface cannot tell a refusal (403) from an outage without it. */
   status?: number;
+  /** The server's machine-readable code. See {@link DataState.code}: two 403s
+   *  (the module gate's MODULE_NOT_LICENSED, a role refusal) differ only by it. */
+  code?: string;
   /** The route's envelope `meta`. See {@link DataState.meta} — `empty` alone
    *  cannot distinguish an empty store from an absent one. */
   meta?: Record<string, unknown>;
@@ -459,6 +485,7 @@ export function useLiveRows<T>(
     loading: st.loading,
     error: st.error,
     status: st.status,
+    ...(st.code ? { code: st.code } : {}),
     meta: st.meta,
     empty: !st.loading && !st.error && rows.length === 0,
   };

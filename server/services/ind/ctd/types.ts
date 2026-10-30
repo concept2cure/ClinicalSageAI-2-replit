@@ -261,6 +261,12 @@ export interface OutlineNode<A extends Necessity = Necessity> {
   presentation?: string[];
   /** Deficiencies a reviewer finds here. */
   pitfalls?: string[];
+  /**
+   * How a senior writer writes the section: tense, voice, the standard
+   * sentence shapes (with slots, never figures) and the hedging it allows.
+   * Craft, not regulation, unless a basis says otherwise (CSR slice 4, 2026-10-29).
+   */
+  writing?: string[];
   /** Other headings, or CTD codes, this section is read with. */
   see?: string[];
   /** Bases beyond the outline's governing basis. Absent ⇒ the governing basis alone. */

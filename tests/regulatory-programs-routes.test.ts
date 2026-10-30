@@ -203,7 +203,7 @@ describe('regulatory-programs routes — single program', () => {
     vi.mocked(svc.getProgramById).mockResolvedValueOnce(null);
     const res = await request(makeApp()).get(`/api/regulatory-programs/${PROGRAM_ID}`);
     expect(res.status).toBe(404);
-    expect(res.body).toEqual({ error: 'Program not found' });
+    expect(res.body).toEqual({ error: 'Project not found' });
   });
 });
 

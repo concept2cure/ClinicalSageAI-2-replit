@@ -18,6 +18,7 @@ vi.mock('../../../db.js', () => ({ pool: { query: vi.fn(async () => ({ rows: [] 
 import { EudamedConnector } from '../eudamed.js';
 import { EuCtisConnector } from '../eu-ctis.js';
 import { EMAEPARConnector } from '../ema-epar.js';
+import { clearEmaEparCache } from '../../integrations/ema-epar-client.js';
 import { searchConnectors } from '../connector-registry.js';
 import type { DataConnector } from '../connector-interface.js';
 
@@ -31,6 +32,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   globalThis.fetch = realFetch;
+  clearEmaEparCache();
 });
 
 const CONNECTORS: Array<{ id: string; make: () => DataConnector; match: unknown; expectId: string }> = [
@@ -49,7 +51,7 @@ const CONNECTORS: Array<{ id: string; make: () => DataConnector; match: unknown;
   {
     id: 'ema_epar',
     make: () => new EMAEPARConnector(),
-    match: { productNumber: 'EMEA/H/C/003820', medicineName: 'Keytruda' },
+    match: { category: 'Human', ema_product_number: 'EMEA/H/C/003820', name_of_medicine: 'Keytruda', active_substance: 'pembrolizumab', document_url: 'https://www.ema.europa.eu/en/documents/assessment-report/keytruda.pdf', name: 'Keytruda assessment', type: 'assessment-report' },
     expectId: 'ema:EMEA/H/C/003820',
   },
 ];
@@ -75,12 +77,12 @@ describe.each(CONNECTORS)('$id connector: a failed search is an error', ({ make,
   });
 
   it('control: a search that ran and matched nothing is an empty result', async () => {
-    answer = () => json({ content: [], totalElements: 0 });
+    answer = () => json({ content: [], data: [], totalElements: 0 });
     await expect(search()).resolves.toEqual([]);
   });
 
   it('control: a match is mapped', async () => {
-    answer = () => json({ content: [match], totalElements: 1 });
+    answer = () => json({ content: [match], data: [match], totalElements: 1 });
     const results = await search();
     expect(results.map(r => r.id)).toEqual([expectId]);
   });

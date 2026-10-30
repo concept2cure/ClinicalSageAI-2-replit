@@ -428,6 +428,8 @@
   .vd-stage .c2c-input:disabled{ background:var(--bg-100); cursor:not-allowed; }
   .vd-stage-fields{ display:grid; grid-template-columns:max-content minmax(0,1fr); gap:6px 10px; align-items:center; font-size:12px; color:var(--text-300); }
   .vd-stage-actions{ display:flex; gap:8px; margin-top:8px; }
+  /* How much of a row's file has been sent (MR-08 Stage 6 step 2). */
+  .vd-stage-progress{ display:block; width:100%; height:6px; margin:2px 0 6px; accent-color:var(--accent-200); }
   .vd-vers{ display:flex; flex-direction:column; gap:6px; }
   .vd-ver{ display:flex; gap:10px; align-items:baseline; }
   .vd-ver-v{ font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; color:var(--accent-200); min-width:42px; }
@@ -480,6 +482,17 @@
   .vd-dr-row:hover{ background:var(--bg-000); }
   .vd-dr-kind{ font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-400); min-width:38px; }
   .vd-dr-name{ color:var(--text-100); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:32%; }
+  /* The uploads lane's open button (Vault.tsx UploadsLane): the cap on the name. */
+  .vd-dr-open{ min-width:0; max-width:45%; flex-shrink:1; }
+  /* A narrow screen. The row's fixed parts (type, "Auto-filed · confirm",
+     size and date) took the whole row and the name, the one part that may
+     shrink to nothing, rendered 0 px wide: no document could be opened from
+     the lane at 390 px. The row wraps: the name shares its line with the type
+     at most, and the rest goes under it. */
+  @media (max-width:900px){
+    .vd-dr-row{ flex-wrap:wrap; row-gap:2px; }
+    .vd-dr-open{ flex:1 1 60%; max-width:none; }
+  }
   .vd-dr-detail{ color:var(--text-400); font-size:11px; }
   .vd-dr-suggest{ color:var(--text-300); font-size:11px; margin-left:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .vd-dr-row .rd-chip{ flex-shrink:0; }
@@ -513,6 +526,17 @@
   .vd-d-filing-reason{ flex:1 1 200px; min-width:0; height:30px; padding:0 9px; font:inherit; font-size:12px; color:var(--text-100); background:var(--bg-000); border:1px solid var(--border-control); border-radius:var(--radius-md); }
   .vd-d-filing-reason::placeholder{ color:var(--text-400); }
   .vd-d-move{ display:inline-flex; gap:6px; align-items:center; }
+  /* The Vault's seals (VR-19, VaultSeals.tsx). */
+  .vd-seals{ margin:14px 0; padding:12px 14px; background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-md); }
+  .vd-seals-note{ font-size:12px; color:var(--text-300); line-height:1.45; margin:0 0 10px; }
+  .vd-seal-list{ list-style:none; margin:0 0 10px; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .vd-seal{ padding:8px 10px; background:var(--bg-050); border-radius:7px; font-size:12px; color:var(--text-200); }
+  .vd-seal-head{ display:flex; gap:10px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+  .vd-seal-reason{ margin-top:4px; color:var(--text-300); }
+  .vd-seal-verdict{ margin-top:6px; color:var(--text-100); line-height:1.45; }
+  .vd-seal-archive{ margin-top:6px; display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+  .vd-seal-archive .vd-seals-note{ margin:0; }
+  .vd-seal-archive-note{ overflow-wrap:anywhere; }
   .vd-d-move-sel{ font-size:11.5px; color:var(--text-200); background:var(--bg-000); border:1px solid var(--border-control,var(--border)); border-radius:7px; padding:6px 8px; max-width:190px; }
 
   /* The three-pane cabinet needs more width than a small screen provides.

@@ -1,0 +1,98 @@
+{
+  "kind": "static source review; no test or runtime execution",
+  "incoming": "c7f320403",
+  "original": "f033cc722",
+  "selectors": [
+    {
+      "name": "ADMISSIONS",
+      "unchangedFromIncoming": true,
+      "sha256": "707bcd3e3cba4bd763aed19a8a52b654b7716f1635089836ccdcc64898a7ae75"
+    },
+    {
+      "name": "knownAgency",
+      "unchangedFromIncoming": true,
+      "sha256": "bd003a378e7c7b9a2d603103e5447b5a096b5318763b99d6938a3097a443d379"
+    },
+    {
+      "name": "contextMatches",
+      "unchangedFromIncoming": true,
+      "sha256": "7ea534aabf41fcf1d76f9167f9e9331bb44ec213c3a4a6c2f7bbe38647e334e0"
+    },
+    {
+      "name": "filingLifecycleReferenceFor",
+      "unchangedFromIncoming": true,
+      "sha256": "1cc99b4af391c844522c3f590a21c474729b191db11c5697dfbf45da5f8293f8"
+    },
+    {
+      "name": "FILING_LOOP",
+      "unchangedFromIncoming": true,
+      "sha256": "806a001f0f18dd9f3bc4ae0e65097b6ab115c21726df0c129a2148ac1cc62f44"
+    },
+    {
+      "name": "FILING_LOOP_ARCHETYPE",
+      "unchangedFromIncoming": true,
+      "sha256": "924f3642e15e89796df141a681329232983e7a4e261e082018dfe2bd18f287d2"
+    },
+    {
+      "name": "FILING_WF_LABEL",
+      "unchangedFromIncoming": true,
+      "sha256": "719d564b09c1fac13c3bbd022161056c0a8deeab90390a1f3098b5fd775af5bb"
+    }
+  ],
+  "server": [
+    {
+      "name": "PROGRAM_DETAIL_SQL",
+      "unchangedFromIncoming": true
+    },
+    {
+      "name": "serializeProgramDetail",
+      "unchangedFromIncoming": true
+    },
+    {
+      "name": "readProgramDetail",
+      "unchangedFromIncoming": true
+    }
+  ],
+  "stableGuards": [
+    {
+      "path": "server/services/ana/ana-launch-scope.ts",
+      "unchangedFromOriginal": true,
+      "sha256": "afa74ba9c7fc3249ed44bee7d60bf96fadd50f8de118f26357d4ef34c598a7ad"
+    },
+    {
+      "path": "server/services/ana-ri/command-executor.ts",
+      "unchangedFromOriginal": true,
+      "sha256": "e0e319e7f169d9289d4f33fd3bb3a944d1b3b90cc8bd1ec928d76da21bc107c5"
+    },
+    {
+      "path": "server/services/ana-ri/mdx-tool-policy.ts",
+      "unchangedFromOriginal": true,
+      "sha256": "f3a4de6b3d2bda4b96f25b5ac183b82f3044d44454c2273767ef4881817d759e"
+    },
+    {
+      "path": "server/services/c2c/program-access.ts",
+      "unchangedFromOriginal": true,
+      "sha256": "d48130f694e182aab8f81449377631cfc244743a8ab1d63dea2927364a33b28f"
+    },
+    {
+      "path": "server/services/evidence-sufficiency/evidence-sufficiency.service.ts",
+      "unchangedFromOriginal": true,
+      "sha256": "66db611b016a0e0bb4c468849ef898d056d8116343264622d812ab473ca5457a"
+    },
+    {
+      "path": "server/services/intelligence-engine/reviewer-simulator.service.ts",
+      "unchangedFromOriginal": true,
+      "sha256": "3e3fe1ac4b5233086b4df6ad0dd82ab3f9e76dd33d45829112f442410599a9a3"
+    }
+  ],
+  "commandHandlerBodiesUnchanged": true,
+  "executableInventoryUnchanged": true,
+  "singleWidgetOwner": "client/src/concept2cure/v2/surfaces/FilingLifecycleReference.tsx",
+  "metadataExport": "FilingReferenceDetails",
+  "oldWidgetDeleted": true,
+  "oldCatalogScreenDeleted": true,
+  "oldFixtureDeleted": true,
+  "singleReplayTestOwner": "tests/schema-contract/catalog-module-claims.contract.test.ts",
+  "parallelReplayTestDeleted": true,
+  "parallelReplayTestPath": "tests/schema-contract/filing-catalog-fold-replay.pglite.test.ts"
+}

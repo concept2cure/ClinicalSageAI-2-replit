@@ -1,0 +1,114 @@
+[
+  {
+    "path": "/api/mdx/qms/documents",
+    "status": 200,
+    "body": {
+      "data": [],
+      "meta": {
+        "count": 0
+      }
+    }
+  },
+  {
+    "path": "/api/mdx/qms/changes",
+    "status": 200,
+    "body": {
+      "data": [],
+      "meta": {
+        "count": 0
+      }
+    }
+  },
+  {
+    "path": "/api/mdx/qms/documents/review-due",
+    "status": 200,
+    "body": {
+      "data": [],
+      "meta": {
+        "count": 0,
+        "withinDays": 30
+      }
+    }
+  },
+  {
+    "path": "/api/mdx/qms/training/compliance",
+    "status": 200,
+    "body": {
+      "data": [],
+      "meta": {
+        "count": 0
+      }
+    }
+  },
+  {
+    "path": "/api/mdx/notifications/unread-count",
+    "status": 200,
+    "body": {
+      "data": {
+        "unread": 0
+      }
+    }
+  },
+  {
+    "path": "/api/concept2cure/projects/9ede58cd-c6ac-48a3-99c8-d89a2a279e27/unified-work",
+    "status": 200,
+    "body": {
+      "items": [],
+      "summary": {
+        "total": 0,
+        "blocking": 0,
+        "open": 0,
+        "inProgress": 0,
+        "done": 0,
+        "bySource": {
+          "schedule": 0,
+          "review": 0,
+          "correspondence": 0,
+          "filing": 0,
+          "board": 0
+        },
+        "partial": false
+      },
+      "sources": {
+        "project_tasks": {
+          "ran": true,
+          "rowCount": 0
+        },
+        "c2c_project_work_items": {
+          "ran": true,
+          "rowCount": 0
+        },
+        "estar_submissions": {
+          "ran": true,
+          "rowCount": 0
+        },
+        "unified_tasks": {
+          "ran": true,
+          "rowCount": 0
+        }
+      }
+    }
+  },
+  {
+    "path": "/api/concept2cure/projects/9ede58cd-c6ac-48a3-99c8-d89a2a279e27/schedule-of-events",
+    "status": 200,
+    "body": {
+      "plan": null,
+      "milestones": [],
+      "goals": [],
+      "revisions": [],
+      "health": {
+        "assessedAt": "2026-10-26T15:13:47.205Z",
+        "total": 0,
+        "completed": 0,
+        "onTrack": 0,
+        "atRisk": 0,
+        "slipped": 0,
+        "undated": 0,
+        "overallStatus": "not_assessed",
+        "summary": "No milestones are scheduled.",
+        "milestones": []
+      }
+    }
+  }
+]

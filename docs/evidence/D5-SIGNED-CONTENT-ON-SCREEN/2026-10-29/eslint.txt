@@ -1,0 +1,29 @@
+# npx eslint --no-ignore <files>, 2026-10-29T11:43:37Z, working tree at 6b70fd0a4 + this change.
+# HEAD's count for a changed file: git show HEAD:<file> | npx eslint --no-ignore --stdin --stdin-filename <file>. A new file's baseline is 0.
+
+| File | HEAD warnings | Now warnings | Errors now |
+|---|---|---|---|
+| client/src/concept2cure/v2/surfaces/Labeling.tsx | 2 | 2 | 0 |
+| client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx | 0 | 0 | 0 |
+| client/src/concept2cure/v2/surfaces/RiskRegister.tsx | 3 | 3 | 0 |
+| server/routes/mdx-labeling.ts | 0 | 0 | 0 |
+| client/src/concept2cure/v2/SignedContentState.tsx (new) | 0 | 0 | 0 |
+| client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx (new) | 0 | 0 | 0 |
+| client/src/concept2cure/v2/__tests__/signedContentState.test.tsx (new) | 0 | 0 | 0 |
+| client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx (new) | 0 | 0 | 0 |
+| client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx (new) | 0 | 0 | 0 |
+| server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts (new) | 0 | 0 | 0 |
+
+## The warnings now (all HEAD's own rules on HEAD's own functions)
+
+client/src/concept2cure/v2/surfaces/Labeling.tsx
+  169:8  warning  Function 'Labeling' has too many lines (408). Maximum allowed is 100  max-lines-per-function
+  169:8  warning  Function 'Labeling' has a complexity of 55. Maximum allowed is 15     complexity
+
+client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+  100:8  warning  Function 'mapRiskItems' has a complexity of 22. Maximum allowed is 15  complexity
+  754:1  warning  File has too many lines (769). Maximum allowed is 500                  max-lines
+  793:1  warning  Function 'RiskLead' has a complexity of 28. Maximum allowed is 15      complexity
+
+✖ 5 problems (0 errors, 5 warnings)
+

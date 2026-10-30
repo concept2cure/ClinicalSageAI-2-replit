@@ -30,10 +30,11 @@ const ok = (body: unknown) => new Response(JSON.stringify(body), { status: 200 }
 const user = (id = '511', organizationId = '51') => ({ id, organizationId, organizationName: null,
   email: 'source-start@example.test', displayName: 'Synthetic author', firstName: 'Synthetic', lastName: 'Author',
   roles: ['author'], permissions: [], mfaEnabled: false, mfaMethods: [], mustChangePassword: false });
+const bearer = (visit = 'initial', id = '511', organizationId = '51') => `fixture.${btoa(JSON.stringify({ userId: Number(id), organizationId: Number(organizationId), visit }))}.synthetic`;
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); clearEditorTarget(); __resetCeremonies();
   vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user: user() })));
-  await authService.adoptSession('synthetic-source-start');
+  await authService.adoptSession(bearer());
   publishShellProject({ id: PROGRAM, title: 'Source start project' });
   apiRequest.mockReset().mockImplementation(async () => ok({ success: true, documents: [] }));
 });
@@ -96,14 +97,14 @@ describe('source-start ownership after the existing editor receives it', () => {
     else {
       vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true,
         user: change === 'account change' ? user('512') : change === 'organization change' ? user('511', '52') : user() })));
-      await authService.adoptSession('synthetic-source-replacement');
+      await authService.adoptSession(bearer('replacement', change === 'account change' ? '512' : '511', change === 'organization change' ? '52' : '51'));
     }
     expect(intent.current()).toBe(false); expect(peekEditorTarget()).toBeNull();
   });
   it('keeps the source intent through a real same-session token refresh', async () => {
-    authService.setToken('synthetic-before-refresh', user(), 'synthetic-refresh-token', 3600);
+    authService.setToken(bearer('before-refresh'), user(), 'synthetic-refresh-token', 3600);
     setEditorTarget(start()); const intent = captureSourceDocumentStartIntent(consumeEditorTarget()!, () => true)!;
-    vi.stubGlobal('fetch', vi.fn(async () => ok({ accessToken: 'synthetic-after-refresh',
+    vi.stubGlobal('fetch', vi.fn(async () => ok({ accessToken: bearer('after-refresh'),
       refreshToken: 'synthetic-next-refresh', expiresIn: 3600 })));
     expect(await authService.refreshToken()).toBe(true);
     expect(intent.current()).toBe(true);

@@ -10,7 +10,8 @@
  * It now shows, above the project's submissions:
  *   - the dispatch gate's verdict, from the same discovery and the same
  *     endpoint as the readiness screen (programSequence.ts), stated exactly as
- *     the server stated it, with "Open readiness" to the readiness screen;
+ *     the server stated it, with a door to the readiness screen ("Check what
+ *     stops sending" since slice A.1; it read "Open readiness");
  *   - the honest not-ready states in plain words;
  * and the project's submissions from GET /api/submissions?programId=<uuid>,
  * with loading, a failure with a retry, and an honest empty as three states.
@@ -36,6 +37,11 @@
  * project by name. The two panels cannot contradict each other any more,
  * because there is one. The market-by-market cases are in
  * projectMarkets.test.tsx.
+ *
+ * F10 (2026-10-29): the door to the readiness screen is gone. Each row shows
+ * that screen's own detail (MarketGateDetail: the server's gates, findings and
+ * acts); submitHoldsReadiness.test.tsx pins it. The assertions here that read
+ * the door or a gate breakdown are re-pointed onto the row.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -163,7 +169,7 @@ describe('Project home — device pathway actions reflect the supported workflow
     const panel = await screen.findByTestId('pj-markets');
     await waitFor(() => expect(panel.textContent).toContain('file on their own pathways'));
     expect(within(panel).queryByRole('button', { name: /Add a market|Compile and download/ })).toBeNull();
-    expect(within(panel).getByRole('button', { name: /Open Submission Center/ })).toBeTruthy();
+    expect(within(panel).getByRole('button', { name: 'See every sequence in Submission Center' })).toBeTruthy();
   });
 
   it.each([['device', '510k'], ['device', 'pma'], ['ivd', '510k'], ['cdx', 'pma'], ['samd', '510k']])('does not offer an eCTD market for a %s %s project, while retaining its submissions', async (productType, programType) => {
@@ -172,10 +178,12 @@ describe('Project home — device pathway actions reflect the supported workflow
     const panel = await screen.findByTestId('pj-markets');
     await waitFor(() => expect(panel.textContent).toContain('file on their own pathways'));
     expect(within(panel).queryByRole('button', { name: /Add a market/ })).toBeNull();
-    expect(within(panel).getByRole('button', { name: /Open Submission Center/ })).toBeTruthy();
-    expect(within(panel).getByRole('button', { name: /Open readiness/ })).toBeTruthy();
+    expect(within(panel).getByRole('button', { name: 'See every sequence in Submission Center' })).toBeTruthy();
     expect(within(panel).queryByRole('button', { name: /Compile and download/ })).toBeNull();
     expect(await screen.findByTestId('pj-submission')).toBeTruthy();
+    // Its readiness is on its own row (F10, P-33), not behind a door to a second screen.
+    await waitFor(() => expect(within(panel).getByTestId('dr2-market-detail')).toBeTruthy());
+    expect(within(panel).queryByRole('button', { name: 'Check what stops sending' })).toBeNull();
   });
 
   it.each(['hde', 'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx'])(
@@ -222,10 +230,10 @@ describe('Project home — the Submit stage lists the project’s submissions', 
     expect(await screen.findByTestId('pj-submission')).toBeTruthy();
   });
 
-  it('keeps "Open Submission Center", which opens on this project', async () => {
+  it('keeps the Submission Center door ("Open Submission Center" until slice A.1), which opens on this project', async () => {
     serve();
     await openSubmit();
-    fireEvent.click(await screen.findByRole('button', { name: /Open Submission Center/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'See every sequence in Submission Center' }));
     expect(onNav).toHaveBeenCalledWith('submission-center');
   });
 });
@@ -246,8 +254,9 @@ describe('Project home — the Submit stage shows the server’s dispatch verdic
     expect(urls()).toContain('/api/submissions/sequences/905/dispatch-readiness');
     // On the submission's own row: the verdict and the list are one panel (F9).
     expect(verdict.textContent).toContain('ONC-221 IND');
-    fireEvent.click(screen.getByRole('button', { name: /Open readiness/ }));
-    expect(onNav).toHaveBeenCalledWith('dispatch-readiness');
+    // And the readiness detail is on that row too (F10, P-33): the door to a second readiness screen is gone.
+    expect(within(verdict).getByTestId('dr2-market-detail')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Check what stops sending' })).toBeNull();
   });
 
   it('a cleared verdict is the server’s, and says so in words', async () => {
@@ -368,11 +377,15 @@ describe('Project home — a cleared verdict carries what the server did not ass
     await openSubmit();
     const verdict = await verdictRow();
     expect(verdict.textContent).toContain('Cleared to dispatch · 1 gate not assessed');
-    const lines = screen.getAllByTestId('pj-market-not-assessed');
-    expect(lines).toHaveLength(1);
-    expect(lines[0].textContent).toContain('Agency validator report');
-    expect(lines[0].textContent).toContain('not assessed');
-    expect(lines[0].textContent).toContain(NOT_ASSESSED);
+    // With the server's gate breakdown each gate is its own card in the readiness detail under the row (F10):
+    // one, and only one, is not assessed, said in the server's words and never "Satisfied".
+    expect(verdict.querySelectorAll('.dr2-gate.warn')).toHaveLength(1);
+    const external = verdict.querySelector('[data-gate="external"]') as HTMLElement;
+    expect(external.className).toContain('warn');
+    expect(external.textContent).toContain('Agency validator report');
+    expect(external.textContent).toContain('Not assessed.');
+    expect(external.textContent).toContain(NOT_ASSESSED);
+    expect(external.textContent).not.toContain('Satisfied');
   });
 
   it('with no gate breakdown, says the external validator did not run', async () => {

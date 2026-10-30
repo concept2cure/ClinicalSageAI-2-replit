@@ -1,0 +1,11 @@
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > IvdSurface draws the IVDR readiness board for the open project > reads the board with the project's id and draws its families 181ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > IvdSurface draws the IVDR readiness board for the open project > mounts the IVD assessment workbench for the same project 202ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a response for the organization is not drawn under a project 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a response for another project is not drawn 54ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a project the organization does not own (404) says so 49ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > an ownership check that could not run (503) says so 46ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a failed read (500) says so 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a family that could not be read is "Not read", and no overall figure is shown 238ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a project with no records reads empty, as a read that succeeded 42ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)

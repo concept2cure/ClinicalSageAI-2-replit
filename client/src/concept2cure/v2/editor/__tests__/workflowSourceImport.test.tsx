@@ -42,7 +42,56 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); clearEditorTarget(); authService.endSession(null); clearAuthToken(); clearShellProject(); localStorage.clear(); sessionStorage.clear(); });
 
+describe('agency response workflow intake', () => {
+  it.each(['agency.response', 'agency.context'])('keeps agency question identities separate and opens the requested %s section', async selectedCode => {
+    const savedSource: WorkflowImportSource = { kind: 'agency-response', eventId: 'recorded-letter', questionId: 17 };
+    const origin = { ...preview.origin, kind: 'agency-response' as const, id: 'recorded-letter:17', selection: savedSource,
+      version: '2', conversion: 'agency-response-snapshot' as const,
+      sourceScope: { level: 'program' as const, programId: PID, projectId: 2 }, association: { mode: 'recorded' as const, reason: null },
+      sectionOrigins: ['agency.context', 'agency.response'].map(code => ({ ...preview.origin.sectionOrigins[0], code, sourceRowId: 'agency_communication_questions:17', originalAuthorship: 'unknown' as const })) };
+    const sourcePreview = { ...preview, origin, sections: ['agency.context', 'agency.response'].map(code => ({ code, title: code, contentSha256: hash })),
+      association: { mode: 'recorded' as const, required: false, reasonRequired: false, sourceProgramId: PID, sourceProjectId: 2, targetProgramId: PID } };
+    expect(readWorkflowPreview({ success: true, data: sourcePreview }, PID, savedSource)).not.toBeNull();
+    expect(readWorkflowPreview({ success: true, data: sourcePreview }, PID, { ...savedSource, questionId: 18 })).toBeNull();
+    expect(readWorkflowPreview({ success: true, data: sourcePreview }, PID, { ...savedSource, eventId: 'another-letter' })).toBeNull();
+    expect(readWorkflowPreview({ success: true, data: sourcePreview }, PID, { ...savedSource, eventId: 'recorded-letter\n' })).toBeNull();
+    const sourceCreated = { ...created, origin, sections: ['agency.context', 'agency.response'].map((code, index) => ({ ...created.sections[0],
+      id: `${index + 3}3333333-3333-4333-8333-333333333333`, code, title: code })),
+      doc: { ...created.doc, provenance: { source: 'import', importSource: { ...origin, reason: 'Review the saved agency answer', warnings: [] } } } };
+    apiRequest.mockResolvedValueOnce(ok(sourcePreview)).mockResolvedValueOnce(ok(sourceCreated));
+    const onOpenDocument = vi.fn(); render(dialog({ source: savedSource, initialSectionCode: 'agency.response', onOpenDocument }));
+    await screen.findByTestId('workflow-import-preview'); reason();
+    fireEvent.click(screen.getByRole('button', { name: 'Create working copy' }));
+    await screen.findByRole('button', { name: 'Open working copy' });
+    if (selectedCode === 'agency.context') fireEvent.change(screen.getByLabelText('Section to open'), { target: { value: selectedCode } });
+    expect((screen.getByLabelText('Section to open') as HTMLSelectElement).value).toBe(selectedCode);
+    fireEvent.click(await screen.findByRole('button', { name: 'Open working copy' }));
+    expect(onOpenDocument).toHaveBeenCalledWith(DOC, selectedCode);
+    expect(describeProvenance(sourceCreated.doc.provenance)?.importSource).toMatchObject({ kind: 'agency-response', id: 'recorded-letter:17' });
+  });
+});
+
 describe('stored workflow intake', () => {
+  it('previews exact saved-design blank CRFs, creates a reasoned copy and opens only its saved section', async () => {
+    const savedSource: WorkflowImportSource = { kind: 'study-design-crf', studyId: 'sd_actual' };
+    const origin = { ...preview.origin, kind: 'study-design-crf' as const, id: savedSource.studyId, selection: savedSource,
+      conversion: 'study-design-crf-projection' as const,
+      sectionOrigins: [{ ...preview.origin.sectionOrigins[0], code: 'crf.form.001', originalAuthorship: 'template' as const }] };
+    const sourcePreview = { ...preview, origin, sections: [{ code: 'crf.form.001', title: 'Blank demographics', contentSha256: hash }] };
+    const copy = { ...created, origin, doc: { ...created.doc, provenance: { source: 'import', importSource: { ...origin, reason: 'Review saved clinical output', warnings: [] } } },
+      sections: [{ ...created.sections[0], code: 'crf.form.001', title: 'Blank demographics', content: 'Participant identifier: [blank]' }] };
+    apiRequest.mockResolvedValueOnce(ok(sourcePreview)).mockResolvedValueOnce(ok(copy));
+    const onOpenDocument = vi.fn(); render(dialog({ source: savedSource, title: 'Blank CRFs', onOpenDocument }));
+    await screen.findByTestId('workflow-import-preview');
+    reason(); associate(); fireEvent.click(screen.getByRole('button', { name: 'Create working copy' }));
+    await screen.findByRole('button', { name: 'Open working copy' });
+    expect(apiRequest.mock.calls[0][2]).toEqual({ programId: PID, source: savedSource, previewOnly: true });
+    expect(apiRequest.mock.calls[1][2]).toMatchObject({ source: savedSource, expectedFingerprint: hash, reason: 'Review saved clinical output' });
+    fireEvent.click(screen.getByRole('button', { name: 'Open working copy' }));
+    expect(onOpenDocument).toHaveBeenCalledWith(DOC, 'crf.form.001');
+    expect(readWorkflowPreview({ success: true, data: sourcePreview }, PID, { kind: 'study-design-crf', studyId: 'sd_other' })).toBeNull();
+    expect(readWorkflowPreview({ success: true, data: sourcePreview }, PID, { kind: 'study-design-crf', studyId: 'sd_actual\n' })).toBeNull();
+  });
   it('previews an exact saved IVD document and opens only the confirmed Authoring document id', async () => {
     const savedSource: WorkflowImportSource={kind:'ivd-document',documentId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'};
     const origin={...preview.origin,kind:'ivd-document' as const,id:savedSource.documentId,selection:savedSource,conversion:'ivd-document-snapshot' as const,

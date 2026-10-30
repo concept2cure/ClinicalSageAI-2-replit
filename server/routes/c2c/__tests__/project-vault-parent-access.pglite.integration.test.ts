@@ -56,6 +56,8 @@ beforeAll(async () => {
       product_type text, device_class text, regulatory_path text, product_code text, predicate_devices jsonb,
       metadata jsonb DEFAULT '{}', deleted_at timestamptz, progress_percent integer
     );
+    CREATE TABLE client_workspaces (id integer PRIMARY KEY, organization_id integer, name text, status text);
+    INSERT INTO client_workspaces VALUES (71,7,'Workspace','active');
     CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, regulatory_program_id uuid,
       owner_id integer, created_by_id integer, settings jsonb, status text, client_workspace_id integer);
     CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);
@@ -82,6 +84,8 @@ beforeAll(async () => {
              ('${PUBLIC_DOC}','${PUBLIC}',7,'Stability public evidence','public.pdf','REPORT','Public stability results',now()-interval '1 day');
   `);
   await h.pg.exec(fs.readFileSync('migrations/20260906_vault_documents_fulltext.sql', 'utf8'));
+  // The search counts versions still being read (MR-08 Stage 3) from the catalog.
+  await h.pg.exec(fs.readFileSync('migrations/20260905_document_catalog.sql', 'utf8'));
   // A search hit carries its lifecycle stage (VR-18), read from canonical_documents.
   await h.pg.exec(fs.readFileSync('migrations/20260731c_canonical_documents.sql', 'utf8'));
 });

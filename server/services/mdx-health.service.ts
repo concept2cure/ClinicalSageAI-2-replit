@@ -15,8 +15,10 @@
 import { pool } from '../db';
 import {
   REGULATORY_PATHWAYS,
+  pathwayForProgram,
   type RegulatoryPathway,
 } from '../../shared/constants/mdx';
+import { isDeviceFamily, workstreamForFilingType } from '../../shared/constants/domain/product-types';
 
 export interface TableHealth {
   /** Schema-qualified name (e.g. 'public.regulatory_programs',
@@ -112,8 +114,8 @@ export function deriveMdxReleaseStatus(input: {
    When `required` is missing we report readiness=not_ready. */
 const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = [
   /* Beta-blocking. */
-  { name: 'public.regulatory_programs',           role: 'Programs list, every per-program endpoint',   required: true  },
-  { name: 'public.saved_precedent_queries',       role: 'PrecedentSurface saved queries panel',        required: true  },
+  { name: 'public.regulatory_programs',           role: 'Projects list, every per-project endpoint',   required: true  },
+  { name: 'public.saved_precedent_queries',       role: 'PrecedentSurface saved queries and Vault saved views', required: true  },
   { name: 'public.audit_logs',                    role: 'ProjectHome activity feed + 21 CFR Part 11', required: true  },
   { name: 'public.q_submissions',                 role: 'PreSubManager list + KPIs',                   required: true  },
   { name: 'public.q_sub_questions',               role: 'PreSubManager detail',                        required: true  },
@@ -240,27 +242,18 @@ async function probeTable(
  */
 async function probePathwayCoverage(): Promise<PathwayCoverage[]> {
   try {
-    const result = await pool.query<{ pathway: string; n: number }>(
-      `SELECT regulatory_path AS pathway, COUNT(*)::int AS n
+    const result = await pool.query<{ program_type: string; pathway: string | null; product_type: string; n: number }>(
+      `SELECT program_type, regulatory_path AS pathway, product_type, COUNT(*)::int AS n
          FROM regulatory_programs
-        WHERE regulatory_path IS NOT NULL
-        GROUP BY 1`,
+        GROUP BY 1, 2, 3`,
     );
-    /* Normalize pathway codes to the kit closed-enum
-       (regulatoryPath='510k' → kit pathway='k510'). */
-    const PATH_TO_KIT: Record<string, RegulatoryPathway> = {
-      '510k':    'k510',
-      'de_novo': 'k510',
-      'pma':     'pma',
-      'cer':     'cer',
-      'ivd':     'ivdr',
-      'ivdr':    'ivdr',
-    };
     const counts = new Map<RegulatoryPathway, number>();
-    for (const r of result.rows) {
-      const kit = PATH_TO_KIT[(r.pathway ?? '').toLowerCase()];
-      if (!kit) continue;
-      counts.set(kit, (counts.get(kit) ?? 0) + r.n);
+    for (const row of result.rows) {
+      const workstream = workstreamForFilingType(row.program_type, row.product_type);
+      if (workstream === 'Biotech' || workstream === 'Pharma') continue;
+      const pathway = pathwayForProgram(row.program_type, row.pathway);
+      if (pathway === 'other' && workstream !== 'MDX' && !isDeviceFamily(row.product_type)) continue;
+      counts.set(pathway, (counts.get(pathway) ?? 0) + row.n);
     }
     return REGULATORY_PATHWAYS.map((p) => ({
       pathway:      p,
@@ -295,7 +288,7 @@ function tableWarnings(tables: TableHealth[], pathwayCoverage: PathwayCoverage[]
     warnings.push(`Table ${t.name} could not be probed — whether it is provisioned is not known. Affects: ${t.role}.`);
   }
   if (pathwayCoverage.some((p) => p.programCount === null)) {
-    warnings.push('Pathway coverage could not be read — the number of programs per pathway is not known.');
+    warnings.push('Pathway coverage could not be read — the number of projects per pathway is not known.');
   }
   return { warnings, missingRequired, requiredUnprobed: unprobed.some((t) => t.required) };
 }

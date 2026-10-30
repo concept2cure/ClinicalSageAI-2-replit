@@ -74,7 +74,8 @@ const sqlCalls = () => query.mock.calls.map((c) => String(c[0]));
 beforeEach(() => {
   query.mockReset();
   release.mockReset();
-  query.mockResolvedValue({ rows: [] });
+  query.mockImplementation(async (sql: string) => ({rows: /AS portfolio_counts/.test(sql)
+    ? [{portfolio_counts:{total:0,byWorkstream:{},byPathway:{},filingWithin60Days:0}}] : []}));
   delete process.env.PROGRAM_AUTHZ_MODE;
   clearSeats();
   seatProgram(ORG, ID);

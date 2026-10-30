@@ -254,7 +254,7 @@ const fdaSoftwareReviewer: ReviewerPersona = {
         'methodology',
         'warning',
         `${FDA_DOCUMENTATION_LEVEL_QUESTION} Does the submitted documentation set match that level?`,
-        'software flagged for program',
+        'software flagged for project',
         fdaDocumentationLevel({}).basis.map(basisLabel).join('; '),
         describeFdaSoftwareDocumentation('undetermined')
       )
@@ -514,7 +514,7 @@ const preclinicalToxicologist: ReviewerPersona = {
           'preclinical_toxicologist',
           'completeness',
           'info',
-          'Nonclinical study data has not been loaded for this program. The preclinical reviewer cannot assess Module 4 adequacy until ctd_nonclinical_studies is populated for the program.',
+          'Nonclinical study data has not been loaded for this project. The preclinical reviewer cannot assess Module 4 adequacy until ctd_nonclinical_studies is populated for the project.',
           'nonclinical_intel_missing',
           'ICH M3(R2)',
           // 2026-10-15: also offered "attach nonclinical facts to the simulator

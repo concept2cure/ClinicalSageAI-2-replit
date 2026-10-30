@@ -1,0 +1,46 @@
+{
+ "extends": "<repo>/tsconfig.json",
+ "compilerOptions": {
+  "incremental": false,
+  "noEmit": true
+ },
+ "include": [
+  "<repo>/client/src/**/*.d.ts",
+  "<repo>/server/**/*.d.ts",
+  "<repo>/shared/**/*.d.ts"
+ ],
+ "files": [
+  "<repo>/client/src/concept2cure/mdx/data/engineering.ts",
+  "<repo>/client/src/concept2cure/mdx/hooks/useEngineering.ts",
+  "<repo>/client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx",
+  "<repo>/client/src/concept2cure/mdx/surfaces/EngineeringDesignHistory.tsx",
+  "<repo>/client/src/concept2cure/quality/ChangeControl.tsx",
+  "<repo>/client/src/concept2cure/quality/qmsWrites.ts",
+  "<repo>/server/routes/mdx-engineering.ts",
+  "<repo>/server/routes/mdx-qms.ts",
+  "<repo>/server/routes/mdx-qms-context.ts",
+  "<repo>/server/services/ana/AnaToolExecutor.ts",
+  "<repo>/server/services/ana/qms-labeling-analytics-tool-defs.ts",
+  "<repo>/server/services/qms/changeControl.service.ts",
+  "<repo>/client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx",
+  "<repo>/client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx",
+  "<repo>/server/routes/__tests__/mdx-engineering-per-product.test.ts",
+  "<repo>/server/routes/__tests__/qms-change-project.test.ts",
+  "<repo>/server/services/ana/__tests__/change-tool-admits-program.test.ts",
+  "<repo>/tests/schema-contract/change-controls-program-key.pglite.test.ts",
+  "<repo>/client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx",
+  "<repo>/client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx",
+  "<repo>/server/routes/__tests__/mdx-engineering-panels-by-project.test.ts",
+  "<repo>/server/routes/__tests__/mdx-engineering-trace-by-project.test.ts",
+  "<repo>/server/routes/__tests__/mdx-engineering.contract.test.ts",
+  "<repo>/server/services/ana/__tests__/qms-change-tools.test.ts",
+  "<repo>/server/services/qms/__tests__/changeControl.pglite.integration.test.ts",
+  "<repo>/tests/mdx-beta-surfaces-routes.test.ts",
+  "<repo>/server/types/auth-request.ts",
+  "<repo>/server/auth/index.ts",
+  "<repo>/server/middleware/auth.ts",
+  "<repo>/server/middleware/tenantContext.ts",
+  "<repo>/server/auth.ts",
+  "<scratch>/css-modules.d.ts"
+ ]
+}
