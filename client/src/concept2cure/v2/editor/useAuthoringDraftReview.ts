@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { FireToast } from '../toast';
 import { acceptAuthoringDraft, captureEditorDraftGuard, checkAuthoringDraftSection, createEmptyAiDraftReviewState,
   generateAuthoringDraft, type AcceptedAttribution, type AiDraftGenerationInputs, type AiDraftReviewSession, type AiDraftReviewState } from './authoringDraftTransport';
+import { DRAFT_APPROACHES, NO_ALTERNATIVES, arrivedAlternative, showAlternative } from './draftAlternatives';
 
 interface Options {
   sectionId: string; docId?: string; programId?: string | null; docSealed: boolean; editorDirty: boolean;
@@ -13,6 +14,8 @@ interface Options {
 }
 const UNKNOWN_ACCEPT = 'Could not confirm whether this draft was accepted. Check the saved section before any further acceptance. The candidate and your review text are retained; no save will be repeated automatically.';
 const DIRTY_ACCEPT = 'Save or discard the editor’s unsaved changes before accepting this draft. Nothing was sent.';
+const NO_PROVIDER = 'No AI provider is configured for this deployment, so this section cannot be drafted. This is a server setting, not your connection. Nothing was changed.';
+const sentence = (message: string) => message.trim().replace(/[.\s]+$/, '');
 
 interface ReviewRun { token: object; current: () => boolean; options: Options }
 interface ReviewActions {
@@ -49,15 +52,44 @@ async function acceptReview(owner: ReviewActions) {
         return;
       }
       run.options.onAccepted(result.section, result.attribution);
-      owner.patch({ draft: null, body: '', acceptUnknown: false, checkedContent: undefined });
+      owner.patch({ draft: null, body: '', acceptUnknown: false, checkedContent: undefined, ...NO_ALTERNATIVES });
       run.options.onClose();
       return;
     }
     if (result.unknown) { owner.patch({ acceptUnknown: true, refusal: UNKNOWN_ACCEPT }); return; }
     const refused = run.options.describeAcceptFailure(result.status, result.code, result.message);
     owner.patch({ refusal: refused.text, acceptUnknown: false, baseChanged: result.code === 'SECTION_BASE_CHANGED',
-      ...(refused.clearDraft ? { draft: null, body: '' } : {}) });
+      ...(refused.clearDraft ? { draft: null, body: '', ...NO_ALTERNATIVES } : {}) });
   } finally { owner.finish(run.token); }
+}
+
+interface AlternativesOwner {
+  read: () => AiDraftReviewState;
+  patch: (state: Partial<AiDraftReviewState>) => void;
+  setPhase: (phase: string | null) => void;
+  arrived: () => void;
+}
+/** One explicit run: the existing draft route once per approach, in turn, each shown as it arrives. */
+async function runAlternatives(owner: AlternativesOwner, run: ReviewRun, request: AiDraftGenerationInputs) {
+  const sources = run.options.reviewSession?.sources;
+  let arrived = 0;
+  for (const [i, { approach, label }] of DRAFT_APPROACHES.entries()) {
+    owner.setPhase(`Drafting alternative ${i + 1} of ${DRAFT_APPROACHES.length} (${label.toLowerCase()})…`);
+    const result = await generateAuthoringDraft({ sectionId: run.options.sectionId, ...request, tone: approach,
+      ...(sources ? { sources } : {}) }, run.current);
+    if (!run.current() || result.ok === false && result.stale) return;
+    if (!result.ok) {
+      owner.patch({ pendingApproaches: [] });
+      if (result.code === 'GATEWAY_UNAVAILABLE') { owner.patch({ refusal: NO_PROVIDER }); return; }
+      run.options.fireToast(arrived
+        ? `Drafted ${arrived} of ${DRAFT_APPROACHES.length} alternatives. The ${approach} alternative could not be drafted — ${sentence(result.message)}. The section is unchanged.`
+        : `Couldn’t draft this section — ${sentence(result.message)}. Nothing was changed.`, 'error');
+      return;
+    }
+    if (!arrived) owner.arrived();
+    owner.patch(arrivedAlternative(owner.read(), approach, result.draft, DRAFT_APPROACHES.slice(i + 1).map(a => a.approach), !arrived));
+    arrived++;
+  }
 }
 
 export function useAuthoringDraftReview(options: Options) {
@@ -66,6 +98,7 @@ export function useAuthoringDraftReview(options: Options) {
   const [generatingSince, setGeneratingSince] = useState<number | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [phase, setPhase] = useState<string | null>(null);
   const state = options.reviewSession?.state ?? local;
   const latest = useRef({ options, state });
   latest.current = { options, state };
@@ -120,14 +153,23 @@ export function useAuthoringDraftReview(options: Options) {
         const target = scope.current;
         candidateCurrent.current = captureEditorDraftGuard({ programId: run.options.programId,
           isCurrent: () => alive.current && scope.current === target });
-        patch({ draft: result.draft, body: result.draft.generated, acceptUnknown: false, baseChanged: false, checkedContent: undefined }); return;
+        patch({ draft: result.draft, body: result.draft.generated, acceptUnknown: false, baseChanged: false, checkedContent: undefined, ...NO_ALTERNATIVES }); return;
       }
-      if (result.code === 'GATEWAY_UNAVAILABLE') {
-        patch({ refusal: 'No AI provider is configured for this deployment, so this section cannot be drafted. This is a server setting, not your connection. Nothing was changed.' });
-        return;
-      }
+      if (result.code === 'GATEWAY_UNAVAILABLE') { patch({ refusal: NO_PROVIDER }); return; }
       run.options.fireToast(`Couldn’t draft this section — ${result.message}. Nothing was changed.`, 'error');
     } finally { finish(run.token); }
+  };
+  const generateAlternatives = async (request: AiDraftGenerationInputs) => {
+    if (latest.current.options.docSealed || latest.current.state.acceptUnknown) return;
+    const run = begin(); if (!run) return;
+    setGenerating(true); setGeneratingSince(Date.now()); patch({ refusal: null, generationInputs: { ...request } });
+    const target = scope.current;
+    try {
+      await runAlternatives({ read: () => latest.current.state, patch, setPhase, arrived: () => {
+        candidateCurrent.current = captureEditorDraftGuard({ programId: run.options.programId,
+          isCurrent: () => alive.current && scope.current === target });
+      } }, run, request);
+    } finally { setPhase(null); finish(run.token); }
   };
   const accept = () => acceptReview({ read: () => latest.current, candidateCurrent, patch, begin, finish, setAccepting });
   const checkSaved = async () => {
@@ -143,6 +185,7 @@ export function useAuthoringDraftReview(options: Options) {
         : 'Could not verify the exact saved section. Acceptance remains unresolved and no further save was requested.' });
     } finally { finish(run.token); }
   };
-  return { state, generating, generatingSince, accepting, checking,
-    generate, accept, checkSaved, patch, setGenerationInputs };
+  const show = (index: number) => { const next = showAlternative(latest.current.state, index); if (next) patch(next); };
+  return { state, generating, generatingSince, accepting, checking, phase,
+    generate, generateAlternatives, showAlternative: show, accept, checkSaved, patch, setGenerationInputs };
 }

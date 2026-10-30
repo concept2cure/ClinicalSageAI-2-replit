@@ -92,7 +92,6 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   'report-engine':          { mod: 'Evidence',        noun: 'report',                    et: 'report' },
   'safety-narrative':       { mod: 'Safety',          noun: 'safety case',               et: 'case' },
   labeling:                 { mod: 'Labeling',        noun: 'label',                     et: 'label' },
-  risk:                     { mod: 'MedicalDevice',   noun: 'risk item',                 et: 'risk' },
   'deep-research':          { mod: 'Intelligence',    noun: 'research',                  et: 'research' },
   'audit-trail':            { mod: 'Quality',         noun: 'audit item',                et: 'audit' },
   billing:                  { mod: 'Regulatory',      noun: 'billing item',              et: 'billing' },

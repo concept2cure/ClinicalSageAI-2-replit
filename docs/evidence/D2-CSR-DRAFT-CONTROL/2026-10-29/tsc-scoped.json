@@ -1,0 +1,34 @@
+{
+ "command": "npx tsc -p tsconfig.scoped.json",
+ "config": {
+  "extends": "/home/user/ClinicalSageAI-2-replit/tsconfig.json",
+  "compilerOptions": {
+   "noEmit": true,
+   "typeRoots": [
+    "/home/user/ClinicalSageAI-2-replit/node_modules/@types",
+    "/home/user/ClinicalSageAI-2-replit/server/types"
+   ]
+  },
+  "include": [],
+  "files": [
+   "/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/csr-draft-control/vite-client.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/types/global.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/shared/types/jsx-modules.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/shared/types/third-party.d.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/authoringDraftTransport.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/draftAlternatives.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx",
+   "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx"
+  ]
+ },
+ "errors": 0,
+ "canary": {
+  "file": "a scratch file passing a number as sectionId and a string as pairing",
+  "output": "../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/csr-draft-control/tsc-canary.ts(3,22): error TS2322: Type 'number' is not assignable to type 'string'.\n../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/csr-draft-control/tsc-canary.ts(3,93): error TS2322: Type 'string' is not assignable to type 'readonly number[]'.\n"
+ }
+}

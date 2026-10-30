@@ -15,13 +15,20 @@
  *
  * Asked of the real registry, the panel's calls as the launch-scope walk reads
  * them from the screens' own code, and the gate production builds.
+ *
+ * 2026-10-29 (D2, fold F2, decision P-61 item 4): the fold is made.
+ * ivd-completeness has no registry entry and its claims moved to
+ * device-diagnostics, so device-diagnostics claims the panel's calls alone. A
+ * holder of ivd-completeness keeps them: its grant carries to device-diagnostics
+ * in the entitlement resolver, which this file stubs, so that is pinned with the
+ * real resolver in
+ * server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /** The modules each test organization holds. */
 const HOLDS: Record<number, ReadonlySet<string>> = {
   101: new Set(['device-diagnostics']),
-  102: new Set(['ivd-completeness']),
   103: new Set(['projects']),
 };
 vi.mock('../../services/license-manager.js', () => ({
@@ -36,7 +43,7 @@ import { invalidateEnforcementModeCache } from '../../services/entitlements/enfo
 import { LAUNCH_SURFACE_IDS } from '../../../shared/constants/launch-scope';
 import { getSurface } from '../../../shared/constants/ui-surface-registry';
 import { checkLaunchScopeApi, REAL } from '../../../scripts/ci/check-launch-scope-api';
-import { buildPrefixMap, moduleEntitlementGate } from '../moduleEntitlementGate';
+import { buildPrefixMap, modulesForPath, moduleEntitlementGate } from '../moduleEntitlementGate';
 
 /** The walk records each file relative to the repository root. */
 const PANEL = ['IvdReadinessBoard.tsx', 'IvdAssessmentWorkbench.tsx'].map((f) => `client/src/concept2cure/v2/surfaces/${f}`);
@@ -65,30 +72,35 @@ describe('the IVDR readiness panel of device-diagnostics, under module enforceme
     Object.fromEntries(await Promise.all(calls.map(async (c) => [c.request, await ask(orgId, c.request)] as const)));
   const all = (v: string) => Object.fromEntries(calls.map((c) => [c.request, v]));
 
-  it('reads the panel\'s calls from both screens that mount it', () => {
+  it('reads the panel\'s calls from the screen that mounts it', () => {
     // A walk that lost the board would make every assertion below pass over nothing.
     expect(calls.map((c) => c.request).sort()).toEqual(expect.arrayContaining([
       '/api/ivd-assessments', '/api/ivd-assessments/classification', '/api/ivd-assessments/documents',
       '/api/ivd-assessments/documents/fsn', '/api/ivd-completeness/completeness',
     ]));
-    for (const c of calls) expect([...c.surfaces].sort(), c.p).toEqual(expect.arrayContaining(['device-diagnostics', 'ivd-completeness']));
+    for (const c of calls) {
+      expect([...c.surfaces], c.p).toContain('device-diagnostics');
+      expect([...c.surfaces], c.p).not.toContain('ivd-completeness');
+    }
   });
 
   it('serves them to an organization entitled to device-diagnostics only', async () => {
     expect(await verdicts(101)).toEqual(all('served'));
   });
 
-  it('serves them to an organization entitled to ivd-completeness only, as before', async () => {
-    expect(await verdicts(102)).toEqual(all('served'));
+  it('asks the gate for device-diagnostics alone: a folded module is no claimant', () => {
+    const map = buildPrefixMap();
+    for (const c of calls) expect([...(modulesForPath(c.request, map) ?? [])], c.request).toEqual(['device-diagnostics']);
   });
 
   it('refuses them to an organization entitled to neither', async () => {
     expect(await verdicts(103)).toEqual(all('403 MODULE_NOT_LICENSED'));
   });
 
-  it('leaves the ivd-completeness claim whole: moving it is founder decision 4', () => {
-    expect(getSurface('ivd-completeness')!.apiPrefixes).toEqual([
-      '/api/validate-completeness', '/api/c2c/projects', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/ivd-completeness',
-    ]);
+  it('the fold moved the claims: no ivd-completeness entry, and device-diagnostics holds its four IVD claims', () => {
+    expect(getSurface('ivd-completeness')).toBeUndefined();
+    expect(getSurface('device-diagnostics')!.apiPrefixes).toEqual(expect.arrayContaining([
+      '/api/validate-completeness', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/ivd-completeness',
+    ]));
   });
 });

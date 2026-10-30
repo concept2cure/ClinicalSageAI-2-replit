@@ -396,7 +396,7 @@ describe('every exit from review closes the route (§2.9, B4)', () => {
   it('retiring a document in review withdraws its route on the same transaction', async () => {
     const id = await draft('RETIRE');
     expect((await send(id, ['r1'], ['qa'])).status).toBe(200);
-    const res = await qms('qa', 'post', `/documents/${id}/retire`, { password: PASSWORD, meaning: 'APPROVED', reason: 'The procedure is superseded by the site SOP.' });
+    const res = await qms('qa', 'post', `/documents/${id}/retire`, { password: PASSWORD, meaning: 'retirement', reason: 'The procedure is superseded by the site SOP.' });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect((await doc(id)).status).toBe('retired');
     expect(await latestRoute(id)).toMatchObject({ status: 'withdrawn', status_reason: 'Retired: The procedure is superseded by the site SOP.' });

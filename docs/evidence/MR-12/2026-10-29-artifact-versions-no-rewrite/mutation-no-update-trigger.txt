@@ -1,0 +1,12 @@
+ ✓ server/services/audit/__tests__/artifact-versions-no-rewrite.pglite.test.ts > concept2cure_artifact_versions refuses a rewrite > records a new version, and moves the artifact head 4ms
+ × server/services/audit/__tests__/artifact-versions-no-rewrite.pglite.test.ts > concept2cure_artifact_versions refuses a rewrite > refuses rewriting the content 5ms
+ × server/services/audit/__tests__/artifact-versions-no-rewrite.pglite.test.ts > concept2cure_artifact_versions refuses a rewrite > refuses rewriting the hash 1ms
+ × server/services/audit/__tests__/artifact-versions-no-rewrite.pglite.test.ts > concept2cure_artifact_versions refuses a rewrite > refuses rewriting the version number 1ms
+ × server/services/audit/__tests__/artifact-versions-no-rewrite.pglite.test.ts > concept2cure_artifact_versions refuses a rewrite > refuses rewriting the whole table 6ms
+ ✓ server/services/audit/__tests__/artifact-versions-no-rewrite.pglite.test.ts > concept2cure_artifact_versions refuses a rewrite > lets the purge's cascade delete an artifact with its versions 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/audit/__tests__/artifact-versions-no-rewrite.pglite.test.ts > concept2cure_artifact_versions refuses a rewrite > refuses rewriting the content
+ FAIL  server/services/audit/__tests__/artifact-versions-no-rewrite.pglite.test.ts > concept2cure_artifact_versions refuses a rewrite > refuses rewriting the hash
+ FAIL  server/services/audit/__tests__/artifact-versions-no-rewrite.pglite.test.ts > concept2cure_artifact_versions refuses a rewrite > refuses rewriting the version number
+ FAIL  server/services/audit/__tests__/artifact-versions-no-rewrite.pglite.test.ts > concept2cure_artifact_versions refuses a rewrite > refuses rewriting the whole table
+      Tests  4 failed | 2 passed (6)

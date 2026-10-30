@@ -2185,6 +2185,11 @@ export const C2C_MIGRATION_FILES = [
   // retention_until), which is the point: the guard has to exist before the
   // clock starts, not after the first record is destroyed.
   'migrations/20260906b_vault_legal_holds.sql',
+  // MR-08 Stage 5 step 4 (2026-10-29): a legal hold is placed once and lifted
+  // once. A row trigger admits only the write-once lift and an owner DELETE;
+  // a statement trigger refuses TRUNCATE. Right after the table it guards. No
+  // table, no column, no DROP.
+  'migrations/20261029b_vault_legal_holds_append_only.sql',
   'migrations/20260906c_vault_documents_content_hash_idx.sql',
   'migrations/20260917_vault_documents_storage_version.sql',
   'migrations/20260917b_submission_leaf_document_uuid.sql',
@@ -3686,6 +3691,10 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20261029h_capa_source_deviation.sql',
   'migrations/20261029i_c2c_commitments_read_only.sql',
   'migrations/20261029j_agency_letter_class.sql',
+  // An artifact version is never rewritten (MR-12 CAT2-20, 2026-10-29): UPDATE
+  // and TRUNCATE of concept2cure_artifact_versions refused; DELETE open for the
+  // purge's cascade. After 0000 (the table). No table, no DROP of another file's.
+  'migrations/20261029k_artifact_versions_no_rewrite.sql',
   // QMS job roles and training assignments (D2, P-49, 2026-10-29;
   // docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.1): qms_job_roles,
   // qms_job_role_members and qms_training_assignments, created only here. After

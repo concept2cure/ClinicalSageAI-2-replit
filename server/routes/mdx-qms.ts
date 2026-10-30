@@ -118,7 +118,7 @@ import {
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
 import { saveQmsControlledText } from '../services/qms/training-controlled-text';
 import { describeQmsTrainingDocument } from '../services/qms/training-content';
-import { inForceSummary, readInForceReleases } from '../services/qms/in-force-release';
+import { inForceSummary, qmsVersionStandings, readInForceReleases, resolveInForceRelease } from '../services/qms/in-force-release';
 import { readRegisterSignatures } from '../services/qms/register-signatures';
 import {
   QMS_PERIODIC_REVIEW_CODE_STATUS, qmsPeriodicReviewBody, readQmsReviewSchedule, recordQmsPeriodicReview,
@@ -134,6 +134,7 @@ import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-
 import { getOrgId, getUserId, qmsClient, admitBodyProject, admittedProject } from './mdx-qms-context';
 import qmsRecordsRouter from './mdx-qms-records';
 import qmsDeviationsRouter from './mdx-qms-deviations';
+import qmsControlledCopyRouter from './mdx-qms-controlled-copy';
 import qmsTrainingRouter from './mdx-qms-training';
 
 const router = Router();
@@ -152,7 +153,9 @@ const DOC_TYPE = ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', '
 const DOC_STATUS = ['draft', 'in_review', 'effective', 'superseded', 'retired'] as const;
 /* The statuses a create or an edit may set. 'effective' is reached only by the
    signed approval below (VSR-001 F-3); 'retired' only by the signed retire
-   route (P1-29 / DP-32), 'superseded' only by the revise route. The schemas
+   route (P1-29 / DP-32). 'superseded' is set by nothing: a version is superseded
+   by its successor's approval, read from qms_document_versions
+   (in-force-release.ts qmsVersionStandings). The schemas
    admitted all five, so a create or a PATCH could make an SOP effective with no
    signature (new-code audit 2026-09-24, finding 1). */
 
@@ -453,7 +456,7 @@ router.get('/qms/documents/:id/versions', async (req: Request, res: Response) =>
   const orgId = getOrgId(req); if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id); if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 400, 'id must be a positive integer');
   try {
-    const parent = await qmsClient(req).query(`SELECT id FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [id, orgId]);
+    const parent = await qmsClient(req).query(`SELECT * FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [id, orgId]);
     if (!parent.rows.length) return notFoundInTenant(res, 'Document');
     const rows = await qmsClient(req).query(`SELECT v.* FROM qms_document_versions v JOIN qms_documents d ON d.id = v.document_id AND d.organization_id = v.organization_id
       WHERE v.document_id = $1 AND v.organization_id = $2 AND d.deleted_at IS NULL ORDER BY v.approved_at DESC, v.id DESC`, [Number(req.params.id), orgId]);
@@ -463,7 +466,10 @@ router.get('/qms/documents/:id/versions', async (req: Request, res: Response) =>
       const access = await decideAuthoringPermission({ pool:requestPgClient(req), principal: authoringPrincipalFromRequest(req), scope, action: 'view' });
       if (!access.allowed) return clientError(res, 403, 'You do not have permission to read this retained authored version.', { code: 'QMS_DOCUMENT_VIEW_DENIED' });
     }
-    return ok(res, rows.rows);
+    // CAT2-18: each version says where it stands (in force, pending, superseded by, retired), by the one in-force reader.
+    const live = parent.rows[0] as QmsDocumentRow;
+    const standings = qmsVersionStandings(live, rows.rows as Array<{ version: string }>, await resolveInForceRelease(qmsClient(req), live));
+    return ok(res, rows.rows.map((row) => ({ ...row, standing: standings.get(String(row.version)) })));
   } catch (err) { return serverError(res, log, 'doc-versions', err); }
 });
 
@@ -713,6 +719,7 @@ function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Doc
   if (err.code === 'INVALID_AUTHORSHIP') return clientError(res, 409, err.message, { code: 'QMS_INVALID_AUTHORSHIP' });
   // Its own code: the remedy is to re-file the section, not to change the document's state.
   if (err.code === 'FILING_DIVERGED') return clientError(res, 409, err.message, { code: 'FILING_DIVERGED' });
+  if (err.code === 'EFFECTIVE_DATE_BACKDATED') return clientError(res, 422, err.message, { code: 'QMS_EFFECTIVE_DATE_BACKDATED' });
   return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
 }
 
@@ -928,6 +935,8 @@ router.use(qmsTrainingRouter);
 router.use(qmsRecordsRouter);
 /* The GMP deviation register (mdx-qms-deviations.ts, P-57). */
 router.use(qmsDeviationsRouter);
+// The controlled copy of a version in force (MR-12 Stage 8): mdx-qms-controlled-copy.ts.
+router.use(qmsControlledCopyRouter);
 
 /* ─── Management reviews ────────────────────────────────────── */
 

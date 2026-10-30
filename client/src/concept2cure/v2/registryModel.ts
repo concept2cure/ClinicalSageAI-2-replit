@@ -51,8 +51,6 @@ export const NAV_TIERS_V2 = [
 export const NAV_GROUP_OF: Record<string, string> = {
   'device-workstream': 'mdx',
   labeling: 'mdx',
-  risk: 'mdx',
-  'design-controls': 'mdx',
   'human-factors': 'mdx',
   'labeling-pi': 'biopharma',
   'program-journey': 'biopharma',
@@ -202,8 +200,6 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'global-ri',
   'safety-narrative',
   'labeling',
-  'risk',
-  'design-controls',
   'human-factors',
   'regulatory-workspace',
   'labeling-pi',
@@ -223,8 +219,6 @@ export const SEGMENTS = [
     focus: [
       'device-workstream',
       'labeling',
-      'risk',
-      'design-controls',
       'human-factors',
       'precedent-intelligence',
     ],
@@ -242,7 +236,6 @@ export const SEGMENTS = [
     defaultSurface: 'projects',
     focus: [
       'device-diagnostics',
-      'ivd-completeness',
       'labeling',
       'precedent-intelligence',
       'evidence-search',
@@ -602,8 +595,10 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
     'save_document_version',
     'export_document',
   ],
-  'ivd-completeness': ['assess_filing_readiness', 'run_validation', 'refine_with_validation', 'export_document'],
+  /* assess_filing_readiness moved here with the IVDR readiness board when
+     ivd-completeness folded into device-diagnostics (D2, fold F2, 2026-10-29). */
   'device-diagnostics': [
+    'assess_filing_readiness',
     'run_validation',
     'refine_with_validation',
     'attach_sources_to_document',
@@ -629,7 +624,6 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
   'crl-library': ['attach_sources_to_document', 'promote_artifact'],
   cmc: ['run_validation', 'refine_with_validation', 'save_document_version'],
   'ind-checklist': ['run_validation', 'compile_dossier', 'route_document_to_module'],
-  risk: ['attach_sources_to_document', 'save_document_version'],
   labeling: ['run_validation', 'refine_with_validation', 'save_document_version'],
   'evidence-search': ['attach_sources_to_document', 'promote_artifact'],
   tasks: ['route_document_to_module'],
@@ -677,7 +671,8 @@ export const SEGMENT_MODULES = {
       // while the engines a 510(k) or PMA sponsor needs — device performance
       // sizing, Bayesian device sizing, MRMC, group-sequential operating
       // characteristics — were reachable only from the two pharma segments.
-      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'biostat-workbench', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), which this segment lists under Evidence & data.
+      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
   ],
@@ -687,7 +682,6 @@ export const SEGMENT_MODULES = {
       label: 'Author & assemble',
       items: [
         'device-diagnostics',
-        'ivd-completeness',
         'device-cer',
         'device-510k',
         'device-presub',
@@ -712,7 +706,8 @@ export const SEGMENT_MODULES = {
       // FOR an IVD sponsor, and this segment could reach none of them. The
       // workbench is the surface that delivers the outcome
       // (docs/SURFACE_DECISIONS_2026-10-08.md).
-      items: ['precedent-intelligence', 'biostat-workbench', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), a device-engineering project feature.
+      items: ['precedent-intelligence', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -1021,6 +1016,20 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      window, the weekly caps and the enforced rate limits (P-68). Old links,
      Stripe's earlier return addresses and AnA's `billing` target land there. */
   billing: 'licensing',
+  /* Risk management and Design controls folded into Engineering evidence (D2,
+     fold F1c, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/).
+     Engineering holds the open project's whole ISO 14971 risk file and its
+     design-control trace (RiskRegister.tsx, DesignControlsTrace.tsx, fold F1
+     slice B), and AnA drives the matrix there. Old links, ⌘K hits and AnA's
+     `risk` target land there; a subscription to either carries to it
+     (decision P-61 item 4,
+     server/services/entitlements/folded-module-successors.ts). */
+  risk: 'device-engineering',
+  'design-controls': 'device-engineering',
+  /* IVD completeness folded into IVDR evidence (D2, fold F2, 2026-10-29). The
+     IVDR readiness board and the IVD assessment workbench are device-diagnostics'
+     readiness panel, for the open project (IvdSurface.tsx). */
+  'ivd-completeness': 'device-diagnostics',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate

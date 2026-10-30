@@ -3,14 +3,11 @@
  * run. Never pass participant inputs, client-supplied tables or RAG precedents. */
 import { createHash } from 'node:crypto';
 import { hasCsrIdentifierMarker } from '../clinical-regulatory-evidence/csr-content-projection.js';
+// One list of table keys (2026-10-29), shared with the scientific review and its
+// screen; this file kept its own copy, which the review's lacked two keys of.
+import { CSR_TABLE_KEYS, type CsrTableKey } from '../../../shared/authoring/csr-scientific-review.js';
 
-export const CSR_TABLE_KEYS = [
-  'disposition', 'analysisPopulations', 'demographics', 'primaryEfficacy', 'secondaryEfficacy',
-  'exposure', 'aeOverallSummary', 'aeBySOC', 'aeTopPT', 'deathsSAEsDiscontinuations', 'labShifts',
-  // CSR slice 6 (2026-10-29): built only when the source supplies them (ADVS/ADEG, ADCM).
-  'vitalSigns', 'concomitantMedications',
-] as const;
-export type CsrTableKey = typeof CSR_TABLE_KEYS[number];
+export { CSR_TABLE_KEYS, type CsrTableKey };
 type Table = { title: string; headers: string[]; rows: string[][] };
 export interface RetainedCsrTables {
   runId: string; programId: string; historical: true; releaseEligibilityVerified: boolean;

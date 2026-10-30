@@ -1,0 +1,163 @@
+[
+ {
+  "mutation": "M1 paragraph author names no turn record",
+  "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > replaces the current paragraph the chosen one is paired with, naming the alternative\u2019s turn 927ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > adds chosen paragraphs to an empty section as one addition, each decided on its own 511ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > the proposals for chosen paragraphs > proposes as AnA, naming the turn only when it was recorded 6ms"
+  ],
+  "restoredSha256": "980bc9839ee3a5dc8c79a04b63abcc2b7aff46c88788f0b3e1fb9a3f91ab4830"
+ },
+ {
+  "mutation": "M2 paragraphs proposed as the person, not AnA",
+  "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > replaces the current paragraph the chosen one is paired with, naming the alternative\u2019s turn 5863ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > adds chosen paragraphs to an empty section as one addition, each decided on its own 5536ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > the proposals for chosen paragraphs > proposes as AnA, naming the turn only when it was recorded 6ms"
+  ],
+  "restoredSha256": "980bc9839ee3a5dc8c79a04b63abcc2b7aff46c88788f0b3e1fb9a3f91ab4830"
+ },
+ {
+  "mutation": "M3 the turn record is not passed to the governed-write gate",
+  "file": "client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > replaces the current paragraph the chosen one is paired with, naming the alternative\u2019s turn 5931ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > adds chosen paragraphs to an empty section as one addition, each decided on its own 5503ms"
+  ],
+  "restoredSha256": "7fa905a666f690689e6ca20fa9cd9e1aea96a3b99e47d8e986e0287513957833"
+ },
+ {
+  "mutation": "M4 pairing by position instead of shared words",
+  "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > default pairing > pairs each draft paragraph with the current paragraph it shares most words with, not by position 6ms"
+  ],
+  "restoredSha256": "980bc9839ee3a5dc8c79a04b63abcc2b7aff46c88788f0b3e1fb9a3f91ab4830"
+ },
+ {
+  "mutation": "M5 every alternative asks for the same tone",
+  "file": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 up to three alternatives, each its own candidate > asks the existing draft route once per approach and labels each by what was asked 263ms",
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 up to three alternatives, each its own candidate > shows each alternative as it arrives, without moving focus 81ms",
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 up to three alternatives, each its own candidate > keeps each alternative\u2019s own edits when the person switches between them 79ms",
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 accepting, comparing and ending a set of alternatives > accepts the whole alternative that is shown, through the existing accept 68ms",
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 accepting, comparing and ending a set of alternatives > compares the shown alternative with another one as a redline 50ms",
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 accepting, comparing and ending a set of alternatives > says how many arrived when one alternative fails, and keeps the ones that did 5022ms"
+  ],
+  "restoredSha256": "f8ab9eb5d6459f60a881a19157f43ee7da1bfc5a49f9ddf3dde94df03a02e7e6"
+ },
+ {
+  "mutation": "M6 switching does not change the candidate accepted",
+  "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 accepting, comparing and ending a set of alternatives > accepts the whole alternative that is shown, through the existing accept 67ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > review state > switching keeps the edits of the alternative left, and is refused while an accept is unresolved 5ms"
+  ],
+  "restoredSha256": "980bc9839ee3a5dc8c79a04b63abcc2b7aff46c88788f0b3e1fb9a3f91ab4830"
+ },
+ {
+  "mutation": "M7 switching drops the edits of the alternative left",
+  "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 up to three alternatives, each its own candidate > keeps each alternative\u2019s own edits when the person switches between them 108ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > review state > switching keeps the edits of the alternative left, and is refused while an accept is unresolved 6ms"
+  ],
+  "restoredSha256": "980bc9839ee3a5dc8c79a04b63abcc2b7aff46c88788f0b3e1fb9a3f91ab4830"
+ },
+ {
+  "mutation": "M8 a later arrival moves the view",
+  "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 up to three alternatives, each its own candidate > asks the existing draft route once per approach and labels each by what was asked 316ms",
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 up to three alternatives, each its own candidate > shows each alternative as it arrives, without moving focus 133ms",
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 up to three alternatives, each its own candidate > puts focus on the alternative shown when the control the person pressed leaves the panel 5037ms",
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 up to three alternatives, each its own candidate > keeps each alternative\u2019s own edits when the person switches between them 129ms",
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 accepting, comparing and ending a set of alternatives > compares the shown alternative with another one as a redline 50ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > review state > shows the first arrival and lists later ones without moving the view 5ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > review state > switching keeps the edits of the alternative left, and is refused while an accept is unresolved 3ms"
+  ],
+  "restoredSha256": "980bc9839ee3a5dc8c79a04b63abcc2b7aff46c88788f0b3e1fb9a3f91ab4830"
+ },
+ {
+  "mutation": "M9 the workbench does not hand the panel its proposal door",
+  "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > replaces the current paragraph the chosen one is paired with, naming the alternative\u2019s turn 5791ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > adds chosen paragraphs to an empty section as one addition, each decided on its own 5471ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > keeps an answer the governed-write rule does not admit out of the section 395ms",
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > says before the click that chosen paragraphs carry no source citations 259ms"
+  ],
+  "restoredSha256": "552b70272b26351b2f848f6c4dea90e08365a9b9b4a2ca82d008b9ec51515a8f"
+ },
+ {
+  "mutation": "M10 the panel skips its own model refusal",
+  "file": "client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA\u2019s tracked changes > keeps an answer the governed-write rule does not admit out of the section 520ms"
+  ],
+  "restoredSha256": "7fa905a666f690689e6ca20fa9cd9e1aea96a3b99e47d8e986e0287513957833"
+ },
+ {
+  "mutation": "M11 Discard keeps the alternatives",
+  "file": "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 accepting, comparing and ending a set of alternatives > discarding drops every alternative, from the screen and from the retained review 52ms"
+  ],
+  "restoredSha256": "56d580d65b640a3de9d816d9ae9efc4d2c0b634bdf687bff4e5ffe451e9a0712"
+ },
+ {
+  "mutation": "M12 a failed alternative does not stop the run",
+  "file": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft \u2014 accepting, comparing and ending a set of alternatives > says how many arrived when one alternative fails, and keeps the ones that did 44ms"
+  ],
+  "restoredSha256": "f8ab9eb5d6459f60a881a19157f43ee7da1bfc5a49f9ddf3dde94df03a02e7e6"
+ },
+ {
+  "mutation": "M13 a pair that changes nothing is proposed anyway",
+  "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > the proposals for chosen paragraphs > replaces each paired current paragraph, joining paragraphs paired with the same one 6ms"
+  ],
+  "restoredSha256": "980bc9839ee3a5dc8c79a04b63abcc2b7aff46c88788f0b3e1fb9a3f91ab4830"
+ },
+ {
+  "mutation": "M14 the empty-section addition loses draft order",
+  "file": "client/src/concept2cure/v2/editor/draftAlternatives.ts",
+  "exitCode": 1,
+  "killed": true,
+  "failingTests": [
+   "\u00d7 client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > the proposals for chosen paragraphs > adds to an empty section as one insert-empty addition of the chosen paragraphs, in draft order 7ms"
+  ],
+  "restoredSha256": "980bc9839ee3a5dc8c79a04b63abcc2b7aff46c88788f0b3e1fb9a3f91ab4830"
+ }
+]

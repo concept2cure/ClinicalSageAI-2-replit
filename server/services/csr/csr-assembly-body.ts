@@ -8,6 +8,8 @@
  *       (medical-writing-qc.ts buildAbbreviationList), with the definition
  *       given at first use, or "not defined at first use" (never invented);
  *   §14 the engine tables, each linked into the §14 leaf;
+ *   §14.3.3 the narratives leaf, linked, with a link to each subject's
+ *       narrative, or marked as not landed or not applicable (D18);
  *   §16 every appendix, linked to its leaf, or marked as not supplied;
  * and every cross-reference in the text linked to its target.
  *
@@ -19,7 +21,7 @@ import { buildAbbreviationList } from '../ana/medical-writing-qc.js';
 import { ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
 import { CsrPdfWriter, type WrittenPdf } from './csr-pdf-writer.js';
 import { splitCrossReferences, type CrossReferenceIndex, type TextRun, type UnresolvedReference } from './csr-cross-references.js';
-import { CSR_TABLES_FILE, headingDestination, supportingOutputs, tflHeadings, type PlannedTfl } from './csr-assembly-plan.js';
+import { CSR_NARRATIVES_SECTION, CSR_TABLES_FILE, headingDestination, narrativeDestination, supportingOutputs, tflHeadings, type PlannedTfl } from './csr-assembly-plan.js';
 
 export type AppendixState =
   | { state: 'filed'; fileName: string; detail: string }
@@ -35,6 +37,8 @@ export interface BodyInput {
   tfls: readonly PlannedTfl[];
   appendices: ReadonlyMap<string, AppendixState>;
   leafTargets: CrossReferenceIndex['leafTargets'];
+  /** The subjects whose narratives the §14.3.3 leaf holds, in its order (empty when it is not filed). */
+  narrativeSubjects?: readonly string[];
   stamp: Date;
 }
 
@@ -42,6 +46,8 @@ export interface BodyHeading { number: string; title: string; level: number }
 export interface RenderedBody { written: WrittenPdf; headings: BodyHeading[]; unresolved: UnresolvedReference[]; abbreviations: { total: number; undefinedAtFirstUse: string[] } }
 
 const APPENDIX_GROUPS = new Set(['16', '16.1', '16.2', '16.3']);
+/** The headings above §14.3.3, drawn whenever §14.3.3 is filed, missing or declared. */
+const NARRATIVE_HEADINGS = new Set(['14', '14.3', CSR_NARRATIVES_SECTION]);
 
 /** The headings the body draws, in E3 order. */
 export function bodyHeadings(input: Pick<BodyInput, 'sections' | 'tfls' | 'appendices'>): BodyHeading[] {
@@ -49,7 +55,7 @@ export function bodyHeadings(input: Pick<BodyInput, 'sections' | 'tfls' | 'appen
   const tflHeads = new Set(tflHeadings(input.tfls).map(h => h.number));
   const wanted = (n: string) => {
     if (n === '1' || n === '3' || n === '4') return true;
-    if (n === '14' || n.startsWith('14.')) return tflHeads.has(n);
+    if (n === '14' || n.startsWith('14.')) return tflHeads.has(n) || (input.appendices.has(CSR_NARRATIVES_SECTION) && NARRATIVE_HEADINGS.has(n));
     if (n === '16' || n.startsWith('16.')) return APPENDIX_GROUPS.has(n) || input.appendices.has(n);
     return drafted.some(code => code === n || code.startsWith(`${n}.`));
   };
@@ -127,6 +133,17 @@ function drawAppendix(pass: Pass, number: string, state: AppendixState | undefin
   else pass.writer.lines(`Not applicable to this study: ${state.reason}`, { font: 'Helvetica-Oblique' });
 }
 
+/** Under §14.3.3: a link to each subject's narrative in the leaf (its named destination). */
+function drawNarrativeLinks(pass: Pass, state: AppendixState | undefined, subjects: readonly string[]): void {
+  if (state?.state !== 'filed' || !subjects.length) return;
+  const runs: TextRun[] = [{ text: 'Narratives by subject: ' }];
+  subjects.forEach((id, i) => {
+    runs.push({ text: id, link: { kind: 'external', fileName: state.fileName, destination: narrativeDestination(id) } });
+    runs.push({ text: i < subjects.length - 1 ? ', ' : '.' });
+  });
+  pass.writer.paragraph(runs, { size: 9 });
+}
+
 function drawSupporting(pass: Pass, number: string, tfls: readonly PlannedTfl[]): void {
   const cited = supportingOutputs(number, tfls).filter(ref => pass.index.leafTargets.has(ref.split(' ')[1]));
   if (cited.length) pass.writer.paragraph(runs(pass, number, `Supporting outputs: ${cited.join(', ')}.`), { size: 9 });
@@ -141,7 +158,8 @@ async function drawHeading(pass: Pass, input: BodyInput, h: BodyHeading, ctx: { 
   const drafted = input.sections.get(h.number);
   if (drafted) drawContent(pass, h.number, drafted.content);
   if (h.number === '14' || h.number.startsWith('14.')) drawTables(pass, h.number, input.tfls, new Set(tflHeadings(input.tfls).map(t => t.number)));
-  if (h.number.startsWith('16')) drawAppendix(pass, h.number, input.appendices.get(h.number));
+  if (h.number.startsWith('16') || h.number === CSR_NARRATIVES_SECTION) drawAppendix(pass, h.number, input.appendices.get(h.number));
+  if (h.number === CSR_NARRATIVES_SECTION) drawNarrativeLinks(pass, input.appendices.get(h.number), input.narrativeSubjects ?? []);
   if (drafted) drawSupporting(pass, h.number, input.tfls);
 }
 

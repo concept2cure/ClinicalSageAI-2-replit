@@ -70,6 +70,9 @@ export const EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS: readonly ExpectedImmutability
   { schema: 'public', table: 'concept2cure_signatures', trigger: 'trg_concept2cure_signatures_no_truncate', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
   { schema: 'public', table: 'concept2cure_submission_snapshots', trigger: 'trg_concept2cure_submission_snapshots_append_only', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
   { schema: 'public', table: 'concept2cure_submission_snapshots', trigger: 'trg_concept2cure_submission_snapshots_no_truncate', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
+  // An artifact version is never rewritten (MR-12 CAT2-20, 2026-10-29).
+  { schema: 'public', table: 'concept2cure_artifact_versions', trigger: 'trg_c2c_artifact_versions_no_rewrite', source: 'migrations/20261029k_artifact_versions_no_rewrite.sql' },
+  { schema: 'public', table: 'concept2cure_artifact_versions', trigger: 'trg_c2c_artifact_versions_no_truncate', source: 'migrations/20261029k_artifact_versions_no_rewrite.sql' },
   // A review comment's words, author and place, fixed once posted; retraction once (2026-10-01, D5).
   { schema: 'public', table: 'concept2cure_thread_comments', trigger: 'trg_c2c_review_comment_record_guard', source: 'migrations/20261001_review_comments_record.sql' },
   { schema: 'public', table: 'concept2cure_thread_comments', trigger: 'trg_c2c_review_comment_no_truncate', source: 'migrations/20261001_review_comments_record.sql' },
@@ -83,6 +86,9 @@ export const EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS: readonly ExpectedImmutability
   { schema: 'public', table: 'cre_evidence_sources', trigger: 'cre_evidence_sources_capture_guard', source: 'migrations/20261001_cre_evidence_sources_capture_immutability.sql' },
   { schema: 'public', table: 'cre_evidence_sources', trigger: 'cre_evidence_sources_truncate_guard', source: 'migrations/20261001_cre_evidence_sources_capture_immutability.sql' },
   { schema: 'public', table: 'cre_evidence_sources', trigger: 'cre_evidence_sources_delete_guard', source: 'migrations/20261001_cre_evidence_sources_capture_immutability.sql' },
+  // A legal hold: placed once, lifted once, never rewritten or removed (MR-08 Stage 5, 2026-10-29, D5).
+  { schema: 'vault', table: 'legal_holds', trigger: 'vault_legal_holds_record_guard', source: 'migrations/20261029b_vault_legal_holds_append_only.sql' },
+  { schema: 'vault', table: 'legal_holds', trigger: 'vault_legal_holds_truncate_guard', source: 'migrations/20261029b_vault_legal_holds_append_only.sql' },
   // The Module 3 signed section snapshots and provenance trail (DP-84, 2026-10-05, D2/D5).
   { schema: 'public', table: 'cmc_module3_section_versions', trigger: 'trg_cmc_module3_section_versions_append_only', source: 'migrations/20261005c_cmc_module3_history_append_only.sql' },
   { schema: 'public', table: 'cmc_module3_section_versions', trigger: 'trg_cmc_module3_section_versions_no_truncate', source: 'migrations/20261005c_cmc_module3_history_append_only.sql' },

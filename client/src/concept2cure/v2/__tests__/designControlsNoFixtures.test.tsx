@@ -14,6 +14,12 @@
  *   - an org with no design inputs sees an honest EmptyState, not seed rows;
  *   - a failed load is an honest error, not a cached sample;
  *   - no "Sample data" pill and no fixture symbols survive in the source.
+ *
+ * 2026-10-29 (D2, fold F1c): the Design controls screen folded into Engineering
+ * evidence, which mounts the same trace (v2/surfaces/DesignControlsTrace.tsx)
+ * for the open project. These cases run against it as Engineering mounts it
+ * (./engineeringPanels.harness.tsx): the read names the project, and the answer
+ * is keyed to it.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -27,22 +33,16 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { DesignControls } from '../surfaces/DesignControls';
+import { DC_READ, EngineeringDesignControlsPanel, keyedToPanelProject } from './engineeringPanels.harness';
 
-/** The route's success envelope: `{ data, meta:{count} }`. */
-function ok(data: unknown, status = 200) {
-  return { ok: status < 400, status, json: async () => ({ data, meta: { count: Array.isArray(data) ? data.length : 0 } }) } as Response;
+/** The route's success envelope for an admitted project: `{ data, meta: { count, scope, programId } }`. */
+function ok(data: unknown[], status = 200) {
+  return { ok: status < 400, status, json: async () => keyedToPanelProject(data) } as Response;
 }
 function fail(status = 503) {
   return { ok: false, status, json: async () => ({ error: { code: 'INTERNAL' } }) } as Response;
 }
 
-const props = () => ({
-  surface: { id: 'design-controls', label: 'Design controls' } as never,
-  onAsk: vi.fn(),
-  onNav: vi.fn(),
-  segment: 'medical-device',
-});
 
 /* TEST data — lives only in this file, never importable by the surface. The
    surface itself ships no design-input fixture at all. */
@@ -59,14 +59,14 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe('DesignControls — real rows render', () => {
-  it('renders the org design inputs from GET /api/design-controls', async () => {
+  it("renders the project's design inputs from GET /api/design-controls", async () => {
     apiRequest.mockResolvedValue(ok(ROWS));
-    render(<DesignControls {...props()} />);
+    render(<EngineeringDesignControlsPanel onAsk={vi.fn()} />);
 
-    // The read hits the real org-scoped endpoint.
+    // The read hits the real endpoint, for the open project.
     await waitFor(() => expect(apiRequest).toHaveBeenCalled());
     expect(String(apiRequest.mock.calls[0][0])).toBe('GET');
-    expect(String(apiRequest.mock.calls[0][1])).toBe('/api/design-controls');
+    expect(String(apiRequest.mock.calls[0][1])).toBe(DC_READ);
 
     // Real rows appear in the traceability matrix.
     expect(await screen.findByText('DI-01')).toBeTruthy();
@@ -76,7 +76,7 @@ describe('DesignControls — real rows render', () => {
 
   it('derives the 820.30 checklist from the real rows (no hardcoded have/have-not)', async () => {
     apiRequest.mockResolvedValue(ok(ROWS));
-    render(<DesignControls {...props()} />);
+    render(<EngineeringDesignControlsPanel onAsk={vi.fn()} />);
     await screen.findByText('DI-01');
 
     // Elements the design-input store evidences are present/absent from the rows:
@@ -94,7 +94,7 @@ describe('DesignControls — real rows render', () => {
 
   it('never presents a "Sample data" pill', async () => {
     apiRequest.mockResolvedValue(ok(ROWS));
-    render(<DesignControls {...props()} />);
+    render(<EngineeringDesignControlsPanel onAsk={vi.fn()} />);
     await screen.findByText('DI-01');
     expect(document.querySelector('.c2c-sample-tag')).toBeNull();
     expect(screen.queryByText('Sample data')).toBeNull();
@@ -102,9 +102,9 @@ describe('DesignControls — real rows render', () => {
 });
 
 describe('DesignControls — honest empty and error states', () => {
-  it('shows an honest empty state (no seed rows) when the org has no design inputs', async () => {
+  it('shows an honest empty state (no seed rows) when the project has no design inputs', async () => {
     apiRequest.mockResolvedValue(ok([]));
-    render(<DesignControls {...props()} />);
+    render(<EngineeringDesignControlsPanel onAsk={vi.fn()} />);
     expect(await screen.findByText('No design inputs defined yet')).toBeTruthy();
     // No fabricated seed content leaks in as a fallback.
     expect(screen.queryByText('DI-01')).toBeNull();
@@ -114,7 +114,7 @@ describe('DesignControls — honest empty and error states', () => {
 
   it('shows an honest error (no cached sample) when the store fails', async () => {
     apiRequest.mockResolvedValue(fail(503));
-    render(<DesignControls {...props()} />);
+    render(<EngineeringDesignControlsPanel onAsk={vi.fn()} />);
     expect(await screen.findByText("Couldn't load the design history file")).toBeTruthy();
     expect(screen.queryByText('DI-01')).toBeNull();
     expect(document.querySelector('.c2c-sample-tag')).toBeNull();
@@ -122,10 +122,10 @@ describe('DesignControls — honest empty and error states', () => {
 });
 
 describe('DesignControls — no fixture symbols survive in source', () => {
-  /* The screen's read, matrix and checklist moved into the trace both it and
-     Engineering mount (fold F1 slice B, 2026-10-29), which reads through
-     useProjectScopedRead over useLiveData, the hook useLiveRows wraps. */
-  const src = ['../surfaces/DesignControls.tsx', '../surfaces/DesignControlsTrace.tsx', '../projectScopedRead.tsx']
+  /* The screen's read, matrix and checklist moved into the trace Engineering
+     mounts (fold F1 slice B, 2026-10-29; the screen folded in F1c), which reads
+     through useProjectScopedRead over useLiveData, the hook useLiveRows wraps. */
+  const src = ['../surfaces/DesignControlsTrace.tsx', '../projectScopedRead.tsx']
     .map((f) => fs.readFileSync(path.resolve(__dirname, f), 'utf8'))
     .join('\n');
   it('imports the fixture-free hooks, not the live-or-fixture ones', () => {

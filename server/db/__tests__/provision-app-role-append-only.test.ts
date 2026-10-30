@@ -158,6 +158,8 @@ describe('APPEND_ONLY_TABLES', () => {
         'words, author and placement are fixed, but a retraction sets deleted_at once and status moves: UPDATEs (20261001_review_comments_record.sql)',
       'public.cre_evidence_sources':
         'write-once and one-way columns, the rest (title, extraction and ingestion status) governed by its writer: UPDATEs (20261001_cre_evidence_sources_capture_immutability.sql)',
+      'vault.legal_holds':
+        'placed once and lifted once: the lift is one UPDATE, lifted_at, lifted_by and lift_reason going NULL → value, which the trigger admits and nothing else (20261029b_vault_legal_holds_append_only.sql)',
     };
     const DP66_CEILING_ONLY =
       'DP-66 (2026-10-01): the grant ceiling only. The census found it written by INSERT only on every path; it has no immutability trigger for the boot to require (docs/evidence/D6/2026-10-01-tranche-4/DP-66-store-ceiling/)';

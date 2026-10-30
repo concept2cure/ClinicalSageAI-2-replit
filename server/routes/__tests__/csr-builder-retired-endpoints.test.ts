@@ -17,6 +17,17 @@
  *                              and benefit-risk/benefit-risk-knowledge.ts.
  *   app.use('/api/csr', …)     served every builder route a second time beside
  *                              /api/csr/jobs (a second build path, POST /api/csr/build).
+ *   POST /build                (2026-10-29, D5, hand-on from the CSR end-to-end
+ *                              lane) the same second build path at /api/csr-builder:
+ *                              every section drafted in the request, no job, no
+ *                              retained run, no client caller. Replaced by
+ *                              POST /api/csr/jobs from the CSR card, which applies
+ *                              the same section rule (csr-job-runner).
+ *
+ * The builder's mount now carries its own authenticateToken. Until then only
+ * the RTM export's /api-wide mount, earlier in the same bootstrap and inside its
+ * own try/catch, authenticated it: a session-less call was refused (401) only
+ * because that unrelated import had succeeded.
  *
  * The real bootstrap (registerClinicalIntelRoutes) mounts the builder; every
  * other router it loads is stubbed. csr-jobs is mounted the way
@@ -30,7 +41,8 @@ vi.mock('../../db', () => ({ db: {} }));
 vi.mock('../../services/usage-metering.js', () => ({ checkQuota: vi.fn(), recordUsage: vi.fn() }));
 vi.mock('../../lib/unified-ai-client.js', () => ({ ai: { complete: vi.fn() } }));
 vi.mock('../../middleware/auth.js', () => ({
-  authenticateToken: (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+  authenticateToken: (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.headers['x-test-unauthenticated']) { res.status(401).json({ error: 'Authentication required' }); return; }
     (req as unknown as { user: unknown }).user = { id: 5, organizationId: 7 };
     next();
   },
@@ -71,7 +83,7 @@ beforeAll(async () => {
   app.use((_req, res) => { res.status(404).json({ error: 'not found' }); });
 });
 
-const RETIRED = ['safety-signals', 'generate-narrative', 'analyze-benefit-risk'];
+const RETIRED = ['safety-signals', 'generate-narrative', 'analyze-benefit-risk', 'build'];
 const body = { drugName: 'LMN-201', indication: 'C. difficile infection', eventDescription: 'Recorded event' };
 
 describe('retired CSR builder endpoints', () => {
@@ -90,6 +102,22 @@ describe('retired CSR builder endpoints', () => {
     const res = await request(app).get('/api/csr-builder/structure');
     expect(res.status).toBe(200);
     expect(res.body.totalSections).toBeGreaterThan(0);
+  });
+
+  it('mounts the builder behind its own authentication, not only the RTM export\'s /api-wide one', async () => {
+    const mounts: unknown[][] = [];
+    await registerClinicalIntelRoutes({ app: { use: (...args: unknown[]) => { mounts.push(args); } } as never, pool: {} as never });
+    const builder = mounts.find(args => args[0] === '/api/csr-builder');
+    expect(builder).toBeDefined();
+    expect(builder!.slice(1, -1)).toContain(authenticateToken);
+  });
+
+  it('refuses a call without a session before any builder handler', async () => {
+    const structure = await request(app).get('/api/csr-builder/structure').set('x-test-unauthenticated', '1');
+    expect(structure.status).toBe(401);
+    const draft = await request(app).post('/api/csr-builder/draft-section').set('x-test-unauthenticated', '1')
+      .send({ sectionNumber: '9.1', studyInfo: body });
+    expect(draft.status).toBe(401);
   });
 
   it('reaches /api/csr/jobs through its own router', async () => {

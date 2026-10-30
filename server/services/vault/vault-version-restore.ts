@@ -7,6 +7,9 @@
  * CONTENT_ALREADY_A_VERSION, because the document already holds them, and no
  * route restored a version. Restoring checks those exact bytes in again as the
  * next version, through the one ingest:
+ *   - a version whose original file a data disposition withdrew is refused,
+ *     before the read and again under the disposition lock at commit, so a
+ *     withdrawn file is never copied back into the Vault;
  *   - the source's stored file is read through the verified reader, and one
  *     that no longer matches its recorded hash is refused, never restored;
  *   - ingest stores the bytes as a new object (so every row keeps its own
@@ -19,6 +22,8 @@
 import type { RequestSqlClient } from '../../db/requestDb.js';
 import { pool } from '../../db.js';
 import { ProgramReadAccessError } from '../c2c/current-program-access.js';
+import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
+import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock.js';
 import { currentVersionOfCode } from './vault-version-checkin.js';
 import { ingestVaultDocument } from './vault-ingest.service.js';
 import { requireGovernedReason } from '../../routes/governed-reason.js';
@@ -44,17 +49,19 @@ export interface RestoreVaultVersionArgs {
 interface SourceRow {
   id: string; document_code: string; version: string; content_hash: string; file_name: string | null;
   mime_type: string | null; document_type: string | null; storage_version_id: string | null;
-  s3_key: string | null; storage_provider: string | null;
+  s3_key: string | null; storage_provider: string | null; available: boolean;
 }
 
 type Refusal = Extract<VaultIngestResult, { ok: false }>;
+const withdrawn = (version: string) =>
+  `The original file of version ${version} was withdrawn under a data disposition, so it cannot be restored. ${NOTHING}`;
 const refuse = (status: number, code: string, message: string): Refusal => ({ ok: false, status, code, message });
 
 /** The version to restore, if it is a live version of the named document in this program. */
 async function readSource(q: RequestSqlClient, args: RestoreVaultVersionArgs): Promise<SourceRow | null> {
   const { rows } = await q.query(
     `SELECT s.id::text AS id, s.document_code, s.version, s.content_hash, s.file_name, s.mime_type, s.document_type,
-            s.storage_version_id, s.s3_key, s.storage_provider
+            s.storage_version_id, s.s3_key, s.storage_provider, ${vaultBinaryAvailableSql('s')} AS available
        FROM vault.documents s
        JOIN vault.documents d ON d.id = $2::uuid AND d.program_id = s.program_id AND d.organization_id = s.organization_id
                              AND d.document_code IS NOT DISTINCT FROM s.document_code AND d.deleted_at IS NULL
@@ -62,6 +69,13 @@ async function readSource(q: RequestSqlClient, args: RestoreVaultVersionArgs): P
     [args.versionId, args.documentId, args.programId, args.organizationId],
   );
   return (rows[0] as unknown as SourceRow | undefined) ?? null;
+}
+
+/** A version that is the current one, or whose file was withdrawn, is not restored. */
+function sourceRefusal(source: SourceRow, headId: string): Refusal | null {
+  if (headId === source.id) return refuse(409, 'ALREADY_CURRENT', `Version ${source.version} is already the current version. ${NOTHING}`);
+  if (!source.available) return refuse(409, 'SOURCE_WITHDRAWN', withdrawn(source.version));
+  return null;
 }
 
 export async function restoreVaultVersion(args: RestoreVaultVersionArgs): Promise<VaultIngestResult> {
@@ -75,7 +89,8 @@ export async function restoreVaultVersion(args: RestoreVaultVersionArgs): Promis
     organizationId: args.organizationId, programId: args.programId, documentCode: source.document_code,
   });
   if (!head) return refuse(409, 'VERSION_NOT_CURRENT', `The current version of this document could not be identified. ${NOTHING}`);
-  if (head.id === source.id) return refuse(409, 'ALREADY_CURRENT', `Version ${source.version} is already the current version. ${NOTHING}`);
+  const blocked = sourceRefusal(source, head.id);
+  if (blocked) return blocked;
   // The document's title is the current version's; the bytes are the earlier one's.
   const title = (await pool.query(
     `SELECT document_title FROM vault.documents WHERE id = $1::uuid AND program_id = $2::uuid AND organization_id = $3`,
@@ -104,16 +119,23 @@ export async function restoreVaultVersion(args: RestoreVaultVersionArgs): Promis
     restoreOf: { versionId: source.id, version: source.version, reason: reason.reason },
     ipAddress: args.ipAddress,
     userAgent: args.userAgent,
-    // Under the ingest's transaction: the version restored is still a live
-    // version holding those bytes, so a version retired meanwhile is not.
-    assertSourceAccess: async (client, phase) => {
-      if (phase !== 'commit') return;
-      const live = await client.query(
-        `SELECT 1 FROM vault.documents WHERE id = $1::uuid AND program_id = $2::uuid AND organization_id = $3
-            AND content_hash = $4 AND deleted_at IS NULL FOR SHARE`,
-        [source.id, args.programId, args.organizationId, source.content_hash],
-      );
-      if (!live.rows[0]) throw new ProgramReadAccessError(409, 'RESTORE_SOURCE_CHANGED', `Version ${source.version} was retired while it was being restored. ${NOTHING}`);
-    },
+    assertSourceAccess: (client, phase) => (phase === 'commit' ? recheckSource(client, args, source) : Promise.resolve()),
   });
+}
+
+/**
+ * Under the ingest's transaction, and the disposition lock a withdrawal takes:
+ * the version restored is still a live version holding those bytes, and its
+ * file has not been withdrawn meanwhile.
+ */
+async function recheckSource(client: RequestSqlClient, args: RestoreVaultVersionArgs, source: SourceRow): Promise<void> {
+  await lockDocumentDispositionProgram(client, args.organizationId, args.programId);
+  const live = await client.query(
+    `SELECT ${vaultBinaryAvailableSql('s')} AS available FROM vault.documents s
+      WHERE s.id = $1::uuid AND s.program_id = $2::uuid AND s.organization_id = $3
+        AND s.content_hash = $4 AND s.deleted_at IS NULL FOR SHARE OF s`,
+    [source.id, args.programId, args.organizationId, source.content_hash],
+  );
+  if (!live.rows[0]) throw new ProgramReadAccessError(409, 'RESTORE_SOURCE_CHANGED', `Version ${source.version} was retired while it was being restored. ${NOTHING}`);
+  if (live.rows[0].available !== true) throw new ProgramReadAccessError(409, 'SOURCE_WITHDRAWN', withdrawn(source.version));
 }

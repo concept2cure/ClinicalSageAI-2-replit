@@ -276,12 +276,14 @@ export function checkInArgumentRefusal(args: {
 }
 
 /**
- * What a check-in's audit row says of its lineage: the version it succeeds,
- * and that its filing was kept. A restore (MR-08 Stage 5) also names the
- * version whose bytes these are, and the person's reason.
+ * What a check-in's audit row says of it: the version it succeeds, and that
+ * its filing was kept. A restore (MR-08 Stage 5) also names the version whose
+ * bytes these are and the person's reason, and says so in the line the
+ * history shows.
  */
-export function checkInLineage(head: CheckInHead, restoreOf?: { versionId: string; version: string; reason: string }) {
-  return { supersedes: head.id, predecessorVersion: head.version, filingKept: true, ...(restoreOf ? { restoredFrom: restoreOf } : {}) };
+export function checkInAuditDetails(head: CheckInHead, version: string, restoreOf?: { versionId: string; version: string; reason: string }) {
+  const lineage = { supersedes: head.id, predecessorVersion: head.version, filingKept: true, ...(restoreOf ? { restoredFrom: restoreOf } : {}) };
+  return restoreOf ? { lineage, description: `Restored version ${restoreOf.version} as version ${version}` } : { lineage };
 }
 
 /** The filing a new version keeps: its head's, as recorded. */

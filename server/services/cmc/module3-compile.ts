@@ -24,6 +24,7 @@ import { composeAppendices, composeRegional, emittableAppendices } from '../modu
 import { regionCodeForPrimaryRegion, resolveSubmissionSpine } from './submission-spine';
 import {
   applicationNotReadable,
+  applicationRefusal,
   CompositionOutOfScopeError,
   compositionRefusal,
   programNotRecorded,
@@ -275,8 +276,16 @@ function admitted(judged: Awaited<ReturnType<typeof judgeProgramComposition>>) {
  * past "modality not established": nothing is recorded, so nothing is
  * established, and the board is where the first record is made. Its declared
  * product class and its application are still judged, so a biologic program
- * or one filing an NDA is refused before anything is recorded. (Compose has
- * nothing to compose for it either way.)
+ * or one filing an NDA, an MAA or an EU CTA is refused before anything is
+ * recorded. (Compose has nothing to compose for it either way.)
+ *
+ * The class is judged by `compositionRefusal` itself, which asks it first. The
+ * application is judged here, by `applicationRefusal`, because
+ * `compositionRefusal` answers "modality not established" before it reaches
+ * the application. Until 2026-10-29 this branch asked nothing more, so an
+ * NDA or CTA program with nothing recorded got an empty, admitted board, and
+ * the task assessment that reads the board would have told it to record its
+ * drug substance (P-62, docs/evidence/CMC-M3-GA/2026-10-29/p62-one-cmc-home/).
  */
 export async function admitProgramComposition(
   orgId: number,
@@ -287,7 +296,10 @@ export async function admitProgramComposition(
     const judged = await judgeProgramComposition(client, orgId, projectId, knownSources);
     const nothingRecordedYet =
       knownSources.length === 0 && judged.refusal?.code === 'CMC_MODALITY_NOT_ESTABLISHED' && judged.regional;
-    return nothingRecordedYet ? judged.regional! : admitted(judged);
+    if (!nothingRecordedYet) return admitted(judged);
+    const application = applicationRefusal(judged.regional!.programType);
+    if (application) throw new CompositionOutOfScopeError(application);
+    return judged.regional!;
   });
 }
 

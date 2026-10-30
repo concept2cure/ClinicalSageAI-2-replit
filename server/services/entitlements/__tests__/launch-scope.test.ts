@@ -286,6 +286,29 @@ describe('the folded AnA memory', () => {
   });
 });
 
+describe('the folded risk file, design-control trace and IVDR readiness board', () => {
+  it('are in no scope list and no new grant: Engineering and IVDR evidence hold them (D2, folds F1c and F2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/. The
+       subset pin in 'the scope list itself' would pass with an id left in one
+       list, so this names them. Each was a catalogue module; an existing grant
+       is kept, deprecated, by the catalogue, and carries to its target (P-61
+       item 4). Neither target is in the Projects app's grants: each keeps its
+       own commercial verdict, as every MDX project feature does. */
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    for (const id of ['risk', 'design-controls', 'ivd-completeness']) {
+      expect(projects.surfaces, id).not.toContain(id);
+      expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[], id).not.toContain(id);
+      expect(isLaunchSurface(id), id).toBe(false);
+      expect(LAUNCH_MODULE_IDS as readonly string[], id).not.toContain(id);
+    }
+    for (const id of ['device-engineering', 'device-diagnostics']) {
+      expect(projects.surfaces, id).toContain(id);
+      expect(isLaunchSurface(id), id).toBe(true);
+    }
+    expect(projects.modules).toEqual(['projects', 'tasks']);
+  });
+});
+
 describe('Submission Center carries the IND lifecycle tools — decision P-32', () => {
   it('the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15', () => {
     const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;

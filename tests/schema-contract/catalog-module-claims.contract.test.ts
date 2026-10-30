@@ -464,3 +464,80 @@ describe('Retired eCTD publishing reference', () => {
     expect((await subs()).rows).toEqual(before.rows);
   });
 });
+
+/* Risk management and Design controls folded into Engineering evidence (fold
+   F1c), and IVD completeness into IVDR evidence (fold F2) (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/). Every writer
+   of the three rows was amended in place (CLAUDE.md Rule 1): 20260810's keep-list
+   and upsert, 20260823's packaging and customer-copy rows (risk,
+   ivd-completeness), 20260814j's insert and 20260823_module_catalog_mdx_registers'
+   upsert and assertion (design-controls). A fresh database never holds the rows;
+   a deployed one keeps each, deprecated, with its tier and its subscriptions,
+   which carry to the target (decision P-61 item 4). */
+describe('Retired risk, design-controls and ivd-completeness', () => {
+  const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
+  const WRITERS = [
+    'migrations/20260814j_catalog_missing_product_surfaces.sql',
+    'db/migrations/20260810_reconcile_module_catalog.sql',
+    'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+    'db/migrations/20260823_module_catalog_customer_copy.sql',
+    'db/migrations/20260823_module_catalog_mdx_registers.sql',
+  ];
+  const RETIRED = [
+    { id: 'risk', name: 'Risk management', org: 291034 },
+    { id: 'design-controls', name: 'Design controls (DHF)', org: 291035 },
+    { id: 'ivd-completeness', name: 'IVD completeness', org: 291036 },
+  ];
+  const meta = async (db: PGlite, id: string) =>
+    (await db.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [id])).rows;
+
+  it('a fresh database replaying the whole catalogue set twice holds none of the three, and both targets and human factors stay offered at standard', async () => {
+    expect(WRITERS.every((f) => CATALOG_MIGRATIONS.includes(f))).toBe(true);
+    const fresh = new PGlite();
+    try {
+      for (const ddl of baseDdl()) await fresh.exec(ddl);
+      for (let replay = 0; replay < 2; replay += 1) {
+        for (const file of CATALOG_MIGRATIONS) await fresh.exec(read(file));
+        for (const { id } of RETIRED) expect(await meta(fresh, id), `${id}, replay ${replay}`).toEqual([]);
+        for (const id of ['device-engineering', 'device-diagnostics', 'human-factors']) {
+          const [row] = await meta(fresh, id);
+          expect(row?.metadata.deprecated ?? false, id).toBe(false);
+          expect(row?.metadata.tiers, id).toEqual(['standard']);
+        }
+      }
+    } finally {
+      await fresh.close();
+    }
+  }, 120_000);
+
+  it('keeps each deployed row, its tier and its subscription, deprecated, across replay of every writer', async () => {
+    for (const r of RETIRED) {
+      await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (${r.org}, 'Historical subscriber ${r.id}', 'historical-${r.id}');`);
+      // As a deployed database holds it today: live, packaged at standard.
+      await pg.query(
+        `INSERT INTO available_modules (module_id, name, description, category, metadata)
+         VALUES ($1, $2, '', 'Folded', '{"legacyMarker":"kept","tiers":["standard"],"industries":[]}'::json)
+         ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+        [r.id, r.name],
+      );
+      await pg.query(
+        `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES ($1, $2, true, '{"historicalSubscription":"kept"}')`,
+        [r.org, r.id],
+      );
+    }
+    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT f1c_f2_fold_subscription_retirement_fk
+      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
+    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id IN (291034, 291035, 291036) ORDER BY organization_id');
+    const before = await subs();
+    expect(before.rows).toHaveLength(3);
+    for (let replay = 0; replay < 2; replay += 1) {
+      for (const file of WRITERS) await pg.exec(read(file));
+      for (const r of RETIRED) {
+        expect(await meta(pg, r.id), `${r.id}, replay ${replay}`).toEqual([
+          { metadata: { deprecated: true, legacyMarker: 'kept', tiers: ['standard'], industries: [] } },
+        ]);
+      }
+    }
+    expect((await subs()).rows).toEqual(before.rows);
+  });
+});

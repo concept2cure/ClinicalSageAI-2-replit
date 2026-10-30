@@ -2374,6 +2374,13 @@ registerToolHandler('medical_writing_guidance', async (input) => {
 });
 
 // Statistical-results narrator — hedged ICH-E3 prose from a structured result.
+// Rule 2 (2026-10-29): the wording is deterministic, the figures are the call's.
+// The output says so; it used to carry only an engine-sounding source label.
+const NARRATED_FIGURES_AS_GIVEN =
+  'Every figure here is as given in this call. None was read from a retained analysis run. ' +
+  'For a CSR, read each figure from the retained run with get_csr_section_evidence. Before a CSR ' +
+  'can be approved, a reviewer maps each reported figure to its retained table cell in the scientific ' +
+  'review, and the server checks every mapped figure against that cell.';
 registerToolHandler('narrate_statistical_result', async (input) => {
   const endpoint = typeof input.endpoint === 'string' ? input.endpoint : '';
   const analysisType = ['time_to_event', 'binary', 'continuous'].includes(input.analysis_type as string)
@@ -2402,7 +2409,10 @@ registerToolHandler('narrate_statistical_result', async (input) => {
     exploratory: typeof input.exploratory === 'boolean' ? input.exploratory : undefined,
     multiplicityControlled: typeof input.multiplicity_controlled === 'boolean' ? input.multiplicity_controlled : undefined,
   });
-  return JSON.stringify({ source: 'AnA Statistical Narrator', ...result });
+  return JSON.stringify({
+    source: 'AnA Statistical Narrator (wording only)', ...result,
+    figureSource: 'as-given', figureSourceNote: NARRATED_FIGURES_AS_GIVEN,
+  });
 });
 
 // Market-access / HEOR value-dossier guidance.
@@ -3841,6 +3851,13 @@ registerToolHandler('screen_promotional_language', async (input) => {
 });
 
 // Safety narrative — ICH E3 §16 patient narrative from structured case facts.
+// Rule 2 (2026-10-29): the facts are the call's, and the output says so. The
+// sourced path is the CSR build's narrative job (csr/csr-narrative-job.ts),
+// which composes with the same composer from the study's ADaM rows.
+const NARRATED_FACTS_AS_GIVEN =
+  'Every fact here is as given in this call. None was read from the study\'s ADaM data. ' +
+  'A CSR\'s patient narratives are composed from the ADaM data by the CSR build\'s narrative job, ' +
+  'which sources every fact.';
 registerToolHandler('draft_safety_narrative', async (input) => {
   const subjectId = typeof input.subject_id === 'string' ? input.subject_id : '';
   const ev = (input.event ?? {}) as Record<string, unknown>;
@@ -3878,8 +3895,10 @@ registerToolHandler('draft_safety_narrative', async (input) => {
     },
   });
   return JSON.stringify({
-    source: 'AnA Safety Narrative (ICH E3 §16)',
+    source: 'AnA Safety Narrative (ICH E3 §16; wording only)',
     ...result,
+    factSource: 'as-given',
+    factSourceNote: NARRATED_FACTS_AS_GIVEN,
     citation_hint:
       result.missingFields.length
         ? `Confirm the missing fields before finalizing: ${result.missingFields.join(', ')}.`

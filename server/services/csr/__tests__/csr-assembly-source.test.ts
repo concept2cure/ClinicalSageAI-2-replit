@@ -16,7 +16,8 @@ import { assembleCsrJob } from '../csr-assembly-source';
 import { assemblyInput, SECTIONS } from './support/csr-assembly-fixture';
 
 let work: string;
-const q = { query: vi.fn() };
+// The build's saved narratives (csr_narrative_outputs): none here, unless a test says otherwise.
+const q = { query: vi.fn(async () => ({ rows: [] as Array<Record<string, unknown>> })) };
 const scope = { organizationId: 7, userId: 5, programId: '11111111-2222-4333-8444-000000000011', projectId: 11, jobId: 41 };
 beforeEach(async () => {
   work = await fs.mkdtemp(path.join(os.tmpdir(), 'csr-assembly-source-'));
@@ -45,6 +46,8 @@ describe('assembling a saved CSR job', () => {
     expect(result.missing.find(m => m.number === '16.2.3')).toMatchObject({ blocking: true, reason: 'The source supplied carries no subject population flags.' });
     expect(result.missing.find(m => m.number === '16.2.8')?.reason).toBe('No ADLB dataset was supplied.');
     expect(result.missing.find(m => m.number === '16.1.1')?.blocking).toBe(true);
+    // No narrative landed: §14.3.3 is a blocking gap that names what the narrative job has saved (D18).
+    expect(result.missing.find(m => m.number === '14.3.3')).toMatchObject({ blocking: true, reason: expect.stringMatching(/No narrative of this build has been saved\./) });
   }, 60_000);
 
   it('refuses a job that was not built from a retained run, before reading any source rows', async () => {

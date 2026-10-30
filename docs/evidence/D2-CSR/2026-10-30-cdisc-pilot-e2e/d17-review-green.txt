@@ -1,0 +1,20 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: subject-level AE withdrawal facts > the bundle accepts a declared withdrawal date variable 4ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: subject-level AE withdrawal facts > reads the withdrawal date and study day, and the TEAEs with onset on or before it, each from its row 5ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the composed narrative > composes, states the withdrawal, lists every preceding TEAE, and attributes no cause 5ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the composed narrative > says so, as a QC item, when no TEAE precedes the withdrawal; still composed 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the composed narrative > names a TEAE whose onset is not recorded rather than placing it, and lists it for QC 1ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the composed narrative > refuses by name when no withdrawal date is declared or recorded: the preceding events cannot be identified 1ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the fact gate refuses an invented cause > refuses "withdrawn due to <event>", "<event> led to withdrawal" and a pronoun attribution 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the fact gate refuses an invented cause > keeps the template when a model rewrite attributes the withdrawal, and records the refusal 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the fact gate refuses an invented cause > refuses a rewrite that drops a candidate event, states an event after withdrawal, or moves the withdrawal day 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the fact gate refuses an invented cause > accepts a rewrite of the connective prose that keeps every fact and no cause 1ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the fact gate refuses an invented cause > applies the cause rule only to a subject-level withdrawal: an event-basis narrative is unaffected 1ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > refuses every attribution form, including "for <event>", sequence words and a cause stated in the next sentence 4ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > does not refuse the template when an event term itself contains a withdrawal word 1ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > never guesses the withdrawal date: an undeclared ADSL EOSDT is not used, and the subject is refused by name 1ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > never reads a blank AESER on a listed TEAE as "not serious": the selection is refused by name 1ms
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  20:46:27
+   Duration  572ms (transform 226ms, setup 86ms, import 198ms, tests 37ms, environment 0ms)

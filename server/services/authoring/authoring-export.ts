@@ -103,6 +103,13 @@ export interface RenderExportArgs {
    * only. Absent on the controlled export and the vault filing.
    */
   workingCopy?: { banner: string };
+  /**
+   * Render a QMS controlled copy (MR-12 Stage 8, services/qms/controlled-copy.ts):
+   * `banner` is printed in the header and footer of every page, and the
+   * signature section prints `manifest`, the QMS approval that put the version
+   * in force, instead of the Authoring signature store. DOCX and PDF only.
+   */
+  controlledCopy?: { banner: string; manifest: string[][] };
 }
 
 /** Where a working copy's manifestation would be: said, not omitted silently. */
@@ -422,10 +429,11 @@ async function companyWordPresentation(args: RenderExportArgs, docxNs: typeof im
 }
 async function authoringWordSection(args: RenderExportArgs, style: DocxStyle | null,
   children: Array<WordParagraph | WordTable>, docxNs: typeof import('docx')): Promise<ISectionOptions> {
+  const pageBanner = args.workingCopy?.banner ?? args.controlledCopy?.banner;
   if (style) return { ...(await import('../docx/docxFactory')).regulatoryLetterheadSection(style,
-    { title: args.doc.title, submissionType: 'Correspondence' }, true, args.workingCopy?.banner), children };
-  if (!args.workingCopy) return { children };
-  const bannerText = args.workingCopy.banner;
+    { title: args.doc.title, submissionType: 'Correspondence' }, true, pageBanner), children };
+  if (!pageBanner) return { children };
+  const bannerText = pageBanner;
   const banner = () => new docxNs.Paragraph({ children: [new docxNs.TextRun({ text: bannerText, bold: true })] });
   return { headers: { default: new docxNs.Header({ children: [banner()] }) },
     footers: { default: new docxNs.Footer({ children: [banner()] }) }, children };
@@ -497,12 +505,13 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
 
   /* §11.50(b) manifestation, after the content. A working copy carries none. */
   children.push(new Paragraph({ text: 'Electronic signatures', heading: HeadingLevel.HEADING_1 }));
+  const manifest = args.controlledCopy?.manifest ?? shared.manifest;
   if (args.workingCopy) {
     children.push(new Paragraph({ text: WORKING_COPY_SIGNATURE_STATEMENT }));
-  } else if (shared.manifest.length === 0) {
+  } else if (manifest.length === 0) {
     children.push(new Paragraph({ text: 'No electronic signatures are recorded against this document.' }));
   } else {
-    for (const lines of shared.manifest) {
+    for (const lines of manifest) {
       for (const line of lines) children.push(new Paragraph({ text: line }));
       children.push(new Paragraph({ text: '' }));
     }
@@ -556,7 +565,7 @@ async function renderPdf(
 export async function renderAuthoringExport(args: RenderExportArgs): Promise<RenderedExport> {
   // Always resolve internally: callers cannot override a historical reference with current branding.
   args = { ...args, companyPresentation: await readCorrespondencePresentation(args.executor, args.tenantId, args.doc) };
-  if (args.workingCopy && args.format === 'xml') throw new Error('A working copy is rendered as DOCX or PDF only');
+  if ((args.workingCopy || args.controlledCopy) && args.format === 'xml') throw new Error('A working or controlled copy is rendered as DOCX or PDF only');
   await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId, args.actor);
   if (!args.workingCopy) await assertWorkflowImportRelease(args.executor, {
     organizationId: args.tenantId, doc: args.doc, sections: args.sections, actor: args.actor,

@@ -1,0 +1,785 @@
+# Green, 2026-10-29: the new test, the suites that name the changed routes, and the build-board and compile suites that reach admitProgramComposition / getModule3BuildStatus
+# npx vitest run <files below>
+# (The 684 per-case lines of project-write-gates.pglite.test.ts are left out to keep this file readable; its cases are counted in the totals at the end.)
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stderr | server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts
+{
+  "timestamp": "2026-10-29T23:01:11.354Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+stdout | server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts
+{
+  "timestamp": "2026-10-29T23:01:13.336Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T23:01:13.336Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts
+{
+  "timestamp": "2026-10-29T23:01:13.337Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > returns readiness snapshot from canonical section/contradiction data 15ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > returns section provenance feed 4ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > section approve fails closed with 401 when re-authentication fails — before any DB write 9ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > section approve proceeds past the re-auth gate on success (then honors the contradiction block) 4ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > approves a section atomically and records a hash-chained governed action (§11) 10ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > refuses to approve a section whose own compiled record is incomplete — 409, rolled back, nothing written 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > refuses to approve a section that was never scored by the compiler (no completeness at all) 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > GET /sections reports each section's compiled completeness and missing inputs 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > blocks final export when not all sections approved and critical contradictions open 4ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > blocks final export when an approved section went stale afterwards (isStale gate) 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > blocks final export when a section has no recorded source lineage 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > readiness is not export-ready when a section has no recorded source lineage 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > readiness does not report export-ready when the governed state could not be evaluated 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > blocks final export when an approved section compiled incomplete, and names it 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > readiness is not export-ready when an approved section compiled incomplete 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > GET /sections/:projectId/:sectionKey — what a signature is actually over > serves the narrative, the tables and the markdown that will be filed 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > GET /sections/:projectId/:sectionKey — what a signature is actually over > says the tables are UNKNOWN for a row compiled before they were stored 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > GET /sections/:projectId/:sectionKey — what a signature is actually over > flags a source that changed since the section was compiled 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > GET /sections/:projectId/:sectionKey — what a signature is actually over > 404s a section that was never compiled instead of serving an empty document 1ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > POST /sections/:projectId/:sectionKey/refresh — the record is the composer's, never the body's > ignores a body that claims completeness, writes the composed record, rewrites lineage, records the refresh 7ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > POST /sections/:projectId/:sectionKey/refresh — the record is the composer's, never the body's > refuses to refresh a project with no canonical sources rather than writing an empty section 2ms
+stderr | server/routes/c2c/__tests__/project-write-gates.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stdout | server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > POST /api/concept2cure/projects/:projectId/artifacts > admits owner
+[GenerationGuard] artifact_created | source=document_builder project=401 artifact=artifact_1793314896371_e47aeaa13574 trace=gen_1793314896409_f6tkt0
+stderr | server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > admits owner
+[governed-evaluator] RIM emitter not registered — learning loop inactive
+stderr | server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/artifacts-center/:artifactId/export > the same member is given the open project’s artifact (read mode: the gate is project access, not edit permission)
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: {
+    rowMode: 'object',
+    parsers: {
+      '20': [Function: identity],
+      '1082': [Function: identity],
+      '1114': [Function: identity],
+      '1184': [Function: identity],
+      '1186': [Function: identity]
+    }
+  }
+}
+stderr | server/routes/c2c/__tests__/project-write-gates.pglite.test.ts > GET /api/artifacts-center/:artifactId/export > the private project’s owner is given its artifact, and the download is recorded (the control)
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: {
+    rowMode: 'object',
+    parsers: {
+      '20': [Function: identity],
+      '1082': [Function: identity],
+      '1114': [Function: identity],
+      '1184': [Function: identity],
+      '1186': [Function: identity]
+    }
+  }
+}
+stderr | server/services/cmc/__tests__/place-module3-into-submission.test.ts
+{
+  "timestamp": "2026-10-29T23:02:38.711Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses with the gate verdict and performs no write when the gate refuses 3ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses a submission that does not file on CTD headings, before any read or write 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > another program's submission is refused before anything is read or written 3ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > the same program, in any case, is placed 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > a legacy numeric project is compared with the program's anchored row: another one is refused 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > a legacy numeric project of the anchored row is placed 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > a program with no anchor cannot be judged, and is not refused (as upsertLeaf) 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places normally when the submission files on CTD headings 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > carries the section label into coauthor_documents.module_name 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > files a section already placed in an earlier sequence as replace of that leaf, not as new 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > placing again into the SAME sequence updates its leaves rather than adding a second copy 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > snapshots approved sections into coauthor_documents and places m-prefixed leaves 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses a sequence that belongs to a different submission 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > skips (and says it skipped) an approved section with no compiled narrative 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > carries the composed tables the narrative cites into the placed snapshot 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places the placeable sections and says which ones were skipped as pre-tables 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses the whole placement — with no write — when every approved section is unplaceable 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places a genuinely table-free section with no table block and no trailing blank tail 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > toLeafSectionCode > prefixes the eCTD spine's m onto CMC OS section keys 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > the governed artifact and the filed leaf are the same bytes > renders a narrative with a trailing space identically for both consumers 1ms
+stderr | server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the fixture is the deployed shape > the register keys project_id as TEXT and is policied, and the runtime role is not exempt 47ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the fixture is the deployed shape > a recorded drug substance lands under the program UUID the CMC surface sends 49ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a device program is given no CMC action, and the boundary’s refusal says why 110ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a diagnostic (IVD) program is given no CMC action, and the boundary’s refusal says why 79ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a biologic program is given no CMC action, and the boundary’s refusal says why 72ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an EU CTA is given no CMC action, and the boundary’s refusal says why 82ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an NDA is given no CMC action, and the boundary’s refusal says why 68ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug-substance record in the register is read as recorded, and only the drug product is asked for 84ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a register that holds both gives no CMC action 83ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > an empty register on a US IND drug program asks for both, naming what each feeds 73ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug substance kept only in project metadata is not read as recorded 74ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a tracking record anchored to no program is answered by the boundary, with no CMC action 78ms
+stderr | server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing
+[module3-compile] submission spine unreadable; refused at the composition boundary: the database could not run this statement
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the register read fails, readiness is said to be unreadable: neither complete nor missing 68ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing 72ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states what the register holds, and not what project metadata says 71ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states the boundary’s refusal for a device program 65ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project-metadata CMC routes are retired > get …/cmc is not served, and the project record is untouched 34ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project-metadata CMC routes are retired > put …/cmc is not served, and the project record is untouched 35ms
+stderr | server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > the database layer this route sits on, as deployed > projects and project_tasks are RLS-enabled, FORCEd and policied by the set, and the runtime role is not exempt 34ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > the database layer this route sits on, as deployed > is the layer that decides at head: on, org A cannot see org B’s project; off, it can (the negative control) 31ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > PUT …/cmc (retired, P-62) is not served and leaves its record exactly as it was 58ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/context answers 404 and names none of its tasks 38ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/program-twin answers 404 34ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/change-impact answers 404 31ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/transform-context answers 404 36ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/artifacts/art_1/verification answers 404 28ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > PUT …/cmc (retired, P-62) is not served and leaves its record exactly as it was 25ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/context answers 404 and names none of its tasks 34ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/program-twin answers 404 44ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/change-impact answers 404 38ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/transform-context answers 404 37ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/artifacts/art_1/verification answers 404 43ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member who is not on a private project cannot read its context 50ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a viewer reads the context 61ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > an archived project’s records stay readable 78ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > the project’s owner reads its context, and its CMC readiness is not project metadata 73ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > a check that could not run is not an answer > when the membership read fails, the context answers 503 and nothing is supplied 36ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > a check that could not run is not an answer > when the project read fails, the context answers 503 and nothing is supplied 32ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/context (projects|project_tasks) 43ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/program-twin (concept2cure_signatures|concept2cure_review_comments) 45ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/verification (concept2cure_signatures|concept2cure_review_comments) 47ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > a task row keyed to this project id under another organization is not in its context 41ms
+stdout | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T23:02:50.295Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T23:02:50.296Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T23:02:50.296Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T23:02:50.359Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > module3BuildAll persists cmc_section_lineage tying sections to their source objects
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > module3BuildAll records a compiled provenance event per section (parity with the API compile route)
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+ ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > module3BuildAll persists cmc_section_lineage tying sections to their source objects 68ms
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a re-compile that CHANGES an approved section returns it to draft; one that changes nothing does not
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a re-compile that CHANGES an approved section returns it to draft; one that changes nothing does not
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a re-compile that CHANGES an approved section returns it to draft; one that changes nothing does not
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+ ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > module3BuildAll records a compiled provenance event per section (parity with the API compile route) 36ms
+ ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > build paths refuse to compose from zero canonical sources instead of writing empty sections 6ms
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a compiled section stores its TABLES, so placement can tell "composes none" from "compiled before tables"
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a legacy section with no tables key becomes placeable only after a recompile AND a re-approval
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a legacy section with no tables key becomes placeable only after a recompile AND a re-approval
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+ ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a re-compile that CHANGES an approved section returns it to draft; one that changes nothing does not 107ms
+ ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a compiled section stores its TABLES, so placement can tell "composes none" from "compiled before tables" 36ms
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > module3BuildSection persists lineage for the single compiled section
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a failed refresh leaves the section lineage intact (the whole refresh is one transaction)
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a failed refresh leaves the section lineage intact (the whole refresh is one transaction)
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > re-building refreshes lineage in place (no duplicate rows per source/section)
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+stderr | server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > re-building refreshes lineage in place (no duplicate rows per source/section)
+[module3-compile] submission spine read failed; no 3.2.R region resolved: current transaction is aborted, commands ignored until end of transaction block
+ ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a legacy section with no tables key becomes placeable only after a recompile AND a re-approval 82ms
+ ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > module3BuildSection persists lineage for the single compiled section 11ms
+ ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a failed refresh leaves the section lineage intact (the whole refresh is one transaction) 45ms
+ ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > re-building refreshes lineage in place (no duplicate rows per source/section) 12ms
+stderr | server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them
+{
+  "timestamp": "2026-10-29T23:02:53.795Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not
+{
+  "timestamp": "2026-10-29T23:02:54.607Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T23:02:54.607Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not
+{
+  "timestamp": "2026-10-29T23:02:54.608Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them 1484ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > notification, work-item and escalation routes live in one router > the notifications router answers every one of them, and the main router none 1ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not 435ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > project task routes live in one router > the tasks router answers every one of them, and the main router none 44ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > conversation mutations live in one router > the conversations router answers every one of them, and the main router none 2ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the export family lives in one router > the exports router answers every export path, and the main router none 5ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the artifact domain lives in one router > the artifacts router answers every artifact path, and the main router none 147ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > AI editing lives in one router > the ai-editing router answers every /ai path, and the main router none 8ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > HAQ session persistence lives in one router > the haq-sessions router answers every HAQ path, and the main router none 2ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the program twin and project-context reads live in one router > the program-twin router answers every one of them, and the main router none 3ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the program twin and project-context reads live in one router > serves no project-metadata CMC route, on any router that mounts at /api/concept2cure 3ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the context-integrity and intelligence endpoints live in one router > the context-intelligence router answers every one of them, and the main router none 20ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the project knowledge, activity and linked-project routes live in one router > the project-knowledge router answers every one of them, and the main router none 3ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the governance and platform-operations routes live in one router > the governance-ops router answers every one of them, and the main router none 2ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the connected-app and knowledge-document routes live in one router > the knowledge-sources router answers every one of them, and the main router none 13ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > honours an explicit modality, either way 2ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > reads any biological signal as biologic, and says which one 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > catches an expression system in the route, and an INN stem in the name 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > does not fire on a chemical substance whose text incidentally says tissue or plasma 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > reads a recorded chemical process with no biological signal as a small molecule 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > classifySubstanceModality — one rule, shared with §3.2.A.2 > reads NOTHING recorded as unknown — never as an assumed small molecule 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > the product class the person recorded is asked first > refuses a biologic, a device, an IVD and a combination product 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > the product class the person recorded is asked first > refuses a program recorded as a biologic even while its substance register says small molecule 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > the product class the person recorded is asked first > composes a program recorded as a drug 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > the product class the person recorded is asked first > falls through to the substance record when no class is recorded (pre-P-21 data) 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > composes a small molecule for a US IND, however the type is cased 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > composes for an IND program that has no submission row yet 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a CTA or NDA program that has no submission row yet 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses when the program row itself could not be read 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses the simulation’s own monoclonal antibody 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a biologic on each signal alone, so one missing field does not open the door 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a substance whose modality the record does not establish, and asks for the route 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a program that records no drug substance at all, and says so differently 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses every application that is not a US IND 1ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > says what a marketing application needs that is not produced here 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > judges the modality BEFORE the application — the substance is the stronger refusal 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > judges the NEWEST drug substance, as the source read orders them 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > every refusal names the path that does author it > points at Authoring, Vault and the Submission center 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > every refusal names the path that does author it > carries the code and the hint in the 409 body 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > a refusal cannot be mistaken for an empty result > is a typed error, recognised by its own guard 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > a refusal cannot be mistaken for an empty result > an unreadable submission refuses rather than composing on an unestablished application 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > a refusal cannot be mistaken for an empty result > a read that failed is answered 503, so a screen offers the retry; a verdict is 409 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > interviewMoleculeTypeRefusal > reads the options it judges 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > interviewMoleculeTypeRefusal > admits a small molecule, and an unanswered question 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > interviewMoleculeTypeRefusal > refuses every type on the flow's biologic branch as a biologic 0ms
+ ✓ server/services/cmc/__tests__/composition-scope.test.ts > interviewMoleculeTypeRefusal > refuses every other option but a small molecule, by name or as not established 2ms
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+{
+  "timestamp": "2026-10-29T23:02:56.259Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > a bare SAVEPOINT is refused here, as in production: this engine is the one that matters 10ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > lists exactly the 3.2.R section the compile composes for a US IND 28ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a monoclonal antibody, typed, and scores nothing 15ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > refuses a small molecule whose program files an NDA 9ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > judges the NEWEST drug substance, as compose does, whatever order the rows are stored in 13ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > reaches compose’s verdict when the older substance is a biologic, the newer a small molecule 16ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > reaches compose’s verdict when the older substance is a small molecule, the newer a biologic 15ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > gives a program with no CMC records yet its empty board, not a refusal 10ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records whose declared class is outside the boundary 9ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records that files an NDA 13ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > the build board (getModule3BuildStatus) > still refuses a program with no records that files an EU clinical-trial application 9ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > a legacy numeric project, which is not a program > is refused as not a program — a settled answer, never a failed read or a driver error 8ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > assessProgramCompositionScope — the boundary for a caller holding no transaction > admits a small-molecule IND program, refuses a biologic, and leaves no transaction open 13ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > drafts for a small-molecule IND program on a real engine 65ms
+ ✓ server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts > AnA’s 2.3 Quality Overall Summary > relays the boundary’s refusal for a biologic, in its own words 9ms
+stderr | server/api/cmc/__tests__/module3BuildStateRoutes.test.ts
+{
+  "timestamp": "2026-10-29T23:02:59.662Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+stderr | server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > build-state: the relation name stays in the log, the client gets the envelope
+{
+  "timestamp": "2026-10-29T23:02:59.830Z",
+  "level": "error",
+  "message": "[module3-build-state] computing the build state failed",
+  "context": {
+    "err": "relation \"cmc_source_objects\" does not exist",
+    "correlationId": "req-p1-17",
+    "code": "42P01"
+  }
+}
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > GET /build-state/:projectId — artifact spine resolution > returns 200 with honest unanchored state for a uuid program with no PM anchor 19ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > GET /build-state/:projectId — artifact spine resolution > queries the registry with the anchored integer id for a linked program 5ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > build-state derives its source rules from the composer (anti-drift) > counts qc_result sources toward 3.2.S.4 and 3.2.P.5 — the drift the copied map had 5ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > build-state reads completeness from the canonical status, not from a stored or fabricated figure > scores an uncompiled section from its live sources — '' is not present, retired does not count 5ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > build-state: the relation name stays in the log, the client gets the envelope 4ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > the 401 for a missing tenant is untouched by the migration 3ms
+stderr | server/services/__tests__/module3-convergence-build-status.test.ts
+{
+  "timestamp": "2026-10-29T23:03:00.611Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+ ✓ server/services/__tests__/module3-convergence-build-status.test.ts > getModule3BuildStatus — a required key holding an empty value is NOT present > '' does not satisfy a required field 6ms
+ ✓ server/services/__tests__/module3-convergence-build-status.test.ts > getModule3BuildStatus — a required key holding an empty value is NOT present > null does not satisfy a required field 1ms
+ ✓ server/services/__tests__/module3-convergence-build-status.test.ts > getModule3BuildStatus — a required key holding an empty value is NOT present > a non-empty value from ANY live source of a matching type does satisfy it 1ms
+ ✓ server/services/__tests__/module3-convergence-build-status.test.ts > getModule3BuildStatus — a retired source feeds nothing > does not count toward completeness, sourceObjectCount, sourceTypes or build state 1ms
+ ✓ server/services/__tests__/module3-convergence-build-status.test.ts > getModule3BuildStatus — a retired source feeds nothing > is excluded from the count while its live sibling still counts 1ms
+ ✓ server/services/__tests__/module3-convergence-build-status.test.ts > getModule3BuildStatus — equals the composer for the same sources > completeness, missingInputs and sourceObjectCount match composeModule3FromCanonicalSources section-for-section 5ms
+ ✓ server/services/__tests__/module3-convergence-build-status.test.ts > getModule3BuildStatus — equals the composer for the same sources > is computed live from the sources, not read back from a compiled row 1ms
+ ✓ server/services/__tests__/module3-convergence-build-status.test.ts > deriveBuildState — the one derivation, in the order the gate implies > an approved section that went stale is stale, not approved — the gate refuses it 0ms
+ ✓ server/services/__tests__/module3-convergence-build-status.test.ts > deriveBuildState — the one derivation, in the order the gate implies > staleness outranks an open contradiction; the artifact lifecycle supplies locked and review 0ms
+ ✓ server/services/__tests__/module3-convergence-build-status.test.ts > deriveBuildState — the one derivation, in the order the gate implies > an uncompiled section with only uploaded documents is sources_uploaded; with composed sources extraction_complete 0ms
+stdout | server/services/cmc/__tests__/composition-scope.pglite.test.ts
+{
+  "timestamp": "2026-10-29T23:03:01.621Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T23:03:01.622Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/services/cmc/__tests__/composition-scope.pglite.test.ts
+{
+  "timestamp": "2026-10-29T23:03:01.622Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/services/cmc/__tests__/composition-scope.pglite.test.ts
+[database] Database connection successful
+ ✓ server/services/cmc/__tests__/composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > refuses a program the person recorded as a biologic, whatever its substance says 39ms
+ ✓ server/services/cmc/__tests__/composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > composes a small molecule for a US IND 21ms
+ ✓ server/services/cmc/__tests__/composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > refuses the simulation’s monoclonal antibody, and composes nothing 18ms
+ ✓ server/services/cmc/__tests__/composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > refuses the same small molecule when the program files an NDA 12ms
+ ✓ server/services/cmc/__tests__/composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > refuses an NDA program that has no submission row yet 6ms
+ ✓ server/services/cmc/__tests__/composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > composes for an IND program that has no submission row yet 7ms
+ ✓ server/services/cmc/__tests__/composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > refuses a program whose substance records no route and no biological origin 13ms
+ ✓ server/services/cmc/__tests__/composition-scope.pglite.test.ts > the compose path consults the boundary before it composes > leaves the caller’s transaction usable after a refusal 11ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > finds the callers it exists to watch 1ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.get(\'/quality/qbd/:projectId\…'` asks before it calls [ 'analyzeQbdFromSources' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/ich-compliance\', asyn…'` asks before it calls [ 'runIchComplianceCheck' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/control-strategy\', as…'` asks before it calls [ 'generateControlStrategy' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/stability-studies/:id/…'` asks before it calls [ 'estimateRecordedShelfLife' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/api/cmc/routes.ts': `'router.post(\'/stability-studies/pool…'` asks before it calls [ 'assessRecordedPoolability' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana/AnaToolExecutor.ts': `'registerToolHandler(\'estimate_record…'` asks before it calls [ 'estimateRecordedShelfLife' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana/AnaToolExecutor.ts': `'registerToolHandler(\'assess_recorded…'` asks before it calls [ 'assessRecordedPoolability' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana/AnaToolExecutor.ts': `'registerToolHandler(\'answer_intellig…'` asks before it calls [ 'advanceFlow' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana/AnaToolExecutor.ts': `'registerToolHandler(\'resume_intellig…'` asks before it calls [ 'resumeFlow' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…': `'export async function ichCompliance('` asks before it calls [ 'runIchComplianceCheck' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/ana-ri/quality-engine…': `'export async function controlStrategy('` asks before it calls [ 'generateControlStrategy' ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/module3-convergence-s…': `'export async function getModule3Build…'` asks before it calls [ …(3) ] 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/services/submission-package-orchestrator.ts asks through the file named 1ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > server/services/authoring/module2-saved-qc.ts asks through the file named 0ms
+ ✓ server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/routes/orchestration.ts': `'router.post(\'/pre-submission-gate\''` is listed with a reason, and still needs to be 1ms
+stderr | server/api/cmc/__tests__/composition-boundary-routes.test.ts
+{
+  "timestamp": "2026-10-29T23:03:08.731Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+stdout | server/api/cmc/__tests__/composition-boundary-routes.test.ts
+{
+  "timestamp": "2026-10-29T23:03:08.808Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T23:03:08.809Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/api/cmc/__tests__/composition-boundary-routes.test.ts
+{
+  "timestamp": "2026-10-29T23:03:08.809Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'GET /quality/qbd/:projectId' asks the composition boundary first > refuses a program outside it with the boundary’s 409, and runs nothing 47ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'GET /quality/qbd/:projectId' asks the composition boundary first > runs for a program inside it 4ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'GET /quality/qbd/:projectId' asks the composition boundary first > answers a read the boundary could not make 503, so a screen offers the retry, and runs nothing 3ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'POST /ich-compliance' asks the composition boundary first > refuses a program outside it with the boundary’s 409, and runs nothing 13ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'POST /ich-compliance' asks the composition boundary first > runs for a program inside it 4ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'POST /ich-compliance' asks the composition boundary first > answers a read the boundary could not make 503, so a screen offers the retry, and runs nothing 3ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'POST /control-strategy' asks the composition boundary first > refuses a program outside it with the boundary’s 409, and runs nothing 3ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'POST /control-strategy' asks the composition boundary first > runs for a program inside it 3ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > 'POST /control-strategy' asks the composition boundary first > answers a read the boundary could not make 503, so a screen offers the retry, and runs nothing 4ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/:id/shelf-life judges the study’s own program > refuses a study of a program outside the boundary, and estimates nothing 9ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/:id/shelf-life judges the study’s own program > refuses a study filed under no program: its modality is not established 2ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/:id/shelf-life judges the study’s own program > estimates for a study of a program inside the boundary 2ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/poolability judges every study’s program > refuses when a study’s program is outside the boundary, and pools nothing 4ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/poolability judges every study’s program > refuses when any study is filed under no program 3ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/poolability judges every study’s program > judges EVERY program: one admitted and one refused is refused, naming the refused one 2ms
+ ✓ server/api/cmc/__tests__/composition-boundary-routes.test.ts > POST /stability-studies/poolability judges every study’s program > pools studies of a program inside the boundary 2ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > writeThroughProjectId — which program the canonical write is keyed on > the row wins: camelCase, then the raw snake_case column 1ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > writeThroughProjectId — which program the canonical write is keyed on > falls back to the request body only when a request is given 1ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > linkToModule3 — what the response says, and what is metered > no project: saved to the register only, said so, and NOT metered — it is a refusal, not a failure 1ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > linkToModule3 — what the response says, and what is metered > a successful write is reported as linked, with no warning 1ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > linkToModule3 — what the response says, and what is metered > a failed write is reported as not linked, with the warning, and metered under cmc_<propagation> 6ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > linkToModule3 — what the response says, and what is metered > a write-through that throws (a mapper on a bad row) is caught, reported and metered the same way 1ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > linkToModule3 — what the response says, and what is metered > a no_project refusal coming back from the write-through itself is the no-project warning, unmetered 0ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > linkToModule3 — what the response says, and what is metered > a metric sink that throws never reaches the request 1ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > writeThroughProjectId — an in-process caller names the project directly > reads a plain { projectId } source the way it reads a request body 0ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > linkToModule3 — a project named on the request must be the tenant's > refuses to link a row under a body-named project the tenant does not hold, and does not write 6ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > linkToModule3 — a project named on the request must be the tenant's > links under a body-named project the tenant holds 1ms
+ ✓ server/services/cmc/__tests__/link-to-module3.test.ts > linkToModule3 — a project named on the request must be the tenant's > does not consult membership for a row that carries its own stored project 0ms
+stderr | server/services/cmc/__tests__/place-module3-into-submission-boundary.test.ts
+{
+  "timestamp": "2026-10-29T23:03:10.004Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+ ✓ server/services/cmc/__tests__/place-module3-into-submission-boundary.test.ts > placeModule3IntoSubmission and the composition boundary > refuses an eSTAR device submission as not filing on CTD headings 3ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission-boundary.test.ts > placeModule3IntoSubmission and the composition boundary > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a nda target, naming it, before anything is read or written 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission-boundary.test.ts > placeModule3IntoSubmission and the composition boundary > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a bla target, naming it, before anything is read or written 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission-boundary.test.ts > placeModule3IntoSubmission and the composition boundary > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a anda target, naming it, before anything is read or written 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission-boundary.test.ts > placeModule3IntoSubmission and the composition boundary > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a maa target, naming it, before anything is read or written 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission-boundary.test.ts > placeModule3IntoSubmission and the composition boundary > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > refuses a program outside the boundary, even when its sections passed the gate 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission-boundary.test.ts > placeModule3IntoSubmission and the composition boundary > the composition boundary (decision P-28: small-molecule Module 3 for a US IND) > places a small-molecule program into its US IND 1ms
+stderr | server/api/cmc/__tests__/module3BuildStateReadiness.test.ts
+{
+  "timestamp": "2026-10-29T23:03:10.857Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+stdout | server/api/cmc/__tests__/module3BuildStateReadiness.test.ts
+{
+  "timestamp": "2026-10-29T23:03:11.010Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T23:03:11.010Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/api/cmc/__tests__/module3BuildStateReadiness.test.ts
+{
+  "timestamp": "2026-10-29T23:03:11.010Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ server/api/cmc/__tests__/module3BuildStateReadiness.test.ts > Module 3 readiness agrees with the export gate > counts an approved, fresh section as ready 18ms
+ ✓ server/api/cmc/__tests__/module3BuildStateReadiness.test.ts > Module 3 readiness agrees with the export gate > does NOT count a section whose ARTIFACT is locked but which was never approved 4ms
+ ✓ server/api/cmc/__tests__/module3BuildStateReadiness.test.ts > Module 3 readiness agrees with the export gate > does NOT count a section that went stale AFTER approval 3ms
+ ✓ server/api/cmc/__tests__/module3BuildStateReadiness.test.ts > Module 3 readiness agrees with the export gate > counts an approved section whose artifact is also locked 3ms
+ ✓ server/api/cmc/__tests__/module3BuildStateReadiness.test.ts > Module 3 readiness agrees with the export gate > reports 100% only when the gate would let every section through 5ms
+stderr | server/routes/c2c/__tests__/tasks-tenant-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks constrains organization_id 17ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks/summary constrains organization_id 4ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks resolves the project within the org 9ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks 404s on a project belonging to another org 3ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks/bulk resolves the project within the org 8ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > PUT /projects/:id/tasks/:taskId constrains organization_id 3ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > DELETE /projects/:id/tasks/:taskId constrains organization_id 3ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — assessment > POST /projects/:id/tasks/assess constrains organization_id on both reads 3ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > builds a 3.2.R regional section — a required module, previously a false 404 18ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > builds a 3.2.A appendix section 3ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > still builds a core section — the fix is not "accept everything" 3ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > still 404s a section this project genuinely cannot compose 3ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > says "no canonical sources" for an empty project, not "no composition rule" 3ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > writes through the canonical persist, not a private copy of the upsert 3ms
+stdout | server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts
+{
+  "timestamp": "2026-10-29T23:03:13.706Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T23:03:13.707Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts
+{
+  "timestamp": "2026-10-29T23:03:13.707Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts
+{
+  "timestamp": "2026-10-29T23:03:13.754Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts > the track is the one the program records > an NDA program's source is classified under NDA, not IND 4ms
+ ✓ server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts > the track is the one the program records > an IND program (recorded in lower case) is classified under IND 1ms
+ ✓ server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts > the track is the one the program records > a legacy project anchored to a program takes the program's type 2ms
+ ✓ server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts > the track is the one the program records > a legacy project with no program takes its own recorded submission type 1ms
+ ✓ server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts > refused, and nothing classified, when no track it can carry is recorded > a project that records no submission type 1ms
+ ✓ server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts > refused, and nothing classified, when no track it can carry is recorded > a program whose recorded application the classification has no track for (an MAA) 1ms
+ ✓ server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts > refused, and nothing classified, when no track it can carry is recorded > another organization's program 1ms
+stdout | server/api/cmc/__tests__/module3ProjectScope.test.ts
+{
+  "timestamp": "2026-10-29T23:03:16.623Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T23:03:16.624Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/api/cmc/__tests__/module3ProjectScope.test.ts
+{
+  "timestamp": "2026-10-29T23:03:16.624Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/api/cmc/__tests__/module3ProjectScope.test.ts
+{
+  "timestamp": "2026-10-29T23:03:16.675Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+stderr | server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > a project lookup that cannot complete is a 500, never a "not found"
+{
+  "timestamp": "2026-10-29T23:03:17.221Z",
+  "level": "error",
+  "message": "[cmc-module3-os] checking the Module 3 project failed",
+  "context": {
+    "projectId": "proj-1",
+    "err": "connection reset",
+    "correlationId": null,
+    "code": null
+  }
+}
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > post /compile/foreign-proj is not found, and nothing is read or written 32ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > get /sections/foreign-proj is not found, and nothing is read or written 3ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > get /sections/foreign-proj/3.2.P.5 is not found, and nothing is read or written 3ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > get /provenance/foreign-proj/3.2.P.5 is not found, and nothing is read or written 3ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > get /readiness/foreign-proj is not found, and nothing is read or written 3ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > post /sections/foreign-proj/3.2.P.5/approve is not found, and nothing is read or written 2ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > post /sections/foreign-proj/3.2.P.5/refresh is not found, and nothing is read or written 2ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > post /guard/final-export/foreign-proj is not found, and nothing is read or written 2ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > post /place-into-submission/foreign-proj is not found, and nothing is read or written 4ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > get /api/cmc/module3-build/build-state/foreign-proj is not found — never an empty build state — and nothing is read or written 2ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > post /api/cmc/module3-convergence/build-section/foreign-proj/3.2.P.5 is not found — never an empty build state — and nothing is read or written 2ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > the organization asked about is the caller's own 2ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > a project lookup that cannot complete is a 500, never a "not found" 2ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > Module 3 routers — another organization's project > with no organization in context, the handler's own refusal stands and no project is looked up 2ms
+stderr | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts
+{
+  "timestamp": "2026-10-29T23:03:17.961Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+stdout | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts
+{
+  "timestamp": "2026-10-29T23:03:18.139Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T23:03:18.139Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/api/cmc/__tests__/composition-boundary-module3-os.test.ts
+{
+  "timestamp": "2026-10-29T23:03:18.139Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > GET /build-state/:projectId > answers the boundary’s refusal 409, with its code and where the program’s Module 3 is authored 15ms
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > GET /build-state/:projectId > answers a read the boundary could not make 503, never as a verdict 3ms
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > POST /place-into-submission/:projectId > answers the boundary’s refusal with its code, its words and its hint 9ms
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_missing_inputs 1ms
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_stale_sections 0ms
+ ✓ server/api/cmc/__tests__/composition-boundary-module3-os.test.ts > AnA’s board commands relay the refusal as their answer > module3_refresh_stale 0ms
+stdout | server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts
+{
+  "timestamp": "2026-10-29T23:03:19.368Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T23:03:19.369Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts
+{
+  "timestamp": "2026-10-29T23:03:19.369Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts
+{
+  "timestamp": "2026-10-29T23:03:19.438Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts > module3_classify_source > maps the artifact under the user who ran the command 3ms
+ ✓ server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts > module3_classify_source > is refused, and maps nothing, when the command carries no user 1ms
+ ✓ server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts > module3_build_all / build_section / refresh_stale > persists and bridges under the user who ran the build 2ms
+ ✓ server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts > module3_build_all / build_section / refresh_stale > build_all is refused, and writes nothing as "system", when the command carries no user 0ms
+ ✓ server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts > module3_build_all / build_section / refresh_stale > build_section is refused when the command carries no user 0ms
+ ✓ server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts > module3_build_all / build_section / refresh_stale > refresh_stale is refused when the command carries no user 0ms
+ Test Files  23 passed (23)
+      Tests  964 passed (964)
+   Start at  23:01:09
+   Duration  129.99s (transform 6.53s, setup 341ms, import 27.28s, tests 99.42s, environment 2ms)

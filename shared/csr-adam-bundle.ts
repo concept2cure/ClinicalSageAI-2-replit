@@ -35,6 +35,8 @@ export const CsrAdamConventionsSchema = z.object({
   disposition: z.enum(['EOSSTT', 'DCDECOD']).optional(),
   /** An ADSL Y/blank flag recording discontinuation for an adverse event (for example DSRAEFL), when the study did not collect event-level AEACN. */
   aeDiscontinuationFlag: variable.optional(),
+  /** The ADSL date of that withdrawal (for example RFENDT, define.xml "Date of Discontinuation/Completion"); never guessed: undeclared, such a narrative is refused by name. A subject-level withdrawal narrative lists the TEAEs on or before it (D17, 2026-10-30). */
+  aeDiscontinuationDate: variable.optional(),
   /** The SAP's causality class for AREL/AEREL values outside the CDISC defaults (for example REMOTE). */
   causality: codes(['related', 'not related']).optional(),
   /** The define.xml decode of ANRIND to NORMAL, HIGH or LOW (for example N, H, L). */
@@ -43,6 +45,16 @@ export const CsrAdamConventionsSchema = z.object({
   lastOnTreatment: z.object({ variable, value: text }).strict().optional(),
   /** Exposure from ADSL when the study has no ADEX: duration in days and, optionally, the average daily dose with its unit. */
   exposure: z.object({ durationDays: variable, averageDailyDose: z.object({ variable, unit: z.string().trim().min(1).max(20) }).strict().optional() }).strict().optional(),
+  /** Further named analysis populations from ADSL Y/N flags (for example EFFFL, COMP24FL), each with its define.xml label (D11, 2026-10-30).
+   * Shown as their own rows; never mapped onto safety, ITT, mITT or per-protocol. */
+  populations: z.array(z.object({ flag: variable, label: text }).strict()).min(1).max(20)
+    .refine(p => new Set(p.map(x => x.flag)).size === p.length && new Set(p.map(x => x.label)).size === p.length, { message: 'Declare each population flag and label once.' }).optional(),
+  /** The descriptive §11.2 table (D12, 2026-10-30): age groups from ADSL AGEGR1 when present, height (HEIGHTBL), a Total column, and
+   * any further ADSL baseline characteristics the SAP tabulates, each with its define.xml label; a categorical one lists its categories in reporting order. */
+  demographics: z.object({ presentation: z.literal('descriptive'),
+    characteristics: z.array(z.object({ variable, label: text, kind: z.enum(['continuous', 'categorical']), categories: z.array(text).min(1).max(100).optional() }).strict()
+      .refine(c => (c.kind === 'categorical') === (c.categories !== undefined), { message: 'List the categories of a categorical characteristic, and only then.' })).min(1).max(50)
+      .refine(c => new Set(c.map(x => x.variable)).size === c.length, { message: 'Declare each characteristic once.' }).optional() }).strict().optional(),
 }).strict();
 export type CsrAdamConventions = z.infer<typeof CsrAdamConventionsSchema>;
 
@@ -56,7 +68,8 @@ export const CsrAdamBundleSchema = z.object({
   randomizedFlag: z.enum(['RANDFL', 'ITTFL']).optional(),
   datasets: z.object({ ADSL: ref, ADAE: ref, ADEX: ref.optional(), ADLB: ref.optional(), ADLBC: ref.optional(), ADLBH: ref.optional(), ADVS: ref.optional(),
     ADEG: ref.optional(), ADCM: ref.optional(), ADMH: ref.optional() }).strict(),
-  efficacyResults: ref,
+  /** The approved SAP efficacy output; absent, the source states that efficacy results were not supplied (D10, 2026-10-30). */
+  efficacyResults: ref.optional(),
   /**
    * The protocol's adverse events of special interest (CSR slice 7, E3 §12.3.2):
    * an ADAE flag variable (for example AESIFL = Y) and/or MedDRA preferred terms

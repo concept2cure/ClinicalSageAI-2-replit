@@ -1,3 +1,13 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 fold F1c: design-controls into Engineering evidence (CLAUDE.md Rule 1).
+-- The design-control trace is the project's, inside Engineering evidence
+-- (device-engineering, DesignControlsTrace.tsx), and the Design controls screen
+-- is retired; `design-controls` is an alias that opens Engineering. Its VALUES
+-- row is removed, so a fresh database never holds a catalogue row for it; its
+-- other writer, 20260823_module_catalog_mdx_registers.sql, no longer upserts it
+-- either. A deployed database keeps its row, metadata and subscriptions;
+-- 20260810 deprecates it on every replay. No DELETE. The note below about eight
+-- surfaces describes the file as written.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/README.md.
 -- AMENDED IN PLACE 2026-10-29 — D2 fold of ectd-publishing into eCTD Compile (CLAUDE.md Rule 1).
 -- The eCTD publishing reference (ectd-publishing) is folded into eCTD Compile,
 -- whose eCTD reference panel carries its spec versions, Regional IG OID and
@@ -72,10 +82,6 @@ BEGIN
   INSERT INTO available_modules
     (module_id, name, description, category, path, icon, sort_order, metadata)
   VALUES
-    ('design-controls', 'Design controls',
-     'Design inputs, outputs, verification and validation traced to a device design history file, with the traceability matrix an auditor asks for.',
-     'Device & diagnostics', '/concept2cure/design-controls', 'shield', 210, '{"tiers": [], "industries": []}'::json),
-
     ('human-factors', 'Human factors',
      'Use-related risk analysis, use scenarios and usability validation against IEC 62366 and FDA human-factors guidance.',
      'Device & diagnostics', '/concept2cure/human-factors', 'users', 220, '{"tiers": [], "industries": []}'::json),

@@ -33,16 +33,16 @@ Every QMS controlled document has an immutable history of approved versions. Eac
 
 | Finding | Status at head | Severity (pilot) | Tester impact | Evidence at head |
 |---|---|---|---|---|
-| CAT2-18 | STILL_OPEN | P0 | Degrades | Revise UPDATEs the same row at `mdx-qms.ts:669-683` and `AnaToolExecutor.ts:14322-14332`; no `qms_document_versions` anywhere; `superseded_by_id` never written |
-| CAT2-19 | STILL_OPEN | P1 | Degrades | `document-approval-signature.ts:272` `COALESCE($4::date, effective_date, $6::date)`; date excluded from digest at `:128-146`; `approveBody` accepts optional past dates at `mdx-qms.ts:526` |
-| CAT2-20 | STILL_OPEN | P1 | Not observable | Digest at `document-approval-signature.ts:128-146` covers `artifactId` only; artifact content rewritten in place at `artifactVersionStore.ts:350-355` |
+| CAT2-18 | FIXED (2026-10-30) | P0 | Degrades | Immutable `qms_document_versions` (20261014); prior version in force through a revision (`readInForceReleases`); one revise service; each version's standing (in force, pending, superseded by, retired) shown in the history. `docs/evidence/MR-12/2026-10-30-version-standing/` |
+| CAT2-19 | FIXED (2026-10-29) | P1 | Degrades | The approval signs its effective date (never inherited, never before today), bound in the signature manifest; a future date is pending and its predecessor stays in force. `docs/evidence/MR-12/2026-10-29-effective-date-signed/` |
+| CAT2-20 | FIXED (2026-10-29) | P1 | Not observable | The signed text is authored sections or `metadata.sections`, never the artifact; no writer sets `artifact_id`; artifact versions refuse UPDATE/TRUNCATE (`20261029k`). `docs/evidence/MR-12/2026-10-29-artifact-versions-no-rewrite/` |
 | CAT2-21 | PARTIALLY_FIXED | P1 | Blocks | acks CTE at `mdx-qms.ts:838-845` has no version filter; training-ack `:757-792` accepts non-effective docs and client `method`/`quizScore`; no client caller |
-| CAT2-22 | STILL_OPEN | P2 | Degrades | `quality/data.ts:103` `TODAY='2026-06-04'`; `SopRegister.tsx:378` flags overdue client-side; no review-complete action |
-| CAT2-23 | PARTIALLY_FIXED | P2 | Not observable | `document-approval-signature.ts:120` `APPROVABLE_STATES={'in_review'}`; still one signer, no routing |
-| CAT2-24 | STILL_OPEN | P2 | Not observable | No "controlled copy", "uncontrolled" or watermark in `server/services/qms`, `mdx-qms.ts` or `client/src/concept2cure/quality` |
-| CAT2-25 | STILL_OPEN | P2 | Not observable | `changeControl.service.ts:330` inserts `linked_ref/linked_id` with no FK or validation; hard `DELETE FROM qms_change_links` at `:343` |
-| CAT2-26 | STILL_OPEN | P2 | Degrades | 17 `onAsk(...)` write call sites, e.g. `SopRegister.tsx:216,227,450`, `ChangeControl.tsx:162,173,433` |
-| P11-03 | PARTIALLY_FIXED | P1 | Degrades | Retire signs `approveBody`'s `'APPROVED'` (`mdx-qms.ts:528`; `SopRegister.tsx:617`); register row `SopRegister.tsx:377-470` shows no signer/time/meaning; PATCH audit after commit, field names only (`mdx-qms.ts:496-506`) |
+| CAT2-22 | FIXED (2026-10-29) | P2 | Degrades | No fixed TODAY: `isReviewOverdue` reads today; signed periodic review at `POST /qms/documents/:id/periodic-review`. See the findings file. |
+| CAT2-23 | FIXED (2026-10-29) | P2 | Not observable | Review routing RR2/RR4: every named approver signs; only the last makes the document effective, under the row lock. See the findings file. |
+| CAT2-24 | FIXED (2026-10-29) | P2 | Not observable | Controlled copy of the version in force, banner on every page, QMS approval printed (31877bd79, d886d49bc). `docs/evidence/MR-12/2026-10-29-controlled-copy/` |
+| CAT2-25 | FIXED (2026-10-29) | P2 | Not observable | A link names a record of this organisation or is refused; a removed link is kept with who and why (5e7bcdd27). `docs/evidence/MR-12/2026-10-29-change-links-kept/` |
+| CAT2-26 | FIXED (2026-10-29) | P2 | Degrades | Create, revise and transition are native governed forms in Quality. See the findings file. |
+| P11-03 | FIXED (2026-10-29) | P1 | Degrades | Approval only from in_review (cf950eeb9); DB refuses effective/retired without a signature (5726976d0); register signature block and edit values. See the findings file. |
 
 ## Already done at head — do not redo
 
@@ -291,6 +291,7 @@ P11-03's draft-to-effective and unsigned-effective points are fixed at head, its
    - At insert (`:330`), validate `linked_id` against the CAPA or deviation table named by `linked_ref`, in the same organization; refuse otherwise. The link is polymorphic, so validation lives in the service, not in a foreign key.
    - Replace the hard `DELETE FROM qms_change_links` (`:343`) with an unlink that sets `removed_at` and `removed_by` and writes an audit row. Add the columns by amending the creating migration in place with `ADD COLUMN IF NOT EXISTS` and a dated header note (Rule 1). Readers filter `removed_at IS NULL`.
    **Done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-change-links-kept/`). Links are checked by reference against the deviation, CAPA and supplier registers, and by id against `qms_documents`. A removal keeps the row, with who removed it and their reason. The controlled-copy half (step 3) is open.
+   **Step 3 done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-controlled-copy/`). `GET /qms/documents/:id/controlled-copy` renders the version in force, through the one renderer, with the CONTROLLED COPY banner on every page and the QMS approval's manifestation, and delivers it through the audited download. Authoring's own controlled export of a QMS-bound document is refused, because it printed "no signatures" over an approved SOP and exported a retired one.
 5. File red and green output under `docs/evidence/MR-12/<date>/`.
 
 **Acceptance**

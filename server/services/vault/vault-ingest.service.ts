@@ -66,7 +66,7 @@ import {
 } from './vault-ingest-discard.js';
 import { ingestTargetRefusal, ingestSourceRefusal } from './vault-ingest-access.js';
 import { readRecordedVersion, reuploadChanges, reuploadDiffers } from './vault-reupload.js';
-import { checkInArgumentRefusal, checkInLineage, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock, withdrawHeadReviewRoute } from './vault-version-checkin.js';
+import { checkInArgumentRefusal, checkInAuditDetails, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock, withdrawHeadReviewRoute } from './vault-version-checkin.js';
 import { notifyTaskEvent } from '../tasking/task-side-effects.js';
 import {
   classifyForFiling,
@@ -594,8 +594,7 @@ async function admitVaultDocument(
         placement.placedBy,
         userId,
         orgId,
-        storageVersionId,
-        storageProvider,
+        storageVersionId, storageProvider,
         DEFAULT_RETENTION_YEARS,
         // A restore names the version whose bytes these are; the database checks it.
         candidateId, (checkIn && args.restoreOf?.versionId) || null,
@@ -664,6 +663,8 @@ async function admitVaultDocument(
       tenantId: orgId,
       userId: userId ?? undefined,
       action: recorded ? 'vault.document.reupload' : 'vault.document.ingest',
+      // A restore's reason is on the row's reason column, where the history reads it.
+      reason: checkIn ? args.restoreOf?.reason : undefined,
       resourceType: 'vault_document',
       resourceId: String(doc.id),
       ipAddress: args.ipAddress,
@@ -684,7 +685,7 @@ async function admitVaultDocument(
         ...(args.dataRoomSourceId != null ? { dataRoomSource: { sourceId: args.dataRoomSourceId } } : {}),
         ...(args.companyLegalSource ? { companyLegalSource: args.companyLegalSource } : {}),
         // A check-in names what it succeeds; its filing is the head's (above).
-        ...(checkIn ? { lineage: checkInLineage(checkIn.head, args.restoreOf) } : {}),
+        ...(checkIn ? checkInAuditDetails(checkIn.head, version, args.restoreOf) : {}),
         /* WHERE the document was filed and WHO/WHAT decided — the audit
            trail records the placement decision, not merely that an upload
            happened. A 'suggested' placement is attributed to the classifier

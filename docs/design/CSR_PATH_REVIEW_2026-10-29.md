@@ -71,7 +71,7 @@ Fixed during this review, each shown failing first (evidence under
 | Projects, programs, IND lifecycle | Submission Center, `server/services/csr/project-scope.ts` | Works. A CSR now refuses an organization-wide build and needs a project (`6f57de780`). |
 | Study register | `clinical_ops.studies` (`server/routes/clinical-operations-routes.ts`), and the device register `clinical_studies` (`mdx-clinical-studies.ts`, AnA `create_clinical_study`) | **Corrected 2026-10-29.** This row first said the register accepts device phases only. That is the *device* register, scoped to device programs by design. The drug study register, `clinical_ops.studies`, already accepts "Phase 2/3". Neither feeds the CSR, which takes its phase from its own source's study information (free text, read as written since `cb14dfc51`). **Gap:** no client form creates a `clinical_ops.studies` row. **Found, handed on:** Clinical Ops (`ClinicalOps.tsx`, outside the launch catalog) prefixes "Phase " and "Ph " to a value that already says "Phase", so "Phase 2/3" reads "Phase Phase 2/3"; `shared/clinical-phase.ts` `phaseLabel` is the fix. |
 | Study design store | the study design store | **NCT fixed** (D5, `docs/evidence/D5/2026-10-29-csr-names-its-registration/`): the CSR's approved source states the ClinicalTrials.gov number (NCT plus eight digits; the build route stripped it before). The title page, the §1 and §2 drafts and Module 2.7's Clinical Study Index print it, or say the source states none. **Open:** Form 3674's `nct_number` box is not filled; no Fast Track designation is recorded anywhere in a governed way (the Mission Control enum takes no reason or audit). |
-| Filing type "Clinical Study Report" | project creation | **Gap:** a project of this type can never be sequenced. A CSR is filed as an information amendment to the IND. |
+| Filing type "Clinical Study Report" | project creation | **Fixed in part** (D2, `docs/evidence/D2/2026-10-29-csr-is-built-in-its-application/`). A CSR project is authored, by design, and never sequenced. Every screen that says so now says where to build it: the application's own project (for a US IND, the IND project), placed into its sequence. `POST /api/submissions` no longer anchors an IND submission to a CSR project, a second IND spine, or creates `csr` as an application (NOT_AN_APPLICATION, 422). **Open:** in production the CSR's assembly and placement controls are on the CSR workflow board, which is not served (handed to the CSR end-to-end lane). |
 | Sequence numbering | Submission Center | **Fixed in part** (D7, `docs/evidence/D7/2026-10-29-sequence-spine-fda-submission-id/`): an IND amendment built on this spine declared its own number as its submission-id, opening a regulatory activity of its own. It now names its Original Application (0000), by the rule the package spine already used (`fda-sequence-identity.ts`), and an amendment with no Original Application to name is refused. **Fixed** (D7, `docs/evidence/D7/2026-10-29-filed-elsewhere-baseline/`): a US submission declares, as a signed act with the agency's acknowledgment as Vault evidence, the sequences 0000–N filed outside the platform and which opened the Original Application. The next sequence offered is N+1, a number N or lower or a second Original Application is refused, and an amendment names the declared original. **Open:** replace, append and delete against leaves filed elsewhere wait for MR-10 Stage 9's import. |
 
 ### 2. Clinical data inputs
@@ -90,7 +90,7 @@ Fixed during this review, each shown failing first (evidence under
 |---|---|---|
 | ICH E3 outline | market-specs CSR spine | 119 headings (`13bafc62f`). The test that expected 16 is stale. |
 | AI drafting | `server/services/csr/csr-job-runner.ts` | Drafts from Data Room excerpts, with the placeholder gate and the unsupplied-statistics guard. **Gaps:** <ul><li>The §10–12 tables never enter the document text.</li><li>Seven of nine job-runner state tests are disabled by a stale fake database.</li><li>Saved placeholder text is now sent back to the model instead of failing the job (`2f57e2e7f`). This looks like a regression.</li></ul> |
-| Rule 2 (no figure from a model) | `record_endpoint_result`, `narrate_statistical_result`, `draft_safety_narrative`, `log_study_ae` | **Defect:** these AnA tools take clinical figures as model-supplied arguments. |
+| Rule 2 (no figure from a model) | `record_endpoint_result`, `narrate_statistical_result`, `draft_safety_narrative`, `log_study_ae` | These AnA tools take clinical figures as model-supplied arguments. `record_endpoint_result` and `log_study_ae` need a person's yes before they write. **Fixed** (D5, `docs/evidence/D5/2026-10-29-narration-figures-as-given/`): the two narrators now say in their output and their description that every figure or fact is as given. Each names the sourced path: `get_csr_section_evidence` for results, and the CSR build's narrative job for patient narratives. |
 | Study facts the draft states | `m2-summary-builders.ts`, `load-csr-inputs-for-project.ts` | **Fixed:** planned N no longer presented as enrolled (`9b0a63be0`); "Phase 3", "III" and "Phase 1" read as written (`cb14dfc51`). **Open, founder's call:** whether a Phase 2/3 study counts as pivotal; it still reads as Phase 2 first. |
 | Appendices 16.x | — | **Gap:** headings only. |
 | Rendering | the PDF renderer | Works (52/52). **Gap:** no PDF/A output. |
@@ -100,7 +100,7 @@ Fixed during this review, each shown failing first (evidence under
 | | Path | State |
 |---|---|---|
 | Clinical QC, claim reconciliation, evidence binding, peer review | `m5-clinical-qc`, `csr-claim-reconciliation`, `csr-section-evidence-binding` | Work. 487/487 tests pass. |
-| CSR scientific review | `server/services/authoring/csr-scientific-review.ts` (`07857e3e3`) | Since 2026-10-28 the server has refused to approve a CSR without a map binding each reported figure to its retained table cell. **Fixed** (`91465a856`): before this, no screen could send the map, so no CSR could be approved through the product. The review decision now has the step. |
+| CSR scientific review | `server/services/authoring/csr-scientific-review.ts` (`07857e3e3`) | Since 2026-10-28 the server has refused to approve a CSR without a map binding each reported figure to its retained table cell. **Fixed** (`91465a856`): before this, no screen could send the map, so no CSR could be approved through the product. The review decision now has the step. **Fixed** (D5, `docs/evidence/D5/2026-10-29-csr-vitals-reviewable/`): the review's table keys lacked vital signs and concomitant medications, so their figures could not be mapped and the receipt did not cover them. There is now one list. |
 
 ### 5. Approval, e-signature, lock, export, filing to Vault
 
@@ -108,7 +108,7 @@ Fixed during this review, each shown failing first (evidence under
 |---|---|---|
 | Approval independence | `authoring.router.ts` `signingRefused` | **Fixed** (`265ea2c5b`): an author could approve their own CSR. |
 | Release gate order | `csr-scientific-review.ts` `assertCsrScientificRelease` | **Fixed** (`eefcaf2c8`, `b84f297ca`): the gate framed every document as a CSR before checking whether it was one. A malformed row on any document made signing, freezing, export and filing to Vault return 500, and since 2026-10-28 those routes had no passing test. 17 suites are green again. |
-| Named signer set | — | **Gap:** no required set of named signers (sponsor's responsible medical officer, biostatistician). |
+| Named signer set | the review route (`server/services/review/review-route.ts`, `docs/design/REVIEW_ROUTING_2026-10-23.md`) | **Gap:** no required set of named signers (sponsor's responsible medical officer, biostatistician). **What already exists** (2026-10-30): the review route names reviewers and approvers, and every named approver signs. QMS documents and the Vault are on it (RR1a, RR1b, RR2, RR4). Authoring, where a CSR is approved, joins it in RR5 and RR6, which have not landed. A CSR's named signers belong on that route once RR6 lands; no second signer mechanism is built beside it. |
 | Investigator signature (16.1.5) | — | **Gap:** not captured. |
 | Export history | `DELETE /api/authoring/export-history/:id` | **Fixed** (`239bf4214`): it refuses; the record is kept. |
 | Signing reason | `/sign`, `/e-sign` | **Fixed** (`56504daea`): a trimmed meaning of at least 8 characters, as the signing dialog asks. |
@@ -118,7 +118,7 @@ Fixed during this review, each shown failing first (evidence under
 | | Path | State |
 |---|---|---|
 | Placement, STF, compile, DTD validation, compiled-sequence view | `place_into_sequence`, the STF generator, `EctdCompile.tsx` | Work. 621 tests pass. |
-| 5.3.5.1 placement | the placement dialog | **Gap:** the section must be typed by hand. |
+| 5.3.5.1 placement | the placement dialog; the CSR assembly's "Place CSR files" (`b265d6fc0`) | **Superseded** (corrected 2026-10-29): an assembled CSR's leaves are placed under 5.3.5.1 with their STF roles, without typing. That control is on the CSR workflow board, which production does not serve (handed to the CSR end-to-end lane). |
 | STF tags | the reviewed STF tag list | **Gap:** `study-report-body` is missing. |
 | Tests | the STF and compile suites | 39 red: the fake PDF fixtures predate the PDF integrity check, a table is missing from the test schema, and one test hangs. |
 
@@ -129,7 +129,7 @@ Fixed during this review, each shown failing first (evidence under
 | Dispatch readiness, release signature, pre-transmit checks | the submission gateways | Work, offline, against local mTLS fixtures. 567 tests pass. |
 | FDA ESG | ESG REST, SFTP and AS2 clients | **Gap:** never run against FDA. ACK2 and ACK3 are not ingested. |
 | Archive | the guarded transmit, `submission-gateways/sent-package-archive.ts` | **Fixed** (D7, `docs/evidence/D7/2026-10-29-sent-package-kept/`): the guard stores the package's exact bytes before the wire and refuses to send when it cannot. Every transmittal row, the `ECTD_TRANSMITTED` row and the sign record name the copy. The **Package** action in Gateway transmittals downloads it, under project access and recorded (`docs/evidence/D7/2026-10-29-sent-package-download/`). **Gap:** packages above the 25 MiB download limit are refused (413), though kept. |
-| The amendment itself | the amendment planner, the cover letter, Form 1571 | **Fixed** (`b9dbaeff4`): a CSR is an information amendment; the plan and the letter say "Information Amendment: Clinical" (21 CFR 312.31(b)), or name the gap. **Open:** the 1571's contents box (item 11) is not in its unverified field registry, and filling it needs the official form, which is not readable from here. |
+| The amendment itself | the amendment planner, the cover letter, Form 1571 | **Fixed** (`b9dbaeff4`): a CSR is an information amendment; the plan and the letter say "Information Amendment: Clinical" (21 CFR 312.31(b)), or name the gap. **Open:** the 1571's contents box (item 11) is not in its unverified field registry, and filling it needs the official form, which is not readable from here (2026-10-30: `www.fda.gov` is outside this environment's allowed domains). |
 | ClinicalTrials.gov results | — | **Gap:** no path to post results for NCT05330182 under 42 CFR Part 11. |
 
 ## What AnA can learn from
@@ -154,25 +154,40 @@ and are not used.
 ## Order of work
 
 1. ~~Bayesian result fields~~: done (`c173d35f5`, `d9e8b41db`).
-2. Rule 2:
+2. ~~Rule 2~~: done (D5, `docs/evidence/D5/2026-10-29-narration-figures-as-given/`).
    - `record_endpoint_result` and `log_study_ae` already need a person's yes
      before they write (their register class is `confirm`).
-   - `narrate_statistical_result` and `draft_safety_narrative` narrate the
-     figures their call supplies, under a deterministic-sounding source label.
-   - Next: bind them to a retained run's source, or say in their output that
-     each figure is as given.
+   - `narrate_statistical_result` and `draft_safety_narrative` now say that
+     each figure or fact is as given, and name the sourced path. The binding
+     itself is the scientific review's, before approval.
 3. The study facts the draft states: enrolled vs planned N and the phase are
-   done (`9b0a63be0`, `cb14dfc51`), and the NCT number (D5). Open: a Fast Track field,
-   and whether a Phase 2/3 study counts as pivotal: **decided** 2026-10-29,
+   done (`9b0a63be0`, `cb14dfc51`), and the NCT number (D5). A Fast Track field:
+   **not built** (2026-10-30). FDA's guidance *Expedited Programs for Serious
+   Conditions* ties Fast Track to the designation request (a cover letter
+   labelled REQUEST FOR FAST TRACK DESIGNATION) and to rolling review of the
+   marketing application. A CSR information amendment carries nothing that
+   depends on it. Read through a search excerpt of the guidance; the page
+   itself is outside this environment's allowed domains. And whether a Phase 2/3 study counts as pivotal: **decided** 2026-10-29,
    the sponsor declares it per study, and Module 2 reads only the declaration
    (`docs/evidence/D5/2026-10-29-pivotal-is-declared/`).
 4. ~~The amendment's Clinical identification~~: done (`b9dbaeff4`). Open:
    the 1571 contents box, and whether `study-report-body` is an STF file tag
-   at all; both need the official specification, not recall.
+   at all; both need the official specification, not recall. On 2026-10-30
+   `www.fda.gov` was refused by this environment's network policy (DNS), so
+   the form's instructions could not be read. A search excerpt says a later
+   submission checks every box that applies and that an information amendment
+   names its review discipline, which the plan and the letter already do.
 5. ~~Signing: the whitespace reason and the protected export history~~: done
    (`56504daea`, `239bf4214`).
 6. Transmission: ~~archive the package sent, and download it~~: done (D7).
    Open: ingesting the acknowledgments, and a streamed download above 25 MiB.
+   Scope of the 25 MiB limit, checked 2026-10-30: the eCTD export of a project
+   with a registry anchor, the normal case, is not capped
+   (`registerExportGovernanceQuick` records size and hash). The limit
+   (`GOVERNED_EXPORT_MAX_BYTES`, set by no in-repo deployment config) applies
+   to the kept sent-package download and to an export with no anchor
+   (`createAuditedUnplacedExport`, which also builds a base64 copy of the
+   whole file).
    ~~An amendment's submission-id~~ and ~~the sequences filed outside the
    platform~~: done (D7).
 7. Then the larger items: TLF ingest, the named signer set and the 16.1.5

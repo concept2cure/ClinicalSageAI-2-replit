@@ -32,15 +32,13 @@ import { SignedContentLine, signedContentForAna, signedContentWords, useSignedRe
 
 /* ════ The ISO 14971 risk register ════
 
-   One register, mounted twice until the fold (D2, fold F1 slice B, 2026-10-29;
+   One register (D2, fold F1 slice B, 2026-10-29;
    docs/design/DEVICE_FOLDS_2026-10-29.md F1, "Work" item 4;
-   docs/evidence/D2-ONE-ANA/2026-10-29/fold-f1b-engineering-parity/):
-     - the Risk screen (./Risk.tsx), for the open project, or the
-       organization's register with no project open, as before;
-     - Engineering (../../mdx/surfaces/EngineeringSurface.tsx), for its project
-       only, once its own route has admitted the project.
-   It was drawn inside Risk.tsx; Engineering showed four rows and a
-   residual-only heatmap of its own. Both now draw this.
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-f1b-engineering-parity/), mounted by
+   Engineering (../../mdx/surfaces/EngineeringSurface.tsx) for its project only,
+   once its own route has admitted the project. It was drawn inside the Risk
+   screen, which mounted it too until it folded into Engineering (fold F1c,
+   2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/).
 
    Every read and write names the open project: GET /api/mdx/risk-items
    ?program_id=, the hazard POST's `programId`. The route admits the project
@@ -392,8 +390,8 @@ function riskAnaContext(x: {
 }
 
 /* ── AnA's hands on the register — the surface-action bus ─────────────────
-   Registered under the screen the register is on ('risk', or
-   'device-engineering' until the fold). Every handler drives the SAME state
+   Registered under the screen the register is on, device-engineering (the
+   Risk screen's `risk` registration went with it, fold F1c). Every handler drives the SAME state
    the human's own controls drive (setView, setSel via the matrix dots);
    hazards resolve against the REAL risk file with honest misses. Accepting
    residual risk, adding hazards, and adding controls stay governed human
@@ -607,8 +605,8 @@ function riskWrites(d: WriteDeps) {
 /* ── The register's state ──────────────────────────────────────────────── */
 
 export interface RiskRegisterOptions extends ProjectReadOptions {
-  /** The screen AnA's matrix actions register under: `risk`, or `device-engineering` until the fold. */
-  surfaceId: 'risk' | 'device-engineering';
+  /** The screen AnA's matrix actions register under: Engineering, the register's one mount since fold F1c. */
+  surfaceId: 'device-engineering';
 }
 
 export interface RiskRegisterState {
@@ -638,14 +636,13 @@ export interface RiskRegisterState {
   writes: ReturnType<typeof riskWrites>;
   toast: ReturnType<typeof useToast>[0];
   authUser: ReturnType<typeof useAuthUser>;
-  /** What AnA can see of the register. The screen publishes it under its own id. */
+  /** What AnA can see of the register. Engineering hands it to the host, which publishes it under device-engineering. */
   anaContext: AnaContext;
 }
 
 export function useRiskRegister(opts: RiskRegisterOptions): RiskRegisterState {
   // REAL slice: GET /api/mdx/risk-items (server mdx-risk-management.ts) reads the
-  // governed risk_items table — the project's rows (or, with no project on the
-  // Risk screen, the organization's), an honest empty, an honest failed load, or
+  // governed risk_items table — the project's rows, an honest empty, an honest failed load, or
   // an honest refusal, never a fixture. Raw rows carry numeric
   // severity/probability (1..5) plus nullable columns; mapRiskItems maps them
   // onto the RiskRow display contract null-safe. A stable EMPTY_ROWS stands in
