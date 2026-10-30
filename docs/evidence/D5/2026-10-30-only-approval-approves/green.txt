@@ -1,0 +1,18 @@
+# Green
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > the creator is refused, nothing is signed or approved, and no re-authentication is spent 63ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > a contributor to a section is an author too 8ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > an independent approver approves as before 9ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > a document with no recorded author cannot be shown independent: 409, nothing signed 5ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > an authorship lookup that fails is 503, in the canonical sentence, not the driver text 13ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/e-sign APPROVER is refused to an author of the document > the author signing as AUTHOR is not a separation-of-duties case 5ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/sign, which can seal at the last workflow step, is refused to an author too > the creator signing as REVIEWER is refused, and nothing is signed 4ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/sign approves only on an APPROVER signature > the author signing AUTHOR at the last step records authorship and approves nothing 5ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/sign approves only on an APPROVER signature > a reviewer signing REVIEWER at the last step records review and approves nothing 7ms
+ ✓ server/routes/__tests__/authoring-approval-independence.test.ts > POST /docs/:docId/sign approves only on an APPROVER signature > an independent APPROVER at the last step approves and freezes, as before (control) 5ms
+      Tests  10 passed (10)
+
+# The two suites that pinned a REVIEWER seal, now signing APPROVER, with this file: 21/21
+
+# Every suite reaching /sign, the workflow steps, the review context or the CSR rule (68 files)
+      1       Tests  1293 passed (1293)
+      1  Test Files  68 passed (68)

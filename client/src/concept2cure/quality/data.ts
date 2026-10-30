@@ -121,9 +121,35 @@ export interface TrainingRow {
   eligible?: boolean;
   unavailableReason?: string | null;
   doc: string;
-  current: number;
-  of: number;
+  /**
+   * Whether the document is assigned (P-49): to nobody, to people none of whom
+   * is active, or assigned. Only an assigned document has a figure.
+   */
+  assignment?: 'assigned' | 'not_assigned' | 'no_active_assignees';
+  /** People assigned with a current acknowledgement of the version in force; null when there is no figure. */
+  current: number | null;
+  /** People assigned; null when there is no figure. */
+  of: number | null;
   lastCycle: string;
+  /** The reader's own line: whether they are assigned, and whether their acknowledgement counts now. */
+  me?: { assigned: boolean; countsNow: boolean } | null;
+}
+
+/** The register's training figure, as the server computes it (GET /qms/training/compliance meta.summary). */
+export interface TrainingSummary {
+  documents: number; assigned: number; notAssigned: number; noActiveAssignees: number; unavailable: number;
+  /** null: nothing assessed, never 0%. */
+  averageCurrentPct: number | null;
+}
+
+/** The coverage KPI: the server's average, or what stands in its way. The client computes no percentage. */
+export function coverageKpiOf(rows: readonly TrainingRow[], summary: TrainingSummary | null): { pct: number | null; sub: string } {
+  if (rows.length === 0) return { pct: null, sub: 'No training-controlled documents yet' };
+  if (!summary) return { pct: null, sub: 'The coverage summary could not be read' };
+  if (summary.averageCurrentPct !== null) return { pct: summary.averageCurrentPct, sub: 'Average of assigned people, version in force' };
+  if (summary.assigned === 0) return { pct: null, sub: summary.noActiveAssignees > 0 ? 'No one assigned is an active member' : 'No document is assigned yet' };
+  if (summary.unavailable === summary.assigned) return { pct: null, sub: 'Verified released text is unavailable' };
+  return { pct: null, sub: 'No one assigned is an active member' };
 }
 
 /* ─── Labels + tone maps ───────────────────────────────────────── */

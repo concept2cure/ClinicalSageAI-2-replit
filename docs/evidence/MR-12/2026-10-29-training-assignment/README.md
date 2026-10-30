@@ -464,3 +464,41 @@ Also in this round:
 
 **Tests:** 41/41 across the two training-assignment suites and slice 1's job-role suite (`slice2-fix-green.txt`); red first, 4 of the 7 new cases (`slice2-fix-red.txt`); seven mutants, all killed (`slice2-fix-mutations.txt`). **Gates:** `ci:sql-interpolation`, `ci:server-error-leaks`, `ci:fabricated-identity`, `ci:tenant-resolvers`, `ci:discarded-audit-write`, `ci:session-scoped-rls-bypass` pass; ESLint gives the six slice files and the three test files no warning.
 
+## Slices 1 and 2, client: job roles and who must train, reached from the register (2026-10-30)
+
+The nine routes of slices 1 and 2 had no client caller (slice 2, deviation 1). Design §3.12's slice 1 and slice 2 controls, in existing Quality files only:
+
+- **`TrainingCoverage.tsx`**: a "Job roles" button in the training section's header opens `JobRolesPanel` (in the shared `DialogPanel`): each role, its description, how many documents it is assigned to, and who holds it ("no longer an active member" for a holder who left). An administrator (`canAdminister`) creates, renames and deletes a role and adds and removes a holder, each with its reason. A role still assigned to a document cannot be deleted, and the button says why.
+- **`SopRegister.tsx`**: a "Training" chip on each row of a trainable type that is not retired (`QMS_TRAINABLE_DOCUMENT_TYPES`), beside "Read and acknowledge", opens `TrainingAssignmentsPanel`: the version in force and any version approved for a later day; the job roles and people assigned, who assigned each and when; and the people assigned, in full for an administrator or designated QMS approver, otherwise the count and the reader's own line (P-50 Q3, as the server decides). With `canAssign`, "Assign a job role", "Assign a person" and Withdraw, each with its reason and only offering what is not already assigned; with `canAssign: null`, "could not be checked" and no controls.
+- **`hooks.ts`**: `useJobRoles` and `useTrainingAssignments(documentId)` on the shared `useFetchJson`, each body checked by a guard, so a body of the wrong shape is a failed read. The panels call them, so the register reads nothing until one is opened.
+- **`qmsWrites.ts`**: `qmsWrite` accepts `DELETE`, whose reason travels in the JSON body the governed removals require.
+- **`app.css`**: four rules for the panels' rows and lists.
+
+Every refusal is the server's sentence (each already ends "Nothing was changed."), kept until the next try; a failed read is `ErrorState`, never "No job roles yet." or "Nobody is assigned".
+
+**Tests:** `client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx`, 15 cases: red 15/15 at `95e6800740` (the panels did not exist, `client-1-2-red.txt`); green 15/15, and all 27 Quality client test files, 283 tests (`client-1-2-green.txt`). Three mutants, all killed (`client-1-2-mutations.txt`). **Gates:** `ci:undefined-css-classes`, `ci:unauthenticated-fetch`, `ci:fabricated-identity` pass. The Quality folder is outside ESLint's scope (the config's ignore list), so the warning ratchet does not apply to it.
+
+**Slice 1's exit condition ("every new route has a client caller") is now met** for the nine job-role and assignment routes. Still open for slice 3: compliance over the assigned people, both versions acknowledgeable, the coverage rows' honest states and the approve dialog's "N people are assigned".
+
+## Slice 3a: compliance counts the people assigned; training person by person is QA's (2026-10-30)
+
+Design §3.6 and P-50 Q3. The rest of slice 3 (both versions acknowledgeable during a training period, the reader's successor, the approve dialog's "N people are assigned", D6's refusal to revise a pending version) is **3b, not done here**.
+
+**What already existed** (re-read at `8659f31539`): `readQmsTrainingCompliance` counted every active member of the organization (`training-compliance.ts`, the roster query) and the client turned an absent count into `0` (`hooks.ts`, `?? 0`); the register computed its own percentage (`SopRegister.tsx`). `GET /qms/training` returned every member's training records to every member, and `GET /qms/training/expiring` every member's lapses. The resolver of who is assigned exists since slice 2 (`readQmsTrainingAssignees`); compliance did not use it.
+
+**What changed:**
+- `server/services/qms/training-compliance.ts`: the denominator is the distinct active people assigned to each document, through the one resolver; the numerator, those of them with a current receipt of the exact release in force. Each row gains `assignment` (`assigned`, `not_assigned`, `no_active_assignees`); `current` and `of` are null unless assigned, so a document assigned to nobody never reads 0 of N. `me` is the viewer's own line (`assigned`, `countsNow`). `summarizeQmsTrainingCompliance` is the register's one figure; its `averageCurrentPct` is null when nothing is assessed. G10's expiry counts the people assigned only. The roster query is deleted, so `ACTIVE_MEMBERS_SQL` is the only definition of an active member in the training code.
+- `server/routes/mdx-qms-training.ts`: compliance passes the viewer and returns `meta.summary`. `GET /qms/training` and `GET /qms/training/expiring` give every person's rows only to administrators and designated QMS approvers (the Approver role stands in while nobody is designated), and anyone else their own, with `meta.scope` saying which (P-50 Q3). Compliance stays open to every member: it carries counts, and each reader's own line.
+- Client: `hooks.ts` maps `assignment`, nullable counts, `me` and the guarded `meta.summary`; `data.ts` `coverageKpiOf` is the KPI's one decision; `TrainingCoverage.tsx` draws one of four states (a figure, "Not assigned", "No active assignees", "Unavailable"), the reader's line ("You are current…", "You are assigned and have not acknowledged…") and new header words ("Version in force · people assigned"); `SopRegister.tsx`'s KPI reads the server's average and says why when there is none ("No document is assigned yet", "No one assigned is an active member", "The coverage summary could not be read"). The client computes no percentage.
+
+**Intended contract changes, in the tests that pinned the roster:**
+- `training-compliance.pglite.test.ts`: the roster-era cases keep their meaning by assigning each document a job role every member holds (`assignToEveryone`, in the shared `_release-approval-fixture.ts`); "0 of 0 when nobody active remains" becomes `no_active_assignees` with no figure. `training.pglite.integration.test.ts` uses the same helper.
+- `tests/db/qms-in-force-during-revision.dbtest.ts` names its two trainees by assignment; `qms-current-signing-and-training-admission.dbtest.ts` assigns its viewer, so the withdrawn release reads "assigned, 0 of 1" rather than "not assigned".
+- `SopRegisterPersonalTraining.test.tsx`: "No active roster members to assess" becomes "No one assigned is an active member".
+
+**Tests:** red first (`slice3a-red.txt`: 7 of 15 PGlite cases; `slice3a-routes-red.txt`: 3 of 3 route cases against trunk's route and service; `slice3a-client-red.txt`: 5 of 9 client cases). Green (`slice3a-green.txt`): 56/56 PGlite; 59/60 across the six training and QMS database suites; 287/287 Quality client tests. Six mutants, all killed (`slice3a-mutations.txt`).
+
+**The one database failure is not this change's:** `qms-current-signing-and-training-admission.dbtest.ts` "refuses retire after actual target wait and signer demotion" fails identically on trunk's code ("The actual QMS request did not wait on its authoritative target lock", a 20 s timeout). Two other failures seen first (send-for-review answered 500) were the throwaway database being older than trunk (`unified_tasks.route_authoring_signature_id` absent); `scripts/db/deploy-migrate.mjs` brought it to trunk's schema and both pass.
+
+**Gates:** `ci:sql-interpolation`, `ci:server-error-leaks`, `ci:fabricated-identity`, `ci:tenant-resolvers`, `ci:undefined-css-classes`, `ci:unauthenticated-fetch` pass; ESLint gives the changed server and test files no warning (`training.pglite.integration.test.ts` was brought back under 500 lines by moving the helper into the shared fixture).
+

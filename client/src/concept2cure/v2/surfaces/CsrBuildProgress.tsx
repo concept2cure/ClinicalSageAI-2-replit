@@ -11,8 +11,9 @@
  *   line offered "Open build progress", a navigation to the csr-workflow
  *   board, which is not a launch surface and is refused in production.
  * - CsrHeadingReview sits on the csr-workflow board (CsrWorkflow in
- *   BiopharmaProject.tsx), the build's progress view; not reached at launch.
- *   It lists the job's headings against the canonical ICH E3 tree with their
+ *   BiopharmaProject.tsx), not reached at launch, and since 2026-10-30 on the
+ *   CSR card for the selected build (CsrRunBuilds.tsx, from
+ *   GET /api/csr/jobs/:jobId/headings). It lists the job's headings against the canonical ICH E3 tree with their
  *   review state, records a decision as the signed-in reviewer, and hands the
  *   approved set to the existing Authoring import (workflow-source-import).
  * - CsrNarrativeBuild sits under the section review on the same board (slice
@@ -31,7 +32,7 @@ import { I } from '../icons';
 
 const JOBS = '/api/csr/jobs';
 
-/** One heading of GET /api/csr-workflow/board `headings`. */
+/** One heading of GET /api/csr/jobs/:jobId/headings and of the board's `headings` (server csr-headings.ts). */
 export interface CsrBoardHeading {
   num: string;
   label: string;

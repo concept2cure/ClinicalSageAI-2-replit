@@ -1,0 +1,18 @@
+# ci.yml `production-image-boot`, CI run 36930467294 (the push that added the job), job 110703004550,
+# GitHub-hosted runner, 2026-10-02 11:05–11:11 UTC. Conclusion: success. Tail of the job log:
+
+/readyz=200 after 7s
+{"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+/healthz=200
+
+docker run --rm --network host -w /app -v "$PWD/scripts/ci/image-boot-signin.mjs:/app/image-boot-signin.mjs:ro" ... c2c-app:ci node image-boot-signin.mjs
+enrolled user 1 in organisation 3, authenticator on
+POST /api/auth/login → 200, second factor required (authenticator)
+POST /api/auth/mfa/verify with a wrong code → 401, refused
+POST /api/auth/mfa/verify with the authenticator code → 200, access token issued
+GET /api/auth/me → 200, signed in as image-boot-signin@example.invalid
+image sign-in: OK
+
+# The steps before these (also green in this job): both Dockerfile.optimized targets built on the
+# runner, the production image's user checked as appuser, an empty TLS PostgreSQL started, and the
+# provision image's own `npm run db:provision` completed against it.

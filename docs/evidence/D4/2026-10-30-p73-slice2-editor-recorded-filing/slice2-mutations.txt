@@ -1,0 +1,6 @@
+no requirements in the block -> RED ['Tests  2 failed | 43 passed (45)', '⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯']
+no mismatch note -> RED ['Tests  1 failed | 44 passed (45)', '⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯']
+template region ignored -> GREEN (survived) ['Tests  45 passed (45)']
+unassessed note dropped -> RED ['Tests  1 failed | 44 passed (45)', '⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯']
+baseline after the new assertion -> GREEN ['Tests  45 passed (45)']
+template region ignored (rerun) -> RED ['Tests  1 failed | 44 passed (45)', '⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯']

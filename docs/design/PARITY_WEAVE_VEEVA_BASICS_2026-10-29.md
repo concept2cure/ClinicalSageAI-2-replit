@@ -803,6 +803,10 @@ Each item appears once. The nonclinical ingest path and NDA, BLA or biologic Mod
 
 ## 6. Gaps outside the catalog (founder decisions under RULE 2)
 
+**Decided 2026-10-30 (P-74, `docs/LAUNCH_DEFINITION_OF_DONE.md`):** the founder admitted eTMF, nonclinical ingest and IB
+authoring, registrations, NDA/BLA (with CMC widened slice by slice), QC/LIMS and study start-up, in that order, overriding
+the "after D10" timing below. The prerequisites in the Dependency column still bind each slice.
+
 Each row would widen the launch catalog. The recommendation is one of **adopt now**, **after D10**, **partner or integrate**, or **never**.
 
 | Area | Benchmark | What exists | Recommendation | Reason | Dependency |

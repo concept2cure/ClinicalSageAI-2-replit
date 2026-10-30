@@ -94,6 +94,9 @@ beforeAll(async () => {
   const approved = await sign(documentId);
   expect(approved.status, JSON.stringify(approved.body)).toBe(200);
   v1SignatureId = Number(approved.body.meta.signature.id);
+  // The trainees, by name (P-49): compliance counts the people assigned to the document, not the roster.
+  await owner.query(`INSERT INTO qms_training_assignments (organization_id, document_id, user_id, assigned_by)
+    VALUES ($1, $2, $3, $5), ($1, $2, $4, $5)`, [orgId, documentId, viewer.id, secondViewer.id, author.id]);
   const read = await http(viewer, 'get', `/api/mdx/qms/documents/${documentId}`);
   v1 = read.body.meta.training;
   expect(read.body.meta.training).toMatchObject({ eligible: true, documentVersion: '1.0' });

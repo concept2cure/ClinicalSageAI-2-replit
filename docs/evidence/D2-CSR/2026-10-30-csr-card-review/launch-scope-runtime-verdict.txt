@@ -1,0 +1,4 @@
+/api/csr/jobs/41/headings "launch"
+/api/csr/jobs/41/sections/10.1/review "launch"
+/api/csr/jobs/41/sections "launch"
+/api/csr-workflow/board "out-of-scope"

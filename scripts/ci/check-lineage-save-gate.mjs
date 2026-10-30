@@ -138,6 +138,10 @@ const NOT_PROSE = [
     file: 'server/services/compute/exportGovernance.ts',
     why: "content is a one-line reference string ('[Governed Export: PDF] name.pdf (12345 bytes)') because, as the file's own header states, an export artifact stores reference metadata rather than the streamed binary — the prose lives in the document that was exported",
   },
+  {
+    file: 'server/services/csr/csr-narrative-store.ts',
+    why: "the CSR narrative job's engine-output store (csr_narrative_outputs, and the §14.3.3 / §12.3.2 rows of csr_section_outputs), not a governed document: every value is composed from the subject's ADaM facts (narrative-compose.ts, nothing typed in), each row carries its facts_digest, and the database verifies the stored SHA-256. The text is never copied into an Authoring document; §14.3.3 is imported as a reference that is made only after every stored narrative matches the landed text (csr-narrative-reference-import.ts). Reviewed 2026-10-30 (own-the-product sweep)",
+  },
 ];
 
 /**

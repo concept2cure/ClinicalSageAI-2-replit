@@ -44,3 +44,23 @@ export async function seedQmsApprovalFixture(client: { query(sql: string, params
     row.signature_meaning,row.signature_purpose,JSON.stringify(row.signature_manifest),row.signature_hash,row.binding_basis,
     row.bound_payload_digest,row.is_valid,row.superseded_by,row.verification_status]);
 }
+
+let everyoneRoles = 0;
+/**
+ * Compliance counts the people assigned to a document (P-49, MR-12 Stage 4
+ * slice 3). A case about receipts rather than assignment assigns the document a
+ * job role every current member of its organization holds, so "assigned" is the
+ * roster. Needs migrations/20261029g_qms_job_roles_and_training_assignments.sql.
+ */
+export async function assignToEveryone(
+  client: { query(sql: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }> },
+  organizationId: number, documentId: number, by: number,
+): Promise<void> {
+  everyoneRoles += 1;
+  const role = (await client.query('INSERT INTO qms_job_roles (organization_id, name, created_by) VALUES ($1, $2, $3) RETURNING id',
+    [organizationId, `Everyone ${everyoneRoles}`, by])).rows[0].id;
+  await client.query(`INSERT INTO qms_job_role_members (organization_id, job_role_id, user_id, added_by)
+    SELECT organization_id, $2, user_id, $3 FROM organization_users WHERE organization_id = $1`, [organizationId, role, by]);
+  await client.query('INSERT INTO qms_training_assignments (organization_id, document_id, job_role_id, assigned_by) VALUES ($1, $2, $3, $4)',
+    [organizationId, documentId, role, by]);
+}

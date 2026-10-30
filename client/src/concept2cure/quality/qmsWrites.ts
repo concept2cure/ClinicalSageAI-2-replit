@@ -10,7 +10,7 @@ import type { ChangeState, ChangeType, Classification, LinkType, Relationship } 
  *  `apiRequest` throws every refusal but a 401, which it returns; that is a
  *  session refusal here. */
 async function send<T>(
-  method: 'POST' | 'PATCH', url: string, body: Record<string, unknown>, take: (parsed: unknown) => T | null,
+  method: 'POST' | 'PATCH' | 'DELETE', url: string, body: Record<string, unknown>, take: (parsed: unknown) => T | null,
 ): Promise<T> {
   const res = await apiRequest(method, url, body);
   const parsed = (await res.json().catch(() => null)) as unknown;
@@ -25,8 +25,9 @@ async function send<T>(
 }
 
 /** Write to a QMS route and return the envelope's `data`. The quality records
- *  (qmsRecordData.ts) write through this too. */
-export const qmsWrite = <T>(method: 'POST' | 'PATCH', path: string, body: Record<string, unknown>): Promise<T> =>
+ *  (qmsRecordData.ts) write through this too. A DELETE carries its reason in a
+ *  JSON body, as the governed QMS removals require. */
+export const qmsWrite = <T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body: Record<string, unknown>): Promise<T> =>
   send(method, `/api/mdx/qms/${path}`, body, (p) => ((p as { data?: T } | null)?.data ?? null));
 
 /** Write to the CAPA routes (server/routes/capa-mdr.ts), which return the

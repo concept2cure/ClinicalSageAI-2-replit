@@ -55,13 +55,39 @@ export interface RetainedScientificRun {
 
 /**
  * Whether a document's stored label marks it as a CSR: its module, product
- * code, title or template names a clinical study report. The server also
- * treats a retained CSR origin or an earlier receipt as a CSR
- * (server/services/authoring/csr-scientific-review.ts requiresCsrScientificReview);
- * the screen reads only the label, and the server's refusal covers the rest.
+ * code or title names a clinical study report ("CSR", "CSRs", "Clinical Study
+ * Report(s)"). The server also treats the built-in CSR templates, a retained CSR
+ * origin or an earlier receipt as a CSR
+ * (server/services/authoring/csr-scientific-review.ts requiresCsrScientificReview),
+ * and returns its answer in the review context, which the screen follows.
+ * 2026-10-30: the plural was refused, so the IND library's "5.3.5.1 · Clinical
+ * Study Reports of Controlled Studies" was not a CSR.
  */
 export const labelledCsr = (value: unknown): boolean =>
-  typeof value === 'string' && /(?:^|[^a-z0-9])(?:csr|clinical[ _-]+study[ _-]+report)(?:$|[^a-z0-9])/i.test(value);
+  typeof value === 'string' && /(?:^|[^a-z0-9])(?:csrs?|clinical[ _-]+study[ _-]+reports?)(?:$|[^a-z0-9])/i.test(value);
+
+/**
+ * The built-in templates a CSR is authored from, by their stored template id
+ * (2026-10-30): the IND library's 5.3.5.1 and 5.3.5.2 sections
+ * (indTemplateId('section:m5.3.5.1' | 'section:m5.3.5.2')), the registry's ICH
+ * CSR and the E3 component (builtinAuthoringTemplateId('registry:ICH_CSR' |
+ * 'component:clinical_study_report')). Written out so the release gate does not
+ * load the template library; csr-template-identity.pglite.test.ts proves each is
+ * the id getBuiltinAuthoringTemplate resolves to that entry. A document made
+ * from one of them is a CSR whatever its title says, and a template id is not
+ * editable. Before this, only labels counted, so a CSR drafted from the IND
+ * 5.3.5.1 template was approved, signed and filed without a review map.
+ */
+export const CSR_TEMPLATE_IDS: readonly string[] = [
+  'f7e72f59-71ed-5cf6-96bf-d8edea20cb84', // section:m5.3.5.1
+  'ba5f51bc-7257-50c9-a79f-66fc30e53d68', // section:m5.3.5.2
+  '5d888ae5-4216-594e-bc5e-9c8bc22f9527', // registry:ICH_CSR
+  '4331e7e3-7777-5c21-8c9b-0e2f56194e7e', // component:clinical_study_report
+];
+
+/** Whether a stored template id is one of the built-in CSR templates. */
+export const isCsrTemplateId = (value: unknown): boolean =>
+  typeof value === 'string' && CSR_TEMPLATE_IDS.includes(value.toLowerCase());
 
 /**
  * Whether `display` stands as a whole number at `offset` in `text`: the
