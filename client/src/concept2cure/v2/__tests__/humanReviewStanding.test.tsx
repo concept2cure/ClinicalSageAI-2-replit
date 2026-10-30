@@ -64,7 +64,7 @@ describe('Human review standing keeps saved-content history honest', () => {
     const closedTask = {
       ...task(), status: 'completed', createdAt: '2026-10-12T10:00:00Z',
       priority: null, assigneeName: 'Dana', dueDate: null, description: null,
-      approvalRequired: false, approvalStatus: null,
+      approvalRequired: false, approvalStatus: null, reviewRouteId: null,
     };
     const state = taskReviewState(closedTask, { state: 'ready', rows });
     expect(state.kind).toBe('earlier');
