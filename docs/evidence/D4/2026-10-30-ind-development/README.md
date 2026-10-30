@@ -192,3 +192,12 @@ treated it as omitted. Two real-service cases failed before correcting only
 blank-choice normalization and the conflict comparison. The resulting 19
 real-service, 287 declared-product and 39 batch-context cases pass 345/345;
 nonblank literal choices remain unchanged. See `blank-submission-selection.md`.
+
+Normal gates subsequently completed for source `1fe5921e5`: the full compiler
+reported zero errors against the unchanged zero baseline, all publication gates
+passed, and the warning ratchet reported net -1. The remote ref advanced from
+`669aa2236` to `1ce6adc68` while those checks ran, so Git correctly refused that
+push without changing the remote. The passing gates and ref-race status are
+retained in `normal-gates-pass-remote-race*`. The Vault upload-receipt changes
+were merged normally and the client/server build passed again before retrying.
+No force push or hook bypass was used.
