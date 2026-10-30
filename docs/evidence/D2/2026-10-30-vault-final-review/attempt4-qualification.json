@@ -1,0 +1,14 @@
+{
+  "protocolCanonicalMerged": "1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10",
+  "settingsCanonicalMerged": "89b67685e",
+  "mergeCommit": "9adc765a57f8310400c65fb764a431a6d33b99f8",
+  "vaultProductionUnchangedFrom": "65609db5e",
+  "protocolChecks": 28,
+  "protocolFiles": 3,
+  "protocolCompilerErrors": 0,
+  "settingsChecks": 115,
+  "settingsFiles": 4,
+  "nativeArchiveChecks": 36,
+  "build": "passed",
+  "thirdPush": "All normal gates and TypeScript0 passed; lost final canonical compare-and-swap."
+}
