@@ -16,30 +16,32 @@ Discovery notes below describe the audit base438287ed1; corrections are describe
 
 ## Catch-up and retained work
 
-Canonical code was fast-forwarded from1c846bdf6 to438287ed1, then throughf0e0ff863 and13be18d3d using normal canonical integration. Incoming work includes core prompt-owner/project-action fixes and Vault archive/upload review safeguards. The initial control contract was committed/pushed as47ce1d3d9 before production edits. resume-state.json, paused-filing-source-manifest.json and the byte-verified paused/ snapshots preserve the earlier unfinished filing work; historical Oct27 RED evidence remains in its original packet. Incoming Oct29 filing integration is credited, not represented as the paused work's completion.
+Canonical code was fast-forwarded from1c846bdf6 to438287ed1, then throughf0e0ff863 and13be18d3d using normal canonical integration. A concurrently completed CSR continuation through90e5c3a1a was reconciled by normal merge with local source256c794eb; canonical-csr-reconciliation.json records the retained behaviors and fixture corrections. The incoming current-approval/conduct guards and all substantive controls remain, with their original evidence under resumed-codex/. Incoming work includes core prompt-owner/project-action fixes and Vault archive/upload review safeguards. The initial control contract was committed/pushed as47ce1d3d9 before production edits. resume-state.json, paused-filing-source-manifest.json and the byte-verified paused/ snapshots preserve the earlier unfinished filing work; historical Oct27 RED evidence remains in its original packet. Incoming Oct29 filing integration is credited, not represented as the paused work's completion.
 
 ## Bounded changes
 
-- The existing CSR builder supplies report-wide writing expertise to both drafting paths and quotes all whitelisted study metadata at user priority. Mapped result headings require usable retained results; absent/empty evidence stays needs-data with template origin and no model cost. Missing tables and context-budget omissions remain distinct in lineage.
+- The existing CSR builder supplies report-wide writing expertise to both drafting paths and quotes all whitelisted study metadata at user priority. Its bounded conduct-claim refusal gate also checks actual model replies; this is additional defense, not proof that every possible assertion is correct. Mapped result headings require usable retained results; absent/empty evidence stays needs-data with template origin and no model cost. Missing tables and context-budget omissions remain distinct in lineage.
 - Existing writing guidance describes source-supported ethics, consent, GCP and actual SAP timing, including missing/late/waived records. Sentence patterns distinguish superiority, noninferiority, equivalence and Bayesian methods without computing decisions or inventing criteria.
-- The same registered interview reaches robustness questions after either primary outcome, preserves therapeutic-area branches and distinguishes sensitivity, supplementary and exploratory analyses. Nonzero AE counts produce neutral review information rather than an inferred high rate. The robustness node moved unchanged to a small factory to retain the repository's file-size ceiling.
+- The same registered interview reaches robustness questions after either primary outcome, preserves therapeutic-area branches and distinguishes sensitivity, supplementary and exploratory analyses. Nonzero AE counts produce neutral review information rather than an inferred high rate. The robustness node moved unchanged to a small factory to retain the repository's file-size ceiling; later reconciliation adds the canonical warning that a per-protocol analysis can target another estimand.
 - Inherited fallbacks now keep recorded plans distinct from actual conduct and remove unsupported severity, fixed safety thresholds, narrative availability, eligibility/unmet-need and statistical-design assumptions. Source gaps remain visible; useful recorded sample size, duration and comparator survive.
-- Current active actor/tenant and exact source-project admission apply to writes. Queued jobs recheck evidence/access after long calls and on populated resumes, protect cancelled job states and retain saved work on refusal. Read-only history access stays distinct from build/review/cancel permission.
+- Current active actor/tenant and exact source-project admission apply to writes. Queued jobs require current source approval, recheck evidence/access after long calls and on populated resumes, protect cancelled job states/progress and retain saved work on refusal. The existing route writer helper delegates to the shared read/write scope owner. Read-only history access stays distinct from build/review/cancel permission.
 - Regenerated the existing text-contrast sheet for its already-present QMS successor selector. The sole DocumentWorkbench and existing UI tokens/navigation remain the owners. Six CSR human scenarios were added to the existing worksheet as Not run.
 
 ## Verification
 
-The decisive integrated selection is release-regression-tests.json; release-source-freeze.json pins3002 statically resolved implementation/test/build inputs. Smaller phases overlap and must not be summed.
+The decisive reconciled selection is reconciled-regression-tests.json; reconciled-accepted-source-freeze.json pins3,011 statically resolved implementation/test/build inputs. Smaller phases and prior canonical/727-check runs overlap and must not be summed.
 
 | Check | Result |
 | --- | --- |
-| Integrated CSR/editor/AnA/current Vault regression |727 passed across63 suites; release-regression.json; no input drift |
-| Scoped lint |26 files,0 errors,8 existing warnings,0 warning growth; release-lint.json |
-| Existing editor/UI/repository gates |7/7 passed; release-editor-gates.json |
-| Production build |Passed; release-build.json |
-| Full-program incremental TypeScript, unchanged zero baseline |0 errors; release-typecheck.json |
+| Reconciled CSR/editor/AnA/Vault qualification |854 distinct checks across71 suites qualified through the full run and one corrected fixture repeat; see bridge below |
+| Scoped lint |29 files,0 errors,8 existing warnings,0 warning growth; reconciled-lint.json |
+| Existing editor/UI/repository gates |7/7 passed; reconciled-editor-gates.json |
+| Reconciled production build |Passed; reconciled-build.json |
+| Final compiler gate |Normal source push must pass the unchanged zero-error baseline |
 
-Genuine RED outputs are retained for access, missing evidence, job/source revalidation, cancellation and inherited fallback claims. Fixture calibration and corrections are explicit in expertise/README.md, generation/README.md and the named correction JSON files. The first compiler failure was11 instances of one PGlite/node-pg driver-envelope type mismatch in a new test fixture; the documented fixture-only bridge preserves real SQL and production types. The initial UI gate failures were corrected without baseline growth. Inline historical receipt pins remain authoritative where a snapshot filename was reused; freeze-reconciliation.json retains the original lint pins separately. The earlier final-qualification-bridge.json predates the final integration; the63-suite release receipt supersedes it.
+The full reconciled run passed853/854 checks:70 suites passed, and one case failed in a20-case suite because an unbound discussion-results section cannot reach the model under the stricter source policy. Its late-permission control now uses non-result section9.1, preserves the bound-results branch and explicitly proves both call the model. The whole20-case suite re-passed. All production inputs and all other test inputs are byte-identical between runs:834 passing checks from the other70 suites plus20 from the corrected suite qualify854 distinct checks. reconciled-qualification-bridge.json records exact before/after test pins; no production guard was weakened, no skipped test is counted and overlapping tests are not added twice.
+
+Genuine RED outputs are retained for access, missing evidence, job/source revalidation, cancellation and inherited fallback claims. The new progress-race control was additionally proved against a deliberately weakened initial-progress writer, then the guard restored; see progress-race-negative-note.json. Fixture calibration is explicit in expertise/README.md, generation/README.md, resumed-codex/README.md and named correction JSON. Initial compiler/UI failures were corrected without baseline growth. Original inline historical receipt pins stay authoritative where a snapshot filename was reused; freeze-reconciliation.json retains the original lint pins separately. Earlier final/release bridges and receipts remain historical; the reconciled qualification supersedes them.
 
 ## Limits
 
@@ -47,4 +49,4 @@ Models are mocked; these checks do not qualify live-provider behavior, native Po
 
 ## Status
 
-The pre-overlap source passed its source checks. A concurrent CSR continuation through90e5c3a1a is being reconciled; these receipts are not claimed for that merged source. Root owns direct canonical publication with normal hooks and accepted-Git-blob verification. Human clinical/statistical review and worksheet cases164–169 remain unrun. Publication and qualification JSON will identify the exact accepted source and evidence.
+Reconciled source checks and normal canonical publication are in progress. Root owns normal hooks and accepted-Git-blob verification. Human clinical/statistical review and worksheet cases164–169 remain unrun. Publication and qualification JSON will identify the exact accepted source and evidence.

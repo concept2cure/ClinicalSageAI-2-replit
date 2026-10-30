@@ -444,7 +444,8 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     await d
       .update(csrBuildJobs)
       .set({ progress: initialProgress, updatedAt: new Date() })
-      .where(eq(csrBuildJobs.id, jobId));
+      .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, job.organizationId),
+        eq(csrBuildJobs.status, 'drafting')));
   }
 
   try {

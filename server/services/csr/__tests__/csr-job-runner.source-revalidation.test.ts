@@ -268,6 +268,7 @@ describe('saved CSR source evidence on resume and completion', () => {
     expect(state.inserted).toEqual([]);
     expect(mocks.draft).not.toHaveBeenCalled();
     expect(mocks.load).toHaveBeenCalled();
+    expect(mocks.load.mock.calls.every(call => call[4]?.requireCurrent === true)).toBe(true);
     expect(mocks.continuation).toHaveBeenCalledExactlyOnceWith(42, 1);
   });
 
@@ -280,6 +281,17 @@ describe('saved CSR source evidence on resume and completion', () => {
     expect(mocks.continuation).toHaveBeenCalledExactlyOnceWith(42, 1);
   });
 
+});
+
+describe('CSR progress when cancellation finishes during retained-output admission', () => {
+  it('preserves the cancelled job progress before drafting can begin', async () => {
+    state.afterOutputRead = () => { state.job.status = 'cancelled'; state.job.progress = 42; };
+    await runCSRBuildJob(42);
+    expect(state.job).toMatchObject({ status: 'cancelled', progress: 42, error: null });
+    expect(state.persisted).toEqual([]);
+    expect(mocks.draft).not.toHaveBeenCalled();
+    expect(mocks.continuation).not.toHaveBeenCalled();
+  });
 });
 
 describe('CSR cancellation and unsupported bindings', () => {

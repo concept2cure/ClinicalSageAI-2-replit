@@ -47,7 +47,8 @@ export async function readCsrJobEvidence(
     import('./cortex-authoring-reader'), import('../../db'),
   ]);
   const evidence = await loadCsrAuthoringEvidence(pool as unknown as RequestSqlClient,
-    { organizationId: job.organizationId, userId: job.requestedBy ?? 0 }, { ...source, sectionNumber });
+    { organizationId: job.organizationId, userId: job.requestedBy ?? 0 }, { ...source, sectionNumber },
+    undefined, { requireCurrent: true });
   if (evidence.programId !== source.programId || evidence.runId !== source.runId || evidence.studyId !== source.studyId ||
       evidence.sectionNumber !== sectionNumber) {
     throw new CsrAuthoringContextError('CSR_EVIDENCE_SCOPE_MISMATCH', 409);

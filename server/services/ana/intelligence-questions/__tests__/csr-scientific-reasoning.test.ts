@@ -48,6 +48,8 @@ describe('CSR robustness follows the recorded analysis, not a success/failure sh
     expect(node.guidance).toMatch(/different estimand/i);
     expect(node.guidance).toMatch(/post.hoc.*exploratory|exploratory.*post.hoc/i);
     expect(node.question).not.toMatch(/since.*not met/i);
+    expect(node.fields.find(field => field.id === 'sensitivity_analysis_summary')?.placeholder)
+      .toMatch(/do not assume a per-protocol analysis targets the same estimand/i);
   });
 
   it('describes uncertainty and decision criteria under the actual SAP method, not a universal superiority p-value', () => {

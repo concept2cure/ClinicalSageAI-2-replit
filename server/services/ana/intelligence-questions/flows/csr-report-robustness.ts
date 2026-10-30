@@ -21,7 +21,7 @@ export function createCsrRobustnessNode(): QuestionNode {
         id: 'sensitivity_analysis_summary',
         label: 'Sensitivity Analysis Results',
         type: 'textarea',
-        placeholder: 'Summarize each sensitivity analysis (e.g., tipping point, per-protocol, MMRM vs. LOCF comparison) and whether the result was consistent with the primary analysis.',
+        placeholder: 'For each same-estimand sensitivity analysis, identify the assumption assessed, method, source output and whether it supports the robustness of the primary interpretation. Do not assume a per-protocol analysis targets the same estimand.',
         required: true,
         validation: { minLength: 50, maxLength: 5000 },
         visibleWhen: { field: 'sensitivity_analyses_performed', operator: 'eq', value: true },

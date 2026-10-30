@@ -185,7 +185,7 @@ describe('result sentences respect the source analysis hypothesis', () => {
     expect(CSR_SENTENCE_PATTERNS.find(pattern => pattern.id === 'non-significant')?.use).toMatch(/superiority/i);
   });
 
-  it.each(['efficacy-noninferiority', 'efficacy-equivalence', 'efficacy-bayesian'])('%s has a source-conditioned sentence rather than a forced p-value conclusion', id => {
+  it.each(['non-inferiority', 'equivalence', 'bayesian-decision'])('%s has a source-conditioned sentence rather than a forced p-value conclusion', id => {
     const pattern = CSR_SENTENCE_PATTERNS.find(candidate => candidate.id === id);
     expect(pattern).toBeDefined();
     expect(pattern?.use).toMatch(/SAP|source|recorded|prespecified|pre-specified/i);

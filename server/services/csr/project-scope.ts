@@ -29,15 +29,15 @@ export async function readCsrProjectActor(
   options: { allowReadOnlyTenant?: boolean; forShare?: boolean } = {},
 ): Promise<ReportProjectActor> {
   if (!Number.isSafeInteger(userId) || !userId || userId <= 0) throw new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'Current project access could not be established for the CSR actor.');
-  if ('select' in database) return readCsrProjectActor(queryableFromDrizzle(database), organizationId, userId, options);
+  const client = 'select' in database ? queryableFromDrizzle(database) : database;
   // Locked writer/signature admission always requires an active tenant.
   // Retained reads may separately opt into the pending-deletion read policy.
   const result = options.forShare
-    ? await database.query(`SELECT ou.role FROM organization_users ou
+    ? await client.query(`SELECT ou.role FROM organization_users ou
         JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id
         WHERE ou.organization_id=$1 AND ou.user_id=$2 AND u.status='active' AND o.status='active'
         FOR SHARE OF ou,u,o`, [organizationId, userId])
-    : await database.query(`SELECT ou.role FROM organization_users ou
+    : await client.query(`SELECT ou.role FROM organization_users ou
         JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id
         WHERE ou.organization_id=$1 AND ou.user_id=$2 AND u.status='active'
           AND (o.status='active' OR ($3::boolean AND o.status='pending_deletion'))`,
@@ -121,20 +121,20 @@ export async function resolveCsrBuildContext(
   return { ...context, ...scope, requestedBy: context.requestedBy ?? request.userId };
 }
 
-/** Saved output/status/cancellation reads enforce the current project policy too. */
-export async function requireCsrJobAccess(database: Pick<RequestDb, 'select' | 'execute'> | CsrScopeExecutor, organizationId: number, jobId: number, userId: number | undefined): Promise<boolean> {
-  const actor = await readCsrProjectActor(database, organizationId, userId, { allowReadOnlyTenant: true });
+/** Saved reads and explicit write admission share the current project policy. */
+export async function requireCsrJobAccess(database: Pick<RequestDb, 'select' | 'execute'> | CsrScopeExecutor, organizationId: number, jobId: number, userId: number | undefined, options: { forWrite?: boolean } = {}): Promise<boolean> {
+  const actor = await readCsrProjectActor(database, organizationId, userId, { allowReadOnlyTenant: options.forWrite !== true });
   if (!('select' in database)) {
     const { rows } = await database.query('SELECT project_id FROM csr_build_jobs WHERE id = $1 AND organization_id = $2', [jobId, organizationId]);
     if (rows.length !== 1) return false;
     const projectId = rows[0].project_id == null ? undefined : parseCsrScopeId(rows[0].project_id, 'projectId');
-    if (projectId !== undefined && !await canAccessReportProject(organizationId, actor, projectId, database)) {
+    if (projectId !== undefined && !await canAccessReportProject(organizationId, actor, projectId, database, options)) {
       throw new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'The CSR actor does not have access to this project.');
     }
     return true;
   }
   const [job] = await database.select({ projectId: csrBuildJobs.projectId }).from(csrBuildJobs).where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId))).limit(1);
   if (!job) return false;
-  if (job.projectId != null) await resolveCsrScope(database, organizationId, { projectId: job.projectId }, { forWrite: false, actorUserId: userId });
+  if (job.projectId != null) await resolveCsrScope(database, organizationId, { projectId: job.projectId }, { forWrite: options.forWrite === true, actorUserId: userId });
   return true;
 }

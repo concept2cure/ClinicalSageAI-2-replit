@@ -390,8 +390,32 @@ function evidenceLineage(evidence: CsrAuthoringEvidence): Record<string, unknown
   return {
     runId: evidence.runId, studyId: evidence.studyId, sectionNumber: evidence.sectionNumber,
     evidenceDigest: evidence.evidenceDigest, sourceSha256: evidence.source.sha256, status: evidence.status,
-    tables: evidence.tables.map(t => t.key), missingTables: evidence.missingTables, omittedTables: evidence.omittedTables,
+    tables: evidence.tables.map(t => t.key), missingTables: evidence.missingTables,
+    omittedTables: evidence.omittedTables, limitations: evidence.limitations,
   };
+}
+
+/** Study metadata and retained results tables do not establish trial conduct. */
+function acceptsConductClaims(content: string, lineage?: Record<string, unknown>): boolean {
+  const claims = [
+    /\b(?:was|were|is|are|had been|has been|have been)\s+(?:(?:reviewed and|fully)\s+)?approved\b/i,
+    /\bapproval\s+(?:was|has been|had been)\s+(?:obtained|secured|granted)\b/i,
+    /\b(?:received|obtained|secured)\s+(?:(?:IRB|IEC|ethics|committee)\s+)?approval\b/i,
+    /\bconsent\b.{0,100}\b(?:was|were|had been|has been)\s+(?:obtained|given|secured)\b/i,
+    /\b(?:patients|participants|subjects)\b.{0,60}\b(?:provided|gave|signed)\b.{0,40}\bconsent\b/i,
+    /\b(?:was|were|is|has been)\s+conducted\s+in (?:full )?(?:compliance|accordance) with\b.{0,100}\b(?:Good Clinical Practice|GCP|Helsinki|ICH E6)\b/i,
+    /\b(?:GCP|Good Clinical Practice)\s+compliance\s+(?:was|is|has been)\s+(?:confirmed|established|verified)\b/i,
+    /\b(?:SAP|statistical analysis plan)\b.{0,100}\b(?:finali[sz]ed|approved|signed)\b.{0,100}\b(?:before|prior to)\b.{0,60}\b(?:unblinding|database lock|data lock)\b/i,
+  ];
+  const unsupported = content.replace(/\[[^\]]*\]/g, '').split(/[.!?;\n]+/).some(sentence => {
+    // Qualify the entire statement; a missing-record preface cannot excuse
+    // an affirmative assurance after "but" or in another clause.
+    const negativeFrame = /^\s*(?:no (?:evidence|records?)\b|it (?:is|was) not (?:established|confirmed|documented) that\b)/i;
+    if (negativeFrame.test(sentence) && !/\b(?:but|however|nevertheless|although)\b/i.test(sentence)) return false;
+    return claims.some(pattern => pattern.test(sentence));
+  });
+  if (unsupported && lineage) lineage.rejectedModelDraft = { reason: 'unsupported_conduct_claim' };
+  return !unsupported;
 }
 
 /**
@@ -411,6 +435,7 @@ function acceptSectionReply(
     lineage.rejectedModelDraft = { reason: 'model_unattributed' };
     return null;
   }
+  if (!acceptsConductClaims(reply.content, lineage)) return null;
   let content = reply.content;
   if (usableEvidence(evidence)) {
     const split = splitCsrClaims(content);
@@ -605,7 +630,7 @@ async function generateSectionWithAI(
     );
     // Same guard as the provenance path: a statistical section that states a
     // figure the study information does not contain is not used.
-    if (content && !acceptModelDraft(section.number, content, info)) {
+    if (content && (!acceptsConductClaims(content) || !acceptModelDraft(section.number, content, info))) {
       return template();
     }
     return { content, isAI: Boolean(content?.trim()) };

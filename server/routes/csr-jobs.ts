@@ -508,15 +508,7 @@ router.post('/:jobId/cancel', async (req: Request, res: Response) => {
 
 /** Write access to the job's project, checked now (not retained from enqueue). */
 async function requireCsrJobWriteAccess(organizationId: number, jobId: number, userId: number): Promise<boolean> {
-  const d = requireDb();
-  if (!await requireCsrJobAccess(d, organizationId, jobId, userId)) return false;
-  const [job] = await d.select({ projectId: csrBuildJobs.projectId }).from(csrBuildJobs)
-    .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId))).limit(1);
-  if (!job) return false;
-  if (job.projectId != null) {
-    await resolveCsrScope(d, organizationId, { projectId: job.projectId }, { forWrite: true, actorUserId: userId });
-  }
-  return true;
+  return requireCsrJobAccess(requireDb(), organizationId, jobId, userId, { forWrite: true });
 }
 
 router.post('/:jobId/sections/:sectionNumber/review', async (req: Request, res: Response) => {

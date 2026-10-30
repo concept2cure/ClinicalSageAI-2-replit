@@ -1,5 +1,5 @@
 {
-  "baseline": "13be18d3de41170072498f460ab92073638ec838",
+  "baseline": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
   "results": [
     {
       "file": "server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts",
@@ -68,6 +68,17 @@
       "growth": []
     },
     {
+      "file": "server/services/__tests__/csr-builder-expertise.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
       "file": "server/services/__tests__/csr-builder-writing-expertise.test.ts",
       "baselineErrors": 0,
       "errors": 0,
@@ -79,7 +90,29 @@
       "growth": []
     },
     {
+      "file": "server/services/ana/__tests__/csr-expertise-writing.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
       "file": "server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/__tests__/csr-expertise-flow.test.ts",
       "baselineErrors": 0,
       "errors": 0,
       "baselineWarnings": 0,
@@ -178,10 +211,10 @@
           "ruleId": "complexity",
           "severity": 1,
           "message": "Function 'generateSectionTemplate' has a complexity of 16. Maximum allowed is 15.",
-          "line": 720,
+          "line": 745,
           "column": 1,
           "messageId": "complex",
-          "endLine": 720,
+          "endLine": 745,
           "endColumn": 33
         }
       ],
@@ -316,7 +349,7 @@
         {
           "ruleId": "max-lines-per-function",
           "severity": 1,
-          "message": "Async function 'runCSRBuildJob' has too many lines (318). Maximum allowed is 100.",
+          "message": "Async function 'runCSRBuildJob' has too many lines (319). Maximum allowed is 100.",
           "line": 285,
           "column": 8,
           "messageId": "exceed",
@@ -336,11 +369,11 @@
         {
           "ruleId": "max-lines",
           "severity": 1,
-          "message": "File has too many lines (570). Maximum allowed is 500.",
+          "message": "File has too many lines (571). Maximum allowed is 500.",
           "line": 694,
           "column": 1,
           "messageId": "exceed",
-          "endLine": 786,
+          "endLine": 787,
           "endColumn": 1
         }
       ],

@@ -1,0 +1,37 @@
+{
+  "acceptedSourceHead": "84853e7bc5c3a81e1b0634703e0585954dac8b9c",
+  "branch": "concept2cure-v2",
+  "acceptedAtUtc": "2026-10-30T16:57:33.784794+00:00",
+  "sourceCommit": "dfac7ffa684eb2607b55eae0ded5a40a2159c120",
+  "fixtureTypingFixCommit": "e441e8cd65169155059336487e9b9bcd355dd0ba",
+  "allNormalPushGatesPassed": true,
+  "typeScriptErrors": 0,
+  "baselineChanged": false,
+  "lintWarningGrowth": 0,
+  "committedFrozenInputsVerified": 64,
+  "csrQualification": {
+    "files": 43,
+    "passed": 436,
+    "failed": 0,
+    "skipped": 0
+  },
+  "typeOnlyFixtureRepeat": {
+    "files": 1,
+    "passed": 23,
+    "emittedJavaScriptIdentical": true
+  },
+  "incomingMergeQualification": {
+    "ownershipAndActionFiles": 2,
+    "ownershipAndActionPassed": 22,
+    "vaultFiles": 8,
+    "vaultPassed": 66,
+    "lintSourceVersionToolPassed": 6,
+    "mergedBuild": "passed"
+  },
+  "notRun": [
+    "live provider",
+    "native PostgreSQL RLS for this CSR slice",
+    "clinical or human acceptance",
+    "agency or deployment action"
+  ]
+}

@@ -26,3 +26,9 @@ Independent final inspection extends the same source-honesty contract to inherit
 ## Qualification and publication
 
 Workers author focused tests before production changes; root records genuine RED outputs and serializes all test/lint/build/compiler/publication jobs. Source freezes distinguish owned RED inputs from final static dependency inputs. Pin raw logs, input hashes and exact commits. Incremental direct canonical publication with normal hooks, then verify accepted source and final evidence. The catch-up report distinguishes implemented incoming capabilities from current findings and remaining work; no claim that every filing or CSR is now scientifically/legally complete.
+
+## Implemented continuation, 2026-10-30
+
+The existing owners now reach the report-wide writing brief in both drafting paths, retain explicit missing evidence, condition conduct/timing guidance on records, distinguish statistical hypotheses and repair the registered interview transitions/count labels. The existing CSR worker binds source program to actual target and repeats current edit/source/provenance admission after drafting and before completion, including populated resumes. Setup state predicates preserve cancellation. Root's actor/read-edit repair uses the existing SQL owner through Drizzle too; the actual cancellation route explicitly asks for edit permission. Retained read-only access remains governed by the existing project/tenant policy.
+
+Qualification: `docs/evidence/D2-CSR-EXPERTISE/2026-10-30/resumed-codex/README.md` (436 tests/43 files, build and no warning growth). Representative conduct-pattern checks do not constitute complete semantic/clinical validation. Missing/unmapped retained evidence remains needs-data for explicit recovery; saved work is preserved. Existing scientific review, signature and release controls remain necessary. No provider, agency or deployment action was performed.
