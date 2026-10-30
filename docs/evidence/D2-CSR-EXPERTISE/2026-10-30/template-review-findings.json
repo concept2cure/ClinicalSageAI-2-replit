@@ -1,0 +1,31 @@
+{
+  "review": "Independent read-only inspection of existing canonical fallback templates after initial regression",
+  "findings": [
+    {
+      "section": "12.2.1",
+      "problem": "Unconditional mild/moderate severity claim and unsupported fixed five-percent display threshold in source-missing fallback."
+    },
+    {
+      "section": "12.3.3",
+      "problem": "Asserts narrative presence despite no supporting source."
+    },
+    {
+      "section": "2",
+      "problem": "Recorded design/duration metadata is phrased as completed conduct."
+    },
+    {
+      "section": "11.4.1",
+      "problem": "Fallback forces a p-value skeleton without conditioning on recorded analysis method."
+    },
+    {
+      "section": "7,9.1,9.3,9.7.1,9.7.2,10.1,13",
+      "problem": "Fallback assumptions need source-bound or method-appropriate placeholders: unmet need, eligibility, completed conduct, randomization and statistical design."
+    }
+  ],
+  "status": "Corrected after targeted RED and GREEN; final integrated qualification pending.",
+  "red": "fallback-red.json",
+  "green": "fallback-green.json",
+  "redSummary": "21 failed /18 passed of39; three newly strengthened safety assertions and18 newly added fallback assertions failed. Two new fallback cases already passed and are controls.",
+  "greenSummary": "39 passed, no input drift.",
+  "note": "The final integrated source retains the existing exact SAP needs-data marker required by numerical-guard tests; later final regression qualifies this small compatibility adjustment."
+}

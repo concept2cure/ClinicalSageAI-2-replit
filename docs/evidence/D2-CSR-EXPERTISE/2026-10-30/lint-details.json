@@ -1,0 +1,394 @@
+{
+  "baseline": "13be18d3de41170072498f460ab92073638ec838",
+  "results": [
+    {
+      "file": "server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/csr-study-pivotal.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/csr-jobs.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/csr-workflow-routes.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/__tests__/csr-builder-e3-brief.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/__tests__/csr-builder-writing-expertise.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/csr-report-robustness.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 2,
+      "warnings": 2,
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'createCsrReportFlow' has too many lines (1895). Maximum allowed is 100.",
+          "line": 21,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 21,
+          "endColumn": 36
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1897). Maximum allowed is 500.",
+          "line": 547,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1992,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr-builder.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 2,
+      "warnings": 2,
+      "previous": {
+        "1:no-undef": 1,
+        "1:complexity": 1
+      },
+      "current": {
+        "1:no-undef": 1,
+        "1:complexity": 1
+      },
+      "messages": [
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'setImmediate' is not defined.",
+          "line": 275,
+          "column": 3,
+          "messageId": "undef",
+          "endLine": 275,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'generateSectionTemplate' has a complexity of 16. Maximum allowed is 15.",
+          "line": 720,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 720,
+          "endColumn": 33
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-job-runner.evidence.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-nct-number.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-project-scope.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/unsupplied-statistics.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/csr-job-evidence.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/csr-job-runner.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 4,
+      "warnings": 4,
+      "previous": {
+        "1:complexity": 2,
+        "1:max-lines-per-function": 1,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:complexity": 2,
+        "1:max-lines-per-function": 1,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'enqueueCSRBuildJob' has a complexity of 22. Maximum allowed is 15.",
+          "line": 195,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 195,
+          "endColumn": 41
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'runCSRBuildJob' has too many lines (318). Maximum allowed is 100.",
+          "line": 285,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 285,
+          "endColumn": 37
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'runCSRBuildJob' has a complexity of 58. Maximum allowed is 15.",
+          "line": 285,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 285,
+          "endColumn": 37
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (570). Maximum allowed is 500.",
+          "line": 694,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 786,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/project-scope.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ind/ctd/csr-e3-sections-plan.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ind/ctd/csr-e3-writing.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "docs/evidence/D2-CSR-EXPERTISE/2026-10-30/run-lint.mjs",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    }
+  ]
+}

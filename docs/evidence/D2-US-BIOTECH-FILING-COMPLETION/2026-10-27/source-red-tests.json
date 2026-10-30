@@ -1,0 +1,6 @@
+[
+  "server/services/ind/ctd/__tests__/specialty-lifecycle-meetings-access-eua.test.ts",
+  "server/services/ind/ctd/__tests__/specialty-lifecycle-biologics.test.ts",
+  "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx",
+  "server/services/regulatory/registry/__tests__/us-biotech-completion-blueprints.test.ts"
+]

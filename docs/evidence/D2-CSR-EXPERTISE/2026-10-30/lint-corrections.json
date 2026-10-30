@@ -1,0 +1,10 @@
+{
+  "failedReceipt": "lint.json",
+  "details": "lint-initial-details.json",
+  "changes": [
+    "Extract the existing source-program parsing block into one pure helper to stay within function complexity.",
+    "Qualify Node22 structuredClone through globalThis and split the existing21-case test grouping without changing behavior.",
+    "Remove unexpected multiline call formatting from the new SQL fixture."
+  ],
+  "baselineChanged": false
+}

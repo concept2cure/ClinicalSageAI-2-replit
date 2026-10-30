@@ -118,7 +118,12 @@ describe('a run-bound CSR job drafts §12.2 over the retained tables', () => {
     modelWriting('11.5%');
     await runCSRBuildJob(42);
 
-    expect(loadMock.mock.calls.map(c => c[2].sectionNumber)).toEqual(['12.2.1', '12.2.2', '12.2.3', '12.2.4']);
+    // The run is admitted before work; each model call is bracketed by the
+    // exact section pack. A placeholder refuses completion before its final
+    // source checks, so no release/continuation is implied by these reads.
+    expect(loadMock.mock.calls.map(c => c[2].sectionNumber)).toEqual([
+      '2', '12.2.1', '12.2.1', '12.2.2', '12.2.2', '12.2.3', '12.2.3', '12.2.4', '12.2.4',
+    ]);
     expect(loadMock.mock.calls[0][1]).toEqual({ organizationId: 1, userId: 5 });
     const evidenceMessage = (chatMock.mock.calls[0][0] as Array<{ content: string }>).at(-1)!.content;
     expect(JSON.parse(evidenceMessage)).toMatchObject({ type: 'retained_csr_evidence', evidence: { sectionNumber: '12.2.1' } });
@@ -185,7 +190,8 @@ describe('a run-bound CSR job drafts §12.2 over the retained tables', () => {
     loadMock.mockRejectedValue(Object.assign(new Error('CSR_SOURCE_RECEIPT_REVOKED'), { status: 409 }));
     modelWriting('10.5%');
     await runCSRBuildJob(42);
-    expect(fake.job).toMatchObject({ status: 'failed', error: { message: 'CSR_SOURCE_RECEIPT_REVOKED', section: '12.2.1' } });
+    // Admission now fails before a section is selected or a model is called.
+    expect(fake.job).toMatchObject({ status: 'failed', error: { message: 'CSR_SOURCE_RECEIPT_REVOKED', section: null } });
     expect(chatMock).not.toHaveBeenCalled();
     expect(fake.persisted).toEqual([]);
   });

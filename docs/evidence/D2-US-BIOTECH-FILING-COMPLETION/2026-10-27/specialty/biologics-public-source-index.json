@@ -1,0 +1,109 @@
+{
+  "scope": "Read-only official sources for canonical biologic working-document records. Raw pages are temporary research inputs outside the packet; retained facts will be authored paraphrases.",
+  "sources": [
+    {
+      "id": "cfr601_12",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-601/section-601.12",
+      "retrievedAt": "2026-10-27T01:04:19.869129+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-601/subpart-C/section-601.12",
+      "bytes": 115438,
+      "sha256": "9844b3ff27bbc1727b3684f50415aa4dfaed6b7bb7a90f6430efa6ce2e273bf5"
+    },
+    {
+      "id": "cfr601_28",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-601/section-601.28",
+      "retrievedAt": "2026-10-27T01:04:19.869854+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-601/subpart-C/section-601.28",
+      "bytes": 82441,
+      "sha256": "1e6557777b23f840e528369551019a14a29db050b63e137bae573d26c3dfb5d7"
+    },
+    {
+      "id": "cfr601_70",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-601/section-601.70",
+      "retrievedAt": "2026-10-27T01:04:19.870355+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-601/subpart-G/section-601.70",
+      "bytes": 93377,
+      "sha256": "3c94e8510446d922a690e760e2c2bc988c176243d69cbeabe62d48d31b69af87"
+    },
+    {
+      "id": "cfr600_81",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-600/subpart-D/section-600.81",
+      "retrievedAt": "2026-10-27T01:04:19.870876+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-600/subpart-D/section-600.81",
+      "bytes": 82436,
+      "sha256": "d5a81ebce1354117ee486d8717ffbab4057e0c69e0c2d58bae4522763c167a0e"
+    },
+    {
+      "id": "cfr600_14",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-600/subpart-B/section-600.14",
+      "retrievedAt": "2026-10-27T01:04:20.527031+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-600/subpart-B/section-600.14",
+      "bytes": 86251,
+      "sha256": "1db7931bf495a16cee941d0febf91756250a0f83369ad37ad996dde0e78f5c49"
+    },
+    {
+      "id": "cfr600_80",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-600/subpart-D/section-600.80",
+      "retrievedAt": "2026-10-27T01:04:20.547428+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-600/subpart-D/section-600.80",
+      "bytes": 125980,
+      "sha256": "ca585c917b8457a19237f45da11980647b4e7f476c99af442e388c56b64b97ca"
+    },
+    {
+      "id": "cfr610_2",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-610/subpart-A/section-610.2",
+      "retrievedAt": "2026-10-27T01:04:20.619471+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-610/subpart-A/section-610.2",
+      "bytes": 81810,
+      "sha256": "95b31b677576a47cc403ffd96102b6fca7f581a15690856241db9e8cfe14a796"
+    },
+    {
+      "id": "fda_cber_master_file",
+      "url": "https://www.fda.gov/vaccines-blood-biologics/development-approval-process-cber/master-files-cber-regulated-products",
+      "retrievedAt": "2026-10-27T01:04:20.720115+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/vaccines-blood-biologics/development-approval-process-cber/master-files-cber-regulated-products",
+      "bytes": 40178,
+      "sha256": "598fa3a3484fbca44c6f6aaff338b2de8be1766903e0d958a795648baa69b809"
+    },
+    {
+      "id": "fda_rems_modification",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/risk-evaluation-and-mitigation-strategies-modifications-and-revisions",
+      "retrievedAt": "2026-10-27T01:04:20.822784+00:00",
+      "status": "unavailable",
+      "error": "HTTPError: HTTP Error 404: Not Found"
+    },
+    {
+      "id": "fda_rems_assessment",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/rems-assessment-planning-and-reporting",
+      "retrievedAt": "2026-10-27T01:04:21.059810+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/rems-assessment-planning-and-reporting",
+      "bytes": 35191,
+      "sha256": "874564cc19890eeb5ee6b6ec2d8a4353fba4737643ac92401f1c7ab83da30fa8"
+    },
+    {
+      "id": "fda_rems_modification_recovered",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/risk-evaluation-and-mitigation-strategies-modifications-and-revisions-guidance-industry",
+      "retrievedAt": "2026-10-27T01:05:40.184841+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/risk-evaluation-and-mitigation-strategies-modifications-and-revisions-guidance-industry",
+      "bytes": 34812,
+      "sha256": "b17283380c0b571ed97ae66f2a7d5612d5d4c42bb51fb406ec5d8cd257b9d7e9"
+    },
+    {
+      "id": "uscode_505_1",
+      "url": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title21-section355-1&num=0&edition=prelim",
+      "retrievedAt": "2026-10-27T01:05:40.510906+00:00",
+      "status": "unavailable",
+      "error": "HTTPError: HTTP Error 404: Not Found"
+    }
+  ]
+}
