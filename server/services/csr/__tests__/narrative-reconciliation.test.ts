@@ -44,7 +44,7 @@ describe('the fact gate', () => {
   it('passes the template narrative, which states each onset by study day', async () => {
     const f = factsFor(7);
     const { text } = templateNarrative(f);
-    expect(text).toContain('On study day 19, the subject experienced severe Septic shock');
+    expect(text).toContain('On study day 19, the subject experienced a serious adverse event of Septic shock, severe in intensity');
     expect(reconcileNarrative(text, f)).toEqual({ ok: true, issues: [] });
     const composed = await composeSubjectNarrative(f);
     expect(composed).toMatchObject({ status: 'composed', prose: 'template' });
@@ -53,7 +53,7 @@ describe('the fact gate', () => {
   it('refuses a narrative whose onset day differs from ADAE ASTDY, even when the wrong day is another recorded fact', () => {
     const f = factsFor(7);
     const { text } = templateNarrative(f);
-    expect(codes(text.replace('On study day 19, the subject experienced severe Septic shock', 'On study day 20, the subject experienced severe Septic shock'), f))
+    expect(codes(text.replace('On study day 19, the subject experienced a serious adverse event of Septic shock, severe in intensity', 'On study day 20, the subject experienced a serious adverse event of Septic shock, severe in intensity'), f))
       .toContain('NARRATIVE_ONSET_MISMATCH');
     // Day 21 is the recorded death day, but not this event's onset.
     expect(codes(text.replace('On study day 19,', 'On study day 21,'), f)).toContain('NARRATIVE_ONSET_MISMATCH');
@@ -70,7 +70,7 @@ describe('the fact gate', () => {
     const { text } = templateNarrative(f);
     expect(codes(text.replace(`${f.age}-year-old`, `${f.age! + 1}-year-old`), f)).toContain('NARRATIVE_AGE_MISMATCH');
     expect(codes(`${text} The event was grade 4.`, f)).toContain('NARRATIVE_GRADE_MISMATCH');
-    expect(codes(text.replace('moderate Pneumonia', 'severe Pneumonia'), f)).toContain('NARRATIVE_SEVERITY_MISMATCH');
+    expect(codes(text.replace('Pneumonia, moderate in intensity', 'Pneumonia, severe in intensity'), f)).toContain('NARRATIVE_SEVERITY_MISMATCH');
     expect(codes(`${text} The subject died.`, f)).toContain('NARRATIVE_DEATH_UNSOURCED');
     expect(codes(text.split('\n\n').filter(p => !p.includes('Pneumonia')).join('\n\n'), f)).toContain('NARRATIVE_EVENT_MISSING');
   });
