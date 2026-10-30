@@ -10,5 +10,7 @@
   "settingsFiles": 4,
   "nativeArchiveChecks": 36,
   "build": "passed",
-  "thirdPush": "All normal gates and TypeScript0 passed; lost final canonical compare-and-swap."
+  "thirdPush": "All normal gates and TypeScript0 passed; lost final canonical compare-and-swap.",
+  "settingsIntegratedCompilerErrors": 0,
+  "settingsIntegratedCompilerExit": 0
 }
