@@ -273,6 +273,23 @@ organisation's membership. With no name they say "requested", never an id.
   `authoring-review-board-access.pglite.test.ts` builds its own schema. It now includes the
   route migration, since production always has those tables.
 
+## The Review board's project switch named the project by its id (fixed)
+
+A board opened from a link (`?program=`) gets the program's id from the shell
+(`restoreShellProject`, `shellProject.ts`) and nothing else, so the switch read
+"Only 099991d1-…" (desktop screenshot 06). It now names the program from the board's own
+rows, which carry the program's name (`prog`). When no row names it, the switch says
+"this project". It never shows the id. The comment-thread pane under the board gets the same
+name (`namedProgram` in `Review.tsx`).
+
+**What already existed (Rule 3).** The board's read already returns each row's program name
+(`program_name` in `authoring-review-board.ts`); the switch reads it. No program-name fetch
+was added, and the shell's own record of the project is unchanged.
+
+**Red, then green** (`board-program-name/`): the two new tests in `reviewBoard.test.tsx` fail
+on the old switch, which shows the id. The Review board tests and the six other Review
+surface test files pass: 64 tests.
+
 ## Open
 
 1. **The shell's top bar at phone width.** It is 344 px wide in a 334 px column, so Get help
@@ -280,9 +297,6 @@ organisation's membership. With no name they say "requested", never an id.
    trigger, which this run taps. The run records this and does not assert it. Fitting 44 px
    targets there needs a decision on what the bar holds at a phone's width. That is shell
    design, not RR5.
-2. **Seen in passing at every width and not investigated:** the Review board's project switch
-   names the project by its id when the board is opened from a link (`?program=`). The desktop
-   screenshot 06 shows it.
-3. **The Authoring OQ protocol** has not been run on RR5.
-4. **RR6:** Authoring approvers on the route, and deleting `POST /docs/:docId/submit` and
+2. **The Authoring OQ protocol** has not been run on RR5.
+3. **RR6:** Authoring approvers on the route, and deleting `POST /docs/:docId/submit` and
    `/docs/:docId/sign`, with `/e-sign` named as the replacement.
