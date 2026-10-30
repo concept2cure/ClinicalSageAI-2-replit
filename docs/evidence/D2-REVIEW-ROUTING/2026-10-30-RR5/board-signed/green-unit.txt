@@ -1,0 +1,3 @@
+Test Files  64 passed (64)
+Tests  677 passed (677)
+files: 62 related unit/pglite test files + homeOpenItems + taskTrayApprovalsFromAuthoring
