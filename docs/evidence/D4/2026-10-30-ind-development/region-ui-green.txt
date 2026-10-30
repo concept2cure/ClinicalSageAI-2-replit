@@ -1,0 +1,50 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > opens on the EU application agency and sends that explicit choice 161ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > uses the exact saved section agency before a different program or caller preference 40ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > lets a GLOBAL section defer to the recorded application 11ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > requires an explicit supported choice when no receiving agency is recorded 46ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > offers only agencies mapped by the shared drafting vocabulary, without MHRA 13ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > holds an unavailable exact section reference instead of falling back to its US program 12ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > updates an untouched default when the scoped read completes and changes projects 13ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > keeps a person’s supported selection and states the application mismatch 11ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > blocks an old unsupported retained choice without discarding the reviewed candidate 147ms
+stdout | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+{
+  "timestamp": "2026-10-30T16:37:16.031Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:37:16.032Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+{
+  "timestamp": "2026-10-30T16:37:16.033Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > validates the complete admitted batch once and returns only section agency/state 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > honors a Japanese assembled section over its US parent and does not affect another section 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > preserves GLOBAL assembled scope instead of inheriting the parent 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > keeps a truly unrecorded template distinct from a failed source read 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > does not promote identity-only source fields into a recorded receiving region 1ms
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  16:37:10
+   Duration  5.94s (transform 3.14s, setup 300ms, import 4.30s, tests 469ms, environment 496ms)
+
