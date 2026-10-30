@@ -281,6 +281,18 @@ The fixer raised three questions about P-19, decided the same day:
 - The demo seeds use the code BX-204 for two different products. The seed's dossier-map project gets its own code;
   demo data must not depend on a code collision.
 
+The bounded PM-06 maintenance extension (2026-10-23; [evidence](evidence/D2-PM-SETTINGS/2026-10-23/README.md))
+reaches the existing program-profile writer from Project home for description, priority and recorded target date.
+Current lead/organization-manager authority, a current-row revision and a stated reason protect the change; its
+chained audit commits in the same transaction. Concurrent/stale edits refuse, and uncertain outcomes require a
+fresh read. Target maintenance does not regenerate milestone plans or change actuals, approved versions or ownership.
+
+2026-10-30, the existing Author-side Memory and Instructions cards reach the saved project intelligence profile
+through the current UUID/actor/anchor/client access path ([evidence](evidence/D2-PM-RECORDED-CONTEXT/2026-10-30/README.md)).
+They distinguish recorded notes from verified evidence and profile instructions from authored instructions/skills.
+The existing AnA profile formatter also uses recorded risk/decision fields rather than invented severity/status.
+This bounded completion adds no instruction precedence, profile writer, provider or launch-row green claim.
+
 ### P-20 — A safety report never infers what nobody stated
 
 The onset date is stated either as a date or explicitly as unknown; a blank is refused. When expectedness is not

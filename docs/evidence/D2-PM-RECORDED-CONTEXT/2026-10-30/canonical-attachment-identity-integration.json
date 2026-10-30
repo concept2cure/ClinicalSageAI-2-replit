@@ -1,0 +1,6 @@
+{
+  "incoming_commit": "c3f16c8a213a2f61fc132c4849ae6d7a49006788",
+  "integration_commit": "6a6e6b69426e6fb3ea228b4eb96f1aebd9d20d83",
+  "selected_pm_inputs_unchanged": 148,
+  "review": "Retain canonical per-selection attachment identity and its upstream qualification. No selected PM source/test/browser/runtime input changes. Existing590 distinct focused cases, native8 and component-browser results remain qualified; no repeated counts are added. A fresh production build and unchanged complete pre-push hook qualify the composed application before expected-head publication."
+}

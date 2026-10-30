@@ -1,0 +1,12 @@
+{
+  "incoming_commit": "f0e0ff863",
+  "integration_commit": "6eeab18fb",
+  "runtime_and_test_paths": [
+    "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx",
+    "client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts",
+    "client/src/concept2cure/v2/surfaceActions.ts",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx"
+  ],
+  "resolution": "Retain upstream keyed ProjectWorkspace and pending-action supersession. Keep metadataEpoch state; use actor/session supplied by ProjectWorkspace props, with no duplicate hooks. Preserve settings mount, session-owned metadata/activity refresh, six stages, Reports, biotech and device work.",
+  "qualification": "The final merged UI cohorts and the incoming ownership/action suites are recorded separately. No backend policy or profile writer changed in this incoming commit."
+}

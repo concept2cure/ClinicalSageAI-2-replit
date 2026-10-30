@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > writes only the fields the patch named 4ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > leaves a clearable field absent rather than writing NULL 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > drops a key a CALLER passed as undefined, not only one zod omitted 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > clears one that was explicitly cleared 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > records the submission date as a date, and clears it when it is no longer planned 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > takes the agencies beyond the primary one, which the create never writes 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > records a team member’s name and role and NOT a user id 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > is org-scoped and program-scoped on the UPDATE itself 2ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the record says about it afterwards > names the fields an inspector would ask about 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the record says about it afterwards > names WHICH predicate was claimed, and that a claim was withdrawn 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the record says about it afterwards > records the action the caller names, so two callers are told apart 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > reports a lost audit row instead of answering as though it wrote one 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > carries the value each field held BEFORE, which the chain does not 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > refuses a programme this organization does not hold, before writing 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > refuses a zero-row UPDATE rather than auditing a change that did not happen 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses a patch that names nothing 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses every column on the refusal list, each of which is a real column 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > keeps the lifecycle and the two phases out of a profile write 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > every settable field is a real column too 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses a column outside the allowlist in the WRITE, not only at the caller 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses a date that is not on the calendar 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > keeps the US class US, because the form it is printed on is US 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > takes each European class on its own column, for its own regulation 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > lets a European class be withdrawn, because "no EU filing planned" is an answer 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > accepts the regulatory paths the platform’s own mapping produces 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the device-profile endpoint’s reach > is exactly what it was, and not the whole shape 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > refuses the bare string array the create route used to write 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > refuses a predicate with a number and no trade name 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > takes the complete claim, keyed by the submission number 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > takes an empty list, because a programme with no predicate states none 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > confirms the actual scoped fields, new revision and transactional audit 3ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses a saved receipt from a different programId 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses a saved receipt from a different projectId 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses a saved receipt from a different organizationId 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses a saved receipt from a different actorUserId 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses a saved receipt from a different clientWorkspaceId 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > leaves a first read unbound when no client was selected, then pins the saved parent for writes 1ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"description":"Other description"} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"priority":"low"} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"targetSubmissionDate":"2028-03-01"} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"revision":"v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"revision":"1"} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not confirm contradictory saved facts {"canChange":false} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires the chained audit, rather than a success-shaped wrapper {"persisted":false,"chained":false} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires the chained audit, rather than a success-shaped wrapper {"persisted":true,"chained":false} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires the chained audit, rather than a success-shaped wrapper {} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses invalid changed-field attribution {"changedFields":[]} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses invalid changed-field attribution {"changedFields":["priority","priority"]} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses invalid changed-field attribution {"changedFields":["leadUserId"]} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses invalid changed-field attribution {"changedFields":["targetAgencies"]} 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > does not treat pending stores or a missing audit envelope as a saved update 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > confirms deliberate clearing against canonical null values 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > refuses an audited field that was not in the submitted change 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires an actual supported anchor ID 0 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires an actual supported anchor ID "11" 0ms
+ ✓ shared/__tests__/project-settings.test.ts > current project settings receipts > requires an actual supported anchor ID 2147483648 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 0) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 1) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 2) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 3) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 4) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 5) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 6) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 7) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 8) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 9) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > rejects invalid or unauthorized patch fields (case 10) 0ms
+ ✓ shared/__tests__/project-settings.test.ts > bounded profile fields > accepts a valid leap day, an omitted field and deliberate clearing 0ms
+
+ Test Files  2 passed (2)
+      Tests  68 passed (68)
+   Start at  20:13:39
+   Duration  1.40s (transform 325ms, setup 161ms, import 690ms, tests 40ms, environment 0ms)
