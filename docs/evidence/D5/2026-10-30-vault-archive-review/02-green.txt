@@ -1,0 +1,14 @@
+Actual source after the negative-control experiments, before publication gates:
+
+npx vitest run --config vitest.db.config.ts tests/db/vault-folder-export.dbtest.ts tests/db/vault-data-room-seal.dbtest.ts
+  2 files passed; 28 tests passed (12 folder, 16 seal).
+  Disposable PostgreSQL16 database platform_ci_vault_fixture_20261030; actual app_service runtime, RLS_ENFORCE=on. Dedicated fixture scaffolding only; no hosted customer data. Full output: db-green.txt.gz.
+
+npx vitest run server/services/vault/__tests__/{vault-archive-delivery.test.ts,vault-folder-export.test.ts,vault-archive-audit-projection.test.ts,vault-archive-builder.test.ts,vault-filing.service.test.ts}
+  5 files passed; 45 tests passed. Full output: unit-green.txt.gz.
+
+Focused ESLint on all ten changed/new source and test files: zero errors. Added delivery, planner, projection and DB test files have zero warnings. Production archive modules have zero warnings; existing classifyByName complexity warning remains. Project-vault route warning rule counts match original exactly (complexity:3, max-lines-per-function:2, max-lines:1). No baseline changed.
+
+Nine independent intentional mutations, injected by temporary Vitest transform plugins outside the repository, each exited1 on the intended assertions (03-mutations.json). Live source files were never replaced during mutations; the concurrent compiler sees only actual source.
+
+Root owns full build/typecheck/hooks/publication evidence. This file does not claim deployment or all launch rows complete.

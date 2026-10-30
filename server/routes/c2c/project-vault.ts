@@ -47,7 +47,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import path from 'node:path';
-import { createReadStream, promises as fs } from 'node:fs';
+import { promises as fs } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 
 import { pool } from '../../db.js';
@@ -68,6 +68,7 @@ import {
   resolveOrgVaultView,
   resolveVaultView,
   folderLabel,
+  cabinetFolderOf,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { sourceReadView } from '../../../shared/data-room-processing-status.js';
@@ -113,6 +114,9 @@ import {
   SavedViewRefusal, changeSavedView, createSavedViewSchema, deleteSavedView, insertSavedView, listSavedViews,
   lockSavedView, patchSavedViewSchema, validateViewParameters,
 } from '../../services/vault/vault-saved-views.js';
+import { canReadAuditTrail } from '../../services/audit/audit-api-authority';
+import { beginArchiveBuild, sendStagedArchive } from '../../services/vault/vault-archive-delivery';
+import type { ArchivedFile } from '../../services/vault/vault-archive-builder';
 import { projectVaultRelationshipHistory, VaultHistoryAccessError } from '../../services/vault/vault-history-access';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
@@ -469,7 +473,7 @@ export async function recordVaultDownload(
 export async function recordVaultArchive(
   req: Request,
   d: { orgId: number; userId: number | undefined; action: 'vault.data_room.archive' | 'vault.folder.export';
-    resourceType: string; resourceId: string; details: Record<string, unknown> },
+    resourceType: string; resourceId: string; details: Record<string, unknown>; files: ReadonlyArray<Pick<ArchivedFile, 'id' | 'sha256'>> },
 ): Promise<boolean> {
   let client: PoolClient | undefined;
   try {
@@ -482,6 +486,16 @@ export async function recordVaultArchive(
       ipAddress: req.ip, userAgent: req.headers['user-agent'],
       details: d.details,
     });
+    for (const file of d.files) {
+      await writeChainedAuditRow(client, {
+        tenantId: d.orgId, userId: d.userId, action: 'vault.document.exported',
+        resourceType: 'vault_document', resourceId: file.id,
+        ipAddress: req.ip, userAgent: req.headers['user-agent'],
+        details: { documentId: file.id, contentHash: file.sha256, programId: d.details.programId,
+          archiveAction: d.action, archiveResourceType: d.resourceType, archiveResourceId: d.resourceId,
+          archiveSha256: d.details.archiveSha256 },
+      });
+    }
     await client.query('COMMIT');
     return true;
   } catch (auditErr) {
@@ -498,25 +512,25 @@ export async function recordVaultArchive(
 /** Why a sealed document's file is not in its closing archive: the single download refuses it too. */
 const WITHHELD_BY_DISPOSITION = 'Its original file was removed under a data disposition; the record and its data are kept.';
 
-/** Stream a finished archive with its recorded SHA-256, then remove its staging directory. */
-function sendStagedArchive(
-  res: Response,
-  built: { path: string; size: number; sha256: string },
-  stage: { cleanup(): Promise<void> },
-  fileName: string,
-): void {
-  res.setHeader('Content-Type', 'application/zip');
-  res.setHeader('Content-Length', String(built.size));
-  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-  res.setHeader('X-Content-SHA256', built.sha256);
-  res.setHeader('Cache-Control', 'no-store');
-  const stream = createReadStream(built.path);
-  res.on('close', () => { stream.destroy(); void stage.cleanup(); });
-  stream.on('error', (err) => {
-    logger.error('vault closing archive stream failed', { fileName, err: err.message });
-    res.destroy(err);
-  });
-  stream.pipe(res);
+/** Both archive routes reserve the same account's build slot. */
+function reserveVaultArchive(req: Request, res: Response, organizationId: number): (() => void) | null {
+  const userId = governedActorId(req);
+  if (!userId) {
+    res.status(401).json({ success: false, error: 'UNAUTHENTICATED', message: 'Sign in before building an archive.' });
+    return null;
+  }
+  const release = beginArchiveBuild(organizationId, userId);
+  if (!release) res.status(429).json({ success: false, error: 'ARCHIVE_BUILD_IN_PROGRESS',
+    message: 'Another archive is being built for your account. Wait for it to finish, then try again.' });
+  return release;
+}
+
+/** A folder-export failure is a refusal, never a partial archive. */
+function folderExportFailure(res: Response, error: unknown, programId: string,
+  ArchiveError: typeof import('../../services/vault/vault-seal-archive.js').SealArchiveError) {
+  if (error instanceof ArchiveError) return res.status(error.status).json({ success: false, error: error.code, message: error.message });
+  logger.error('vault folder export failed', { programId, err: error instanceof Error ? error.message : String(error) });
+  return res.status(500).json({ success: false, error: 'EXPORT_UNAVAILABLE', message: 'The folder could not be exported. Nothing was sent.' });
 }
 
 /** The four shapes a `folderId` can arrive in, mapped to what the service reads. */
@@ -779,7 +793,7 @@ function whereFiled(folderId: string): string {
  * Exported for the tree-merge regression test.
  */
 export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFolder {
-  const unfiled = uploads.filter(u => !u.folder_id || (u.placement_status || 'unfiled') === 'unfiled');
+  const unfiled = uploads.filter(u => !cabinetFolderOf(u));
   const inView = new Set(foldersForView(view).map(f => f.id));
   const byFolder = new Map<string, UploadRow[]>();
   /* Filed to a folder this view does not have. The view is resolved per read
@@ -789,14 +803,15 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
      while still counted; it is shown, with where it was filed. */
   const otherView: UploadRow[] = [];
   for (const u of uploads) {
-    if (!u.folder_id || (u.placement_status || 'unfiled') === 'unfiled') continue;
-    if (!inView.has(u.folder_id)) {
+    const folder = cabinetFolderOf(u);
+    if (!folder) continue;
+    if (!inView.has(folder)) {
       otherView.push(u);
       continue;
     }
-    const list = byFolder.get(u.folder_id) ?? [];
+    const list = byFolder.get(folder) ?? [];
     list.push(u);
-    byFolder.set(u.folder_id, list);
+    byFolder.set(folder, list);
   }
   const children: Array<VaultFolder | VaultDoc> = [];
   children.push({
@@ -2934,6 +2949,8 @@ export default function createProjectVaultRoutes(): Router {
     const { verifySeal, VaultSealError } = await import('../../services/vault/vault-seal.service.js');
     const { openVaultArchive } = await import('../../services/vault/vault-archive-builder.js');
     const { buildSealArchiveContents, SealArchiveError } = await import('../../services/vault/vault-seal-archive.js');
+    const release = reserveVaultArchive(req, res, orgId);
+    if (!release) return undefined;
     let stage: Awaited<ReturnType<typeof openVaultArchive>> | undefined;
     let sending = false;
     // A sealed document whose original file a data disposition removed is
@@ -2960,10 +2977,10 @@ export default function createProjectVaultRoutes(): Router {
           message: 'This seal does not verify intact, so no closing archive was built. Nothing was sent.' });
       }
       const actorId = governedActorId(req) ?? undefined;
-      const contents = await buildSealArchiveContents(pool, { organizationId: orgId, userId: actorId, seal, manifest, withheld });
+      const contents = await buildSealArchiveContents(pool, { organizationId: orgId, userId: actorId, seal, manifest, withheld, namedActors: canReadAuditTrail(req) });
       const built = await stage.finish(contents);
       const recorded = await recordVaultArchive(req, {
-        orgId, userId: actorId, action: 'vault.data_room.archive', resourceType: 'vault_data_room_seal', resourceId: seal.id,
+        orgId, userId: actorId, action: 'vault.data_room.archive', resourceType: 'vault_data_room_seal', resourceId: seal.id, files: built.files,
         details: { programId: id, manifestSha256: seal.manifestSha256, archiveSha256: built.sha256, archiveSize: built.size,
           documentCount: built.files.length, withheldCount: withheld.length },
       });
@@ -2972,8 +2989,7 @@ export default function createProjectVaultRoutes(): Router {
           message: 'The archive could not be recorded in the audit trail, so it was not sent.' });
       }
       sending = true;
-      res.setHeader('X-Archive-Withheld', String(withheld.length));
-      sendStagedArchive(res, built, stage, `vault-seal-${seal.id.slice(0, 8)}-closing-archive.zip`);
+      sendStagedArchive(res, built, stage, `vault-seal-${seal.id.slice(0, 8)}-closing-archive.zip`, withheld.length);
       return undefined;
     } catch (err) {
       if (err instanceof VaultSealError) return res.status(404).json({ success: false, error: err.code, message: err.message });
@@ -2982,6 +2998,7 @@ export default function createProjectVaultRoutes(): Router {
       return res.status(500).json({ success: false, error: 'ARCHIVE_UNAVAILABLE',
         message: 'The closing archive could not be built. Nothing was sent.' });
     } finally {
+      release();
       if (!sending) await stage?.cleanup().catch(() => undefined);
     }
   });
@@ -3003,6 +3020,8 @@ export default function createProjectVaultRoutes(): Router {
     const { planFolderExport, folderExportDocument, buildFolderExportContents } = await import('../../services/vault/vault-folder-export.js');
     const { openVaultArchive } = await import('../../services/vault/vault-archive-builder.js');
     const { SealArchiveError } = await import('../../services/vault/vault-seal-archive.js');
+    const release = reserveVaultArchive(req, res, orgId);
+    if (!release) return undefined;
     let stage: Awaited<ReturnType<typeof openVaultArchive>> | undefined;
     let sending = false;
     try {
@@ -3013,10 +3032,10 @@ export default function createProjectVaultRoutes(): Router {
       if (!staged.ok) return res.status(409).json({ success: false, error: 'EXPORT_FILE_UNVERIFIED', message: staged.message });
       const actorId = governedActorId(req) ?? undefined;
       const contents = await buildFolderExportContents(pool, { organizationId: orgId, userId: actorId, programId: id,
-        programName: plan.programName, folder: plan.folder, documents: staged.documents, withheld: staged.withheld });
+        programName: plan.programName, folder: plan.folder, documents: staged.documents, withheld: staged.withheld, namedActors: canReadAuditTrail(req) });
       const built = await stage.finish(contents);
       const recorded = await recordVaultArchive(req, {
-        orgId, userId: actorId, action: 'vault.folder.export', resourceType: 'vault_folder', resourceId: `${id}:${plan.folder.id}`,
+        orgId, userId: actorId, action: 'vault.folder.export', resourceType: 'vault_folder', resourceId: `${id}:${plan.folder.id}`, files: built.files,
         details: { programId: id, folderId: plan.folder.id, folderLabel: plan.folder.label, archiveSha256: built.sha256, archiveSize: built.size,
           documentCount: built.files.length, withheldCount: staged.withheld.length, documentIds: built.files.map((f) => f.id) },
       });
@@ -3025,14 +3044,12 @@ export default function createProjectVaultRoutes(): Router {
           message: 'The export could not be recorded in the audit trail, so it was not sent.' });
       }
       sending = true;
-      res.setHeader('X-Archive-Withheld', String(staged.withheld.length));
-      sendStagedArchive(res, built, stage, `vault-${plan.folder.id}-export-${built.sha256.slice(0, 8)}.zip`);
+      sendStagedArchive(res, built, stage, `vault-${plan.folder.id}-export-${built.sha256.slice(0, 8)}.zip`, staged.withheld.length);
       return undefined;
     } catch (err) {
-      if (err instanceof SealArchiveError) return res.status(err.status).json({ success: false, error: err.code, message: err.message });
-      logger.error('vault folder export failed', { programId: id, err: err instanceof Error ? err.message : String(err) });
-      return res.status(500).json({ success: false, error: 'EXPORT_UNAVAILABLE', message: 'The folder could not be exported. Nothing was sent.' });
+      return folderExportFailure(res, err, id, SealArchiveError);
     } finally {
+      release();
       if (!sending) await stage?.cleanup().catch(() => undefined);
     }
   });

@@ -287,8 +287,36 @@ describe("a seal's closing archive (VR-20)", () => {
     expect((await archiveRows(sealId)).length).toBe(before);
   });
 
-  it('a viewer the project admits may download it', async () => {
-    expect((await archive(mine, sealId, viewer)).status).toBe(200);
+  it('a viewer may download it with audit account references and each document export recorded', async () => {
+    const res = await archive(mine, sealId, viewer);
+    expect(res.status).toBe(200);
+    const zip = new AdmZip(res.body as Buffer);
+    const manifest = JSON.parse(zip.readAsText('manifest.json'));
+    const trail = JSON.parse(zip.readAsText('audit/audit-trail.json'));
+    expect(trail.actorIdentity).toBe('account references; IP addresses omitted');
+    expect(trail.entries.length).toBeGreaterThan(0);
+    for (const entry of trail.entries) {
+      expect(entry).not.toHaveProperty('ip');
+      expect(entry.actor).toBe(entry.actorRef ?? (entry.actor === 'System' ? 'System' : 'not named in this copy'));
+    }
+    expect(manifest.auditTrail.actorIdentity).toBe(trail.actorIdentity);
+    expect(zip.readAsText('INDEX.txt')).toContain(trail.actorIdentity);
+    const rows = (await owner.query(`SELECT record_id, new_values FROM audit_logs
+      WHERE tenant_id = $1 AND action = 'vault.document.exported' AND new_values->>'archiveSha256' = $2`,
+    [mine.orgId, sha256(res.body as Buffer)])).rows;
+    expect(rows).toHaveLength(manifest.files.length);
+    for (const file of manifest.files) expect(rows.find((r) => r.record_id === file.id)?.new_values)
+      .toMatchObject({ documentId: file.id, contentHash: file.sha256, archiveAction: 'vault.data_room.archive' });
+  });
+
+
+  it('shares the per-account build guard with folder exports and releases it afterwards', async () => {
+    const { beginArchiveBuild } = await import('../../server/services/vault/vault-archive-delivery');
+    const release = beginArchiveBuild(mine.orgId, signer.userId);
+    expect(release).toBeTypeOf('function');
+    try { expect((await archive(mine, sealId)).status).toBe(429); }
+    finally { release?.(); }
+    expect((await archive(mine, sealId)).status).toBe(200);
   });
 
   it('sends nothing when the archive cannot be recorded in the audit trail', async () => {

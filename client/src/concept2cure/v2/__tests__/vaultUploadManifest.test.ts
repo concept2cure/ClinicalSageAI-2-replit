@@ -116,7 +116,7 @@ describe('applying a manifest to the list', () => {
 
   it('says what it did in one paragraph, and that nothing was uploaded', () => {
     const out = applyManifest(ROWS(), lines('File,Document type\nspec-dp.pdf,Report\ncsr-101.pdf,Synopsis\n'), FOLDERS);
-    expect(manifestNote(out)).toBe('Manifest applied to 1 file. Nothing has been uploaded; check the rows, then upload. '
+    expect(manifestNote(out)).toBe('Manifest: fields applied to 1 file. Nothing has been uploaded; check the rows, then upload. '
       + '1 line not applied: line 3 (csr-101.pdf): "Synopsis" is not a Vault document type. '
       + '1 file in the list is not in the manifest and keeps its fields: library/clinical/protocol-101.pdf.');
   });
@@ -129,7 +129,7 @@ describe('downloading the list as a manifest', () => {
       row('b', 'library/clinical/csr-101.pdf'),
     ];
     const csv = manifestOf(rows, FOLDERS);
-    expect(csv.split('\r\n')[0]).toBe('File,Title,Document type,Classification,Folder,Evidence kind,CTD section');
+    expect(csv.split('\r\n')[0]).toBe('\ufeffFile,Title,Document type,Classification,Folder,Evidence kind,CTD section');
     expect(csv).toContain('"Spec, drug product"');
     const back = applyManifest(rows.map((r) => ({ ...r, title: '', documentType: 'OTHER' as const, classification: '' as const, folderId: '', evidenceKind: '', ctdSection: '' })), lines(csv), FOLDERS);
     expect(back.refused).toEqual([]);

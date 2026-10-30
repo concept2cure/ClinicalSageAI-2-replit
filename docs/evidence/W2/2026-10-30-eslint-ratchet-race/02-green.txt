@@ -1,0 +1,124 @@
+TAP version 13
+# Subtest: historical source does not enter the source tree while the gate runs
+ok 1 - historical source does not enter the source tree while the gate runs
+  ---
+  duration_ms: 567.768159
+  type: 'test'
+  ...
+# Subtest: the original basename controls both historical and current warning counts
+ok 2 - the original basename controls both historical and current warning counts
+  ---
+  duration_ms: 432.001954
+  type: 'test'
+  ...
+# Subtest: an invalid real ESLint configuration remains a gate failure
+ok 3 - an invalid real ESLint configuration remains a gate failure
+  ---
+  duration_ms: 275.83096
+  type: 'test'
+  ...
+# Subtest: historical JSX, test suffixes, ignored names and deleted directories keep the original configuration
+ok 4 - historical JSX, test suffixes, ignored names and deleted directories keep the original configuration
+  ---
+  duration_ms: 165.719621
+  type: 'test'
+  ...
+# Subtest: historical-source configuration errors propagate instead of returning an empty report
+ok 5 - historical-source configuration errors propagate instead of returning an empty report
+  ---
+  duration_ms: 5.162688
+  type: 'test'
+  ...
+# Subtest: the real --gate still refuses current warning growth
+ok 6 - the real --gate still refuses current warning growth
+  ---
+  duration_ms: 539.15076
+  type: 'test'
+  ...
+# Subtest: passes when the count matches the baseline exactly
+ok 7 - passes when the count matches the baseline exactly
+  ---
+  duration_ms: 40.612836
+  type: 'test'
+  ...
+# Subtest: fails when the total grows, naming the rule that grew
+ok 8 - fails when the total grows, naming the rule that grew
+  ---
+  duration_ms: 32.244793
+  type: 'test'
+  ...
+# Subtest: fails when a rule absent from the baseline appears
+ok 9 - fails when a rule absent from the baseline appears
+  ---
+  duration_ms: 48.52004
+  type: 'test'
+  ...
+# Subtest: passes on shrink, telling the committer to ratchet down
+ok 10 - passes on shrink, telling the committer to ratchet down
+  ---
+  duration_ms: 54.482308
+  type: 'test'
+  ...
+# Subtest: passes an equal-total mix shift but reports what moved
+ok 11 - passes an equal-total mix shift but reports what moved
+  ---
+  duration_ms: 48.202673
+  type: 'test'
+  ...
+# Subtest: counts only severity-1 messages — errors belong to the Run ESLint step
+ok 12 - counts only severity-1 messages — errors belong to the Run ESLint step
+  ---
+  duration_ms: 46.583135
+  type: 'test'
+  ...
+# Subtest: fails closed on invalid report JSON (crashed or truncated lint run)
+ok 13 - fails closed on invalid report JSON (crashed or truncated lint run)
+  ---
+  duration_ms: 64.127383
+  type: 'test'
+  ...
+# Subtest: fails closed when the report is not a results array (error envelope)
+ok 14 - fails closed when the report is not a results array (error envelope)
+  ---
+  duration_ms: 57.188886
+  type: 'test'
+  ...
+# Subtest: fails closed on a missing baseline, with the generation command
+ok 15 - fails closed on a missing baseline, with the generation command
+  ---
+  duration_ms: 56.915177
+  type: 'test'
+  ...
+# Subtest: fails closed on a hand-edited baseline whose rules do not sum to the total
+ok 16 - fails closed on a hand-edited baseline whose rules do not sum to the total
+  ---
+  duration_ms: 37.001078
+  type: 'test'
+  ...
+# Subtest: --write-baseline writes totals and per-rule counts that the gate then accepts
+ok 17 - --write-baseline writes totals and per-rule counts that the gate then accepts
+  ---
+  duration_ms: 125.888448
+  type: 'test'
+  ...
+# Subtest: --since with no ref refuses rather than diffing against nothing
+ok 18 - --since with no ref refuses rather than diffing against nothing
+  ---
+  duration_ms: 38.396088
+  type: 'test'
+  ...
+# Subtest: --since with an unresolvable ref refuses rather than reporting no change
+ok 19 - --since with an unresolvable ref refuses rather than reporting no change
+  ---
+  duration_ms: 36.820718
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2053.529744

@@ -211,3 +211,52 @@ describe('each row says how far its file has got (MR-08 Stage 6 step 2)', () => 
   });
 });
 
+
+describe('retry queue and current upload failures remain distinct', () => {
+  it('clears old refusals for a new attempt so a retry queued behind another file waits', async () => {
+    let release!: () => void;
+    let requests = 0;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    stubIngestXhr(vi.fn(async () => {
+      requests += 1;
+      if (requests <= 2) return { status: 422, json: async () => ({ error: { message: 'Earlier refusal' } }) };
+      if (requests === 3) await held;
+      return { status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+    }), [0.5]);
+    const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    await within(panel).findByRole('button', { name: 'Try again for 2 files' });
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    const rows = within(panel).getAllByTestId('vault-stage-row');
+    await within(rows[0]).findByText(/Uploading/);
+    const waiting = within(rows[1]).getByText('Waiting: files are sent one at a time.');
+    expect(waiting.className).not.toContain('vd-dr-err');
+    expect(within(rows[1]).queryByText(/Earlier refusal/)).toBeNull();
+    release();
+    await within(rows[1]).findByText(/Recorded as v1.0/);
+  });
+
+  it.each([false, true])('keeps a new refusal or unknown result visible while the next file is uploading (unknown=%s)', async (unknown) => {
+    let release!: () => void;
+    let requests = 0;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    stubIngestXhr(vi.fn(async () => {
+      requests += 1;
+      if (requests === 1) {
+        if (unknown) throw new Error('reply lost after sending');
+        return { status: 422, json: async () => ({ error: { message: 'Current refusal' } }) };
+      }
+      await held;
+      return { status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+    }), [1]);
+    const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    const rows = within(panel).getAllByTestId('vault-stage-row');
+    await within(rows[1]).findByText(/Sent\. The server/);
+    const refusal = within(rows[0]).getByText(unknown ? /Not known whether it was recorded/ : 'Not recorded: Current refusal');
+    expect(refusal.className).toContain('vd-dr-err');
+    expect(within(rows[0]).queryByText(/Waiting/)).toBeNull();
+    release();
+    await within(rows[1]).findByText(/Recorded as v1.0/);
+  });
+});
