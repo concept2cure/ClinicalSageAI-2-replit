@@ -1,0 +1,22 @@
+a machine-text claim is credited only when the turn record holds the words > credits the claim the record holds, under a model RULE 2 admits (the honest case) 48ms
+a machine-text claim is credited only when the turn record holds the words > a claim of words the record does not hold is the saver’s own, not AnA’s 42ms
+a machine-text claim is credited only when the turn record holds the words > a claim naming no turn record at all is the saver’s own 34ms
+a machine-text claim is credited only when the turn record holds the words > a turn record of another organisation vouches for nothing: an id is not a capability 37ms
+RULE 2 at the save door: a verified claim the rule will not admit stops the save > refuses the save, names the model, and writes nothing 19ms
+RULE 2 at the save door: a verified claim the rule will not admit stops the save > one unadmitted model among several is enough 19ms
+RULE 2 at the save door: a verified claim the rule will not admit stops the save > a record naming NO model is not approval: an empty list is not a list of admitted models 17ms
+RULE 2 at the save door: a verified claim the rule will not admit stops the save > refuses when only ONE of several claims names an unadmitted model 27ms
+RULE 2 at the save door: a verified claim the rule will not admit stops the save > an UNVERIFIABLE claim does not refuse the save — the server cannot tell 40ms
+one verdict gates both channels > an accepted-author claim no record vouches for names no contributor and no draft source 29ms
+one verdict gates both channels > an author whose every claim is unverifiable is not a contributor either 38ms
+one verdict gates both channels > a verified claim that credits no clause names nobody: one word is not an acceptance 39ms
+the Part 11 row says a claim was made, and what became of it > discloses a credited claim 34ms
+the Part 11 row says a claim was made, and what became of it > discloses an unverifiable claim with the reason the record gives 34ms
+the Part 11 row says a claim was made, and what became of it > discloses a claim naming a record this organisation does not have 30ms
+the Part 11 row says a claim was made, and what became of it > names the machine author from the server’s own vocabulary, never the request’s 34ms
+the Part 11 row says a claim was made, and what became of it > says nothing about machine text when no claim was made 29ms
+the saver is told what was not credited > the response names each refused claim and why, so the editor can say so 34ms
+the saver is told what was not credited > says nothing when every claim was credited 32ms
+§14.3.3 of an imported CSR, held by reference, is not saved over (2026-10-30, SYNTHETIC) > refuses a content save with 409 and its code, and the text stays as imported 13ms
+§14.3.3 of an imported CSR, held by reference, is not saved over (2026-10-30, SYNTHETIC) > saves the same imported section when its receipt holds no reference 28ms
+      Tests  21 passed (21)

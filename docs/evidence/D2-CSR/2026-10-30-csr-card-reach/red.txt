@@ -1,0 +1,4900 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol
+{
+  "timestamp": "2026-10-30T01:51:07.211Z",
+  "level": "error",
+  "message": "[csr-jobs] CSR evidence source check failed",
+  "context": {
+    "err": "pool exhausted",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > queues a build bound to the run once its tables read for this protocol 34ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol 15ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses a run retained under another program than the build, before reading it 5ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > records each decision as the signed-in reviewer, never a body-supplied one 37ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > refuses a send-back without a reason and a malformed section number 7ms
+ × server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > lists only this organization's builds bound to the run, newest first 10ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > refuses a missing or malformed run and a missing program, never an empty list 4ms
+   → expected undefined to be 'CSR_RUN_REQUIRED' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > carries the narrative build and the assembly for a build of the saved run, on the card 5055ms
+   → Unable to find a label with the text of: CSR builds from this run
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Clinical source tables"[39m
+    [36m>[39m
+      [36m<strong>[39m
+        [0mClinical source tables[0m
+      [36m</strong>[39m
+      [36m<p>[39m
+        [0mChoose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mReview clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mThese tables are saved with the run for review. They are not automatically placed into an eCTD package.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen clinical source Vault[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mView clinical source format[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReload clinical sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mNo supporting JSON sources are listed for this project.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPreview clinical tables[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Frozen run clinical tables"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mFrozen clinical tables for [0m
+          [0m0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31[0m
+        [36m</h4>[39m
+        [36m<p>[39m
+          [0mHistorical source versions are retained with this run. They can differ from the current Vault version.[0m
+        [36m</p>[39m
+        [36m<div>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mSYN Phase 2[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0mSYN-201-P[0m
+            [0m · [0m
+            [0mno ClinicalTrials.gov number in the source[0m
+            [0m · data cut [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mSource: [0m
+            [0mSYN source[0m
+            [0m, version [0m
+            [0m2[0m
+          [36m</p>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mSource fingerprint[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+            [36m>[39m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdisposition table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdisposition table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0manalysisPopulations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0manalysisPopulations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdemographics table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdemographics table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mprimaryEfficacy table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mprimaryEfficacy table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeOverallSummary table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeOverallSummary table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeBySOC table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeBySOC table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeTopPT table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeTopPT table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdeathsSAEsDiscontinuations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdeathsSAEsDiscontinuations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"CSR draft from this run"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 6px;"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDraft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mBuild CSR draft · SYN-201-P[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px; max-width: 760px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mPivotal studies[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdeclared by the sponsor; Module 2 uses only these declarations[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [0mThe declarations could not be read, so whether any study is pivotal is not shown here.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Clinical source tables"[39m
+    [36m>[39m
+      [36m<strong>[39m
+        [0mClinical source tables[0m
+      [36m</strong>[39m
+      [36m<p>[39m
+        [0mChoose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mReview clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mThese tables are saved with the run for review. They are not automatically placed into an eCTD package.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen clinical source Vault[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mView clinical source format[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReload clinical sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mNo supporting JSON sources are listed for this project.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPreview clinical tables[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Frozen run clinical tables"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mFrozen clinical tables for [0m
+          [0m0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31[0m
+        [36m</h4>[39m
+        [36m<p>[39m
+          [0mHistorical source versions are retained with this run. They can differ from the current Vault version.[0m
+        [36m</p>[39m
+        [36m<div>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mSYN Phase 2[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0mSYN-201-P[0m
+            [0m · [0m
+            [0mno ClinicalTrials.gov number in the source[0m
+            [0m · data cut [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mSource: [0m
+            [0mSYN source[0m
+            [0m, version [0m
+            [0m2[0m
+          [36m</p>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mSource fingerprint[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+            [36m>[39m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdisposition table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdisposition table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0manalysisPopulations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0manalysisPopulations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdemographics table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdemographics table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mprimaryEfficacy table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mprimaryEfficacy table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeOverallSummary table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeOverallSummary table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeBySOC table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeBySOC table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeTopPT table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeTopPT table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdeathsSAEsDiscontinuations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdeathsSAEsDiscontinuations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"CSR draft from this run"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 6px;"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDraft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mBuild CSR draft · SYN-201-P[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px; max-width: 760px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mPivotal studies[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdeclared by the sponsor; Module 2 uses only these declarations[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [0mThe declarations could not be read, so whether any study is pivotal is not shown here.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > a newly queued build is selected on the card; nothing navigates to the board 211ms
+   → Unable to find a label with the text of: CSR builds from this run
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Clinical source tables"[39m
+    [36m>[39m
+      [36m<strong>[39m
+        [0mClinical source tables[0m
+      [36m</strong>[39m
+      [36m<p>[39m
+        [0mChoose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mReview clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mThese tables are saved with the run for review. They are not automatically placed into an eCTD package.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen clinical source Vault[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mView clinical source format[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReload clinical sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mNo supporting JSON sources are listed for this project.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPreview clinical tables[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Frozen run clinical tables"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mFrozen clinical tables for [0m
+          [0m0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31[0m
+        [36m</h4>[39m
+        [36m<p>[39m
+          [0mHistorical source versions are retained with this run. They can differ from the current Vault version.[0m
+        [36m</p>[39m
+        [36m<div>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mSYN Phase 2[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0mSYN-201-P[0m
+            [0m · [0m
+            [0mno ClinicalTrials.gov number in the source[0m
+            [0m · data cut [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mSource: [0m
+            [0mSYN source[0m
+            [0m, version [0m
+            [0m2[0m
+          [36m</p>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mSource fingerprint[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+            [36m>[39m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdisposition table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdisposition table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0manalysisPopulations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0manalysisPopulations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdemographics table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdemographics table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mprimaryEfficacy table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mprimaryEfficacy table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeOverallSummary table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeOverallSummary table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeBySOC table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeBySOC table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeTopPT table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeTopPT table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdeathsSAEsDiscontinuations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdeathsSAEsDiscontinuations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"CSR draft from this run"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 6px;"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDraft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mBuild CSR draft · SYN-201-P[0m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0mCSR build [0m
+              [0m42[0m
+              [0m is queued.[0m
+              [0m [0m
+              [36m<button[39m
+                [33mclass[39m=[32m"nda-open"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12 5 7 7-7 7"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Open build progress[0m
+              [36m</button>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px; max-width: 760px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mPivotal studies[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdeclared by the sponsor; Module 2 uses only these declarations[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [0mThe declarations could not be read, so whether any study is pivotal is not shown here.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states that no build exists for the run, and a refused build list as an alert, never an empty list 5008ms
+   → Unable to find an element with the text: No CSR build has been started from this run.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Clinical source tables"[39m
+    [36m>[39m
+      [36m<strong>[39m
+        [0mClinical source tables[0m
+      [36m</strong>[39m
+      [36m<p>[39m
+        [0mChoose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mReview clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mThese tables are saved with the run for review. They are not automatically placed into an eCTD package.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen clinical source Vault[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mView clinical source format[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReload clinical sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mNo supporting JSON sources are listed for this project.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPreview clinical tables[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Frozen run clinical tables"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mFrozen clinical tables for [0m
+          [0m0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31[0m
+        [36m</h4>[39m
+        [36m<p>[39m
+          [0mHistorical source versions are retained with this run. They can differ from the current Vault version.[0m
+        [36m</p>[39m
+        [36m<div>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mSYN Phase 2[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0mSYN-201-P[0m
+            [0m · [0m
+            [0mno ClinicalTrials.gov number in the source[0m
+            [0m · data cut [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mSource: [0m
+            [0mSYN source[0m
+            [0m, version [0m
+            [0m2[0m
+          [36m</p>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mSource fingerprint[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+            [36m>[39m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdisposition table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdisposition table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0manalysisPopulations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0manalysisPopulations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdemographics table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdemographics table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mprimaryEfficacy table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mprimaryEfficacy table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeOverallSummary table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeOverallSummary table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeBySOC table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeBySOC table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeTopPT table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeTopPT table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdeathsSAEsDiscontinuations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdeathsSAEsDiscontinuations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"CSR draft from this run"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 6px;"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDraft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mBuild CSR draft · SYN-201-P[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px; max-width: 760px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mPivotal studies[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdeclared by the sponsor; Module 2 uses only these declarations[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [0mThe declarations could not be read, so whether any study is pivotal is not shown here.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Clinical source tables"[39m
+    [36m>[39m
+      [36m<strong>[39m
+        [0mClinical source tables[0m
+      [36m</strong>[39m
+      [36m<p>[39m
+        [0mChoose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mReview clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mThese tables are saved with the run for review. They are not automatically placed into an eCTD package.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen clinical source Vault[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mView clinical source format[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReload clinical sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mNo supporting JSON sources are listed for this project.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPreview clinical tables[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Frozen run clinical tables"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mFrozen clinical tables for [0m
+          [0m0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31[0m
+        [36m</h4>[39m
+        [36m<p>[39m
+          [0mHistorical source versions are retained with this run. They can differ from the current Vault version.[0m
+        [36m</p>[39m
+        [36m<div>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mSYN Phase 2[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0mSYN-201-P[0m
+            [0m · [0m
+            [0mno ClinicalTrials.gov number in the source[0m
+            [0m · data cut [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mSource: [0m
+            [0mSYN source[0m
+            [0m, version [0m
+            [0m2[0m
+          [36m</p>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mSource fingerprint[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+            [36m>[39m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdisposition table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdisposition table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0manalysisPopulations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0manalysisPopulations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdemographics table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdemographics table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mprimaryEfficacy table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mprimaryEfficacy table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeOverallSummary table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeOverallSummary table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeBySOC table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeBySOC table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeTopPT table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeTopPT table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdeathsSAEsDiscontinuations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdeathsSAEsDiscontinuations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"CSR draft from this run"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 6px;"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDraft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mBuild CSR draft · SYN-201-P[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px; max-width: 760px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mPivotal studies[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdeclared by the sponsor; Module 2 uses only these declarations[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [0mThe declarations could not be read, so whether any study is pivotal is not shown here.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > lists only this organization's builds bound to the run, newest first
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts:134:24
+    132|   it('lists only this organization\'s builds bound to the run, newest …
+    133|     const res = await request(app).get(`/api/csr/jobs?programId=${PROG…
+    134|     expect(res.status).toBe(200);
+       |                        ^
+    135|     expect(res.body.jobs).toEqual([expect.objectContaining({ jobId: 1,…
+    136|     expect(typeof res.body.jobs[0].updatedAt).toBe('string');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > refuses a missing or malformed run and a missing program, never an empty list
+AssertionError: expected undefined to be 'CSR_RUN_REQUIRED' // Object.is equality
+
+- Expected:
+"CSR_RUN_REQUIRED"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts:140:86
+    138|
+    139|   it('refuses a missing or malformed run and a missing program, never …
+    140|     expect((await request(app).get(`/api/csr/jobs?programId=${PROGRAM}…
+       |                                                                                      ^
+    141|     expect((await request(app).get(`/api/csr/jobs?programId=${PROGRAM}…
+    142|     expect((await request(app).get(`/api/csr/jobs?runId=${RUN}`)).body…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > carries the narrative build and the assembly for a build of the saved run, on the card
+TestingLibraryElementError: Unable to find a label with the text of: CSR builds from this run
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Clinical source tables"[39m
+    [36m>[39m
+      [36m<strong>[39m
+        [0mClinical source tables[0m
+      [36m</strong>[39m
+      [36m<p>[39m
+        [0mChoose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mReview clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mThese tables are saved with the run for review. They are not automatically placed into an eCTD package.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen clinical source Vault[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mView clinical source format[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReload clinical sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mNo supporting JSON sources are listed for this project.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPreview clinical tables[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Frozen run clinical tables"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mFrozen clinical tables for [0m
+          [0m0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31[0m
+        [36m</h4>[39m
+        [36m<p>[39m
+          [0mHistorical source versions are retained with this run. They can differ from the current Vault version.[0m
+        [36m</p>[39m
+        [36m<div>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mSYN Phase 2[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0mSYN-201-P[0m
+            [0m · [0m
+            [0mno ClinicalTrials.gov number in the source[0m
+            [0m · data cut [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mSource: [0m
+            [0mSYN source[0m
+            [0m, version [0m
+            [0m2[0m
+          [36m</p>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mSource fingerprint[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+            [36m>[39m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdisposition table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdisposition table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0manalysisPopulations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0manalysisPopulations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdemographics table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdemographics table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mprimaryEfficacy table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mprimaryEfficacy table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeOverallSummary table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeOverallSummary table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeBySOC table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeBySOC table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeTopPT table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeTopPT table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdeathsSAEsDiscontinuations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdeathsSAEsDiscontinuations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"CSR draft from this run"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 6px;"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDraft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mBuild CSR draft · SYN-201-P[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px; max-width: 760px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mPivotal studies[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdeclared by the sponsor; Module 2 uses only these declarations[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [0mThe declarations could not be read, so whether any study is pivotal is not shown here.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Clinical source tables"[39m
+    [36m>[39m
+      [36m<strong>[39m
+        [0mClinical source tables[0m
+      [36m</strong>[39m
+      [36m<p>[39m
+        [0mChoose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mReview clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mThese tables are saved with the run for review. They are not automatically placed into an eCTD package.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen clinical source Vault[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mView clinical source format[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReload clinical sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mNo supporting JSON sources are listed for this project.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPreview clinical tables[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Frozen run clinical tables"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mFrozen clinical tables for [0m
+          [0m0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31[0m
+        [36m</h4>[39m
+        [36m<p>[39m
+          [0mHistorical source versions are retained with this run. They can differ from the current Vault version.[0m
+        [36m</p>[39m
+        [36m<div>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mSYN Phase 2[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0mSYN-201-P[0m
+            [0m · [0m
+            [0mno ClinicalTrials.gov number in the source[0m
+            [0m · data cut [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mSource: [0m
+            [0mSYN source[0m
+            [0m, version [0m
+            [0m2[0m
+          [36m</p>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mSource fingerprint[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+            [36m>[39m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdisposition table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdisposition table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0manalysisPopulations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0manalysisPopulations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdemographics table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdemographics table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mprimaryEfficacy table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mprimaryEfficacy table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeOverallSummary table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeOverallSummary table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeBySOC table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeBySOC table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeTopPT table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeTopPT table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdeathsSAEsDiscontinuations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdeathsSAEsDiscontinuations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"CSR draft from this run"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 6px;"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDraft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mBuild CSR draft · SYN-201-P[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px; max-width: 760px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mPivotal studies[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdeclared by the sponsor; Module 2 uses only these declarations[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [0mThe declarations could not be read, so whether any study is pivotal is not shown here.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx:54:31
+     52| it('carries the narrative build and the assembly for a build of the sa…
+     53|   card();
+     54|   const region = await screen.findByLabelText('CSR builds from this ru…
+       |                               ^
+     55|   expect(await within(region).findByLabelText('Patient safety narrativ…
+     56|   expect(within(region).getByLabelText('CSR assembly')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > a newly queued build is selected on the card; nothing navigates to the board
+TestingLibraryElementError: Unable to find a label with the text of: CSR builds from this run
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Clinical source tables"[39m
+    [36m>[39m
+      [36m<strong>[39m
+        [0mClinical source tables[0m
+      [36m</strong>[39m
+      [36m<p>[39m
+        [0mChoose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mReview clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mThese tables are saved with the run for review. They are not automatically placed into an eCTD package.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen clinical source Vault[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mView clinical source format[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReload clinical sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mNo supporting JSON sources are listed for this project.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPreview clinical tables[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Frozen run clinical tables"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mFrozen clinical tables for [0m
+          [0m0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31[0m
+        [36m</h4>[39m
+        [36m<p>[39m
+          [0mHistorical source versions are retained with this run. They can differ from the current Vault version.[0m
+        [36m</p>[39m
+        [36m<div>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mSYN Phase 2[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0mSYN-201-P[0m
+            [0m · [0m
+            [0mno ClinicalTrials.gov number in the source[0m
+            [0m · data cut [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mSource: [0m
+            [0mSYN source[0m
+            [0m, version [0m
+            [0m2[0m
+          [36m</p>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mSource fingerprint[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+            [36m>[39m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdisposition table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdisposition table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0manalysisPopulations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0manalysisPopulations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdemographics table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdemographics table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mprimaryEfficacy table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mprimaryEfficacy table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeOverallSummary table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeOverallSummary table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeBySOC table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeBySOC table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeTopPT table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeTopPT table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdeathsSAEsDiscontinuations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdeathsSAEsDiscontinuations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"CSR draft from this run"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 6px;"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDraft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mBuild CSR draft · SYN-201-P[0m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0mCSR build [0m
+              [0m42[0m
+              [0m is queued.[0m
+              [0m [0m
+              [36m<button[39m
+                [33mclass[39m=[32m"nda-open"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12 5 7 7-7 7"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Open build progress[0m
+              [36m</button>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px; max-width: 760px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mPivotal studies[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdeclared by the sponsor; Module 2 uses only these declarations[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [0mThe declarations could not be read, so whether any study is pivotal is not shown here.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx:68:25
+     66|   fireEvent.click(await screen.findByRole('button', { name: /Build CSR…
+     67|   await screen.findByText(/CSR build 42 is queued/);
+     68|   const region = screen.getByLabelText('CSR builds from this run');
+       |                         ^
+     69|   expect(await within(region).findByText(/CSR build 42 · queued/)).toB…
+     70|   expect(screen.queryByRole('button', { name: /Open build progress/ })…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states that no build exists for the run, and a refused build list as an alert, never an empty list
+TestingLibraryElementError: Unable to find an element with the text: No CSR build has been started from this run.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Clinical source tables"[39m
+    [36m>[39m
+      [36m<strong>[39m
+        [0mClinical source tables[0m
+      [36m</strong>[39m
+      [36m<p>[39m
+        [0mChoose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mReview clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mThese tables are saved with the run for review. They are not automatically placed into an eCTD package.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen clinical source Vault[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mView clinical source format[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReload clinical sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mNo supporting JSON sources are listed for this project.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPreview clinical tables[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Frozen run clinical tables"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mFrozen clinical tables for [0m
+          [0m0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31[0m
+        [36m</h4>[39m
+        [36m<p>[39m
+          [0mHistorical source versions are retained with this run. They can differ from the current Vault version.[0m
+        [36m</p>[39m
+        [36m<div>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mSYN Phase 2[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0mSYN-201-P[0m
+            [0m · [0m
+            [0mno ClinicalTrials.gov number in the source[0m
+            [0m · data cut [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mSource: [0m
+            [0mSYN source[0m
+            [0m, version [0m
+            [0m2[0m
+          [36m</p>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mSource fingerprint[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+            [36m>[39m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdisposition table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdisposition table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0manalysisPopulations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0manalysisPopulations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdemographics table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdemographics table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mprimaryEfficacy table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mprimaryEfficacy table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeOverallSummary table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeOverallSummary table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeBySOC table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeBySOC table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeTopPT table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeTopPT table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdeathsSAEsDiscontinuations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdeathsSAEsDiscontinuations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"CSR draft from this run"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 6px;"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDraft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mBuild CSR draft · SYN-201-P[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px; max-width: 760px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mPivotal studies[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdeclared by the sponsor; Module 2 uses only these declarations[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [0mThe declarations could not be read, so whether any study is pivotal is not shown here.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Clinical source tables"[39m
+    [36m>[39m
+      [36m<strong>[39m
+        [0mClinical source tables[0m
+      [36m</strong>[39m
+      [36m<p>[39m
+        [0mChoose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mReview clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mThese tables are saved with the run for review. They are not automatically placed into an eCTD package.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mOpen clinical source Vault[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mView clinical source format[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mReload clinical sources[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p>[39m
+        [0mNo supporting JSON sources are listed for this project.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPreview clinical tables[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Frozen run clinical tables"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mFrozen clinical tables for [0m
+          [0m0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31[0m
+        [36m</h4>[39m
+        [36m<p>[39m
+          [0mHistorical source versions are retained with this run. They can differ from the current Vault version.[0m
+        [36m</p>[39m
+        [36m<div>[39m
+          [36m<p>[39m
+            [36m<strong>[39m
+              [0mSYN Phase 2[0m
+            [36m</strong>[39m
+            [0m · [0m
+            [0mSYN-201-P[0m
+            [0m · [0m
+            [0mno ClinicalTrials.gov number in the source[0m
+            [0m · data cut [0m
+            [0m2026-10-01[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mSource: [0m
+            [0mSYN source[0m
+            [0m, version [0m
+            [0m2[0m
+          [36m</p>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mSource fingerprint[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+            [36m>[39m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdisposition table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdisposition table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0manalysisPopulations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0manalysisPopulations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdemographics table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdemographics table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mprimaryEfficacy table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mprimaryEfficacy table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeOverallSummary table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeOverallSummary table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeBySOC table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeBySOC table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0maeTopPT table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0maeTopPT table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0mdeathsSAEsDiscontinuations table[0m
+            [36m</summary>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"overflow-x: auto;"[39m
+            [36m>[39m
+              [36m<table>[39m
+                [36m<caption>[39m
+                  [0mdeathsSAEsDiscontinuations table[0m
+                [36m</caption>[39m
+                [36m<thead>[39m
+                  [36m<tr>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mMeasure[0m
+                    [36m</th>[39m
+                    [36m<th[39m
+                      [33mscope[39m=[32m"col"[39m
+                    [36m>[39m
+                      [0mResult[0m
+                    [36m</th>[39m
+                  [36m</tr>[39m
+                [36m</thead>[39m
+                [36m<tbody>[39m
+                  [36m<tr>[39m
+                    [36m<td>[39m
+                      [0mRandomized[0m
+                    [36m</td>[39m
+                    [36m<td>[39m
+                      [0m23[0m
+                    [36m</td>[39m
+                  [36m</tr>[39m
+                [36m</tbody>[39m
+              [36m</table>[39m
+            [36m</div>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"CSR draft from this run"[39m
+          [33mstyle[39m=[32m"display: grid; gap: 6px;"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDraft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nda-open"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mBuild CSR draft · SYN-201-P[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+        [33mstyle[39m=[32m"margin-bottom: 18px; max-width: 760px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mPivotal studies[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdeclared by the sponsor; Module 2 uses only these declarations[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [0mThe declarations could not be read, so whether any study is pivotal is not shown here.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx:78:23
+     76|   builds = [];
+     77|   card();
+     78|   expect(await screen.findByText('No CSR build has been started from t…
+       |                       ^
+     79|   cleanup();
+     80|   apiRequest.mockImplementation(async (method: string, path: string) =…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 5 passed (10)
+   Start at  01:50:56
+   Duration  22.03s (transform 3.05s, setup 201ms, import 5.89s, tests 14.88s, environment 557ms)
+

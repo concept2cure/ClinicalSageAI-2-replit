@@ -41,13 +41,12 @@
  *
  * @module server/services/qms/qms-review-route
  */
-import { drizzle } from 'drizzle-orm/node-postgres';
 import { recordGovernedAction } from '../../routes/c2c/actions';
 import { qmsSignedContent, type QmsDocumentRow } from './document-approval-signature';
 import { isQmsDesignatedApprover } from './qms-approver-designation';
 import {
   closeReviewRoute, closeRouteTaskOnSignature, isOrgAdmin, openReadySteps, ReviewRouteRefusal, sendReviewRoute,
-  type RouteActSubject, type RouteRequest, type RouteSubject, type RouteTx,
+  routeTxOf, type RouteActSubject, type RouteRequest, type RouteSubject,
 } from '../review/review-route';
 import { routeStanding, type RouteMember, type RouteRole, type RouteStanding } from '../review/review-route-standing';
 import { isInterimShare, shareOfNextApproval } from '../review/approval-share';
@@ -59,8 +58,8 @@ export interface QmsRouteClient {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number | null }>;
 }
 
-/** The route writers take a Drizzle transaction; a QMS act holds a pg client inside its BEGIN. */
-export const routeTxOf = (client: QmsRouteClient): RouteTx => drizzle(client as never) as unknown as RouteTx;
+/** The route writers take a Drizzle transaction; a QMS act holds a pg client inside its BEGIN (review-route.ts, shared with Authoring since RR5). */
+export { routeTxOf };
 
 /** The reviewers a QMS route may name are optional; one approver is required (NEW-4). */
 export const QMS_ROUTE_RULES = { reviewersOptional: true } as const;

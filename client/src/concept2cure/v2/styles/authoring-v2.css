@@ -2133,10 +2133,20 @@
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);
     }
+    /* The outline scrolls as one box here (RR5 phone acceptance, 2026-10-30).
+       Capped at 180px with no overflow of its own, its header (the program,
+       the filter, the outline basis) took the whole height, the row list was
+       squeezed to nothing, and the rows painted on over the document below:
+       no document in the outline could be tapped open at 390px, and the
+       page under it took the taps meant for them. */
     .ed > .ed-tree {
       max-height: 180px;
+      overflow-y: auto;
       border-right: 0;
       border-bottom: 1px solid var(--border);
+    }
+    .ed > .ed-tree > .ed-tree-scroll {
+      flex: none;
     }
     .ed[data-comments='true'] > .ed-comments {
       width: 100%;

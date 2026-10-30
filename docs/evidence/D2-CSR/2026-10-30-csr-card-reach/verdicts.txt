@@ -1,0 +1,11 @@
+launch         /api/csr/jobs?programId=11111111-2222-4333-8444-000000000001&runId=0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31
+launch         /api/csr/jobs/41/sections
+launch         /api/csr/jobs/41/narratives
+launch         /api/csr/jobs/41/narratives/status
+launch         /api/csr/jobs/41/assembly
+launch         /api/csr/jobs/41/assembly/supply-candidates
+launch         /api/csr/jobs/41/assembly/targets
+launch         /api/csr/jobs/41/assembly/3/place
+launch         /api/csr/jobs/41/assembly/3/lifecycle
+launch         /api/csr/jobs/41/assembly/3/withdraw-placement
+out-of-scope   /api/csr-workflow/board

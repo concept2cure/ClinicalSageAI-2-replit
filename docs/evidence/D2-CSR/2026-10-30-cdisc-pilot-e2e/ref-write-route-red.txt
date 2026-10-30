@@ -1,0 +1,6 @@
+refuses a content save with 409 and its code, and the text stays as imported 53ms
+   → expected 200 to be 409 // Object.is equality
+saves the same imported section when its receipt holds no reference 41ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 200 to be 409 // Object.is equality
+      Tests  1 failed | 1 passed | 19 skipped (21)

@@ -1,0 +1,59 @@
+# 03-mutation: each guard removed in turn; each is caught by the case written for it
+# Script: export-mutate.py (each source file restored after its run). [db] = tests/db/vault-folder-export.dbtest.ts on real PostgreSQL 16 as app_service, RLS_ENFORCE=on; [client] = vaultFolderExport.test.tsx + vaultSeals.test.tsx
+
+## S1 the export holds every document of the project, not the folder
+[db]
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > holds the folder's current versions, their manifest, an index, SHA256SUMS and audit trail, and records its own hash before sending
+   → expected [ 'documents/001-record.txt', …(2) ] to have a length of 2 but got 3
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > refuses another organisation's project, an unknown folder and an empty folder, and records nothing
+   → expected 200 to be 409 // Object.is equality
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > lists a document whose original file a disposition withdrew as withheld, and does not read it
+   → expected [ …(3) ] to deeply equal [ Array(1) ]
+      Tests  3 failed | 3 passed (6)
+
+## S2 a withdrawn file is not withheld
+[db]
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > lists a document whose original file a disposition withdrew as withheld, and does not read it
+   → expected '0' to be '1' // Object.is equality
+      Tests  1 failed | 5 passed (6)
+
+## S3 a file that fails its hash is skipped, not refused
+[db]
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > refuses the whole export when one file no longer matches its hash, and records and sends nothing
+   → expected 200 to be 409 // Object.is equality
+      Tests  1 failed | 5 passed (6)
+
+## S4 the archive is sent when its audit row was not written
+[db]
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > sends nothing when the export cannot be recorded in the audit trail
+   → expected 200 to be 500 // Object.is equality
+      Tests  1 failed | 5 passed (6)
+
+## S5 an unknown folder is not refused
+[db]
+ × tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > refuses another organisation's project, an unknown folder and an empty folder, and records nothing
+   → expected 409 to be 404 // Object.is equality
+      Tests  1 failed | 5 passed (6)
+
+## C1 Unfiled offers export
+[client]
+ × client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > offers export on a filing folder only
+   → expected 'unfiled' to be null
+ × client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > offers nothing on the cabinet itself, on Unfiled, or on a folder with no documents
+   → expected <div class="vd-confirm-acts" …(1)>…(1)</div> to be null
+      Tests  2 failed | 14 passed (16)
+
+## C2 a folder with no documents offers export
+[client]
+ × client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > offers nothing on the cabinet itself, on Unfiled, or on a folder with no documents
+   → expected <div class="vd-confirm-acts" …(1)>…(1)</div> to be null
+      Tests  1 failed | 15 passed (16)
+
+## C3 the received file is saved without comparing its hash
+[client]
+ × client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > does not save a file that does not match the recorded SHA-256
+   → expected null not to be null
+ × client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal's closing archive > is not saved when the file received does not match the recorded hash, or no hash was stated
+   → expected 'Closing archive saved. Its SHA-256, c…' to match /does not match the SHA-256 the server…/
+      Tests  2 failed | 14 passed (16)
+

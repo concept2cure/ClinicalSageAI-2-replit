@@ -1,0 +1,43 @@
+# 02-green: after this change
+
+## Real PostgreSQL 16, as app_service, RLS_ENFORCE=on: the folder export, the seal (VR-19/VR-20), the hold notice and version restore
+ ✓ tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > holds the folder's current versions, their manifest, an index, SHA256SUMS and audit trail, and records its own hash before sending
+ ✓ tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > a viewer the project admits may export it, as they may download each file
+ ✓ tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > refuses another organisation's project, an unknown folder and an empty folder, and records nothing
+ ✓ tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > sends nothing when the export cannot be recorded in the audit trail
+ ✓ tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > lists a document whose original file a disposition withdrew as withheld, and does not read it
+ ✓ tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > refuses the whole export when one file no longer matches its hash, and records and sends nothing
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+(the seal, hold-notice and restore cases: all green, counted in the totals above)
+
+## Client: vaultFolderExport.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > offers export on a filing folder only
+ ✓ client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > offers nothing on the cabinet itself, on Unfiled, or on a folder with no documents
+ ✓ client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > saves the archive when it hashes to the SHA-256 the server recorded
+ ✓ client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > says when a withdrawn file is not in it
+ ✓ client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > does not save a file that does not match the recorded SHA-256
+ ✓ client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx > exporting a Vault folder > says nothing was saved, in the server's words, when the export is refused
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+## Broad run: client/src/concept2cure/v2/__tests__/vault*, server/routes/c2c/__tests__, server/services/vault
+ × client/src/concept2cure/v2/__tests__/vaultOpensOnFiledDocument.test.tsx > Vault — opens on the document File to Vault named > with the filed document named, opens on its row with "Place into fil
+ × client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and sele
+ Test Files  2 failed | 190 passed (192)
+      Tests  2 failed | 2774 passed (2776)
+The two failures were this change's: both tests found the folder's name with getByText over the whole list,
+and the new button 'Export Module 5 · Clinical' is a second match. Each test's comment says it means the
+breadcrumb, so both now look in .vd-breadcrumb. Rerun:
+ Test Files  3 passed (3)
+      Tests  21 passed (21)
+Other suites that render the Vault surface (sourceAssemblyEntry, projectDocumentDisposition, filingPathNoDeadEnds, anaDrivesScreens, authoringVaultPlacementFlow):
+ Test Files  5 passed (5)
+      Tests  60 passed (60)
+
+## Type check: NODE_OPTIONS=--max-old-space-size=13312 npx tsc --noEmit -p tsconfig.json
+tsc exit 0
+
+## Gates
+check-eslint-warning-ratchet --since origin/concept2cure-v2: no file changed its warning count
+ci:sql-interpolation, ci:tenant-isolation:no-regression, ci:vault-document-writers, ci:discarded-audit-write, ci:insert-columns-declared: pass

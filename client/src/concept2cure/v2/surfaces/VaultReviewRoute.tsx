@@ -374,14 +374,20 @@ export function routeActMeaning(act: RouteAct, reviewComplete: boolean): string 
     : 'The route closes and every member who has not signed is told. The version stays in review, and nothing is signed on it until a new route is sent.';
 }
 
-/** Withdraw or Return for revision, each a governed act with the actor's reason. */
-export function RouteActDialog({ act, canonicalId, title, reviewComplete, onClose, onDone }: {
+/**
+ * Withdraw, Return for revision or Hand back, each a governed act with the
+ * actor's reason. RR5: another subject (an Authoring document) gives its own
+ * act (`post`) and where it is recorded (`audit`); the Vault's are the default.
+ */
+export function RouteActDialog({ act, canonicalId, title, reviewComplete, onClose, onDone, post, audit = 'this version’s audit trail' }: {
   act: RouteAct;
   canonicalId: string;
   title: string;
   reviewComplete: boolean;
   onClose: () => void;
   onDone: () => void;
+  post?: (body: { reason: string }) => Promise<unknown>;
+  audit?: string;
 }) {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -394,7 +400,8 @@ export function RouteActDialog({ act, canonicalId, title, reviewComplete, onClos
     setBusy(true);
     setError(null);
     try {
-      await lifecyclePost(`/api/regulatory/documents/${encodeURIComponent(canonicalId)}/review-route/${act}`, { reason: reason.trim() }, failed);
+      if (post) await post({ reason: reason.trim() });
+      else await lifecyclePost(`/api/regulatory/documents/${encodeURIComponent(canonicalId)}/review-route/${act}`, { reason: reason.trim() }, failed);
       onDone();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Nothing was changed.');
@@ -416,7 +423,7 @@ export function RouteActDialog({ act, canonicalId, title, reviewComplete, onClos
         <div className="de-body">
           <div className="de-gov"><span className="ico">{I.lock}</span><span className="de-gov-t">{routeActMeaning(act, reviewComplete)}</span></div>
           <ReasonField id="vr-act-reason" label={reasonLabel}
-            note={`Recorded on this version’s audit trail and given to the people on the route. At least ${GOVERNED_REASON_MIN} characters.`}
+            note={`Recorded on ${audit} and given to the people on the route. At least ${GOVERNED_REASON_MIN} characters.`}
             value={reason} onChange={setReason} testId="vr-act-reason" />
           {problem ? <div className="de-desc" id="vr-act-note">{problem}</div> : null}
           {error ? <div className="de-err" role="alert" data-testid="vr-act-error">{error}</div> : null}

@@ -73,8 +73,8 @@ async function effects(docId: string) {
     (SELECT count(*)::int FROM authoring_exports WHERE doc_id=$1::text) AS exports`,[docId])).rows[0];
 }
 async function approveAssignedReview(docId: string) {
-  const asked = await call(actors.author,'post',`/documents/${docId}/request-review`,{
-    reviewers:[{id:String(actors.reviewer.id),name:'Native independent reviewer',email:actors.reviewer.email}],reason:REASON,
+  const asked = await call(actors.author,'post',`/documents/${docId}/request-review`,{ // RR5: the request names its review route's due date.
+    reviewers:[{id:String(actors.reviewer.id),name:'Native independent reviewer',email:actors.reviewer.email}],reason:REASON,route:{reviewDueDate:new Date(Date.now()+3*86_400_000).toISOString().slice(0,10)},
   });
   expect(asked.status,JSON.stringify(asked.body)).toBe(200);
   const binding = await captureAssignedWorkflowReview(app, actors.reviewer, docId, orgId);

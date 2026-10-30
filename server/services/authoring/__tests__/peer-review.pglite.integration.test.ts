@@ -121,7 +121,10 @@ async function requestReview(documentId: string, reviewerIds = [REVIEWER], execu
       outcomes.push({ reviewerId: String(review.reviewer_id), granted: true as const, permissionId: String(permission.id) });
     }
     return outcomes;
-  } });
+  },
+  // The request's review route (RR5) is the router's to write (authoring-review-route.ts), proven against
+  // PostgreSQL in tests/db/review-route-authoring-rr5.dbtest.ts; this suite pins the request service itself.
+  route: { prepare: () => null, write: async () => null } });
 }
 
 async function expected(documentId: string, actorId = REVIEWER): Promise<AuthoringReviewExpected> {

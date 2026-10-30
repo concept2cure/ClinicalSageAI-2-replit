@@ -69,6 +69,33 @@
 -- the integer sweep policies it. The member key to the header is composite
 -- (organization_id, review_route_id), so a task can never name another
 -- organization's route.
+--
+-- AMENDED IN PLACE, 2026-10-29 (slice RR5 of the design: Authoring's
+-- request-review writes its route; evidence
+-- docs/evidence/D2-REVIEW-ROUTING/2026-10-30-RR5/). Additive only; nothing is
+-- removed:
+--   (a) unified_tasks.route_authoring_signature_id uuid: the authoring_signatures
+--       row (the existing REVIEWER e-sign, POST /api/authoring/docs/:id/e-sign)
+--       a member of an Authoring route signed with. route_signature_id is an
+--       electronic_signatures integer id; an Authoring signature is a uuid in
+--       its own table, and is never copied into electronic_signatures (§11.70,
+--       authoring-approval-carryover.ts). The trigger below guards it like
+--       every other route column.
+--   (b) review_routes.approval_due_at loses NOT NULL, by a conditional ALTER
+--       (below the CREATE, which is left as deployed). An Authoring route at
+--       RR5 names reviewers only (its approvers are RR6), so it has no
+--       approval to be due; a Vault or QMS route still always writes one
+--       (parseRouteRequest refuses a route there without an approver and its
+--       date). No other file in the migration set sets this column NOT NULL,
+--       so the replay cannot re-impose it.
+--
+-- AMENDED IN PLACE, 2026-10-30 (RR5 merged with P-59's route doors): an
+-- Authoring member signs into route_authoring_signature_id, so every door
+-- counts either signature column as signed, and a sibling door,
+-- review_route_record_authoring_signature, closes an Authoring member's task
+-- on a verified authoring_signatures row (the member's own, this document's,
+-- over the route's digest, with the role's meaning). review_route_writer may
+-- read authoring_signatures. Additive; nothing is removed.
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS public.review_routes (
@@ -91,6 +118,18 @@ CREATE TABLE IF NOT EXISTS public.review_routes (
   sender_overdue_notified_at timestamptz,
   created_at                 timestamptz NOT NULL DEFAULT now()
 );
+
+-- 2026-10-29 (RR5, note (b) above): an Authoring route at RR5 has no approval.
+DO $mig$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_attribute
+     WHERE attrelid = 'public.review_routes'::regclass AND attname = 'approval_due_at' AND attnotnull
+  ) THEN
+    ALTER TABLE public.review_routes ALTER COLUMN approval_due_at DROP NOT NULL;
+  END IF;
+END
+$mig$;
 
 -- The organization key, when the base schema is present (a test database
 -- built from a subset of tables may not hold organizations).
@@ -197,6 +236,8 @@ BEGIN
   ALTER TABLE public.unified_tasks ADD COLUMN IF NOT EXISTS review_step integer;
   ALTER TABLE public.unified_tasks ADD COLUMN IF NOT EXISTS route_signature_id integer;
   ALTER TABLE public.unified_tasks ADD COLUMN IF NOT EXISTS route_act_id text;
+  -- 2026-10-29 (RR5, note (a) above).
+  ALTER TABLE public.unified_tasks ADD COLUMN IF NOT EXISTS route_authoring_signature_id uuid;
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
@@ -301,7 +342,8 @@ BEGIN
 
   IF TG_OP = 'INSERT' THEN
     IF NEW.review_route_id IS NOT NULL OR NEW.review_role IS NOT NULL OR NEW.review_step IS NOT NULL
-       OR NEW.route_signature_id IS NOT NULL OR NEW.route_act_id IS NOT NULL THEN
+       OR NEW.route_signature_id IS NOT NULL OR NEW.route_act_id IS NOT NULL
+       OR NEW.route_authoring_signature_id IS NOT NULL THEN
       RAISE EXCEPTION
         'ROUTE_TASK_OWNED_BY_ROUTE: review route columns are written only by the review route.'
         USING ERRCODE = 'raise_exception';
@@ -323,7 +365,8 @@ BEGIN
      OR NEW.review_role IS DISTINCT FROM OLD.review_role
      OR NEW.review_step IS DISTINCT FROM OLD.review_step
      OR NEW.route_signature_id IS DISTINCT FROM OLD.route_signature_id
-     OR NEW.route_act_id IS DISTINCT FROM OLD.route_act_id THEN
+     OR NEW.route_act_id IS DISTINCT FROM OLD.route_act_id
+     OR NEW.route_authoring_signature_id IS DISTINCT FROM OLD.route_authoring_signature_id THEN
     RAISE EXCEPTION
       'ROUTE_TASK_OWNED_BY_ROUTE: review route columns of task % are written only by the review route.', OLD.task_id
       USING ERRCODE = 'raise_exception';
@@ -410,6 +453,10 @@ BEGIN
   IF to_regclass('public.c2c_ana_actions') IS NOT NULL THEN
     GRANT SELECT ON public.c2c_ana_actions TO review_route_writer;
   END IF;
+  -- RR5 (2026-10-30): the Authoring signature door reads Authoring's own signatures.
+  IF to_regclass('public.authoring_signatures') IS NOT NULL THEN
+    GRANT SELECT ON public.authoring_signatures TO review_route_writer;
+  END IF;
   IF to_regclass('public.organization_users') IS NOT NULL AND to_regclass('public.users') IS NOT NULL THEN
     GRANT SELECT ON public.organization_users, public.users TO review_route_writer;
   END IF;
@@ -479,7 +526,7 @@ BEGIN
    WHERE t.organization_id = p_org AND t.task_id = p_task_id AND t.deleted_at IS NULL AND t.assignee_id IS NOT NULL
      AND t.task_id ~ ('^ROUTE-' || left(p_route::text, 8) || '-' || t.assignee_id::text || '(-[0-9]+)?$')
      AND t.review_route_id IS NULL AND t.review_role IS NULL AND t.review_step IS NULL
-     AND t.route_signature_id IS NULL AND t.route_act_id IS NULL;
+     AND (t.route_signature_id IS NULL AND t.route_authoring_signature_id IS NULL) AND t.route_act_id IS NULL;
   GET DIAGNOSTICS v_count = ROW_COUNT;
   IF v_count <> 1 THEN
     RAISE EXCEPTION 'ROUTE_TASK_OWNED_BY_ROUTE: task % is not a new member task of route %.', p_task_id, p_route USING ERRCODE = 'raise_exception';
@@ -507,7 +554,7 @@ BEGIN
     FROM public.review_routes r, public.electronic_signatures s
    WHERE r.organization_id = p_org AND r.id = p_route AND r.status = 'open'
      AND t.organization_id = p_org AND t.task_id = p_task_id AND t.review_route_id = p_route
-     AND t.route_signature_id IS NULL AND t.deleted_at IS NULL
+     AND (t.route_signature_id IS NULL AND t.route_authoring_signature_id IS NULL) AND t.deleted_at IS NULL
      AND s.id = p_signature AND s.organization_id = p_org AND s.signer_id = t.assignee_id
      AND s.signed_target = public.review_route_subject_target(r.subject_type, r.subject_id)
      AND s.bound_payload_digest = r.content_digest
@@ -517,6 +564,44 @@ BEGIN
   RETURNING t.status INTO v_status;
   IF v_status IS NULL THEN
     RAISE EXCEPTION 'ROUTE_TASK_OWNED_BY_ROUTE: signature % does not close task % of route %.', p_signature, p_task_id, p_route
+      USING ERRCODE = 'raise_exception';
+  END IF;
+  RETURN v_status;
+END;
+$fn$;
+
+-- An Authoring member's verified REVIEWER (or APPROVER) e-sign closes their
+-- task (RR5, 2026-10-30): the authoring_signatures row must be the member's
+-- own (its signer_email is the assignee's), of this organization, over this
+-- route's document and content digest, with the role's meaning, as
+-- review-route-standing.ts verifiedAuthoringSignature reads it. The sibling of
+-- review_route_record_signature for the signatures Authoring keeps in its own
+-- table (they are never copied into electronic_signatures, §11.70).
+CREATE OR REPLACE FUNCTION public.review_route_record_authoring_signature(p_org integer, p_route uuid, p_task_id text, p_signature uuid, p_actor integer)
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $fn$
+DECLARE
+  v_status text;
+BEGIN
+  PERFORM public.review_route_door_scope(p_org);
+  UPDATE public.unified_tasks t
+     SET route_authoring_signature_id = p_signature, status = 'completed', progress = 100, completion_percentage = 100,
+         completed_at = now(), last_modified_by = p_actor, updated_at = now()
+    FROM public.review_routes r, public.authoring_signatures a, public.organization_users ou, public.users u
+   WHERE r.organization_id = p_org AND r.id = p_route AND r.status = 'open' AND r.subject_type = 'authoring_document'
+     AND t.organization_id = p_org AND t.task_id = p_task_id AND t.review_route_id = p_route
+     AND t.route_signature_id IS NULL AND t.route_authoring_signature_id IS NULL AND t.deleted_at IS NULL
+     AND a.id = p_signature AND a.tenant_id = p_org AND a.doc_id::text = r.subject_id
+     AND a.content_hash = r.content_digest
+     AND upper(a.meaning) = CASE t.review_role WHEN 'reviewer' THEN 'REVIEWER' ELSE 'APPROVER' END
+     AND ou.organization_id = p_org AND ou.user_id = t.assignee_id
+     AND u.id = ou.user_id AND lower(u.email) = lower(a.signer_email)
+  RETURNING t.status INTO v_status;
+  IF v_status IS NULL THEN
+    RAISE EXCEPTION 'ROUTE_TASK_OWNED_BY_ROUTE: Authoring signature % does not close task % of route %.', p_signature, p_task_id, p_route
       USING ERRCODE = 'raise_exception';
   END IF;
   RETURN v_status;
@@ -539,7 +624,7 @@ BEGIN
   PERFORM public.review_route_door_scope(p_org);
   IF EXISTS (SELECT 1 FROM public.unified_tasks t JOIN public.unified_tasks m
                 ON m.organization_id = p_org AND m.review_route_id = p_route AND m.deleted_at IS NULL
-               AND m.review_step < t.review_step AND m.route_signature_id IS NULL
+               AND m.review_step < t.review_step AND (m.route_signature_id IS NULL AND m.route_authoring_signature_id IS NULL)
               WHERE t.organization_id = p_org AND t.task_id = p_task_id AND t.review_route_id = p_route) THEN
     RAISE EXCEPTION 'ROUTE_TASK_OWNED_BY_ROUTE: a step before task % of route % has not signed.', p_task_id, p_route USING ERRCODE = 'raise_exception';
   END IF;
@@ -547,7 +632,7 @@ BEGIN
     FROM public.review_routes r
    WHERE r.organization_id = p_org AND r.id = p_route AND r.status = 'open'
      AND t.organization_id = p_org AND t.task_id = p_task_id AND t.review_route_id = p_route
-     AND t.status = 'blocked' AND t.route_signature_id IS NULL AND t.route_act_id IS NULL AND t.deleted_at IS NULL;
+     AND t.status = 'blocked' AND (t.route_signature_id IS NULL AND t.route_authoring_signature_id IS NULL) AND t.route_act_id IS NULL AND t.deleted_at IS NULL;
   GET DIAGNOSTICS v_count = ROW_COUNT;
   RETURN v_count = 1;
 END;
@@ -569,7 +654,7 @@ BEGIN
   PERFORM public.review_route_door_scope(p_org);
   IF NOT EXISTS (SELECT 1 FROM public.review_routes r WHERE r.organization_id = p_org AND r.id = p_route AND r.status = 'open')
      OR EXISTS (SELECT 1 FROM public.unified_tasks m WHERE m.organization_id = p_org AND m.review_route_id = p_route
-                  AND m.review_role = 'approver' AND m.route_signature_id IS NOT NULL)
+                  AND m.review_role = 'approver' AND (m.route_signature_id IS NOT NULL OR m.route_authoring_signature_id IS NOT NULL))
      OR EXISTS (SELECT 1 FROM public.unified_tasks m WHERE m.organization_id = p_org AND m.review_route_id = p_route
                   AND m.review_role = 'reviewer' AND m.deleted_at IS NULL AND m.review_step >= p_step) THEN
     RAISE EXCEPTION 'ROUTE_TASK_OWNED_BY_ROUTE: route % does not admit its approvers at step %.', p_route, p_step USING ERRCODE = 'raise_exception';
@@ -581,7 +666,7 @@ BEGIN
   END IF;
   UPDATE public.unified_tasks t
      SET review_step = p_step, updated_at = now(), last_modified_by = p_actor,
-         status = CASE WHEN t.status = 'pending' AND t.route_signature_id IS NULL AND t.route_act_id IS NULL THEN 'blocked' ELSE t.status END
+         status = CASE WHEN t.status = 'pending' AND (t.route_signature_id IS NULL AND t.route_authoring_signature_id IS NULL) AND t.route_act_id IS NULL THEN 'blocked' ELSE t.status END
    WHERE t.organization_id = p_org AND t.task_id = p_task_id AND t.review_route_id = p_route;
   RETURN v_was = 'pending';
 END;
@@ -602,7 +687,7 @@ BEGIN
   END IF;
   UPDATE public.unified_tasks t SET status = 'cancelled', updated_at = now(), last_modified_by = p_actor
    WHERE t.organization_id = p_org AND t.task_id = p_task_id AND t.review_route_id = p_route
-     AND t.route_signature_id IS NULL AND t.status <> 'cancelled';
+     AND (t.route_signature_id IS NULL AND t.route_authoring_signature_id IS NULL) AND t.status <> 'cancelled';
 END;
 $fn$;
 
@@ -642,7 +727,7 @@ BEGIN
   ELSE
     UPDATE public.unified_tasks t SET route_act_id = p_act, status = 'blocked', updated_at = now(), last_modified_by = t.assignee_id
      WHERE t.organization_id = p_org AND t.task_id = p_task_id AND t.review_route_id = p_route
-       AND t.route_act_id IS NULL AND t.route_signature_id IS NULL
+       AND t.route_act_id IS NULL AND (t.route_signature_id IS NULL AND t.route_authoring_signature_id IS NULL)
     RETURNING t.status INTO v_status;
   END IF;
   IF v_status IS NULL THEN
@@ -691,10 +776,10 @@ BEGIN
          status = CASE WHEN t.review_step = 1 OR NOT EXISTS (
                          SELECT 1 FROM public.unified_tasks o
                           WHERE o.organization_id = p_org AND o.review_route_id = p_route AND o.review_step < t.review_step
-                            AND o.deleted_at IS NULL AND o.route_signature_id IS NULL)
+                            AND o.deleted_at IS NULL AND (o.route_signature_id IS NULL AND o.route_authoring_signature_id IS NULL))
                        THEN 'pending' ELSE 'blocked' END
    WHERE t.organization_id = p_org AND t.task_id = p_task_id AND t.review_route_id = p_route
-     AND t.route_signature_id IS NULL AND t.deleted_at IS NULL
+     AND (t.route_signature_id IS NULL AND t.route_authoring_signature_id IS NULL) AND t.deleted_at IS NULL
   RETURNING t.id, t.task_id, t.organization_id, t.project_id, t.client_workspace_id, t.status, t.assignee_id, t.assignee_name,
             t.assigned_by, t.assigned_at, t.title, t.xmin::text, t.updated_at::text;
   IF NOT FOUND THEN
@@ -712,6 +797,7 @@ BEGIN
   FOREACH v_fn IN ARRAY ARRAY[
     'public.review_route_enlist_member(integer,uuid,text,text,integer)',
     'public.review_route_record_signature(integer,uuid,text,integer,integer)',
+    'public.review_route_record_authoring_signature(integer,uuid,text,uuid,integer)',
     'public.review_route_open_step(integer,uuid,text)',
     'public.review_route_restep_approver(integer,uuid,text,integer,integer)',
     'public.review_route_cancel_member(integer,uuid,text,integer)',

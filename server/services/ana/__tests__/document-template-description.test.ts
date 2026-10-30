@@ -25,7 +25,7 @@ import {
   DOCUMENT_TEMPLATES,
   getDocumentTemplate,
 } from '../../market-specs/document-template-library';
-import { e3TopLevel } from '../../ind/ctd/index.js';
+import { ICH_E3_GUIDANCE } from '../../ind/ctd/index.js';
 import { SMPC_QRD_SECTIONS } from '../../labeling/smpc-qrd-catalog';
 import { ICH_E2F_DSUR_SECTIONS } from '../../ind/ctd/lifecycle-document-types';
 import { getApplicationType } from '../../../../shared/regulatory/global-document-registry';
@@ -68,8 +68,9 @@ function entryFor(clause: string, id: string): string {
 /** How an outline is shown to be read from its record: its sections are the record's. */
 const RECORD_PROOFS: Record<string, () => void> = {
   clinical_study_report: () => {
+    // Every node of the tree since 13bafc62ff (2026-10-26), not only §1–§16.
     expect(getDocumentTemplate('clinical_study_report')!.sections.map((s) => `${s.number} ${s.heading}`)).toEqual(
-      e3TopLevel().map((s) => `${s.number} ${s.title}`),
+      ICH_E3_GUIDANCE.map((s) => `${s.number} ${s.title}`),
     );
   },
   smpc: () => {
@@ -149,8 +150,12 @@ describe('get_document_template description — says which outlines are canonica
   });
 
   it('keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last', () => {
-    expect(description.length, 'fits under the 1024-character trim').toBeLessThanOrEqual(OPENAI_MAX_TOOL_DESCRIPTION_CHARS);
-    // Should the library outgrow the cap, the trim must still cut only hand-kept ids.
+    // The library outgrew the cap on 2026-10-26/27 (13bafc62ff's CRF outlines, 14b27100d9's and
+    // 42bbb941e2's US lifecycle outlines): every id is named (above), and the hand-kept ids alone
+    // are longer than 1,024 characters, so both cannot hold. What must hold is what the cap was
+    // for: the trim cuts only hand-kept ids. Everything up to the first hand-kept id sits in the head.
+    expect(description.indexOf(HAND_MARK) + `${HAND_MARK}: `.length, 'the trim falls inside the hand-kept list').toBeLessThanOrEqual(head.length);
+    expect(head).toContain(blueprintClause);
     expect(head).toContain(INSTRUCTION);
     expect(head).toMatch(/`template_id`/);
     expect(head).toMatch(/`family`/);

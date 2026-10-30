@@ -297,7 +297,7 @@ export function priorRequestNote(r: StandingReview): string {
  * pending cannot be chosen; one whose verdict is recorded can be, and is told
  * that the verdict stays in the record and a new review is requested.
  */
-export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standing, selected, onToggle, authorWithheld }: {
+export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standing, selected, onToggle, authorWithheld, refusals = {} }: {
   roster: Assignee[];
   rosterState: RosterState;
   onReloadRoster: () => void;
@@ -306,6 +306,8 @@ export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standin
   onToggle: (id: string) => void;
   /** The document's author was left out of the roster: said, not silent. */
   authorWithheld?: boolean;
+  /** RR5: why the review route's validator would refuse a member as a reviewer, by member id; shown disabled with it. */
+  refusals?: Record<string, string>;
 }) {
   if (rosterState === 'error') {
     return <ReadFailed label="Reviewers" message={ROSTER_UNREAD} againLabel="Read the roster again" onAgain={onReloadRoster} testId="sfr-roster-error" />;
@@ -336,7 +338,7 @@ export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standin
           testIdPrefix="sfr-reviewer"
           noteIdPrefix="sfr-prior"
           maxHeight={200}
-          options={roster.map(a => reviewerOption(a, standing.rows.find(r => r.reviewerId === a.id) ?? null))}
+          options={roster.map(a => reviewerOption(a, standing.rows.find(r => r.reviewerId === a.id) ?? null, refusals[a.id] ?? null))}
           selected={selected}
           onChange={next => {
             // The checklist's contract is one toggle at a time.
@@ -350,11 +352,13 @@ export function ReviewerChecklist({ roster, rosterState, onReloadRoster, standin
   );
 }
 
-/** One member: their earlier request here when they have one; not choosable while it is pending. */
-function reviewerOption(member: Assignee, prior: StandingReview | null): PickerOption {
+/** One member: their earlier request here when they have one; not choosable while it is pending, or when the route would refuse them (RR5). */
+function reviewerOption(member: Assignee, prior: StandingReview | null, refused: string | null): PickerOption {
+  const label = member.label ?? member.name;
+  if (refused && !alreadyAsked(prior)) return { id: member.id, label, note: refused, disabled: true };
   return {
     id: member.id,
-    label: member.label ?? member.name,
+    label,
     ...(prior ? { note: priorRequestNote(prior) } : {}),
     disabled: alreadyAsked(prior),
   };

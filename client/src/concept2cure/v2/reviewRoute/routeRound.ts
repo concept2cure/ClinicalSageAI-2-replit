@@ -15,7 +15,8 @@ import { list, nameOf, utc, utcClock } from './routeText';
 
 // ── The round, as the server reads it (RouteRound, review-route-standing.ts) ──
 
-export interface RouteSignatureView { id: number; printedName: string | null; meaning: string; signedAt: string }
+/** `id`: an electronic signature's id, or an Authoring signature's uuid (RR5). */
+export interface RouteSignatureView { id: number | string; printedName: string | null; meaning: string; signedAt: string }
 export interface RouteMemberView {
   taskId: string;
   userId: number;
@@ -40,7 +41,8 @@ export interface RouteHeaderView {
   statusBy: number | null;
   statusAt: string | null;
   reviewDueAt: string | null;
-  approvalDueAt: string;
+  /** Null on a route that names no approver (an Authoring route, RR5). */
+  approvalDueAt: string | null;
   createdAt: string;
 }
 export interface RouteHistoryEntryView {
@@ -123,7 +125,10 @@ function closedHeadline(round: RouteRoundView): string {
   const r = round.route;
   if (r.status === 'returned') return `Returned by ${closedBy(round)}: ${r.statusReason ?? 'no reason recorded'}`;
   if (r.status === 'withdrawn') return `Withdrawn by ${closedBy(round)} on ${utc(r.statusAt)}: ${r.statusReason ?? 'no reason recorded'}`;
-  return round.members.filter((m) => m.role === 'approver').length > 1
+  const approvers = round.members.filter((m) => m.role === 'approver').length;
+  // RR5: an Authoring route names reviewers only, so it completes on the last review signature.
+  if (approvers === 0) return round.members.length > 1 ? 'Reviewed: every named reviewer signed.' : 'Reviewed: the named reviewer signed.';
+  return approvers > 1
     ? 'Approved: every named reviewer and every named approver signed.'
     : 'Approved: every named reviewer and the approver signed.';
 }

@@ -43,7 +43,7 @@ export interface Queryable {
 }
 
 export class DocumentWriteReservationError extends Error {
-  constructor(readonly status: 403 | 404, readonly code: string, message: string) {
+  constructor(readonly status: 403 | 404 | 409, readonly code: string, message: string) {
     super(message);
     this.name = 'DocumentWriteReservationError';
   }
@@ -68,6 +68,30 @@ export async function reserveWritableSection(executor: Queryable, sectionId: str
   const docId = (section.rows[0] as { doc_id?: unknown } | undefined)?.doc_id;
   if (typeof docId !== 'string') throw new DocumentWriteReservationError(404,'DOCUMENT_NOT_FOUND','Section not found. Nothing was changed.');
   await reserveWritableDocument(executor,docId,tenantId);
+}
+
+/**
+ * §14.3.3 of an imported CSR is held by reference to the build's narrative
+ * store (shared/csr-narrative-reference.ts, 2026-10-30): the section holds the
+ * landed opening only, and the narratives are read from the store at import,
+ * assembly and release. Its text is therefore not edited in Authoring; the
+ * narratives are changed by running them again. The authority is the
+ * section's immutable creation receipt (as workflow-import-governance.ts
+ * reads it), not the document's editable provenance. Call after
+ * reserveWritableSection, on paths that change the section's text.
+ */
+export async function refuseNarrativeReferenceContentWrite(executor: Queryable, sectionId: string, tenantId: number): Promise<void> {
+  const held = await executor.query(`SELECT true AS held FROM authoring_audit_trail t
+    WHERE t.section_id::text = $1 AND t.tenant_id = $2 AND t.operation_type = 'CREATE'
+      AND t.metadata->'provenance'->'importSource'->>'kind' = 'csr'
+      AND jsonb_typeof(t.metadata->'provenance'->'importSource'->'sectionOrigins') = 'array'
+      AND EXISTS (SELECT 1 FROM jsonb_array_elements(t.metadata->'provenance'->'importSource'->'sectionOrigins') o
+        WHERE o->>'code' = t.metadata->>'section_code' AND jsonb_typeof(o->'narrativeReference') = 'object')
+    LIMIT 1`, [sectionId, tenantId]);
+  if ((held.rows[0] as { held?: unknown } | undefined)?.held === true) {
+    throw new DocumentWriteReservationError(409, 'CSR_NARRATIVE_REFERENCE_READ_ONLY',
+      'Section 14.3.3 holds the patient narratives by reference to the CSR build. Its text is not edited here; run the narratives again to change them. Nothing was changed.');
+  }
 }
 
 /**

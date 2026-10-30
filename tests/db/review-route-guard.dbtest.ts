@@ -217,7 +217,7 @@ describe('the route writer is a role, never a setting (P-59)', () => {
         WHERE n.nspname = 'public' AND p.prosecdef AND pg_get_userbyid(p.proowner) = 'review_route_writer' ORDER BY p.proname`)).rows;
     expect(doors.map((d) => d.proname)).toEqual([
       'review_route_cancel_member', 'review_route_enlist_member', 'review_route_open_step', 'review_route_reassign_member',
-      'review_route_record_signature', 'review_route_restep_approver', 'review_route_stamp_act',
+      'review_route_record_authoring_signature', 'review_route_record_signature', 'review_route_restep_approver', 'review_route_stamp_act',
     ]);
     for (const d of doors) {
       expect(d, d.proname).toMatchObject({ prosecdef: true, owner: 'review_route_writer', public_runs: false, app_runs: true });
