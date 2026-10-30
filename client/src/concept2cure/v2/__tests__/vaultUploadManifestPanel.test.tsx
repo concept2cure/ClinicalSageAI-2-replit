@@ -23,7 +23,7 @@ vi.mock('../download', async (importOriginal) => ({
 
 import { Vault } from '../surfaces/Vault';
 import { PID, ok, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
-import { stubIngestXhr } from './_ingest-xhr-fake';
+import { ingestReceipt, stubIngestXhr } from './_ingest-xhr-fake';
 
 const HEADER = 'File,Title,Document type,Classification,Folder,Evidence kind,CTD section';
 
@@ -31,7 +31,7 @@ function stubIngest() {
   const sent: FormData[] = [];
   stubIngestXhr(vi.fn(async (_url: string, init: { body?: unknown }) => {
     sent.push(init.body as FormData);
-    return { ok: true, status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+    return { ok: true, status: 201, json: async () => ingestReceipt(init.body as FormData) };
   }));
   return sent;
 }

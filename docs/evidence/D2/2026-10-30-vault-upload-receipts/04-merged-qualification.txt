@@ -1,0 +1,9 @@
+2026-10-30 canonical merge qualification
+
+Implementation: 28e98ddfb. Normal merge of canonical be078603b (CSR qualification and editor source/file visit ownership) at cef6b4c93. No receipt source conflict; no AGENTS, package, compiler, hook or shared stylesheet change.
+All receipt implementation files and the native contract test match their qualified content before this merge. Existing browser/native proof is retained without claiming those cohorts ran again.
+Combined source: 169/169 tests across 13 files pass: seven upload/receipt suites, five affected editor/source suites and one actual-SQL CSR program-scope suite. This overlaps earlier cohorts and is not added to their total.
+Combined production client/server/audit-verifier build passes.
+Independent final review confirms the equal/duplicate metadata, missing-title, actual raw-JSON failure and explicit unknown-commit findings are addressed; no new blocker found.
+Normal push runs all repository hooks. Exact final head, remote verification, CI state and hook results: /workspace/shared/vault-upload-receipts-release.json. Hook output: /workspace/shared/vault-upload-receipts-push.txt.
+No deployment performed by this continuation.
