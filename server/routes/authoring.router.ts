@@ -4845,8 +4845,8 @@ async function freezeCensus(
   return { openCommentCount, pendingEdits };
 }
 
-/** The 409 a freeze answers while work is outstanding — naming it, never a status code. */
-function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
+/** The 409 a freeze, or an approval, answers while work is outstanding — naming it, never a status code. */
+function notSettledRefusal(openCommentCount: number, pendingEdits: number, act: 'freeze' | 'approve' = 'freeze') {
   const parts: string[] = [];
   if (openCommentCount > 0) {
     parts.push(`${openCommentCount} unresolved comment${openCommentCount === 1 ? '' : 's'}`);
@@ -4854,19 +4854,50 @@ function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
   if (pendingEdits > 0) {
     parts.push(`${pendingEdits} tracked change${pendingEdits === 1 ? '' : 's'} nobody has accepted or rejected`);
   }
+  const message = act === 'approve'
+    ? `Not approved — this document still has ${parts.join(' and ')}. ` +
+      'An approval seals the content for filing, so the questions would go ' +
+      'unanswered and the proposed edits would stay undecided in the approved ' +
+      'text. Resolve them, or approve again confirming you intend to approve it ' +
+      'as it stands. Nothing was signed.'
+    : `Not frozen — this document still has ${parts.join(' and ')}. ` +
+      'Freezing seals the content for signature and filing, so the questions ' +
+      'would go unanswered and the proposed edits would reach a reviewer ' +
+      'undecided. Resolve them, or freeze again confirming you intend to ' +
+      'seal it as it stands.';
   return {
     success: false,
-    error: {
-      code: 'DOCUMENT_NOT_SETTLED',
-      message:
-        `Not frozen — this document still has ${parts.join(' and ')}. ` +
-        'Freezing seals the content for signature and filing, so the questions ' +
-        'would go unanswered and the proposed edits would reach a reviewer ' +
-        'undecided. Resolve them, or freeze again confirming you intend to ' +
-        'seal it as it stands.',
-    },
+    error: { code: 'DOCUMENT_NOT_SETTLED', message },
     unresolved: { openComments: openCommentCount, pendingEdits },
   };
+}
+
+/**
+ * What an APPROVER e-signature must clear before the credential (2026-10-30,
+ * the CSR path sweep): separation of duties, then the settle question Freeze
+ * asks. An approval freezes the document too, and it did not ask, so an
+ * approved CSR could carry open review comments and undecided tracked changes
+ * inside the signed text. Refused (409) while either is outstanding, unless the
+ * approver states they approve it as it stands; that is recorded on this
+ * transaction, as Freeze records it. Before re-authentication, so a refusal
+ * spends no second factor.
+ */
+async function approvalRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
+): Promise<boolean> {
+  if (await signingRefused(client, req, res, ids)) return true;
+  const { openCommentCount, pendingEdits } = await freezeCensus(ids.docId, ids.tenantId, current.sections, client);
+  if (openCommentCount === 0 && pendingEdits === 0) return false;
+  if (req.body?.acknowledgeUnresolved !== true) {
+    res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits, 'approve'));
+    return true;
+  }
+  await createAuditTrail(req, ids.docId, null, 'APPROVAL_UNRESOLVED_ACKNOWLEDGED', null, null,
+    `Approved with ${openCommentCount} unresolved comment(s) and ${pendingEdits} undecided tracked change(s), acknowledged by ${getActorEmail(req)}.`,
+    { openCommentCount, pendingEdits, acknowledged: true }, client);
+  return false;
 }
 
 /**
@@ -5375,7 +5406,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
          Before `reverifyAuthoringSigner`, so a refusal spends no
          re-authentication code; before the status flip, the snapshot and the
          signature row, so a refused approval seals nothing. */
-      if (meaning === 'APPROVER' && await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
+      if (meaning === 'APPROVER' && await approvalRefused(client, req, res, current, { docId, tenantId, meaning })) return;
       // RR5: on a live review route only a named reviewer whose turn it is signs REVIEWER, over the route's content; refused before the credential.
       const routed = meaning === 'REVIEWER' ? await authoringReviewerPrecheck(client, { tenantId, docId: String(current.doc.id), title: String(current.doc.title ?? ''), signerId: Number(getActorId(req)), digest: sectionsDigest(current.sections) }) : null;
 
