@@ -1,0 +1,7 @@
+# Red: the committed resolvers (HEAD c862373aa)
+ × server/services/ectd/__tests__/rendered-csr-assembly-not-released.pglite.test.ts > an assembled CSR file > reads as not approved to Validation and Dispatch 15ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ectd/__tests__/rendered-csr-assembly-not-released.pglite.test.ts > an assembled CSR file > is staged but noted unfinalized, so freeze and transmit refuse it 10ms
+   → expected +0 to be 1 // Object.is equality
+ ✓ server/services/ectd/__tests__/rendered-csr-assembly-not-released.pglite.test.ts > the server's own rendered forms and reports (control) > a rendered safety report is released as before 4ms
+      Tests  2 failed | 1 passed (3)
