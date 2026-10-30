@@ -59,6 +59,9 @@ const ORG_UUID = '77777777-7777-4777-8777-777777777777';
 const PROGRAM = '88888888-8888-4888-8888-888888888888';
 let filing: { program_type: string; primary_agency: string; metadata: unknown } | null = null;
 let code = '1.2.1';
+let product: Record<string, unknown> = {};
+let charters: Record<string, unknown>[] = [];
+let charterReadFailed = false;
 
 function app() {
   const a = express();
@@ -80,8 +83,14 @@ const prompt = () => String(h.route.mock.calls[0][0].messages[0].content);
 
 beforeEach(() => {
   vi.clearAllMocks(); filing = null; code = '1.2.1';
+  product = {}; charters = []; charterReadFailed = false;
   h.query.mockImplementation(async (sql: unknown) => {
     const s = String(sql);
+    if (s.includes('FROM project_charters')) {
+      if (charterReadFailed) throw new Error('unavailable');
+      return { rowCount: charters.length, rows: charters };
+    }
+    if (s.includes('SELECT product_type, indication,')) return { rowCount: 1, rows: [{ ...product, ...filing }] };
     if (s.includes('AS reference_bytes')) return { rowCount: 1, rows: [{ reference_bytes: 0 }] };
     if (s.includes('d.status')) return { rowCount: 1, rows: [{ status: null }] };
     if (s.includes('authoring_sections')) return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', code, title: 'Section', content: '', module: 'M1', product_code: 'ABC', client_program_id: PROGRAM }] };
@@ -129,5 +138,57 @@ describe('the editor drafts against the application the project records', () => 
     expect(prompt()).toContain('RECEIVING APPLICATION ON RECORD:');
     expect(prompt()).not.toMatch(/differs from the application on record/);
     expect(res.body.draft.metadata).toMatchObject({ submissionType: 'US_IND' });
+  });
+});
+
+
+describe('the editor uses current recorded product context', () => {
+  function recordedProduct() {
+    filing = { program_type: 'ind', primary_agency: 'FDA', metadata: { submissionTypeId: 'us_ind' } };
+    code = '2.5';
+    product = { product_type: 'monoclonal_antibody', indication: 'Recorded indication' };
+    charters = [{ id: 12, version: 3, updated_at: '2026-10-30T00:00:00Z', approval_status: 'draft',
+      therapeutic_area: 'oncology', development_stage: 'phase_2', target_population: 'Adults' }];
+  }
+
+  it('carries the charter and product facts into the actual gateway prompt as unqualified records', async () => {
+    recordedProduct();
+    const res = await draft();
+    expect(res.status).toBe(200);
+    expect(prompt()).toContain('RECORDED PRODUCT CONTEXT');
+    expect(prompt()).toContain('phase_2');
+    expect(prompt()).toContain('Recorded indication');
+    expect(prompt()).toContain('Adults');
+    expect(prompt()).toContain('Therapeutic Area Context — Oncology');
+    expect(prompt()).toContain('not scientific evidence');
+    expect(h.route.mock.calls[0][0]).toMatchObject({ organizationId: 7, userId: 5, projectId: 42 });
+  });
+
+  it('does not choose an arbitrary charter when more than one is recorded', async () => {
+    recordedProduct(); charters.push({ ...charters[0], id: 13, therapeutic_area: 'neurology' });
+    const res = await draft();
+    expect(res.status).toBe(200);
+    expect(prompt()).toContain('ambiguous');
+    expect(prompt()).not.toContain('Therapeutic Area Context — Oncology');
+    expect(prompt()).not.toContain('Therapeutic Area Context — Neurology');
+  });
+
+  it('does not call a provider or park a draft if the recorded facts cannot be read', async () => {
+    recordedProduct(); charterReadFailed = true;
+    const res = await draft();
+    expect(res.status).toBe(503);
+    expect(h.route).not.toHaveBeenCalled();
+    expect(h.park).not.toHaveBeenCalled();
+  });
+
+  it('does not retain a response after the charter changes during generation', async () => {
+    recordedProduct();
+    h.route.mockImplementationOnce(async () => {
+      charters[0] = { ...charters[0], version: 4, development_stage: 'phase_3' };
+      return { content: JSON.stringify({ content: 'Draft.', attributions: [] }), model: 'claude-x', provider: 'anthropic' };
+    });
+    const res = await draft();
+    expect(res.status).toBe(409);
+    expect(h.park).not.toHaveBeenCalled();
   });
 });

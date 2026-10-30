@@ -7,6 +7,7 @@ import type { AssemblyCommitData, AssemblyPlan, AssemblyPreviewInput, AssemblySe
 import { authoringCurrentReadPath } from './authoringCurrentRead';
 import type { AssemblySourceManifest } from '@shared/authoring/assembly-sources';
 import { assemblyManifestForSelection, sameAssemblyManifest } from './assemblySourceSelection';
+import { writingAgencyOf } from '@shared/authoring/writing-regions';
 
 const record = (value: unknown): Record<string, unknown> | null => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const text = (value: unknown): value is string => typeof value === 'string' && Boolean(value.trim());
@@ -34,7 +35,7 @@ function validPlanIdentity(plan: Record<string, unknown>, docId: string, input: 
 function validPlanContents(plan: Record<string, unknown>): boolean {
   return typeof plan.templateName === 'string' && strings(plan.limitations) && strings(plan.gaps)
     && Array.isArray(plan.rows) && plan.rows.length > 0 && plan.rows.every(validPlanRow)
-    && (plan.draftRegion === null || ['FDA', 'EMA', 'PMDA', 'Health Canada'].includes(String(plan.draftRegion)));
+    && (plan.draftRegion === null || (typeof plan.draftRegion === 'string' && writingAgencyOf(plan.draftRegion) === plan.draftRegion));
 }
 export function readAssemblyPlan(raw: unknown, docId: string, input: AssemblyPreviewInput): AssemblyPlan | null {
   const plan = record(raw);
