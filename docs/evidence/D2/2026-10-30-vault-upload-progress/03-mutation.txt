@@ -1,0 +1,54 @@
+# 03-mutation: each piece removed in turn, on the final code; each is caught
+# Script: progress-mutate.py (each file restored after its run). Suites: useVaultUpload, vaultUploadStaging, vaultOpensUploadedDocument, vaultCheckInVersion.
+
+## M1 every progress event is reported, not once per percent
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > tells the row once per whole percent, not once per packet
+   → expected [ undefined, …(5) ] to deeply equal [ undefined, …(3) ]
+      Tests  1 failed | 36 passed (37)
+
+## M2 the batch does not pass progress to the request
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts, as its bytes go out, and as it settles
+   → expected [ Array(4) ] to deeply equal [ Array(8) ]
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > tells the row once per whole percent, not once per packet
+   → expected [ undefined ] to deeply equal [ undefined, …(3) ]
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > shows the share sent with a progress bar, and the rows behind it wait their turn
+   → Unable to find an element with the text: Uploading… 50% of 1.9 MB sent. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher mor
+      Tests  3 failed | 34 passed (37)
+
+## M3 the row says only "Uploading…" whatever has been sent
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > shows the share sent with a progress bar, and the rows behind it wait their turn
+   → Unable to find an element with the text: Uploading… 50% of 1.9 MB sent. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher mor
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > says the server is scanning and storing a file once all of it is sent, and only "Uploading…" bef
+   → expected 'Uploading…' to be 'Sent. The server is scanning it and s…' // Object.is equality
+      Tests  2 failed | 35 passed (37)
+
+## M4 a queued row says nothing while it waits
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > shows the share sent with a progress bar, and the rows behind it wait their turn
+   → Unable to find an element with the text: Waiting: files are sent one at a time.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your ma
+      Tests  1 failed | 36 passed (37)
+
+## M5 no progress bar
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > shows the share sent with a progress bar, and the rows behind it wait their turn
+   → expected undefined to be 'Sending a.pdf' // Object.is equality
+      Tests  1 failed | 36 passed (37)
+
+## M6 a refusal (4xx) is read as recorded
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says what the Vault refused, row by row, and tries only that one again
+   → Unable to find an element with the text: Not recorded: The file failed the malware scan. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make
+ × client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a check-in opens the document at the version just recorded, not the folder’s first document
+   → Unable to find an element with the text: Upload as a new version of stability-summary-24m. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to ma
+ × client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+   → Unable to find an element with the text: Upload as a new version of stability-summary-24m. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to ma
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+   → expected [ 'fda-letter.pdf', 'tool.exe' ] to deeply equal [ 'fda-letter.pdf' ]
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the document each file was recorded as > lists the ids the server returned, in the order sent, and invents none
+   → expected [ 'a.pdf', 'tool.exe', …(2) ] to deeply equal [ Array(3) ]
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts, as its bytes go out, and as it settles
+   → expected [ Array(8) ] to deeply equal [ Array(8) ]
+      Tests  6 failed | 31 passed (37)
+
+## M7 the session cookie is not sent
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+   → expected 'same-origin' to be 'include' // Object.is equality
+      Tests  1 failed | 36 passed (37)
+
