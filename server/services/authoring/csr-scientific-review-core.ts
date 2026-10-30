@@ -10,7 +10,7 @@ import { createHash } from 'node:crypto';
    (shared/authoring/csr-scientific-review.ts), so the screen never offers a
    figure this verifier would refuse. Re-exported for this module's importers. */
 import {
-  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, containsExactNumericalDisplay,
+  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, containsExactNumericalDisplay, markupRanges, reportedDisplayAt,
   type CsrTableKey, type RetainedScientificRun, type RetainedScientificTable,
   type ScientificCellClaim, type ScientificReviewSubmission, type ScientificSectionReview,
 } from '../../../shared/authoring/csr-scientific-review.js';
@@ -137,6 +137,15 @@ function scientificTableBundle(runs: readonly RetainedScientificRun[]) {
     return { runId: run.runId, programId: run.programId, studies };
   }).sort((a, b) => a.runId.localeCompare(b.runId));
 }
+/** The cell's value is reported somewhere inside the claimed span, judged against the whole section. */
+function reportedInSpan(content: string, claim: { start: number; end: number; expectedValue: string }, header: string): boolean {
+  const markup = markupRanges(content);
+  for (let at = claim.start; at + claim.expectedValue.length <= claim.end; at++) {
+    if (reportedDisplayAt(content, at, claim.expectedValue, header, markup)) return true;
+  }
+  return false;
+}
+
 export function scientificTablesSha256(runs: readonly RetainedScientificRun[]): string {
   return scientificSha256(canonicalScientificJson(scientificTableBundle(runs)));
 }
@@ -184,6 +193,11 @@ export function prepareScientificReviewReceipt(args: {
       if (!table || claim.row >= table.rows.length || claim.column >= table.headers.length ||
         table.rows[claim.row][claim.column] !== claim.expectedValue || !/[\d]/.test(claim.expectedValue)) {
         return fail('CSR_EVIDENCE_CELL_MISMATCH', 'A claim does not match the exact retained numerical table cell.');
+      }
+      // 2026-10-30: where the figure stands in the whole saved section, not only
+      // inside the span, which has no neighbours ("190" claimed inside "1190").
+      if (!reportedInSpan(section.content, claim, table.headers[claim.column] ?? '')) {
+        return fail('CSR_EVIDENCE_CLAIM_CHANGED', 'A mapped claim no longer contains the exact reviewed source value at its recorded location.');
       }
       checkedClaims++;
     }

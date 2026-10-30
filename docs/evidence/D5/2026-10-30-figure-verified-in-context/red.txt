@@ -1,0 +1,11 @@
+# Red: the committed verifier (HEAD c862373aa)
+ × server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses "190" claimed inside "1190" 8ms
+   → expected function to throw an error, but it didn't
+ × server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses "12" claimed inside "12.5" 1ms
+   → expected function to throw an error, but it didn't
+ × server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses digits inside markup 1ms
+   → expected function to throw an error, but it didn't
+ × server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses a count followed by "%" when its column is not a percentage 1ms
+   → expected function to throw an error, but it didn't
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > accepts a whole figure, and a percentage-column value reported with its unit (controls) 1ms
+      Tests  4 failed | 1 passed (5)
