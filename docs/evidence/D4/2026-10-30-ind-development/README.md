@@ -222,6 +222,19 @@ is in `resumed-integration.json`. The previous incomplete whole-AnA sweep remain
 incomplete. Publication requires a successful normal push receipt, separately
 recorded after the mandatory gates finish.
 
+The resumed source `963f29484` passed every normal gate, including zero full-tree
+TypeScript errors and net -1 ESLint warnings. Git then rejected the update when
+the canonical ref advanced again; the receipt is retained as
+`resumed-gates-ref-race*`. Changes through `d79abdf9f` were merged at `cf8f59ad1`.
+The affected catalog/task recovery, Vault upload/visit, device drawer and archive
+service/parent-access checks pass 250/250 across 27 suites; the production
+client/server build passes again. All 66 IND hashes remain unchanged. These
+cohorts overlap prior checks and are not added to a whole-suite total. The native
+PostgreSQL archive suites were not rerun in this workspace because no disposable
+database URL is configured; incoming native evidence remains under
+`docs/evidence/D5/2026-10-30-vault-final-access/`. The PGlite parent-access and
+focused service checks are labelled as such, not as native-database proof.
+
 The next source again passed every gate, including the zero-error compiler, but
 the remote advanced during that run too. The second ref-race receipt is retained.
 The new study/protocol initiation and verified CSR STF-value corrections through

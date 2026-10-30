@@ -8,6 +8,12 @@ Projects, Study/Protocol and IND regression checks pass 428/428 across 23 suites
 production client/server builds pass. Normal publication gates are the next step.
 See the resumed-integration section of the README and its retained logs.
 
+Those normal gates subsequently passed with zero TypeScript errors and net -1
+warnings, but Git refused another concurrent ref update. Changes through
+`d79abdf9f` were merged at `cf8f59ad1`; the affected recovery/upload/drawer/archive
+checks pass 250/250 across 27 suites and the production builds pass again.
+All 66 IND hashes remain unchanged. Publication is retried normally.
+
 Project Home's intelligence-profile indication/population and IND's program/sole
 charter facts remain separate records; this integration does not reconcile them.
 

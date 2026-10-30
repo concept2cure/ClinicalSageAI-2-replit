@@ -23,5 +23,16 @@
     "Project intelligence profile and program/charter facts remain separate records",
     "Focused checks do not establish scientific/regulatory/model qualification",
     "Regional Module 1 content, nonclinical source binding and populated applicability remain open"
-  ]
+  ],
+  "subsequent_merge": {
+    "source": "cf8f59ad18c523dfa72c67600bbf4ce3f260e213",
+    "integrated_remote": "d79abdf9f4dd1a30091247bce2fdab2081a1e188",
+    "focused_suites": 27,
+    "focused_passed": 250,
+    "log": "resumed-recovery-tests.txt.gz",
+    "ind_source_hashes_unchanged": 66,
+    "native_database_suite": "not rerun: no disposable PostgreSQL URL configured; incoming owner native receipts retained separately",
+    "production_build": "passed",
+    "build_log": "resumed-recovery-build.txt.gz"
+  }
 }
