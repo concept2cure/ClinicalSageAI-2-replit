@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage generation hold keeps arrived review available > blocks a new request with its reason, then permits explicit drafting after the hold is lifted
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage generation hold keeps arrived review available > holds regeneration while preserving comparison, tracked replacement and navigation
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The workbench passes the recorded writing scope into passage drafts > uses 'the Japanese section instead of its U…' 676ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The workbench passes the recorded writing scope into passage drafts > uses 'the EU CTA program when the section h…' 321ms
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > drafts three replacements of exactly the selection, and the one chosen replaces exactly it as AnA’s tracked change
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > replaces the first occurrence when that is the one selected
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps focus with the person: on the alternative shown, and back on Replace once the change is in the editor
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > says before the click that the replacement carries no source citations and AnA supplies no figures
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps an answer the governed-write rule does not admit out of the section
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > refuses an answer the server did not draft for the passage selected, and lists nothing
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps a refusal from the server beside the passage, with its remedy, and lists nothing
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > goes back to the section draft, which is as it was
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > ends the passage when the panel closes, so Draft from sources opens the section draft
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > opens the section draft, not the passage, when Draft from sources is pressed in Document view
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > belongs to its section: another section, and coming back, show the section draft
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > with nothing selected
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > for a selection that runs across paragraphs
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > for words that read the same, with the same text around them, in more than one place
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 16 skipped (18)
+   Start at  16:37:44
+   Duration  5.18s (transform 2.78s, setup 145ms, import 3.40s, tests 1.00s, environment 498ms)
+
