@@ -1,0 +1,224 @@
+[
+  {
+    "path": "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+    "git_blob": "c8cbdf08dbdf066bdf05834853e292081fa5d8f5",
+    "sha256": "3e0506be983f5407732db2b365a9e8565f30abe491d15872be83d87f8ad24c54",
+    "bytes": 27258
+  },
+  {
+    "path": "client/src/concept2cure/mdx/app.css",
+    "git_blob": "24d246d3b3dc1f5da1f16df173454ec58905953b",
+    "sha256": "62cca3606d3ce23a08a116559b571c5ccef2e953e58b842a346ad60601f71eb8",
+    "bytes": 197342
+  },
+  {
+    "path": "client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx",
+    "git_blob": "54614f002e58f094593d78e6e39f95fdcd3b9d47",
+    "sha256": "b4136ca73086117f26b53659787f7eecc185123f4a45e51c097e9295672c2e7e",
+    "bytes": 27526
+  },
+  {
+    "path": "client/src/concept2cure/mdx/surfaces/engineeringPanelTarget.ts",
+    "git_blob": "4673faf38e657f14fd314b2387dfb7e12c4a4485",
+    "sha256": "df13aa1545e1fbd99219afa2cb83faf22563103f65eeb08209afa7561690e455",
+    "bytes": 2531
+  },
+  {
+    "path": "client/src/concept2cure/v2/dataConnect.tsx",
+    "git_blob": "005d57d94e29a03fa91cfde86b8822da20b23e55",
+    "sha256": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669",
+    "bytes": 33034
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+    "git_blob": "93ad8226bd095ee6ce82b7d6e050efedaf3ba9a5",
+    "sha256": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7",
+    "bytes": 3869
+  },
+  {
+    "path": "client/src/concept2cure/v2/projectScopedRead.tsx",
+    "git_blob": "5c69b8939fcf4bdd0740f34ac8ab526023307e75",
+    "sha256": "9dcd711a081a9fece7b2952216858a421a627d72c5be6861181363a0184d3f99",
+    "bytes": 9101
+  },
+  {
+    "path": "client/src/concept2cure/v2/shellProject.ts",
+    "git_blob": "449ac278cb08e71739cdfb15220c2de390a74062",
+    "sha256": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
+    "bytes": 15793
+  },
+  {
+    "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+    "sha256": "e51c1f78075f4fb168459f9ddcf3efc9df16add9cb10fbcc49acd9a384cb0aec",
+    "git_blob": "2eda99401a4e3f31610cb59173d5ff0a711baedf",
+    "bytes": 52407
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaceActions.ts",
+    "git_blob": "0afc1f654f3922c701f36d0580a023c8ac704bed",
+    "sha256": "2c3fa2b8f6a375af1d7af1192f730438634f35f7224946f8cf444e45d5a8486b",
+    "bytes": 23865
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+    "git_blob": "07dba584650af8d6ab9d2979ed9ba52d9f360204",
+    "sha256": "8c25ac8a223318f0f28c67222d7e11c208caa31260665d6e2835b77dbf5e8bd3",
+    "bytes": 103205
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx",
+    "git_blob": "738afe93286eebd3fc05c2da331b9d18ee6386be",
+    "sha256": "1f49ca6b760a6f2cc5f13b810e0bb7d642fcd828cc86b4f8cab78895edda4adc",
+    "bytes": 13180
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/RiskRegister.tsx",
+    "git_blob": "43aa22c5b116adfa4b2c328b63c29e545ec31884",
+    "sha256": "48a66bb26b8d2426781d42df9eb2f11b51f6684484fd23ee83b570f56f283a2e",
+    "bytes": 62495
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/riskRecordRead.ts",
+    "git_blob": "76546ed8afa99f44a59986b3a1152315d40c281b",
+    "sha256": "31e92c9cd5b484d7e99c6c394f42f16f8d9aec3c973369b440c41898a64f402d",
+    "bytes": 5832
+  },
+  {
+    "path": "client/src/services/portal/authService.tsx",
+    "git_blob": "50ef15bf0f6fd8684fb0abb8ad3978e2f85dfa70",
+    "sha256": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54",
+    "bytes": 55628
+  },
+  {
+    "path": "server/db/requestDb.ts",
+    "git_blob": "3c2586e1267529e3987bcdfab70f9227c7d0ce63",
+    "sha256": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+    "bytes": 6329
+  },
+  {
+    "path": "server/middleware/orgMembership.ts",
+    "git_blob": "409b761eb51e59afe7a90b55ab220dd9c70b38c0",
+    "sha256": "182c11428338ba181904a23ddf53ff2500868a21c323d918700468d6b9f7cb80",
+    "bytes": 29241
+  },
+  {
+    "path": "server/routes/governed-signed-act.ts",
+    "git_blob": "c74877326f90d186a6a888d77d128f1ac948fed7",
+    "sha256": "d6d0878cc349c07b66234ef85816fec67325cc59d42c69c36bf0df77c8244767",
+    "bytes": 18398
+  },
+  {
+    "path": "server/routes/mdx-engineering.ts",
+    "git_blob": "58bd6ba5a8e314d66096e166f4764f526cb90705",
+    "sha256": "d312e5c9f34f4cd81a5741666d1cd10ed48c27b11f80a16f130e65c689f6aaa5",
+    "bytes": 30075
+  },
+  {
+    "path": "server/routes/mdx-risk-acceptance-lock.ts",
+    "git_blob": "469ee237c6525b5ad5997a4949ef7d358c5c167e",
+    "sha256": "0849a31a865c83a6a4b19e1b5133a3884a6f7d30f194ea34a17bd405e368bf78",
+    "bytes": 11482
+  },
+  {
+    "path": "server/routes/mdx-risk-access.ts",
+    "git_blob": "72ede67f466fd23438aaadd01bf6546a97da3daa",
+    "sha256": "1a4660caeff1c9e5b3d92659481dbfd6d991fd7b1a665e9c856af93332687ff2",
+    "bytes": 9475
+  },
+  {
+    "path": "server/routes/mdx-risk-management.ts",
+    "git_blob": "834fd882cae7fc824920f932a1f086209818310e",
+    "sha256": "17dc627fc53846fbfb90fd6b58a596f4e955c892d6ba3d4f8e4891f1fef44cc3",
+    "bytes": 34824
+  },
+  {
+    "path": "server/services/ana/therapeutic-area-profiles/oncology.ts",
+    "git_blob": "deaf645b03d73abaad7187f68ccec3b430ca8b3c",
+    "sha256": "e8b8d699870ed9da81ed4bb032030bed409bb8a440d0768d448975234a7743bd",
+    "bytes": 12115
+  },
+  {
+    "path": "server/services/c2c/current-program-access.ts",
+    "git_blob": "f4f3473cc339c8e22c50711abfe0c9dfb2ca07e4",
+    "sha256": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+    "bytes": 10424
+  },
+  {
+    "path": "server/services/csr/project-scope.ts",
+    "git_blob": "7f89eaf2e27c1649f99cd885bd21a5ab09686621",
+    "sha256": "6f70d1b969ea1abc92809f22ac9e8061506366ce250e583f325e969520b74108",
+    "bytes": 10981
+  },
+  {
+    "path": "server/services/lumen-context-builder.ts",
+    "git_blob": "ded224f6d147d03af5dae014dc4c68a0132db280",
+    "sha256": "e1d54173a37e03ee5ccba42a31170556f345d5cc4e8436c34e43cb429e9f74a9",
+    "bytes": 54384
+  },
+  {
+    "path": "server/services/lumen-context/prompt-budget.ts",
+    "git_blob": "973da9e6f8af664378567b9192675808602259d7",
+    "sha256": "c9fbcf7df0a9232848bcb1afc3335b77c3269f90ff557903a1b96a4087c47f46",
+    "bytes": 1157
+  },
+  {
+    "path": "server/services/lumen-instruction-engine.ts",
+    "git_blob": "b3b0adbdc1d9c442241360284a8b9794b938d63f",
+    "sha256": "e2e7dcf856703b72202f6610cb8af00beb4a890b1d280f0ba74440a84fbba0f7",
+    "bytes": 53708
+  },
+  {
+    "path": "server/services/module-intelligence.ts",
+    "git_blob": "a063708cb170a88f3a535068ff0f46a283034f86",
+    "sha256": "0be6ab3209c4b1745be6e66d5e5099edd7d537163076bd586697334bd3608b31",
+    "bytes": 61825
+  },
+  {
+    "path": "server/services/part11/signature-persistence.ts",
+    "git_blob": "1ba36702db930c9f3d721a2185a659f4abf99445",
+    "sha256": "7e0996a052a3b7f78e211fd617d263bb87983254b402c122cafe3dd528455ca6",
+    "bytes": 52794
+  },
+  {
+    "path": "server/services/part11/signed-content-lock.ts",
+    "git_blob": "c8c4c4d8a98fb3befcdae25efc91df09cfa099de",
+    "sha256": "de577030cefc12b3a15e0d7fcb814727f4aed8c038768207f143328903f3ea32",
+    "bytes": 12453
+  },
+  {
+    "path": "server/services/part11/signed-content-state.ts",
+    "git_blob": "a133462249f0356d4800789e055731adf1e12749",
+    "sha256": "2cec02221269b6dd7bdfe5eec8ad7ee2b9c7e9a4040f26c48eb858c515a008f7",
+    "bytes": 10747
+  },
+  {
+    "path": "server/services/project-sharing-access.ts",
+    "git_blob": "9edbd777068337a84ce1aa9d92116bd31d5f4090",
+    "sha256": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+    "bytes": 6485
+  },
+  {
+    "path": "server/services/regulatory/workspace-config-enrichment.ts",
+    "git_blob": "02bf0fe54b1651def1ae639f7cac13f8fc24e0b4",
+    "sha256": "f65fda2f0ba147c734e7ca9565494929c0d457bfcbd31802341643c2ae220d50",
+    "bytes": 5052
+  },
+  {
+    "path": "server/services/report-os/project-access.ts",
+    "git_blob": "8d4bdb492117d6b647e2542741efc54555c23797",
+    "sha256": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+    "bytes": 8592
+  },
+  {
+    "path": "shared/navigation/index.ts",
+    "git_blob": "5c9141da7c28c138eb3a52fd2733db05949d5a3a",
+    "sha256": "5844fa1bca83f041b02206193a780608af4936feb67de80f821ce1522ce9e46e",
+    "bytes": 32005
+  },
+  {
+    "path": "shared/regulatory/app-registry.ts",
+    "git_blob": "bd238ac97e4e75579887bfe351f8371eab3ce260",
+    "sha256": "79552bd7f2491672915ea15b8907568c9708cfe2d02cfcd147c7ad90786a6b22",
+    "bytes": 8769
+  }
+]

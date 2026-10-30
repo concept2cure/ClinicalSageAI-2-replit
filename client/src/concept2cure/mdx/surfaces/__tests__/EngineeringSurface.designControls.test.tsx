@@ -31,7 +31,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => H.user }));
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuthUser: () => H.user }));
 
 import { ApiRequestError, extractApiError } from '@/lib/queryClient';
 import { GOVERNED_WRITE_PERMISSION } from '@shared/constants/permissions';

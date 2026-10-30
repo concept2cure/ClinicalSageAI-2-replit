@@ -200,7 +200,10 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'device-diagnostics', label: 'IVDR evidence', description: 'The IVD pathway workspace for in-vitro diagnostic projects.', scope: 'global', group: 'module' },
   { id: 'device-clinical-studies', label: 'Device clinical studies', description: 'The clinical studies register for device projects.', scope: 'global', group: 'module' },
   { id: 'device-software', label: 'Device software lifecycle', description: 'Software documentation completeness for the device project in context.', scope: 'global', group: 'module' },
-  { id: 'device-engineering', label: 'Engineering evidence', description: 'The engineering and design-controls workspace.', scope: 'global', group: 'module' },
+  { id: 'device-engineering', label: 'Engineering evidence', description: 'The engineering and design-controls workspace.', scope: 'global', group: 'module', params: [
+    { name: 'engineeringPanel', required: false, description: 'Existing engineering subsection to focus.', enum: ['risk', 'design-controls'] },
+    { name: 'programId', required: false, description: 'Expected open project; a different project is never selected by this handoff.' },
+  ] },
   { id: 'device-udi', label: 'UDI and labeling', description: 'The device UDI register.', scope: 'global', group: 'module' },
   { id: 'device-postmarket', label: 'Post-market surveillance and CAPA', description: 'Postmarket surveillance with its triage queue.', scope: 'global', group: 'module' },
   { id: 'device-presub', label: 'Pre-Sub manager', description: 'The device pre-submission manager.', scope: 'global', group: 'module' },
