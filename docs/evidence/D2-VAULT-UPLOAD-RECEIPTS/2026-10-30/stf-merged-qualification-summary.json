@@ -11,7 +11,11 @@
   "prior_source_all_normal_gates_passed": true,
   "prior_source_compiler_errors": 0,
   "prior_source_publication": "rejected solely by concurrent ref advance",
-  "current_publication": "pending normal push gates",
+  "current_publication": "accepted directly on concept2cure-v2",
   "native_xml_qualification_repeated": false,
-  "native_legacy_repair_claimed": false
+  "native_legacy_repair_claimed": false,
+  "source_commit": "b1455c944cae51296784cc5c50c719f1255e5888",
+  "normal_gates_passed": true,
+  "compiler_errors": 0,
+  "publication_receipt": "source-publication.json"
 }
