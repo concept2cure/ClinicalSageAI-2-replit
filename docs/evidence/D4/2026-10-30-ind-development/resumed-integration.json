@@ -18,7 +18,7 @@
     }
   ],
   "production_build": "passed",
-  "publication": "pending normal push",
+  "publication": "accepted normal push",
   "limits": [
     "Project intelligence profile and program/charter facts remain separate records",
     "Focused checks do not establish scientific/regulatory/model qualification",
@@ -34,5 +34,7 @@
     "native_database_suite": "not rerun: no disposable PostgreSQL URL configured; incoming owner native receipts retained separately",
     "production_build": "passed",
     "build_log": "resumed-recovery-build.txt.gz"
-  }
+  },
+  "publication_receipt": "publication-receipt.json",
+  "published_source": "8f0b6df37269be8ba9cdc0f0f6b4222b57040425"
 }

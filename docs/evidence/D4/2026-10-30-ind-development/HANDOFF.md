@@ -1,18 +1,28 @@
 # Verified IND development handoff
 
-## Resumed integration — publication pending
+## Published to the canonical branch
+
+Normal push accepted source `8f0b6df37269be8ba9cdc0f0f6b4222b57040425` on
+2026-10-30 at 19:10 UTC. The remote ref was independently verified equal to the
+local source. Every normal gate passed: zero full-tree TypeScript errors against
+the unchanged zero baseline, net -1 ESLint warnings, and unchanged 66 IND source
+hashes. See `publication-receipt.json` and `publication-accepted*` for the exact
+receipt and full hook output. No deployment or scientific qualification is claimed.
+
+## Resumed integration
 
 On continuation, canonical changes through `89b67685e` were merged normally at
 `8a6958b77`. All 66 retained IND source hashes remain identical. The affected
 Projects, Study/Protocol and IND regression checks pass 428/428 across 23 suites;
-production client/server builds pass. Normal publication gates are the next step.
+production client/server builds pass. The normal publication result is above.
 See the resumed-integration section of the README and its retained logs.
 
 Those normal gates subsequently passed with zero TypeScript errors and net -1
 warnings, but Git refused another concurrent ref update. Changes through
 `d79abdf9f` were merged at `cf8f59ad1`; the affected recovery/upload/drawer/archive
 checks pass 250/250 across 27 suites and the production builds pass again.
-All 66 IND hashes remain unchanged. Publication is retried normally.
+All 66 IND hashes remain unchanged. The subsequent `af226ae6a` merge changed no
+application source relative to `5ff16e755`; the normal retry then succeeded.
 
 Project Home's intelligence-profile indication/population and IND's program/sole
 charter facts remain separate records; this integration does not reconcile them.
