@@ -13,6 +13,13 @@
  * unit testing without a DB; every read/write is tenant-scoped from ctx and
  * audited — mirroring estar-registration-service / ind-master-data-service.
  *
+ * Every change a filing takes is also written to its own event history
+ * (estar_submission_events) on the change's transaction (D2, fold F5 item 1,
+ * 2026-10-30; one device-filing store, decision P-61 item 1): the start of
+ * tracking, each status change and the signed filing. The §11.10(e) audit row
+ * is written after the commit and may be missing (audit-write-outcome.ts), so
+ * the history a screen states as fact is this one.
+ *
  * @module server/services/pathway-engines/estar/estar-submission-service
  */
 
@@ -21,6 +28,7 @@ import { db } from '../../../db';
 import {
   estarSubmissions,
   ESTAR_SUBMISSION_STATUSES,
+  type EstarSubmissionEventType,
   type EstarSubmissionRow,
   type EstarSubmissionStatus,
 } from '../../../../shared/schema/estar-submission';
@@ -76,6 +84,58 @@ export function computeDecisionDue(filedAt: Date, reviewGoalDays?: number | null
   return new Date(filedAt.getTime() + reviewGoalDays * 24 * 60 * 60 * 1000);
 }
 
+/**
+ * The review goal a filing is clocked by: its own, or, where it recorded none,
+ * its catalogue entry's. A filing migrated from a submission package (fold F5)
+ * carries no review goal, because the package recorded none; the catalogue
+ * names the FDA review goal of its submission type.
+ */
+export function reviewGoalDaysOf(row: { catalogKey: string; reviewGoalDays: number | null }): number | null {
+  return row.reviewGoalDays ?? getCatalogEntry(row.catalogKey as EstarCatalogKey)?.reviewGoalDays ?? null;
+}
+
+// ── The filing's event history ───────────────────────────────────────────────
+
+/** A pg-style client on the transaction of the change an event records. */
+type HistoryClient = { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+
+export interface EstarSubmissionEventInput {
+  organizationId: number;
+  submissionId: string;
+  eventType: EstarSubmissionEventType;
+  fromStatus?: string | null;
+  toStatus?: string | null;
+  actorUserId: number | null;
+  detail?: Record<string, unknown>;
+  occurredAt?: Date | null;
+}
+
+/** Write one event on the caller's client, inside the transaction of the change it records. */
+export async function recordEstarSubmissionEvent(client: HistoryClient, e: EstarSubmissionEventInput): Promise<void> {
+  await client.query(
+    `INSERT INTO estar_submission_events
+       (organization_id, submission_id, event_type, from_status, to_status, actor_user_id, detail, occurred_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, COALESCE($8::timestamptz, now()))`,
+    [e.organizationId, e.submissionId, e.eventType, e.fromStatus ?? null, e.toStatus ?? null, e.actorUserId,
+      JSON.stringify(e.detail ?? {}), e.occurredAt ?? null],
+  );
+}
+
+/** One event of a filing's history, as GET /submissions/:id/events returns it. */
+export interface EstarSubmissionEvent {
+  id: number;
+  eventType: EstarSubmissionEventType;
+  fromStatus: string | null;
+  toStatus: string | null;
+  actorUserId: number | null;
+  /** The actor's recorded name; null when the event names no one or the user row is gone. */
+  actorName: string | null;
+  detail: Record<string, unknown>;
+  occurredAt: string;
+}
+
+const isoOf = (value: unknown): string => (value instanceof Date ? value.toISOString() : new Date(String(value)).toISOString());
+
 // ── CRUD + lifecycle (DB) ────────────────────────────────────────────────────
 
 export interface CreateEstarSubmissionInput {
@@ -91,13 +151,18 @@ export interface CreateEstarSubmissionInput {
 export type AuditedEstarSubmission = EstarSubmissionRow & { auditTrail: AuditRowOutcome };
 
 /**
- * Start tracking a filing from a catalog key. Program type + review clock are
- * pulled from the catalog (the filing→tracking bridge); starts in `draft`.
+ * Start tracking a filing on the caller's transaction client: the row and its
+ * `created` event, or neither. The one insert of a tracked filing: the HTTP
+ * route (through createEstarSubmission) and AnA's create_submission_package
+ * (on its signed transaction) both write through it. Program type and review
+ * clock come from the catalogue; the filing starts at `draft`.
  */
-export async function createEstarSubmission(
+export async function insertTrackedFiling(
+  client: HistoryClient,
   input: CreateEstarSubmissionInput,
   ctx: Ctx,
-): Promise<AuditedEstarSubmission> {
+  eventDetail: Record<string, unknown> = {},
+): Promise<{ id: string }> {
   const entry = getCatalogEntry(input.catalogKey as EstarCatalogKey);
   if (!entry) {
     throw new EstarSubmissionError('VALIDATION', `No eSTAR catalog entry for "${input.catalogKey}".`);
@@ -112,34 +177,51 @@ export async function createEstarSubmission(
     input.projectId != null &&
     !(await projectBelongsToTenant(
       { organizationId: ctx.organizationId, projectId: String(input.projectId) },
-      queryableFromDrizzle(db),
+      client,
     ))
   ) {
     throw new EstarSubmissionError('NOT_FOUND', `Project ${input.projectId} is not a project of this organization.`);
   }
-  const [row] = await db
-    .insert(estarSubmissions)
-    .values({
-      organizationId: ctx.organizationId,
-      catalogKey: input.catalogKey,
-      programType: entry.programType,
-      variant: input.variant ?? 'device',
-      title: input.title ?? entry.label,
-      status: 'draft',
-      reviewGoalDays: entry.reviewGoalDays ?? null,
-      qSubmissionId: input.qSubmissionId ?? null,
-      projectId: input.projectId ?? null,
-      notes: input.notes ?? null,
-      createdBy: ctx.userId,
-    })
-    .returning();
+  const variant = input.variant ?? 'device';
+  const projectId = input.projectId ?? null;
+  const inserted = await client.query(
+    `INSERT INTO estar_submissions
+       (organization_id, catalog_key, program_type, variant, title, status, review_goal_days,
+        q_submission_id, project_id, notes, created_by)
+     VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10)
+     RETURNING id`,
+    [ctx.organizationId, input.catalogKey, entry.programType, variant, input.title ?? entry.label,
+      entry.reviewGoalDays ?? null, input.qSubmissionId ?? null, projectId, input.notes ?? null, ctx.userId],
+  );
+  const id = String(inserted.rows[0].id);
+  await recordEstarSubmissionEvent(client, {
+    organizationId: ctx.organizationId,
+    submissionId: id,
+    eventType: 'created',
+    toStatus: 'draft',
+    actorUserId: ctx.userId,
+    detail: { catalogKey: input.catalogKey, programType: entry.programType, variant, projectId, ...eventDetail },
+  });
+  return { id };
+}
+
+/**
+ * Start tracking a filing from a catalog key. Program type + review clock are
+ * pulled from the catalog (the filing→tracking bridge); starts in `draft`.
+ */
+export async function createEstarSubmission(
+  input: CreateEstarSubmissionInput,
+  ctx: Ctx,
+): Promise<AuditedEstarSubmission> {
+  const { id } = await db.transaction(async (tx) => insertTrackedFiling(queryableFromDrizzle(tx), input, ctx));
+  const row = await getEstarSubmission(id, ctx);
   const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'ESTAR_SUBMISSION_CREATED',
     resourceType: 'estar_submission',
     resourceId: row.id,
-    details: { catalogKey: input.catalogKey, programType: entry.programType },
+    details: { catalogKey: input.catalogKey, programType: row.programType },
   });
   logger.info('Created eSTAR submission', { id: row.id, organizationId: ctx.organizationId });
   return { ...row, auditTrail };
@@ -173,6 +255,36 @@ export async function getEstarSubmission(
     .limit(1);
   if (!row) throw new EstarSubmissionError('NOT_FOUND', 'eSTAR submission not found for this organization.');
   return row as EstarSubmissionRow;
+}
+
+/**
+ * A filing's event history, oldest first. The filing is read for the
+ * organization first, so another organization's id is NOT_FOUND, never an
+ * empty history.
+ */
+export async function listEstarSubmissionEvents(
+  id: string,
+  ctx: { organizationId: number },
+): Promise<EstarSubmissionEvent[]> {
+  await getEstarSubmission(id, ctx);
+  const { rows } = await queryableFromDrizzle(db).query(
+    `SELECT e.id, e.event_type, e.from_status, e.to_status, e.actor_user_id, u.name AS actor_name, e.detail, e.occurred_at
+       FROM estar_submission_events e
+       LEFT JOIN users u ON u.id = e.actor_user_id
+      WHERE e.organization_id = $1 AND e.submission_id = $2
+      ORDER BY e.occurred_at, e.id`,
+    [ctx.organizationId, id],
+  );
+  return rows.map((r: Record<string, unknown>) => ({
+    id: Number(r.id),
+    eventType: r.event_type as EstarSubmissionEventType,
+    fromStatus: (r.from_status as string | null) ?? null,
+    toStatus: (r.to_status as string | null) ?? null,
+    actorUserId: r.actor_user_id == null ? null : Number(r.actor_user_id),
+    actorName: typeof r.actor_name === 'string' && r.actor_name ? r.actor_name : null,
+    detail: (typeof r.detail === 'string' ? JSON.parse(r.detail) : r.detail ?? {}) as Record<string, unknown>,
+    occurredAt: isoOf(r.occurred_at),
+  }));
 }
 
 /**
@@ -341,7 +453,31 @@ export async function applySignedFiling(
     command: 'sign',
   });
 
+  /* The filing's own history, on the same client: it commits with the filing
+     and its signature, or not at all. */
+  await recordFiledEvent(client, p, artifactSha256);
+
   return { artifactSha256 };
+}
+
+/** The `filed` event of a signed filing, on the signing transaction's client. */
+function recordFiledEvent(client: SignatureDbClient, p: SignedFilingParams, artifactSha256: string): Promise<void> {
+  return recordEstarSubmissionEvent(client, {
+    organizationId: p.organizationId,
+    submissionId: p.id,
+    eventType: 'filed',
+    fromStatus: p.fromStatus,
+    toStatus: 'filed',
+    actorUserId: p.userId,
+    detail: {
+      artifactDocumentId: p.artifactDocumentId,
+      artifactSha256,
+      fdaTrackingNumber: p.fdaTrackingNumber ?? null,
+      meaning: p.meaning,
+      reason: p.reason,
+    },
+    occurredAt: p.now,
+  });
 }
 
 /**
@@ -384,7 +520,7 @@ export async function advanceEstarSubmission(
         organizationId: ctx.organizationId,
         userId: ctx.userId,
         fromStatus: current.status as EstarSubmissionStatus,
-        reviewGoalDays: current.reviewGoalDays,
+        reviewGoalDays: reviewGoalDaysOf(current),
         artifactDocumentId: input.signature!.artifactDocumentId,
         reason: input.signature!.reason,
         meaning: input.signature!.meaning,
@@ -409,12 +545,27 @@ export async function advanceEstarSubmission(
     patch.decision = input.decision;
   }
 
-  const [row] = await db
-    .update(estarSubmissions)
-    .set(patch)
-    .where(and(eq(estarSubmissions.id, id), eq(estarSubmissions.organizationId, ctx.organizationId), eq(estarSubmissions.status, current.status)))
-    .returning();
-  if (!row) throw new EstarSubmissionError('STATE_CHANGED', 'The tracked filing changed during this request. Read its current state before another transition.');
+  const row = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(estarSubmissions)
+      .set(patch)
+      .where(and(eq(estarSubmissions.id, id), eq(estarSubmissions.organizationId, ctx.organizationId), eq(estarSubmissions.status, current.status)))
+      .returning();
+    if (!updated) throw new EstarSubmissionError('STATE_CHANGED', 'The tracked filing changed during this request. Read its current state before another transition.');
+    await recordEstarSubmissionEvent(queryableFromDrizzle(tx), {
+      organizationId: ctx.organizationId,
+      submissionId: id,
+      eventType: 'status_changed',
+      fromStatus: current.status,
+      toStatus: input.toStatus,
+      actorUserId: ctx.userId,
+      detail: {
+        ...(input.fdaTrackingNumber !== undefined ? { fdaTrackingNumber: input.fdaTrackingNumber } : {}),
+        ...(input.toStatus === 'decision' && input.decision !== undefined ? { decision: input.decision } : {}),
+      },
+    });
+    return updated;
+  });
   const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
@@ -431,7 +582,9 @@ export default {
   canTransition,
   computeDecisionDue,
   createEstarSubmission,
+  insertTrackedFiling,
   listEstarSubmissions,
+  listEstarSubmissionEvents,
   getEstarSubmission,
   advanceEstarSubmission,
 };

@@ -1,0 +1,30 @@
+-- P-72 slice 0, item 1: give the jobs' predicates something to match, for both tenants (owner, past triggers; a copy only).
+\set ON_ERROR_STOP off
+SET session_replication_role = 'replica';
+-- task-due sweep: one overdue open task per tenant, assigned to the tenant's admin
+UPDATE unified_tasks t SET due_date = now() - interval '1 day', assignee_id = ou.user_id
+  FROM organization_users ou WHERE ou.organization_id = t.organization_id AND t.organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%');
+-- retention sweep: one expired document per tenant; A's program stays under its legal hold, B's hold is lifted
+UPDATE vault.documents SET retention_until = CURRENT_DATE - 10 WHERE document_code IN ('p72-a-doc-2', 'p72-b-doc-2');
+UPDATE vault.legal_holds SET lifted_at = now(), lifted_by = (SELECT u.id FROM users u WHERE u.email = 'p72-b-admin@example.invalid'), lift_reason = 'p72 slice 0 probe: lifted so the expired document is disposable' WHERE reference = 'p72-hold-' || (SELECT id FROM organizations WHERE slug = 'p72-b');
+-- run control: each tenant's live run belongs to its admin
+UPDATE ana_runs r SET user_id = ou.user_id, started_session_id = NULL FROM organization_users ou
+ WHERE ou.organization_id = r.organization_id AND r.organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%');
+-- submission-chat sweep: one pending, expired proposal per tenant
+UPDATE ana_submission_chat_proposals SET status = 'pending', expires_at = now() - interval '1 hour'
+ WHERE organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%');
+-- scheduled-once: a finished claim for A ('p72-probe-a')
+UPDATE scheduled_job_claims SET job_name = 'p72-probe-a', finished_at = now(), result = '{"p72":true}'::jsonb
+ WHERE organization_id = (SELECT id FROM organizations WHERE slug = 'p72-a');
+SET session_replication_role = 'origin';
+SELECT 'unified_tasks overdue', count(*) FROM unified_tasks WHERE due_date < now() AND organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%')
+UNION ALL SELECT 'vault expired', count(*) FROM vault.documents WHERE retention_until < CURRENT_DATE
+UNION ALL SELECT 'holds active', count(*) FROM vault.legal_holds WHERE lifted_at IS NULL AND reference LIKE 'p72-hold-%'
+UNION ALL SELECT 'ana_runs running w/ user', count(*) FROM ana_runs WHERE status = 'running' AND user_id IS NOT NULL AND organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%')
+UNION ALL SELECT 'proposals pending expired', count(*) FROM ana_submission_chat_proposals WHERE status = 'pending' AND expires_at < now()
+UNION ALL SELECT 'scheduled claim A finished', count(*) FROM scheduled_job_claims WHERE job_name = 'p72-probe-a' AND finished_at IS NOT NULL;
+-- ivdr pack worker: one queued job per tenant
+SET session_replication_role = 'replica';
+UPDATE ivdr_pack_build_jobs SET status = 'QUEUED' WHERE organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%');
+SET session_replication_role = 'origin';
+SELECT 'ivdr jobs queued', count(*) FROM ivdr_pack_build_jobs WHERE status = 'QUEUED';

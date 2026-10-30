@@ -1,0 +1,23 @@
+## scripts/db/program-same-org-preflight.mjs, owner = superuser postgres (CI shape)
+exit 0
+refused lines: 0
+  ✓ vault.documents: 0 record(s) name a foreign or missing project
+  ✓ public.submission_transmittals: 0 record(s) name a foreign or missing project
+
+✓ every project key names a project of its own organization.
+## the same, owner = non-superuser c2c_rds_master (RDS shape)
+exit 2
+refused lines: 0
+  ✓ public.submission_transmittals: 0 record(s) name a foreign or missing project
+
+✗ 1 store(s) could not be read in full as this role, so this is not a clean result (see above).
+## scripts/db-verify/verify-rls.ts, with the P arm (upgraded database)
+exit 1
+  ✗ FAIL: every non-allowlisted tenant table has ENABLE+FORCE RLS and USING/WITH CHECK (incomplete: ai.document_embeddings, ai.gateway_audit_log, ai.rag_conversations, ai.search_queries, audit.event
+[RLS] enforcement on — tenant isolation, fail-closed, WITH CHECK, super-admin
+==== RLS VERIFICATION: 4 passed, 3 failed ====
+## the same, P arm removed
+exit 1
+  ✗ FAIL: every non-allowlisted tenant table has ENABLE+FORCE RLS and USING/WITH CHECK (incomplete: ai.document_embeddings, ai.gateway_audit_log, ai.rag_conversations, ai.search_queries, audit.event
+[RLS] enforcement on — tenant isolation, fail-closed, WITH CHECK, super-admin
+==== RLS VERIFICATION: 4 passed, 3 failed ====

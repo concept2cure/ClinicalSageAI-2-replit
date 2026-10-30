@@ -7,8 +7,13 @@
  * unified_tasks rows carrying review_route_id — each person's inbox entry,
  * written here and nowhere else: every generic task writer refuses them
  * (refuseRouteTaskWrite) and the database refuses any other writer
- * (unified_tasks_route_rows_guard), unless the transaction set the
- * route-writer setting, which only enterRouteWriter below sets.
+ * (unified_tasks_route_rows_guard). Since 2026-10-29 (P-59) the guard admits
+ * a write only as the NOLOGIN role review_route_writer, which is current_user
+ * only inside its SECURITY DEFINER doors (migrations/20261023_review_routes.sql):
+ * each write below is one door, and the door checks at the database what makes
+ * it legitimate (the route open, the task its member, a signature the member's
+ * own, an act its own ledger row). It used to admit any transaction that set
+ * c2c.review_route_writer, which the runtime role could set itself.
  *
  * Authority is the route and verified signatures (review-route-standing.ts),
  * never a task's status. The status written here keeps the inbox in step:
@@ -67,11 +72,6 @@ export {
 
 /** A Drizzle transaction: the member rows are inserted through createTaskInTx. */
 export type RouteTx = TaskInsertRunner;
-
-/** The one place the route-writer setting is set: transaction-local. */
-export async function enterRouteWriter(q: RouteQueryable): Promise<void> {
-  await q.query(`SELECT set_config('c2c.review_route_writer', 'on', true)`);
-}
 
 export interface RouteSubject {
   type: RouteSubjectType;
@@ -170,7 +170,6 @@ export async function sendReviewRoute(
     `SELECT count(*)::int AS n FROM review_routes WHERE organization_id = $1 AND subject_type = $2 AND subject_id = $3`,
     [p.organizationId, p.subject.type, p.subject.id],
   );
-  await enterRouteWriter(q);
   const inserted = await q.query(
     `INSERT INTO review_routes (organization_id, subject_type, subject_id, round, sender_id, sender_name, review_order,
        review_due_at, reviewer_step_due_at, approval_due_at, content_digest)
@@ -216,15 +215,12 @@ export async function closeRouteTaskOnSignature(
   p: { organizationId: number; standing: RouteStanding; member: RouteMember; signatureId: number; actorUserId: number; reason: string; subjectTitle: string },
 ): Promise<TaskEventNotice[]> {
   const q = queryableFromDrizzle(tx);
-  await enterRouteWriter(q);
+  // The door checks the signature is the member's own, over this route's subject and digest (P-59).
   const { rows } = await q.query(
-    `UPDATE unified_tasks SET route_signature_id = $1, status = 'completed', progress = 100, completion_percentage = 100,
-            completed_at = now(), last_modified_by = $2, updated_at = now()
-      WHERE organization_id = $3 AND task_id = $4 AND review_route_id = $5::uuid AND route_signature_id IS NULL
-      RETURNING status`,
-    [p.signatureId, p.actorUserId, p.organizationId, p.member.taskId, p.standing.route!.id],
+    'SELECT public.review_route_record_signature($1, $2::uuid, $3, $4, $5) AS status',
+    [p.organizationId, p.standing.route!.id, p.member.taskId, p.signatureId, p.actorUserId],
   );
-  if (rows.length !== 1) throw new Error(`Route member ${p.member.taskId} could not be closed on its signature`);
+  if (rows[0]?.status !== 'completed') throw new Error(`Route member ${p.member.taskId} could not be closed on its signature`);
   await auditTaskActionInTx(q, {
     orgId: p.organizationId,
     userId: p.actorUserId,
@@ -253,15 +249,14 @@ export async function openReadySteps(
   p: { organizationId: number; standing: RouteStanding; actorUserId: number; subjectTitle: string },
 ): Promise<TaskEventNotice[]> {
   const q = queryableFromDrizzle(tx);
-  await enterRouteWriter(q);
   const notices: TaskEventNotice[] = [];
   for (const m of p.standing.members.filter((x) => x.outcome === 'pending' && x.stepOpen)) {
+    // The door opens a step only when every member of every earlier step has a stamped signature (P-59).
     const { rows } = await q.query(
-      `UPDATE unified_tasks SET status = 'pending', updated_at = now()
-        WHERE organization_id = $1 AND task_id = $2 AND review_route_id = $3::uuid AND status = 'blocked' RETURNING task_id`,
-      [p.organizationId, m.taskId, p.standing.route!.id],
+      'SELECT public.review_route_open_step($1, $2::uuid, $3) AS opened',
+      [p.organizationId, p.standing.route!.id, m.taskId],
     );
-    if (!rows.length) continue;
+    if (rows[0]?.opened !== true) continue;
     const approver = m.role === 'approver';
     await auditTaskActionInTx(q, {
       orgId: p.organizationId, userId: p.actorUserId, command: 'task.transition', taskId: m.taskId,
@@ -297,7 +292,6 @@ export async function closeReviewRoute(
 ): Promise<{ notices: TaskEventNotice[]; actId: string | null }> {
   const q = queryableFromDrizzle(tx);
   const route = p.standing.route!;
-  await enterRouteWriter(q);
   const closed = await q.query(
     `UPDATE review_routes SET status = $1, status_reason = $2, status_by = $3, status_at = now()
       WHERE organization_id = $4 AND id = $5::uuid AND status = 'open' RETURNING id`,
@@ -307,11 +301,7 @@ export async function closeReviewRoute(
   const target = routeSubjectTarget(p.subjectType, p.subjectId);
   const open = p.standing.members.filter((m) => m.outcome !== 'signed');
   for (const m of open) {
-    await q.query(
-      `UPDATE unified_tasks SET status = 'cancelled', updated_at = now(), last_modified_by = $1
-        WHERE organization_id = $2 AND task_id = $3 AND review_route_id = $4::uuid AND status <> 'cancelled'`,
-      [p.actorUserId, p.organizationId, m.taskId, route.id],
-    );
+    await q.query('SELECT public.review_route_cancel_member($1, $2::uuid, $3, $4)', [p.organizationId, route.id, m.taskId, p.actorUserId]);
   }
   let actId: string | null = null;
   if (p.status !== 'complete') {
@@ -327,10 +317,7 @@ export async function closeReviewRoute(
     });
     actId = gov.actionId;
     if (p.returner) {
-      await q.query(
-        `UPDATE unified_tasks SET route_act_id = $1 WHERE organization_id = $2 AND task_id = $3 AND review_route_id = $4::uuid`,
-        [actId, p.organizationId, p.returner.taskId, route.id],
-      );
+      await q.query('SELECT public.review_route_stamp_act($1, $2::uuid, $3, $4)', [p.organizationId, route.id, p.returner.taskId, actId]);
     }
   }
   for (const m of open) {
@@ -439,18 +426,10 @@ export async function reassignMember(
     contentDigest: route.contentDigest, role: member.role, candidateId: p.assigneeId, senderId: route.senderId, actorId: p.actorUserId,
     named: new Set(p.standing.members.map((m) => m.userId)),
   }).catch(asChangeRefusal);
-  await enterRouteWriter(q);
-  await assignTaskInTx(req, q as unknown as RequestSqlClient, { taskId: member.taskId, method: 'named', assigneeId: to.userId, reason: p.reason }, { routeOwned: true })
-    .catch(asChangeRefusal);
   const status = routeStatusOf(member);
-  const reopened = await q.query(
-    `UPDATE unified_tasks SET assignee_name = $1, route_act_id = NULL, status = $2, updated_at = now()
-      WHERE organization_id = $3 AND task_id = $4 AND review_route_id = $5::uuid AND assignee_id = $6
-      RETURNING task_id`,
-    [to.printedName, status, p.organizationId, member.taskId, route.id, to.userId],
-  );
-  if (reopened.rows.length !== 1) throw new Error(`Route member ${member.taskId} was not reassigned to ${to.userId}`);
   const actorName = await printedNameOf(q, p.organizationId, p.actorUserId);
+  // The ledger row first: the route writer's door writes the handoff only for
+  // the reassignment its own row names (P-59, review_route_reassign_member).
   const gov = await recordGovernedAction(q, {
     orgId: p.organizationId,
     userId: p.actorUserId,
@@ -464,6 +443,9 @@ export async function reassignMember(
     },
     ...routeLedgerScope(p.subject.type),
   });
+  const handoff = { routeId: route.id, actId: gov.actionId, printedName: to.printedName };
+  await assignTaskInTx(req, q as unknown as RequestSqlClient, { taskId: member.taskId, method: 'named', assigneeId: to.userId, reason: p.reason }, { routeOwned: handoff })
+    .catch(asChangeRefusal);
   if (member.outcome === 'handed back') {
     await auditTaskActionInTx(q, {
       orgId: p.organizationId, userId: p.actorUserId, command: 'task.transition', taskId: member.taskId,
@@ -503,7 +485,6 @@ export async function handBackMember(
   if (member.outcome === 'handed back') throw changed(409, 'ROUTE_HANDED_BACK', 'You have already handed this back; the sender reassigns it.');
   if (member.outcome === 'returned') throw changed(409, 'ROUTE_MEMBER_RETURNED', 'You returned this document for revision.');
   const printedName = member.printedName ?? (await printedNameOf(q, p.organizationId, member.userId));
-  await enterRouteWriter(q);
   const gov = await recordGovernedAction(q, {
     orgId: p.organizationId,
     userId: p.actorUserId,
@@ -513,14 +494,10 @@ export async function handBackMember(
     payload: { routeId: route.id, taskId: member.taskId, role: member.role, step: member.step, userId: member.userId, printedName, actorName: printedName },
     ...routeLedgerScope(p.subject.type),
   });
-  const stamped = await q.query(
-    `UPDATE unified_tasks SET route_act_id = $1, status = 'blocked', updated_at = now(), last_modified_by = $2
-      WHERE organization_id = $3 AND task_id = $4 AND review_route_id = $5::uuid AND assignee_id = $2
-        AND route_act_id IS NULL AND route_signature_id IS NULL
-      RETURNING status`,
-    [gov.actionId, p.actorUserId, p.organizationId, member.taskId, route.id],
-  );
-  if (stamped.rows.length !== 1) throw new Error(`Route member ${member.taskId} could not record its hand-back`);
+  // The door stamps the act only when its ledger row is this member's hand-back on this route (P-59).
+  const stamped = await q.query('SELECT public.review_route_stamp_act($1, $2::uuid, $3, $4) AS status',
+    [p.organizationId, route.id, member.taskId, gov.actionId]);
+  if (stamped.rows[0]?.status !== 'blocked') throw new Error(`Route member ${member.taskId} could not record its hand-back`);
   await auditTaskActionInTx(q, {
     orgId: p.organizationId, userId: p.actorUserId, command: 'task.transition', taskId: member.taskId,
     payload: { from: routeStatusOf(member), to: 'blocked', routeId: route.id, cause: 'hand-back', actId: gov.actionId },
@@ -552,11 +529,9 @@ async function reblockApprovers(
   const notices: TaskEventNotice[] = [];
   for (const m of p.standing.members.filter((x) => x.role === 'approver')) {
     const turnHadCome = m.outcome === 'pending' && m.stepOpen;
-    await q.query(
-      `UPDATE unified_tasks SET review_step = $1, status = CASE WHEN $2::boolean THEN 'blocked' ELSE status END, updated_at = now(), last_modified_by = $3
-        WHERE organization_id = $4 AND task_id = $5 AND review_route_id = $6::uuid`,
-      [p.approverStep, turnHadCome, p.actorUserId, p.organizationId, m.taskId, route.id],
-    );
+    // The door moves an approver after every reviewer, only while no approver has signed (P-59).
+    await q.query('SELECT public.review_route_restep_approver($1, $2::uuid, $3, $4, $5)',
+      [p.organizationId, route.id, m.taskId, p.approverStep, p.actorUserId]);
     if (!turnHadCome) continue;
     reblocked.push(m.taskId);
     await auditTaskActionInTx(q, {
@@ -616,7 +591,6 @@ export async function addRouteReviewer(
   const open = reviewers.filter((m) => m.step < step).every((m) => m.outcome === 'signed');
   const actorName = await printedNameOf(q, p.organizationId, p.actorUserId);
   const anchor = p.subject.programId ? await readProgramAnchorRow(q, { programId: p.subject.programId, orgId: p.organizationId, context: 'review-route-add' }) : null;
-  await enterRouteWriter(q);
   const { reblocked, notices } = await reblockApprovers(q, {
     organizationId: p.organizationId, actorUserId: p.actorUserId, reason: p.reason, standing: p.standing, approverStep: step + 1, subjectTitle: p.subject.title,
     notice: `${actorName} added ${to.printedName} as a reviewer, so the approval waits for their review: ${p.reason}`,

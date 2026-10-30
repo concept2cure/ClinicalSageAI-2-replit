@@ -1,0 +1,24 @@
+######## database c2c_p72_pre
+active_holds_visible_to_the_system_scope
+1
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72/probe/73-hold-precondition.sql:9: ERROR:  REG_QUESTION_PURGE_REFUSED: organization 8 has 1 active legal hold(s); records under hold cannot be destroyed.
+CONTEXT:  PL/pgSQL function tenant_purge_door_preconditions(integer,text) line 20 at RAISE
+SQL statement "SELECT public.tenant_purge_door_preconditions(p_org, 'REG_QUESTION')"
+PL/pgSQL function purge_tenant_reg_questions(integer) line 5 at PERFORM
+######## database c2c_p72_pre_su_noarm
+active_holds_visible_to_the_system_scope
+0
+questions
+0
+######## database c2c_p72_pre_rds_arm
+active_holds_visible_to_the_system_scope
+1
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72/probe/73-hold-precondition.sql:9: ERROR:  REG_QUESTION_PURGE_REFUSED: organization 8 has 1 active legal hold(s); records under hold cannot be destroyed.
+CONTEXT:  PL/pgSQL function tenant_purge_door_preconditions(integer,text) line 20 at RAISE
+SQL statement "SELECT public.tenant_purge_door_preconditions(p_org, 'REG_QUESTION')"
+PL/pgSQL function purge_tenant_reg_questions(integer) line 5 at PERFORM
+######## database c2c_p72_pre_rds_noarm
+active_holds_visible_to_the_system_scope
+0
+questions
+0

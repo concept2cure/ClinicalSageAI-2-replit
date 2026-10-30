@@ -58,7 +58,7 @@ beforeEach(async () => {
       stripe_subscription_id text, updated_at timestamptz, settings jsonb DEFAULT '{}', slug text);
     CREATE TABLE users (id int PRIMARY KEY);
     CREATE TABLE tenant_export_receipts (organization_id int, digest text,
-      table_count int, row_count bigint, created_at timestamptz, created_by int);
+      table_count int, row_count bigint, created_at timestamptz, created_by int, export_scope text);
     CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id int NOT NULL);
     CREATE TABLE qms_documents (id int PRIMARY KEY, organization_id int, status text, metadata jsonb DEFAULT '{}');
     CREATE TABLE authoring_documents (id uuid PRIMARY KEY, tenant_id int);
@@ -75,7 +75,7 @@ beforeEach(async () => {
       (11, 'Synthetic tenant', 'pending_deletion', now() - interval '1 day'),
       (22, 'Other synthetic tenant', 'active', NULL);
     INSERT INTO users VALUES (7);
-    INSERT INTO tenant_export_receipts VALUES (11, 'synthetic-final-export', 5, 9, now(), 7);
+    INSERT INTO tenant_export_receipts VALUES (11, 'synthetic-final-export', 5, 9, now(), 7, 'organization');
     INSERT INTO regulatory_programs VALUES
       ('11111111-1111-4111-8111-111111111111', 11),
       ('22222222-2222-4222-8222-222222222222', 22);
@@ -89,6 +89,8 @@ beforeEach(async () => {
     'migrations/20261018_company_legal_registry.sql',
     'migrations/20260813b_tenant_export_receipts.sql',
     'migrations/20261018_company_document_export_receipts.sql',
+    // The offboarding certificate the purge writes (P-58).
+    'migrations/20261029k_tenant_offboarding_custody.sql',
   ]) await db.exec(await readFile(file, 'utf8'));
   await db.exec(await tableDdl('migrations/20260507_mdx_beta_surfaces.sql', 'risk_items'));
   await db.exec(await tableDdl('migrations/20260507_mdx_beta_surfaces.sql', 'risk_controls'));

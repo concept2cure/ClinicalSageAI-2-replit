@@ -63,6 +63,18 @@
 -- it. A restore or a test fixture writes it as the owner with
 -- session_replication_role = replica for one transaction.
 --
+-- AMENDED IN PLACE 2026-10-29: THE TENANT PURGE'S DOOR (D6, P-58;
+-- docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/). The founder decided a
+-- departing tenant's legacy questions are exported and erased with it, after
+-- custody of the export passes to the customer. reg_questions_read_only
+-- admits ONE DELETE, by the role tenant_record_purger, which is current_user
+-- only inside public.purge_tenant_reg_questions
+-- (migrations/20261029k_tenant_offboarding_custody.sql: SECURITY DEFINER,
+-- platform scope, pending_deletion, no legal hold, custody signed). INSERT,
+-- UPDATE, TRUNCATE, and DELETE by every other role (the owner and the runtime
+-- role included), are still refused; the runtime role's SELECT-only ceiling is
+-- unchanged. No session setting opens it. The tenant purge now lists it.
+--
 -- OWED, NOT HERE. Moving a row that is not closed onto a letter is a governed
 -- act a person takes; it is deferred until a deployed estate shows rows that
 -- need it (the count query is in the evidence README). Until then a person
@@ -82,6 +94,10 @@
 CREATE OR REPLACE FUNCTION public.reg_questions_read_only() RETURNS trigger
 LANGUAGE plpgsql AS $fn$
 BEGIN
+  -- The tenant purge's door (2026-10-29, P-58), and nothing else.
+  IF TG_OP = 'DELETE' AND current_user = 'tenant_record_purger' THEN
+    RETURN OLD;
+  END IF;
   RAISE EXCEPTION
     'reg_questions is read-only since 2026-10-19 (% refused): agency questions are recorded on the letter they came in, in Communication, where each response is approved by signature.',
     TG_OP
@@ -91,7 +107,7 @@ END;
 $fn$;
 
 COMMENT ON FUNCTION public.reg_questions_read_only() IS
-  'Refuses INSERT, UPDATE, DELETE and TRUNCATE on reg_questions, the earlier CMC agency-question file, read-only since 2026-10-19 (P-39 item 1).';
+  'Refuses INSERT, UPDATE, DELETE and TRUNCATE on reg_questions, the earlier CMC agency-question file, read-only since 2026-10-19 (P-39 item 1); admits only the tenant purge door''s DELETE (tenant_record_purger, P-58).';
 
 DO $$
 BEGIN

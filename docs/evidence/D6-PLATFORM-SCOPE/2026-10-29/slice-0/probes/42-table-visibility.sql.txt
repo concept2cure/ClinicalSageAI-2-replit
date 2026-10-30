@@ -1,0 +1,22 @@
+-- P-72 slice 0: what the system scope SEES, table by table. As the runtime role (app_service), in one transaction with
+-- the system scope's LOCAL settings (tenant '0', org '', role app_super_admin, enforce on — runWithSystemTenantScope
+-- through poolInstrumentation), count the rows of every RLS-enabled table. Run against each copy (arm / arm removed,
+-- superuser owner / RDS-shaped owner); the diff is the set of tables the system scope reads only through P.
+-- psql -v scope=sys|a  (a = p72-a's own scope: tenant id + org uuid, no role)
+\set ON_ERROR_STOP on
+BEGIN;
+SELECT CASE WHEN :'scope' = 'sys' THEN '0' ELSE (SELECT id::text FROM organizations WHERE slug = 'p72-a') END AS tid,
+       CASE WHEN :'scope' = 'sys' THEN '' ELSE (SELECT uuid::text FROM organizations WHERE slug = 'p72-a') END AS oid,
+       CASE WHEN :'scope' = 'sys' THEN 'app_super_admin' ELSE '' END AS role \gset
+SELECT set_config('app.current_tenant_id', :'tid', true), set_config('app.current_org_id', :'oid', true),
+       set_config('app.current_user_role', :'role', true), set_config('app.current_account_id', '', true),
+       set_config('app.rls_enforce', 'on', true), set_config('app.bypass_rls', '', true), set_config('app.is_admin', '', true) \gset
+CREATE TEMP TABLE vis (t text, n bigint, err text) ON COMMIT DROP;
+DO $$ DECLARE r record; n bigint; BEGIN
+  FOR r IN SELECT format('%I.%I', ns.nspname, c.relname) q FROM pg_class c JOIN pg_namespace ns ON ns.oid = c.relnamespace
+            WHERE c.relkind IN ('r','p') AND c.relrowsecurity AND ns.nspname NOT IN ('pg_catalog','information_schema') ORDER BY 1 LOOP
+    BEGIN EXECUTE 'SELECT count(*) FROM ' || r.q INTO n; INSERT INTO vis VALUES (r.q, n, NULL);
+    EXCEPTION WHEN OTHERS THEN INSERT INTO vis VALUES (r.q, NULL, left(SQLERRM, 80)); END;
+  END LOOP; END $$;
+SELECT t || ' | ' || coalesce(n::text, 'ERR ' || err) FROM vis ORDER BY t;
+ROLLBACK;

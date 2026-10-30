@@ -1,0 +1,52 @@
+######## database c2c_p72_pre
+== 1. tenant A scope, role admin (an ordinary administrator): mint the platform role on own membership
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72/probe/72-role-claim.sql:9: ERROR:  a platform-staff role is granted by the platform scope only (organization 7, role app_super_admin)
+HINT:  See docs/evidence/D3/2026-09-26-memberships/.
+CONTEXT:  PL/pgSQL function organization_users_staff_role_platform_only() line 7 at RAISE
+== 2. tenant A scope whose role string is app_super_admin (what establishRequestTenantScope / authoring.router.ts:8276 would send for such a claim)
+what | unified_tasks | audit_logs | users_of_b | legal_holds_of_b
+B rows read from A's scope | 1 | 1 | 1 | 1
+UPDATE 1
+UPDATE 1
+== 3. the same, role admin (control): B rows read from A's scope
+unified_tasks | audit_logs | legal_holds_of_b
+0 | 0 | 0
+######## database c2c_p72_pre_su_noarm
+== 1. tenant A scope, role admin (an ordinary administrator): mint the platform role on own membership
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72/probe/72-role-claim.sql:9: ERROR:  a platform-staff role is granted by the platform scope only (organization 7, role app_super_admin)
+HINT:  See docs/evidence/D3/2026-09-26-memberships/.
+CONTEXT:  PL/pgSQL function organization_users_staff_role_platform_only() line 7 at RAISE
+== 2. tenant A scope whose role string is app_super_admin (what establishRequestTenantScope / authoring.router.ts:8276 would send for such a claim)
+what | unified_tasks | audit_logs | users_of_b | legal_holds_of_b
+B rows read from A's scope | 0 | 0 | 0 | 0
+UPDATE 0
+UPDATE 1
+== 3. the same, role admin (control): B rows read from A's scope
+unified_tasks | audit_logs | legal_holds_of_b
+0 | 0 | 0
+######## database c2c_p72_pre_rds_arm
+== 1. tenant A scope, role admin (an ordinary administrator): mint the platform role on own membership
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72/probe/72-role-claim.sql:9: ERROR:  a platform-staff role is granted by the platform scope only (organization 7, role app_super_admin)
+HINT:  See docs/evidence/D3/2026-09-26-memberships/.
+CONTEXT:  PL/pgSQL function organization_users_staff_role_platform_only() line 7 at RAISE
+== 2. tenant A scope whose role string is app_super_admin (what establishRequestTenantScope / authoring.router.ts:8276 would send for such a claim)
+what | unified_tasks | audit_logs | users_of_b | legal_holds_of_b
+B rows read from A's scope | 1 | 1 | 1 | 1
+UPDATE 1
+UPDATE 1
+== 3. the same, role admin (control): B rows read from A's scope
+unified_tasks | audit_logs | legal_holds_of_b
+0 | 0 | 0
+######## database c2c_p72_pre_rds_noarm
+== 1. tenant A scope, role admin (an ordinary administrator): mint the platform role on own membership
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72/probe/72-role-claim.sql:9: ERROR:  a platform-staff role is granted by the platform scope only (organization 7, role app_super_admin)
+HINT:  See docs/evidence/D3/2026-09-26-memberships/.
+CONTEXT:  PL/pgSQL function organization_users_staff_role_platform_only() line 7 at RAISE
+== 2. tenant A scope whose role string is app_super_admin (what establishRequestTenantScope / authoring.router.ts:8276 would send for such a claim)
+what | unified_tasks | audit_logs | users_of_b | legal_holds_of_b
+B rows read from A's scope | 0 | 0 | 0 | 0
+UPDATE 0
+UPDATE 1
+== 3. the same, role admin (control): B rows read from A's scope
+unified_tasks | audit_logs | legal_holds_of_b
+0 | 0 | 0

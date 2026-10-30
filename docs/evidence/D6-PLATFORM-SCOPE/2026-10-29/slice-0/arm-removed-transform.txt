@@ -1,0 +1,9 @@
+SET
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72/probe/40-neutralise-p-arm.sql:26: NOTICE:  policies rewritten: 977
+DO
+policies_still_reading_current_user_role
+0
+(1 row)
+policies
+1233
+(1 row)

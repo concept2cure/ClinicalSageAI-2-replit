@@ -1,0 +1,94 @@
+/**
+ * P-72 slice 0, item 1: run each platform path's own code (the functions behind the 57 runWithSystemTenantScope
+ * call sites, the explicit app_super_admin scopes and the startup probes) against one database as the runtime role,
+ * capturing every statement it sends with its row count or error. Run once against the copy with the P arm and once
+ * against the copy with it removed (same data); 52-diff-paths.py diffs the two captures.
+ * Env: APP_DATABASE_URL (app_service), DATABASE_URL (the owner), OUT (jsonl capture file).
+ */
+import fs from 'node:fs';
+const REPO = '/home/user/ClinicalSageAI-2-replit';
+const pg = (await import(`${REPO}/node_modules/pg/lib/index.js`)).default;
+let current: any = null;
+const SKIP = /^\s*(BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE|SET |RESET |START TRANSACTION|SELECT set_config\()/i;
+const norm = (t: string) => t.replace(/\s+/g, ' ').trim().slice(0, 220);
+const orig = pg.Client.prototype.query;
+pg.Client.prototype.query = function (...args: any[]) {
+  const q = args[0]; const text = typeof q === 'string' ? q : q?.text;
+  if (!current || !text || SKIP.test(text)) return orig.apply(this, args);
+  const rec: any = { sql: norm(text) }; current.stmts.push(rec);
+  const cb = typeof args[args.length - 1] === 'function' ? args[args.length - 1] : null;
+  if (cb) { args[args.length - 1] = (err: any, res: any) => { if (err) rec.err = String(err.message).slice(0, 120); else rec.n = res?.rowCount ?? res?.rows?.length ?? null; cb(err, res); }; return orig.apply(this, args); }
+  const p = orig.apply(this, args);
+  if (p && typeof p.then === 'function') return p.then((res: any) => { rec.n = res?.rowCount ?? res?.rows?.length ?? null; return res; }, (err: any) => { rec.err = String(err?.message).slice(0, 120); throw err; });
+  return p;
+};
+const S = `${REPO}/server`;
+const { pool } = await import(`${S}/db.ts`);
+const { runWithSystemTenantScope, runWithTenantScope } = await import(`${S}/db/tenantStore.ts`);
+const owner = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+const orgs = (await owner.query(`SELECT id, uuid::text uuid FROM organizations WHERE slug IN ('p72-a','p72-b') ORDER BY slug`)).rows;
+const A = orgs[0];
+const users = (await owner.query(`SELECT id FROM users WHERE email LIKE 'p72-%-admin@example.invalid' ORDER BY email`)).rows;
+const runIds = (await owner.query(`SELECT id FROM ana_runs WHERE organization_id = ANY($1::int[])`, [orgs.map((o: any) => o.id)])).rows.map((r: any) => r.id);
+await owner.end();
+const short = (v: any) => { try { return JSON.stringify(v, (_k, x) => (typeof x === 'bigint' ? String(x) : x))?.slice(0, 400) ?? String(v); } catch { return String(v).slice(0, 400); } };
+const sys = (fn: () => Promise<any>) => runWithSystemTenantScope('p72-slice0:harness', fn);
+type Path = { name: string; site: string; run: () => Promise<any> };
+const paths: Path[] = [
+  { name: 'assertRlsCatalogPosture', site: 'server/index.ts:170', run: async () => sys(async () => (await import(`${S}/db/rlsEnforcement.ts`)).assertRlsCatalogPosture(pool)) },
+  { name: 'runStartupInvariants', site: 'server/lib/startup-invariants.ts:144', run: async () => (await import(`${S}/lib/startup-invariants.ts`)).runStartupInvariants() },
+  { name: 'assertAuthoringAuthorizationReady', site: 'server/startup/authoringAuthorizationInvariant.ts:42', run: async () => (await import(`${S}/startup/authoringAuthorizationInvariant.ts`)).assertAuthoringAuthorizationReady(pool) },
+  { name: 'assertAuditImmutabilityForProduction', site: 'server/startup/audit-enforcement.ts:215', run: async () => sys(async () => { const cl = await pool.connect(); try { return await (await import(`${S}/startup/audit-enforcement.ts`)).assertAuditImmutabilityForProduction(cl, { NODE_ENV: 'test' } as any); } finally { cl.release(); } }) },
+  { name: 'findVectorsFromAnotherModel', site: 'server/services/embedding-corpus-policy.ts:380,399', run: async () => { const { pool: p } = await import(`${S}/db.ts`); return (await import(`${S}/services/embedding-corpus-policy.ts`)).findVectorsFromAnotherModel(p); } },
+  { name: 'auditService.logAction (enterprise-security security event; audit:initialize)', site: 'server/middleware/enterprise-security.ts:987 + server/services/auditService.ts:176', run: async () => sys(async () => (await import(`${S}/services/auditService.ts`)).default.logAction({ tenantId: A.id, userId: users[0].id, action: 'p72_probe', resourceType: 'security_event', resourceId: '/p72', details: {} } as any)) },
+  { name: 'GatewayAuditLogger.initialize (store probe)', site: 'server/services/ai-gateway/audit.ts:163', run: async () => { const { GatewayAuditLogger } = await import(`${S}/services/ai-gateway/audit.ts`); const g = new GatewayAuditLogger(pool); return g.initialize(); } },
+  { name: 'GatewayAuditLogger.log (ledger write)', site: 'server/services/ai-gateway/audit.ts:368', run: async () => { const { GatewayAuditLogger } = await import(`${S}/services/ai-gateway/audit.ts`); const g = new GatewayAuditLogger(pool); await g.initialize().catch(() => undefined); return g.log({ requestId: 'p72-' + Date.now(), timestamp: new Date(), provider: 'p72', model: 'p72', taskType: 'probe', strategy: 'p72', organizationId: A.id, success: true, latencyMs: 1, inputTokens: 0, outputTokens: 0 } as any); } },
+  { name: 'FeatureToggleService.initializeFeatureToggle', site: 'server/services/featureToggleService.ts:327', run: async () => (await import(`${S}/services/featureToggleService.ts`)).FeatureToggleService.initializeFeatureToggle('p72_probe_toggle', 'p72 probe', false) },
+  { name: 'FeatureToggleService.isFeatureEnabled (no scope)', site: 'server/services/featureToggleService.ts:59', run: async () => (await import(`${S}/services/featureToggleService.ts`)).FeatureToggleService.isFeatureEnabled('p72_probe_toggle', A.id) },
+  { name: 'FeatureToggleService.workspaceInOrganization (no scope)', site: 'server/services/featureToggleService.ts:82', run: async () => (await import(`${S}/services/featureToggleService.ts`)).FeatureToggleService.workspaceInOrganization(1, A.id) },
+  { name: 'seedCapabilityRegistry', site: 'server/services/ana-capability-registry.ts:653', run: async () => (await import(`${S}/services/ana-capability-registry.ts`)).seedCapabilityRegistry() },
+  { name: 'backfillCapabilityGovernance', site: 'server/services/ana-capability-registry.ts:719', run: async () => (await import(`${S}/services/ana-capability-registry.ts`)).backfillCapabilityGovernance() },
+  { name: 'seedTemplatesIfMissing', site: 'server/services/intelligence/template-seeds.ts:692', run: async () => (await import(`${S}/services/intelligence/template-seeds.ts`)).seedTemplatesIfMissing() },
+  { name: 'loadPatternRegistry(A)', site: 'server/services/intelligence/pattern-registry.ts:727', run: async () => (await import(`${S}/services/intelligence/pattern-registry.ts`)).loadPatternRegistry(A.id) },
+  { name: 'runScheduledOnce', site: 'server/db/scheduledOnce.ts:74', run: async () => (await import(`${S}/db/scheduledOnce.ts`)).runScheduledOnce('p72-probe', async () => 'ran') },
+  { name: 'readLatestWindowResult (org 0)', site: 'server/db/scheduledOnce.ts:219', run: async () => (await import(`${S}/db/scheduledOnce.ts`)).readLatestWindowResult('p72-probe', 0) },
+  { name: 'readLatestWindowResult (org A)', site: 'server/db/scheduledOnce.ts:219', run: async () => (await import(`${S}/db/scheduledOnce.ts`)).readLatestWindowResult('p72-probe-a', A.id) },
+  { name: 'registerSession + sessionInactivityReason', site: 'server/services/session-inactivity.ts:226', run: async () => { const m = await import(`${S}/services/session-inactivity.ts`); const claims = m.newSessionClaims ? m.newSessionClaims(Math.floor(Date.now() / 1000), 1800) : { sid: 'p72-sid', iat: Math.floor(Date.now() / 1000) }; const ended = await m.registerSession(users[0].id, claims as any, 5); const reason = await m.sessionInactivityReason(users[0].id as any, claims as any).catch((e: any) => `ERR ${e.message}`); return { ended, reason }; } },
+  { name: 'runRetentionSweep', site: 'server/jobs/retentionCron.ts:212', run: async () => (await import(`${S}/jobs/retentionCron.ts`)).runRetentionSweep() },
+  { name: 'runTaskDueSweep', site: 'server/jobs/taskDueSweep.ts:155', run: async () => (await import(`${S}/jobs/taskDueSweep.ts`)).runTaskDueSweep() },
+  { name: 'runVaultProcessingOnce', site: 'server/jobs/vaultProcessingSweep.ts:230', run: async () => (await import(`${S}/jobs/vaultProcessingSweep.ts`)).runVaultProcessingOnce() },
+  { name: 'runDriftSentinelSweep', site: 'server/jobs/driftSentinelSweep.ts:54', run: async () => (await import(`${S}/jobs/driftSentinelSweep.ts`)).runDriftSentinelSweep() },
+  { name: 'runAuditChainIntegrityCheck', site: 'server/jobs/auditChainIntegritySweep.ts:595', run: async () => (await import(`${S}/jobs/auditChainIntegritySweep.ts`)).runAuditChainIntegrityCheck() },
+  { name: 'runCsrQueueRecoveryOnce', site: 'server/jobs/csrQueueRecovery.ts:37', run: async () => (await import(`${S}/jobs/csrQueueRecovery.ts`)).runCsrQueueRecoveryOnce() },
+  { name: 'runDigestHeartbeatTick (09:00Z Monday)', site: 'server/services/digest/digest-heartbeat.ts:127,141', run: async () => { const m = await import(`${S}/services/digest/digest-heartbeat.ts`); m.__resetDigestHeartbeatStateForTests?.(); const d = new Date(); for (let i = 0; i < 400 && !m.isWithinDigestWindow(d); i++) d.setTime(d.getTime() + 3600_000); return m.runDigestHeartbeatTick(d); } },
+  { name: 'runDigestHeartbeatTick, second tick (idempotency)', site: 'server/services/digest/digest-heartbeat.ts:141', run: async () => { const m = await import(`${S}/services/digest/digest-heartbeat.ts`); m.__resetDigestHeartbeatStateForTests?.(); const d = new Date(); for (let i = 0; i < 400 && !m.isWithinDigestWindow(d); i++) d.setTime(d.getTime() + 3600_000); return m.runDigestHeartbeatTick(d); } },
+  { name: 'registerDefaultSchedulesForActiveOrgs', site: 'server/services/automation/scheduled-jobs.ts:492', run: async () => (await import(`${S}/services/automation/scheduled-jobs.ts`)).registerDefaultSchedulesForActiveOrgs() },
+  { name: 'sweepDueSubscriptions (scan only: generator records, never delivers)', site: 'server/services/report-os/scheduling/worker.ts:119', run: async () => { const seen: number[] = []; const out = await (await import(`${S}/services/report-os/scheduling/worker.ts`)).sweepDueSubscriptions(new Date(Date.now() + 400 * 86400_000), async (sub: any) => { seen.push(Number(sub.organization_id ?? sub.organizationId)); }, async () => 'enterprise' as any); return { out, generatedFor: seen }; } },
+  { name: 'stopRunsFor(user A, session end) [before the reaper]', site: 'server/services/ana/run-control.ts:1359,1376', run: async () => (await import(`${S}/services/ana/run-control.ts`)).stopRunsFor(pool, { userId: users[0].id } as any, { cause: 'logout' } as any) },
+  { name: 'run-control poll (its SQL)', site: 'server/services/ana/run-control.ts:1846,1890', run: async () => sys(async () => (await pool.query(`SELECT id, status, stopped_reason, stopped_detail FROM ana_runs WHERE id = ANY($1::text[])`, [runIds])).rows.map((r: any) => r.status)) },
+  { name: 'reapOrphanedRuns', site: 'server/services/ana/run-control.ts:1533,1494', run: async () => (await import(`${S}/services/ana/run-control.ts`)).reapOrphanedRuns(pool, 1000) },
+  { name: 'beatOwnedRuns', site: 'server/services/ana/run-control.ts:1650', run: async () => (await import(`${S}/services/ana/run-control.ts`)).beatOwnedRuns() },
+  { name: 'runOnDemandCheck (chain integrity monitor)', site: 'server/services/audit/chainIntegrityMonitor.ts:318', run: async () => { const m = await import(`${S}/services/audit/chainIntegrityMonitor.ts`); try { m.startChainMonitor?.(pool, 24 * 3600_000); } catch {} const r = await m.runOnDemandCheck(); m.stopChainMonitor?.(); return r; } },
+  { name: 'runSecuritySelfTest', site: 'server/services/securityHealth.ts:581', run: async () => { const r: any = await (await import(`${S}/services/securityHealth.ts`)).runSecuritySelfTest(pool); return (r.checks ?? r.results ?? r)?.map?.((c: any) => `${c.name ?? c.id}:${c.status}`) ?? r; } },
+  { name: 'runConsolidation (explicit app_super_admin scope)', site: 'server/services/memory-consolidation-job.ts:110', run: async () => (await import(`${S}/services/memory-consolidation-job.ts`)).runConsolidation() },
+  { name: 'sweepExpiredProposals', site: 'server/services/ana/submission-chat-sweep-scheduler.ts:57', run: async () => sys(async () => (await import(`${S}/services/ana/submission-chat-proposal-store.ts`)).sweepExpiredProposals()) },
+  { name: 'verifyTenantChainOnAdminScope(A) (explicit app_super_admin scope)', site: 'server/services/audit/tenant-chain-verdict.ts:80', run: async () => (await import(`${S}/services/audit/tenant-chain-verdict.ts`)).verifyTenantChainOnAdminScope(A.id) },
+  { name: 'verifyTenantSealsOnAdminScope(A) (explicit app_super_admin scope)', site: 'server/services/audit/compliance-reports/integrity-checks.ts:38', run: async () => (await import(`${S}/services/audit/compliance-reports/integrity-checks.ts`)).verifyTenantSealsOnAdminScope(A.id) },
+  { name: 'ivdr-pack-worker claim (its SQL, rolled back)', site: 'server/workers/ivdr-pack-worker.ts:695', run: async () => sys(async () => { const c = await pool.connect(); try { await c.query('BEGIN'); const r = await c.query(`SELECT id, organization_id, project_id, pack_type, requested_by_user_id, outputs, use_latest_approved, sign_build FROM ivdr_pack_build_jobs WHERE status = 'QUEUED' ORDER BY requested_at ASC FOR UPDATE SKIP LOCKED LIMIT 1`); await c.query('ROLLBACK'); return r.rows.map((x: any) => x.organization_id); } finally { c.release(); } }) },
+  { name: 'processWebhookEvent (minimal unhandled event type)', site: 'server/routes/billing.ts:328', run: async () => sys(async () => (await import(`${S}/services/billing.ts`)).processWebhookEvent({ id: 'evt_p72_' + Date.now(), type: 'p72.probe', data: { object: {} } } as any)) },
+];
+const out = fs.createWriteStream(process.env.OUT!);
+for (const p of paths) {
+  current = { name: p.name, site: p.site, stmts: [] };
+  const t0 = Date.now();
+  try {
+    const r = await Promise.race([p.run(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout 45s')), 45_000))]);
+    current.result = short(r);
+  } catch (e: any) { current.error = String(e?.message ?? e).slice(0, 240); }
+  current.ms = Date.now() - t0;
+  out.write(JSON.stringify(current) + '\n');
+  current = null;
+}
+out.end();
+await new Promise((r) => setTimeout(r, 500));
+process.exit(0);

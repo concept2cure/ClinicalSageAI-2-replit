@@ -4,6 +4,14 @@
 -- Integrity Risk Addressed: a heuristic stored as, or lost beside, a confidence.
 -- =============================================================================
 --
+-- AMENDED IN PLACE 2026-10-29 (D6, P-58; docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/):
+-- prevent_lineage_modification admits ONE DELETE, by the role
+-- tenant_record_purger, which is current_user only inside the tenant purge's
+-- door public.purge_tenant_lineage_records
+-- (migrations/20261029k_tenant_offboarding_custody.sql: SECURITY DEFINER,
+-- platform scope, pending_deletion, no legal hold, custody signed). UPDATE,
+-- and DELETE by every other role, are still refused. No session setting opens it.
+--
 -- AMENDED IN PLACE 2026-10-15: evidence_chain_records gains
 -- evidence_coverage_heuristic (REAL) and primary_relevance_basis (TEXT), added
 -- with ADD COLUMN IF NOT EXISTS so a replay is a no-op. The evidence model
@@ -78,6 +86,10 @@ CREATE INDEX IF NOT EXISTS dlr_created_at_idx ON data_lineage_records(created_at
 CREATE OR REPLACE FUNCTION prevent_lineage_modification()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- P-58 (2026-10-29): the tenant purge's door, and nothing else.
+  IF TG_OP = 'DELETE' AND current_user = 'tenant_record_purger' THEN
+    RETURN OLD;
+  END IF;
   RAISE EXCEPTION 'Data lineage records are append-only (21 CFR Part 11 §11.10(e)). Modifications are prohibited.';
   RETURN NULL;
 END;

@@ -1,0 +1,33 @@
+"""P-72 slice 0, item 1: diff the path captures (with the P arm / with it removed). For each path: its result, and
+every statement whose row count or error differs. A path whose statements and result are identical does not depend
+on P (for this data)."""
+import json, sys
+arm = [json.loads(l) for l in open(sys.argv[1])]
+noarm = {r['name']: r for r in (json.loads(l) for l in open(sys.argv[2]))}
+dep, same = [], []
+for a in arm:
+    b = noarm.get(a['name'], {})
+    ra, rb = (a.get('error') and 'ERROR ' + a['error']) or a.get('result'), (b.get('error') and 'ERROR ' + b['error']) or b.get('result')
+    diffs = []
+    # Order-insensitive: a path issues some statements concurrently (Promise.all), so pair them by text.
+    import collections, re
+    key = lambda x: re.sub(r"'p72[^']*'|p72-[0-9]+|evt_p72_[0-9]+", "<id>", x['sql'])
+    ca = collections.Counter((key(x), str(x.get('err', x.get('n'))) if not x.get('err') else 'ERR') for x in a['stmts'])
+    cb = collections.Counter((key(y), str(y.get('err', y.get('n'))) if not y.get('err') else 'ERR') for y in b.get('stmts', []))
+    only_a, only_b = ca - cb, cb - ca
+    texts = sorted({k for k, _ in list(only_a) + list(only_b)})
+    for t in texts:
+        va = sorted(v for (k, v), n in only_a.items() if k == t for _ in range(n)); vb = sorted(v for (k, v), n in only_b.items() if k == t for _ in range(n))
+        diffs.append((','.join(va) or '-', ','.join(vb) or '-', t[:170]))
+    (dep if diffs or ra != rb else same).append((a, ra, rb, diffs))
+print(f'# paths run: {len(arm)}; behaviour differs without P: {len(dep)}; identical: {len(same)}')
+print('\n## DIFFERS without the P arm (arm -> arm removed)')
+for a, ra, rb, diffs in dep:
+    print(f"\n### {a['name']}  [{a['site']}]")
+    print(f'  result with P   : {str(ra)[:300]}')
+    print(f'  result without P: {str(rb)[:300]}')
+    for vx, vy, sql in diffs[:12]: print(f'  rows {vx} -> {vy} | {sql}')
+    if len(diffs) > 12: print(f'  ... {len(diffs) - 12} more differing statements')
+print('\n## IDENTICAL with and without the P arm')
+for a, ra, rb, diffs in same:
+    print(f"- {a['name']}  [{a['site']}] : {len(a['stmts'])} statements; result {str(ra)[:160]}")

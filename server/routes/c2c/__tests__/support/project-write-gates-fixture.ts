@@ -146,8 +146,7 @@ export const WRITES: readonly WriteRoute[] = [
   { method: 'DELETE', path: `${ART}/reviewers/:assignmentId`, mode: 'write' },
   { method: 'POST', path: `${ART}/reviewers/:assignmentId/remind`, mode: 'write' },
   { method: 'POST', path: `${ART}/reviews/submit`, mode: 'review', body: { decision: 'approve' } },
-  // haq-sessions.ts
-  { method: 'PUT', path: `${P}/haq-session`, mode: 'write', body: { questions: [{ id: 'q1', text: 'Gate probe question' }] } },
+  // haq-sessions.ts is retired (P-39 step 4): HAQ questions are the project inbox's.
   // program-twin.ts serves reads only: its PUT …/cmc is retired (decision P-62).
   // project-knowledge.ts
   { method: 'POST', path: `${P}/linked`, mode: 'write' },
