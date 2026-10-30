@@ -1,0 +1,32 @@
+# Gates on the RR5 phone-acceptance commit, 2026-10-30T09:20Z, base origin/concept2cure-v2
+
+$ npm run --silent ci:pushed-lint-errors
+[ci:pushed-lint-errors] OK — no ESLint errors in 4 changed file(s) against origin/concept2cure-v2.
+exit 0
+
+$ npm run --silent ci:pushed-lint-warnings
+[ci:eslint-warning-ratchet] --since d7d3a7ea3c9f1ac8505f5a8a1a4b2d48a0d1b888 (d7d3a7ea3) -- 4 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since d7d3a7ea3c9f1ac8505f5a8a1a4b2d48a0d1b888.
+exit 0
+
+$ npm run --silent ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit 0
+
+$ npm run --silent ci:untracked-imports
+[ci:untracked-imports] OK — every relative import in 4 file(s) resolves to a tracked file.
+exit 0
+
+$ npm run --silent ci:class-vocabulary
+[ci:class-vocabulary] OK — 5849 file(s) scanned, no restated class vocabulary.
+exit 0
+
+$ npm run --silent ci:check-css-selector-shadowing
+[css-shadowing] OK — 48 stylesheets, 18 known shadowed selector(s), 0 new.
+exit 0
+
+$ npm run --silent ci:check-shell-css-collisions
+[ci:shell-css-collisions] 22 class name(s) defined in more than one shell tree (baseline 22) — pdev+v2:22
+[ci:shell-css-collisions] OK — no new cross-shell collisions.
+exit 0
+
