@@ -29,3 +29,5 @@ The build guard is process-local and serializes building only, across both archi
 `04-integration.txt` and compressed logs record 2,620 regression tests across 256 files, the separate 28 native database tests, 19 lint-ratchet controls, production build, zero-error TypeScript and warning ratchet. Upload browser evidence lives beside its D2 review evidence. Normal publication uses all repository hooks; the exact publication receipt and hook log are retained at the paths in the integration record. No deployment or complete launch acceptance is claimed.
 
 `05-merged-qualification.txt` records the later disjoint canonical merge, its 315 focused tests/21 files, combined production build, and the first push's successful gates followed by a Git ref race. Counts overlap the earlier cohorts.
+
+`06-client-ownership-merge.txt` records the further client-only canonical merge, 118 affected checks/12 files and complete production build. The Vault implementation remains unchanged from its qualified source. Both rejected pushes passed all hooks before encountering ref races.
