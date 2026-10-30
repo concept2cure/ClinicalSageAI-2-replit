@@ -343,6 +343,33 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     expect(H.persistSignature).toHaveBeenCalledTimes(1);
     expect(H.persistSignature.mock.calls[0][1].extraManifest).toMatchObject({ twoPersonRule: 'enforced' });
   });
+  /* CAT2-19 (2026-10-29): the version is effective from the date the approver
+     signs, never the prior version's; a past date is refused; the date is in
+     the signature's manifest. */
+  it('is effective from the approval day when no date is given, never the prior date, and the manifest binds it', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(200);
+    const update = H.txQuery.mock.calls.find((c) => String(c[0]).startsWith('UPDATE qms_documents'))!;
+    expect(String(update[0])).toMatch(/effective_date = \$4::date,/);
+    expect((update[1] as unknown[])[3]).toBe(today);
+    const [, params] = H.persistSignature.mock.calls[0] as [unknown, Record<string, any>];
+    expect(params.extraManifest).toMatchObject({ effectiveDate: today });
+    expect((H.recordGoverned.mock.calls[0] as [unknown, Record<string, any>])[1].payload).toMatchObject({ effectiveDate: today });
+  });
+
+  it('refuses an effective date before the database day with 422, and signs nothing', async () => {
+    const scripted = H.txQuery.getMockImplementation()!;
+    H.txQuery.mockImplementation(async (sql: string, args?: unknown[]) =>
+      (String(sql).includes('< CURRENT_DATE AS backdated') ? { rows: [{ backdated: true }] } : scripted(sql, args)));
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send({ ...VALID_BODY, effectiveDate: '2020-01-01' });
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body.details.code).toBe('QMS_EFFECTIVE_DATE_BACKDATED');
+    expect(H.txQuery.mock.calls.some((c) => String(c[0]).startsWith('UPDATE qms_documents'))).toBe(false);
+    expect(H.persistSignature).not.toHaveBeenCalled();
+    expect(H.recordGoverned).not.toHaveBeenCalled();
+  });
+
   it('signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT', async () => {
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(200);

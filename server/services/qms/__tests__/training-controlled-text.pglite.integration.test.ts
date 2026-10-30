@@ -154,7 +154,7 @@ async function approveAs(userId: number) {
   try {
     const result = await approveQmsDocumentSigned(client, {
       orgId: 1, userId, documentId: document.id,
-      reason: 'Reviewed the controlled procedure independently.', meaning: 'APPROVED', effectiveDate: '2026-10-14',
+      reason: 'Reviewed the controlled procedure independently.', meaning: 'APPROVED', effectiveDate: new Date().toISOString().slice(0, 10),
       authenticationMethod: 'password+totp', secondFactorVerified: true, ipAddress: '127.0.0.1',
     });
     await client.query('COMMIT');

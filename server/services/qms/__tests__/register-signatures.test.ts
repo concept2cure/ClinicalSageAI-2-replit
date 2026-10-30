@@ -22,9 +22,9 @@ function effective(id: number, title = 'Complaint handling'): QmsDocumentRow {
 }
 
 /** The electronic_signatures row approveQmsDocumentSigned writes for `doc`, hashed to its manifest. */
-function approvalRow(doc: QmsDocumentRow, id: number): Record<string, unknown> {
+function approvalRow(doc: QmsDocumentRow, id: number, extra: Record<string, unknown> = {}): Record<string, unknown> {
   const digest = computeQmsDocumentContentDigest(doc);
-  const manifest = {
+  const manifest = { ...extra,
     kind: 'governed-sign', command: 'approve', target: `qms-document:${doc.id}`, organizationId: 9, signerId: 7,
     signerName: 'Dana Whitfield', signerEmail: 'dana@example.com', meaning: 'APPROVED', reason: 'Reviewed and approved.',
     bindingBasis: QMS_DOCUMENT_BINDING_BASIS, boundPayloadDigest: digest, docNumber: doc.doc_number, version: doc.version,
@@ -75,6 +75,18 @@ describe('readQmsReleaseApprovals', () => {
     const failing = { query: vi.fn(async () => { throw new Error('connection reset'); }) };
     const out = await readQmsReleaseApprovals(failing, 9, [effective(5), effective(6)]);
     expect([out.get(5)?.state, out.get(6)?.state]).toEqual(['unavailable', 'unavailable']);
+  });
+});
+
+describe('the effective date bound in the approval (CAT2-19)', () => {
+  it('stands while the row carries the signed effective date, and does not once the date is changed', async () => {
+    const doc = effective(5);
+    const signedFor = approvalRow(doc, 41, { effectiveDate: '2026-09-01' });
+    expect((await readQmsReleaseApprovals(clientOf([signedFor]), 9, [doc])).get(5)).toMatchObject({ state: 'valid' });
+    const moved = { ...doc, effective_date: '2026-08-01' };
+    expect((await readQmsReleaseApprovals(clientOf([signedFor]), 9, [moved])).get(5)).toMatchObject({ state: 'unverified' });
+    // A signature from before the binding carries no date, and is read as it was.
+    expect((await readQmsReleaseApprovals(clientOf([approvalRow(moved, 42)]), 9, [moved])).get(5)).toMatchObject({ state: 'valid' });
   });
 });
 

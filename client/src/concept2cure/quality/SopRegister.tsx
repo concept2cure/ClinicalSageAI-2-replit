@@ -54,7 +54,7 @@ import { QmsRouteForm, QmsRoutePanel } from './QmsReviewRoute';
 import { myTurn, qmsApprovalMeta, qmsRouteView } from './qmsReviewRoute';
 import { approvalShare, routeHeadline } from '../v2/reviewRoute/routeRound';
 import { useAuthUser } from '@/services/portal/authService';
-import { reviewRowOf, type QmsDoc } from './data';
+import { reviewRowOf, todayUtc, type QmsDoc } from './data';
 import { PeriodicReviewPanel, RecordPeriodicReview, canRecordReview, lastReviewLine, useRecordPeriodicReview } from './PeriodicReview';
 import { ErrorState } from '../v2/dataConnect';
 import { ControlledDocumentSetup, ControlledDocumentReason } from './ControlledDocumentDialogs';
@@ -218,6 +218,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const admin = ((user as { roles?: string[] } | null)?.roles ?? []).some((r) => String(r).toLowerCase() === 'admin');
   /** The last register action's outcome, in the server's words when it refused. */
   const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  /** The day an approval makes its version effective from (CAT2-19): today unless the approver chooses later. */
+  const [effectiveFrom, setEffectiveFrom] = React.useState<string>(todayUtc());
   /** The controlled copy of the version in force (MR-12 Stage 8): issued, recorded and downloaded, or the server's reason. */
   const downloadControlledCopy = async (d: QmsDoc) => {
     try {
@@ -489,7 +491,9 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                   <span className="qms-tag">{DOC_TYPE_LABEL[d.docType] ?? d.docType}</span>
                 </div>
                 <div className="qms-cell mono">{d.version}</div>
-                <div className="qms-cell" title={d.inForce ? `Version ${d.inForce.version} stays in force until version ${d.version} is approved.` : undefined}>
+                <div className="qms-cell" title={d.inForce ? (d.status === 'effective'
+                  ? `Version ${d.inForce.version} stays in force until version ${d.version} is effective.`
+                  : `Version ${d.inForce.version} stays in force until version ${d.version} is approved.`) : undefined}>
                   {d.inForce && (
                     <span className="qms-pill" data-tone="effective" data-testid="qms-in-force">v{d.inForce.version} in force</span>
                   )}{d.inForce ? ' ' : null}
@@ -498,7 +502,12 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                   </span>
                   <RouteLine doc={d} meId={meId} />
                 </div>
-                <div className="qms-cell">{formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}</div>
+                <div className="qms-cell">
+                  {formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}
+                  {d.status === 'effective' && d.effectiveDate && d.effectiveDate.slice(0, 10) > todayUtc() && (
+                    <span className="qms-route-line" data-testid="qms-pending-effective">v{d.version} from {d.effectiveDate.slice(0, 10)} (pending)</span>
+                  )}
+                </div>
                 <NextReviewCell doc={d} overdue={overdue} />
                 <div className="qms-cell qms-rowacts">
                   <DocumentReadButton doc={d} disabled={!personalTrainingScope(user, d.id)} onOpen={openReader} />
@@ -525,7 +534,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                     <button
                       className="qms-chip"
                       title="Approve with your electronic signature (password and second factor). The author cannot approve their own document."
-                      onClick={() => setApproving(d)}
+                      onClick={() => { setEffectiveFrom(todayUtc()); setApproving(d); }}
                     >
                       {I.check} Approve
                     </button>
@@ -604,7 +613,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       {reviewing && <QmsRouteForm doc={reviewing} mode="send" onClose={() => setReviewing(null)} onSent={() => sent(reviewing)} />}
       {routePanel && <QmsRoutePanel doc={routePanel} view={qmsRouteView(docs.find((x) => x.id === routePanel.id) ?? routePanel)} meId={meId} admin={admin}
         signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])} onClose={() => setRoutePanel(null)} onChanged={() => reg.refresh?.()}
-        onApprove={() => { setApproving(routePanel); setRoutePanel(null); }} />}
+        onApprove={() => { setEffectiveFrom(todayUtc()); setApproving(routePanel); setRoutePanel(null); }} />}
       {revising && <ControlledDocumentReason title="Create controlled revision" action="Create revision"
         description={`Create a new draft of ${revising.docNumber} ${revising.title} v${revising.version}. The previous controlled editing copy stays read-only and recorded signed versions remain in the history.`}
         onClose={() => setRevising(null)} onSubmit={async reason => {
@@ -628,9 +637,17 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           defaultMeaning="approval"
           meanings={['approval']}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          renderMeaningDetails={(_meaning, committing) => (
+            <label className="qms-effective-date">
+              Effective from (UTC day)
+              <input type="date" value={effectiveFrom} min={todayUtc()} disabled={committing} required
+                onChange={(e) => setEffectiveFrom(e.target.value)} aria-describedby="qms-effective-date-help" />
+              <span id="qms-effective-date-help">Signed with the approval. A later day leaves the version in force until then.</span>
+            </label>
+          )}
           onClose={() => setApproving(null)}
           onSign={async (input) => {
-            const manifest = await postQmsApproval({ kind: 'document', id: approving.id }, input);
+            const manifest = await postQmsApproval({ kind: 'document', id: approving.id }, input, effectiveFrom || todayUtc());
             reg.refresh?.();
             return manifest;
           }}
