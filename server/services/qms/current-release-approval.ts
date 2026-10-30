@@ -126,8 +126,8 @@ function retainedReleaseMatches(retained: Record<string, unknown> | null, snapsh
 }
 
 export async function readQmsTrainingReleaseContext(client: TrainingSqlClient, document: QmsDocumentRow,
-  now = new Date(), options: { lock?: boolean } = {}) {
-  let context = describeQmsTrainingDocument(document, now);
+  now = new Date(), options: { lock?: boolean; ahead?: boolean } = {}) {
+  let context = describeQmsTrainingDocument(document, now, { ahead: options.ahead });
   if (!context.eligible) return { context: document.authoring_document_id ? { ...context, sections: [] } : context, approval: null };
   const approval = await readCurrentQmsReleaseApproval(client, document, options);
   if (approval.state !== 'valid') return { context: { ...context, eligible: false, sections: document.authoring_document_id ? [] : context.sections, unavailableReason: approval.reason }, approval };
@@ -143,7 +143,7 @@ export async function readQmsTrainingReleaseContext(client: TrainingSqlClient, d
       if (!snapshot || !retainedReleaseMatches(retained, snapshot, document, approval, context.contentDigest)) {
         return { context: { ...context, eligible: false, sections: [], unavailableReason: 'The immutable signed content for this released revision could not be verified.' }, approval };
       }
-      context = describeQmsTrainingDocument(snapshot, now);
+      context = describeQmsTrainingDocument(snapshot, now, { ahead: options.ahead });
     } catch (error) {
       console.error('[qms-training] immutable release unavailable:', error instanceof Error ? error.message : error);
       return { context: { ...context, eligible: false, sections: [], unavailableReason: 'The immutable signed content could not be read. Reload this record before trying again.' }, approval: unavailable() };

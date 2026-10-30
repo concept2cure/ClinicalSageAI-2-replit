@@ -195,6 +195,50 @@ describe('Review board — the queue pill says where the document stands', () =>
   });
 });
 
+/* RR5 phone acceptance (2026-10-30, open item): after Rae signed REVIEWER on
+   the route, the board still listed the document as "Awaiting your review".
+   The signature is her review; the server reads it from the route
+   (routeSignedAt, myReviewSignedAt) and the board says so. */
+describe('Review board — a review signed on its route', () => {
+  const SIGNED_AT = '2026-10-30T09:00:00Z';
+  const signedRow = (over: Record<string, unknown> = {}) => ({
+    ...BOARD.queue[0],
+    awaitingMyReview: false, mine: false, myReviewSignedAt: SIGNED_AT,
+    reviews: [{ ...BOARD.queue[0].reviews[0], requestedByName: 'Avery Author', routeSignedAt: SIGNED_AT }],
+    ...over,
+  });
+
+  it('shows the reviewer as signed, by whom it was asked, and offers no review decision', async () => {
+    apiRequest.mockImplementation(async () => ok({ ...BOARD, queue: [signedRow()] }));
+    render(<Review {...props()} />);
+    await screen.findAllByText('Clinical Overview §2.5');
+    expect(screen.getByText(/Your review signature recorded/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Record review decision/ })).toBeNull();
+    const step = document.querySelector('.rv-wf-step');
+    expect(step?.querySelector('.rv-wf-tag')?.textContent).toBe('Signed');
+    expect(step?.querySelector('.rv-wf-meta')?.textContent).toMatch(/^requested by Avery Author · signed /);
+  });
+
+  it('a queue whose every reviewer signed reads "Reviewers signed, sign-off pending"', async () => {
+    apiRequest.mockImplementation(async () => ok({ ...BOARD, queue: [signedRow({ docStatus: 'IN_REVIEW', state: 'approved' })] }));
+    render(<Review {...props()} />);
+    await screen.findAllByText('Clinical Overview §2.5');
+    expect(document.querySelector('.lrow .lrow-top .rd-chip')?.textContent).toBe('Reviewers signed, sign-off pending');
+  });
+
+  it('a later change request is not hidden by an earlier signature', async () => {
+    const row = signedRow({
+      myReviewSignedAt: null, myReviewStatus: 'changes_requested', myReviewStanding: 'current', state: 'changes-requested',
+      reviews: [{ ...BOARD.queue[0].reviews[0], routeSignedAt: SIGNED_AT, status: 'changes_requested', standing: 'current' }],
+    });
+    apiRequest.mockImplementation(async () => ok({ ...BOARD, queue: [row] }));
+    render(<Review {...props()} />);
+    await screen.findAllByText('Clinical Overview §2.5');
+    expect(document.querySelector('.rv-wf-step .rv-wf-tag')?.textContent).not.toBe('Signed');
+    expect(document.querySelector('.lrow .lrow-top .rd-chip')?.textContent).toBe('Changes requested');
+  });
+});
+
 /* QA 2026-10-08 (j1, "Project screens show other programs' documents"): with
    BX-256 open, Review & approval listed BX-204's device items. The board was
    read org-wide by default and the program filter started OFF, so the screen

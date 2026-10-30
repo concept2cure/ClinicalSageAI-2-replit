@@ -7,9 +7,9 @@
  * resumed after a section-level failure, and surface progress to the caller
  * without blocking an HTTP request.
  *
- * Phase 3b: NO new routes, NO UI. This module is consumed by
- * csr-builder.launchCSRBuildAsync (back-compat alongside the legacy
- * synchronous launchCSRBuild).
+ * Consumed by csr-builder.launchCSRBuildAsync, the one build path (the
+ * synchronous launchCSRBuild was deleted 2026-10-30; this runner's completion
+ * gate is the fail-closed status rule).
  *
  * State machine for csr_build_jobs.status:
  *   queued -> drafting -> complete
