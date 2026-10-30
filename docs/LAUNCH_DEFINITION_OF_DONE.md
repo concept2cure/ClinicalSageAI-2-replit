@@ -1304,6 +1304,33 @@ therapeutic areas and all geographical regions", the founder chose drafting firs
 - **Unchanged.** Submission Center's packaging and transmission bounds, and the agency gateways, are not widened by
   this decision.
 
+### P-74 — Six areas outside the catalog are admitted, in order: eTMF, nonclinical and IB authoring, registrations, NDA/BLA, QC/LIMS, study start-up
+
+Decided by the founder on 2026-10-30, answering the six catalog questions of the Weave and Veeva Basics parity work
+(`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §6, P-48): "Yes to the sequence but all are needed."
+
+- **Admitted, in this order.** Each is worked only after the one before it lands:
+  1. **eTMF** — `Etmf.tsx`, `etmf.routes.ts`, `tmf-completeness.ts`.
+  2. **Nonclinical study-report ingest into 2.4/2.6, and Investigator's Brochure authoring** — `routes/preclinical.ts`,
+     `m26-nonclinical-summaries.ts`, the `nonclinical` and `investigator-brochure` surfaces.
+  3. **Registrations (RIM lite)** — `routes/rim.ts`, `Registrations.tsx`.
+  4. **NDA/BLA** — `nda-cockpit`, `maa-cockpit`; and CMC / Module 3 widened beyond P-28, slice by slice as P-73 sets
+     out (biologic content, marketing-application Module 3), each verified before it is admitted.
+  5. **QC operations / LIMS** — batch release, CoA, external results, stability; the CMC registers and the `/api/qc`
+     stubs are the starting point, and integrating a CMO's LIMS is weighed against building.
+  6. **Study start-up** — site activation, over the IRB, ICF, 1572 and budget pieces already in the catalog.
+- **This decides timing and scope, not readiness.** The parity design recommended "after D10" for these; the founder
+  overrides the timing. The prerequisites its §6 names still bind each slice, and an area joins `LAUNCH_APPS` in
+  `shared/constants/launch-scope.ts` only when its slice lands with them:
+  - one study store, and one TMF store (`etmf.ts` and `etmf.routes.ts` converged; the losing migration amended in
+    place, RULE 1);
+  - every migration a surface needs added to `C2C_MIGRATION_FILES` (`rim_lite`, the TMF store);
+  - a URS and OQ for each new regulated function, as CMC had (`URS-007`, `OQ-008`);
+  - extracted values confirmed by a person before any composer reads them, and PQ for any model step (RULE 2).
+- **Unchanged.** RULE 3 holds for every slice: each is named "complete", "reach" or "converge" against the existing
+  code listed in the parity design, never "build". Safety/PV, EDC and a content LMS stay "partner or integrate" as the
+  parity design recommends; this decision does not admit them.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one
