@@ -42,3 +42,5 @@ Root's actual subprocess test is `tests/regulatory/ectd-qualification-cli.test.t
 ## Final review refinements
 
 Executed local rows alone contribute to `availableChecksPassed`; unavailable mandatory rows remain explicit blockers. Producer captured-supportive-byte integrity faults propagate into original/amendment failure and availability, while a claimed mismatch needs valid unequal SHA-256 facts before it becomes a confirmed content failure. Malformed proof remains blocked. These distinctions were reproduced with failing tests before each correction; final affected verification is348/22. Publication receipt will bind accepted source and normal compiler gates.
+
+Published software correction: implementation `dcdd4cb97`, accepted canonical source `61fe4fd81`, normal full compiler0 and all push gates passed. Exact committed-blob bindings and publication-race dispositions are in the evidence `publication.json`. No agency acceptance or release deployment is claimed.
