@@ -1,0 +1,13 @@
+===== SYN-NARR-0005 [ 'aesi' ] 
+Subject SYN-NARR-0005, a 34-year-old male subject randomized to the LMN-201 arm in study SYN-NARR. Relevant medical history included Type 2 diabetes mellitus. Concomitant medications included PARACETAMOL. The subject received LMN-201 beginning 2026-01-09. On study day 15, the subject experienced an adverse event of Alanine aminotransferase increased, mild in intensity. The dose of LMN-201 was not changed. The event was not serious. The event resolved. The investigator assessed the event as possibly related to LMN-201.
+
+The subject received LMN-201 for 28 days.
+===== SYN-NARR-0004 [ 'serious' ] 
+Subject SYN-NARR-0004, a 33-year-old female subject randomized to the Placebo arm in study SYN-NARR. Relevant medical history included Hypertension. Concomitant medications included PARACETAMOL. The subject received Placebo beginning 2026-01-08. On study day 10, the subject experienced a serious adverse event of Pneumonia, moderate in intensity. The event was serious: it required inpatient hospitalization or prolongation of existing hospitalization. The dose of Placebo was not changed. The event resolved. The investigator assessed the event as not related to Placebo.
+
+The subject received Placebo for 28 days.
+===== SYN-NARR-0008 [ 'death', 'serious', 'discontinuation' ] 
+Subject SYN-NARR-0008, a 37-year-old male subject randomized to the Placebo arm in study SYN-NARR. Relevant medical history included Hypertension. Concomitant medications included PARACETAMOL. The subject received Placebo beginning 2026-01-12. On study day 19, the subject experienced a serious adverse event of Septic shock, severe in intensity. The event was serious: it resulted in death. Placebo was permanently discontinued. The event was fatal. The investigator assessed the event as not related to Placebo.
+
+The subject received Placebo for 19 days. The subject died on study day 21. The recorded cause of death was septic shock.
+
