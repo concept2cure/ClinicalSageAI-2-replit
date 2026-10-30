@@ -1,0 +1,1317 @@
+$ RLS_ENFORCE=off npx vitest run client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx
+# with the six product files (surfaces-v2.css, app-v2.css, review-decision.css, EsignModal.css, authoring-v2.css, Review.tsx) at HEAD, the tests at the working tree
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy 354ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > choosing Working copy (Word) on a draft posts the working-copy route and downloads what the server sent 104ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > Working copy (PDF) asks for a PDF 78ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a refusal is said in the server’s words, beside the control and in a toast, and nothing downloads 77ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item 109ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a FROZEN document offers the controlled export, through the export route 91ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a APPROVED document offers the controlled export, through the export route 85ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a approved document offers the controlled export, through the export route 79ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open 45ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > opens on ArrowDown with focus on the first item; the arrows move; Escape closes and returns focus 56ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > choosing an item closes the menu and returns focus to the button 89ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > a refusal for one document is not shown beside the next one the control is handed 86ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > the live region is an absolutely placed box inside the menu’s own wrapper
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > an answer that arrives after the person moved on is told, but not shown beside the other document, and does not hold its control 162ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button 31ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > near the top of the screen it opens below its button, right edges aligned, in fixed coordinates 2ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > with room above it opens above; aligned left where right-aligned would run off the screen 1ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > taller than the room below, it scrolls inside itself rather than running off the screen 1ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > the live region is an absolutely placed box inside the menu’s own wrapper 13ms
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > where the toolbar scrolls sideways it is the containing block, so it clips that box 8ms
+   → 
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    : expected false to be true // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > the menu itself stays fixed, so the toolbar does not cut it off 1ms
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > stacks the list above the detail 14ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > wraps what does not fit in the detail, which cuts off what overflows it 5ms
+   → .c2c-v2 .dt-head: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > makes every control a reviewer taps there a 44px target 6ms
+   → .c2c-v2 .dt-acts .btn: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > marks the controls those rules name, and sets no inline height a rule cannot override 3ms
+   → expected '/**\n * Review & Approval -- kit app/…' to match /className="dt-acts"/
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Close and each notice’s Mark read 44px square 12ms
+   → .c2c-v2 .tt-close: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Triage, Show more, Open the task board and every button in the tray 44px tall 10ms
+   → .c2c-v2 .tt-triage: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The review decision dialog at 390px > makes the decision, the reason and each button a 44px target 2ms
+   → .c2c-v2 .rv-decision-actions .btn: expected false to be true // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > the shell resets every button’s padding and background 1ms
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-primary its box outranks that reset 4ms
+   → .es-btn-primary: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-secondary its box outranks that reset 3ms
+   → .es-btn-secondary: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-close its box outranks that reset 3ms
+   → .es-close: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-meaning-opt its box outranks that reset 2ms
+   → .es-meaning-opt: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > at 390px Sign and commit, Cancel, Done and each meaning are 44px tall, and the close control 44px square 2ms
+   → .es-modal .es-btn-primary: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > reduced motion still stops their transitions, at the same rank 2ms
+   → es-btn-primary: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > no second copy of the meaning pills’ rules works around the reset elsewhere 14ms
+   → expected [ { media: [], …(2) }, …(4) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > where the toolbar scrolls sideways it is the containing block, so it clips that box
+AssertionError: 
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    : expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:331:88
+    329|     const scrollers = rules('authoring-v2.css', '.ed-doc-actions').fil…
+    330|     expect(scrollers.length).toBeGreaterThan(0);
+    331|     for (const body of scrollers) expect(declares(body, 'position', 'r…
+       |                                                                                        ^
+    332|   });
+    333|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > stacks the list above the detail
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:94:105
+     92| describe('The Review board at 390px', () => {
+     93|   it('stacks the list above the detail', () => {
+     94|     expect(phoneRule(surfaces, '.c2c-v2 .split', 'grid-template-column…
+       |                                                                                                         ^
+     95|   });
+     96|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > wraps what does not fit in the detail, which cuts off what overflows it
+AssertionError: .c2c-v2 .dt-head: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:99:68
+     97|   it('wraps what does not fit in the detail, which cuts off what overf…
+     98|     for (const sel of ['.c2c-v2 .dt-head', '.c2c-v2 .dt-acts', '.c2c-v…
+     99|       expect(phoneRule(surfaces, sel, 'flex-wrap', /^wrap$/), sel).toB…
+       |                                                                    ^
+    100|     }
+    101|     expect(phoneRule(surfaces, '.c2c-v2 .rv-reply-in', 'min-width', /^…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > makes every control a reviewer taps there a 44px target
+AssertionError: .c2c-v2 .dt-acts .btn: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:108:72
+    106|   it('makes every control a reviewer taps there a 44px target', () => {
+    107|     for (const sel of ['.c2c-v2 .dt-acts .btn', '.c2c-v2 .btn.rv-doc-o…
+    108|       expect(phoneRule(surfaces, sel, 'min-height', AT_LEAST_44), sel)…
+       |                                                                        ^
+    109|     }
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > marks the controls those rules name, and sets no inline height a rule cannot override
+AssertionError: expected '/**\n * Review & Approval -- kit app/…' to match /className="dt-acts"/
+
+- Expected:
+/className="dt-acts"/
+
++ Received:
+"/**
+ * Review & Approval -- kit app/Project.jsx `Review` ported.
+ *
+ * Registry id: `review`
+ *
+ * Review queue over the AUTHORING review store, threaded comments, approve /
+ * request changes with a reason / decline, the document's approval chain.
+ *
+ * ── One store (VSR-001 F-6, decided 2026-09-21) ──────────────────────────────
+ * The queue is GET /api/review/board, a read model over the tables the
+ * Authoring launch app writes through: review requests and verdicts
+ * (POST /api/authoring/documents/:id/request-review, POST .../review), the
+ * approval chain (POST /api/authoring/docs/:id/submit, advanced by the §11.50
+ * signature route), and comments. Every act recorded here is one of the
+ * authoring workflow's OWN transitions, called directly:
+ *   approve / request changes / decline → POST /api/authoring/documents/:id/review
+ *   comment                             → POST /api/authoring/sections/:sectionId/comment
+ *   resolve                             → PATCH /api/authoring/comments/:commentId
+ * There is no delegate: the authoring workflow has no such transition (a
+ * reviewer is added with request-review), and this board invents no state.
+ *
+ * NOTE: this surface records review verdicts. It does NOT apply a 21 CFR §11.50
+ * electronic signature — see ReviewDecisionDialog. Binding signatures are applied
+ * from the authoring workspace (server/routes/authoring.router.ts), re-verified
+ * and sealed against a frozen document version.
+ *
+ * ── Opening the document (2026-10-08) ────────────────────────────────────────
+ * \"Open in editor\", \"Open the document to sign\" and, on an AI comment, \"Open
+ * the document\" open THE reviewed document, by id, through the editor
+ * deep-link channel (../editorTarget.ts), the way Vault's \"Open in editor\"
+ * does. They used to navigate to the editor with no document, so the reviewer
+ * landed on its list (docs/design/ONE_ANA_ONE_CANVAS.md §4.7, slice 19). The
+ * AI comment's button said \"Apply in editor\"; nothing applies the suggestion,
+ * so it is named for what it does.
+ */
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { I } from '../icons';
+import { EmptyState, useLiveData } from '../dataConnect';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
+import { AnswerLead } from '../AnswerLead';
+import type { SurfaceViewProps } from '../surfaceViews';
+import { useAuthUser } from '@/services/portal/authService';
+import { ceremonyOpen } from '../ceremony';
+import { ReviewDecisionDialog } from './ReviewDecisionDialog';
+import type { AuthoringReviewRow } from '@shared/authoring/peer-review';
+import type { ReviewItem, ReviewComment, ReviewWorkflow, ReviewRequest } from '../fixtures/review-data';
+import { assessmentStateFor, hasAnswer } from '../assessmentState';
+import { publishShellProject, readShellProject } from '../shellProject';
+import { setEditorTarget } from '../editorTarget';
+import { ReviewThreadsPane } from './ReviewThreads';
+import { ReviewVaultQueue, type VaultReviewItem } from './ReviewVaultQueue';
+import { openNotificationRecord } from '../notificationNavigation';
+import { NOTICE_UUID } from '@shared/types/notification-navigation';
+import { reviewStanding, REVIEW_STANDING_PILL_TONE } from './reviewStanding';
+import '../styles/project-home-v2.css';
+import { getSurfaceMeta } from '../registryModel';
+import { C2CToast, useToast } from '../toast';
+
+/** Sub-headline shared by the surface header and its honest empty/error states. */
+/** The registry label, so the page and its breadcrumb are one name (section 9). */
+const REVIEW_TITLE = getSurfaceMeta('review').label;
+const REVIEW_SUB = 'Reviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.';
+
+/**
+ * The render contract of GET /api/review/board (server/routes/review-board-routes.ts),
+ * returned as { success, data }. useLiveData unwraps the success envelope, so the
+ * hook's `.data` is this board object directly — real, org-scoped, no fixture.
+ */
+interface ReviewBoardData {
+  queue: ReviewItem[];
+  workflows: Record<string, ReviewWorkflow>;
+  thread: ReviewComment[];
+  /** Vault versions in review (QA 2026-10-08, walk 2, j3): null when that read failed. */
+  vaultReviews?: VaultReviewItem[] | null;
+}
+
+type Scope = 'all' | 'mine' | 'requested';
+const SCOPES: Array<{ id: Scope; label: string }> = [
+  { id: 'mine', label: 'Awaiting my review' },
+  { id: 'requested', label: 'Requested by me' },
+  { id: 'all', label: 'All open' },
+];
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const REVIEW_STATUS_LABEL: Record<string, string> = {
+  pending: 'Pending',
+  approved: 'Approved',
+  changes_requested: 'Changes requested',
+  rejected: 'Declined',
+};
+
+/* ── Inline helpers (kit shared bits) ── */
+
+function PageHead({ eyebrow, title, sub, actions }: {
+  eyebrow: string;
+  title: string;
+  sub?: string;
+  actions?: React.ReactNode;
+}) {
+  return (
+    <div className=\"ph\">
+      <div>
+        <div className=\"ph-eyebrow\">{eyebrow}</div>
+        <h1 className=\"ph-title\">{title}</h1>
+        {sub && <div className=\"ph-sub\">{sub}</div>}
+      </div>
+      {actions && <div style={{ display: 'flex', gap: 8 }}>{actions}</div>}
+    </div>
+  );
+}
+
+function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
+  return <span className={`rd-chip tone-${tone}`}>{children}</span>;
+}
+
+/** Scope + program switch, rendered above the queue and in the empty state. */
+function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
+  scope: Scope;
+  onScope: (s: Scope) => void;
+  program: { id: string; title: string } | null;
+  onlyProgram: boolean;
+  onOnlyProgram: (v: boolean) => void;
+}) {
+  const on = { fontWeight: 600, background: 'var(--bg-050)' } as const;
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginBottom: 12 }}>
+      {SCOPES.map((s) => (
+        <button
+          key={s.id}
+          className=\"btn ghost\"
+          aria-pressed={scope === s.id}
+          data-on={scope === s.id || undefined}
+          style={scope === s.id ? on : undefined}
+          onClick={() => onScope(s.id)}
+        >
+          {s.label}
+        </button>
+      ))}
+      {program && (
+        <button
+          className=\"btn ghost\"
+          aria-pressed={onlyProgram}
+          data-on={onlyProgram || undefined}
+          style={{ marginLeft: 'auto', ...(onlyProgram ? on : {}) }}
+          onClick={() => onOnlyProgram(!onlyProgram)}
+          title={onlyProgram ? 'Showing this project only' : 'Show this project only'}
+        >
+          {I.gitBranch} {onlyProgram ? 'Only ' : 'All projects · '}{program.title}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Open the reviewed document itself in the editor, not the editor's list.
+ *
+ * The target names the document by id, the strongest claim the channel takes:
+ * the editor opens it or states the miss. The editor's document list is scoped
+ * to the open program, so when the document belongs to another program, that
+ * program is opened first: REPLACE, never merge, as MdxSurfaceHost's
+ * openEditor does. A document with no program opens only if the editor can
+ * see it, and otherwise the editor says it could not.
+ */
+export function openReviewDocument(
+  item: Pick<ReviewItem, 'id' | 'programId' | 'prog'>,
+  onNav: (id: string) => void,
+): void {
+  const shell = readShellProject();
+  if (item.programId && String(shell?.id ?? '') !== item.programId) {
+    publishShellProject({ id: item.programId, ...(item.prog ? { title: item.prog } : {}) });
+  }
+  setEditorTarget({ docType: null, docId: item.id, programId: item.programId, programTitle: item.prog });
+  onNav('document-authoring');
+}
+
+/* ════ Review & Approval surface ════ */
+
+export function Review(props: SurfaceViewProps) {
+  const user = useAuthUser();
+  return <ReviewSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
+}
+
+/**
+ * Open a Vault version on the board in the Vault of its project, on its row,
+ * through the one record-opening path a notice uses (RR1b). A version with no
+ * project opens the Vault itself.
+ */
+function openVaultVersion(item: VaultReviewItem, onNav: (id: string) => void, fireToast: (text: string, tone?: 'error') => void) {
+  if (!item.programId || !NOTICE_UUID.test(item.programId) || !NOTICE_UUID.test(item.vaultId)) return onNav('vault');
+  try {
+    openNotificationRecord({ surface: 'vault', label: 'Open the version', params: { documentId: item.vaultId }, programId: item.programId }, onNav);
+  } catch (e) {
+    fireToast(e instanceof Error ? e.message : 'The version could not be opened.', 'error');
+  }
+}
+
+function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
+  const me = useAuthUser();
+  const meId = me?.id && /^\\d+$/.test(me.id) ? Number(me.id) : null;
+  const [queue, setQueue] = useState<ReviewItem[]>([]);
+  const [sel, setSel] = useState('');
+  /* The row whose thread the board should carry. Set only by an explicit
+     selection (a click, \"Open the queue\", AnA's select-document) — never by the
+     seeding effect below — so a board load does not re-request itself. */
+  const [threadFor, setThreadFor] = useState('');
+  const [thread, setThread] = useState<ReviewComment[]>([]);
+  const [reply, setReply] = useState('');
+  const [decisionFor, setDecisionFor] = useState<ReviewItem | null>(null);
+  // Shared comment-write state guards a double submit.
+  const [requesting, setRequesting] = useState(false);
+  const [scope, setScope] = useState<Scope>('all');
+  const [toast, fireToast] = useToast();
+  /** The queue column — \"Open the queue\" scrolls to it and focuses the row it selected. */
+  const queueRef = useRef<HTMLDivElement>(null);
+
+  /* The program the shell has open, when it is a regulatory program (UUID).
+     A program-less shell, or a numeric project id, offers no program filter
+     rather than a filter that could never match. */
+  const program = useMemo(() => {
+    const p = readShellProject();
+    if (!p || !UUID_RE.test(String(p.id))) return null;
+    return { id: String(p.id), title: p.title || p.code || p.product || String(p.id) };
+  }, []);
+  /* With a program open, the board starts on THAT program. It started
+     org-wide, so the screen reached from BX-256's project home listed BX-204's
+     device items under it (QA 2026-10-08, j1). Every program stays one click
+     away: the toggle widens the board on purpose. */
+  const [onlyProgram, setOnlyProgram] = useState(() => program !== null);
+
+  // Live, org-scoped review board — GET /api/review/board → { success, data }.
+  // useLiveData unwraps the success envelope, so `board` is the render contract
+  // itself ({ queue, workflows, thread }). There is no fixture: a tenant with
+  // nothing in review renders an honest empty board, and a failed load renders
+  // an honest error — never a fabricated queue behind a \"sample\" pill.
+  //
+  // The scope is explicit in the URL so the server never guesses it; the
+  // selected item is passed so its thread is the one that comes back; and
+  // `boardEpoch` is bumped after every confirmed write so the board is RE-READ.
+  // Re-reading is what makes the surface show the record rather than a memory
+  // of what was clicked.
+  const [boardEpoch, setBoardEpoch] = useState(0);
+  const boardUrl =
+    '/api/review/board?scope=' + scope +
+    (onlyProgram && program ? '&programId=' + encodeURIComponent(program.id) : '') +
+    (threadFor ? '&itemId=' + encodeURIComponent(threadFor) : '');
+  const boardState = useLiveData<ReviewBoardData>(boardUrl, [boardUrl, boardEpoch]);
+  const board = boardState.data;
+  const workflows: Record<string, ReviewWorkflow> = board?.workflows ?? {};
+
+  // Seed the queue + thread from every board that resolves: nothing is edited
+  // locally any more (every act is written and then re-read), so the record is
+  // always the newest board.
+  useEffect(() => {
+    if (boardState.loading || !board) return;
+    const q = (board.queue ?? []).map((r) => ({ ...r }));
+    setQueue(q);
+    setSel((prev) => (q.some((r) => r.id === prev) ? prev : q[0] ? q[0].id : ''));
+    setThread((board.thread ?? []).map((c) => ({ ...c })));
+  }, [boardState.loading, board]);
+
+  /** Re-read the board from the server after a confirmed write. */
+  const refreshBoard = () => setBoardEpoch((e) => e + 1);
+  const decisionDialog = decisionFor && <ReviewDecisionDialog documentId={decisionFor.id} programId={decisionFor.programId ?? null} onClose={() => setDecisionFor(null)} onRecorded={(receipt) => {
+    refreshBoard(); fireToast(recordedNotice(receipt));
+  }} />;
+
+  /** Select a row: the detail pane AND the thread the next board read carries. */
+  const selectRow = (id: string) => {
+    if (ceremonyOpen()) return;
+    setSel(id);
+    setThreadFor(id);
+  };
+
+  const changeScope = (s: Scope) => {
+    if (ceremonyOpen()) return;
+    setScope(s);
+  };
+
+  /* Jump to the next document still awaiting a decision — ONE path shared by
+     the AnswerLead's \"Open the queue\" button and AnA's review.open-queue
+     action, so the two can never drift. */
+  const openQueue = (): ReviewItem | null => {
+    const next = queue.find((r) => r.state !== 'approved') ?? null;
+    if (next) selectRow(next.id);
+
+    try {
+      queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      queueRef.current?.querySelector<HTMLButtonElement>('.lrow[data-on]')?.focus();
+    } catch { /* no scrollIntoView here — the row is still selected */ }
+    return next;
+  };
+
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under 'review' (identity-mapped nav target). View selection
+     ONLY: recording a verdict, requesting changes, commenting and resolving
+     stay governed human acts, untouched by this registration. Both handlers
+     refuse — with the real reason — while a form holding a person's
+     in-progress justification is open. */
+  const reviewBusyGuard = (): { ok: false; reason: string } | null => {
+    if (requesting) return { ok: false, reason: 'A review write is in flight — wait for it to finish.' };
+    if (ceremonyOpen()) return { ok: false, reason: 'The review decision dialog is open — close it first.' };
+    return null;
+  };
+  useSurfaceActionHandlers('review', {
+    'review.select-document': (params) => {
+      const guarded = reviewBusyGuard();
+      if (guarded) return guarded;
+      const wanted = (params.document ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No document named.' };
+      if (boardState.error && queue.length === 0)
+        return { ok: false, reason: 'The review board could not be read.' };
+      if (boardState.loading && queue.length === 0)
+        return { ok: false, reason: 'The review board is still loading.', retry: true };
+      if (queue.length === 0)
+        return {
+          ok: false,
+          reason: Array.isArray(board?.queue)
+            ? 'Nothing is in review.'
+            : 'The review board could not be read.',
+        };
+      const lower = wanted.toLowerCase();
+      const exact = queue.find((r) => r.id === wanted || r.doc.toLowerCase() === lower);
+      const contains = exact ? [] : queue.filter((r) => r.doc.toLowerCase().includes(lower));
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `\"${params.document}\" matches ${contains.length} documents — name one exactly.`
+              : `No document named \"${params.document}\" in the review queue.`,
+        };
+      }
+      selectRow(match.id);
+      return { ok: true, detail: `Selected ${match.doc}` };
+    },
+    'review.open-queue': () => {
+      const guarded = reviewBusyGuard();
+      if (guarded) return guarded;
+      if (boardState.error && queue.length === 0)
+        return { ok: false, reason: 'The review board could not be read.' };
+      if (boardState.loading && queue.length === 0)
+        return { ok: false, reason: 'The review board is still loading.', retry: true };
+      if (queue.length === 0)
+        return {
+          ok: false,
+          reason: Array.isArray(board?.queue)
+            ? 'Nothing is in review.'
+            : 'The review board could not be read.',
+        };
+      if (!queue.some((r) => r.state !== 'approved'))
+        return { ok: false, reason: 'The queue has no next review decision to open. Check final sign-off separately.' };
+      const next = openQueue();
+      return { ok: true, detail: next ? `Opened the queue at ${next.doc}` : 'Opened the queue' };
+    },
+  });
+  /* The ready signal for the retry contract above. */
+  useEffect(() => {
+    if (!boardState.loading) notifySurfaceActionReady('review');
+  }, [boardState.loading]);
+
+  /* The approval-board slice of AnA's screen context. NOT published here:
+     ReviewThreadsPane (always mounted by this surface) is the ONE 'review'
+     publisher. The board facts travel to the pane as a prop. A FAILED read
+     ships the failure. */
+  const boardContext = useMemo(() => {
+    if (boardState.loading && queue.length === 0) {
+      return { state: 'loading' as const };
+    }
+    if (boardState.error && queue.length === 0) {
+      return { state: 'error' as const };
+    }
+    const awaiting = queue.filter((r) => r.state !== 'approved').length;
+    const selected = queue.find((r) => r.id === sel);
+    return {
+      state: 'ready' as const,
+      queueCount: queue.length,
+      awaitingDecision: awaiting,
+      selectedDoc: selected?.doc ?? null,
+      selectedState: selected?.state ?? null,
+    };
+  }, [boardState.loading, boardState.error, queue, sel]);
+
+  useEffect(() => {
+    try {
+      const r = queue.find((x) => x.id === sel);
+      if ((window as any).C2C && r) {
+        (window as any).C2C.setContext({
+          entityType: 'review',
+          entityId: r.id,
+          entityLabel: (r.prog ? r.prog + ' · ' : '') + r.doc,
+        });
+      }
+    } catch { /* noop */ }
+  }, [sel, queue]);
+
+  const scopeBar = (
+    <>
+      <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={(value) => { if (!ceremonyOpen()) setOnlyProgram(value); }} />
+      {/* Send for review on a Vault version assigns nobody, so it was in no
+          queue (QA 2026-10-08, walk 2, j3). Listed here with who has it. */}
+      <ReviewVaultQueue items={board?.vaultReviews} meId={meId} onOpenVault={(item) => openVaultVersion(item, onNav, fireToast)} />
+    </>
+  );
+  const vaultInReview = (board?.vaultReviews ?? []).length;
+
+  // ── The three honest states, before any row is dereferenced. No fixture ──
+  if (boardState.loading && queue.length === 0) {
+    return (
+      <div className=\"page-inner\">
+        {decisionDialog}
+        <PageHead eyebrow=\"Project · review\" title={REVIEW_TITLE} sub={REVIEW_SUB} />
+        {scopeBar}
+        <EmptyState title=\"Loading the review board…\" icon={I.clock} />
+      </div>
+    );
+  }
+  if (boardState.error && queue.length === 0) {
+    return (
+      <div className=\"page-inner\">
+        {decisionDialog}
+        <PageHead eyebrow=\"Project · review\" title={REVIEW_TITLE} sub={REVIEW_SUB} />
+        {scopeBar}
+        <EmptyState
+          tone=\"error\"
+          title=\"Couldn't load the review board\"
+          hint={boardState.error}
+          icon={I.alertTriangle}
+        />
+      </div>
+    );
+  }
+  if (queue.length === 0) {
+    /* \"Nothing is in review\" is a CLAIM. The board's own queue array is the
+       positive evidence that the board was read: a real board with nothing on
+       it comes back as `queue: []`. No array means nothing was read, and the
+       honest copy says that instead of reassuring. */
+    const boardRead = Array.isArray(board?.queue);
+    /* With Vault versions listed above, \"nothing\" would be untrue: the claim
+       narrows to the Authoring queue. */
+    const emptyTitle = vaultInReview > 0
+      ? 'No document from the editor is in this queue'
+      : scope === 'mine' ? 'Nothing awaits your review'
+      : scope === 'requested' ? 'You have not requested a review'
+      : 'Nothing is in review';
+    const emptyHint =
+      scope === 'mine'
+        ? 'When a colleague requests your review on a document in the editor, or a document reaches your sign-off step, it appears here.'
+        : scope === 'requested'
+          ? 'Reviews you request from the editor appear here with each reviewer’s verdict.'
+          : 'When a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.';
+    return (
+      <div className=\"page-inner\">
+        {decisionDialog}
+        <PageHead eyebrow=\"Project · review\" title={REVIEW_TITLE} sub={REVIEW_SUB} />
+        {scopeBar}
+        {boardRead ? (
+          <EmptyState title={emptyTitle} hint={emptyHint} icon={I.shieldCheck} />
+        ) : (
+          <EmptyState
+            tone=\"error\"
+            title=\"The review board did not load\"
+            hint=\"The request came back without a board, so this screen cannot tell you whether anything is awaiting review. Try again, and treat the queue as unread until it loads.\"
+            icon={I.alertTriangle}
+            retry={refreshBoard}
+          />
+        )}
+        {/* Threads can exist even when no document is on the approval board. */}
+        <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
+        <C2CToast msg={toast} />
+      </div>
+    );
+  }
+
+  const item = queue.find((r) => r.id === sel) || queue[0];
+  const wf: ReviewWorkflow | null = workflows[item.id] || null;
+
+  const openEditor = () => openReviewDocument(item, onNav);
+
+  /**
+   * Resolve a review comment — PATCH /api/authoring/comments/:id {status}.
+   * Optimistic on screen, reverted when the record did not change.
+   */
+  const resolveCmt = async (id: string) => {
+    const prev = thread;
+    setThread((t) => t.map((c) => (c.id === id ? { ...c, state: 'resolved' } : c)));
+    try {
+      const res = await apiRequest('PATCH', '/api/authoring/comments/' + encodeURIComponent(id), { status: 'resolved' });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || (body as { success?: boolean } | null)?.success !== true) {
+        setThread(prev); // the record did not change, so neither does the thread
+        fireToast(serverMessage(body) ?? 'The comment was not resolved (HTTP ' + res.status + '). It is still open.', 'error');
+      }
+    } catch (e) {
+      setThread(prev);
+      fireToast('The comment was not resolved — ' + redactInternals(e instanceof Error ? e.message : '', 'the service could not be reached') + '. It is still open.', 'error');
+    }
+  };
+
+  /**
+   * Post a review comment — POST /api/authoring/sections/:sectionId/comment.
+   * Authoring comments are anchored to a section; a board-level comment goes
+   * on the document's first section. A document with no section yet cannot
+   * take one, and the box says so rather than posting nowhere.
+   */
+  const postReply = async () => {
+    const text = reply.trim();
+    if (!text || requesting) return;
+    if (!item.firstSectionId) {
+      fireToast('This document has no section yet, so a comment has nothing to attach to.', 'error');
+      return;
+    }
+    setRequesting(true);
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/authoring/sections/' + encodeURIComponent(item.firstSectionId) + '/comment',
+        { body: text, doc_id: item.id },
+      );
+      const body = await res.json().catch(() => null);
+      if (!res.ok || (body as { success?: boolean } | null)?.success !== true) {
+        fireToast(serverMessage(body) ?? 'The comment was not posted (HTTP ' + res.status + '). Nothing was saved.', 'error');
+        return;
+      }
+      setReply('');
+      refreshBoard();
+    } catch (e) {
+      fireToast('The comment was not posted — ' + redactInternals(e instanceof Error ? e.message : '', 'the service could not be reached') + '. Nothing was saved.', 'error');
+    } finally {
+      setRequesting(false);
+    }
+  };
+
+  const openCmts = thread.filter((c) => c.state === 'open').length;
+  /* \"0 open\" is a claim that nothing on this document is outstanding. The board
+     carrying a thread ARRAY is the positive evidence the comments were read. */
+  const threadState = assessmentStateFor(boardState, {
+    scopeExists: true,
+    findingCount: openCmts,
+    assessmentRan: Array.isArray(board?.thread),
+  });
+
+  /* ---- AnswerLead derivation ----
+     Ownership is decided SERVER-SIDE per row, from the authoring store:
+     `awaitingMyReview` (a pending review request names the caller) and
+     `atMySignOff` (the current approval step's approver is the caller). The
+     claim \"nothing is waiting on you\" is only spoken over a board that came
+     back with a queue array; a failed or empty re-read withdraws it. */
+  const awaitingMe = queue.filter((r) => r.awaitingMyReview === true);
+  const signMe = queue.filter((r) => r.atMySignOff === true);
+  const stillMoving = queue.filter((r) => r.state !== 'approved').length;
+
+  const signState = assessmentStateFor(boardState, {
+    scopeExists: queue.length > 0,
+    findingCount: awaitingMe.length + signMe.length,
+    assessmentRan: Array.isArray(board?.queue),
+  });
+  const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
+  const signHeadline =
+    signState === 'loading'
+      ? <>Reading the review queue…</>
+      : signState === 'unreadable'
+        ? <>The review queue could not be re-read. The queue below is the last board that loaded, and nothing here tells you whether a review is waiting on you.</>
+        : signState === 'not-assessed'
+          ? <>No review queue came back, so this screen cannot say whether a review is waiting on you. The queue below is the last board that loaded.</>
+          : signState === 'assessed-with-findings'
+            ? (
+              awaitingMe.length > 0
+                ? <><b>{awaitingMe.length}</b> {awaitingMe.length === 1 ? 'document awaits' : 'documents await'} your review{signMe.length > 0 ? <>, and <b>{n(signMe.length, 'is', 'are')}</b> at your sign-off step — sign from the authoring workspace</> : null}.</>
+                : <><b>{signMe.length}</b> {signMe.length === 1 ? 'document is' : 'documents are'} at your <b>sign-off step</b> — sign from the authoring workspace.</>
+            )
+            : <>Nothing is waiting on you — <b>{stillMoving}</b> document{stillMoving === 1 ? '' : 's'} still moving through review.</>;
+  const first = awaitingMe[0] ?? signMe[0];
+  const signAction =
+    signState === 'assessed-with-findings' && first
+      ? { label: 'Review ' + first.doc, onClick: () => selectRow(first.id) }
+      : hasAnswer(signState) && stillMoving > 0
+        ? { label: 'Open the queue', onClick: () => { openQueue(); } }
+        : undefined;
+
+  const ownership = (r: ReviewItem): string =>
+    r.awaitingMyReview ? 'Awaiting your review'
+    : r.atMySignOff ? 'At your sign-off'
+    : r.requestedByMe ? 'Requested by you'
+    : '';
+
+  return (
+    <div className=\"page-inner\">
+        {decisionDialog}
+      <PageHead
+        eyebrow=\"Project · review\"
+        title={REVIEW_TITLE}
+        sub={REVIEW_SUB}
+        actions={
+          <button className=\"btn ghost\" onClick={() => onAsk('Summarize open review comments')}>
+            {I.sparkles} Ask AnA
+          </button>
+        }
+      />
+
+      <AnswerLead
+        tone={signState === 'assessed-with-findings' ? 'urgent' : 'calm'}
+        eyebrow=\"What is waiting on your review right now\"
+        headline={signHeadline}
+        body={<>Each document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.</>}
+        reassure={
+          hasAnswer(signState) && signState !== 'not-assessed'
+            ? \"I'll surface exactly which review you own and pre-read the document so your verdict is one informed click.\"
+            : undefined
+        }
+        action={signAction}
+        secondary=\"Or work the queue below.\"
+      />
+
+      {scopeBar}
+
+      <div className=\"split\">
+        <div className=\"split-list\" ref={queueRef}>
+          {queue.map((r) => (
+            <button key={r.id} className=\"lrow\" data-on={sel === r.id || undefined} onClick={() => selectRow(r.id)}>
+              <div className=\"lrow-top\">
+                <span className=\"mono\">{r.prog ?? r.module ?? ''}</span>
+                <Pill tone={REVIEW_STANDING_PILL_TONE[reviewStanding(r).group]}>{reviewStanding(r).words}</Pill>
+              </div>
+              <div className=\"lrow-title\">{r.doc}</div>
+              <div className=\"lrow-meta\"><span>{r.reviewer}{r.role ? ' · ' + r.role : ''}</span></div>
+              <div className=\"lrow-foot\">
+                <span className=\"gates\"><span className=\"g warn\">{r.comments} cmt</span></span>
+                <span className=\"lrow-due\" style={{ color: r.mine ? 'var(--warning)' : 'var(--text-400)' }}>{ownership(r)}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className=\"split-detail\">
+          <div className=\"dt-head\">
+            <div>
+              <div className=\"dt-eyebrow\">{item.prog ?? item.module ?? ''}{item.role ? ' · ' + item.role : ''}</div>
+              <h3 className=\"dt-title\">{item.doc}</h3>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {item.awaitingMyReview
+                ? <>
+                    <button className=\"btn ghost\" onClick={() => setDecisionFor(item)}>{I.close} Request changes...</button>
+                    <button className=\"btn primary\" onClick={() => setDecisionFor(item)}>{I.shieldCheck} Record review decision</button>
+                  </>
+                : item.myReviewStatus && item.myReviewStatus !== 'pending'
+                  ? <RecordedReviewStanding item={item} />
+                  : item.atMySignOff
+                    ? <button className=\"btn primary\" onClick={openEditor} data-testid=\"rv-open-to-sign\">{I.lock} Open the document to sign</button>
+                    : <Pill tone={REVIEW_STANDING_PILL_TONE[reviewStanding(item).group]}>{reviewStanding(item).words}</Pill>
+              }
+            </div>
+          </div>
+
+          {/* The review requests on this document — who was asked, by whom,
+              and what each has said. Same rows the author's review panel reads. */}
+          <div className=\"rv-wf\">
+            <div className=\"rv-wf-h\">
+              <span className=\"rv-wf-l\">{I.user} Review requests</span>
+              {/* A board row served before this read model carried the
+                  document's status (or by a server that could not read it)
+                  has none. Rendering nothing there is honest; crashing the
+                  surface on it blanked the whole board. */}
+              {item.docStatus && (
+                <span className=\"rv-wf-tid mono\">{item.docStatus.toLowerCase().replace(/_/g, ' ')}</span>
+              )}
+            </div>
+            <div className=\"rv-wf-steps\">
+              {(item.reviews ?? []).length === 0 && (
+                <div className=\"rv-wf-step\" data-status=\"pending\">
+                  <div className=\"rv-wf-body\">
+                    <div className=\"rv-wf-nm\">No review requested yet</div>
+                    <div className=\"rv-wf-meta mono\">The document was submitted for sign-off without a named reviewer.</div>
+                  </div>
+                </div>
+              )}
+              {(item.reviews ?? []).map((review, index) => <ReviewRequestStep key={review.id} review={review} index={index} />)}
+            </div>
+          </div>
+
+          {/* The approval chain — authoring_workflow_steps for the current
+              submission. Absent when the author has not submitted for sign-off:
+              that is a fact about the document (same read as the queue), not an
+              unread chain. */}
+          {!wf && (
+            <div className=\"esign-banner\">
+              {/* QA 2026-10-08 (j4): this said the author submits the document
+                  from the authoring workspace; no control there submits to a
+                  chain. What is true is said instead. */}
+              <span className=\"ico\">{I.gitBranch}</span> No approval chain: this document has not been submitted to one. In the authoring workspace it is approved by an Approval e-signature, which an approver applies after the review.
+            </div>
+          )}
+          {wf && (
+            <div className=\"rv-wf\">
+              <div className=\"rv-wf-h\">
+                <span className=\"rv-wf-l\">{I.gitBranch} {wf.template}</span>
+                <span className=\"rv-wf-tid mono\">{wf.templateId}</span>
+              </div>
+              <div className=\"rv-wf-steps\">
+                {wf.steps.map((s, i) => (
+                  <div key={s.id} className=\"rv-wf-step\" data-status={s.status}>
+                    <span className=\"rv-wf-dot\">{s.status === 'approved' ? I.check : (i + 1)}</span>
+                    <div className=\"rv-wf-body\">
+                      <div className=\"rv-wf-nm\">
+                        {s.name}
+                        <span className={'rv-wf-tag tone-' + (s.status === 'approved' ? 'ok' : s.status === 'current' ? 'warn' : s.status === 'rejected' ? 'err' : 'idle')}>
+                          {s.status === 'approved' ? 'Signed' : s.status === 'current' ? 'Awaiting signature' : s.status === 'rejected' ? 'Rejected' : 'Pending'}
+                        </span>
+                      </div>
+                      <div className=\"rv-wf-meta mono\">
+                        {s.approverType}: {s.approver} · {s.requiredActions.join(' + ')}{s.at ? ' · ' + s.at : ''}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* The document under review */}
+          <div className=\"rv-doc\">
+            <div className=\"rv-doc-h\">
+              <span className=\"rv-doc-l\">{I.fileText} Document under review</span>
+              <div className=\"rv-doc-acts\">
+                {item.conf != null && (
+                  <span className=\"rv-conf\" data-tone={item.conf >= 0.85 ? 'ok' : item.conf >= 0.7 ? 'warn' : 'err'} title=\"AnA confidence\">
+                    {Math.round(item.conf * 100)}% confidence
+                  </span>
+                )}
+                <button className=\"btn ghost\" style={{ height: 28 }} onClick={openEditor} data-testid=\"rv-open-in-editor\">{I.externalLink} Open in editor</button>
+              </div>
+            </div>
+            <div className=\"rv-doc-page\">
+              <div className=\"rv-doc-sec\">{item.doc}</div>
+              <p className=\"rv-doc-text\">{item.passage || 'No section content yet.'}</p>
+              {item.prov && <div className=\"rv-doc-prov\">{I.lock} {item.prov}</div>}
+            </div>
+          </div>
+
+          <div className=\"esign-banner\">
+            <span className=\"ico\">{I.lock}</span> Decisions recorded on this surface are not electronic signatures. A binding 21 CFR §11.50 signature is applied from the authoring workspace, where the signer's password is re-verified and the signature is sealed against a frozen document version.
+          </div>
+
+          <div className=\"dr-seclbl\" style={{ padding: '0 0 8px', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Comments</span>
+            <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>
+              {threadState === 'assessed-with-findings'
+                ? openCmts + ' open'
+                : threadState === 'loading'
+                  ? 'reading the thread…'
+                  : threadState === 'unreadable'
+                    ? 'thread not re-read'
+                    : threadState === 'not-assessed'
+                      ? 'thread not read'
+                      : '0 open'}
+            </span>
+          </div>
+
+          <div className=\"thread\">
+            {thread.map((c) => (
+              <div key={c.id} className=\"cmt\" data-ai={c.ai || undefined} data-resolved={c.state === 'resolved' || undefined}>
+                <div className=\"cmt-meta\">
+                  <span className=\"cmt-av\">{c.ai ? '*' : c.author.split(/[\\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join('').toUpperCase()}</span>
+                  <b>{c.author}</b>
+                  <span className=\"cmt-role\">{c.role}</span>
+                  <span className=\"cmt-when\">· {c.when}</span>
+                  <Pill tone={c.state === 'resolved' ? 'ok' : 'warn'}>{c.state}</Pill>
+                </div>
+                <div className=\"cmt-body\">{c.body}</div>
+                {c.state === 'open' && (
+                  <div className=\"cmt-actions\">
+                    <button className=\"btn ghost\" style={{ height: 26 }} onClick={() => resolveCmt(c.id)}>Resolve</button>
+                    {c.ai && <button className=\"btn ghost\" style={{ height: 26 }} onClick={openEditor} data-testid=\"rv-comment-open-doc\">Open the document</button>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className=\"rv-reply\">
+            <input
+              className=\"rv-reply-in\"
+              placeholder={item.firstSectionId ? 'Add a comment...' : 'No section to comment on yet'}
+              value={reply}
+              disabled={!item.firstSectionId}
+              onChange={(e) => setReply(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); postReply(); } }}
+            />
+            <button className=\"btn ghost\" disabled={!reply.trim() || !item.firstSectionId} onClick={postReply}>{I.send} Comment</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Real, persisted review threads (Phase-13 backend) — assigned to the
+          signed-in reviewer, with reply / request-changes / resolve in place. */}
+      <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
+
+      <C2CToast msg={toast} />
+    </div>
+  );
+}
+
+function RecordedReviewStanding({ item }: { item: ReviewItem }) {
+  const current = item.myReviewStanding === 'current';
+  const label = REVIEW_STATUS_LABEL[item.myReviewStatus ?? ''] ?? item.myReviewStatus;
+  return <span className={`rd-chip tone-${current ? item.myReviewStatus === 'approved' ? 'ok' : item.myReviewStatus === 'rejected' ? 'err' : 'warn' : 'warn'}`}>
+    {current ? 'Your decision recorded' : 'Your earlier decision'} — {label}
+    {!current && (item.myReviewStanding === 'stale' ? ' · Saved content changed' : ' · Content binding unavailable')}
+  </span>;
+}
+
+function recordedNotice(receipt: AuthoringReviewRow): string {
+  return receipt.review_status === 'approved' ? 'Approval recorded for the saved document shown.' : receipt.review_status === 'changes_requested' ?
+    'Change request recorded — the author has your reason.' : 'Rejection recorded — the author has your reason.';
+}
+
+function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: number }) {
+  const current = review.standing === 'current';
+  const approved = current && review.status === 'approved';
+  const tone = approved ? 'ok' : current && review.status === 'rejected' ? 'err' : 'warn';
+  const state = approved ? 'approved' : review.status === 'pending' ? 'current' : 'pending';
+  return <div className=\"rv-wf-step\" data-status={state}>
+    <span className=\"rv-wf-dot\">{approved ? I.check : index + 1}</span>
+    <div className=\"rv-wf-body\">
+      <div className=\"rv-wf-nm\">{review.reviewer}<span className={`rv-wf-tag tone-${tone}`}>{reviewRequestWords(review)}</span></div>
+      <div className=\"rv-wf-meta mono\">
+        {review.requestedBy ? `requested by ${review.requestedBy}` : 'requested'}
+        {review.reviewedAt && ` · decided ${new Date(review.reviewedAt).toLocaleDateString()}`}
+        {review.comments && ` · ${review.comments}`}
+      </div>
+    </div>
+  </div>;
+}
+
+function reviewRequestWords(review: ReviewRequest): string {
+  const label = REVIEW_STATUS_LABEL[review.status] ?? review.status;
+  if (review.status === 'pending' || review.standing === 'current') return label;
+  return `${label} · ${review.standing === 'stale' ? 'Earlier saved content' : 'Content binding unavailable'}`;
+}
+"
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:114:17
+    112|   it('marks the controls those rules name, and sets no inline height a…
+    113|     const src = fs.readFileSync(path.join(V2, 'surfaces', 'Review.tsx'…
+    114|     expect(src).toMatch(/className="dt-acts"/);
+       |                 ^
+    115|     expect(src).toMatch(/className="btn ghost rv-doc-open"[^>]*data-te…
+    116|     expect(src).toMatch(/className="btn ghost rv-scope-program"/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Close and each notice’s Mark read 44px square
+AssertionError: .c2c-v2 .tt-close: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:124:62
+    122|   it('makes Close and each notice’s Mark read 44px square', () => {
+    123|     for (const sel of ['.c2c-v2 .tt-close', '.c2c-v2 .tt-read']) {
+    124|       expect(phoneRule(app, sel, 'width', AT_LEAST_44), sel).toBe(true…
+       |                                                              ^
+    125|       expect(phoneRule(app, sel, 'height', AT_LEAST_44), sel).toBe(tru…
+    126|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Triage, Show more, Open the task board and every button in the tray 44px tall
+AssertionError: .c2c-v2 .tt-triage: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:131:67
+    129|   it('makes Triage, Show more, Open the task board and every button in…
+    130|     for (const sel of ['.c2c-v2 .tt-triage', '.c2c-v2 .tt-more', '.c2c…
+    131|       expect(phoneRule(app, sel, 'min-height', AT_LEAST_44), sel).toBe…
+       |                                                                   ^
+    132|     }
+    133|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The review decision dialog at 390px > makes the decision, the reason and each button a 44px target
+AssertionError: .c2c-v2 .rv-decision-actions .btn: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:139:72
+    137|   it('makes the decision, the reason and each button a 44px target', (…
+    138|     for (const sel of ['.c2c-v2 .rv-decision-actions .btn', '.c2c-v2 .…
+    139|       expect(phoneRule(decision, sel, 'min-height', AT_LEAST_44), sel)…
+       |                                                                        ^
+    140|     }
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-primary its box outranks that reset
+AssertionError: .es-btn-primary: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:168:104
+    166|     expect(boxes.length).toBeGreaterThan(0);
+    167|     const resetRank = specificity(reset!.selectors[0]);
+    168|     for (const r of boxes) for (const s of r.selectors) expect(outrank…
+       |                                                                                                        ^
+    169|   });
+    170|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-secondary its box outranks that reset
+AssertionError: .es-btn-secondary: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:168:104
+    166|     expect(boxes.length).toBeGreaterThan(0);
+    167|     const resetRank = specificity(reset!.selectors[0]);
+    168|     for (const r of boxes) for (const s of r.selectors) expect(outrank…
+       |                                                                                                        ^
+    169|   });
+    170|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-close its box outranks that reset
+AssertionError: .es-close: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:168:104
+    166|     expect(boxes.length).toBeGreaterThan(0);
+    167|     const resetRank = specificity(reset!.selectors[0]);
+    168|     for (const r of boxes) for (const s of r.selectors) expect(outrank…
+       |                                                                                                        ^
+    169|   });
+    170|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-meaning-opt its box outranks that reset
+AssertionError: .es-meaning-opt: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:168:104
+    166|     expect(boxes.length).toBeGreaterThan(0);
+    167|     const resetRank = specificity(reset!.selectors[0]);
+    168|     for (const r of boxes) for (const s of r.selectors) expect(outrank…
+       |                                                                                                        ^
+    169|   });
+    170|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > at 390px Sign and commit, Cancel, Done and each meaning are 44px tall, and the close control 44px square
+AssertionError: .es-modal .es-btn-primary: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:173:69
+    171|   it('at 390px Sign and commit, Cancel, Done and each meaning are 44px…
+    172|     for (const sel of ['.es-modal .es-btn-primary', '.es-modal .es-btn…
+    173|       expect(phoneRule(esign, sel, 'min-height', AT_LEAST_44), sel).to…
+       |                                                                     ^
+    174|     }
+    175|     expect(phoneRule(esign, '.es-modal .es-close', 'width', AT_LEAST_4…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > reduced motion still stops their transitions, at the same rank
+AssertionError: es-btn-primary: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:181:104
+    179|   it('reduced motion still stops their transitions, at the same rank',…
+    180|     const still = rulesOf(esign).filter(r => r.media.some(m => /prefer…
+    181|     for (const cls of BUTTONS) expect(still.some(r => r.selectors.incl…
+       |                                                                                                        ^
+    182|   });
+    183|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > no second copy of the meaning pills’ rules works around the reset elsewhere
+AssertionError: expected [ { media: [], …(2) }, …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "decls": "
++     padding: 5px 11px;
++     border-radius: var(--radius-sm);
++     border: 1px solid var(--border);
++     background: var(--bg-000);
++     font-size: 12px;
++     font-weight: 500;
++     color: var(--text-300);
++   ",
++     "media": [],
++     "selectors": [
++       ".c2c-v2 .es-meaning-opt",
++     ],
++   },
++   {
++     "decls": "
++     background: var(--bg-050);
++     color: var(--text-100);
++   ",
++     "media": [],
++     "selectors": [
++       ".c2c-v2 .es-meaning-opt:hover",
++     ],
++   },
++   {
++     "decls": "
++     background: var(--accent-strong);
++     border-color: var(--accent-strong);
++     color: var(--accent-on-strong);
++   ",
++     "media": [],
++     "selectors": [
++       ".c2c-v2 .es-meaning-opt[data-active='true']",
++     ],
++   },
++   {
++     "decls": "
++     outline: 2px solid var(--accent-main-200);
++     outline-offset: 2px;
++     border-radius: var(--radius-sm);
++   ",
++     "media": [],
++     "selectors": [
++       ".c2c-v2 .es-meaning-opt:focus-visible",
++     ],
++   },
++   {
++     "decls": "
++       min-height: 44px;
++     ",
++     "media": [
++       "@media (max-width: 760px)",
++     ],
++     "selectors": [
++       ".c2c-v2 .es-meaning-opt",
++     ],
++   },
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts:186:88
+    184|   it('no second copy of the meaning pills’ rules works around the rese…
+    185|     const authoring = rulesOf(path.join(V2, 'styles', 'authoring-v2.cs…
+    186|     expect(authoring.filter(r => r.selectors.some(s => s.includes('es-…
+       |                                                                                        ^
+    187|   });
+    188| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  15 failed | 20 passed (35)
+   Start at  09:00:32
+   Duration  4.47s (transform 908ms, setup 319ms, import 1.15s, tests 1.57s, environment 810ms)
+

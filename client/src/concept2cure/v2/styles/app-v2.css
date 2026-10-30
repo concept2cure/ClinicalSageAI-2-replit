@@ -878,6 +878,15 @@
 .c2c-v2 .tt-more:hover{background:var(--bg-050);color:var(--text-100);}
 .c2c-v2 .tt-foot{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-300);font-weight:500;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer;}
 .c2c-v2 .tt-foot:hover{color:var(--accent-100);}
+/* The tray at a phone's width: every control in it a 44px target (RR5 phone
+   acceptance, 2026-10-30). Measured at 390px: Close 26px, each notice's Mark
+   read 24px, Notification preferences and each notice's open button 32px,
+   Triage 41px, Open the task board 43px. */
+@media (max-width:760px){
+  .c2c-v2 .tt-close,.c2c-v2 .tt-read{width:44px;height:44px;}
+  .c2c-v2 .tt-triage,.c2c-v2 .tt-more,.c2c-v2 .tt-foot{min-height:44px;}
+  .c2c-v2 .tt-panel .btn{height:auto;min-height:44px;}
+}
 .c2c-v2 .tb-col-b{display:flex;flex-direction:column;gap:9px;}
 .c2c-v2 .tb-card{position:relative;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);padding:10px 11px 9px;cursor:pointer;transition:border-color var(--dur),box-shadow var(--dur);}
 .c2c-v2 .tb-card:hover{border-color:var(--text-400);box-shadow:0 2px 8px -4px rgb(20 20 19/.18);}

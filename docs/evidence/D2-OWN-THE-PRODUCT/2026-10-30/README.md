@@ -35,3 +35,22 @@ The CSR cortex tests had never run, and once run they were failing.
   being no section.
 - **Result.** 95 of 95 pass (`test-cortex.txt`).
 - **Keeping them running.** `npm run test:cortex` is declared in `package.json` and runs as its own CI step.
+
+## Batch 2: the three environment gates, run with their environment
+
+- **`ci:replay-rebuilds-nothing` passes.** It was run against the lane's database after `deploy-migrate` brought it
+  to trunk (456/456 files). Its earlier output reacted only to a database a few migrations behind.
+- **`ci:server-bundle-prod-imports` passes** after `node scripts/build-server.mjs`: 63 load-time packages are all
+  shipped, and the two runtime absences are each covered by a written exception.
+- **`ci:tables-live-schema` had three phantom findings, now gone.** It reported the tables `missing`, `that` and
+  `conversation`:
+  - **Where they came from.** AnA skill and labeling guidance prose, for example "…derived from missing…".
+  - **Why.** The shared extractor (`check-migration-reachability.mjs`) treated any string literal containing a SQL
+    verb in any case as SQL, and "select" is an English word.
+  - **The new rule (`isSqlish`).** A string counts if it has an upper-case verb anywhere, or if it starts like a
+    query in any case (leading comments and a parenthesis are allowed).
+  - **Measured.** Of 788 referenced relations, exactly those three phantoms are lost, and no real table.
+  - **Pinned.** `migration-reachability-guard.contract.test.ts` holds both directions: real queries count, prose
+    does not. Restoring the old rule turns 4 of its tests red.
+  - **Result.** The gate passes, with 33 absent tables, all baselined. `ci:migration-reachability` and
+    `ci:column-reachability` still pass.

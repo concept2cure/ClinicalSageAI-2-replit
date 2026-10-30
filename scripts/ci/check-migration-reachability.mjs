@@ -130,7 +130,20 @@ const NOT_A_RELATION = new Set([
  * stream of phantom findings gets the whole guard ignored, which costs all of
  * them (ledger C-35 / C-39).
  */
-const SQL_VERB = /\b(SELECT\s|INSERT\s+INTO\s|UPDATE\s+[a-z_."]+\s+SET\s|DELETE\s+FROM\s|WITH\s+[a-z_]+\s+AS\s*\()/i;
+/** An upper-case SQL verb anywhere in the string. */
+const SQL_VERB_UPPER = /\b(SELECT\s|INSERT\s+INTO\s|UPDATE\s+[a-z_."]+\s+SET\s|DELETE\s+FROM\s|WITH\s+[a-z_]+\s+AS\s*\()/;
+/** A string that BEGINS as a query, in any case, after optional SQL comments or an opening parenthesis. */
+const SQL_START = /^(?:\s|--[^\n]*\n|\/\*[\s\S]*?\*\/)*\(?\s*(?:select\s|insert\s+into\s|update\s+[a-z_."]+\s+set\s|delete\s+from\s|with\s+(?:recursive\s+)?[a-z_]+\s*(?:\([^)]*\))?\s*as\s*(?:not\s+)?(?:materialized\s*)?\()/i;
+/**
+ * Whether a string literal is SQL. Until 2026-10-30 any string with a SQL verb in any case counted, so
+ * prose did: "…do not select or apply…" made a whole paragraph SQL, and "…derived from missing…" became a
+ * table named `missing` (three phantoms on ci:tables-live-schema from AnA skill and labeling guidance). A
+ * lower-case verb now counts only where the string starts like a query; an upper-case one anywhere. Measured
+ * on 2026-10-30: of 788 referenced relations, exactly those three were lost.
+ */
+export function isSqlish(text) {
+  return Boolean(text) && (SQL_VERB_UPPER.test(text) || SQL_START.test(text));
+}
 function sqlishSegments(src) {
   const out = [];
   // Template literals, then ordinary quoted strings. Non-greedy, newline-aware
@@ -138,7 +151,7 @@ function sqlishSegments(src) {
   for (const re of [/`([\s\S]*?)`/g, /'((?:[^'\\\n]|\\.)*)'/g, /"((?:[^"\\\n]|\\.)*)"/g]) {
     re.lastIndex = 0;
     for (const m of src.matchAll(re)) {
-      if (m[1] && SQL_VERB.test(m[1])) out.push(m[1]);
+      if (isSqlish(m[1])) out.push(m[1]);
     }
   }
   return out;
