@@ -1,0 +1,21 @@
+{
+  "client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts": "c0229da821607611ed48085cd1d9e0ce74441f9c02df6e08fa438465c1b1e73f",
+  "client/src/concept2cure/v2/__tests__/surfaceActions.test.ts": "ea46c72effce981c1de44fb655c0cf142d447c6458eb9944949adbb6393f56ad",
+  "client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx": "3202e1320e8a9e78d3d5546e5a7eff94c916bef4f5cde3462247f261e91475b1",
+  "client/src/concept2cure/v2/__tests__/driveQueue.test.ts": "f7b2f9d552d294ae731bb5df5a0b0cd7a759a73970118d74f0d0cac661060f97",
+  "client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts": "2faf3516aa422bc01a1543b36e9738e117e3ffa6ecc4187025a3e62189f8849b",
+  "client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx": "4f4cfa06ec9416b7b8b9a9e144f51be72721e476b2635dfd14d17f4d9949aabd",
+  "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx": "73dc2af1d10587d233923cb9044b2a7fcce019a0c804b7fdb923c8d9559965bc",
+  "client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx": "70b205d21fdb9314441da96c124bac786d2a94912ffd0cbe9ed27386736569f5",
+  "client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx": "16cdad6bd49b92970bfaa900f79fa2bfb448caf3d1670e9aeea5cb42722f9251",
+  "client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts": "c852568253e852a839e6e6c8234ae8b87f9f38e62bbd21427cf8ea1b8dc79d51",
+  "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx": "10a65b88aa3d3bb95ecf329f60184f4d419715dc3c57ce02dee7a035186bd80f",
+  "client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts": "e85268db016d28b4ab530fd613bec673536a607b0ab71f8ff28a5597861491fa",
+  "client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx": "f4894947b511d5d3ee6ff2592dcb32406a1ec6c24416a7ae0778608bcf486039",
+  "client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx": "a26a1354055e8aaf4277496486f5214217be56b300a331d47cf39e1088467710",
+  "client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx": "c898ec65466714cb1445e0d81428a8194874ec191bba2d652187778aa5b1e5cb",
+  "client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx": "b82c4b7c983a327242bf99f0f10fe765a316e2d8ebb9294d47cd16a965dd8fea",
+  "server/services/vault/__tests__/vault-archive-audit-projection.test.ts": "a9421901d912464932191b5ef500ca49c3b84d5703ce4329c5db59de23efdd4a",
+  "server/services/vault/__tests__/vault-archive-delivery.test.ts": "1f959c866dbbba07b32ba39cbcccf8a31e0d96a83cb273e03d9394ef84ee49dc",
+  "server/services/vault/__tests__/vault-folder-export.test.ts": "f0e483e586ecf6804948b4b0587041014ccacb8d0e406433a45423949ae2f61d"
+}

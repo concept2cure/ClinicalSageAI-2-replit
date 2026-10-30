@@ -1,0 +1,537 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed 'PDF' body on same-program session replacement and opens for the current owner 326ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "blob": Blob {},
+          "hash": "abababababababababababababababababababababababababababababababab",
+          "kind": "pdf",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed 'non-PDF' body on same-program session replacement and opens for the current owner 128ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "blob": Blob {},
+          "kind": "download",
+          "name": "Study report.pdf",
+          "why": "it is named or typed as a PDF, but its contents are not a PDF, so it is not shown here",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed refusal json body without a toast in the replacement session 105ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "kind": "refused",
+          "message": "Previous session could not open this file",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires an in-flight file immediately when the supplied owner becomes invalid 97ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "blob": Blob {},
+          "hash": "abababababababababababababababababababababababababababababababab",
+          "kind": "pdf",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > does not revive a retired in-flight file when the same owner key becomes valid again 108ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "blob": Blob {},
+          "hash": "abababababababababababababababababababababababababababababababab",
+          "kind": "pdf",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > does not give the first A visit authority after an A to B to A session visit 107ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "blob": Blob {},
+          "hash": "abababababababababababababababababababababababababababababababab",
+          "kind": "pdf",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > keeps selection, an in-flight open and its viewer through equivalent owner and section rerenders 108ms
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > releases an open PDF URL on same-program session replacement before another file opens 52ms
+   → expected <iframe …(3)></iframe> to be null
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > still reports a refusal that belongs to the current session 47ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed 'PDF' body on same-program session replacement and opens for the current owner
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "blob": Blob {},
+          "hash": "abababababababababababababababababababababababababababababababab",
+          "kind": "pdf",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ expectNoPresentation client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:136:33
+    134|
+    135| function expectNoPresentation(fireToast: ReturnType<typeof vi.fn>) {
+    136|   expect(presentOpenedFile).not.toHaveBeenCalled();
+       |                                 ^
+    137|   expect(downloadBlob).not.toHaveBeenCalled();
+    138|   expect(createObjectURL).not.toHaveBeenCalled();
+ ❯ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:190:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed 'non-PDF' body on same-program session replacement and opens for the current owner
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "blob": Blob {},
+          "kind": "download",
+          "name": "Study report.pdf",
+          "why": "it is named or typed as a PDF, but its contents are not a PDF, so it is not shown here",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ expectNoPresentation client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:136:33
+    134|
+    135| function expectNoPresentation(fireToast: ReturnType<typeof vi.fn>) {
+    136|   expect(presentOpenedFile).not.toHaveBeenCalled();
+       |                                 ^
+    137|   expect(downloadBlob).not.toHaveBeenCalled();
+    138|   expect(createObjectURL).not.toHaveBeenCalled();
+ ❯ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:190:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires a delayed refusal json body without a toast in the replacement session
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "kind": "refused",
+          "message": "Previous session could not open this file",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ expectNoPresentation client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:136:33
+    134|
+    135| function expectNoPresentation(fireToast: ReturnType<typeof vi.fn>) {
+    136|   expect(presentOpenedFile).not.toHaveBeenCalled();
+       |                                 ^
+    137|   expect(downloadBlob).not.toHaveBeenCalled();
+    138|   expect(createObjectURL).not.toHaveBeenCalled();
+ ❯ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:218:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > retires an in-flight file immediately when the supplied owner becomes invalid
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "blob": Blob {},
+          "hash": "abababababababababababababababababababababababababababababababab",
+          "kind": "pdf",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ expectNoPresentation client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:136:33
+    134|
+    135| function expectNoPresentation(fireToast: ReturnType<typeof vi.fn>) {
+    136|   expect(presentOpenedFile).not.toHaveBeenCalled();
+       |                                 ^
+    137|   expect(downloadBlob).not.toHaveBeenCalled();
+    138|   expect(createObjectURL).not.toHaveBeenCalled();
+ ❯ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:236:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > does not revive a retired in-flight file when the same owner key becomes valid again
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "blob": Blob {},
+          "hash": "abababababababababababababababababababababababababababababababab",
+          "kind": "pdf",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ expectNoPresentation client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:136:33
+    134|
+    135| function expectNoPresentation(fireToast: ReturnType<typeof vi.fn>) {
+    136|   expect(presentOpenedFile).not.toHaveBeenCalled();
+       |                                 ^
+    137|   expect(downloadBlob).not.toHaveBeenCalled();
+    138|   expect(createObjectURL).not.toHaveBeenCalled();
+ ❯ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:254:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > does not give the first A visit authority after an A to B to A session visit
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "doc": Object {
+          "docId": "upload-1",
+          "id": "upload-1",
+          "num": "",
+          "owner": "",
+          "pct": null,
+          "preview": "",
+          "src": "upload",
+          "status": "unfiled",
+          "title": "Study report.pdf",
+          "type": "Report",
+          "updated": "",
+          "ver": "",
+        },
+        "file": Object {
+          "blob": Blob {},
+          "hash": "abababababababababababababababababababababababababababababababab",
+          "kind": "pdf",
+        },
+        "report": [Function Mock],
+        "showPdf": [Function anonymous],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ expectNoPresentation client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:136:33
+    134|
+    135| function expectNoPresentation(fireToast: ReturnType<typeof vi.fn>) {
+    136|   expect(presentOpenedFile).not.toHaveBeenCalled();
+       |                                 ^
+    137|   expect(downloadBlob).not.toHaveBeenCalled();
+    138|   expect(createObjectURL).not.toHaveBeenCalled();
+ ❯ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:274:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx > releases an open PDF URL on same-program session replacement before another file opens
+AssertionError: expected <iframe …(3)></iframe> to be null
+
+- Expected:
+null
+
++ Received:
+<iframe
+  class="pf-viewer-frame"
+  src="blob:session-test/1"
+  title="Study report.pdf — PDF viewer"
+/>
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx:321:44
+    319|   panel.replace(owner.b);
+    320|
+    321|   expect(screen.queryByTitle(FRAME_TITLE)).toBeNull();
+       |                                            ^
+    322|   expect(revokeObjectURL).toHaveBeenCalledWith(oldURL);
+    323|   expect(presentOpenedFile).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+   Start at  16:38:27
+   Duration  2.81s (transform 831ms, setup 140ms, import 1.04s, tests 1.08s, environment 408ms)
+

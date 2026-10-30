@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not read the previous document section or publish its evidence while the next pinned document sections are pending 854ms
+   → expected [ '9' ] to deeply equal []
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > rejects delayed recorded-section sources after replacement prose settles with the same IDs
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section cite receipt to the replacement session
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section remove receipt to the replacement session
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not apply an earlier section reread receipt to the replacement session
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > retires document-refresh busy state and suppresses old findings and follow-up reads on session replacement
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=false)
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > accepts a current document-refresh receipt and reads the current section (switch=true)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx > Workbench source replies stay with the original readable visit > does not read the previous document section or publish its evidence while the next pinned document sections are pending
+AssertionError: expected [ '9' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "9",
++ ]
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx:129:41
+    127|
+    128|     const published = JSON.parse(screen.getByTestId('published-source-…
+    129|     expect(published.evidenceSourceIds).toEqual([]);
+       |                                         ^
+    130|     expect(previousSectionReadsAfterSwitch).toBe(0);
+    131|     expect(document.querySelector('.tiptap')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  16:46:49
+   Duration  4.94s (transform 2.67s, setup 139ms, import 3.35s, tests 858ms, environment 473ms)
+

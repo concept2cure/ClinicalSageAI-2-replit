@@ -1,0 +1,27 @@
+{
+  "initialFullRun": "reconciled-regression.json",
+  "initialFullRunResult": {
+    "suitesPassed": 70,
+    "suiteFailed": 1,
+    "testsPassed": 853,
+    "testsFailed": 1,
+    "total": 854
+  },
+  "initialPins": "reconciled-source-freeze.json",
+  "qualifiedInputs": "reconciled-accepted-source-freeze.json",
+  "changedInputs": {
+    "server/services/csr/__tests__/csr-job-runner.evidence.test.ts": {
+      "before": "1e8ed72d13b251a1a483857c965f3b2ba0e0c4b07a1875bbfbdff0e1ad869715",
+      "after": "012875e0697b66c07de8a25627f3573b0822d46a072045a5d2d6b3e8c77afb66"
+    }
+  },
+  "productionInputsIdentical": true,
+  "correction": "For the unbound late-permission control, use actual non-result metadata target9.1 instead of results-dependent discussion13. Preserve bound13 result path. Assert gateway called exactly once on both branches before checking refused late writes.",
+  "affectedRetest": "reconciled-runner-fixture.json",
+  "passingSuitesFromInitial": 70,
+  "passingTestsFromInitialOtherSuites": 834,
+  "passingRetestedSuiteTests": 20,
+  "qualifiedDistinctSuites": 71,
+  "qualifiedDistinctTests": 854,
+  "overlappingRunsNotSummed": true
+}

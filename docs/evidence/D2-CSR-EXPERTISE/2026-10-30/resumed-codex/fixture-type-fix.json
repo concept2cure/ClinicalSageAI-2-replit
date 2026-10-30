@@ -1,0 +1,8 @@
+{
+  "path": "server/services/csr/__tests__/csr-current-scope.pglite.test.ts",
+  "beforeTypeScriptSha256": "6cb5a1e89ed6552ad511529dbdbc381570b224022ef5e7d95739119679bced1b",
+  "afterTypeScriptSha256": "3ec455447f6ebc034bf4b922ecd2ebeaf827b166259ae643a1f62ed23ec3bde6",
+  "emittedJavaScriptIdentical": true,
+  "emittedJavaScriptSha256": "1dd3a0d10b3967fd7cf7dc557f60b2483f6afaf0069343d9c42c2f50cd377d78",
+  "reason": "PGlite test driver mapped to the existing select/execute scope seam; runtime SQL and assertions unchanged."
+}

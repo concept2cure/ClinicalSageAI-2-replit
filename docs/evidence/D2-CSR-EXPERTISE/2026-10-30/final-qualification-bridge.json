@@ -1,0 +1,21 @@
+{
+  "fullRun": "final-regression.json",
+  "fullRunResult": {
+    "suites": 58,
+    "tests": 676,
+    "exitCode": 0
+  },
+  "fullRunPins": "publication-source-freeze.json",
+  "acceptedPins": "accepted-source-freeze.json",
+  "changedInputs": {
+    "server/services/__tests__/csr-builder-writing-expertise.test.ts": {
+      "before": "f3b015381e8bd2005e130a9fb01d974c608e1e4ce08bab6d669bc9f18cd1d6c2",
+      "after": "fac44fdbdc0ecd16bd12f6fc9589d6e18315870014e63527e1a28132f92aca1b"
+    }
+  },
+  "productionInputsIdentical": true,
+  "correction": "Strengthen existing fallback fixtures with recorded sampleSize240/duration/comparator. Both sample-size paths now exercise the original forced-power branch and assert useful metadata is retained; all39 cases re-pass. No production code or other input changed.",
+  "affectedRetest": "final-fallback-fixture.json",
+  "distinctFinalTests": 676,
+  "overlappingRunsNotSummed": true
+}

@@ -34,7 +34,7 @@ import { redactInternals } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { VaultClassification, VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
 import { vaultDocumentCodeForFile } from '@shared/constants/domain/vault-document-code';
-import { sendIngest, type IngestProgress, type IngestReply } from './vaultIngestTransport';
+import { IngestUnconfirmedError, sendIngest, type IngestProgress, type IngestReply } from './vaultIngestTransport';
 export { VAULT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 
 export interface VaultUploadOutcome {
@@ -45,8 +45,8 @@ export interface VaultUploadOutcome {
    *  so a surface that opens the document just uploaded opens one the server
    *  named, never one it guessed. */
   recorded: string[];
-  /** Files it refused, each with the reason as the server phrased it. */
-  failed: Array<{ name: string; reason: string }>;
+  /** Files without a confirmed receipt: a refusal, or an unknown result after a complete send. */
+  failed: Array<{ name: string; reason: string; unknown?: true }>;
   /** Per-file filing outcome, as the server stored it: the classifier's
    *  suggested dossier folder, or unfiled (visible review queue). */
   filings: Array<{ name: string; folderLabel: string | null; needsReview: boolean; placement: VaultPlacement }>;
@@ -98,7 +98,7 @@ export type VaultUploadFileStatus =
   | { state: 'stored'; version: string | null; folderLabel: string | null; placement: VaultPlacement; already: boolean;
       /** Its text is still being read by the server (a scanned PDF's OCR is off the upload, MR-08 Stage 3). */
       readingText?: true }
-  | { state: 'refused'; reason: string };
+  | { state: 'refused'; reason: string; unknown?: true };
 
 export interface VaultUploadOptions {
   /**
@@ -185,7 +185,7 @@ async function uploadOne(
       documentId: string | null;
       readingText: boolean;
     }
-  | { ok: false; reason: string; code: string | null }
+  | { ok: false; reason: string; code: string | null; unknown?: true }
 > {
   const { newVersionOf, fields, onProgress } = how;
   const form = new FormData();
@@ -229,9 +229,9 @@ async function uploadOne(
        server cannot parse. `getAuthHeaders()` sets only Authorization and
        x-organization-id. */
     res = await sendIngest(form, { ...getAuthHeaders() }, onProgress);
-  } catch {
-    /* A transport failure, not a server refusal. The distinction matters: the
-       user can retry this one, and nothing was filed. */
+  } catch (error) {
+    // Sending every byte is not a receipt. The server may have committed before the reply was lost.
+    if (error instanceof IngestUnconfirmedError) return { ok: false, reason: error.message, code: null, unknown: true };
     return { ok: false, reason: 'the connection dropped before the file was sent', code: null };
   }
 
@@ -319,12 +319,14 @@ function outcomeNote(outcome: VaultUploadOutcome): NonNullable<VaultUploadState[
       .join(' ');
     return { tone: 'ok', text: `${versionText} ${filedText} ${alreadyRecordedText(outcome.alreadyRecorded)}`.trim() };
   }
+  const refused = outcome.failed.filter((f) => !f.unknown);
+  const unknown = outcome.failed.filter((f) => f.unknown);
   return {
     tone: 'error',
     text:
       (outcome.succeeded.length ? `Filed ${outcome.succeeded.length}. ` : '') +
-      `Not filed: ${outcome.failed.map((f) => `${f.name} — ${f.reason}`).join('; ')}. ` +
-      'Nothing partial was recorded for those.',
+      (refused.length ? `Not filed: ${refused.map((f) => `${f.name} — ${f.reason}`).join('; ')}. Nothing partial was recorded for those.` : '') +
+      (unknown.length ? ` It is not known whether these files were recorded: ${unknown.map((f) => f.name).join('; ')}. Reload the Vault and check before trying again.` : ''),
   };
 }
 
@@ -383,7 +385,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
           opts?.onFileStatus?.(index, r.ok
             ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, placement: r.placement, already: Boolean(r.already),
               ...(r.readingText ? { readingText: true as const } : {}) }
-            : { state: 'refused', reason: r.reason });
+            : { state: 'refused', reason: r.reason, ...(r.unknown ? { unknown: true as const } : {}) });
           if (r.ok && r.documentId) outcome.recorded.push(r.documentId);
           if (r.ok && r.already) {
             outcome.succeeded.push(file.name);
@@ -405,7 +407,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
               placement: r.placement,
             });
           } else {
-            outcome.failed.push({ name: file.name, reason: r.reason });
+            outcome.failed.push({ name: file.name, reason: r.reason, ...(r.unknown ? { unknown: true as const } : {}) });
             if (r.code === 'VERSION_CONTENT_CONFLICT') outcome.conflicts.push({ name: file.name, file });
           }
         }

@@ -1,0 +1,8 @@
+{
+  "scope": "Actual builder and its undefined-results-evidence counterexamples.",
+  "files": {
+    "server/services/__tests__/csr-builder-writing-expertise.test.ts": "e164b64f03106c1b17e5f349098f74d7a1412af057f9c54f2b03a3350b02e9ce",
+    "server/services/csr-builder.ts": "525c514d73f6d44da3067f1813fe90fec1042e748fbaf3610583a0820676cf20",
+    "server/services/csr/cortex-authoring-context.ts": "bde500608d19bf5b07fb7c1f55d4813843feeedd7071ae442da83ef7d2142504"
+  }
+}

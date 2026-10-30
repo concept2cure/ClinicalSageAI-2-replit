@@ -1,0 +1,23 @@
+{
+  "branch": "concept2cure-v2",
+  "accepted_source_commit": "162f2845e487e310657ea75d15120fe3e95beefc",
+  "accepted_tree": "baf2b0b79f5033ee479b3dd61c5b6c462ff3c4c1",
+  "qualified_local_candidate": "be51b09159eba6de4b7a4826ef4408d91ff64a01",
+  "canonical_parent": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
+  "exact_tree_equality": true,
+  "normal_pre_push_gates": "all passed for exact tree, including zero TypeScript errors and no added warnings",
+  "transport": "shell Git credential rejected after all gates; authenticated connected GitHub Git Data API",
+  "branch_update": {
+    "force": false,
+    "expected_sha": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
+    "verified_remote_sha": "162f2845e487e310657ea75d15120fe3e95beefc"
+  },
+  "local_convergence": "exact remote commit object reproduced and hash-verified; identical-tree local and remote-tracking refs adopted atomically; no working files changed",
+  "tests": {
+    "distinct_vitest_checks": 743,
+    "distinct_vitest_suites": 59,
+    "node_gate_controls": 6
+  },
+  "production_build": "passed",
+  "deployment_acceptance": "not claimed"
+}

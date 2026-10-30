@@ -1,0 +1,42 @@
+{
+  "timing": "Captured before fixture-corrected cancellation RED execution",
+  "head": "fc1ece8d961c33f7f00c16367b30f7aa95d05b71",
+  "initialFailure": "Initial two worker tests failed because fixture omitted existing generated source_run_id. Production was not changed; fixture corrected before this guard run.",
+  "files": [
+    {
+      "path": "server/services/csr/csr-job-runner.ts",
+      "sha256": "cd2f58902798a27f1e5defa3ee7af5cba8faffdf040760fde65b682fd16e3e4f",
+      "archive": "server__services__csr__csr-job-runner.ts.gz"
+    },
+    {
+      "path": "server/services/csr/__tests__/csr-evidence-target.pglite.test.ts",
+      "sha256": "5590548996b6627ff43099a8c04f2d28fcb1da4a9376db4b39c7c6d0dd715459",
+      "archive": "server__services__csr____tests____csr-evidence-target.pglite.test.ts.gz"
+    },
+    {
+      "path": "server/services/csr/project-scope.ts",
+      "sha256": "d2289789ee58654b3e7abce540a4ee5c0f991dc75f2a738249f50c4e710f0897",
+      "archive": "server__services__csr__project-scope.ts.gz"
+    },
+    {
+      "path": "server/services/report-os/project-access.ts",
+      "sha256": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+      "archive": "server__services__report-os__project-access.ts.gz"
+    },
+    {
+      "path": "server/services/project-sharing-access.ts",
+      "sha256": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+      "archive": "server__services__project-sharing-access.ts.gz"
+    },
+    {
+      "path": "server/db/drizzle-queryable.ts",
+      "sha256": "0e2ac9713c4326739921c88beb832737e2350e210a0c92e926789acbeda13399",
+      "archive": "server__db__drizzle-queryable.ts.gz"
+    },
+    {
+      "path": "shared/schema.ts",
+      "sha256": "f5dcde2abbcbc409989c4d3d6690f5cb0edce1f4117dcc5ecd1f155a04db9cba",
+      "archive": "shared__schema.ts.gz"
+    }
+  ]
+}

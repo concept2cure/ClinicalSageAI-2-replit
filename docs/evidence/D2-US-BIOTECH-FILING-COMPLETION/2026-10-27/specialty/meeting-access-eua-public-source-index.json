@@ -1,0 +1,85 @@
+{
+  "retrievedAt": "2026-10-27T01:05:54.411268+00:00",
+  "purpose": "Read-only official source review for existing lifecycle source completion. No agency submission or provider call.",
+  "sources": [
+    {
+      "id": "expanded-access",
+      "requestedUrl": "https://www.fda.gov/news-events/public-health-focus/expanded-access",
+      "resolvedUrl": "https://www.fda.gov/news-events/public-health-focus/expanded-access",
+      "status": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "bytes": 38427,
+      "sha256": "d6830abc202da1c0ae808566094daf9967ab3213ee634ef80e56255b567ff2dd"
+    },
+    {
+      "id": "cfr312300",
+      "requestedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-I/section-312.300",
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-I/section-312.300",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 79506,
+      "sha256": "7ac9e49808bf09de26d0de5bf597196bff28f3b42a44351b05b70232e10ed62f"
+    },
+    {
+      "id": "cfr312310",
+      "requestedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-I/section-312.310",
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-I/section-312.310",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 84909,
+      "sha256": "870639ef99b7f8a9737bd14c54ed68131641cf33dfdef1e3f7ae7939aead9591"
+    },
+    {
+      "id": "cfr312315",
+      "requestedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-I/section-312.315",
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-I/section-312.315",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 85345,
+      "sha256": "82b87dd55e9d06877d7da31becbe393c97ed43277cd427895ea58ead68136bb1"
+    },
+    {
+      "id": "cfr312320",
+      "requestedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-I/section-312.320",
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-I/section-312.320",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 81481,
+      "sha256": "f7a45062f228ec659c286b6fd6b452805d63cf2f59597ad41fc2d8c877cdfd35"
+    },
+    {
+      "id": "pdufa-formal-meetings",
+      "requestedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/formal-meetings-between-fda-and-sponsors-or-applicants-pdufa-products",
+      "resolvedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/formal-meetings-between-fda-and-sponsors-or-applicants-pdufa-products",
+      "status": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "bytes": 35415,
+      "sha256": "b059ffc8e1614aa66a17b5ac38fe8d1aae0748e644aa2f63a75c1aad40176962"
+    },
+    {
+      "id": "pdufa-vii-letter",
+      "requestedUrl": "https://www.fda.gov/media/151712/download",
+      "resolvedUrl": "https://www.fda.gov/media/151712/download",
+      "status": 200,
+      "contentType": "application/pdf",
+      "bytes": 463799,
+      "sha256": "5a68654c8f0e2208577680829d35a9fd5098c43a6f46ec5db103d8851dc18417"
+    },
+    {
+      "id": "eua",
+      "requestedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/emergency-use-authorization-medical-products-and-related-authorities",
+      "resolvedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/emergency-use-authorization-medical-products-and-related-authorities",
+      "status": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "bytes": 195834,
+      "sha256": "edda1ba49cea536d0e558f5b7adb889268e598afcf1cc2705f2897001ee913a1"
+    },
+    {
+      "id": "usc564",
+      "requestedUrl": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title21-section360bbb-3&num=0&edition=prelim",
+      "status": "failed",
+      "error": "HTTP Error 404: Not Found"
+    }
+  ],
+  "authoredFacts": []
+}

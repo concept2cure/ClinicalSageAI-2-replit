@@ -1,0 +1,22 @@
+{
+  "scope": "RED counterexamples pin affected existing owners/tests only; concurrent disjoint company-format work is not represented as frozen. Final integration will pin full static dependency inputs.",
+  "files": {
+    "server/services/ind/ctd/__tests__/specialty-lifecycle-meetings-access-eua.test.ts": "ecdee22309137bc5b37ee5ea43e19984afac100913b5774197be7725900f10f0",
+    "server/services/ind/ctd/__tests__/specialty-lifecycle-biologics.test.ts": "ac6e4bd0795eec0d6538baef3c3bf113c92a8359f15e0b1eaea0307a78ba9767",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx": "699b197e0c8ef15b264d41dc6292ab2eff3a1d6cce3810a12634b9bb798279df",
+    "server/services/regulatory/registry/__tests__/us-biotech-completion-blueprints.test.ts": "1549196d12e57dcda9838ef714d42c0ce3d2a22030203bcc70bc3034bd0da0a8",
+    "server/services/ind/ctd/lifecycle-document-types.ts": "ead028d233d4f780c0a3e56cbd053bf58b947a7472ab9a46a8c1286ea41efacb",
+    "server/services/ind/ctd/types.ts": "4a9b54aefac2faea0d07cc53bee4d58fb17a65f7edc1d8f7c1fcc2ce4aeecf25",
+    "shared/constants/domain/regulatory-meeting-types.ts": "0c33b3bef1e9d38cbb909aac94a5d88ae3d34aa5d90361ee878fef640491aa6f",
+    "server/services/post-approval/post-approval-knowledge.ts": "52505778bbb1aa601f29f25c35e190b5bdf7770f8b2c4f05f0ee224031e88409",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "247c2c9bc6cf92899fd81a762e41405d85b0560befebb5e3fba379d66b1be0dc",
+    "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx": "04ef5c27610d959e354c20acad0938a15e481cd6522aff1f26ec0250813e3d35",
+    "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx": "cad28ec2080d5f216d82220e097068eadbf42efaea7f1c088eaabe603bdc3dfc",
+    "client/src/concept2cure/v2/surfaces/programSequence.ts": "9a692ccbf3b57aa6eb99b7b3220785c7f2818c91b24604421e90a5c5afbc3a45",
+    "server/services/regulatory/sectionBlueprintCatalog.ts": "f80ee806ca902bc313ac5dc231d53174ff7b2e65568b5cf8abd85ffadce3edda",
+    "server/services/regulatory/taskBlueprintCatalog.ts": "dc17c14eb13f2f409ad83fc6822a9f1ddb6ad4333d4c432ccf57111301623d1f",
+    "server/services/market-specs/document-template-library.ts": "fd2bb95548e9ebc9dc5afe51336221cbf0a4a025abb3e714db7bfcf09af7f893",
+    "shared/regulatory/global-document-registry.ts": "9c2b2aaf91f9eefb0bf9777edb5c79ae2a4549f7fffc81621de9c6f4aab7056a",
+    "shared/regulatory/project-bootstrap.ts": "54fb299622edf8fa46e3a86b3e326b638f2519202146b6a1f5c9cc61e0f38748"
+  }
+}
