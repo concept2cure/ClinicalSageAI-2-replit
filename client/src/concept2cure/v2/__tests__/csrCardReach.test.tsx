@@ -17,12 +17,13 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 const { apiRequest } = vi.hoisted(() => ({ apiRequest: vi.fn() }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
 vi.mock('../editor/SourceImportDialog', async original => ({ ...(await original<typeof import('../editor/SourceImportDialog')>()),
-  SourceImportDialog: ({ programId, source, onOpenDocument }: { programId: string; source: unknown; onOpenDocument?: (id: string, code?: string) => void }) =>
-    <div data-testid="csr-import">{JSON.stringify({ programId, source })}
+  SourceImportDialog: ({ programId, programName, source, onOpenDocument }: { programId: string; programName?: string; source: unknown; onOpenDocument?: (id: string, code?: string) => void }) =>
+    <div data-testid="csr-import">{JSON.stringify({ programId, programName, source })}
       {onOpenDocument && <button type="button" onClick={() => onOpenDocument('saved-csr-copy', '11.4.1')}>Open confirmed copy</button>}</div> }));
 import { CsrSourceInputControls } from '../surfaces/CsrSourceInputControls';
 import { BUILD_POLL_MS } from '../surfaces/CsrRunBuilds';
 import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
+import { clearShellProject, publishShellProject } from '../shellProject';
 
 const PROGRAM = '11111111-2222-4333-8444-000000000001';
 const RUN = '0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31';
@@ -147,10 +148,27 @@ it('imports exactly the approved sections into Authoring and opens the saved cop
   const region = await screen.findByLabelText('CSR builds from this run');
   fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into Authoring/ }));
   const dialog = await screen.findByTestId('csr-import');
+  // No open project in the shell: the dialog names the target by its id (programName absent).
   expect(JSON.parse(dialog.firstChild!.textContent!)).toEqual({ programId: PROGRAM, source: { kind: 'csr', jobId: 41, sectionNumbers: ['11.4.1', '12.2'] } });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Open confirmed copy' }));
   expect(nav).toHaveBeenCalledWith('document-authoring');
   expect(peekEditorTarget()).toMatchObject({ docId: 'saved-csr-copy', programId: PROGRAM, sectionCode: '11.4.1' });
+});
+
+it('names the target project in the import dialog when the open project is this program, and only then', async () => {
+  publishShellProject({ id: PROGRAM.toUpperCase(), title: 'SYN-201 IND' });
+  try {
+    card();
+    const region = await screen.findByLabelText('CSR builds from this run');
+    fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into Authoring/ }));
+    expect(JSON.parse((await screen.findByTestId('csr-import')).firstChild!.textContent!)).toMatchObject({ programId: PROGRAM, programName: 'SYN-201 IND' });
+    cleanup();
+    publishShellProject({ id: '11111111-2222-4333-8444-0000000000ff', title: 'Another program' });
+    card();
+    const other = await screen.findByLabelText('CSR builds from this run');
+    fireEvent.click(await within(other).findByRole('button', { name: /Import approved sections into Authoring/ }));
+    expect(JSON.parse((await screen.findByTestId('csr-import')).firstChild!.textContent!).programName).toBeUndefined();
+  } finally { clearShellProject(); }
 });
 
 it('states a refused headings read as an alert, never an empty review', async () => {
