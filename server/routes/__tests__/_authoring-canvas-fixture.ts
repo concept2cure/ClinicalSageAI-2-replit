@@ -56,6 +56,7 @@ export const PREREQ = `
     program_type TEXT,
     primary_agency TEXT,
     product_type TEXT,
+    metadata JSON,
     deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
   );
