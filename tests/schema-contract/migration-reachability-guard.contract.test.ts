@@ -35,6 +35,7 @@ import {
   REF_RE,
   cteNames,
   relationsIn,
+  isSqlish,
 } from '../../scripts/ci/check-migration-reachability.mjs';
 
 /** Every relation name REF_RE finds in one SQL segment, qualified as the guard does. */
@@ -217,4 +218,24 @@ describe('a CTE is a name the query binds, however it is written', () => {
     expect([...cteNames(sql)]).toEqual([]);
     expect([...relationsIn(sql)]).toEqual(['people']);
   });
+});
+
+// 2026-10-30: a string counted as SQL if it held a SQL verb in any case, so AnA skill and labeling prose
+// did ("…do not select or apply…"), and "…derived from missing…" became a table named `missing`.
+describe('isSqlish: queries count, prose does not', () => {
+  it.each([
+    'SELECT id FROM vault.documents WHERE organization_id = $1',
+    'select id from vault.documents where organization_id = $1',
+    '  -- the current rows\n  select id from projects',
+    '(select 1 from projects)',
+    'with recent as (select id from projects) select * from recent',
+    'UPDATE projects SET metadata = $2 WHERE id = $1',
+    'Reads the rows: SELECT id FROM projects WHERE id = $1',
+  ])('counts %j', (text) => { expect(isSqlish(text)).toBe(true); });
+  it.each([
+    'Keep unanswered facts as not_stated and dependent results derived from missing data unresolved; select the next step.',
+    'Plan the trial around the marker: whether to select patients, and what that means for the claim made from that.',
+    'Milk excretion is not inferred from conversation inputs. Select the data source.',
+    'Authentication required to select organization',
+  ])('does not count %j', (text) => { expect(isSqlish(text)).toBe(false); });
 });

@@ -15,7 +15,7 @@ import { useLiveRows } from '../dataConnect';
 import { ApiRequestError, apiRequest, assertApiResponseOk } from '@/lib/queryClient';
 import { CC_INTERACTION_TYPES } from '../fixtures/commcenter';
 import { programSubmissionsPath, type MarketSubmission } from './programSequence';
-import { submissionLabel } from './AgencyInbox';
+import { agencyCommsPath, submissionLabel, type CommRow } from './AgencyInbox';
 import {
   HA_INTERACTION_DATE_FOR, HA_INTERACTION_NEXT, HA_INTERACTION_STATUS_LABEL, isHaInteractionStatus, type HaInteractionStatus,
 } from '@shared/regulatory/ha-interaction-lifecycle';
@@ -86,14 +86,22 @@ export function RecordMeetingForm({ projectId, fire, onCancel, onRecorded }: {
 }
 
 export function MoveMeetingForm({ meeting, fire, onCancel, onMoved }: {
-  meeting: { id: number; title: string; status: string }; fire: Fire; onCancel: () => void; onMoved: () => void;
+  meeting: { id: number; title: string; status: string; project_id?: number | null }; fire: Fire; onCancel: () => void; onMoved: () => void;
 }) {
   const moves = meetingMoves(meeting.status);
+  /* The minutes are a letter in the meeting's project inbox, recorded as meeting
+     minutes (P-39 step 4c). Its questions carry the agreements, its answers the
+     commitments. Offered only when the meeting's minutes can be received. */
+  const projectId = meeting.project_id != null && moves.includes('minutes_received') ? String(meeting.project_id) : null;
+  const letters = useLiveRows<CommRow>(agencyCommsPath(projectId), [projectId]);
+  const minutesLetters = letters.rows.filter((c) => c.sourceType === 'meeting_minutes');
   const move = async (v: Record<string, string>) => {
     const dateKey = HA_INTERACTION_DATE_FOR[v.status as HaInteractionStatus];
     try {
       const res = await apiRequest('PATCH', `/api/ha-interactions/interactions/${meeting.id}/status`, {
-        status: v.status, ...(dateKey && v.date ? { [dateKey]: v.date } : {}), reason: v.reason,
+        status: v.status, ...(dateKey && v.date ? { [dateKey]: v.date } : {}),
+        ...(v.status === 'minutes_received' && v.minutesEventId ? { minutesEventId: v.minutesEventId } : {}),
+        reason: v.reason,
       });
       if (!res.ok) await assertApiResponseOk(res);
       fire(`Meeting moved to ${HA_INTERACTION_STATUS_LABEL[v.status as HaInteractionStatus]?.toLowerCase() ?? v.status}, with an audit entry.`);
@@ -114,6 +122,14 @@ export function MoveMeetingForm({ meeting, fire, onCancel, onMoved }: {
           { key: 'status', label: 'Move to', type: 'select', required: true,
             options: moves.map((s) => ({ value: s, label: HA_INTERACTION_STATUS_LABEL[s] })) },
           { key: 'date', label: 'Date', type: 'date', desc: 'Scheduled, held and minutes received each record the date it happened.' },
+          ...(projectId ? [{
+            key: 'minutesEventId', label: 'Minutes letter', type: 'select' as const,
+            options: minutesLetters.map((c) => ({ value: c.id, label: `${c.communicationType} · received ${c.receivedDate.slice(0, 10)}` })),
+            desc: letters.loading ? "Reading this project's inbox…"
+              : letters.error ? "This project's inbox could not be read, so no minutes letter can be named now."
+                : minutesLetters.length ? 'The inbox letter that holds the minutes. Its questions carry the agreements, its answers the commitments.'
+                  : 'No letter in this project\'s inbox is recorded as meeting minutes yet. Log the minutes in the inbox, then name it here.',
+          }] : []),
           { key: 'reason', label: 'Reason', type: 'text', required: true },
         ],
       }}
