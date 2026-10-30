@@ -1,0 +1,55 @@
+{
+  "sourceMerge": "6747c4470",
+  "incomingCanonical": "be078603b",
+  "previousQualifiedInputs": "reconciled-accepted-source-freeze.json",
+  "qualifiedInputs": "publication-qualified-inputs.json",
+  "changedInputs": {
+    "client/src/concept2cure/v2/dataConnect.tsx": {
+      "before": "51b03e8cf336df448663742c5b31bb4dc9c93f6879b437cc490420fcc6809815",
+      "after": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669"
+    },
+    "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx": {
+      "before": "72795c57c0eaa9b80392944d8837f43a872ce71f6f184f79e7d8696ee80e1cc3",
+      "after": "167df31292a807b81979808985812a0ddbd55288038a9267218da87bcf3e566f"
+    },
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": {
+      "before": "326e0ddcf63bc0de0b28a88b46587b9539b0af0e4a0964ea72abb65ca11d13e9",
+      "after": "e057fa9661a3308dbb9f0cf31335fb03286279727d8435c239c5f9ee4f854bc6"
+    },
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": {
+      "before": "f5e996375e537a42e6ebc056f5e122cfb8a9c424a5223dea96c233185b0e5c98",
+      "after": "9e8902274471789e36ba952e47e4ac51a5b88679f2b300c290b76db4dc35e132"
+    },
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx": {
+      "before": null,
+      "after": "48e54568f7cb9e0bfcf8ada3758510614e4268aed83175c9d0296605ff151a15"
+    },
+    "client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx": {
+      "before": null,
+      "after": "d5197f69e1808c8f71ba819fa5bc8d78f38e96e34a902eac63cf421c91cbf730"
+    },
+    "client/src/concept2cure/v2/editor/__tests__/workbenchSourceReceiptOwnership.test.tsx": {
+      "before": null,
+      "after": "b82c4b7c983a327242bf99f0f10fe765a316e2d8ebb9294d47cd16a965dd8fea"
+    },
+    "client/src/concept2cure/v2/editor/__tests__/workbenchSourceSessionOwnership.test.tsx": {
+      "before": null,
+      "after": "f4d80c505b74bdefd6d9e2e0361cb1391d959ea83f7297d6de6032401f290a89"
+    },
+    "client/src/concept2cure/v2/editor/citationAdmission.ts": {
+      "before": "58d88401f947d63a0c7c61954dda8a9076d7f3199c33d7cd8bf0992ed82200c4",
+      "after": "6b071684f6839bfa673eaaea68f15c17a148b0e75fefc783c34a4a54937f0464"
+    },
+    "client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts": {
+      "before": "d6a89cf30ad47e0bcaf1b05bb098a869b5c6b3d0cb38e923283848485f5cb807",
+      "after": "c47955252bde36f14c714e36b05f07bc3d90ab6091b2237b7fd2b502c253d581"
+    }
+  },
+  "allServerAndSharedInputsIdentical": true,
+  "unchangedBackendInputCount": 2170,
+  "affectedEditorRun": "publication-editor-regression.json",
+  "affectedEditorSuites": 12,
+  "affectedEditorTests": 87,
+  "overlap": "Eight CSR suites repeat earlier qualification; four incoming editor-ownership suites are new. Do not sum87 with854 as a unique total.",
+  "qualification": "Prior71-suite CSR/server/AnA/Vault qualification plus the affected editor rerun. Fresh build/editor gates and normal-push compiler gate qualify the final committed source."
+}

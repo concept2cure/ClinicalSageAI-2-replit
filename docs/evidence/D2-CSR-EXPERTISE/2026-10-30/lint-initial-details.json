@@ -1,0 +1,540 @@
+{
+  "baseline": "438287ed102ff9857938276bbe835f0ec1c11a88",
+  "results": [
+    {
+      "file": "server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/csr-study-pivotal.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/csr-jobs.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/csr-workflow-routes.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/__tests__/csr-builder-e3-brief.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/__tests__/csr-builder-writing-expertise.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 2,
+      "warnings": 2,
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'createCsrReportFlow' has too many lines (1968). Maximum allowed is 100.",
+          "line": 20,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 20,
+          "endColumn": 36
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1969). Maximum allowed is 500.",
+          "line": 547,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 2064,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr-builder.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 2,
+      "warnings": 2,
+      "previous": {
+        "1:no-undef": 1,
+        "1:complexity": 1
+      },
+      "current": {
+        "1:no-undef": 1,
+        "1:complexity": 1
+      },
+      "messages": [
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'setImmediate' is not defined.",
+          "line": 275,
+          "column": 3,
+          "messageId": "undef",
+          "endLine": 275,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'generateSectionTemplate' has a complexity of 19. Maximum allowed is 15.",
+          "line": 720,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 720,
+          "endColumn": 33
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-job-runner.evidence.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 12,
+      "previous": {},
+      "current": {
+        "1:no-undef": 11,
+        "1:max-lines-per-function": 1
+      },
+      "messages": [
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 67,
+          "column": 76,
+          "messageId": "undef",
+          "endLine": 67,
+          "endColumn": 91
+        },
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 91,
+          "column": 52,
+          "messageId": "undef",
+          "endLine": 91,
+          "endColumn": 67
+        },
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 91,
+          "column": 100,
+          "messageId": "undef",
+          "endLine": 91,
+          "endColumn": 115
+        },
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 92,
+          "column": 25,
+          "messageId": "undef",
+          "endLine": 92,
+          "endColumn": 40
+        },
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 103,
+          "column": 18,
+          "messageId": "undef",
+          "endLine": 103,
+          "endColumn": 33
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Arrow function has too many lines (184). Maximum allowed is 100.",
+          "line": 147,
+          "column": 82,
+          "messageId": "exceed",
+          "endLine": 147,
+          "endColumn": 84
+        },
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 184,
+          "column": 20,
+          "messageId": "undef",
+          "endLine": 184,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 228,
+          "column": 33,
+          "messageId": "undef",
+          "endLine": 228,
+          "endColumn": 48
+        },
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 237,
+          "column": 33,
+          "messageId": "undef",
+          "endLine": 237,
+          "endColumn": 48
+        },
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 245,
+          "column": 37,
+          "messageId": "undef",
+          "endLine": 245,
+          "endColumn": 52
+        },
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 261,
+          "column": 33,
+          "messageId": "undef",
+          "endLine": 261,
+          "endColumn": 48
+        },
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'structuredClone' is not defined.",
+          "line": 331,
+          "column": 33,
+          "messageId": "undef",
+          "endLine": 331,
+          "endColumn": 48
+        }
+      ],
+      "growth": [
+        "1:no-undef",
+        "1:max-lines-per-function"
+      ]
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-nct-number.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-project-scope.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 1,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {
+        "2:no-unexpected-multiline": 1
+      },
+      "messages": [
+        {
+          "ruleId": "no-unexpected-multiline",
+          "severity": 2,
+          "message": "Unexpected newline between function and ( of function call.",
+          "line": 111,
+          "column": 5,
+          "messageId": "function",
+          "endLine": 111,
+          "endColumn": 6
+        }
+      ],
+      "growth": [
+        "2:no-unexpected-multiline"
+      ]
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/unsupplied-statistics.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/csr-job-evidence.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/csr-job-runner.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 4,
+      "warnings": 4,
+      "previous": {
+        "1:complexity": 2,
+        "1:max-lines-per-function": 1,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:complexity": 2,
+        "1:max-lines-per-function": 1,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'enqueueCSRBuildJob' has a complexity of 22. Maximum allowed is 15.",
+          "line": 195,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 195,
+          "endColumn": 41
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'runCSRBuildJob' has too many lines (318). Maximum allowed is 100.",
+          "line": 285,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 285,
+          "endColumn": 37
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'runCSRBuildJob' has a complexity of 58. Maximum allowed is 15.",
+          "line": 285,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 285,
+          "endColumn": 37
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (570). Maximum allowed is 500.",
+          "line": 694,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 786,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/project-scope.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 1,
+      "previous": {},
+      "current": {
+        "1:complexity": 1
+      },
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'resolveCsrBuildContext' has a complexity of 17. Maximum allowed is 15.",
+          "line": 97,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 97,
+          "endColumn": 45
+        }
+      ],
+      "growth": [
+        "1:complexity"
+      ]
+    },
+    {
+      "file": "server/services/ind/ctd/csr-e3-sections-plan.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ind/ctd/csr-e3-writing.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "docs/evidence/D2-CSR-EXPERTISE/2026-10-30/run-lint.mjs",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    }
+  ]
+}

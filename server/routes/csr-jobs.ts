@@ -59,6 +59,7 @@ import {
 } from '../services/csr/csr-job-runner.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { CsrScopeError, parseCsrScopeId, requireCsrJobAccess, resolveCsrScope } from '../services/csr/project-scope';
+import { CsrAuthoringContextError } from '../services/csr/cortex-authoring-context';
 import {
   CsrSectionReviewError,
   decideCsrSectionReview,
@@ -263,7 +264,9 @@ router.post('/', async (req: Request, res: Response) => {
       status: enqueued.status,
     });
   } catch (err) {
-    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
+    if (err instanceof CsrScopeError || err instanceof CsrAuthoringContextError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
     log.error('Failed to enqueue CSR build job', {
       err: err instanceof Error ? err.message : String(err),
       organizationId,
@@ -438,7 +441,7 @@ router.post('/:jobId/cancel', async (req: Request, res: Response) => {
     // as 404 so we don't leak job existence across tenants. The probe
     // also lets us return a precise 409.status payload when the row is
     // already terminal at probe time (common case, no race).
-    if (!await requireCsrJobAccess(requireDb(), organizationId, jobId, resolveUserId(req), { forWrite: true })) return res.status(404).json({ error: 'Job not found' });
+    if (!await requireCsrJobWriteAccess(organizationId, jobId, resolveUserId(req) ?? 0)) return res.status(404).json({ error: 'Job not found' });
     const status = await getCSRBuildJobStatus(jobId, organizationId);
     if (status == null) {
       return res.status(404).json({ error: 'Job not found' });
@@ -505,15 +508,7 @@ router.post('/:jobId/cancel', async (req: Request, res: Response) => {
 
 /** Write access to the job's project, checked now (not retained from enqueue). */
 async function requireCsrJobWriteAccess(organizationId: number, jobId: number, userId: number): Promise<boolean> {
-  const d = requireDb();
-  if (!await requireCsrJobAccess(d, organizationId, jobId, userId)) return false;
-  const [job] = await d.select({ projectId: csrBuildJobs.projectId }).from(csrBuildJobs)
-    .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId))).limit(1);
-  if (!job) return false;
-  if (job.projectId != null) {
-    await resolveCsrScope(d, organizationId, { projectId: job.projectId }, { forWrite: true, actorUserId: userId });
-  }
-  return true;
+  return requireCsrJobAccess(requireDb(), organizationId, jobId, userId, { forWrite: true });
 }
 
 router.post('/:jobId/sections/:sectionNumber/review', async (req: Request, res: Response) => {

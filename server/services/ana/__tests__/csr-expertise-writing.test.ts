@@ -12,6 +12,7 @@ describe('record-dependent conduct and statistical timing', () => {
   it('names late SAP finalization and consent waivers as facts to describe honestly', () => {
     expect(getE3Section('9.7')!.writing!.join(' ')).toMatch(/late|after unblinding/i);
     expect(getE3Section('5.3')!.writing!.join(' ')).toMatch(/waiv/i);
+    expect(getE3Section('5.3')!.writing!.join(' ')).toMatch(/documented authority and scope/i);
   });
 });
 
@@ -22,6 +23,7 @@ describe('hypothesis-specific result sentences', () => {
     expect(pattern).toBeDefined();
     expect(pattern!.pattern).toContain('{');
     expect(pattern!.pattern).toMatch(/margin|posterior|credible/i);
+    expect(pattern!.use).toMatch(/retained SAP and source analysis/i);
   });
 
   it('restricts a non-significant superiority sentence to that design', () => {
@@ -29,5 +31,14 @@ describe('hypothesis-specific result sentences', () => {
     const rules = csrWritingGuidance(undefined).rules.map(r => r.rule).join(' ');
     expect(rules).toMatch(/non.inferiority.*equivalence.*Bayesian/i);
     expect(rules).toMatch(/pre.specified.*criterion|prespecified.*criterion/i);
+  });
+
+  it('applies method-appropriate uncertainty to the global and synopsis guidance', () => {
+    const rules = csrWritingGuidance(undefined).rules;
+    expect(rules.find(rule => rule.topic === 'numbers')!.rule).toMatch(/confidence or credible interval/i);
+    expect(rules.find(rule => rule.topic === 'numbers')!.rule).toMatch(/p-value only/i);
+    const synopsis = getE3Section('2')!.writing!.join(' ');
+    expect(synopsis).toMatch(/confidence or credible interval/i);
+    expect(synopsis).toMatch(/p-value only/i);
   });
 });

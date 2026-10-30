@@ -1,0 +1,119 @@
+[
+  {
+    "key": "505b2-guidance",
+    "requestedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/applications-covered-section-505b2",
+    "retrievedAt": "2026-10-27T01:06:26.518127+00:00",
+    "status": 200,
+    "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/applications-covered-section-505b2",
+    "sha256": "ddf9e304e6a1f6131471e65cea04d9e8dff455bd3fd9b55a24392e5609d64961",
+    "bytes": 34908,
+    "title": "Applications Covered by Section 505(b)(2) | FDA"
+  },
+  {
+    "key": "505b2-anda-choice",
+    "requestedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/determining-whether-submit-anda-or-505b2-application",
+    "retrievedAt": "2026-10-27T01:06:26.775395+00:00",
+    "status": 200,
+    "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/determining-whether-submit-anda-or-505b2-application",
+    "sha256": "0316935e09feaf4a694eefb551b4723bf8cd55797c8cf120c9bf10d06c200a68",
+    "bytes": 35876,
+    "title": "Determining Whether to Submit an ANDA or a 505(b)(2) Application | FDA"
+  },
+  {
+    "key": "biosimilar-review",
+    "requestedUrl": "https://www.fda.gov/drugs/biosimilars/review-and-approval",
+    "retrievedAt": "2026-10-27T01:06:26.905420+00:00",
+    "status": 200,
+    "url": "https://www.fda.gov/drugs/biosimilars/review-and-approval",
+    "sha256": "19871cd52773cfe40eee8417340c03622af721acb52a61237ee88d2299806dfd",
+    "bytes": 44072,
+    "title": "Review and Approval | FDA"
+  },
+  {
+    "key": "biosimilar-scientific",
+    "requestedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/scientific-considerations-demonstrating-biosimilarity-reference-product",
+    "retrievedAt": "2026-10-27T01:06:27.055256+00:00",
+    "errorType": "HTTPError",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "key": "accelerated-approval",
+    "requestedUrl": "https://www.fda.gov/drugs/nda-and-bla-approvals/accelerated-approval-program",
+    "retrievedAt": "2026-10-27T01:06:27.448301+00:00",
+    "status": 200,
+    "url": "https://www.fda.gov/drugs/nda-and-bla-approvals/accelerated-approval-program",
+    "sha256": "b3018f6ed9eee8332fb0247e0a4e41be7dea36ad572db3ff3834ef9e7f2cdd82",
+    "bytes": 41730,
+    "title": "Accelerated Approval Program | FDA"
+  },
+  {
+    "key": "expedited-programs",
+    "requestedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/expedited-programs-serious-conditions-drugs-and-biologics",
+    "retrievedAt": "2026-10-27T01:06:27.868497+00:00",
+    "status": 200,
+    "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/expedited-programs-serious-conditions-drugs-and-biologics",
+    "sha256": "64f483055a8c23646b9bd66dfb969a2ee6c20de612b9bbbf50dc9c53204e98bd",
+    "bytes": 34347,
+    "title": "Expedited Programs for Serious Conditions | Drugs and Biologics | FDA"
+  },
+  {
+    "key": "postmarket-requirements",
+    "requestedUrl": "https://www.fda.gov/drugs/guidance-compliance-regulatory-information/postmarket-requirements-and-commitments",
+    "retrievedAt": "2026-10-27T01:06:28.045214+00:00",
+    "status": 200,
+    "url": "https://www.fda.gov/drugs/guidance-compliance-regulatory-information/postmarketing-requirements-and-commitments-introduction",
+    "sha256": "83fd9d08d1a2f452c620daae464a3d6e280a2f20704294e2bffe70497cd93cf7",
+    "bytes": 38005,
+    "title": "Postmarketing Requirements and Commitments: Introduction | FDA"
+  },
+  {
+    "key": "rfd-guidance",
+    "requestedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/how-write-request-designation-rfd",
+    "retrievedAt": "2026-10-27T01:06:28.486904+00:00",
+    "status": 200,
+    "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/how-write-request-designation-rfd",
+    "sha256": "204b5756335474f4ac30c057452729b72374a5735058a79f946086757d528b20",
+    "bytes": 83311,
+    "title": "How to Write a Request for Designation (RFD) | FDA"
+  },
+  {
+    "key": "cfr-31454",
+    "requestedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314/subpart-B/section-314.54",
+    "retrievedAt": "2026-10-27T01:06:28.621813+00:00",
+    "status": 200,
+    "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314/subpart-B/section-314.54",
+    "sha256": "e913ccdbf1a91ef25d5c5893e926267cee2ecd1599c811b817b911666993c0bf",
+    "bytes": 91061,
+    "title": "eCFR :: 21 CFR 314.54 -- Procedure for submission of a 505(b)(2) application requiring investigations for approval of a new indication for, or other change from, a listed drug."
+  },
+  {
+    "key": "cfr-31494",
+    "requestedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314/subpart-C/section-314.94",
+    "retrievedAt": "2026-10-27T01:06:28.906698+00:00",
+    "status": 200,
+    "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314/subpart-C/section-314.94",
+    "sha256": "f87453a795560ea48d4bf86a9f7a5e0e1fb4e356e6caf8dff4dcc4460a427ecd",
+    "bytes": 136564,
+    "title": "eCFR :: 21 CFR 314.94 -- Content and format of an ANDA."
+  },
+  {
+    "key": "cfr-314510",
+    "requestedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314/subpart-H/section-314.510",
+    "retrievedAt": "2026-10-27T01:06:29.234681+00:00",
+    "status": 200,
+    "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314/subpart-H/section-314.510",
+    "sha256": "6e4a1d164375a0411b48a5377b206394770fda0ff034f2173aee6d7f92099445",
+    "bytes": 81898,
+    "title": "eCFR :: 21 CFR 314.510 -- Approval based on a surrogate endpoint or on an effect on a clinical endpoint other than survival or irreversible morbidity."
+  },
+  {
+    "key": "cfr-37",
+    "requestedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-3/subpart-A/section-3.7",
+    "retrievedAt": "2026-10-27T01:06:29.809389+00:00",
+    "status": 200,
+    "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-3/subpart-A/section-3.7",
+    "sha256": "3b2d7cbdd525babbbdd4ca74194ae23b0c2131553995e1937a24d8459413345a",
+    "bytes": 84979,
+    "title": "eCFR :: 21 CFR 3.7 -- Request for designation."
+  }
+]

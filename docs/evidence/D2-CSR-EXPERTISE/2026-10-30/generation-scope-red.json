@@ -1,0 +1,40 @@
+{
+  "startedAt": "2026-10-30T16:13:17.648626+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts",
+    "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 12.69,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "generation-red-source-freeze.json",
+  "sourcesBefore": {
+    "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts": "e68be92d6d36f5c3ac60cba9481046a6ef729b08c53b8bfe77c70ce8f2eaf6f0",
+    "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts": "c486cfdc1b7b7d828d9e64d6ff76990cb5a0ecbfdc95c43338843d573f6f44a5",
+    "server/services/csr/project-scope.ts": "515dd7c9fa56aba0455ac19780ff4ea96e4a2bea8d66de5b3b4cfe3ac52c7d1e",
+    "server/services/csr/csr-job-runner.ts": "5c14fa24abe739fc06acf0cf5b18e047a4c248715f2d7263549ac9c8cfdeda81",
+    "server/services/csr/cortex-authoring-reader.ts": "f7310492e99593e16525fad840eeab3d8abfe74281e97f629741a867553733cf",
+    "server/services/csr/cortex-authoring-context.ts": "bde500608d19bf5b07fb7c1f55d4813843feeedd7071ae442da83ef7d2142504"
+  },
+  "sourcesAfter": {
+    "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts": "e68be92d6d36f5c3ac60cba9481046a6ef729b08c53b8bfe77c70ce8f2eaf6f0",
+    "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts": "c486cfdc1b7b7d828d9e64d6ff76990cb5a0ecbfdc95c43338843d573f6f44a5",
+    "server/services/csr/project-scope.ts": "515dd7c9fa56aba0455ac19780ff4ea96e4a2bea8d66de5b3b4cfe3ac52c7d1e",
+    "server/services/csr/csr-job-runner.ts": "5c14fa24abe739fc06acf0cf5b18e047a4c248715f2d7263549ac9c8cfdeda81",
+    "server/services/csr/cortex-authoring-reader.ts": "f7310492e99593e16525fad840eeab3d8abfe74281e97f629741a867553733cf",
+    "server/services/csr/cortex-authoring-context.ts": "bde500608d19bf5b07fb7c1f55d4813843feeedd7071ae442da83ef7d2142504"
+  },
+  "sourceDrift": [],
+  "rawOutput": "generation-scope-red.log.gz",
+  "rawGzipSha256": "66a2254984c72d01915613600a94f782b767bb1218720571de6ee9b8546a5756",
+  "testSummary": [
+    "Test Files  2 failed (2)",
+    "Tests  27 failed | 4 passed (31)",
+    "Duration  11.79s (transform 2.06s, setup 135ms, import 3.63s, tests 7.40s, environment 0ms)"
+  ]
+}
