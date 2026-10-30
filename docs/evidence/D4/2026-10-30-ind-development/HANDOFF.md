@@ -1,4 +1,17 @@
-# Verified IND development handoff — publication blocked by concurrent pushes
+# Verified IND development handoff
+
+## Resumed integration — publication pending
+
+On continuation, canonical changes through `89b67685e` were merged normally at
+`8a6958b77`. All 66 retained IND source hashes remain identical. The affected
+Projects, Study/Protocol and IND regression checks pass 428/428 across 23 suites;
+production client/server builds pass. Normal publication gates are the next step.
+See the resumed-integration section of the README and its retained logs.
+
+Project Home's intelligence-profile indication/population and IND's program/sole
+charter facts remain separate records; this integration does not reconcile them.
+
+## Previous publication attempts
 
 Implementation commits: `8013c9457` (core drafting increment) and `f19544aee`
 (blank-choice parity). Latest fully gated local source: `d7d70a7f28536cfbcbaa4dcb15fa132deef58549`.

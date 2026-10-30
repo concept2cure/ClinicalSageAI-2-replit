@@ -202,6 +202,26 @@ retained in `normal-gates-pass-remote-race*`. The Vault upload-receipt changes
 were merged normally and the client/server build passed again before retrying.
 No force push or hook bypass was used.
 
+## Resumed canonical integration
+
+Canonical Project settings/recorded-context and Study/Protocol guidance through
+`89b67685e` were merged normally at `8a6958b77`. No IND source changed: all 66
+entries in `source-sha256.json` still match. Read-only integration review found
+no conflict with drafting, region selection, candidate acceptance or source
+currentness. Project Home's intelligence-profile indication/population and IND's
+program/sole-charter facts remain separate records, not reconciled by this merge.
+
+The incoming Projects and Protocol workflow suites, shared settings/profile
+validators, context-enrichment/unified-work consumers, recorded-product SQL and
+real drafting service, and editor recorded-filing regressions pass 376/376 across
+21 suites. The existing programme-profile writer and product-advisory selection
+checks pass a further 52/52 across two disjoint suites. Both production builds
+pass. Retained logs are `resumed-integration-tests.txt.gz`,
+`resumed-retained-tests.txt.gz` and `resumed-build.txt.gz`; machine-readable scope
+is in `resumed-integration.json`. The previous incomplete whole-AnA sweep remains
+incomplete. Publication requires a successful normal push receipt, separately
+recorded after the mandatory gates finish.
+
 The next source again passed every gate, including the zero-error compiler, but
 the remote advanced during that run too. The second ref-race receipt is retained.
 The new study/protocol initiation and verified CSR STF-value corrections through
