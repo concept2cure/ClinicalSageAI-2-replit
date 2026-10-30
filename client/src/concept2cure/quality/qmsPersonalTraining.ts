@@ -71,6 +71,19 @@ function receiptMatches(receipt: QmsTrainingAcknowledgement, scope: PersonalTrai
     (receipt.expiresAt === null || Date.parse(receipt.expiresAt) > Date.now());
 }
 
+/**
+ * The row is the version read, or the row is the successor of the version in
+ * force that is read: a revision being drafted or reviewed, or the version
+ * approved for a later day, read beside it (in-force-release.ts; P-49).
+ */
+function readsRow(row: { version?: unknown; status?: unknown }, context: QmsTrainingContext): boolean {
+  if (row.version === context.documentVersion && row.status === context.status) return true;
+  if (context.status !== 'effective' || context.inForce !== true) return false;
+  const successor = context.successor;
+  if (successor) return successor.documentId === context.documentId && row.version === successor.documentVersion && row.status === successor.status;
+  return row.status === 'draft' || row.status === 'in_review';
+}
+
 /** Authenticated canonical transport; no optimistic acknowledgement or tenant fallback. */
 export async function readPersonalTrainingRecord(scope: PersonalTrainingScope): Promise<{
   context: QmsTrainingContext;
@@ -83,12 +96,12 @@ export async function readPersonalTrainingRecord(scope: PersonalTrainingScope): 
   const parsed = qmsTrainingContextSchema.safeParse(envelope?.meta?.training);
   if (!parsed.success || envelope?.data?.id !== scope.documentId ||
       envelope.data.organization_id !== scope.organizationId || parsed.data.documentId !== scope.documentId ||
-      envelope.data.version !== parsed.data.documentVersion || envelope.data.status !== parsed.data.status) {
+      !readsRow(envelope.data, parsed.data)) {
     throw new PersonalTrainingError(UNREADABLE);
   }
   const context = parsed.data;
-  if (context.acknowledgement && !receiptMatches(context.acknowledgement, scope, context)) {
-    throw new PersonalTrainingError(UNREADABLE);
+  for (const version of [context, context.successor]) {
+    if (version?.acknowledgement && !receiptMatches(version.acknowledgement, scope, version)) throw new PersonalTrainingError(UNREADABLE);
   }
   return { context, document: envelope.data as PersonalTrainingDocument };
 }

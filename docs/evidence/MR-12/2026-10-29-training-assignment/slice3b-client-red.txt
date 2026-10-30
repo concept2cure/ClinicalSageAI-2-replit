@@ -1,0 +1,67 @@
+# Slice 3b client, red at HEAD 12ab1bdd01 — npx vitest run client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx
+          The released revision could not be verified. Reload this record before acknowledging it.
+      Tests  5 failed | 32 passed (37)
+ FAIL  client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > acknowledges the version selected, and says the acknowledgement counts from the day it takes effect
+ FAIL  client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > does not carry a declaration made on one version over to the other
+ FAIL  client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens a document whose next version is being drafted on the version in force
+ FAIL  client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens on the version in force and offers the next version with the day it takes effect
+ FAIL  client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > shows why a next version may not be read, with none of its text and no declaration
+ × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > acknowledges the version selected, and says the acknowledgement counts from the day it takes effect 5005ms
+ × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > does not carry a declaration made on one version over to the other 5007ms
+ × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens a document whose next version is being drafted on the version in force 5005ms
+ × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens on the version in force and offers the next version with the day it takes effect 5009ms
+ × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > shows why a next version may not be read, with none of its text and no declaration 5008ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after different digest 42ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after different revision 39ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after foreign actor 37ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after malformed success 37ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after missing audit 39ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after unchained audit 43ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > keeps a confirmed receipt when the following refresh fails 37ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > reconciles a lost write response by explicitly reloading the authoritative current receipt 49ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > shows a stale-release refusal and requires rereading rather than retrying a stale declaration 34ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > allows a viewer to personally acknowledge without requesting a password or signature 112ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > prevents same-tick duplicate submissions and closing during a pending write 35ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > refuses a token account swap before React rerenders without posting the checked declaration under another actor 42ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > renders exact section text escaped, names its revision, and requires an unchecked personal declaration 288ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > shows a current server receipt without offering a duplicate acknowledgement 18ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > does not refresh or render a confirmed old-document write after switching documents 33ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a delayed old-document read after the selected document changes 11ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a late old-organization write result and never refreshes the replacement scope 35ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a late old-user write result and never refreshes the replacement scope 34ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > rejects a foreign user receipt returned by a successful GET 9ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > treats a refused initial read as unreadable, including a resolved session 401 9ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > does not let a viewer edit an unreleased document 17ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > gives an authorized writer the existing controlled-text editor for a draft 28ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > keeps a controlled-text save confirmed while independently rereading after a coverage-refresh failure 43ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > lets a in-review reader read recorded text without a release claim or acknowledgement 10ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > lets a read-only standing reader read recorded text without a release claim or acknowledgement 8ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when artifact only has no verified released bodies 13ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when outline only has no verified released bodies 15ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when unverified release has no verified released bodies 13ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > requires fresh server editing availability even when the cached session has a writer permission 12ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a receipt of another person on the next version as unverifiable 10ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a row that is neither the version read nor its successor as unverifiable 11ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a successor that is not the row as unverifiable 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+# red at HEAD — npx vitest run client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts
+ × client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > reads the version in force while the row is a revision being drafted 8ms
+ × client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > reads the version in force while the row is a revision under review 2ms
+ × client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > reads the version in force and its successor when the row is the version approved for a later day 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a draft row beside a version not said to be in force 3ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a later effective row with no successor read 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a successor that is not the row 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a successor of another document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects another person’s receipt on the successor 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 77 passed (80)
+
+# red at HEAD — npx vitest run client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says effective today leaves the people assigned no training period 94ms
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says a later day lets them read it ahead, until the day it takes effect 86ms
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when nobody is assigned, with no count 84ms
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when nobody assigned is an active member, with no count 67ms
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when the read failed, with no count 66ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 17 passed (22)

@@ -1,0 +1,226 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5242/api/review/board",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 67,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "queue": [
+          {
+            "id": "9a6313a3-6018-40e1-b7f7-478b05f5b231",
+            "doc": "OQ-003 Clinical Overview 20261030150803",
+            "prog": "OQ-003 Authoring program 20261030150803",
+            "programId": "d9364692-dfec-479d-9316-1ba59a3d077d",
+            "pid": "9a6313a3-6018-40e1-b7f7-478b05f5b231",
+            "module": "M2",
+            "docStatus": "IN_REVIEW",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "cc1d39ab-4406-4231-b504-fa4b876cb908",
+                "reviewerId": "2",
+                "reviewer": "OQ Signer",
+                "reviewerEmail": "oq-signer@validation.local",
+                "status": "pending",
+                "standing": "pending",
+                "comments": null,
+                "requestedBy": "1",
+                "requestedAt": "2026-10-30T15:08:13.363Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "cc1d39ab-4406-4231-b504-fa4b876cb908",
+            "myReviewStatus": "pending",
+            "myReviewStanding": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Signer",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 1,
+            "esig": "pending",
+            "conf": null,
+            "prov": "in review · review requested by 1",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "b29d9dc8-bb62-4017-83c4-eeac78a0c7c9",
+            "requestedAt": "2026-10-30T15:08:13.363Z"
+          },
+          {
+            "id": "5bdf2248-39a4-404b-9b5c-4689aed1bf16",
+            "doc": "OQ-003 Clinical Overview 20261030150453",
+            "prog": "OQ-003 Authoring program 20261030150453",
+            "programId": "b098571e-c3ce-4cc0-aa41-a6740639b880",
+            "pid": "5bdf2248-39a4-404b-9b5c-4689aed1bf16",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "ba8465cf-c7a8-40c4-aa39-1ede2b1103f8",
+                "reviewerId": "2",
+                "reviewer": "OQ Signer",
+                "reviewerEmail": "oq-signer@validation.local",
+                "status": "pending",
+                "standing": "pending",
+                "comments": null,
+                "requestedBy": "1",
+                "requestedAt": "2026-10-30T15:05:02.841Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "ba8465cf-c7a8-40c4-aa39-1ede2b1103f8",
+            "myReviewStatus": "pending",
+            "myReviewStanding": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Signer",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by 1",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "18003e89-c99d-40d1-bcc2-aa40da206de3",
+            "requestedAt": "2026-10-30T15:05:02.841Z"
+          },
+          {
+            "id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+            "doc": "OQ-003 Clinical Overview 20261030150319",
+            "prog": "OQ-003 Authoring program 20261030150319",
+            "programId": "7d6330ec-03d0-49ed-afb2-757b79754837",
+            "pid": "afe3ea45-deba-4252-850b-7bde8dae2081",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "dcaab204-b36d-4814-99a5-f580973b6712",
+                "reviewerId": "2",
+                "reviewer": "OQ Signer",
+                "reviewerEmail": "oq-signer@validation.local",
+                "status": "pending",
+                "standing": "pending",
+                "comments": null,
+                "requestedBy": "1",
+                "requestedAt": "2026-10-30T15:03:29.058Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "dcaab204-b36d-4814-99a5-f580973b6712",
+            "myReviewStatus": "pending",
+            "myReviewStanding": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Signer",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by 1",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "8a5b7ed2-88e9-4baf-9baa-4e42529953ab",
+            "requestedAt": "2026-10-30T15:03:29.058Z"
+          }
+        ],
+        "workflows": {
+          "9a6313a3-6018-40e1-b7f7-478b05f5b231": {
+            "templateId": "78737f45-ebb6-42af-a668-1c82ac430960",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "af3787bc-2a31-48d6-ab47-c3070adda671",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "5bdf2248-39a4-404b-9b5c-4689aed1bf16": {
+            "templateId": "56b9e1ee-a1f7-4772-980a-8b5c03d2c75c",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "da688b89-17bc-4ace-a6d9-e7ff03346b19",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "afe3ea45-deba-4252-850b-7bde8dae2081": {
+            "templateId": "6aebdcd4-2fd3-4a3f-a816-ec73a93f448b",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "4c2e352a-04c4-41cc-8c93-da37b7d16129",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          }
+        },
+        "thread": [
+          {
+            "id": "12e23835-2613-4eda-846d-ce62e8aec18d",
+            "author": "oq-runner@validation.local",
+            "role": "§2.5",
+            "when": "1m ago",
+            "state": "open",
+            "body": "OQ-003 step 09 review comment",
+            "ai": false,
+            "sectionId": "b29d9dc8-bb62-4017-83c4-eeac78a0c7c9",
+            "parentId": null
+          }
+        ],
+        "meta": {
+          "scope": "all",
+          "programId": null,
+          "total": 3,
+          "threadItemId": "9a6313a3-6018-40e1-b7f7-478b05f5b231",
+          "threadDocumentId": "9a6313a3-6018-40e1-b7f7-478b05f5b231",
+          "generatedAt": "2026-10-30T15:08:15.454Z"
+        },
+        "vaultReviews": []
+      }
+    }
+  }
+}
