@@ -76,6 +76,7 @@ import { DraftFigureLine } from './DraftFigureLine';
 import { DraftClaimsLine } from './DraftClaimsLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
+import { proposalTargetOf } from './draftAlternatives';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } from './RichSectionEditor';
 import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
@@ -1914,6 +1915,9 @@ export function DocumentWorkbench({
   const editorSectionLabelsRef = useRef<Record<string, string>>({});
   editorSectionLabelsRef.current = Object.fromEntries(sections.map(s => [s.id, `${s.code} ${s.title}`.trim()]));
   const onEditorBridge = embedded?.onEditorBridge;
+  /* The same bridge, for the workbench's own draft panel: chosen paragraphs use this door. */
+  const draftBridgeRef = useRef<EditorBridge | null>(null);
+  const draftProposals = useMemo(() => proposalTargetOf(() => draftBridgeRef.current), []);
   useEffect(() => {
     if (!activeSection || !activeDocId) {
       onEditorBridge?.(null);
@@ -1977,8 +1981,10 @@ export function DocumentWorkbench({
       canPropose: () => live && editorRef.current?.canProposeReplacement() === true,
     };
     onEditorBridge?.(bridge);
+    draftBridgeRef.current = bridge;
     return () => {
       live = false;
+      if (draftBridgeRef.current === bridge) draftBridgeRef.current = null;
       onEditorBridge?.(null);
     };
   }, [onEditorBridge, activeDocId, activeSection, docSealed, contentReadOnly, editRefusal, viewMode, insertAnaText, anaProposeRefusal]);
@@ -5342,6 +5348,9 @@ export function DocumentWorkbench({
                     onAccepted={onAiDraftAccepted}
                     onClose={() => setAiDraftOpen(false)}
                     fireToast={fireToast}
+                    savedContent={activeSection.content ?? ''}
+                    savedUpdatedAt={activeSection.updated_at ?? null}
+                    proposals={draftProposals}
                   />
                 )}
                 <div

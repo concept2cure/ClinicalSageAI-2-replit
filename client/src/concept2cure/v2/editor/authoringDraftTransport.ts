@@ -18,8 +18,17 @@ export interface PendingAiDraft {
 }
 export interface AcceptedAttribution { sourceSpans: number; authorSpans: number; distinctSources: number; coverage: number }
 export interface AiDraftGenerationInputs { tone: string; region: string; context: string; requirements: string }
+/** What one alternative asked the draft route for: the existing tone vocabulary. */
+export type AiDraftApproach = 'professional' | 'concise' | 'detailed';
+/** One alternative: its own single-use candidate, and the person's edits of it. */
+export interface AiDraftAlternative { approach: AiDraftApproach; draft: PendingAiDraft; body: string }
 export interface AiDraftReviewState {
   draft: PendingAiDraft | null; body: string; changeReason: string; refusal: string | null;
+  /** Alternatives that arrived, in order; `draft`/`body` are the one shown (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md). */
+  alternatives?: AiDraftAlternative[];
+  shownAlternative?: number;
+  /** Approaches still being drafted, so a pending one reads as pending, never as absent. */
+  pendingApproaches?: AiDraftApproach[];
   /** Editable inputs for the next explicit draft; source authority stays on the session. */
   generationInputs?: AiDraftGenerationInputs;
   /** A lost or malformed acceptance response may follow a committed save. */

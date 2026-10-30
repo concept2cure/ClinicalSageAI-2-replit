@@ -1,0 +1,26 @@
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > replaces the current paragraph the chosen one is paired with, naming the alternative’s turn 874ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > adds chosen paragraphs to an empty section as one addition, each decided on its own 572ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > keeps an answer the governed-write rule does not admit out of the section 472ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > says before the click that chosen paragraphs carry no source citations 318ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > paragraphs and their shape > splits a draft at blank lines and keeps a list or a table whole 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > paragraphs and their shape > reads the saved section as the editor’s text blocks, innermost first 19ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > default pairing > pairs each draft paragraph with the current paragraph it shares most words with, not by position 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > default pairing > breaks a tie toward the paragraph at the same position, and pairs nothing when there is no current text 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > the proposals for chosen paragraphs > adds to an empty section as one insert-empty addition of the chosen paragraphs, in draft order 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > the proposals for chosen paragraphs > replaces each paired current paragraph, joining paragraphs paired with the same one 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > the proposals for chosen paragraphs > sends no base it does not have, and proposes nothing when nothing is chosen 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > the proposals for chosen paragraphs > names each refusal by paragraph, in this panel’s terms 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > the proposals for chosen paragraphs > proposes as AnA, naming the turn only when it was recorded 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > review state > shows the first arrival and lists later ones without moving the view 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftAlternatives.test.ts > review state > switching keeps the edits of the alternative left, and is refused while an accept is unresolved 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > asks the existing draft route once per approach and labels each by what was asked 270ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > shows each alternative as it arrives, without moving focus 105ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > puts focus on the alternative shown when the control the person pressed leaves the panel 54ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > keeps each alternative’s own edits when the person switches between them 115ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — accepting, comparing and ending a set of alternatives > accepts the whole alternative that is shown, through the existing accept 93ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — accepting, comparing and ending a set of alternatives > compares the shown alternative with another one as a redline 78ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — accepting, comparing and ending a set of alternatives > says how many arrived when one alternative fails, and keeps the ones that did 41ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — accepting, comparing and ending a set of alternatives > refuses with no provider and shows nothing that looks like a draft 21ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — accepting, comparing and ending a set of alternatives > discarding drops every alternative, from the screen and from the retained review 49ms
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
