@@ -86,7 +86,7 @@ beforeAll(async () => {
   h.pg = new PGlite();
   await h.pg.exec(`
     CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id integer NOT NULL, deleted_at timestamptz);
-    CREATE TABLE projects (id serial PRIMARY KEY, organization_id integer NOT NULL, regulatory_program_id uuid);
+    CREATE TABLE projects (id serial PRIMARY KEY, organization_id integer NOT NULL, regulatory_program_id uuid, client_workspace_id integer, status text);
     CREATE TABLE unified_tasks (
       task_id text PRIMARY KEY, organization_id integer NOT NULL, project_id integer, module_type text NOT NULL,
       title text NOT NULL, description text, task_type text, status text NOT NULL DEFAULT 'pending',

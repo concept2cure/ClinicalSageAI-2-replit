@@ -78,7 +78,9 @@ const PREREQ = `
   );
   INSERT INTO organizations (id, name) VALUES (1, 'org-a');
   INSERT INTO users (id, name, email) VALUES (${MEMBER_USER_ID}, 'Member', 'member@parity.example');
-  INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG_ID}, ${MEMBER_USER_ID}, 'member');
+  -- The membership row's role decides, not the token's roles claim (IAM-10; this router since P-72 slice 1a):
+  -- admin is the assignable role the template-create gate admits, so revocation is what refuses the token.
+  INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG_ID}, ${MEMBER_USER_ID}, 'admin');
 `;
 
 let jdb: JourneyDb;
@@ -185,7 +187,7 @@ describe('C2C-SEC-001: authoring router enforces canonical access-token semantic
 
     await jdb.pool.query(
       `INSERT INTO organization_users (user_id, organization_id, role)
-       VALUES ($1, $2, 'member') ON CONFLICT DO NOTHING`,
+       VALUES ($1, $2, 'admin') ON CONFLICT DO NOTHING`,
       [MEMBER_USER_ID, ORG_ID],
     );
     const asMember = await post(await mint(memberClaims()));
