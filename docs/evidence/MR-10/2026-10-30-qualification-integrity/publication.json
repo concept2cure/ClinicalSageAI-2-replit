@@ -1,0 +1,106 @@
+{
+  "recordedAt": "2026-10-30T20:16:57.809038+00:00",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "implementationCommit": "c53e8fa5a821694e143666f1335a6331b8c035cc",
+  "acceptedSource": "8a1c1448cac417697e33e49368ae9aff88674df8",
+  "normalSourcePushExitCode": 0,
+  "fullTypecheck": {
+    "compilerExitCode": 0,
+    "errors": 0,
+    "baseline": 0
+  },
+  "scopedAndPushedLint": {
+    "typeScriptFiles": 3,
+    "errors": 0,
+    "warningDelta": -1,
+    "normalRatchetPassed": true
+  },
+  "affectedRegression": {
+    "passed": 375,
+    "testFiles": 25,
+    "failed": 0,
+    "skipped": 0,
+    "testedBase": "32eafdbf2c57bfa70d98429b8d312652eb08afe5",
+    "inputs": "final-inputs.json"
+  },
+  "committedBlobComparison": {
+    "commit": "8a1c1448cac417697e33e49368ae9aff88674df8",
+    "pinnedFiles": 335,
+    "mismatches": []
+  },
+  "builds": [
+    {
+      "base": "32eafdbf2c57bfa70d98429b8d312652eb08afe5",
+      "withUncommittedImplementation": true,
+      "exitCode": 0,
+      "log": "build.log.gz"
+    },
+    {
+      "source": "a788f30759ab472294f91a016fa3a7dcfeaadaa3",
+      "exitCode": 0,
+      "log": "ectd-integrity-merged-build.log.gz"
+    },
+    {
+      "source": "f0d4a557ceced75dde79d23359ee7d636497ef4a",
+      "exitCode": 0,
+      "log": "ectd-integrity-final-merged-build.log.gz"
+    },
+    {
+      "source": "8a1c1448cac417697e33e49368ae9aff88674df8",
+      "exitCode": 0,
+      "log": "ectd-integrity-final-merged-build4.log.gz"
+    }
+  ],
+  "actualCommand": {
+    "exitCode": 1,
+    "status": "blocked",
+    "availableChecksPassed": true,
+    "canonicalZipOriginalValid": true,
+    "canonicalZipAmendmentValid": true,
+    "execution": "actual-unconfigured-run/execution.json",
+    "scope": "Golden synthetic documents; no agency qualification."
+  },
+  "rejectedPushes": [
+    {
+      "source": "a788f30759ab472294f91a016fa3a7dcfeaadaa3",
+      "compilerErrors": 0,
+      "allNormalGatesPassed": true,
+      "pushExitCode": 1,
+      "reason": "Remote advanced to f53e6f71f, disjoint attachment/narrative source and receipts."
+    },
+    {
+      "source": "f0d4a557ceced75dde79d23359ee7d636497ef4a",
+      "compilerErrors": 0,
+      "allNormalGatesPassed": true,
+      "pushExitCode": 1,
+      "reason": "Remote advanced to bbd35cacd, documentation-only attachment receipt."
+    },
+    {
+      "source": "6cccb71cc7f08c2f2b736c4e2adcd12d1d06b529",
+      "compilerErrors": 0,
+      "allNormalGatesPassed": true,
+      "pushExitCode": 1,
+      "reason": "Remote advanced to915eb2ef9, disjoint protocol shell controls."
+    }
+  ],
+  "concurrentWorkPreserved": "All incoming canonical source retained by merge. Work-order conflicts reconciled by preserving own claim plus the other lane\u2019s latest accepted row, not duplicate or stale statuses. Own335 inputs remained byte-identical; complete application rebuilt after source merges.",
+  "review": "Independent read-only source and evidence reviews clear. Workers ran no jobs/Git. Root serialized all verification/publication.",
+  "agencyQualification": "Open: recorded asset/counsel/validator-profile/current-criteria/human/agency prerequisites remain. RPS proof blocker unchanged. No asset acquisition, endpoint call, governed record, deployment or remote CI completion claimed.",
+  "bypassesOrOtherBranchesUsed": false,
+  "verificationArtifactManifest": "artifact-manifest.json",
+  "publicationArtifactsSha256": {
+    "ectd-integrity-commit.log.gz": "f53d75367b44fa35219a9e3346eedb2bfc03042dd40574b4decb4503f7557041",
+    "ectd-integrity-publication-merge.log.gz": "9baec2d8f6dafc32c1b6b340ea2d6fe82e0ae3aee5929cb18ee74ccf623e1751",
+    "ectd-integrity-publication-merge2.log.gz": "ee3be522688f28564c6100b5ec6deddcc59d6a46245be90d6981063c380e50de",
+    "ectd-integrity-publication-merge3.log.gz": "dca62b95b83c740f77c311c5d91a5a20335eca610677b4f33db643bc6d3316e2",
+    "ectd-integrity-publication-merge4.log.gz": "1fc0652800fcd831866fdcaf5c0a3a87a16908c2b932b5e372dca62650c0570d",
+    "ectd-integrity-merged-build.log.gz": "b5ba4a3007fad54406884634d0944d1708e4ddcfb36b9314335b032d953fdd90",
+    "ectd-integrity-final-merged-build.log.gz": "293fdc454224f52843aa3a3db3a645c65e28d8cabf66138bf799d59e07b8077b",
+    "ectd-integrity-final-merged-build4.log.gz": "6f653c24a734e3b0c81c74606d0dba24c9554e018ef10e58123710b73954698d",
+    "ectd-integrity-push-attempt1-ref-race.log.gz": "7726a4c10a497a0054832fce1a3eb8ad109dc743c7f394d51dca76f97a70954f",
+    "ectd-integrity-push-attempt2-ref-race.log.gz": "f2640829e6db403a21c556d1d804e50ab52495bac9e3ac684bac2423c21f728d",
+    "ectd-integrity-push-attempt3-ref-race.log.gz": "47bdbecba48c9efd5d38087ace23d8dafd0347565ba89e584df2d1fdbcfa63a5",
+    "ectd-integrity-push.log.gz": "e9b09e65510d8a862bf663a0d051baea45e44f7caecf838e4d76dd3eda82d802"
+  }
+}

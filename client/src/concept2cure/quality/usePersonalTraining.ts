@@ -14,10 +14,10 @@ function versionOf(context: QmsTrainingContext | null, reading: TrainingVersionC
 }
 
 /** The identity-keyed reader owns every response and retires late requests. */
-export function usePersonalTrainingRecord(scope: PersonalTrainingScope | null, isCurrent: () => boolean) {
+export function usePersonalTrainingRecord(scope: PersonalTrainingScope | null, isCurrent: () => boolean, opensOn: TrainingVersionChoice = 'in-force') {
   const [context, setContext] = React.useState<QmsTrainingContext | null>(null);
   const [documentRecord, setDocumentRecord] = React.useState<PersonalTrainingDocument | null>(null);
-  const [reading, setReadingState] = React.useState<TrainingVersionChoice>('in-force');
+  const [reading, setReadingState] = React.useState<TrainingVersionChoice>(opensOn);
   const [understood, setUnderstood] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [blocked, setBlocked] = React.useState(false);

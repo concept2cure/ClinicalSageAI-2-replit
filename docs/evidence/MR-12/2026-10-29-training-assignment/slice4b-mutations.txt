@@ -1,0 +1,33 @@
+# Slice 4b (QP1) mutations — each mutant applied alone, the named suites run, the file restored (scratchpad/mutqp1.py)
+M1 the notice door reads only TASK-/ROUTE- task ids again: KILLED
+    client/src/concept2cure/v2/__tests__/notificationTarget.test.ts: Tests  6 failed | 9 passed (15)
+      × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > sends the person assigned to read and acknowledge the docum
+      × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > asks anyone no longer assigned what any notice on the docum
+    tests/db/qms-training-tasks.dbtest.ts: Tests  2 failed | 12 passed (14)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > opens each notice on the training reader for its person, through the one notification door (slice 4b) 25ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > gives a task due in the future one due-soon notice and one overdue notice from the sweep 28ms
+M2 anyone is sent to read, assigned or not: KILLED
+    server/services/notifications/__tests__/notification-training-target.test.ts: Tests  3 failed | 3 passed (6)
+      × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > sends the person assigned to read and acknowledge the docum
+      × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > asks anyone no longer assigned what any notice on the docum
+M3 a training task opens the Tasks board as before: KILLED
+    server/services/notifications/__tests__/notification-training-target.test.ts: Tests  4 failed | 2 passed (6)
+      × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > sends the person assigned to read and acknowledge the docum
+      × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > asks anyone no longer assigned what any notice on the docum
+    tests/db/qms-training-tasks.dbtest.ts: Tests  1 failed | 13 passed (14)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > opens each notice on the training reader for its person, through the one notification door (slice 4b) 40ms
+M4 any intent is admitted on Quality: KILLED
+    server/services/notifications/__tests__/notification-training-target.test.ts: Tests  1 failed | 5 passed (6)
+      × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > the shared contract admits the reading intent on Quality, a
+M5 the training key is not anchored at its end: KILLED
+    server/services/notifications/__tests__/notification-training-target.test.ts: Tests  1 failed | 5 passed (6)
+      × server/services/notifications/__tests__/notification-training-target.test.ts > a training task notice opens the reader that completes it > opens nothing for a training task whose document is gone, o
+M6 the Quality adapter passes any intent through: KILLED
+    client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx: Tests  1 failed | 1 passed (2)
+      × client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx > Quality adapter consumes exact notification handoffs > carries a training notice’s reading intent, and only that intent
+M7 the register ignores the reading intent: KILLED
+    client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx: Tests  1 failed | 17 passed (18)
+      × client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the training reader, not the editor, for a training notice (qms
+M8 the reader ignores where it was asked to open: KILLED
+    client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx: Tests  1 failed | 38 passed (39)
+      × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opened from a training notice, starts on the version appro

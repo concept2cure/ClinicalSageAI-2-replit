@@ -16,7 +16,8 @@
  *     due-date sweep never also tells them "overdue";
  *   - a release nobody can read and acknowledge gets no task;
  *   - a task that cannot be written never undoes the act, and a plan that could
- *     not be read closes nothing.
+ *     not be read closes nothing;
+ *   - each notice opens the training reader for its person (slice 4b).
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
@@ -79,10 +80,16 @@ const assignmentId = async (documentId: number, subject: { job_role_id?: number;
 
 let qa: number;
 let pendingDoc: number;
+/** The one notification door (GET /api/mdx/notifications/:id/target), behind the same authMiddleware. */
+let door: import('express').Express;
 
 beforeAll(async () => {
   await provisionTrainingAssignmentFixture();
   qa = await role(A.admin, 'Quality assurance', [A.qa1, A.both]);
+  const express = (await import('express')).default;
+  const { authMiddleware } = await import('../../server/auth');
+  door = express(); door.use(express.json());
+  door.use('/api/mdx', authMiddleware, (await import('../../server/routes/mdx-notifications')).default);
 }, 180_000);
 afterAll(teardownTrainingAssignmentFixture);
 
@@ -105,6 +112,16 @@ describe('a version approved for a later day', () => {
     expect(sent.map(n => n.recipient_user_id).sort()).toEqual(written.map(t => t.assignee_id).sort());
     for (const n of sent) expect(n.body).toBe(`Due ${LATER}, the day it takes effect. Your acknowledgement counts from then.`);
     expect(await taskOf(pendingDoc, A.unassigned)).toEqual([]);
+  });
+
+  it('opens each notice on the training reader for its person, through the one notification door (slice 4b)', async () => {
+    const [task] = await taskOf(pendingDoc, A.named);
+    const notice = (await owner.query(`SELECT id FROM mdx_notifications WHERE organization_id = $1 AND resource_id = $2`, [orgA.id, task.task_id])).rows[0];
+    const target = (by: Actor) => request(door).get(`/api/mdx/notifications/${notice.id}/target`).set('Authorization', `Bearer ${by.token}`);
+    const res = await target(A.named);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data).toEqual({ surface: 'quality', label: 'Read and acknowledge', params: { qmsDocumentId: String(pendingDoc), qmsIntent: 'read' }, programId: null });
+    expect((await target(A.qa1)).status, 'a notice is its recipient\u2019s alone').toBe(404);
   });
 
   it('writes nothing when planned again', async () => {
