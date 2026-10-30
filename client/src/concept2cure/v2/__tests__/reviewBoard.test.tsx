@@ -271,6 +271,24 @@ describe('Review board — the open program', () => {
       expect(apiRequest.mock.calls.some((c) => String(c[1]) === '/api/review/board?scope=all')).toBe(true));
   });
 
+  /* RR5 acceptance (2026-10-30): opened from a link (`?program=`) the shell
+     knows the program's id and nothing else, and the switch read
+     "Only 099991d1-…". It names the program from the board's own rows, and
+     says "this project" when no row names it — never the id. */
+  it('a program opened from a link is named from the board, never by its id', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM };
+    apiRequest.mockImplementation(async () => ok({ ...BOARD, queue: [{ ...BOARD.queue[0], programId: PROGRAM, prog: 'BX-256 program' }] }));
+    render(<Review {...props()} />);
+    expect((await screen.findByRole('button', { pressed: true, name: /Only BX-256 program/ })).textContent).not.toContain(PROGRAM);
+  });
+
+  it('with no row naming it, the switch says "this project"', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM };
+    apiRequest.mockImplementation(async () => ok(EMPTY_BOARD));
+    render(<Review {...props()} />);
+    expect((await screen.findByRole('button', { pressed: true, name: /Only this project/ })).textContent).not.toContain(PROGRAM);
+  });
+
   /* What QA actually saw: the board was empty, and the "Threads & change
      requests — assigned to you" inbox under it listed BX-204's items. */
   it('the review-thread inbox follows the same program filter', async () => {
