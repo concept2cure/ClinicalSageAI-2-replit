@@ -1,0 +1,40 @@
+{
+  "rejected_candidate": "f1279a4c1f194760ff6079a82f953e86ed3610e4",
+  "normal_gates_passed": true,
+  "typescript_errors": 0,
+  "push_result": "rejected concurrent ref compare-and-swap, exit1; no source accepted",
+  "push_log": "source-push-race-2.txt",
+  "new_canonical_base": "4323b91497aad4a47eada40d1ef08b4332b3f605",
+  "incoming_commits": 49,
+  "incoming_paths": 1166,
+  "source_delta": "only expected five client paths relative to new canonical base",
+  "work_order_conflict": "resolved with all canonical rows retained verbatim",
+  "current_selected_publication_inputs": 128,
+  "current_publication_mismatches": [],
+  "browser_inputs_unchanged": 36,
+  "latest_regression": {
+    "passed": 618,
+    "suites": 45,
+    "failures": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "log": "race-2-regression.txt",
+    "includes_previous_484_case_cohort": true
+  },
+  "fresh_full_build": {
+    "exit_code": 0,
+    "log": "race-2-build.txt"
+  },
+  "independent_preservation_review": {
+    "reviewer": "device_feedback_contract",
+    "verdict": "approved; no additional attachment/browser execution warranted",
+    "prior69_pins_unchanged": true,
+    "current128_pins_unchanged": true,
+    "browser36_pins_unchanged": true,
+    "canonical_work_order_rows_retained": 341,
+    "unresolved_conflicts": 0,
+    "root_bold_row_subset_count": 228,
+    "count_note": "341 includes every table row; earlier 228 root count covered only bold work-order entries. No row was lost."
+  },
+  "next_push": "pending all normal gates"
+}
