@@ -26,6 +26,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { ApiRequestError } from '@/lib/queryClient';
 import { Vault } from '../surfaces/Vault';
+import { stubIngestXhr } from './_ingest-xhr-fake';
 import { PID, DOC_ID, ok, uploadDoc, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
 
 const V1 = '33333333-3333-4333-8333-333333333333';
@@ -56,10 +57,10 @@ function mockApi(tree = cabinetTree([head])) {
   });
 }
 
-/** fetch, as the upload hook calls it: the multipart bodies it was given, and the answers in order. */
+/** The ingest request, as the upload hook sends it: the multipart bodies it was given, and the answers in order. */
 function stubIngest(answers: Array<{ status: number; body: unknown }>) {
   const sent: FormData[] = [];
-  vi.stubGlobal('fetch', vi.fn(async (_url: string, init: { body?: unknown }) => {
+  stubIngestXhr(vi.fn(async (_url: string, init: { body?: unknown }) => {
     sent.push(init.body as FormData);
     const a = answers.shift() ?? { status: 201, body: {} };
     return { ok: a.status < 300, status: a.status, json: async () => a.body } as Response;

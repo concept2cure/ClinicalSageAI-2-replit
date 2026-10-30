@@ -1,0 +1,56 @@
+# 02-green: after this change
+
+## The upload suites: useVaultUpload, vaultUploadStaging, vaultOpensUploadedDocument, vaultCheckInVersion
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > lists chosen files as rows and sends nothing until asked
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > sends each row's title, type, classification and the folder chosen, with its kind and section, and n
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > leaves every blank field to the Vault, and the folder to its classifier
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says what the Vault refused, row by row, and tries only that one again
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says when a recorded file’s text is still being read (MR-08 Stage 3)
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > flags a second file with the same name before it is sent
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > opens with focus on the list and says what was added; a removed row hands focu
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > names each row by its file, offers only this view’s folders, and moves focus
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > shows the share sent with a progress bar, and the rows behind it wait their turn
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > says the server is scanning and storing a file once all of it is sent, and only "Uploading…" before it
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > opens a new document where it landed, in place of the one that was open
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a check-in opens the document at the version just recorded, not the folder’s first document
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a response that names no document opens nothing: the document is not guessed
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx > after an upload, the Vault opens the document it recorded > a recorded document the re-read does not hold is said, not silently ignored
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > is one row and one header, saying how many versions it has
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > lists every version with its SHA-256 prefix and uploader, each downloadable
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > says so when the versions cannot be read
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > exports the signed history of every version, and says when the role may not
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > an earlier version found by search says so, and shows its versions and history
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > the empty state claims only what the product does
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the document each file was recorded as > lists the ids the server returned, in the order sent, and invents none
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > sends each file its own title, type, classification and filing, and never a version
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > says a folder the person chose is their filing, not a suggestion awaiting confirmation
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts, as its bytes go out, and as it settles
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — a re-upload whose filing was not applied (Part 11 review F3) > a file the Vault already holds, sent to another folder, says where its filing is changed (
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > tells the row once per whole percent, not once per packet
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a connection that drops is a refusal the person can retry, and nothing was filed
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a reply that is not JSON is refused with its status, never read as recorded
+ Test Files  4 passed (4)
+      Tests  37 passed (37)
+
+## Every Vault, eTMF and MDX client suite, and the other suites that render the Vault
+# vitest run client/src/concept2cure/v2/__tests__/{vault*,etmf*,useVaultUpload,documentIntakeFormats,fileDropZone,projectDocumentDisposition,filingPathNoDeadEnds,anaDrivesScreens,authoringVaultPlacementFlow} client/src/concept2cure/mdx v2/editor/__tests__/sourceAssemblyEntry
+ Test Files  161 passed (161)
+      Tests  1529 passed (1529)
+(Before vaultCheckInVersion.test.tsx moved onto the XHR fake, that run had 2 failures there: it faked the ingest with fetch. Moved; 9 of 9.)
+
+## Type check: NODE_OPTIONS=--max-old-space-size=13312 npx tsc --noEmit -p tsconfig.json
+tsc exit 0
+
+## Lint ratchet: check-eslint-warning-ratchet --since origin/concept2cure-v2
+no file rises; useVaultUpload.test.tsx 6 -> 0
+
+## Gates: ci:undefined-css-classes OK; ci:unauthenticated-fetch 72 calls scanned, every one authenticated (05-gate.txt)

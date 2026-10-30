@@ -1,0 +1,19 @@
+# 04-browser: the bundled vaultIngestTransport.ts in Chromium (Playwright), against a local ingest endpoint
+# Bundle: npx esbuild client/src/concept2cure/v2/vaultIngestTransport.ts --bundle --format=iife --global-name=VaultIngest
+# The server pauses its read 2 ms per chunk, so a 20 MB body takes long enough for the browser to report progress more than once.
+
+## 20 MB upload, read slowly by the server
+reply: ok=true status=201
+server received 20971838 bytes, content-type multipart/form-data
+Authorization reached the server: true
+session cookie reached the server (withCredentials): true
+progress events: 7; every one lengthComputable with the same total 20971838: true
+bytes sent rise and end at the total: true / last = 20971838 = total: true
+total equals the bytes the server received: true
+percent seen: 0 30 46 57 71 87 100
+
+## a refusal
+reply: ok=false status=422 body={"error":{"message":"The file failed the malware scan","code":"MALWARE"}}
+
+## the server cuts the connection after 4 MB
+rejected: "the connection dropped before the file was sent"; progress events before it: 3

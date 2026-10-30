@@ -303,6 +303,65 @@ describe('AuthoringFilingBar — real filing actions', () => {
     });
   });
 
+  /* 2026-10-30: an Approval approves and freezes, so the server asks what Freeze
+     asks. The screen offers the same two ways forward, and the acknowledgement
+     goes only with a deliberate, re-signed approval. */
+  describe('when the server refuses an approval because the document is not settled', () => {
+    const notSettled = () => {
+      const err: any = new Error('Not approved — this document still has 2 unresolved comments.');
+      err.name = 'ApiRequestError';
+      err.status = 409;
+      err.code = 'DOCUMENT_NOT_SETTLED';
+      err.payload = { unresolved: { openComments: 2, pendingEdits: 1 } };
+      return err;
+    };
+    const esignCalls = () => apiRequest.mock.calls.filter((c) => c[1] === '/api/authoring/docs/D1/e-sign');
+    async function approve() {
+      fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+      const dialog = await screen.findByRole('dialog');
+      fireEvent.click(within(dialog).getByRole('radio', { name: /Approval/ }));
+      fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+      fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+    }
+
+    it('re-asks, naming what is outstanding, and sends the acknowledgement only on a deliberate, re-signed approval', async () => {
+      stubSignerChecks();
+      apiRequest.mockRejectedValueOnce(notSettled());
+      const { onChanged } = renderBar('draft');
+      await approve();
+      await waitFor(() => expect(screen.getByTestId('form-title').textContent).toMatch(/not settled/i));
+      expect(screen.getByTestId('form-sub').textContent).toMatch(/2 unresolved comments and 1 tracked change.*approval seals/);
+      expect((esignCalls()[0][2] as any).acknowledgeUnresolved).toBeUndefined();
+
+      ackChoice.value = 'approve';
+      apiRequest.mockResolvedValue(ok({ success: true, signatureId: 's3', documentHash: 'h', signedAt: '2026-10-30T00:00:00Z' }));
+      fireEvent.click(screen.getByTestId('form-submit'));
+      const dialog = await screen.findByRole('dialog');
+      expect(dialog.textContent).toMatch(/Approving it as it stands/);
+      fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+      fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+
+      await waitFor(() => expect(onChanged).toHaveBeenCalled());
+      expect(esignCalls()).toHaveLength(2);
+      expect(esignCalls()[1][2]).toMatchObject({ meaning: 'APPROVER', acknowledgeUnresolved: true });
+    });
+
+    it('sends nothing more when the approver chooses to go back and resolve', async () => {
+      stubSignerChecks();
+      apiRequest.mockRejectedValueOnce(notSettled());
+      renderBar('draft');
+      await approve();
+      await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toBe('acknowledge'));
+      const callsBefore = apiRequest.mock.calls.length;
+      ackChoice.value = 'resolve';
+      fireEvent.click(screen.getByTestId('form-submit'));
+      expect(apiRequest.mock.calls.length).toBe(callsBefore);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
   it('signs through the shared dialog: the password and meaning go to the real endpoint (approves + freezes)', async () => {
     const verify = stubSignerChecks();
     apiRequest.mockResolvedValue(ok({ success: true, signatureId: 's1', documentHash: 'sig9hash0000', signedAt: '2026-07-21T00:00:00Z' }, 200));
