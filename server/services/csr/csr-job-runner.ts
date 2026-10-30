@@ -41,7 +41,7 @@ import {
   type CSRBuildRequest,
   type CSRSection,
 } from '../csr-builder';
-import { CsrAuthoringContextError, csrSectionTableKeys, parseCsrEvidenceSelection,
+import { CsrAuthoringContextError, parseCsrEvidenceSelection,
   type CsrAuthoringEvidence } from './cortex-authoring-context';
 import type { RequestSqlClient } from '../../db/requestDb';
 
@@ -149,8 +149,9 @@ function retainedDraftTargets(persisted: unknown): CSRSection[] | null {
 }
 
 /**
- * The retained evidence pack for one results section of a run-bound job, or
- * undefined for a section no engine table supports (§9.7, §10.2, §12.5).
+ * The retained evidence pack for one section of a run-bound job. A heading
+ * without table support still verifies its retained source; its explicit
+ * empty pack preserves that missing-evidence state for the existing drafter.
  * Loaded through the canonical project-authorized, receipt-verified reader
  * as the job's requester, re-checked per section. A revoked or withdrawn
  * source, a missing requester or a pack for another protocol throws, and the
@@ -159,17 +160,25 @@ function retainedDraftTargets(persisted: unknown): CSRSection[] | null {
 async function loadSectionEvidence(
   source: EvidenceSource, sectionNumber: string,
   job: { organizationId: number; requestedBy: number | null; studyId: string },
-): Promise<CsrAuthoringEvidence | undefined> {
-  if (!csrSectionTableKeys(sectionNumber).length) return undefined;
+): Promise<CsrAuthoringEvidence> {
   const [{ loadCsrAuthoringEvidence }, { pool }] = await Promise.all([
     import('./cortex-authoring-reader'), import('../../db'),
   ]);
   const evidence = await loadCsrAuthoringEvidence(pool as unknown as RequestSqlClient,
-    { organizationId: job.organizationId, userId: job.requestedBy ?? 0 }, { ...source, sectionNumber });
+    { organizationId: job.organizationId, userId: job.requestedBy ?? 0 }, { ...source, sectionNumber },
+    undefined, { requireCurrent: true });
   if (evidence.source.protocolNumber !== job.studyId) {
     throw new CsrAuthoringContextError('CSR_EVIDENCE_STUDY_MISMATCH', 409);
   }
   return evidence;
+}
+
+function savedEvidenceDigest(lineage: unknown): string | null {
+  if (!lineage || typeof lineage !== 'object') return null;
+  const evidence = (lineage as Record<string, unknown>).evidence;
+  if (!evidence || typeof evidence !== 'object') return null;
+  const digest = (evidence as Record<string, unknown>).evidenceDigest;
+  return typeof digest === 'string' && /^[a-f0-9]{64}$/.test(digest) ? digest : null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -217,6 +226,13 @@ export async function enqueueCSRBuildJob(
   if (scope.projectId === undefined) {
     throw new CsrScopeError('CSR_PROJECT_REQUIRED', 400,
       'The selected CSR project could not be resolved. No job was created.');
+  }
+  if (evidenceSource) {
+    // A matching protocol is not project identity. Reuse the unique program
+    // anchor and current edit policy before storing a source-bound job.
+    await resolveCsrScope(d, ctx.organizationId,
+      { projectId: scope.projectId, programId: evidenceSource.programId },
+      { forWrite: true, actorUserId: scope.requestedBy });
   }
 
   // Preserve the caller's intent: NULL == "full build", a non-empty array
@@ -292,6 +308,12 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     );
     return;
   }
+  // Retain the state read above across admission awaits. A cancellation or a
+  // competing claim must win over this worker's late setup/refusal writes.
+  const runnableJob = and(eq(csrBuildJobs.id, job.id),
+    eq(csrBuildJobs.organizationId, job.organizationId), eq(csrBuildJobs.status, job.status));
+  const draftingJob = and(eq(csrBuildJobs.id, job.id),
+    eq(csrBuildJobs.organizationId, job.organizationId), eq(csrBuildJobs.status, 'drafting'));
 
   // Legacy unanchored jobs cannot resume into a regulated dossier.
   // Refuse before any source reads or model calls.
@@ -303,7 +325,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         reason: 'project_anchor_missing',
         message: 'This CSR job has no project anchor. Select a project and start a new build.',
       },
-    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    }).where(runnableJob);
     return;
   }
 
@@ -315,7 +337,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     await d.update(csrBuildJobs).set({ status: 'failed', updatedAt: new Date(), error: {
       reason: error instanceof CsrScopeError ? 'project_access_refused' : 'project_access_verification_failed',
       code: error instanceof CsrScopeError ? error.code : 'CSR_PROJECT_ACCESS_UNAVAILABLE',
-    } }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    } }).where(runnableJob);
     return;
   }
 
@@ -335,7 +357,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         reason: 'study_identity_mismatch',
         message: 'The saved CSR study identity does not match this job. No additional sections were drafted.',
       },
-    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    }).where(runnableJob);
     return;
   }
 
@@ -346,11 +368,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     startedAt: new Date(),
     updatedAt: new Date(),
     error: null,
-  }).where(and(
-    eq(csrBuildJobs.id, jobId),
-    eq(csrBuildJobs.organizationId, job.organizationId),
-    eq(csrBuildJobs.status, job.status),
-  )).returning({ id: csrBuildJobs.id });
+  }).where(runnableJob).returning({ id: csrBuildJobs.id });
   if (!claimed) return;
 
   const persistedSubset = job.sectionsToGenerate ?? null;
@@ -360,7 +378,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
   if (!allTargets) {
     await d.update(csrBuildJobs).set({ status: 'failed', progress: 0, updatedAt: new Date(),
       error: { reason: 'invalid_section_selection', message: 'The retained CSR selection does not identify supported report sections.' },
-    }).where(eq(csrBuildJobs.id, jobId));
+    }).where(draftingJob);
     return;
   }
   const request: CSRBuildRequest = {
@@ -384,7 +402,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
   const targetNumbers = new Set(allTargets.map(section => section.number));
 
   const alreadyPersisted = await d
-    .select({ sectionNumber: csrSectionOutputs.sectionNumber, content: csrSectionOutputs.content, contentHash: csrSectionOutputs.contentHash })
+    .select({ sectionNumber: csrSectionOutputs.sectionNumber, content: csrSectionOutputs.content, contentHash: csrSectionOutputs.contentHash, lineage: csrSectionOutputs.lineage })
     .from(csrSectionOutputs)
     .where(and(eq(csrSectionOutputs.jobId, job.id), eq(csrSectionOutputs.organizationId, job.organizationId)));
   // Resume only verified, non-placeholder content. A damaged or incomplete
@@ -416,13 +434,34 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         sections: damaged.map(row => row.sectionNumber),
         message: 'Saved CSR section integrity verification failed. Existing content was preserved; review the affected sections before restarting.',
       },
-    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    }).where(draftingJob);
     return;
   }
 
   const totalSections = allTargets.length;
   let sectionsCompleted = persistedSet.size;
   const currentSection = { number: '' as string };
+  const currentDigests = new Map<string, string>();
+  const savedByNumber = new Map(alreadyPersisted.map(row => [row.sectionNumber, row]));
+
+  // The same admission runs before and after asynchronous drafting, and for
+  // every retained target on completion. A populated resume cannot skip it.
+  const revalidate = async (sectionNumber: string): Promise<CsrAuthoringEvidence | undefined> => {
+    await resolveCsrScope(d, job.organizationId, {
+      projectId: job.projectId,
+      ...(evidenceSource ? { programId: parseEvidenceSource(evidenceSource).programId } : {}),
+    }, { forWrite: true, actorUserId: job.requestedBy ?? undefined });
+    if (!evidenceSource) return undefined;
+    const evidence = await loadSectionEvidence(parseEvidenceSource(evidenceSource), sectionNumber, job);
+    let expected = currentDigests.get(sectionNumber);
+    if (!expected && persistedSet.has(sectionNumber)) {
+      expected = savedEvidenceDigest(savedByNumber.get(sectionNumber)?.lineage) ?? undefined;
+      if (!expected) throw new CsrAuthoringContextError('CSR_EVIDENCE_PROVENANCE_MISSING', 409);
+    }
+    if (expected && expected !== evidence.evidenceDigest) throw new CsrAuthoringContextError('CSR_EVIDENCE_CHANGED', 409);
+    currentDigests.set(sectionNumber, evidence.evidenceDigest);
+    return evidence;
+  };
 
   // Seed initial progress so a resumed run reports the right number
   if (totalSections > 0) {
@@ -432,7 +471,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     await d
       .update(csrBuildJobs)
       .set({ progress: initialProgress, updatedAt: new Date() })
-      .where(eq(csrBuildJobs.id, jobId));
+      .where(draftingJob);
   }
 
   try {
@@ -441,15 +480,12 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     // disk and a resume picks up exactly where we left off (and re-bills
     // only the un-persisted remainder).
     for (const section of allTargets) {
-      if (persistedSet.has(section.number)) continue;
-
       currentSection.number = section.number;
+      const evidence = await revalidate(section.number);
+      if (persistedSet.has(section.number)) continue;
 
       // A job bound to a retained run drafts each results section over that
       // section's engine tables; a refused or revoked source fails the job.
-      const evidence = evidenceSource
-        ? await loadSectionEvidence(evidenceSource, section.number, job)
-        : undefined;
       const drafted = await draftCSRSectionWithProvenance(
         section,
         request,
@@ -462,6 +498,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       if (drafted.number !== section.number) {
         throw new Error('CSR_DRAFT_SECTION_MISMATCH: Generated section identifier differs from the requested ICH E3 section.');
       }
+      await revalidate(section.number);
 
       // Model calls are long-running. A cancelled or superseded job cannot
       // save a late model result into its previously governed section set.
@@ -520,6 +557,13 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         .where(and(eq(csrBuildJobs.id, jobId),
           eq(csrBuildJobs.organizationId, job.organizationId),
           eq(csrBuildJobs.status, 'drafting')));
+    }
+
+    // A source may have changed while a later section was drafted. Recheck
+    // the complete selected set before issuing a completed-job verdict.
+    for (const section of allTargets) {
+      currentSection.number = section.number;
+      await revalidate(section.number);
     }
 
     // 6. Re-read saved target coverage, including prior attempts. Missing rows

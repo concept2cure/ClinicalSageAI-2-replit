@@ -150,9 +150,10 @@ describe('draftCSRSectionWithProvenance', () => {
     expect(drafted).toMatchObject({ model: 'test-model', tokenCost: 7 });
   });
 
-  it('does not apply the guard to a non-statistical section', async () => {
-    completeMock.mockResolvedValueOnce('ETHICS\nThe study was approved by 12 IRBs.');
-    const drafted = await draftCSRSectionWithProvenance(section('5.1'), request);
+  it('does not apply the numerical guard to a non-statistical introduction', async () => {
+    // Conduct assertions have their own refusal; this case isolates numerical scope.
+    completeMock.mockResolvedValueOnce('INTRODUCTION\nThe development programme included 12 study centres.');
+    const drafted = await draftCSRSectionWithProvenance(section('7'), request);
     expect(drafted.source).toBe('ai');
   });
 

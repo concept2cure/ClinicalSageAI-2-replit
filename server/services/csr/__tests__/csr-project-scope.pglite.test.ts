@@ -21,6 +21,11 @@ beforeAll(async () => {
     CREATE TABLE client_workspaces (id integer PRIMARY KEY, organization_id integer);
     INSERT INTO client_workspaces VALUES (71,7),(72,7),(81,8);
     INSERT INTO projects (id,organization_id,client_workspace_id,status,regulatory_program_id) VALUES (11,7,71,'active','${PROGRAM}'),(12,7,72,'active',NULL),(13,7,71,'archived',NULL),(21,8,81,'active','${FOREIGN}');
+    CREATE TABLE users (id integer PRIMARY KEY, status text);
+    INSERT INTO users VALUES (5,'active');
+    CREATE TABLE organizations (id integer PRIMARY KEY, status text);
+    INSERT INTO organizations VALUES (7,'active'),(8,'active');
+    UPDATE projects SET owner_id=5,created_by_id=5 WHERE organization_id=7;
     CREATE TABLE organization_users (organization_id integer, user_id integer, role text);
     INSERT INTO organization_users VALUES (7,5,'member');
     CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);

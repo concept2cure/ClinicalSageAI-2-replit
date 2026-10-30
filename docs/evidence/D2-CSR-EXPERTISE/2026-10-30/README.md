@@ -18,4 +18,4 @@ Canonical code was fast-forwarded from1c846bdf6 to438287ed1. resume-state.json a
 
 ## Status
 
-Discovery/interfaces published before production changes. Root owns global jobs and direct canonical Git publication. Human, live-provider and agency acceptance remain unrun.
+Implemented and locally qualified in `resumed-codex/README.md`: 436 tests across 43 files pass; client/server/audit-verifier builds pass; changed-file lint has zero errors and zero warning growth. The bounded expertise, retained-source generation and current read/edit admission contracts are completed through the existing owners. Normal canonical publication gates and the accepted source receipt are recorded in that packet. Human, live-provider, native PostgreSQL RLS and agency acceptance remain unrun. Earlier filing work is still preserved and in progress.

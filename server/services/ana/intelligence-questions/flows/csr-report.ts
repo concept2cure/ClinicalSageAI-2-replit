@@ -860,10 +860,6 @@ export function createCsrReportFlow(): FlowDefinition {
         ],
         branches: [
           {
-            when: { field: 'primary_endpoint_met', operator: 'eq', value: false },
-            goto: 'sensitivity_analyses',
-          },
-          {
             when: { field: 'therapeutic_area', operator: 'eq', value: 'oncology' },
             goto: 'oncology_efficacy',
           },
@@ -872,7 +868,7 @@ export function createCsrReportFlow(): FlowDefinition {
             goto: 'vaccine_efficacy',
           },
         ],
-        defaultNext: 'secondary_results',
+        defaultNext: 'sensitivity_analyses',
         issueChecks: [
           {
             id: 'primary_endpoint_not_met',
@@ -884,7 +880,7 @@ export function createCsrReportFlow(): FlowDefinition {
             severity: 'info',
             title: 'Primary Endpoint Not Met',
             message:
-              'The primary endpoint was not met. Per ICH E3 Section 11.4.1, the CSR must still provide a complete analysis of the primary endpoint results and discuss potential reasons for the failure. Consider sensitivity analyses, post-hoc analyses, and implications for the development program.',
+              'The primary endpoint was not met. Provide the complete prespecified analysis and source-supported reasons and limitations. Assess robustness using sensitivity analyses for the same estimand; distinguish supplementary analyses and exploratory post hoc work, without using them to reverse the primary conclusion.',
             reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 11.4.1',
           },
           {
@@ -966,7 +962,7 @@ export function createCsrReportFlow(): FlowDefinition {
             validation: { min: 0 },
           },
         ],
-        defaultNext: 'secondary_results',
+        defaultNext: 'sensitivity_analyses',
       },
 
       /* — Vaccine-specific efficacy (conditional branch) —————————— */
@@ -1020,18 +1016,18 @@ export function createCsrReportFlow(): FlowDefinition {
             placeholder: 'Describe persistence of antibody titers at 6 months, 12 months, etc.',
           },
         ],
-        defaultNext: 'secondary_results',
+        defaultNext: 'sensitivity_analyses',
       },
 
-      /* — Sensitivity analyses (branch when primary endpoint not met) — */
+      /* — Robustness is assessed whether the primary criterion was met or not. — */
 
       {
         id: 'sensitivity_analyses',
         section: 'efficacy_results',
         question:
-          'Since the primary endpoint was not met, describe any sensitivity and post-hoc analyses performed.',
+          'Describe the planned robustness assessments, supplementary analyses and any post hoc work, whether or not the primary criterion was met.',
         guidance:
-          'Per ICH E9 Section 5.2.3 and ICH E3 Section 11.4.2, when the primary endpoint is not met, the CSR must present pre-specified sensitivity analyses to assess the robustness of the primary result. Post-hoc analyses may be included but must be clearly identified as exploratory and not used to claim efficacy. FDA expects a thorough discussion of why the study failed and any supportive subgroup signals.',
+          'Assess robustness after either a successful or unsuccessful primary result. Under ICH E9(R1), sensitivity analyses address assumptions for the same estimand; supplementary analyses target a different estimand and must be labelled separately. Classify analyses by the protocol and SAP, not by whether their result is favourable. Post hoc work is identified as exploratory, not a replacement for the prespecified primary conclusion. Missing analyses or source outputs remain explicit.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -1044,9 +1040,16 @@ export function createCsrReportFlow(): FlowDefinition {
             id: 'sensitivity_analysis_summary',
             label: 'Sensitivity Analysis Results',
             type: 'textarea',
-            placeholder: 'Summarize each sensitivity analysis (e.g., tipping point, per-protocol, MMRM vs. LOCF comparison) and whether the result was consistent with the primary analysis.',
+            placeholder: 'For each same-estimand sensitivity analysis, identify the assumption assessed, method, source output and whether it supports the robustness of the primary interpretation. Do not assume a per-protocol analysis targets the same estimand.',
             required: true,
             validation: { minLength: 50, maxLength: 5000 },
+            visibleWhen: { field: 'sensitivity_analyses_performed', operator: 'eq', value: true },
+          },
+          {
+            id: 'supplementary_analysis_summary',
+            label: 'Supplementary Analyses (Different Estimand)',
+            type: 'textarea',
+            placeholder: 'Identify each different estimand, its rationale, prespecified or post hoc status, and source output; state when none was performed or the record is unavailable.',
           },
           {
             id: 'post_hoc_analyses_performed',
@@ -1070,6 +1073,7 @@ export function createCsrReportFlow(): FlowDefinition {
             type: 'textarea',
             placeholder: 'e.g., High placebo response rate, insufficient dose, study population not enriched, regional differences, etc.',
             required: true,
+            visibleWhen: { field: 'primary_endpoint_met', operator: 'eq', value: false },
           },
         ],
         defaultNext: 'secondary_results',
@@ -1222,29 +1226,29 @@ export function createCsrReportFlow(): FlowDefinition {
         defaultNext: 'serious_events',
         issueChecks: [
           {
-            id: 'high_discontinuation_due_to_aes',
+            id: 'discontinuations_require_review',
             condition: {
               field: 'discontinuations_due_to_aes',
               operator: 'gt',
-              value: 0, // Note: runtime engine should evaluate discontinuations_due_to_aes / safety_population_size > 0.10
+              value: 0,
             },
-            severity: 'warning',
-            title: 'Elevated Discontinuation Rate Due to AEs',
+            severity: 'info',
+            title: 'Review AE-Related Discontinuations',
             message:
-              'A high rate of discontinuation due to adverse events may affect the tolerability profile and benefit-risk balance. Per ICH E3 Section 12.2 (12.2.3 Analysis of Adverse Events), the CSR should analyze AEs leading to discontinuation by PT and SOC, and compare rates between treatment groups. The FDA labeling team will consider this rate when drafting the Adverse Reactions section (USPI Section 6).',
+              'Discontinuations due to adverse events were reported. This absolute count does not establish an incidence rate or tolerability conclusion. Review the safety population denominator, treatment-group counts, exposure and source outputs, then describe the events by PT and SOC with an appropriate comparison.',
             reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 12.2',
           },
           {
-            id: 'high_grade3_ae_rate',
+            id: 'grade3_events_require_review',
             condition: {
               field: 'grade_3_or_higher_aes',
               operator: 'gt',
-              value: 0, // Note: runtime engine should evaluate grade_3_or_higher_aes / safety_population_size > 0.25
+              value: 0,
             },
-            severity: 'warning',
-            title: 'High Rate of Severe (Grade ≥3) Adverse Events',
+            severity: 'info',
+            title: 'Review Grade ≥3 Adverse Events',
             message:
-              'The incidence of Grade 3 or higher adverse events is notable. Per ICH E3 Section 12.2 (12.2.3 Analysis of Adverse Events), severe AEs should be analyzed by SOC and PT with comparison to the control arm. Consider whether a dose modification strategy, Warnings and Precautions language, or monitoring recommendations are warranted for the product label.',
+              'Grade 3 or higher adverse events were reported. A nonzero count alone does not establish a high incidence or product risk. Review the grading scale, safety population denominator, treatment-group counts, exposure and source outputs before interpreting the finding; distinguish severity from seriousness.',
             reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 12.2',
           },
         ],

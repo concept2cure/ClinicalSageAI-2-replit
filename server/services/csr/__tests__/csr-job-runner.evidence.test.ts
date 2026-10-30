@@ -68,6 +68,7 @@ let fake: ReturnType<typeof makeFakeDb>;
 vi.mock('../../../db', () => ({ get db() { return fake.db; }, pool: { query: vi.fn() } }));
 
 import { runCSRBuildJob } from '../csr-job-runner';
+import { resolveCsrScope } from '../project-scope';
 
 const PROGRAM = '0b7a1f52-1c9e-4f5a-9d43-5d1c2e8a9b10';
 const RUN = '6f2d4c1e-8a3b-4e7f-b2c9-1a0d5e6f7a8b';
@@ -109,6 +110,7 @@ const row = (n: string) => fake.persisted.find(r => r.sectionNumber === n)!;
 
 beforeEach(() => {
   chatMock.mockReset(); continueMock.mockReset().mockResolvedValue([]);
+  vi.mocked(resolveCsrScope).mockReset().mockResolvedValue({ projectId: 11 });
   loadMock.mockReset().mockImplementation(async (_q: unknown, _actor: unknown, selection: any) => buildCsrAuthoringEvidence(RETAINED, selection));
 });
 
@@ -118,7 +120,8 @@ describe('a run-bound CSR job drafts §12.2 over the retained tables', () => {
     modelWriting('11.5%');
     await runCSRBuildJob(42);
 
-    expect(loadMock.mock.calls.map(c => c[2].sectionNumber)).toEqual(['12.2.1', '12.2.2', '12.2.3', '12.2.4']);
+    expect([...new Set(loadMock.mock.calls.map(c => c[2].sectionNumber))]).toEqual(['12.2.1', '12.2.2', '12.2.3', '12.2.4']);
+    expect(loadMock.mock.calls.every(call => call[4]?.requireCurrent === true)).toBe(true);
     expect(loadMock.mock.calls[0][1]).toEqual({ organizationId: 1, userId: 5 });
     const evidenceMessage = (chatMock.mock.calls[0][0] as Array<{ content: string }>).at(-1)!.content;
     expect(JSON.parse(evidenceMessage)).toMatchObject({ type: 'retained_csr_evidence', evidence: { sectionNumber: '12.2.1' } });
@@ -208,5 +211,111 @@ describe('a run-bound CSR job drafts §12.2 over the retained tables', () => {
     expect(row('12.2.1')).toMatchObject({ aiGenerated: false, model: null });
     expect(row('12.2.1').lineage).toMatchObject({ rejectedModelDraft: { reason: 'model_unattributed' } });
     expect(fake.job).toMatchObject({ status: 'failed', error: { reason: 'missing_section_outputs', sections: ['12.2.2', '12.2.3', '12.2.4'] } });
+  });
+});
+
+describe('current source admission across asynchronous CSR drafting and resume', () => {
+  const singleJob = () => ({ ...makeJob(), sectionsToGenerate: ['13'] });
+  const savedDiscussion = () => {
+    const evidence = buildCsrAuthoringEvidence(RETAINED, { programId: PROGRAM, runId: RUN, studyId: 'STUDY-7', sectionNumber: '13' });
+    const content = 'Recorded discussion retained for scientific review.';
+    return { sectionNumber: '13', content, contentHash: createHash('sha256').update(content).digest('hex'),
+      lineage: { evidence: { evidenceDigest: evidence.evidenceDigest } } };
+  };
+  const changeEvidence = () => {
+    const changed = globalThis.structuredClone(RETAINED);
+    changed.studies[0].source.sha256 = 'b'.repeat(64);
+    loadMock.mockImplementation(async (_q: unknown, _actor: unknown, selection: any) => buildCsrAuthoringEvidence(changed, selection));
+  };
+
+  it.each(['CSR_SOURCE_DATA_UNAVAILABLE', 'CSR_SOURCE_APPROVAL_REQUIRED', 'CSR_SOURCE_CHANGED'])('refuses a late model result after %s without saving it', async code => {
+    fake = makeFakeDb(singleJob());
+    chatMock.mockImplementation(async () => {
+      loadMock.mockRejectedValue(Object.assign(new Error(code), { code }));
+      return reply('A source-supported discussion awaiting scientific review.');
+    });
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed', error: { message: code } });
+    expect(fake.persisted).toEqual([]);
+    expect(continueMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses a changed source digest between the model request and section save', async () => {
+    fake = makeFakeDb(singleJob());
+    chatMock.mockImplementation(async () => { changeEvidence(); return reply('A source-supported discussion awaiting scientific review.'); });
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed', error: { message: 'CSR_EVIDENCE_CHANGED' } });
+    expect(fake.persisted).toEqual([]);
+    expect(continueMock).not.toHaveBeenCalled();
+  });
+
+  it.each([true, false])('rechecks current edit access after the model even when evidence-bound=%s', async bound => {
+    const job = singleJob();
+    if (!bound) delete (job.studyInfoSnapshot as { evidenceSource?: unknown }).evidenceSource;
+    fake = makeFakeDb(job);
+    chatMock.mockImplementation(async () => {
+      vi.mocked(resolveCsrScope).mockRejectedValue(Object.assign(new Error('Current project edit access was revoked'), { code: 'CSR_PROJECT_ACCESS_DENIED' }));
+      return reply('A source-supported discussion awaiting scientific review.');
+    });
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed' });
+    expect(fake.persisted).toEqual([]);
+    expect(continueMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['withdrawn', 'changed', 'missing-provenance'])('a fully populated resume still refuses %s evidence and preserves saved work', async mode => {
+    fake = makeFakeDb({ ...singleJob(), status: 'failed' });
+    const saved = savedDiscussion();
+    if (mode === 'missing-provenance') saved.lineage = {} as typeof saved.lineage;
+    fake.persisted.push(saved);
+    const before = globalThis.structuredClone(fake.persisted);
+    if (mode === 'withdrawn') loadMock.mockRejectedValue(new Error('CSR_SOURCE_DATA_UNAVAILABLE'));
+    if (mode === 'changed') changeEvidence();
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed' });
+    expect(fake.persisted).toEqual(before);
+    expect(chatMock).not.toHaveBeenCalled();
+    expect(continueMock).not.toHaveBeenCalled();
+  });
+
+  it('revalidates a fully populated resume and completes without another model call when provenance still matches', async () => {
+    fake = makeFakeDb({ ...singleJob(), status: 'failed' });
+    fake.persisted.push(savedDiscussion());
+    const before = globalThis.structuredClone(fake.persisted);
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'complete', progress: 100 });
+    expect(loadMock).toHaveBeenCalled();
+    expect(fake.persisted).toEqual(before);
+    expect(chatMock).not.toHaveBeenCalled();
+    expect(continueMock).toHaveBeenCalledExactlyOnceWith(42, 1);
+  });
+
+  it('does not bypass source withdrawal when the selected section has no table mapping', async () => {
+    fake = makeFakeDb({ ...singleJob(), sectionsToGenerate: ['6'] });
+    loadMock.mockRejectedValue(new Error('CSR_SOURCE_DATA_UNAVAILABLE'));
+    chatMock.mockResolvedValue(reply('Recorded administration information.'));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed' });
+    expect(chatMock).not.toHaveBeenCalled();
+    expect(fake.persisted).toEqual([]);
+  });
+
+  it('retains earlier sections when a later model result loses source eligibility and permits explicit recovery', async () => {
+    fake = makeFakeDb(makeJob());
+    let calls = 0;
+    chatMock.mockImplementation(async () => {
+      calls += 1;
+      if (calls === 2) loadMock.mockRejectedValue(new Error('CSR_SOURCE_DATA_UNAVAILABLE'));
+      return reply('Recorded adverse-event discussion awaiting scientific review.');
+    });
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed' });
+    expect(fake.persisted.map(output => output.sectionNumber)).toEqual(['12.2.1']);
+    const retained = globalThis.structuredClone(fake.persisted[0]);
+    loadMock.mockImplementation(async (_q: unknown, _actor: unknown, selection: any) => buildCsrAuthoringEvidence(RETAINED, selection));
+    chatMock.mockResolvedValue(reply('Recorded adverse-event discussion awaiting scientific review.'));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'complete' });
+    expect(fake.persisted[0]).toEqual(retained);
   });
 });

@@ -438,7 +438,7 @@ router.post('/:jobId/cancel', async (req: Request, res: Response) => {
     // as 404 so we don't leak job existence across tenants. The probe
     // also lets us return a precise 409.status payload when the row is
     // already terminal at probe time (common case, no race).
-    if (!await requireCsrJobAccess(requireDb(), organizationId, jobId, resolveUserId(req))) return res.status(404).json({ error: 'Job not found' });
+    if (!await requireCsrJobAccess(requireDb(), organizationId, jobId, resolveUserId(req), { forWrite: true })) return res.status(404).json({ error: 'Job not found' });
     const status = await getCSRBuildJobStatus(jobId, organizationId);
     if (status == null) {
       return res.status(404).json({ error: 'Job not found' });

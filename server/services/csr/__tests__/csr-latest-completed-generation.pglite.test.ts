@@ -13,6 +13,8 @@ beforeAll(async () => {
   await database.exec(`
     CREATE TABLE projects (id integer PRIMARY KEY,organization_id integer,client_workspace_id integer,status text,owner_id integer,created_by_id integer,settings jsonb DEFAULT '{}'::jsonb);
     INSERT INTO projects VALUES (11,7,71,'active',NULL,NULL,'{}'),(99,7,71,'active',NULL,NULL,'{}');
+    CREATE TABLE users (id integer PRIMARY KEY,status text); INSERT INTO users VALUES (5,'active');
+    CREATE TABLE organizations (id integer PRIMARY KEY,status text); INSERT INTO organizations VALUES (7,'active'),(8,'active');
     CREATE TABLE organization_users (organization_id integer,user_id integer,role text);
     INSERT INTO organization_users VALUES (7,5,'member');
     CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);

@@ -1,0 +1,16 @@
+{
+  "sourceBase": "fc1ece8d961c33f7f00c16367b30f7aa95d05b71",
+  "sourceFreezeUnchanged": true,
+  "testFiles": 43,
+  "tests": 436,
+  "passed": 436,
+  "failed": 0,
+  "pending": 0,
+  "success": true,
+  "lint": {
+    "errorCount": 0,
+    "warningDelta": 0
+  },
+  "build": "passed: Vite client, server, audit-chain verifier",
+  "publicationBase": "9c4085a395e7ba2e2a4d258c5934a976598a96ba"
+}
