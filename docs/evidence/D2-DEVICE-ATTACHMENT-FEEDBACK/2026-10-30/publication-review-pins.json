@@ -1,0 +1,240 @@
+{
+  "review": "approved source publication receipt; metadata publication remains root-owned",
+  "reviewed_at": "2026-10-30T20:01:46.893757+00:00",
+  "source_commit": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+  "source_tree": "1e1b6dbd7d3b6c4bb80f933bd56b53e32c03bad5",
+  "canonical_base": "e27f678dfed2f06fa4751c127aec9f36c76a016a",
+  "canonical_branch": "concept2cure-v2",
+  "accepted_attempt": 9,
+  "earlier_ref_race_attempts": [
+    {
+      "attempt": 1,
+      "accepted": false,
+      "gates_passed": true,
+      "typescript_errors": 0
+    },
+    {
+      "attempt": 2,
+      "accepted": false,
+      "gates_passed": true,
+      "typescript_errors": 0
+    },
+    {
+      "attempt": 3,
+      "accepted": false,
+      "gates_passed": true,
+      "typescript_errors": 0
+    },
+    {
+      "attempt": 4,
+      "accepted": false,
+      "gates_passed": true,
+      "typescript_errors": 0
+    },
+    {
+      "attempt": 5,
+      "accepted": false,
+      "gates_passed": true,
+      "typescript_errors": 0
+    },
+    {
+      "attempt": 6,
+      "accepted": false,
+      "gates_passed": true,
+      "typescript_errors": 0
+    },
+    {
+      "attempt": 7,
+      "accepted": false,
+      "gates_passed": true,
+      "typescript_errors": 0
+    },
+    {
+      "attempt": 8,
+      "accepted": false,
+      "gates_passed": true,
+      "typescript_errors": 0
+    }
+  ],
+  "source_input_verification": {
+    "count": 165,
+    "manifest": "final-publication-inputs.json",
+    "working_tree_mismatches": [],
+    "accepted_git_blob_mismatches": []
+  },
+  "browser_input_verification": {
+    "count": 36,
+    "working_tree_mismatches": [],
+    "accepted_git_blob_mismatches": [],
+    "flows_passed": 8,
+    "browser_errors": 0,
+    "unexpected_requests": 0
+  },
+  "qualification": {
+    "tests": 727,
+    "suites": 54,
+    "failed": 0,
+    "skipped": 0,
+    "distinct_suite_paths": 54,
+    "cohorts": [
+      {
+        "log": "race-2-regression.txt",
+        "tests": 618,
+        "suites": 45,
+        "scope": "actual client attachment, project, RBM and company workflows; includes the earlier 484-case cohort",
+        "suite_paths": [
+          "client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx",
+          "client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts",
+          "client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx",
+          "client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts",
+          "client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts",
+          "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx",
+          "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.history.test.tsx",
+          "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.readOnly.test.tsx",
+          "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx",
+          "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx",
+          "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx",
+          "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx",
+          "client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx",
+          "client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx",
+          "client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx",
+          "client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx",
+          "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+          "client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx",
+          "client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx",
+          "client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx",
+          "client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx",
+          "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx",
+          "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx",
+          "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx",
+          "client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx",
+          "client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx",
+          "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx",
+          "client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx",
+          "client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx",
+          "client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx",
+          "client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts",
+          "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx",
+          "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+          "client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx",
+          "client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx",
+          "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+          "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx",
+          "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx",
+          "client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx",
+          "client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx",
+          "client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx",
+          "client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx",
+          "client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx",
+          "client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx",
+          "client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx"
+        ],
+        "log_sha256": "622dcc9089bfd35ef33f00779831cba513ba39c623c816d44d28a34b13087a4a"
+      },
+      {
+        "log": "race-4-server-tests.txt",
+        "tests": 13,
+        "suites": 2,
+        "scope": "incoming OCR and client-review admission",
+        "suite_paths": [
+          "server/routes/__tests__/mdx-client-review-admits-project.test.ts",
+          "server/services/ocr/__tests__/extracted-text-nul.test.ts"
+        ],
+        "log_sha256": "c642083c5b216450606ee49e46f5519b46e2cb0c9e861e89f9dbb385becea37c"
+      },
+      {
+        "log": "race-6-qms-tests.txt",
+        "tests": 76,
+        "suites": 5,
+        "scope": "incoming QMS and tasking",
+        "suite_paths": [
+          "server/routes/__tests__/mdx-qms-retire.test.ts",
+          "server/routes/__tests__/qms-document-approval-signature.test.ts",
+          "server/routes/__tests__/qms-personal-training.test.ts",
+          "server/services/qms/__tests__/training-task.test.ts",
+          "server/services/tasking/__tests__/source-task.test.ts"
+        ],
+        "log_sha256": "430612f1ae3e8423c602d0244d3461de92cb9558d0a5788c7612fa1c77d2153b"
+      },
+      {
+        "log": "race-8-narrative-tests.txt",
+        "tests": 20,
+        "suites": 2,
+        "scope": "incoming controlled-term safety narrative",
+        "suite_paths": [
+          "server/services/ana/__tests__/safety-narrative.test.ts",
+          "server/services/csr/__tests__/narrative-reconciliation.test.ts"
+        ],
+        "log_sha256": "a094912c2eafee3a9eab1e8900fff7cd97b1bd36807e557ae24d747183b74128"
+      }
+    ],
+    "excluded": "Older 484/385 overlapping cohorts; older eCTD bridge 48 checks and six skipped controls"
+  },
+  "normal_gates_passed": true,
+  "typescript_errors": 0,
+  "receipt_hash_bindings_match": true,
+  "accepted_source_build_completed": [
+    "client",
+    "server",
+    "audit-chain verifier"
+  ],
+  "source_delta_paths": [
+    "client/src/concept2cure/mdx/pathway-tabs.css",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/pathway/DossierAttachments.tsx",
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx"
+  ],
+  "working_source_delta_paths": [],
+  "unresolved_git_entries": [],
+  "accepted_source_conflict_markers": [],
+  "work_order_verification": {
+    "accepted_table_lines": 343,
+    "current_table_lines": 343,
+    "other_owner_rows_missing": [],
+    "changed_rows": "Only this workstream claimed-to-source-accepted receipt row"
+  },
+  "ci_observation": {
+    "queued": 4,
+    "pending": 1,
+    "completed_skipped": 1,
+    "completion_claimed": false,
+    "deployment_claimed": false
+  },
+  "limits": [
+    "Synthetic engineering qualification; no hosted authentication, native storage, human OQ or agency acceptance claimed",
+    "Durable Dossier-to-Vault attachment association/reload remains a separate need",
+    "Native database and licensed eCTD qualification retain existing canonical owner attribution; the older bridge run skipped six xmllint-dependent controls, which are excluded from the 727 checks",
+    "Already dispatched writes can finish; existing canonical visit owner retires queued work and visible/local publication; no network recall or rollback added"
+  ],
+  "reviewed_file_sha256": {
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-publication.json": "13bf4152ba008278221b99383391d076fcff4eb9079ccc1a1d6d12ae56284895",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push.txt": "626c19b67f2e6ea89fbe2c64c86d2bee1ad5cbc29ae697deb0757011f5197326",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/accepted-source-build.txt": "414b607f2e9490bc288e4971666f49fc983352dcf41c6c72dfceeef68d52db7c",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/final-publication-inputs.json": "d964155cf85808dfff2317ba148ebf081aeb6f3a082232109abe1483bdcc13a7",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-converged/result.json": "b50b2f10e1d41fefa7be405f93152213914ae92f4d73dbc1e746922e23832257",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ci-source-observation.json": "d11e18f496743f57ea55ab928fc326cbad431846b2fc6c5302bbba42cfec59fb",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/race-2-regression.txt": "622dcc9089bfd35ef33f00779831cba513ba39c623c816d44d28a34b13087a4a",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/race-4-server-tests.txt": "c642083c5b216450606ee49e46f5519b46e2cb0c9e861e89f9dbb385becea37c",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/race-6-qms-tests.txt": "430612f1ae3e8423c602d0244d3461de92cb9558d0a5788c7612fa1c77d2153b",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/race-8-narrative-tests.txt": "a094912c2eafee3a9eab1e8900fff7cd97b1bd36807e557ae24d747183b74128",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-1.json": "dbd9c6b56e7cde99a3063b40149732ca83f4ee29e6a1528004cbc8642bcfd021",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-1.txt": "fd30951c55642fdbfb186c03b198dbac8b67d091581d87d592c7a4b37f60624c",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-2.json": "3ccdafe51e4fe035ef4f240796d497169c64e6af69616cb5a7963cd6fa7a5585",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-2.txt": "6b48af63502368c3acc2cdd28343556cbfc4ee1d89bffaef3d710c172bbe9d9a",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-3.json": "8a43a25bd68bb682c3cba7c142c9e40f236fced739d2d195cbf7a1cbe185928c",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-3.txt": "4ecc845e286de5c09b4dd4e2f2ca9410e1b12bccec0e0695a1323432ef99d3c4",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-4.json": "fa41fefebe29d0044025aadc793ff7d2e9fce71bd96ef89486de8c5546c8dc1e",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-4.txt": "3633593e6845e9e87cd801fbc4afe5a6fed53a77a65e0c33bbe95cc9143bf441",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-5.json": "84a14c53b7c838b0874363948f2cdef475fd90d73b9af85bdffed20ba84a8e9d",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-5.txt": "a703c45e5e7496948dd93f9d70c1e2c9f9c8ac80a17b1824588a2ce4a8d8ab23",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-6.json": "cfdad2caab734204f930184574ed8934b609fffca1202845cd57e08fb4cca37f",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-6.txt": "31c1d5ecc62de0c7cdf99b4665904b617eb4e47c5afc1aecd8348721724f6ae3",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-7.json": "aacbdbce5570d1b2edcfaba4893a7b35c8802fb06614620deb230c502a563083",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-7.txt": "94fccc083ee359cd0ffd283f4dd2162f75dccd0ab649d26e846c1050148afc43",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-8.json": "aa00d486f1bb6f2eaac92d83e69db2702536b02f29fd174c052be7778582b925",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/source-push-race-8.txt": "3a972ce9436c90b16f6ba59099145a3256329d1e29768d890949217f012dcdf7",
+    "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/publication-review.md": "ff01ec62cf6aee0294bdf0a500e819b8e5d093dad6018ba0e92ac18b3ab50524"
+  },
+  "reviewer_execution": "Read-only Git/hash/log inspection; only these two review documents written; no runners or Git mutations"
+}
