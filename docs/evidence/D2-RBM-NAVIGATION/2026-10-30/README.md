@@ -65,8 +65,8 @@ Deleted history finds 3 historical retirements/rewrites, not an absent module.
 
 The full signature successor at `09c83267b` passed the root combined cohort,
 build and zero-regression lint below. Canonical integration, the later SQL gate
-successor and the latest unrelated CSR/STF merge have their own named checks and
-source-preservation links. The current packet selects 220 source/test/configuration
+successor and later canonical integrations have their own named checks and
+source-preservation links. The current packet selects 245 source/test/configuration
 inputs; it does not relabel earlier executions as a full rerun of current source.
 Whole TypeScript, normal push gates and fresh remote proof remain pending.
 
@@ -322,8 +322,23 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   unchanged**. The production build passed **exit 0** with those 220 inputs
   stable. Changed-file lint across 55 TypeScript files against `d4c745c5f`
   remained 190→190 with zero errors. This separate source epoch does not borrow
-  or sum the preceding settings, RBM or upstream totals. Current-source whole
-  TypeScript, all normal push gates and fresh remote proof remain pending.
+  or sum the preceding settings, RBM or upstream totals. Its lint is retained
+  as `final-recovery-lint.json`.
+- Vault upload/access integration: incoming `d79abdf9f` merged normally into
+  `1afc89725`; the sole work-order conflict was resolved by retaining all distinct
+  owned rows. The net 26 source/test inputs include five production files.
+  Independent review found the same shell-project channel, retained canonical
+  actor/project guards, retired upload callbacks and final archive admission
+  checks; no RBM rail or project-setup source changed. Root's affected cohort
+  (`final-vault-*`) at `1afc89725` passed **119/119 across 12 actual files**, exit
+  0, zero skipped and all **245 selected inputs unchanged**. Its production build
+  passed **exit 0** on those stable inputs; changed-file lint across 55 TypeScript
+  files remained 190→190 with zero errors. The incoming
+  [D5 archive-access packet](../../D5/2026-10-30-vault-final-access/README.md)
+  retains its native archive executions at its own named source; those are
+  upstream evidence, not a root native-PostgreSQL rerun at this merge. Cohorts
+  remain separate and overlap. Current-source whole TypeScript, all normal push
+  gates and fresh remote proof remain pending.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
   changed-file selection. The initial lint harness exceeded its historical text
@@ -359,7 +374,7 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   launch scope, launch API scope, signature ceremony and SQL-interpolation CI
   checks all pass **exit 0**, with **210 selected inputs unchanged** through
   those checks (`final-settings-ci-summary.json`). These are prior-epoch focused
-  receipts; the current recovery integration still requires all normal push gates.
+  receipts; the current Vault integration still requires all normal push gates.
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
   Review found the missing-signature gap and checked its final closure; review
@@ -379,6 +394,6 @@ explicitly synthetic browser behavior only at the named sources. It does not
 establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
 validation or agency acceptance. Whole TypeScript and all normal gates passed at
 `498403dc3`, `59d0bd6eb`, `dd53c5a5f` and `624cd9285`; remote advancement then
-refused those updates. The current 220-input integration still requires its own
+refused those updates. The current 245-input integration still requires its own
 compiler/gated-push retry
 and fresh remote/source verification before publication can be claimed.
