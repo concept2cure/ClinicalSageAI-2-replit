@@ -43,3 +43,5 @@ The first native attempt passed the client-shaped create/reupload/check-in contr
 - Production build and full-program TypeScript pass; zero compiler errors and no added lint warnings. No baseline or production dependency is widened.
 
 The client validates identity, request context, rendered metadata and internal receipt coherence. Authority and persisted bytes continue to come from the existing governed server admission. Invalid successful replies and explicit server `OUTCOME_UNKNOWN` results remain unconfirmed; no write is retried automatically.
+
+`04-merged-qualification.txt` records the later disjoint canonical merge, 169 focused checks/13 files and a fresh complete production build. The receipt source, native test and styles remain unchanged from their qualified content. Normal publication uses every repository hook; exact publication proof is retained at the paths in that record.
