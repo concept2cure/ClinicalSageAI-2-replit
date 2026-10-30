@@ -3712,6 +3712,20 @@ export const C2C_MIGRATION_FILES = [
   // so it follows the four db/migrations files above that amend their own
   // policies. Creates no table.
   'migrations/20261029j_no_session_rls_bypass.sql',
+  // A departing tenant's records leave with it, after custody (D6, P-58,
+  // 2026-10-29; docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/):
+  // public.tenant_offboarding_certificates (one per purged tenant, append-only
+  // for every role), the NOLOGIN role tenant_record_purger and its five
+  // SECURITY DEFINER purge doors (signatures and audit trail, lineage, IVDR
+  // histories, reg_questions, review routes), each on the definer allowlist;
+  // and tenant_export_receipts.export_scope, the scope each export was read in
+  // (P-58's data return), after the receipts' creators (20260813b, 20261018).
+  // After every table its doors erase (the base schema, 20260327, 20261001,
+  // 20261019b, 20261023, the IVDR module) and after 20261023's
+  // review_route_writer guard, which admits this role's DELETE. Public with
+  // organization_id INTEGER NOT NULL, so the sweep below polices the
+  // certificate. Every statement guarded; no DROP.
+  'migrations/20261029k_tenant_offboarding_custody.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

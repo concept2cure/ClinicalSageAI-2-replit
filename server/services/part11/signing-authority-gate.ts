@@ -42,11 +42,17 @@ export type SigningAuthorityRefusal =
  * otherwise the refusal to answer, before the password is asked for and before
  * anything is written. A lookup that cannot run refuses (fail closed).
  */
-export async function checkSigningAuthority(userId: number, orgId: number, executor?: SignerRoleExec): Promise<SigningAuthorityRefusal | null> {
+export async function checkSigningAuthority(
+  userId: number,
+  orgId: number,
+  executor?: SignerRoleExec,
+  /** Passed to resolveSignerOrgRole: active only, unless the act is the custody act (P-58, part11/custody-signature.ts). */
+  opts?: { organizationStatuses?: readonly string[] },
+): Promise<SigningAuthorityRefusal | null> {
   let role: string | null;
   try {
     role = executor
-      ? await resolveSignerOrgRole(userId, orgId, executor)
+      ? await resolveSignerOrgRole(userId, orgId, executor, opts)
       : await resolveSignerOrgRole(userId, orgId);
   } catch (err) {
     console.error('[signing-authority] signer role lookup failed:', err instanceof Error ? err.message : err);

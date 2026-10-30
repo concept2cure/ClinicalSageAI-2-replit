@@ -310,8 +310,9 @@ router.get('/:tenantId/users', async (req, res) => {
  *
  *   404 — the organization does not exist.
  *   422 — the request is well-formed but a PRECONDITION of the lifecycle is
- *         unmet (no export evidence, retention window still open). The caller
- *         can retry the same request once it satisfies the precondition.
+ *         unmet (no export evidence, retention window still open, custody of
+ *         the export not signed or stale). The caller can retry the same
+ *         request once it satisfies the precondition.
  *   409 — the organization is in a state that conflicts with the request
  *         (already purged, not scheduled for deletion, or retained document
  *         lineage blocks erasure). Review the governed records before retrying.
@@ -323,6 +324,8 @@ function offboardingHttpStatus(code: string): number {
   if (code === 'TENANT_NOT_FOUND') return 404;
   if (code === 'PURGE_ACTOR_REQUIRED') return 403;
   if (code === 'EXPORT_EVIDENCE_REQUIRED' || code === 'RETENTION_WINDOW_OPEN') return 422;
+  // P-58: custody of the export is not signed, or no longer matches the records held.
+  if (code === 'CUSTODY_ATTESTATION_REQUIRED' || code === 'CUSTODY_ATTESTATION_STALE') return 422;
   return 409;
 }
 
@@ -490,6 +493,8 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
       turnRecordErasure: record.turnRecordErasure,
       // An artifact's signatures and lock snapshots erased; each signing's chained ledger row is kept.
       artifactRecordErasure: record.artifactRecordErasure,
+      // The one record the platform keeps of the offboarding (P-58).
+      offboardingCertificate: record.offboardingCertificate,
     });
   } catch (error) {
     if (error instanceof OffboardingStateError) {

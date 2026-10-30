@@ -25,6 +25,16 @@
 -- Corrections are made by INSERTING a superseding record, never by mutating
 -- or removing history.
 --
+-- AMENDED IN PLACE 2026-10-29 (D6, P-58: a departing tenant's records leave
+-- with it, after custody; docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/):
+-- esign_block_mutation admits ONE DELETE, by the role tenant_record_purger,
+-- which is current_user only inside the tenant purge's door
+-- public.purge_tenant_signed_records (migrations/20261029k_tenant_offboarding_custody.sql:
+-- SECURITY DEFINER, platform scope, pending_deletion, no legal hold, custody
+-- signed). Every other role, the owner included, is still refused, and
+-- UPDATE is unchanged. No session setting opens it. Here, in the creating
+-- file, because this file re-runs on every deploy (CLAUDE.md Rule 1).
+--
 -- AMENDED IN PLACE 2026-09-25 (row D5; security audit 2026-09-24 finding DP-03,
 -- evidence docs/evidence/D6/2026-09-24-p0/P0-7/; CLAUDE.md Rule 1: this file
 -- re-runs on every deploy, so the change is here, not in an appended migration).
@@ -80,6 +90,10 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
   IF TG_OP = 'DELETE' THEN
+    -- P-58 (2026-10-29): the tenant purge's door, and nothing else.
+    IF current_user = 'tenant_record_purger' THEN
+      RETURN OLD;
+    END IF;
     RAISE EXCEPTION
       'IMMUTABILITY_VIOLATION: electronic_signatures is append-only (21 CFR Part 11 §11.70) — rows cannot be deleted. Insert a superseding signature instead.'
       USING ERRCODE = 'raise_exception';

@@ -31,6 +31,8 @@ export async function resolveSignerOrgRole(
   userId: number,
   organizationId: number,
   executor?: SignerRoleExec,
+  /** The organisation statuses a signer may sign from: active, unless the act is the custody act (part11/custody-signature.ts). */
+  opts: { organizationStatuses?: readonly string[] } = {},
 ): Promise<string | null> {
   if (!Number.isFinite(userId) || userId <= 0 || !Number.isFinite(organizationId) || organizationId <= 0) {
     return null;
@@ -42,9 +44,9 @@ export async function resolveSignerOrgRole(
     const { rows } = await executor.query(
       `SELECT ou.role FROM organization_users ou
          JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id
-        WHERE ou.user_id=$1 AND ou.organization_id=$2 AND u.status=$3 AND o.status=$3
+        WHERE ou.user_id=$1 AND ou.organization_id=$2 AND u.status=$3 AND o.status = ANY($4::text[])
         FOR SHARE OF ou,u,o`,
-      [userId, organizationId, 'active'],
+      [userId, organizationId, 'active', [...(opts.organizationStatuses ?? ['active'])]],
     );
     if (rows.length !== 1 || typeof rows[0].role !== 'string') return null;
     const role = rows[0].role.trim().toLowerCase();

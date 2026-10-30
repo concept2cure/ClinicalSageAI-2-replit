@@ -42,15 +42,18 @@ import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 import { invalidateTenantPosture } from './tenant-lifecycle';
 import { invalidateOrgMembershipCache } from '../../middleware/orgMembership';
-import { findExportReceipt, type ExportReceipt } from '../tenant-export/tenant-full-export.service';
+import { COMPLETE_EXPORT_SCOPES, findExportReceipt, type ExportReceipt } from '../tenant-export/tenant-full-export.service';
 import { readLockedCompanyDocumentSettings, readCompanyDocumentsExportEnvelope, companyDocumentsExportDescriptor,
   type CompanyDocumentsExportDescriptor } from '../tenant-export/company-document-envelope';
 import { PURGE_PARENT_SCOPED } from './purge-parent-scope';
-import { PURGE_REFERRER_TABLES, PURGE_REFERRERS_NOT_ERASED } from './purge-referrers';
+import { PURGE_PLATFORM_RECORDS, PURGE_REFERRER_TABLES, PURGE_REFERRERS_NOT_ERASED } from './purge-referrers';
+import { HELD_RECORD_DOORS } from './purge-held-doors';
+import { recordOffboardingCertificate, type OffboardingCertificate } from './offboarding-certificate';
 import { getStorageProviderFor } from '../storage';
 import { recordPurge, type PurgeAuditContext } from './tenant-purge-audit';
 import { reserveSourceReadReceiptPurge } from './tenant-source-read-receipt-purge';
 import { disposeCompanyDesigns } from '../tenant-export/company-design-disposal';
+import { custodyForPurge } from './offboarding-custody';
 
 const logger = createScopedLogger('tenant-offboarding');
 
@@ -314,6 +317,22 @@ function assertPurgeAttributable(purgedByUserId: number): void {
  * Throws `OffboardingStateError`; returns the organization and the export
  * receipt that authorizes the purge (which the purge's audit row records).
  */
+/**
+ * P-58's data return (2026-10-29): an export read in the platform scope returned
+ * none of the organization's Vault documents or knowledge graph, and nothing
+ * failed. Only an export read in the organization's own scope (or unrestricted)
+ * records its scope on its receipt; a receipt recorded before then records none.
+ */
+function assertCompleteExportScope(receipt: ExportReceipt): void {
+  if (COMPLETE_EXPORT_SCOPES.includes(String(receipt.exportScope ?? ''))) return;
+  throw new OffboardingStateError(
+    'EXPORT_SCOPE_UNVERIFIED',
+    "That export's receipt does not show it was read in the organization's own scope, so it may hold " +
+      'none of its Vault documents or knowledge graph. Produce a new full export (GET /api/tenant-export/full), ' +
+      'sign custody of it, and purge with its digest. Nothing was purged.'
+  );
+}
+
 async function assertPurgePermitted(
   pool: Pool,
   organizationId: number,
@@ -347,6 +366,7 @@ async function assertPurgePermitted(
         'export (GET /api/tenant-export/full) and purge with the digest it returns.'
     );
   }
+  assertCompleteExportScope(receipt);
 
   const existing = await readOrganization(pool, organizationId);
   if (!existing) {
@@ -703,6 +723,9 @@ export const PURGE_DOORS = Object.freeze([
     erasure: 'vaultSealErasure',
     unavailable: 'VAULT_SEAL_PURGE_UNAVAILABLE',
   },
+  // The held records (P-58): signatures and the audit trail, lineage, the IVDR
+  // histories, reg_questions and the review routes (./purge-held-doors.ts).
+  ...HELD_RECORD_DOORS,
 ] as const);
 type PurgeDoor = (typeof PURGE_DOORS)[number];
 
@@ -769,6 +792,8 @@ interface PurgeTally {
   sourceReadReceiptErasure: SourceReadReceiptErasure;
   artifactRecordErasure: ArtifactRecordErasure;
   vaultSealErasure: VaultSealErasure;
+  /** The one record the platform keeps of the purge (P-58, ./offboarding-certificate.ts). */
+  certificate?: OffboardingCertificate;
 }
 
 /** Run every listed table's delete on the transaction client, counting as it goes. */
@@ -883,6 +908,13 @@ function isDocumentDispositionRetentionConflict(error: unknown): boolean {
 }
 
 /** The locked current metadata, not a stale preflight, must match the data return. */
+/** The receipt re-read under the purge's lock still binds what it bound: the company documents, and the export's scope. */
+function sameReceiptEvidence(held: ExportReceipt, receipt: ExportReceipt): boolean {
+  return (held.companyDocumentsVersion ?? null) === (receipt.companyDocumentsVersion ?? null)
+    && (held.companyDocumentsSha256 ?? null) === (receipt.companyDocumentsSha256 ?? null)
+    && (held.exportScope ?? null) === (receipt.exportScope ?? null);
+}
+
 async function verifyCompanyDocumentReturn(client: PoolClient, organizationId: number,
   receipt: ExportReceipt): Promise<CompanyDocumentsExportDescriptor> {
   await client.query("SET LOCAL TIME ZONE 'UTC'");
@@ -890,8 +922,7 @@ async function verifyCompanyDocumentReturn(client: PoolClient, organizationId: n
   if (rows.length !== 1) throw new OffboardingStateError('TENANT_NOT_FOUND', 'Organization not found. Nothing was purged.');
   const envelope = await readCompanyDocumentsExportEnvelope(client, organizationId, rows[0]);
   const held = await findExportReceipt(client, organizationId, receipt.digest, { hold: true });
-  if (!held || (held.companyDocumentsVersion ?? null) !== (receipt.companyDocumentsVersion ?? null)
-      || (held.companyDocumentsSha256 ?? null) !== (receipt.companyDocumentsSha256 ?? null)) {
+  if (!held || !sameReceiptEvidence(held, receipt)) {
     throw new OffboardingStateError('EXPORT_EVIDENCE_UNVERIFIED', 'The final export receipt changed during this request. Produce a current full export. Nothing was purged.');
   }
   if (envelope.present || held.companyDocumentsVersion != null || held.companyDocumentsSha256 != null) {
@@ -900,6 +931,26 @@ async function verifyCompanyDocumentReturn(client: PoolClient, organizationId: n
     }
   }
   return companyDocumentsExportDescriptor(envelope);
+}
+
+/**
+ * The purge's transaction erases in the organization's own tenant id and
+ * organization uuid (P-58, 2026-10-29), set LOCAL after its BEGIN, as the
+ * export reads (services/tenant-export/company-export-snapshot.ts). The role
+ * stays the platform role the purge runs in, which every door checks
+ * (tenant_purge_door_preconditions); P-72 moves the doors. Under the platform
+ * scope alone (tenant '0', no uuid) a policy that admits only its own tenant
+ * showed the DELETE none of the organization's rows: citation_chains,
+ * knowledge_graph_nodes, knowledge_graph_edges and lumen_knowledge_graph_edges
+ * survived a purge whose certificate counted them erased.
+ */
+async function enterOrganizationScope(client: PoolClient, organizationId: number): Promise<void> {
+  // By to_jsonb, so a schema whose organizations carry no uuid (a test fixture) reads none rather than fail.
+  const { rows } = await client.query("SELECT to_jsonb(o)->>'uuid' AS uuid FROM organizations o WHERE o.id = $1", [organizationId]);
+  await client.query(
+    "SELECT set_config('app.current_tenant_id', $1, true), set_config('app.current_org_id', $2, true)",
+    [String(organizationId), rows[0]?.uuid ? String(rows[0].uuid) : ''],
+  );
 }
 
 /**
@@ -927,14 +978,28 @@ async function purgeInOneTransaction(
   try {
     await client.query('BEGIN');
     try {
+      await enterOrganizationScope(client, organizationId);
       const receiptPurgeReserved = await reserveSourceReadReceiptPurge(client, {
         organizationId, childTables: input.childTables, receipt: input.receipt, preconditions: input.preconditions,
       });
       await assertRegulatedContentDisposition(client, organizationId);
       await assertNoActiveLegalHold(client, organizationId, receiptPurgeReserved);
       const companyDocuments = await verifyCompanyDocumentReturn(client, organizationId, input.receipt);
+      // P-58: a held record (a signature, an audit trail, a sealed report, a
+      // ledger) is erased only once the customer signed custody of this very
+      // export, attesting to the records held now (./offboarding-custody.ts).
+      const custody = await custodyForPurge(client, organizationId, input.receipt.digest);
+      if (custody.refusal) throw new OffboardingStateError(custody.refusal.code, custody.refusal.message);
       const tally = await deleteTenantRows(client, organizationId, input.childTables);
       const purgedAt = await markPurged(client, organizationId, input.purgedByUserId, input.receipt.digest, receiptPurgeReserved || companyDocuments.present);
+      if (!purgedAt) throw new OffboardingStateError('PURGE_STATUS_UNCONFIRMED', 'The status change was not confirmed, so the offboarding certificate cannot be dated. Nothing was purged.');
+      const certificate = await recordOffboardingCertificate(client, {
+        organizationId, export: { digest: input.receipt.digest, tableCount: Number(input.receipt.tableCount), rowCount: Number(input.receipt.rowCount) },
+        deletedRows: tally.deletedRows, tablesAbsent: tally.tablesAbsent, heldRecords: custody.heldRecords,
+        custodySignatureId: custody.signature?.id ?? null, purgedBy: input.purgedByUserId, purgedAt,
+      });
+      if (!certificate) throw new OffboardingStateError('OFFBOARDING_CERTIFICATE_UNAVAILABLE', 'This database has no tenant_offboarding_certificates; run node scripts/db/deploy-migrate.mjs. Nothing was purged.');
+      tally.certificate = certificate;
       await recordPurge(client, {
         existing: input.existing,
         receipt: input.receipt,
@@ -974,6 +1039,8 @@ async function purgeInOneTransaction(
  *   4. a final export digest is supplied and matches this tenant's receipt;
  *   5. no legal hold on the tenant is active.
  *   6. no controlled QMS versions or frozen submission inputs await retention review.
+ *   7. a tenant holding a held record has a valid custody signature on this
+ *      export, attesting to the records it holds now (P-58, ./offboarding-custody.ts).
  *
  * The organization ROW SURVIVES, in status `purged`, carrying the offboarding
  * evidence — who requested it, when, why, which export was handed over, who
@@ -1003,6 +1070,7 @@ export async function purgeTenant(
     sourceReadReceiptErasure: SourceReadReceiptErasure;
     artifactRecordErasure: ArtifactRecordErasure;
     vaultSealErasure: VaultSealErasure;
+    offboardingCertificate: OffboardingCertificate | null;
   }
 > {
   const { organizationId, purgedByUserId, preconditions } = params;
@@ -1060,6 +1128,7 @@ export async function purgeTenant(
     sourceReadReceiptErasure: tally.sourceReadReceiptErasure,
     artifactRecordErasure: tally.artifactRecordErasure,
     vaultSealErasure: tally.vaultSealErasure,
+    offboardingCertificate: tally.certificate ?? null,
   };
 }
 
@@ -1081,8 +1150,9 @@ export const PURGE_RETAINED_RECORDS: Readonly<Record<string, string>> = Object.f
 });
 
 /* Tables the purge does not erase although a row of theirs can name a row it
-   deletes: ./purge-referrers, with each one's reason. */
-export { PURGE_REFERRERS_NOT_ERASED };
+   deletes (none since P-58), and the platform's own records of a purge:
+   ./purge-referrers, with each one's reason. */
+export { PURGE_REFERRERS_NOT_ERASED, PURGE_PLATFORM_RECORDS };
 
 function assertNoRetainedRecords(tables: readonly string[]): void {
   for (const table of tables) {
@@ -1092,6 +1162,9 @@ function assertNoRetainedRecords(tables: readonly string[]): void {
     }
     if (Object.prototype.hasOwnProperty.call(PURGE_REFERRERS_NOT_ERASED, name)) {
       throw new OffboardingStateError('PURGE_RETAINED_RECORD', `Tenant purge does not erase ${table} until its retention is decided`);
+    }
+    if (Object.prototype.hasOwnProperty.call(PURGE_PLATFORM_RECORDS, name)) {
+      throw new OffboardingStateError('PURGE_RETAINED_RECORD', `Tenant purge never erases the platform's record of it: ${table}`);
     }
   }
 }

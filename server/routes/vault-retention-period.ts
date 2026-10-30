@@ -29,17 +29,19 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
 import { DEFAULT_RETENTION_YEARS } from '../../shared/schema/vault';
-import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
+import { requestPgClient } from '../db/requestDb';
 import { serverError } from '../lib/api-response';
 import { requireRole } from '../middleware/auth';
 import { writeChainedAuditRow } from '../services/auditService';
 import { authedOrgId } from '../utils/authedOrgId';
 import { clientIpOf } from '../utils/client-ip';
 import { createScopedLogger } from '../utils/logger';
+import {
+  RETENTION_PERIOD_COLUMNS as COLUMNS, presentRetentionPeriod as present, readRetentionPeriod as readPeriod,
+  type RetentionPeriodRow as PeriodRow,
+} from '../services/vault/retention-period';
 
 const log = createScopedLogger('vault-retention-period');
-
-const COLUMNS = 'organization_id, retention_years, reason, governing_rule, set_by, set_at';
 
 /** The shortest reason and rule the database accepts for a shorter period (the CHECK's own bounds). */
 const MIN_REASON = 10;
@@ -50,28 +52,6 @@ const setSchema = z.object({
   reason: z.string().trim().max(2000).optional(),
   governingRule: z.string().trim().max(300).optional(),
 });
-
-interface PeriodRow {
-  organization_id: number;
-  retention_years: number;
-  reason: string | null;
-  governing_rule: string | null;
-  set_by: number;
-  set_at: Date | string;
-}
-
-/** What the organisation's period is, as the API and the audit row state it. */
-function present(row: PeriodRow | null) {
-  return {
-    years: row?.retention_years ?? DEFAULT_RETENTION_YEARS,
-    defaultYears: DEFAULT_RETENTION_YEARS,
-    isDefault: row === null,
-    reason: row?.reason ?? null,
-    governingRule: row?.governing_rule ?? null,
-    setBy: row?.set_by ?? null,
-    setAt: row?.set_at ?? null,
-  };
-}
 
 const audited = (row: PeriodRow | null) =>
   row === null ? null : { years: row.retention_years, reason: row.reason, governingRule: row.governing_rule };
@@ -85,12 +65,6 @@ function sessionOf(req: Request, res: Response): { orgId: number; actorId: numbe
     return null;
   }
   return { orgId, actorId };
-}
-
-async function readPeriod(client: RequestSqlClient, orgId: number): Promise<PeriodRow | null> {
-  // tenant-isolation-safe: keyed by the session's organisation, on the request's RLS-scoped client.
-  const r = await client.query(`SELECT ${COLUMNS} FROM organization_retention_settings WHERE organization_id = $1`, [orgId]);
-  return (r.rows[0] as unknown as PeriodRow | undefined) ?? null;
 }
 
 /** A shorter period's missing justification, in words, or null when the body may be recorded. */

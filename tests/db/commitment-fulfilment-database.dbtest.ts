@@ -256,7 +256,7 @@ describe('the database holds what is named, and the type, whatever the route', (
 });
 
 describe('a tenant whose commitments name evidence can still be erased', () => {
-  it('purge removes the commitments before the Vault versions they name, with no 23503; the signature stays', async () => {
+  it('purge removes the commitments before the Vault versions they name, with no 23503, and, after custody, the signature', async () => {
     const { purgeTenant } = await import('../../server/services/tenant/tenant-offboarding');
     const org = await organization('purge');
     const u = Number((await owner.query(`INSERT INTO users (email, name, password_hash, status) VALUES ($1, 'Purge Actor', 'x', 'active') RETURNING id`, [`${PREFIX}-purge@example.invalid`])).rows[0].id);
@@ -295,7 +295,10 @@ describe('a tenant whose commitments name evidence can still be erased', () => {
       c.release();
     }
     await owner.query(`UPDATE organizations SET status = 'pending_deletion', purged_at = NULL, deletion_requested_at = now() - interval '40 days', purge_eligible_at = now() - interval '1 day' WHERE id = $1`, [org.id]);
-    await owner.query(`INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by) VALUES ($1, $2, 1, 1, NULL)`, [org.id, `${PREFIX}-digest`]);
+    await owner.query(`INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by, export_scope) VALUES ($1, $2, 1, 1, NULL, 'organization')`, [org.id, `${PREFIX}-digest`]);
+    // P-58: the signature is a held record; it is erased only once an administrator signed custody of this export.
+    const { signCustody } = await import('./offboarding-custody-signature');
+    const custody = await signCustody(owner, org.id, u, `${PREFIX}-digest`);
 
     const { getPool } = await import('../../server/db/runtime');
     const { runWithSystemTenantScope } = await import('../../server/db/tenantStore');
@@ -304,6 +307,10 @@ describe('a tenant whose commitments name evidence can still be erased', () => {
     expect(purged.status, JSON.stringify(purged)).toBe('purged');
     expect((await owner.query(`SELECT count(*)::int AS n FROM regulatory_commitments WHERE organization_id = $1`, [org.id])).rows[0].n).toBe(0);
     expect((await owner.query(`SELECT count(*)::int AS n FROM vault.documents WHERE organization_id = $1`, [org.id])).rows[0].n).toBe(0);
-    expect((await owner.query(`SELECT signed_target FROM electronic_signatures WHERE id = $1`, [sig])).rows).toEqual([{ signed_target: `regulatory-commitment:${cid}` }]);
+    // The signature left in the export the customer took custody of (P-58), and is erased with the tenant;
+    // the custody signature stays, named by the offboarding certificate.
+    expect((await owner.query(`SELECT id FROM electronic_signatures WHERE id = $1`, [sig])).rows).toEqual([]);
+    expect((await owner.query(`SELECT custody_signature_id FROM tenant_offboarding_certificates WHERE organization_id = $1`, [org.id])).rows)
+      .toEqual([{ custody_signature_id: custody }]);
   }, 60_000);
 });

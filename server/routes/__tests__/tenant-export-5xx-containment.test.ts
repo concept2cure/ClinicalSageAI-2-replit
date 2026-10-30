@@ -44,7 +44,8 @@ vi.mock('../../services/tenant-export/attestation-report.service', () => ({
   generateAttestation: (...a: any[]) => attestationSvc.generateAttestation(...a),
   AttestationKeyMissingError,
 }));
-vi.mock('../../db', () => ({ pool: { query: vi.fn(async () => ({ rows: [{ role: 'admin' }] })), connect: vi.fn(async () => ({ query: vi.fn(async () => ({ rows: [{ id: 7 }] })), release: vi.fn() })) } }));
+// uuid: the export runs in the organization's own scope, its tenant id and its uuid (P-58's data return).
+vi.mock('../../db', () => ({ pool: { query: vi.fn(async () => ({ rows: [{ role: 'admin', uuid: '00000000-0000-4000-8000-000000000007' }] })), connect: vi.fn(async () => ({ query: vi.fn(async () => ({ rows: [{ id: 7 }] })), release: vi.fn() })) } }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({
   recordAuditRow: vi.fn(async () => ({ persisted: true, chained: true })),
 }));
