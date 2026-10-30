@@ -47,3 +47,9 @@ The earlier integrated attempt had 428 passes and eight failures in the old unit
 Key failing checks before repair: root permission admission 10 failures/12 passes; read-only cancellation returned 204 (one failure/15 passes); initial expertise 30 failures/3 passes; adversarial conduct claims six failures/21 passes; generation admission/source checks 17 failures/23 passes; corrected cancellation-race check two failures/three passes. The pending-deletion retained-read regression check separately caught a regression in the first local actor repair (one failure/22 skipped) and was corrected before final qualification. The first cancellation-race attempt had a fixture/schema omission and is explicitly not guard evidence. Totals overlap; only the final 436-test set is the integrated qualification.
 
 A later fast-forward to `9c4085a39` brought only incoming IND/core-owner publication evidence; it changes no production/test input in this CSR freeze. Normal direct canonical commit/push and compiler gates remain the final publication step.
+
+## Concurrent canonical merge
+
+After local source commit `dfac7ffa6`, incoming `f0e0ff863` changed project ownership and pending AnA action ordering in the client. Normal merge `cc00cdcda` preserves both contributions. All 64 frozen CSR inputs remain byte-identical; its two affected client suites separately pass 22 tests (`csr-merged-client-tests.log.gz`). This is separate incoming-change qualification, not an extra 22 CSR tests. The merged build and normal publication gates are retained below.
+
+Merged Vite client, server and audit-chain-verifier build: passed (`csr-merged-build.log.gz`). The exact lint comparison script is retained as `lint-check.mjs.txt`; the 43-file Vitest command uses Node 22 and the listed `test-files.txt` arguments.

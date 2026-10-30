@@ -12,5 +12,12 @@
     "warningDelta": 0
   },
   "build": "passed: Vite client, server, audit-chain verifier",
-  "publicationBase": "9c4085a395e7ba2e2a4d258c5934a976598a96ba"
+  "publicationBase": "9c4085a395e7ba2e2a4d258c5934a976598a96ba",
+  "mergedHead": "cc00cdcdafa97a7cb2dd84de9e67cf6337de3bc5",
+  "incomingClientQualification": {
+    "files": 2,
+    "passed": 22,
+    "failed": 0
+  },
+  "mergedBuild": "passed"
 }
