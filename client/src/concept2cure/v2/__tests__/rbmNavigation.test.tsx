@@ -1,0 +1,85 @@
+// @vitest-environment jsdom
+/** Founder request, 2026-10-30: the existing monitoring workspace is a central service. */
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import type { NavSurfaceEntitlement } from '../navEntitlements';
+
+const apiRequest = vi.hoisted(() => vi.fn());
+const entitlement = vi.hoisted(() => ({
+  current: { id: 'rbm', label: 'Risk-based monitoring', entitled: true, source: 'included', requiredTier: 'professional' } as NavSurfaceEntitlement,
+}));
+vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
+vi.mock('@/services/portal/authService', () => ({
+  useAuth: () => ({ user: { id: 7, firstName: 'Ada', lastName: 'Rowe', roles: ['admin'], permissions: ['billing:admin'] }, logout: vi.fn() }),
+}));
+vi.mock('@/contexts/TenantContext', () => ({
+  useTenant: () => ({ currentOrganization: { id: 7, name: 'Recorded organization' } }),
+}));
+
+import { NavEntitlementsProvider } from '../navEntitlements';
+import { Rail } from '../Shell';
+
+const response = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear();
+  entitlement.current = { id: 'rbm', label: 'Risk-based monitoring', entitled: true, source: 'included', requiredTier: 'professional' };
+  apiRequest.mockReset().mockImplementation(async (_method: string, path: string) => {
+    if (path === '/api/module-subscriptions/navigation') return response({
+      organizationId: 7, tier: 'professional', industryMode: 'biotech', resolved: true,
+      masterAdmin: false, launchScope: { enforced: true }, surfaces: [entitlement.current],
+    });
+    return response({ data: [] });
+  });
+});
+afterEach(cleanup);
+
+async function mountRail(collapsed = false, segment = 'biotech') {
+  const onNav = vi.fn();
+  render(<NavEntitlementsProvider><Rail activeId="rbm" onNav={onNav} collapsed={collapsed}
+    setCollapsed={() => {}} segment={segment} setSegment={() => {}} /></NavEntitlementsProvider>);
+  await act(async () => { await new Promise(done => setTimeout(done, 0)); });
+  return { onNav, rail: screen.getByRole('navigation', { name: 'Primary' }) };
+}
+
+describe('RBM in the main left rail', () => {
+  it.each([false, true])('opens the existing RBM destination beside the other work areas (collapsed=%s)', async collapsed => {
+    const { rail, onNav } = await mountRail(collapsed);
+    const workAreas = within(rail).getByRole('group', { name: 'Work areas' });
+    const monitoring = within(workAreas).getByRole('button', { name: 'Risk-based monitoring' });
+    expect(monitoring.getAttribute('aria-current')).toBe('page');
+    expect(monitoring.getAttribute('disabled')).toBeNull();
+    expect(monitoring.tabIndex).toBe(0);
+    for (const name of ['Projects', 'Tasks', 'Communication', 'Vault', 'CMC / Module 3', 'Quality', 'Reporting & analytics']) {
+      expect(within(rail).getByRole('button', { name })).toBeTruthy();
+    }
+    fireEvent.click(monitoring);
+    expect(onNav).toHaveBeenCalledExactlyOnceWith('rbm');
+  });
+
+  it.each(['medtech', 'cro'])('keeps the same entitled central service for the %s client view', async segment => {
+    const { rail, onNav } = await mountRail(false, segment);
+    fireEvent.click(within(rail).getByRole('button', { name: 'Risk-based monitoring' }));
+    expect(onNav).toHaveBeenCalledExactlyOnceWith('rbm');
+  });
+
+  it('explains the real Professional subscription lock without opening RBM', async () => {
+    entitlement.current = { ...entitlement.current, entitled: false, source: 'tier' };
+    const { rail, onNav } = await mountRail();
+    const monitoring = within(rail).getByRole('button', { name: 'Risk-based monitoring — not included in your subscription' });
+    expect(monitoring.getAttribute('disabled')).toBeNull();
+    expect(monitoring.tabIndex).toBe(0);
+    fireEvent.click(monitoring);
+    const explanation = screen.getByRole('dialog', { name: 'Risk-based monitoring' });
+    expect(within(explanation).getByText('Included from Professional')).toBeTruthy();
+    expect(within(explanation).getByRole('button', { name: 'Compare subscriptions' })).toBeTruthy();
+    expect(onNav).not.toHaveBeenCalled();
+  });
+
+  it('honors a deployment verdict that still withholds RBM from the release', async () => {
+    entitlement.current = { ...entitlement.current, entitled: false, source: 'launch-scope' };
+    const { rail } = await mountRail();
+    expect(within(rail).queryByRole('button', { name: /Risk-based monitoring/ })).toBeNull();
+    expect(within(rail).getByRole('button', { name: 'Projects' })).toBeTruthy();
+  });
+});

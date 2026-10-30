@@ -1,0 +1,35 @@
+{
+  "observedAt": "2026-10-30T17:44:28.390109+00:00",
+  "reviewer": "/root/rbm_signature_review",
+  "base": "669aa2236",
+  "incoming": "0ad3a15ceed158232dfb1cb18e543820027c0488",
+  "verdict": "No production compatibility blocker; reconcile obsolete projectHomePlan RBM-hidden test expectation after witnessed failure",
+  "details": [
+    "No rail/RBM/ProjectHome/server/shared/package/config changes",
+    "ProjectCoreWork adds availability-filtered RBM under verified project, reuses onNav/context",
+    "CSS only new pj-core-work-controls and pde-work-heading selectors; no changed existing declarations; predecessor browser whole-CSS evidence plus bounded source review only",
+    "Vault uploads validate exact-program persisted receipt; no direct RBM uploader imports"
+  ],
+  "readOnlyNoExecution": true,
+  "upstreamHistoricalTotalsNotBorrowed": true,
+  "incomingFiles": {
+    "client/src/concept2cure/v2/__tests__/_ingest-xhr-fake.ts": "d7c582159a4a99871d4ca8f823fa2410341dfcc24576ee084e8b15f41700d7ff",
+    "client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx": "eab85f8f49bb8017e4e0782179f4421158c4b9755bbb9047ef6b05506a8efa89",
+    "client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx": "3eed06123ce61fb6a9a8959eebfe10093ab4fc3c131123d914c5dc401a4a1b42",
+    "client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx": "b492611e278cce14e34de035191791f4a39f655dc67d89574e79447e0ef94943",
+    "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx": "e9e0dd364d86208d264042d1e2e359311a2af41635f3c9558eddcd34e48e42c2",
+    "client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx": "a965fc36895c33e80315e6b2049c03c9fea0f7df9a887a6f00c80888fc6f2afa",
+    "client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx": "3af89424aefca5135285fc9b0a80116e13837b5da1269a31307986c913a52b7f",
+    "client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx": "22bbb0640baa4856af9ccf6ed186a57750c3cd996f4485d8c9343b825977739d",
+    "client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx": "3192f4362a660d142403b0a40e265dd65e10387bdc3722983739ecfa48706c0f",
+    "client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx": "532d3c9339d732b160ce64bc8f7766ab267bfd8070894d6f1009d776eb14b49f",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "da717168f6787e3afba4fb8078bc1c4a634e33607c8b51199aea1784ac2e6940",
+    "client/src/concept2cure/v2/styles/protocol-dev-editing.css": "6263d5f95d841436d2433585d2b3c65074e41e8d6692d0015936682b9a3202f8",
+    "client/src/concept2cure/v2/surfaces/ProjectCoreWork.tsx": "23bfd52df84e4f48dec2e27b77fe795ea9a76d6c66148d27dfe8fbea28e878e0",
+    "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx": "1409441c6b96fc965903e1e96840653d70ccd0beeeb921b7a0049285d8d60427",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx": "50775554c68109543953f1abf21727c7e4b8cc53da1921ebb998fc8d703458e2",
+    "client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx": "a211037fea3140527a5501b0defe6469add550754302a117fa8f70203afd42ad",
+    "client/src/concept2cure/v2/useVaultUpload.ts": "e23599ab93b0907d33e6a5d26d376cfa1f96604c07e45f8ef0dd842837d1f873",
+    "client/src/concept2cure/v2/vaultIngestReceipt.ts": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a"
+  }
+}

@@ -20,6 +20,8 @@ import type { Pool } from 'pg';
 
 import { authMiddleware } from '../auth.js';
 import { requireTenantContext } from '../middleware/tenantContext.js';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { RBM_HTTP_PREFIXES } from '../services/rbm/rbm-access';
 import { authoringObjectAuthorization } from '../middleware/authoringObjectAuthorization';
 import authoringPermissionsRouter from '../routes/authoring-permissions';
 import { sanitizeAskAnaInput } from '../routes/ask-ana-utils';
@@ -1180,6 +1182,7 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxEngineeringRoutes);
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);
+  app.use(RBM_HTTP_PREFIXES, requireTenantContext, requireEditorAccessForWrites);
   app.use('/api/mdx', mdxRbmRoutes);
   // RBM data layer: metric ingestion + the engine runs over ingested data.
   app.use('/api/mdx', mdxRbmDataRoutes);

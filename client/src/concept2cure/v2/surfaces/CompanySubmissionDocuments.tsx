@@ -205,10 +205,10 @@ function CompanionLibraryEditor({ props, library, context, selection, actions }:
 function CompanyCorrespondenceWorkflows({ props, library, auth }: { props: CompanionProps; library: CompanyLibrary; auth: ReturnType<typeof getAuthToken> }) {
   const { seq, submission } = props;
   return <>
-    {library.response && <CompanyCorrespondenceVariants sequenceId={seq.id} value={library.variantId} onChange={library.setVariantId} />}
-    <CompanyCorrespondenceDraft sequenceId={seq.id} programId={submission.programId} submissionTitle={submission.title || `Submission ${submission.id}`} onNav={props.onNav} variantId={library.variantId || undefined} />
+    {library.response && <CompanyCorrespondenceVariants sequenceId={seq.id} value={library.variantId} onChange={library.setVariantId} current={() => library.active && Boolean(library.response) && library.current()} />}
+    <CompanyCorrespondenceDraft sequenceId={seq.id} programId={submission.programId} submissionTitle={submission.title || `Submission ${submission.id}`} onNav={props.onNav} variantId={library.variantId || undefined} current={() => library.active && Boolean(library.response) && library.current()} />
     {library.response && <CompanyFilingIdentityReview sequenceId={seq.id} profileRevision={library.response.data.revision}
-      canReview={library.response.capabilities?.manageLegal ?? library.response.canManage} variantId={library.variantId || undefined} />}
+      canReview={library.response.capabilities?.manageLegal ?? library.response.canManage} variantId={library.variantId || undefined} current={() => library.active && Boolean(library.response) && library.current()} />}
     {library.response && auth && <CompanyLegalReadiness sequenceId={seq.id} profile={library.response.data} token={auth}
       canManage={library.response.capabilities?.manageLegal ?? library.response.canManage} onSaved={library.setResponse} />}
   </>;

@@ -63,14 +63,16 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import { requestPgClient, requestConnectable } from '../db/requestDb';
+import { seedRbmAssessment } from '../services/rbm/rbm-assessment-seed';
 import {
-  scoreRisk, overallRiskFromScores, kriStatus, qtlStatus, qtlRangeError,
-  DEFAULT_CTQ_FACTORS, DEFAULT_KRIS, DEFAULT_QTLS, QTL_DIRECTIONS,
+  scoreRisk, kriStatus, qtlStatus, qtlRangeError,
+  DEFAULT_KRIS, DEFAULT_QTLS, QTL_DIRECTIONS,
   type KriDirection, type QtlDirection,
 } from '../services/rbm/rbm-engine';
 import {
   generatePlanFromAssessment, amendAssessment, approveAssessment, approvePlan,
-  amendMonitoringPlan, nextPlanVersion, createAction,
+  amendMonitoringPlan, nextPlanVersion, createAction, requireDraftAssessment, RbmAssessmentEditError,
 } from '../services/rbm/rbm-actuator';
 import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services/part11/signing-authority-gate';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
@@ -82,10 +84,17 @@ import {
   buildRiskReview, renderRiskReviewMarkdown, buildAttentionFeed,
 } from '../services/rbm/risk-report';
 import { loadRiskReviewInput } from '../services/rbm/risk-report-data';
-import { reverifySigner } from '../services/part11/reverify-signer';
+import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
+import { recordGovernedAction } from './c2c/actions';
+import {
+  BINDING_BASIS, persistGovernedSignSignature, SignatureContentUnboundError,
+} from '../services/part11/signature-persistence';
+import { clientIpOf } from '../utils/client-ip';
 
+import { rbmRequestAdmission, recheckRbmWrite } from '../services/rbm/rbm-access';
 const router = Router();
+router.use(rbmRequestAdmission);
 const log = createScopedLogger('mdx-rbm');
 
 function getOrgId(req: Request): number | null {
@@ -122,9 +131,10 @@ const ACTION_STATUS = ['open', 'in_progress', 'done'] as const;
 function buildPatch(
   data: Record<string, unknown>,
   colMap: Record<string, string>,
+  initialArgs: unknown[] = [],
 ): { setSql: string; args: unknown[] } | null {
   const setFrags: string[] = [];
-  const args: unknown[] = [];
+  const args: unknown[] = [...initialArgs];
   for (const [k, v] of Object.entries(data)) {
     if (v === undefined) continue;
     const col = colMap[k];
@@ -208,46 +218,11 @@ router.post('/rbm-assessments/seed', async (req, res) => {
   if (orgId === null) return orgRequired(res);
   const parsed = seedAssessBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const { programId } = parsed.data;
-  const scores = DEFAULT_CTQ_FACTORS.map(f => scoreRisk(f.likelihood, f.impact).score);
-  const overall = overallRiskFromScores(scores);
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    // Seeded as DRAFT. A seeded RACT is a starting library, not an approved
-    // risk basis: activation is a governed, re-authenticated signature
-    // (POST /rbm-assessments/:id/approve). Inserting it 'active' would let an
-    // unreviewed default library govern monitoring-tier assignment and the
-    // risk review report without anyone having signed for it.
-    const { rows: aRows } = await client.query(
-      `INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status, created_by)
-       VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`,
-      [orgId, programId, parsed.data.title ?? 'Risk assessment (RACT)', parsed.data.framework ?? 'ich_e6r3', overall, getUserId(req)],
-    );
-    const assessment = aRows[0];
-    for (const f of DEFAULT_CTQ_FACTORS) {
-      const { score } = scoreRisk(f.likelihood, f.impact);
-      await client.query(
-        `INSERT INTO rbm_risk_items (
-           organization_id, assessment_id, program_id, category, ctq_factor, risk_description,
-           likelihood, impact, risk_score, is_critical, mitigation, status
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'open')`,
-        [orgId, assessment.id, programId, f.category, f.ctqFactor, f.riskDescription,
-          f.likelihood, f.impact, score, f.isCritical, f.mitigation],
-      );
-    }
-    await client.query('COMMIT');
-    const { rows: items } = await pool.query(
-      `SELECT * FROM rbm_risk_items WHERE assessment_id = $1 ORDER BY risk_score DESC, id`,
-      [assessment.id],
-    );
-    return created(res, { ...assessment, items });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
-    return serverError(res, log, 'seed-assessment', err);
-  } finally {
-    client.release();
-  }
+    const assessment = await seedRbmAssessment(requestPgClient(req), { organizationId: orgId, userId: getUserId(req)! }, parsed.data, 'owned');
+    return created(res, assessment);
+  } catch (err) { return serverError(res, log, 'seed-assessment', err); }
+
 });
 
 router.get('/rbm-assessments/:id', async (req, res) => {
@@ -262,8 +237,8 @@ router.get('/rbm-assessments/:id', async (req, res) => {
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Risk assessment');
     const items = await pool.query(
-      `SELECT * FROM rbm_risk_items WHERE assessment_id = $1 AND deleted_at IS NULL ORDER BY risk_score DESC NULLS LAST, id`,
-      [id],
+      `SELECT * FROM rbm_risk_items WHERE assessment_id = $1 AND organization_id = $2 AND program_id = $3 AND deleted_at IS NULL ORDER BY risk_score DESC NULLS LAST, id`,
+      [id, orgId, rows[0].program_id],
     );
     return ok(res, { ...rows[0], items: items.rows });
   } catch (err) { return serverError(res, log, 'get-assessment', err); }
@@ -282,9 +257,9 @@ router.get('/rbm-assessments/:id', async (req, res) => {
    no independent reviewer, and left `approved_by` and `approved_at` null while
    the row read as approved.
 
-   The signed route is the only way to 'active'. PATCH keeps 'draft' and
-   'archived', which carry no signature meaning, so ordinary editing and
-   retirement still work. */
+   The signed route is the only way to 'active'. Only draft versions can be
+   patched or retired; signed and archived versions stay immutable and edits
+   use the existing amendment path. */
 const PATCHABLE_ASSESS_STATUS = ['draft', 'archived'] as const;
 const patchAssessBody = createAssessBody.partial().extend({
   status: z.enum(PATCHABLE_ASSESS_STATUS).optional(),
@@ -302,17 +277,22 @@ router.patch('/rbm-assessments/:id', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const patch = buildPatch(parsed.data, ASSESS_COL);
   if (!patch) return clientError(res, 422, 'No updatable fields in body');
-  patch.args.push(id, orgId);
+  const client = await requestConnectable(req).connect();
   try {
-    const { rows } = await pool.query(
-      `UPDATE rbm_risk_assessments SET ${patch.setSql}, updated_at = NOW()
-        WHERE id = $${patch.args.length - 1} AND organization_id = $${patch.args.length} AND deleted_at IS NULL
-        RETURNING *`,
-      patch.args,
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Risk assessment');
+    await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
+    await requireDraftAssessment(client, orgId, id, undefined, 'update');
+    patch.args.push(id, orgId);
+    const { rows } = await client.query(`UPDATE rbm_risk_assessments SET ${patch.setSql}, updated_at=NOW()
+      WHERE id=$${patch.args.length - 1} AND organization_id=$${patch.args.length} AND status='draft' AND deleted_at IS NULL RETURNING *`, patch.args);
+    if (!rows.length) { await client.query('ROLLBACK'); return clientError(res, 409, 'The draft assessment changed. Refresh before editing.'); }
+    await client.query('COMMIT');
     return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'patch-assessment', err); }
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof RbmAssessmentEditError) return clientError(res, err.status, err.message, { code: err.code });
+    return serverError(res, log, 'patch-assessment', err);
+  } finally { client.release(); }
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -361,6 +341,12 @@ const createItemBody = z.object({
   assignedTo: z.number().int().positive().optional().nullable(),
 });
 
+function createItemValues(orgId: number, p: z.infer<typeof createItemBody>, score: number): unknown[] {
+  return [orgId, p.assessmentId ?? null, p.programId ?? null, p.refCode ?? null, p.category ?? 'operational',
+    p.ctqFactor, p.riskDescription ?? null, p.likelihood, p.impact, p.detectability ?? null, score,
+    p.isCritical ?? false, p.mitigation ?? null, p.status ?? 'open', p.assignedTo ?? null];
+}
+
 router.post('/rbm-risk-items', async (req, res) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -368,19 +354,26 @@ router.post('/rbm-risk-items', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
   const { score } = scoreRisk(p.likelihood, p.impact);
+  const client = await requestConnectable(req).connect();
   try {
-    const { rows } = await pool.query(
+    await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
+    if (p.assessmentId != null) await requireDraftAssessment(client, orgId, p.assessmentId, p.programId ?? undefined);
+    const { rows } = await client.query(
       `INSERT INTO rbm_risk_items (
          organization_id, assessment_id, program_id, ref_code, category, ctq_factor,
          risk_description, likelihood, impact, detectability, risk_score, is_critical,
          mitigation, status, assigned_to
        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
-      [orgId, p.assessmentId ?? null, p.programId ?? null, p.refCode ?? null, p.category ?? 'operational',
-        p.ctqFactor, p.riskDescription ?? null, p.likelihood, p.impact, p.detectability ?? null, score,
-        p.isCritical ?? false, p.mitigation ?? null, p.status ?? 'open', p.assignedTo ?? null],
+      createItemValues(orgId, p, score),
     );
+    await client.query('COMMIT');
     return created(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'create-item', err); }
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof RbmAssessmentEditError) return clientError(res, err.status, err.message, { code: err.code });
+    return serverError(res, log, 'create-item', err);
+  } finally { client.release(); }
 });
 
 const patchItemBody = createItemBody.partial().extend({
@@ -414,16 +407,28 @@ router.patch('/rbm-risk-items/:id', async (req, res) => {
     patch.setSql += `, residual_score = $${patch.args.length}`;
   }
   patch.args.push(id, orgId);
+  const client = await requestConnectable(req).connect();
   try {
-    const { rows } = await pool.query(
+    await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
+    const current = await client.query('SELECT assessment_id,program_id FROM rbm_risk_items WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL FOR UPDATE', [id, orgId]);
+    if (!current.rows.length) { await client.query('ROLLBACK'); return notFoundInTenant(res, 'Risk item'); }
+    const parent = current.rows[0];
+    if (parent.assessment_id != null) await requireDraftAssessment(client, orgId, Number(parent.assessment_id), String(parent.program_id));
+    const { rows } = await client.query(
       `UPDATE rbm_risk_items SET ${patch.setSql}, updated_at = NOW()
         WHERE id = $${patch.args.length - 1} AND organization_id = $${patch.args.length} AND deleted_at IS NULL
         RETURNING *`,
       patch.args,
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Risk item');
+    if (rows.length === 0) { await client.query('ROLLBACK'); return notFoundInTenant(res, 'Risk item'); }
+    await client.query('COMMIT');
     return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'patch-item', err); }
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof RbmAssessmentEditError) return clientError(res, err.status, err.message, { code: err.code });
+    return serverError(res, log, 'patch-item', err);
+  } finally { client.release(); }
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -589,6 +594,7 @@ router.post('/rbm-kris/:id/values', async (req, res) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
       const ins = await client.query(
         `INSERT INTO rbm_kri_values (organization_id, kri_id, value, status, observed_at, note)
          VALUES ($1,$2,$3,$4, COALESCE($5::timestamptz, NOW()), $6) RETURNING *`,
@@ -910,6 +916,7 @@ router.post('/rbm-signals/:id/investigate', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
     const { rows: sigRows } = await client.query(
       `UPDATE rbm_signals SET status = $1, resolution_notes = $2, updated_at = NOW()
         WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
@@ -1002,7 +1009,44 @@ const approveBody = z.object({
   reason: z.string().min(3).max(2000),
   password: z.string().min(1),
   mfaToken: z.string().optional(),
+  // The existing approval modal declares this fixed meaning to the signer.
+  meaning: z.literal('approval').optional(),
 });
+
+/** Fixed approval meaning and verified factors; no credential reaches the ledger or manifest. */
+function rbmApprovalSignature(req: Request, input: {
+  orgId: number; signerId: number; id: number; kind: 'assessment' | 'plan'; reason: string;
+  row: Record<string, unknown>; authorKnown: boolean; signoff: SignerReverified;
+}) {
+  const { orgId, signerId, id, kind, reason, row, authorKnown, signoff } = input;
+  const target = kind === 'assessment' ? `rbm-assessment:${id}` : `rbm-monitoring-plan:${id}`;
+  const payload = { meaning: 'approval', version: row.version, programId: row.program_id,
+    twoPersonRule: authorKnown ? 'enforced' : 'not_applicable_no_author_recorded' };
+  return {
+    orgId, userId: signerId, target, reason, payload,
+    requiredBasis: kind === 'assessment' ? BINDING_BASIS.RBM_ASSESSMENT_CONTENT : BINDING_BASIS.RBM_MONITORING_PLAN_CONTENT,
+    authenticationMethod: signoff.authenticationMethod, secondFactorVerified: signoff.secondFactorVerified,
+    occurredAt: new Date(), ipAddress: clientIpOf(req),
+  };
+}
+
+/** A required content basis can never fall back to signing a ledger hash. */
+function rbmApprovalFailed(res: Response, where: string, err: unknown) {
+  if (err instanceof SignatureContentUnboundError) {
+    return clientError(res, 409, 'The record version or its project relationships could not be verified. Nothing was signed.',
+      { code: 'SIGNATURE_CONTENT_UNBOUND' });
+  }
+  return serverError(res, log, where, err);
+}
+
+/** Only genuinely missing legacy attribution bypasses the author comparison. */
+function rbmRecordedAuthor(value: unknown): number | null {
+  if (value == null) return null;
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) {
+    throw new Error('The recorded RBM author identity could not be verified.');
+  }
+  return value;
+}
 
 /**
  * checkSigningAuthority's refusal in this router's envelope (clientError's,
@@ -1029,14 +1073,16 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
   // 21 CFR Part 11 §11.10(g): identity is not authority. The platform's one
   // policy (checkSigningAuthority), asked BEFORE the password since 2026-10-08
   // (P-27): asked after it, a role that may not sign could still test one here.
-  const authority = await checkSigningAuthority(signerId, orgId);
+  const signingClient = requestPgClient(req);
+  const authority = await checkSigningAuthority(signerId, orgId, signingClient);
   if (authority) return rbmSigningAuthorityRefused(res, authority);
-  const signoff = await reverifySigner(signerId, { password: parsed.data.password, mfaToken: parsed.data.mfaToken }, signerReverificationDeps());
+  const signoff = await reverifySigner(signerId, { password: parsed.data.password, mfaToken: parsed.data.mfaToken }, signerReverificationDeps(signingClient));
   if (!signoff.ok) return clientError(res, signoff.status, signoff.error, { code: signoff.code });
 
-  const client = await pool.connect();
+  const client = await requestConnectable(req).connect();
   try {
     await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
     // 21 CFR Part 11 §11.10(d) — the two-person rule. The author of a risk
     // assessment may not be the person who approves it: a governing risk basis
     // signed by the one person who wrote it has had no independent review, and
@@ -1049,15 +1095,19 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
     // says the author was never captured. An inspector can then tell an
     // approval that WAS two-person-checked from one that could not be.
     const authorRow = await client.query(
-      `SELECT created_by FROM rbm_risk_assessments
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      `SELECT created_by,status,program_id,version FROM rbm_risk_assessments
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
       [id, orgId],
     );
     if (authorRow.rows.length === 0) {
       await client.query('ROLLBACK');
       return notFoundInTenant(res, 'Risk assessment');
     }
-    const authorId: number | null = authorRow.rows[0].created_by ?? null;
+    if (authorRow.rows[0].status !== 'draft') {
+      await client.query('ROLLBACK');
+      return clientError(res, 409, 'Only a draft assessment can be approved. The signed version stays on file.');
+    }
+    const authorId = rbmRecordedAuthor(authorRow.rows[0].created_by);
     if (authorId !== null && authorId === signerId) {
       await client.query('ROLLBACK');
       return clientError(
@@ -1082,11 +1132,19 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
       await client.query('ROLLBACK');
       return notFoundInTenant(res, 'Risk assessment');
     }
+    const signing = rbmApprovalSignature(req, {
+      orgId, signerId, id, kind: 'assessment', reason: parsed.data.reason, row,
+      authorKnown: authorId !== null, signoff,
+    });
+    const gov = await recordGovernedAction(client, {
+      ...signing, command: 'sign', domain: 'rbm', surface: 'rbm',
+    });
+    const signature = await persistGovernedSignSignature(client, { ...signing, ...gov });
     await client.query('COMMIT');
-    return ok(res, row);
+    return ok(res, row, { ...gov, signatureId: signature.id, signedAt: signature.signedAt.toISOString(), meaning: 'approval' });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
-    return serverError(res, log, 'approve-assessment', err);
+    return rbmApprovalFailed(res, 'approve-assessment', err);
   } finally {
     client.release();
   }
@@ -1114,6 +1172,7 @@ router.post('/rbm-assessments/:id/amend', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
     const result = await amendAssessment(client, orgId, {
       assessmentId: id, reason: parsed.data.reason, openedBy: getUserId(req),
     });
@@ -1150,26 +1209,32 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
   // 21 CFR Part 11 §11.10(g): identity is not authority. The platform's one
   // policy (checkSigningAuthority), asked BEFORE the password since 2026-10-08
   // (P-27): asked after it, a role that may not sign could still test one here.
-  const authority = await checkSigningAuthority(signerId, orgId);
+  const signingClient = requestPgClient(req);
+  const authority = await checkSigningAuthority(signerId, orgId, signingClient);
   if (authority) return rbmSigningAuthorityRefused(res, authority);
-  const signoff = await reverifySigner(signerId, { password: parsed.data.password, mfaToken: parsed.data.mfaToken }, signerReverificationDeps());
+  const signoff = await reverifySigner(signerId, { password: parsed.data.password, mfaToken: parsed.data.mfaToken }, signerReverificationDeps(signingClient));
   if (!signoff.ok) return clientError(res, signoff.status, signoff.error, { code: signoff.code });
 
-  const client = await pool.connect();
+  const client = await requestConnectable(req).connect();
   try {
     await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
     // §11.10(d) two-person rule — see the assessment route above for why an
     // authorless row is approved rather than stranded.
     const authorRow = await client.query(
-      `SELECT created_by FROM rbm_monitoring_plans
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      `SELECT created_by,status,program_id,version FROM rbm_monitoring_plans
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
       [id, orgId],
     );
     if (authorRow.rows.length === 0) {
       await client.query('ROLLBACK');
       return notFoundInTenant(res, 'Monitoring plan');
     }
-    const authorId: number | null = authorRow.rows[0].created_by ?? null;
+    if (authorRow.rows[0].status !== 'draft') {
+      await client.query('ROLLBACK');
+      return clientError(res, 409, 'Only a draft monitoring plan can be approved. The signed version stays on file.');
+    }
+    const authorId = rbmRecordedAuthor(authorRow.rows[0].created_by);
     if (authorId !== null && authorId === signerId) {
       await client.query('ROLLBACK');
       return clientError(
@@ -1190,11 +1255,19 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
       await client.query('ROLLBACK');
       return notFoundInTenant(res, 'Monitoring plan');
     }
+    const signing = rbmApprovalSignature(req, {
+      orgId, signerId, id, kind: 'plan', reason: parsed.data.reason, row,
+      authorKnown: authorId !== null, signoff,
+    });
+    const gov = await recordGovernedAction(client, {
+      ...signing, command: 'sign', domain: 'rbm', surface: 'rbm',
+    });
+    const signature = await persistGovernedSignSignature(client, { ...signing, ...gov });
     await client.query('COMMIT');
-    return ok(res, row);
+    return ok(res, row, { ...gov, signatureId: signature.id, signedAt: signature.signedAt.toISOString(), meaning: 'approval' });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
-    return serverError(res, log, 'approve-plan', err);
+    return rbmApprovalFailed(res, 'approve-plan', err);
   } finally {
     client.release();
   }
@@ -1273,6 +1346,7 @@ router.post('/rbm-monitoring-plans/generate', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
     const result = await generatePlanFromAssessment(client, orgId, parsed.data);
     if (!result.generated) {
       await client.query('ROLLBACK');
@@ -1334,7 +1408,9 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
   if (id === null) return clientError(res, 422, 'id must be numeric');
   const parsed = patchPlanBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const patch = buildPatch(parsed.data, PLAN_COL);
+  const statusOnly = Object.entries(parsed.data).every(([k, v]) => k === 'status' || v === undefined);
+  const retiring = statusOnly && parsed.data.status === 'archived';
+  const patch = buildPatch(parsed.data, PLAN_COL, [retiring]);
   if (!patch) return clientError(res, 422, 'No updatable fields in body');
   try {
     const cur = await pool.query(
@@ -1351,8 +1427,6 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
     // 'archived' stays allowed so a plan can be retired without amending it;
     // moving a non-draft BACK to draft is not, since that would reopen a signed
     // record for editing with its approval fields still attached.
-    const statusOnly = Object.entries(parsed.data).every(([k, v]) => k === 'status' || v === undefined);
-    const retiring = statusOnly && parsed.data.status === 'archived';
     if (curStatus !== 'draft' && !retiring) {
       return clientError(res, 409,
         `Monitoring plan v${curVersion ?? '?'} is ${curStatus} and cannot be edited. `
@@ -1362,10 +1436,11 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
     const { rows } = await pool.query(
       `UPDATE rbm_monitoring_plans SET ${patch.setSql}, updated_at = NOW()
         WHERE id = $${patch.args.length - 1} AND organization_id = $${patch.args.length} AND deleted_at IS NULL
+          AND ($1::boolean OR status = 'draft')
         RETURNING *`,
       patch.args,
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
+    if (rows.length === 0) return clientError(res, 409, 'The draft monitoring plan changed. Refresh before editing.');
     return ok(res, rows[0]);
   } catch (err) { return serverError(res, log, 'patch-plan', err); }
 });
@@ -1392,6 +1467,7 @@ router.post('/rbm-monitoring-plans/:id/amend', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
     const result = await amendMonitoringPlan(client, orgId, {
       planId: id, reason: parsed.data.reason, openedBy: getUserId(req),
     });

@@ -1,0 +1,78 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > opens the existing RBM destination beside the other work areas (collapsed=false) 516ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > opens the existing RBM destination beside the other work areas (collapsed=true) 187ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > keeps the same entitled central service for the medtech client view 63ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > keeps the same entitled central service for the cro client view 60ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > explains the real Professional subscription lock without opening RBM 83ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > honors a deployment verdict that still withholds RBM from the release 70ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the existing surface without provisioning an RBM subscription grant 3ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > keeps the existing tier refusal after release admission 1ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > keeps the existing disabled refusal after release admission 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > preserves a real subscription verdict instead of replacing it with a release lock 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx-rbm/rbm-programs through its existing surface 1ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx-rbm/rbm-board/11111111-1111-4111-8111-111111111111 through its existing surface 1ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-assessments/7/amend through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-assessments/7/approve through its existing surface 1ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-risk-items through its existing surface 1ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-risk-items/7 through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-kris through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-kris/7/values through its existing surface 2ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-qtls through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-qtls/7 through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-signals/7 through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-site-risk/recompute through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-monitoring-plans/7/amend through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-monitoring-plans/7/approve through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-monitoring-actions through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-monitoring-actions/7 through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-metric-ingest through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-central-monitoring/run through its existing surface 2ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > admits the called RBM path /api/mdx/rbm-patient-profiles/score through its existing surface 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > does not make the unrelated or uncalled path /api/mdx-rbm/unrelated a launch route 1ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > does not make the unrelated or uncalled path /api/mdx-rbm/rbm-board-unrelated/11111111-1111-4111-8111-111111111111 a launch route 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > does not make the unrelated or uncalled path /api/mdx/rbm-risk-items-unrelated a launch route 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > does not make the unrelated or uncalled path /api/mdx/rbm-central-monitoring/unrelated a launch route 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > does not make the unrelated or uncalled path /api/mdx/rbm-patient-profiles/unrelated a launch route 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > does not make the unrelated or uncalled path /api/mdx/rbm-data-runs a launch route 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > does not make the unrelated or uncalled path /api/mdx/clinical-ops a launch route 0ms
+ ✓ server/services/entitlements/__tests__/rbm-launch-claim.test.ts > RBM release admission > does not make the unrelated or uncalled path /api/mdx/qms/readiness a launch route 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order 159ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading 28ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the feature catalog, Submission Center, Conversation and a second task entry are not on the rail 19ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no two entries share an icon 17ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=false) 154ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=true) 111ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Quality is on the rail, and opens Quality 58ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > CMC / Module 3 is on the rail beside Quality, and opens CMC 51ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Home is explicitly labelled and opens Home 54ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no entry carries an AnA badge, and no section lists retired or locked screens 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the mark goes to Home 87ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is reached without a rail entry > ⌘K finds Conversation and opens the conversation screen 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the task board on everyone’s tasks 145ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > the board’s My tasks gives the person’s own, and Tasks stays the marked entry 157ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the board at its own address, not the action’s alias 45ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault > the top bar’s search opens the palette, and the result opens the Vault, not a retired screen 81ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers an organization administrator Subscription & features, which opens the catalog 104ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > names each subscription entry by its surface's registry label, as the breadcrumb and ⌘K do 118ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > gives a billing administrator one entry to Licensing, Subscription & billing (P-68) 67ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers every client type once, the current one checked, by more than colour 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing a client type sets it 44ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing the type already chosen changes nothing and closes the menu 44ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 25ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 44ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 30ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 23ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 60ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+
+ Test Files  3 passed (3)
+      Tests  68 passed (68)
+   Start at  16:48:40
+   Duration  6.31s (transform 1.33s, setup 246ms, import 1.80s, tests 2.84s, environment 982ms)
+
+JSON report written to /workspace/.cloud-setup/rbm-navigation/nav-green-02-results.json

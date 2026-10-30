@@ -1,0 +1,12 @@
+PASS 1 desktop Actual configuration starts with RBM unchecked
+PASS 2 desktop Actual checkbox selects RBM and keeps the verified workspace
+PASS 3 desktop Actual Review summary repeats the RBM selection
+PASS 4 desktop Actual create handler sends the selected boolean and opens the exact mocked project receipt
+PASS 5 desktop Browser sends no RBM seed or commercial-grant request
+PASS 6 desktop Viewport has no horizontal document overflow
+PASS 7 phone Actual configuration starts with RBM unchecked
+PASS 8 phone Actual checkbox selects RBM and keeps the verified workspace
+PASS 9 phone Actual Review summary repeats the RBM selection
+PASS 10 phone Actual create handler sends the selected boolean and opens the exact mocked project receipt
+PASS 11 phone Browser sends no RBM seed or commercial-grant request
+PASS 12 phone Viewport has no horizontal document overflow

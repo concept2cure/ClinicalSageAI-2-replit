@@ -6,7 +6,8 @@
  * analytics a launch app; seven until 2026-10-12, when CMC / Module 3 joined
  * under decision P-28; eight until 2026-10-17, when Submission Readiness was
  * folded into Submission Center), every other surface behind a flag that is
- * off in production. This file IS that flag's data.
+ * off in production. This file IS that flag's data. RBM joins as a central service by P-76,
+ * 2026-10-30; its existing commercial verdict remains in force.
  *
  * "On by default" is the modules list, not the app list: a launch app's
  * SURFACES are inside the boundary, and its MODULES are what a new
@@ -47,7 +48,7 @@ export interface LaunchApp {
   modules: readonly string[];
 }
 
-/** The seven launch apps, in the order the definition of done lists them. */
+/** The eight launch apps; RBM joins by founder decision P-76, 2026-10-30. */
 export const LAUNCH_APPS: readonly LaunchApp[] = [
   {
     id: 'projects',
@@ -210,6 +211,16 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
        the screen was refused to everyone, entitled or not, and every path
        under /api/cmc was unattributed. */
     surfaces: ['cmc'],
+    modules: [],
+  },
+  {
+    id: 'rbm',
+    label: 'Risk-based monitoring',
+    // Founder request P-76, 2026-10-30: reach the existing central service
+    // from the main rail and an optional project setup choice. Surfaces-only
+    // admission preserves its professional-tier and explicit grant verdicts;
+    // adding a module here would silently grant it to every new organization.
+    surfaces: ['rbm'],
     modules: [],
   },
   {

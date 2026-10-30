@@ -79,8 +79,8 @@ describe('the scope list itself', () => {
     }
     expect(LAUNCH_APPS.map((app) => app.id)).not.toContain('mdx');
   });
-  it('has seven apps and every app surface is in the id set', () => {
-    expect(LAUNCH_APPS).toHaveLength(7);
+  it('has eight apps and every app surface is in the id set', () => {
+    expect(LAUNCH_APPS).toHaveLength(8);
     for (const a of LAUNCH_APPS) for (const s of a.surfaces) expect(isLaunchSurface(s)).toBe(true);
   });
   it('CMC / Module 3 is a launch app — decision P-28, 2026-10-12', () => {
@@ -395,7 +395,7 @@ describe('applyLaunchScope', () => {
     expect(out).toEqual(locked);
   });
   it('locks a bought module outside the scope — the boundary never widens', () => {
-    const [out] = applyLaunchScope([v('rbm', { source: 'subscribed' })]);
+    const [out] = applyLaunchScope([v('research-admin', { source: 'subscribed' })]);
     expect(out.entitled).toBe(false);
     expect(out.source).toBe('launch-scope');
     expect(out.requiredTier).toBeNull();
@@ -406,7 +406,7 @@ describe('applyLaunchScope', () => {
     // Both un-catalogued (contextual) and catalogued-but-absent surfaces appear.
     expect(ids.has('coverage')).toBe(true);
     expect(ids.has('client-portal')).toBe(true);
-    expect(ids.has('rbm')).toBe(true);
+    expect(ids.has('research-admin')).toBe(true);
     for (const x of out) {
       expect(x.entitled).toBe(false);
       expect(x.source).toBe('launch-scope');

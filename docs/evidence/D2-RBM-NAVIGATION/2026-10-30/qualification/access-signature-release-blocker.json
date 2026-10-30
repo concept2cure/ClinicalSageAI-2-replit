@@ -1,0 +1,15 @@
+{
+  "observedAt": "2026-10-30T17:35:09.985890+00:00",
+  "rootPredecessor": "final-02-summary.json",
+  "rootPredecessorResult": {
+    "passed": 891,
+    "failed": 0,
+    "files": 48,
+    "unchangedSelectedInputs": 98
+  },
+  "releaseBlocker": "Current RBM HTTP assessment/plan approval verifies credentials and authority but did not persist electronic_signatures; outsidecatalog baseline rationale obsolete after founder P-76.",
+  "contract": "docs/design/RBM_NAVIGATION_PROJECT_SETUP_2026-10-30.md",
+  "boundedSuccessorOwner": "/root/canonical_merge_review",
+  "required": "same transaction immutable version content binding + canonical ledger/signature writer; rollback on persistence failure; existing auth/project/two-person and AnA refusals preserved",
+  "status": "implementation in progress; preclosure891case result is not successor execution proof"
+}

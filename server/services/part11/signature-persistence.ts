@@ -112,6 +112,10 @@ const PG_UNDEFINED_TABLE = '42P01';
 // Every electronic_signatures row written through this module states WHAT its
 // bound_payload_digest is a digest OF. Never guess from context; read the basis.
 export const BINDING_BASIS = {
+  /** sha256 (rbm-assessment/v1) over an immutable RACT version and coherent live CtQ register. */
+  RBM_ASSESSMENT_CONTENT: 'rbm-assessment-content-sha256',
+  /** sha256 (rbm-monitoring-plan/v1) over an immutable plan version and retained assessment identity. */
+  RBM_MONITORING_PLAN_CONTENT: 'rbm-monitoring-plan-content-sha256',
   /** sha256 of the signed document version's content (legacy /api/esignature path). */
   DOCUMENT_VERSION_CONTENT: 'document-version-content-sha256',
   /** sha256 over the eCTD sequence row + its ordered leaf manifest at signing time. */

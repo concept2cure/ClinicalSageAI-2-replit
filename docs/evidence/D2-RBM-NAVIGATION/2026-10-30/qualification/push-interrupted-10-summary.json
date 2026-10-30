@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-30T19:24:43.566776+00:00",
+  "commit": "18c7858d33fd9561ad03bf6d3f95b54965d4c38f",
+  "selectedInputs": 328,
+  "interruptedByRoot": true,
+  "signal": "SIGTERM to dedicated push process group783747 before typecheck/publish",
+  "reason": "Documentation merge10b940486 conflicted. A separate shell command chain started a push despite the prior merge chain failing. Stopped immediately; resolve merge before retry. No successful publication or normal-exit claim.",
+  "noForceOrBypass": true
+}

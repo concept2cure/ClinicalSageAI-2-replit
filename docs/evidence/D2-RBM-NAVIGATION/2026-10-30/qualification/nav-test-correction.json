@@ -1,0 +1,14 @@
+{
+  "initialRedFunctionalFailures": 28,
+  "initialRedAlsoHadOverbroadArrayExpectations": 3,
+  "green01Failures": 4,
+  "corrections": [
+    "Compare exact RBM verdict via its id, because applyLaunchScope also appends unrelated hidden-surface verdicts",
+    "Select existing subscription-lock accessible name; still require actual Professional explanation and Compare subscriptions in opened panel"
+  ],
+  "unchangedAssertions": "Actual RBM navigation, peer destinations, no grant, active API path admission and unrelated negative paths remain unchanged. Original shellNav assertion lines preserved.",
+  "priorExactSourcesRetained": [
+    "nav-red-*",
+    "nav-green-01-*"
+  ]
+}

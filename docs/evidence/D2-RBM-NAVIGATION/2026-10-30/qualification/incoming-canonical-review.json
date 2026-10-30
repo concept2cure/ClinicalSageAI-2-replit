@@ -1,0 +1,20 @@
+{
+  "incoming": "be078603b",
+  "base": "f0e0ff863",
+  "reviewer": "/root/rbm_release_review",
+  "result": "No RBM shared-contract blocker found. dataConnect adds2exports only; owned4arg reads unchanged. CSR rawSQL actor verifier unchanged for RBM; Drizzle paths compose same verifier. No current-program-access/governed-write/sharing/runtime/dependency/config diff.",
+  "recommendedRegression": [
+    "dataConnectOwnedRead.test.tsx",
+    "csr-current-scope.pglite.test.ts",
+    "program-access.test.ts",
+    "existing RBM native/current-project cohort"
+  ],
+  "upstreamReceipts": [
+    "D2-CANONICAL-WORKFLOW-REVIEW/.../final-source-hooks-files-pins.json",
+    "D2-CANONICAL-WORKFLOW-REVIEW/.../publication.json",
+    "D2-CSR-EXPERTISE/.../resumed-codex/final-source-freeze.json",
+    "D2-CSR-EXPERTISE/.../resumed-codex/publication.json"
+  ],
+  "historicalUpstreamCohortsNotBorrowed": true,
+  "readOnlyReviewNoExecution": true
+}

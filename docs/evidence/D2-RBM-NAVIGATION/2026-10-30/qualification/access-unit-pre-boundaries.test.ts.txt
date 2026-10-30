@@ -1,0 +1,195 @@
+/** Admission composes current project sharing and the existing commercial mode. */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Request, Response, NextFunction } from 'express';
+
+const h = vi.hoisted(() => ({
+  access: vi.fn(), write: vi.fn(), mode: vi.fn(), license: vi.fn(),
+  observe: vi.fn(), fallbackQuery: vi.fn(), getPool: vi.fn(),
+}));
+vi.mock('../../c2c/current-program-access', async original => ({
+  ...(await original<Record<string, unknown>>()), requireCurrentProgramAccess: h.access,
+}));
+vi.mock('../../c2c/governed-program-write', async original => ({
+  ...(await original<Record<string, unknown>>()), requireGovernedProgramWriteTx: h.write,
+}));
+vi.mock('../../entitlements/enforcement-mode', () => ({ currentEnforcementMode: h.mode }));
+vi.mock('../../license-manager', () => ({ canAccessModule: h.license }));
+vi.mock('../../entitlements/enforcement-observations', () => ({ recordObservation: h.observe }));
+vi.mock('../../../db', async original => ({
+  ...(await original<Record<string, unknown>>()), getPool: h.getPool,
+}));
+
+import { ProgramReadAccessError } from '../../c2c/current-program-access';
+import { requireRbmProgram, rbmToolAdmissionRefusal, rbmRequestAdmission } from '../rbm-access';
+
+const OURS = '11111111-1111-4111-8111-111111111111';
+const OTHER = '22222222-2222-4222-8222-222222222222';
+const actor = { organizationId: 7, userId: 3 };
+const queryClient = () => ({ query: vi.fn(async (_sql: string, _params?: unknown[]) => ({ rows: [] as Array<Record<string, unknown>> })) });
+const admitted = { programId: OURS, projectId: 9, clientWorkspaceId: null, actor: { userId: 3, role: 'admin' } };
+
+beforeEach(() => {
+  h.access.mockReset().mockResolvedValue(admitted);
+  h.write.mockReset().mockResolvedValue(undefined);
+  h.mode.mockReset().mockResolvedValue({ mode: 'off' });
+  h.license.mockReset().mockResolvedValue({ allowed: true });
+  h.observe.mockReset();
+  h.fallbackQuery.mockReset().mockResolvedValue({ rows: [] });
+  h.getPool.mockReset().mockReturnValue({ query: h.fallbackQuery });
+});
+
+describe('canonical RBM program admission', () => {
+  it('uses the verified actor and current sharing policy for an explicit project', async () => {
+    const q = queryClient();
+    expect(await requireRbmProgram(q, actor, { programId: OURS })).toBe(OURS);
+    expect(h.access).toHaveBeenCalledWith(q, expect.objectContaining({ ...actor, programId: OURS }));
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it('preserves a private-project refusal without using the read as a write grant', async () => {
+    h.access.mockRejectedValue(new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Project access is not permitted.'));
+    await expect(requireRbmProgram(queryClient(), actor, { programId: OURS })).rejects.toMatchObject({ status: 403, code: 'PROJECT_PERMISSION_DENIED' });
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it('asks the canonical governed-write policy as well as read access for a write', async () => {
+    const q = queryClient();
+    await requireRbmProgram(q, actor, { programId: OURS }, true);
+    expect(h.access).toHaveBeenCalled();
+    expect(h.write).toHaveBeenCalledWith(q, actor.organizationId, actor.userId, OURS);
+  });
+
+  it.each(['plan', 'action'] as const)('derives an ID-only %s from its recorded program before admission', async kind => {
+    const q = queryClient(); q.query.mockResolvedValue({ rows: [{ program_id: OURS }] });
+    expect(await requireRbmProgram(q, actor, { records: [{ kind, id: 41 }] })).toBe(OURS);
+    expect(q.query).toHaveBeenCalled();
+    expect(q.query.mock.calls[0][1]).toEqual(expect.arrayContaining([actor.organizationId, 41]));
+    expect(h.access).toHaveBeenCalledWith(q, expect.objectContaining({ ...actor, programId: OURS }));
+  });
+
+  it('refuses a supplied project that differs from the persisted record parent', async () => {
+    const q = queryClient(); q.query.mockResolvedValue({ rows: [{ program_id: OTHER }] });
+    await expect(requireRbmProgram(q, actor, { programId: OURS, records: [{ kind: 'assessment', id: 41 }] })).rejects.toBeDefined();
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it('refuses two record IDs with different project parents', async () => {
+    const q = queryClient();
+    q.query.mockResolvedValueOnce({ rows: [{ program_id: OURS }] }).mockResolvedValueOnce({ rows: [{ program_id: OTHER }] });
+    await expect(requireRbmProgram(q, actor, { records: [{ kind: 'plan', id: 41 }, { kind: 'signal', id: 42 }] })).rejects.toBeDefined();
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it.each([{ label: 'absent or foreign-tenant', rows: [] }, { label: 'unanchored', rows: [{ program_id: null }] }])('refuses a $label record', async ({ rows }) => {
+    const q = queryClient(); q.query.mockResolvedValue({ rows });
+    await expect(requireRbmProgram(q, actor, { records: [{ kind: 'action', id: 41 }] })).rejects.toBeDefined();
+    expect(h.access).not.toHaveBeenCalled();
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it('refuses a project-free list rather than reading the whole organization', async () => {
+    const q = queryClient();
+    await expect(requireRbmProgram(q, actor, {})).rejects.toBeDefined();
+    expect(q.query).not.toHaveBeenCalled();
+    expect(h.access).not.toHaveBeenCalled();
+  });
+
+  it('does not turn an unavailable sharing read into an empty successful admission', async () => {
+    h.access.mockRejectedValue(new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Project access could not be verified.'));
+    await expect(requireRbmProgram(queryClient(), actor, { programId: OURS })).rejects.toMatchObject({ status: 503 });
+  });
+});
+
+describe('AnA RBM admission', () => {
+  it('is inert for a non-RBM tool even when the input names a project', async () => {
+    const q = queryClient();
+    expect(await rbmToolAdmissionRefusal('search_literature', { programId: OTHER }, { ...actor, sqlClient: q })).toBeNull();
+    expect(q.query).not.toHaveBeenCalled();
+    expect(h.access).not.toHaveBeenCalled();
+    expect(h.mode).not.toHaveBeenCalled();
+    expect(h.license).not.toHaveBeenCalled();
+  });
+
+  it('refuses an RBM operation without a verified actor', async () => {
+    expect(await rbmToolAdmissionRefusal('get_rbm_attention', { programId: OURS }, {})).not.toBeNull();
+    expect(h.access).not.toHaveBeenCalled();
+  });
+
+  it('checks current private-project access even with commercial enforcement off', async () => {
+    h.access.mockRejectedValue(new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Project access is not permitted.'));
+    const out = await rbmToolAdmissionRefusal('get_rbm_attention', { programId: OURS }, { ...actor, sqlClient: queryClient() });
+    expect(out?.code).toBe('PROJECT_PERMISSION_DENIED');
+    expect(h.license).not.toHaveBeenCalled();
+  });
+
+  it('uses the trusted tool SQL client rather than replacing its request scope', async () => {
+    const q = queryClient();
+    expect(await rbmToolAdmissionRefusal('get_rbm_attention', { programId: OURS }, { ...actor, sqlClient: q })).toBeNull();
+    expect(h.access).toHaveBeenCalledWith(q, expect.objectContaining({ ...actor, programId: OURS }));
+    expect(h.getPool).not.toHaveBeenCalled();
+  });
+
+  it('uses the existing trusted pool when the server supplied no tool SQL client', async () => {
+    expect(await rbmToolAdmissionRefusal('get_rbm_attention', { programId: OURS }, actor)).toBeNull();
+    expect(h.getPool).toHaveBeenCalled();
+    expect(h.access).toHaveBeenCalledWith(expect.objectContaining({ query: h.fallbackQuery }), expect.objectContaining({ ...actor, programId: OURS }));
+  });
+
+  it('resolves a plan-only monitoring action and checks the linked signal belongs to that project', async () => {
+    const q = queryClient();
+    q.query.mockResolvedValueOnce({ rows: [{ program_id: OURS }] }).mockResolvedValueOnce({ rows: [{ program_id: OTHER }] });
+    const out = await rbmToolAdmissionRefusal('create_monitoring_action', { planId: 41, signalId: 42, description: 'Investigate' }, { ...actor, sqlClient: q });
+    expect(out).not.toBeNull();
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['record_kri_reading', { programId: OURS, kriId: 41, value: 4 }],
+    ['draft_monitoring_plan', { programId: OURS, assessmentId: 41 }],
+  ])('rejects another project’s optional parent on %s', async (name, input) => {
+    const q = queryClient(); q.query.mockResolvedValue({ rows: [{ program_id: OTHER }] });
+    expect(await rbmToolAdmissionRefusal(name as string, input as Record<string, unknown>, { ...actor, sqlClient: q })).not.toBeNull();
+    expect(h.write).not.toHaveBeenCalled();
+  });
+
+  it('honors an explicit commercial denial in enforce mode', async () => {
+    h.mode.mockResolvedValue({ mode: 'enforce' }); h.license.mockResolvedValue({ allowed: false, reason: 'Professional is required.' });
+    expect(await rbmToolAdmissionRefusal('get_rbm_attention', { programId: OURS }, { ...actor, sqlClient: queryClient() })).not.toBeNull();
+    expect(h.license).toHaveBeenCalledWith(actor.organizationId, 'rbm');
+  });
+
+  it('cannot bypass private-project access when commercial resolution is unavailable', async () => {
+    h.mode.mockResolvedValue({ mode: 'enforce' }); h.license.mockRejectedValue(new Error('Commercial read unavailable'));
+    h.access.mockRejectedValue(new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Project access is not permitted.'));
+    const out = await rbmToolAdmissionRefusal('get_rbm_attention', { programId: OURS }, { ...actor, sqlClient: queryClient() });
+    expect(out?.code).toBe('PROJECT_PERMISSION_DENIED');
+    expect(h.access).toHaveBeenCalled();
+  });
+
+  it('keeps report mode observational while still checking project access', async () => {
+    h.mode.mockResolvedValue({ mode: 'report' }); h.license.mockResolvedValue({ allowed: false });
+    expect(await rbmToolAdmissionRefusal('get_rbm_attention', { programId: OURS }, { ...actor, sqlClient: queryClient() })).toBeNull();
+    expect(h.license).toHaveBeenCalledWith(actor.organizationId, 'rbm');
+    expect(h.access).toHaveBeenCalled();
+  });
+});
+
+describe('RBM HTTP boundary', () => {
+  function response() { const res = { status: vi.fn(), json: vi.fn() }; res.status.mockReturnValue(res); return res; }
+  it('does not gate another router stacked under /api/mdx', async () => {
+    const res = response(), next = vi.fn();
+    await rbmRequestAdmission({ path: '/notifications/unread-count', originalUrl: '/api/mdx/notifications/unread-count', method: 'GET' } as Request, res as unknown as Response, next as NextFunction);
+    expect(next).toHaveBeenCalledOnce();
+    expect(h.access).not.toHaveBeenCalled();
+    expect(h.getPool).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when an RBM request has no pinned request SQL client', async () => {
+    const res = response(), next = vi.fn();
+    await rbmRequestAdmission({ path: '/rbm-risk-items', originalUrl: '/api/mdx/rbm-risk-items', method: 'GET', query: { program_id: OURS }, user: { id: actor.userId, organizationId: actor.organizationId } } as unknown as Request, res as unknown as Response, next as NextFunction);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalled();
+    expect(res.status.mock.calls[0][0]).toBeGreaterThanOrEqual(400);
+    expect(h.getPool).not.toHaveBeenCalled();
+  });
+});
