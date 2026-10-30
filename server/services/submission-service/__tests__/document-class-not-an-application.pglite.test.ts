@@ -31,7 +31,7 @@ const CSR_PROJECT = '11111111-2222-4333-8444-0000000000c5';
 const IND_PROJECT = '11111111-2222-4333-8444-0000000000d1';
 const base = { title: 'LMN-201', clientType: 'biotech', primaryRegion: 'fda' } as const;
 const refusalOf = (p: Promise<unknown>) => p.then(() => { throw new Error('expected a refusal'); }, (e: unknown) => e as SubmissionError);
-const submissionCount = async () => Number((await harness.pglite.query('SELECT count(*)::int AS n FROM submissions')).rows[0].n);
+const submissionCount = async () => Number((await harness.pglite.query<{ n: number }>('SELECT count(*)::int AS n FROM submissions')).rows[0].n);
 
 beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true, programSpine: true });
