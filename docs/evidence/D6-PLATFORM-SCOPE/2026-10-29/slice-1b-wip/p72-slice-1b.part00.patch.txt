@@ -1,0 +1,1794 @@
+diff --git a/server/bin/run-retention.ts b/server/bin/run-retention.ts
+index 5e83986de..76a9b2442 100644
+--- a/server/bin/run-retention.ts
++++ b/server/bin/run-retention.ts
+@@ -2,9 +2,14 @@
+ /**
+  * Manual / scheduled runner for the document retention job.
+  *
+- * Runs one retention sweep (see server/jobs/retentionCron.ts): archives expired
+- * documents per policy, soft- or hard-deletes them, audits each action. Intended
+- * for an external scheduler (cron / CI) or manual admin runs.
++ * Runs one retention sweep (see server/jobs/retentionCron.ts): each
++ * organisation in its own scope, archives its expired documents per policy,
++ * soft-deletes them and audits each action. A legal hold leaves a document in
++ * place, and a policy that asks for destruction is refused: nothing is
++ * hard-deleted. Intended for an external scheduler (cron / CI) or manual admin
++ * runs. Exits 1 when any document could not be disposed of, an organisation
++ * could not be swept, or a document names another organisation than its
++ * programme's owner (P-72 slice 1b).
+  *
+  * Usage: tsx server/bin/run-retention.ts   (or: npm run retention:run)
+  */
+@@ -18,7 +23,7 @@ console.log('║                 Concept2Cure Vault Retention Job
+ console.log('╚═══════════════════════════════════════════════════════════════╝');
+ console.log('');
+ console.log('⚠️  Archives and deletes documents whose retention period has elapsed.');
+-console.log('   Soft-delete by default; hard-delete only when a matched policy says so.');
++console.log('   Soft-delete only: a legal hold leaves a document in place, and destruction is refused.');
+ console.log('');
+ console.log('Starting job...');
+ console.log('');
+diff --git a/server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts b/server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts
+new file mode 100644
+index 000000000..c6358a5d5
+--- /dev/null
++++ b/server/jobs/__tests__/auditChainIntegritySweep.org-scope.test.ts
+@@ -0,0 +1,254 @@
++/**
++ * The audit integrity sweep verifies each organisation's chain in that
++ * organisation's own scope (P-72 slice 1b;
++ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/).
++ *
++ * ── The defect ───────────────────────────────────────────────────────────────
++ * runAuditChainIntegrityCheck took one pooled connection in the system scope
++ * and sent every statement outside a transaction. The pool applies a scope only
++ * when a transaction begins, so the connection carried no tenant:
++ * connectionIsTenantScoped said "scoped to one tenant" and the sweep answered
++ * ok:false over 0 rows every day on a production-shaped database, with the
++ * platform arm or without it.
++ *
++ * ── What is asserted ─────────────────────────────────────────────────────────
++ * - Every statement is inside a transaction (BEGIN first, on every connection).
++ * - Each organisation's audit_logs chain and seals, and its audit_events rows
++ *   and seals, are read in its own scope (its tenant id, no role), filtered to
++ *   it; only the organisation list and the stores with no tenant key are read
++ *   in the infrastructure scope.
++ * - A break, a refused legacy walk or an empty store is reported per store
++ *   with the organisation named; a store no organisation has a row in is
++ *   unverifiable, never ok.
++ * - The anchor is verified and written per organisation, in its own scope.
++ * The production-shaped proof (real policies, a non-superuser owner, with and
++ * without the platform arm) is the slice's probe, filed with its evidence.
++ */
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++
++const m = vi.hoisted(() => ({
++  verifyAuditChain: vi.fn(),
++  verifyAuditChainSeals: vi.fn(),
++  verifyAuditEventsChainSeals: vi.fn(),
++  verifyAuditChainAnchor: vi.fn(),
++  writeAuditChainAnchor: vi.fn(),
++  reportSecurityAlert: vi.fn(),
++  /** Every statement and verifier call, with its connection and the scope it ran in. */
++  events: [] as Array<{ what: string; conn: number; tenantId: string | null; role: string | null; params?: unknown[] }>,
++  orgs: [7, 8] as number[],
++  auditEvents: new Map<number, unknown[]>(),
++  connections: 0,
++  released: 0,
++}));
++
++vi.mock('node-cron', () => ({ default: { schedule: vi.fn() } }));
++vi.mock('../../db.js', async () => {
++  const { getTenantScope } = await import('../../db/tenantStore');
++  const here = () => ({ tenantId: getTenantScope()?.tenantId ?? null, role: getTenantScope()?.role ?? null });
++  return {
++    pool: {
++      connect: vi.fn(async () => {
++        const conn = ++m.connections;
++        return {
++          query: vi.fn(async (sql: string, params: unknown[] = []) => {
++            m.events.push({ what: sql.trim().split(/\s+/).slice(0, 4).join(' '), conn, ...here(), params });
++            if (/^(BEGIN|ROLLBACK)\b/.test(sql)) return { rows: [] };
++            if (sql.includes('FROM public.organizations')) return { rows: m.orgs.map((id) => ({ id })) };
++            if (sql.includes('to_regclass')) return { rows: [{ present: true }] };
++            if (sql.includes('FROM audit_events')) return { rows: m.auditEvents.get(Number(params[0])) ?? [] };
++            if (sql.includes('FROM audit.tamper_proof_log')) return { rows: [] };
++            throw new Error(`unexpected query in test: ${sql}`);
++          }),
++          release: vi.fn(() => { m.released += 1; }),
++          conn,
++        };
++      }),
++    },
++  };
++});
++vi.mock('../../services/audit/chain.js', async () => {
++  const { getTenantScope } = await import('../../db/tenantStore');
++  const record = (what: string, c: { conn?: number }, opts?: unknown) =>
++    m.events.push({ what, conn: c.conn ?? 0, tenantId: getTenantScope()?.tenantId ?? null, role: getTenantScope()?.role ?? null, params: [opts] });
++  return {
++    verifyAuditChain: (c: { conn?: number }, opts?: unknown) => (record('verifyAuditChain', c, opts), m.verifyAuditChain(c, opts)),
++    verifyAuditChainSeals: (c: { conn?: number }, opts?: unknown) => (record('verifyAuditChainSeals', c, opts), m.verifyAuditChainSeals(c, opts)),
++    verifyAuditEventsChainSeals: (c: { conn?: number }, opts?: unknown) =>
++      (record('verifyAuditEventsChainSeals', c, opts), m.verifyAuditEventsChainSeals(c, opts)),
++  };
++});
++vi.mock('../../lib/tamper-proof-audit.js', () => ({ verifyTamperProofLogRows: () => ({ valid: true }) }));
++vi.mock('../../services/audit/audit-immutability-triggers.js', () => ({
++  assertAuditImmutabilityTriggers: async () => ({ ok: true, expected: 8, present: 8, missing: [], disabled: [], tablesAbsent: [] }),
++}));
++vi.mock('../../services/security-alerts.js', () => ({ reportSecurityAlert: m.reportSecurityAlert }));
++vi.mock('../../services/audit/chain-anchor.js', async (importOriginal) => ({
++  ...(await importOriginal<Record<string, unknown>>()),
++  verifyAuditChainAnchor: m.verifyAuditChainAnchor,
++  writeAuditChainAnchor: m.writeAuditChainAnchor,
++}));
++
++import { runAuditChainIntegrityCheck } from '../auditChainIntegritySweep';
++
++const RUN_AT = Date.parse('2026-10-30T02:00:00.000Z');
++const anchorOk = {
++  status: 'ok', anchorKey: 'anchors/audit-chain/2026/10/29/a.json', anchoredAt: '2026-10-29T02:00:00.000Z',
++  organizations: 2, breaks: [], archived: [], reason: 'every anchored head is present and unchanged',
++};
++const walk = (rows: number) => ({ ok: true, rowsChecked: rows, tenants: rows ? 1 : 0, legacyRows: 0, sequencedRows: rows });
++const seals = (verified: number) => ({ valid: true, brokenAt: null, verified, unsealed: 0, unsealedAfterSealed: 0, firstUnsealedAfterSealed: null });
++const event = (org: number, seq: number, hash: string, prev: string | null) =>
++  ({ id: org * 100 + seq, organization_id: org, sequence_number: seq, record_hash: hash, previous_hash: prev });
++const store = (r: Awaited<ReturnType<typeof runAuditChainIntegrityCheck>>, name: string) => r.stores.find((s) => s.store === name);
++const tenantOf = (opts: unknown) => (opts as { tenantId?: number } | undefined)?.tenantId;
++const originalEnv = { ...process.env };
++
++beforeEach(() => {
++  vi.useFakeTimers({ toFake: ['Date'] });
++  vi.setSystemTime(RUN_AT);
++  process.env.AUDIT_HMAC_KEY = 'k'.repeat(32);
++  process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);
++  m.events = [];
++  m.orgs = [7, 8];
++  m.connections = 0;
++  m.released = 0;
++  m.auditEvents = new Map([[7, [event(7, 1, 'a1', null), event(7, 2, 'a2', 'a1')]], [8, [event(8, 1, 'b1', null)]]]);
++  m.verifyAuditChain.mockReset().mockImplementation(async (_c: unknown, opts: unknown) => walk(tenantOf(opts) === 7 ? 3 : 2));
++  m.verifyAuditChainSeals.mockReset().mockImplementation(async (_c: unknown, opts: unknown) => seals(tenantOf(opts) === 7 ? 3 : 2));
++  m.verifyAuditEventsChainSeals.mockReset().mockResolvedValue(seals(1));
++  m.verifyAuditChainAnchor.mockReset().mockResolvedValue(anchorOk);
++  m.writeAuditChainAnchor.mockReset().mockResolvedValue({ key: 'anchors/audit-chain/2026/10/30/b.json', organizations: 2 });
++  m.reportSecurityAlert.mockReset();
++  vi.spyOn(process, 'emitWarning').mockImplementation(() => undefined);
++});
++afterEach(() => {
++  vi.useRealTimers();
++  vi.restoreAllMocks();
++  process.env = { ...originalEnv };
++});
++
++describe('each organisation is verified in its own scope', () => {
++  it('every statement is inside a transaction: each connection begins before it reads, and every connection goes back', async () => {
++    await runAuditChainIntegrityCheck({ anchorStore: null });
++    const byConn = new Map<number, string[]>();
++    for (const e of m.events.filter((x) => x.conn > 0)) byConn.set(e.conn, [...(byConn.get(e.conn) ?? []), e.what]);
++    expect(byConn.size).toBeGreaterThanOrEqual(4); // the list, two organisations, the infrastructure snapshot
++    for (const statements of byConn.values()) {
++      expect(statements[0]).toMatch(/^BEGIN ISOLATION LEVEL REPEATABLE/);
++      expect(statements.at(-1)).toBe('ROLLBACK');
++    }
++    expect(m.released).toBe(m.connections);
++  });
++
++  it('reads each organisation\'s audit_logs chain and seals in its tenant scope, with no role, for that organisation only', async () => {
++    const result = await runAuditChainIntegrityCheck({ anchorStore: null });
++    for (const what of ['verifyAuditChain', 'verifyAuditChainSeals']) {
++      expect(m.events.filter((e) => e.what === what).map((e) => [e.tenantId, e.role, tenantOf(e.params?.[0])])).toEqual([
++        ['7', null, 7],
++        ['8', null, 8],
++      ]);
++    }
++    expect(result.rowsChecked).toBe(5);
++    expect(result.organizations).toBe(2);
++    expect(store(result, 'audit_logs.chain')).toMatchObject({ status: 'ok', rowsChecked: 5 });
++    expect(store(result, 'audit_logs.seals')).toMatchObject({ status: 'ok', rowsChecked: 5 });
++  });
++
++  it('reads each organisation\'s audit_events rows and seals in its own scope, filtered to it', async () => {
++    const result = await runAuditChainIntegrityCheck({ anchorStore: null });
++    const reads = m.events.filter((e) => e.what.startsWith('SELECT id, organization_id,'));
++    expect(reads.map((e) => [e.tenantId, e.role, e.params])).toEqual([['7', null, [7]], ['8', null, [8]]]);
++    expect(m.events.filter((e) => e.what === 'verifyAuditEventsChainSeals').map((e) => [e.tenantId, e.params?.[0]])).toEqual([
++      ['7', { organizationId: 7 }],
++      ['8', { organizationId: 8 }],
++    ]);
++    expect(store(result, 'audit_events.linkage')).toMatchObject({ status: 'ok', rowsChecked: 3 });
++  });
++
++  it('reads only the organisation list and the stores with no tenant key in the infrastructure scope', async () => {
++    await runAuditChainIntegrityCheck({ anchorStore: null });
++    const system = m.events.filter((e) => e.tenantId === '0');
++    expect(system.every((e) => /^(BEGIN|ROLLBACK|SELECT id FROM public\.organizations|SELECT to_regclass|SELECT \* FROM audit\.tamper_proof_log)/.test(e.what))).toBe(true);
++    expect(m.events.some((e) => e.tenantId === null && e.conn > 0)).toBe(false);
++  });
++});
++
++describe('what a per-organisation verdict says', () => {
++  it('a break in one organisation\'s chain is broken, names that organisation, and still counts the other\'s rows', async () => {
++    m.verifyAuditChain.mockImplementation(async (_c: unknown, opts: unknown) =>
++      tenantOf(opts) === 8
++        ? { ...walk(2), ok: false, brokenAt: { id: 'row-b2', expected: 'e', stored: 's', tenantId: 8 } }
++        : walk(3));
++    const result = await runAuditChainIntegrityCheck({ anchorStore: null });
++    expect(store(result, 'audit_logs.chain')).toMatchObject({ status: 'broken', firstFailure: 'row-b2', organizationId: 8, rowsChecked: 5 });
++    expect(result.brokenAt).toMatchObject({ id: 'row-b2' });
++    expect(result.failures).toContain('audit_logs.chain');
++    expect(m.reportSecurityAlert).toHaveBeenCalledOnce();
++  });
++
++  it('legacy rows the walk refuses in an organisation\'s scope are unverifiable for it, never ok and not an incident', async () => {
++    m.verifyAuditChain.mockImplementation(async (_c: unknown, opts: unknown) => {
++      if (tenantOf(opts) === 7) {
++        throw Object.assign(new Error('audit chain: tenant 7 has legacy (unsequenced) rows that may link to other tenants\' rows'), {
++          code: 'AUDIT_CHAIN_PARTIAL_VIEW',
++        });
++      }
++      return walk(2);
++    });
++    const result = await runAuditChainIntegrityCheck({ anchorStore: null });
++    expect(store(result, 'audit_logs.chain')).toMatchObject({ status: 'unverifiable', organizationId: 7 });
++    expect(store(result, 'audit_logs.chain')?.reason).toMatch(/tenant 7 has legacy/);
++    expect(result.ok).toBe(false);
++    expect(result.failures).not.toContain('audit_logs.chain');
++  });
++
++  it('a store in which no organisation has a row verified nothing: unverifiable, never ok', async () => {
++    m.verifyAuditChain.mockResolvedValue(walk(0));
++    m.verifyAuditChainSeals.mockResolvedValue(seals(0));
++    m.auditEvents = new Map();
++    const result = await runAuditChainIntegrityCheck({ anchorStore: null });
++    expect(store(result, 'audit_logs.chain')).toMatchObject({ status: 'unverifiable', rowsChecked: 0 });
++    expect(store(result, 'audit_logs.chain')?.reason).toMatch(/no organisation has a chained audit_logs row/);
++    expect(store(result, 'audit_logs.seals')).toMatchObject({ status: 'unverifiable' });
++    expect(store(result, 'audit_events.linkage')).toMatchObject({ status: 'unverifiable', reason: 'no entries: there is no chain to verify' });
++    expect(result.ok).toBe(false);
++  });
++
++  it('an organisation with no rows neither passes nor fails a store the others verify', async () => {
++    m.orgs = [7, 8, 9];
++    m.verifyAuditChain.mockImplementation(async (_c: unknown, opts: unknown) => walk(tenantOf(opts) === 9 ? 0 : 2));
++    const result = await runAuditChainIntegrityCheck({ anchorStore: null });
++    expect(store(result, 'audit_logs.chain')).toMatchObject({ status: 'ok', rowsChecked: 4 });
++    expect(store(result, 'audit_events.linkage')).toMatchObject({ status: 'ok', rowsChecked: 3 });
++  });
++});
++
++describe('the anchor is verified and written per organisation', () => {
++  const memoryStore = { location: 'memory://test', put: vi.fn(), latest: vi.fn() };
++
++  it('passes a scope opener that runs in the named organisation\'s own scope, inside a transaction', async () => {
++    let seen: Array<{ tenantId: string | null; role: string | null; first: string }> = [];
++    m.verifyAuditChainAnchor.mockImplementation(async (_c: unknown, _s: unknown, _now: unknown, opts: any) => {
++      expect(typeof opts?.inOrganizationScope).toBe('function');
++      const before = m.events.length;
++      await opts.inOrganizationScope(8, async (c: { query: (s: string) => Promise<unknown> }) => {
++        await c.query('SELECT to_regclass(\'probe\')');
++      });
++      const mine = m.events.slice(before);
++      seen = mine.filter((e) => e.what.startsWith('SELECT to_regclass')).map((e) => ({ tenantId: e.tenantId, role: e.role, first: mine[0].what }));
++      return anchorOk;
++    });
++    const result = await runAuditChainIntegrityCheck({ anchorStore: memoryStore as never });
++    expect(seen).toEqual([{ tenantId: '8', role: null, first: 'BEGIN ISOLATION LEVEL REPEATABLE' }]);
++    expect(store(result, 'audit_logs.anchor')).toMatchObject({ status: 'ok' });
++  });
++
++  it('writes the next anchor from every organisation\'s head, each read in its own scope', async () => {
++    const result = await runAuditChainIntegrityCheck({ anchorStore: memoryStore as never });
++    expect(m.writeAuditChainAnchor).toHaveBeenCalledOnce();
++    const opts = m.writeAuditChainAnchor.mock.calls[0][3];
++    expect(opts.organizations).toEqual([7, 8]);
++    expect(typeof opts.inOrganizationScope).toBe('function');
++    expect(result.anchorWrite).toMatchObject({ written: true, organizations: 2 });
++  });
++});
+diff --git a/server/jobs/__tests__/auditChainIntegritySweep.test.ts b/server/jobs/__tests__/auditChainIntegritySweep.test.ts
+index b654c0cc3..34a7c80ea 100644
+--- a/server/jobs/__tests__/auditChainIntegritySweep.test.ts
++++ b/server/jobs/__tests__/auditChainIntegritySweep.test.ts
+@@ -138,11 +138,21 @@ const anchorOk = {
+   organizations: 2, breaks: [], archived: [], reason: 'every anchored head is present and unchanged',
+ };
+ 
++/** The sweep's transaction statements, and its organisation list: organisation 1 (P-72 slice 1b). */
++function sweepFrame(sql: string): { rows: unknown[] } | null {
++  if (/^(BEGIN|ROLLBACK)\b/.test(sql)) return { rows: [] };
++  return sql.includes('FROM public.organizations') ? { rows: [{ id: 1 }] } : null;
++}
++
+ /** Rows the fake client returns per statement, keyed by a substring of the SQL. */
+ function answerQueries(overrides: Partial<Record<'regclass' | 'audit_events' | 'tamper_proof_log', unknown>> = {}) {
+   m.clientQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
++    // Every statement is inside a transaction, and the organisation list is read first (P-72 slice 1b).
++    const frame = sweepFrame(sql);
++    if (frame) return frame;
+     if (sql.includes('to_regclass')) {
+-      return overrides.regclass ?? { rows: [{ present: true }] };
++      const regclass = overrides.regclass;
++      return typeof regclass === 'function' ? regclass(params) : regclass ?? { rows: [{ present: true }] };
+     }
+     if (sql.includes('FROM audit_events')) {
+       return (
+@@ -233,7 +243,8 @@ describe('runAuditChainIntegrityCheck verifies every audit store', () => {
+     expect(m.assertAuditImmutabilityTriggers).toHaveBeenCalledOnce();
+     expect(emitWarning).not.toHaveBeenCalled();
+     expect(m.reportSecurityAlert).not.toHaveBeenCalled();
+-    expect(m.clientRelease).toHaveBeenCalledOnce();
++    // Every connection the sweep took went back: the list, organisation 1's snapshot, the infrastructure one.
++    expect(m.clientRelease).toHaveBeenCalledTimes(3);
+   });
+ 
+   it('a broken audit_logs HMAC seal raises the alert path with the failing index and no row content', async () => {
+@@ -324,12 +335,9 @@ describe('runAuditChainIntegrityCheck verifies every audit store', () => {
+   });
+ 
+   it('an absent audit.tamper_proof_log is reported as missing (an incident), never as verified', async () => {
+-    m.clientQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+-      if (sql.includes('to_regclass')) {
+-        return { rows: [{ present: params?.[0] !== 'audit.tamper_proof_log' }] };
+-      }
+-      if (sql.includes('FROM audit_events')) return { rows: [] };
+-      throw new Error(`unexpected query in test: ${sql}`);
++    answerQueries({
++      regclass: (params?: unknown[]) => ({ rows: [{ present: params?.[0] !== 'audit.tamper_proof_log' }] }),
++      audit_events: { rows: [] },
+     });
+     const result = await runAuditChainIntegrityCheck();
+     expect(result.stores.find((s) => s.store === 'audit.tamper_proof_log')).toMatchObject({ status: 'missing' });
+diff --git a/server/jobs/__tests__/retentionCron.legal-hold.test.ts b/server/jobs/__tests__/retentionCron.legal-hold.test.ts
+index 675a78fbc..67e6ca4c1 100644
+--- a/server/jobs/__tests__/retentionCron.legal-hold.test.ts
++++ b/server/jobs/__tests__/retentionCron.legal-hold.test.ts
+@@ -48,6 +48,8 @@ const tx = vi.hoisted(() => ({
+   }),
+   auditThrows: false,
+   programOrg: 7 as number | null,
++  /** The organisations the sweep enumerates. */
++  orgs: [7] as number[],
+ }));
+ 
+ /** Documents hard-deleted, by id. */
+@@ -82,7 +84,12 @@ vi.mock('../../db', () => {
+   };
+   return {
+     db: { select: (...a: unknown[]) => (select(...a), selectChain) },
+-    pool: { connect: vi.fn(async () => client), query: vi.fn() },
++    // The organisation list (P-72 slice 1b): the sweep runs once per organisation, in its own scope.
++    pool: {
++      connect: vi.fn(async () => client),
++      query: vi.fn(async (sql: string) =>
++        /FROM public\.organizations/i.test(String(sql)) ? { rows: tx.orgs.map((id) => ({ id, uuid: `00000000-0000-4000-8000-00000000000${id}` })) } : { rows: [] }),
++    },
+   };
+ });
+ vi.mock('../../services/auditService', () => ({
+@@ -94,6 +101,7 @@ vi.mock('../../services/auditService', () => ({
+ 
+ vi.mock('../../db/tenantStore', () => ({
+   runWithSystemTenantScope: (_label: string, fn: () => unknown) => fn(),
++  runWithTenantScope: (_scope: unknown, fn: () => unknown) => fn(),
+ }));
+ vi.mock('../../services/security-alerts', () => ({ reportSecurityAlert: vi.fn() }));
+ vi.mock('nodemailer', () => ({ default: { createTransport: () => ({ sendMail: vi.fn() }) } }));
+@@ -125,11 +133,12 @@ const SOFT_DELETE_POLICY = [
+ ];
+ 
+ /**
+- * The sweep reads, in order: expired documents, policies, holds.
+- * (`Promise.all`, so the order is the array order.)
++ * The sweep reads, in order: the policies (once), then each organisation's
++ * expired documents and its holds (`Promise.all`, so the order is the array
++ * order; P-72 slice 1b).
+  */
+ function arrange(opts: { docs?: unknown[]; policies?: unknown[]; holds?: unknown[] }) {
+-  selectResults = [opts.docs ?? [], opts.policies ?? [], opts.holds ?? []];
++  selectResults = [opts.policies ?? [], opts.docs ?? [], opts.holds ?? []];
+   selectCall = 0;
+   selectThrowsAt = null;
+ }
+@@ -142,6 +151,7 @@ beforeEach(() => {
+   tx.params.length = 0;
+   tx.auditThrows = false;
+   tx.programOrg = 7;
++  tx.orgs = [7];
+   selectResults = [];
+   selectCall = 0;
+   selectThrowsAt = null;
+@@ -225,7 +235,7 @@ describe('a hold that does not apply does not block', () => {
+ 
+ describe('the sweep fails closed when holds cannot be read', () => {
+   it('aborts having deleted nothing, rather than proceeding as if none existed', async () => {
+-    selectResults = [[expiredDoc()], HARD_DELETE_POLICY, []];
++    selectResults = [HARD_DELETE_POLICY, [expiredDoc()], []];
+     selectCall = 0;
+     selectThrowsAt = 2; // the holds read
+ 
+@@ -254,6 +264,7 @@ describe('a disposition is one transaction with its chained audit row (P1-22)',
+   });
+ 
+   it('archive then soft delete, in the same transaction, under the document\'s own organisation', async () => {
++    tx.orgs = [9]; // swept in organisation 9's own run
+     arrange({
+       docs: [expiredDoc({ organizationId: 9 })],
+       policies: [{ policyName: 'purge', archiveBeforeDelete: true, hardDelete: false }],
+diff --git a/server/jobs/__tests__/retentionCron.org-scope.test.ts b/server/jobs/__tests__/retentionCron.org-scope.test.ts
+new file mode 100644
+index 000000000..5dd655c4b
+--- /dev/null
++++ b/server/jobs/__tests__/retentionCron.org-scope.test.ts
+@@ -0,0 +1,237 @@
++/**
++ * The retention sweep runs once per organisation, in that organisation's own
++ * scope (P-72 slice 1b; docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/).
++ *
++ * ── The defect ───────────────────────────────────────────────────────────────
++ * runRetentionSweep read vault.documents, vault.retention_policies and
++ * vault.legal_holds in the system scope (tenant '0', no organisation uuid).
++ * vault.documents decides through core.can_access_program on the organisation
++ * uuid, so on a production-shaped database the sweep scanned 0 of 2 expired
++ * documents: the Vault's retention never ran. It saw the legal holds only
++ * through the platform arm of their policy, which P-72 removes.
++ *
++ * ── What is asserted ─────────────────────────────────────────────────────────
++ * - Each organisation's documents and holds are read inside its own scope
++ *   (tenant id AND organisation uuid, no role), never the system scope; only
++ *   the organisation list and the policies (no tenant key) are read there.
++ * - The documents read is the programmes the organisation owns; the holds read
++ *   is the organisation's own. A hold is placed only by the programme's owner
++ *   (routes/vault-legal-holds.ts targetOwned), so the owner's scope sees every
++ *   hold that can cover what it sweeps.
++ * - A document naming another organisation than its programme's owner is left
++ *   in place and counted: no one scope reads the owner's holds and can audit
++ *   the disposal under the document's own organisation.
++ * - An organisation with no uuid is not swept, and the job says so.
++ * The production-shaped proof (real policies, a non-superuser owner, with and
++ * without the platform arm) is the slice's probe, filed with its evidence.
++ */
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++import { PgDialect } from 'drizzle-orm/pg-core';
++import { getTableName, type SQL } from 'drizzle-orm';
++
++type Scope = { tenantId: string; orgUuid?: string | null; role?: string | null; source?: string; caller?: string; system?: true };
++
++const h = vi.hoisted(() => ({
++  scope: null as Scope | null,
++  scopes: [] as Scope[],
++  /** Every db.select(): the table, the rendered WHERE, and the scope it ran in. */
++  reads: [] as Array<{ table: string; sql: string; params: unknown[]; scope: Scope | null }>,
++  /** Every statement on a disposition client, with the scope it ran in. */
++  statements: [] as Array<{ text: string; scope: Scope | null }>,
++  orgs: [] as Array<{ id: number; uuid: string | null }>,
++  docs: new Map<string, unknown[]>(),
++  holds: new Map<string, unknown[]>(),
++  programOrg: 7 as number | null,
++  audit: vi.fn(async (_client: unknown, _entry: unknown, _tenant?: unknown, _resource?: unknown) => undefined),
++  alert: vi.fn((..._a: unknown[]) => undefined),
++}));
++
++function enter<T>(scope: Scope, fn: () => T): T {
++  h.scopes.push(scope);
++  const outer = h.scope;
++  h.scope = scope;
++  const result = fn();
++  if (result && typeof (result as { then?: unknown }).then === 'function') {
++    return (result as unknown as Promise<unknown>).finally(() => { h.scope = outer; }) as unknown as T;
++  }
++  h.scope = outer;
++  return result;
++}
++
++vi.mock('../../db/tenantStore', () => ({
++  runWithSystemTenantScope: (caller: string, fn: () => unknown) => enter({ tenantId: '0', role: 'app_super_admin', caller, system: true }, fn),
++  runWithTenantScope: (scope: Scope, fn: () => unknown) => enter(scope, fn),
++}));
++
++vi.mock('../../db', async () => {
++  const dialect = new PgDialect();
++  const select = () => {
++    let table = '';
++    let where: SQL | undefined;
++    const chain: any = {
++      from: (t: any) => { table = getTableName(t); return chain; },
++      where: (w: SQL) => { where = w; return chain; },
++      then: (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) => {
++        const q = where ? dialect.sqlToQuery(where) : { sql: '', params: [] };
++        h.reads.push({ table, sql: q.sql, params: q.params, scope: h.scope });
++        const tenant = h.scope?.tenantId ?? '';
++        const rows = table === 'documents' ? h.docs.get(tenant) ?? [] : table === 'legal_holds' ? h.holds.get(tenant) ?? [] : [];
++        return Promise.resolve(rows).then(resolve, reject);
++      },
++    };
++    return chain;
++  };
++  const client = {
++    query: vi.fn(async (text: string) => {
++      const s = String(text).trim();
++      h.statements.push({ text: s.split(/\s+/).slice(0, 3).join(' '), scope: h.scope });
++      if (/FROM regulatory_programs/i.test(s)) return { rows: h.programOrg === null ? [] : [{ organization_id: h.programOrg }], rowCount: 1 };
++      return { rows: [], rowCount: 1 };
++    }),
++    release: vi.fn(),
++  };
++  return {
++    db: { select },
++    pool: {
++      connect: vi.fn(async () => client),
++      query: vi.fn(async (text: string) => {
++        h.statements.push({ text: String(text).trim().split(/\s+/).slice(0, 3).join(' '), scope: h.scope });
++        return /FROM public\.organizations/i.test(String(text)) ? { rows: h.orgs } : { rows: [] };
++      }),
++    },
++  };
++});
++vi.mock('../../services/auditService', () => ({
++  writeChainedAuditRow: (client: unknown, entry: unknown, tenant?: unknown, resource?: unknown) => h.audit(client, entry, tenant, resource),
++}));
++vi.mock('../../services/security-alerts', () => ({ reportSecurityAlert: (...a: unknown[]) => h.alert(...a) }));
++vi.mock('../../services/emailService', () => ({ sendGenericEmail: vi.fn(async () => true) }));
++vi.mock('node-cron', () => ({ default: { schedule: vi.fn() } }));
++
++import { runRetentionJob, runRetentionSweep } from '../retentionCron';
++
++const UUID_A = '73629479-bb69-405d-9ff0-b7b8150eca13';
++const UUID_B = 'c63e801a-76ba-4b5e-be47-9d6792367291';
++const PROGRAM_A = '11111111-1111-1111-1111-111111111111';
++const PROGRAM_B = '33333333-3333-3333-3333-333333333333';
++const expired = (id: string, programId: string, over: Record<string, unknown> = {}) => ({
++  id, programId, documentCode: id, documentTitle: id, documentType: 'protocol',
++  retentionPolicy: null, retentionUntil: '2020-01-01', deletedAt: null, ...over,
++});
++const readsOf = (table: string) => h.reads.filter((r) => r.table === table);
++
++beforeEach(() => {
++  h.scope = null;
++  h.scopes = [];
++  h.reads = [];
++  h.statements = [];
++  h.orgs = [{ id: 7, uuid: UUID_A }, { id: 8, uuid: UUID_B }];
++  h.docs = new Map();
++  h.holds = new Map();
++  h.programOrg = 7;
++  h.audit.mockClear();
++  h.alert.mockClear();
++});
++
++describe('each organisation is swept in its own scope', () => {
++  it('reads each organisation\'s documents and holds in its tenant id AND uuid scope, with no role', async () => {
++    const summary = await runRetentionSweep();
++
++    expect(summary).toMatchObject({ organizations: 2, organizationsNotSwept: 0 });
++    for (const table of ['documents', 'legal_holds']) {
++      expect(readsOf(table).map((r) => r.scope)).toEqual([
++        expect.objectContaining({ tenantId: '7', orgUuid: UUID_A, role: null, source: 'job' }),
++        expect.objectContaining({ tenantId: '8', orgUuid: UUID_B, role: null, source: 'job' }),
++      ]);
++      // Never the system scope: there, vault.documents admits nothing and the holds only through the platform arm.
++      expect(readsOf(table).some((r) => r.scope?.system)).toBe(false);
++    }
++    // Only the organisation list and the policies (no tenant key) are read in the system scope.
++    expect(readsOf('retention_policies').map((r) => r.scope?.system)).toEqual([true]);
++    expect(h.statements.filter((s) => s.text.startsWith('SELECT id, uuid::text')).map((s) => s.scope?.system)).toEqual([true]);
++  });
++
++  it('reads the programmes the organisation owns, and only its own active holds', async () => {
++    await runRetentionSweep();
++
++    const [docsA] = readsOf('documents');
++    expect(docsA.sql).toMatch(/"program_id" IN \(SELECT rp\.id FROM regulatory_programs rp WHERE rp\.organization_id = \$\d+\)/);
++    expect(docsA.params).toContain(7);
++    const [holdsA] = readsOf('legal_holds');
++    expect(holdsA.sql).toMatch(/"lifted_at" is null/i);
++    expect(holdsA.sql).toMatch(/"organization_id" = \$\d+/);
++    expect(holdsA.params).toEqual([7]);
++  });
++
++  it('disposes of each organisation\'s document inside that organisation\'s scope, audited under it', async () => {
++    h.docs.set('8', [expired('doc-b', PROGRAM_B)]);
++    h.programOrg = 8;
++
++    const summary = await runRetentionSweep();
++
++    expect(summary).toMatchObject({ scanned: 1, softDeleted: 1, errors: 0 });
++    const tx = h.statements.filter((s) => ['BEGIN', 'COMMIT'].includes(s.text) || s.text.startsWith('UPDATE vault.documents'));
++    expect(tx.map((s) => [s.text.split(' ')[0], s.scope?.tenantId, s.scope?.orgUuid])).toEqual([
++      ['BEGIN', '8', UUID_B], ['UPDATE', '8', UUID_B], ['COMMIT', '8', UUID_B],
++    ]);
++    expect(h.audit.mock.calls[0][2]).toBe(8);
++  });
++
++  it('an organisation\'s hold stops disposition of its own expired document, and not another organisation\'s', async () => {
++    h.docs.set('7', [expired('doc-a', PROGRAM_A)]);
++    h.docs.set('8', [expired('doc-b', PROGRAM_B)]);
++    h.holds.set('7', [{ programId: PROGRAM_A, documentId: null }]);
++    h.programOrg = 8;
++
++    const summary = await runRetentionSweep();
++
++    expect(summary).toMatchObject({ scanned: 2, heldByLegalHold: 1, softDeleted: 1, errors: 0 });
++    expect(h.audit.mock.calls.map((c) => c[3])).toEqual(['doc-b']);
++  });
++});
++
++describe('what the sweep refuses to do in an organisation\'s scope', () => {
++  it('leaves a document that names another organisation than its programme\'s owner, counts it, and the job is not clean', async () => {
++    h.orgs = [{ id: 7, uuid: UUID_A }];
++    h.docs.set('7', [expired('doc-x', PROGRAM_A, { organizationId: 8 })]);
++
++    const summary = await runRetentionSweep();
++
++    expect(summary).toMatchObject({ scanned: 1, organizationMismatch: 1, softDeleted: 0, archived: 0, errors: 0 });
++    expect(h.statements.some((s) => s.text === 'BEGIN')).toBe(false);
++    expect(h.audit).not.toHaveBeenCalled();
++    await expect(runRetentionJob()).resolves.toBe(false);
++  });
++
++  it('a document resolved to another organisation at disposal is rolled back, not disposed in this scope', async () => {
++    h.orgs = [{ id: 7, uuid: UUID_A }];
++    h.docs.set('7', [expired('doc-y', PROGRAM_A)]);
++    h.programOrg = 8; // the programme's row names organisation 8 by the time the transaction reads it
++
++    const summary = await runRetentionSweep();
++
++    expect(summary).toMatchObject({ softDeleted: 0, errors: 1 });
++    expect(h.statements.map((s) => s.text)).toContain('ROLLBACK');
++    expect(h.statements.some((s) => s.text.startsWith('UPDATE vault.documents'))).toBe(false);
++    expect(h.audit).not.toHaveBeenCalled();
++  });
++
++  it('an organisation with no uuid is not swept: nothing is read in a uuid-less scope, and the job fails with an alert', async () => {
++    h.orgs = [{ id: 7, uuid: UUID_A }, { id: 9, uuid: null }];
++
++    const summary = await runRetentionSweep();
++
++    expect(summary).toMatchObject({ organizations: 1, organizationsNotSwept: 1 });
++    expect(h.scopes.filter((s) => !s.system).map((s) => s.tenantId)).toEqual(['7']);
++    await expect(runRetentionJob()).resolves.toBe(false);
++    expect(h.alert).toHaveBeenCalledWith(expect.objectContaining({ kind: 'retention_sweep_failed' }));
++  });
++
++  it('an operator can sweep the organisations it names, and only those', async () => {
++    h.orgs = [{ id: 8, uuid: UUID_B }];
++    await runRetentionSweep({ organizationIds: [8] });
++    const listed = (await import('../../db')).pool.query as unknown as { mock: { calls: unknown[][] } };
++    expect(listed.mock.calls.at(-1)?.[1]).toEqual([[8]]);
++    expect(h.scopes.filter((s) => !s.system).map((s) => s.tenantId)).toEqual(['8']);
++  });
++});
+diff --git a/server/jobs/__tests__/retentionCron.policies.test.ts b/server/jobs/__tests__/retentionCron.policies.test.ts
+index cfa50a573..336a9535b 100644
+--- a/server/jobs/__tests__/retentionCron.policies.test.ts
++++ b/server/jobs/__tests__/retentionCron.policies.test.ts
+@@ -58,12 +58,18 @@ vi.mock('../../db', () => {
+     }),
+     release: vi.fn(),
+   };
+-  return { db: { select: () => selectChain }, pool: { connect: vi.fn(async () => client), query: vi.fn() } };
++  // The organisation list (P-72 slice 1b): the sweep runs once per organisation, in its own scope.
++  const query = vi.fn(async (sql: string) =>
++    /FROM public\.organizations/i.test(String(sql)) ? { rows: [{ id: 7, uuid: '00000000-0000-4000-8000-000000000007' }] } : { rows: [] });
++  return { db: { select: () => selectChain }, pool: { connect: vi.fn(async () => client), query } };
+ });
+ vi.mock('../../services/auditService', () => ({
+   writeChainedAuditRow: (client: unknown, entry: unknown, tenant?: unknown, resource?: unknown) => tx.audit(client, entry, tenant, resource),
+ }));
+-vi.mock('../../db/tenantStore', () => ({ runWithSystemTenantScope: (_label: string, fn: () => unknown) => fn() }));
++vi.mock('../../db/tenantStore', () => ({
++  runWithSystemTenantScope: (_label: string, fn: () => unknown) => fn(),
++  runWithTenantScope: (_scope: unknown, fn: () => unknown) => fn(),
++}));
+ vi.mock('../../services/security-alerts', () => ({ reportSecurityAlert: (...a: unknown[]) => mail.reportSecurityAlert(...a) }));
+ vi.mock('nodemailer', () => ({
+   default: {
+@@ -90,10 +96,11 @@ const doc = (id: string, over: Record<string, unknown> = {}) => ({
+   ...over,
+ });
+ const policy = (policyName: string, archiveBeforeDelete: boolean, hardDelete: boolean) => ({ policyName, archiveBeforeDelete, hardDelete, active: true });
++/** The sweep reads, in order: the policies (once), then the organisation's expired documents and its holds. */
+ function arrange(opts: { docs?: unknown[]; policies?: unknown[]; holds?: unknown[]; enumerationFails?: boolean }) {
+-  selectResults = [opts.docs ?? [], opts.policies ?? [], opts.holds ?? []];
++  selectResults = [opts.policies ?? [], opts.docs ?? [], opts.holds ?? []];
+   selectCall = 0;
+-  selectThrowsAt = opts.enumerationFails ? 0 : null;
++  selectThrowsAt = opts.enumerationFails ? 1 : null; // the organisation's expired-documents read
+ }
+ const auditEntries = () => tx.audit.mock.calls.map(c => c[1] as { action: string; resourceId: string; details: Record<string, unknown> });
+ 
+@@ -135,7 +142,7 @@ describe('runRetentionSweep — per-policy processing', () => {
+     arrange({ docs: [doc('doc-raced'), doc('doc-fresh')] });
+     tx.alreadyGone.add('doc-raced');
+     const summary = await runRetentionSweep();
+-    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 1, errors: 0 });
++    expect(summary).toEqual({ organizations: 1, organizationsNotSwept: 0, scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, organizationMismatch: 0, alreadyDisposed: 1, errors: 0 });
+     // Its archive insert ran inside the transaction and was rolled back with it.
+     expect(tx.statements.filter(t => t === 'ROLLBACK')).toHaveLength(1);
+     expect(tx.statements.filter(t => t === 'COMMIT')).toHaveLength(1);
+@@ -145,7 +152,7 @@ describe('runRetentionSweep — per-policy processing', () => {
+   it('falls back to archive + soft-delete for a document with no policy, and never hard-deletes it', async () => {
+     arrange({ docs: [doc('doc-nopolicy')] });
+     const summary = await runRetentionSweep();
+-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
++    expect(summary).toEqual({ organizations: 1, organizationsNotSwept: 0, scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, organizationMismatch: 0, alreadyDisposed: 0, errors: 0 });
+     expect(archived).toEqual(['doc-nopolicy']);
+     expect(softDeleted).toEqual(['doc-nopolicy']);
+     expect(deleted).toEqual([]);
+@@ -156,7 +163,7 @@ describe('runRetentionSweep — per-policy processing', () => {
+   it('uses the default (archive + soft-delete) when the named policy is unknown or inactive', async () => {
+     arrange({ docs: [doc('doc-ghost', { retentionPolicy: 'no-such-policy' })], policies: [policy('something-else', true, true)] });
+     const summary = await runRetentionSweep();
+-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
++    expect(summary).toEqual({ organizations: 1, organizationsNotSwept: 0, scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, organizationMismatch: 0, alreadyDisposed: 0, errors: 0 });
+     expect(deleted).toEqual([]);
+     expect(auditEntries()[0].details).toMatchObject({ policyMatched: false, retentionPolicy: 'no-such-policy' });
+   });
+@@ -172,7 +179,7 @@ describe('runRetentionSweep — per-policy processing', () => {
+       policies: [policy('purge', true, true), policy('keep-row', true, false), policy('no-archive', false, false)],
+     });
+     const summary = await runRetentionSweep();
+-    expect(summary).toEqual({ scanned: 3, archived: 1, softDeleted: 2, destructionRefused: 1, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
++    expect(summary).toEqual({ organizations: 1, organizationsNotSwept: 0, scanned: 3, archived: 1, softDeleted: 2, destructionRefused: 1, heldByLegalHold: 0, organizationMismatch: 0, alreadyDisposed: 0, errors: 0 });
+     expect(deleted).toEqual([]);
+     expect(archived).toEqual(['doc-keep']);
+     expect(softDeleted).toEqual(['doc-keep', 'doc-noarch']);
+@@ -189,7 +196,7 @@ describe('runRetentionSweep — failure semantics', () => {
+     arrange({ docs: [doc('doc-bad'), doc('doc-good')] });
+     tx.archiveFailFor = new Set(['doc-bad']);
+     const summary = await runRetentionSweep();
+-    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 1 });
++    expect(summary).toEqual({ organizations: 1, organizationsNotSwept: 0, scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, organizationMismatch: 0, alreadyDisposed: 0, errors: 1 });
+     expect(archived).toEqual(['doc-good']);
+     expect(softDeleted).toEqual(['doc-good']);
+     expect(auditEntries().map(e => e.resourceId)).toEqual(['doc-good']);
+diff --git a/server/jobs/auditChainIntegritySweep.ts b/server/jobs/auditChainIntegritySweep.ts
+index 7d66b07e1..9c1383f43 100644
+--- a/server/jobs/auditChainIntegritySweep.ts
++++ b/server/jobs/auditChainIntegritySweep.ts
+@@ -66,6 +66,29 @@
+  * (security-alerts.ts) with counts and the first failing identifier, never row
+  * content. Unverifiable is logged as a warning and is never reported as ok.
+  *
++ * Each organisation in its own scope (P-72 slice 1b, 2026-10-30;
++ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/). Until then one pooled
++ * connection, in the system scope, sent every statement outside a
++ * transaction, and the pool applies a scope only when a transaction begins:
++ * the connection saw no tenant, connectionIsTenantScoped said so, and on a
++ * production-shaped database the sweep answered ok:false over 0 rows every
++ * day, with the platform arm or without it. Now the organisations are listed
++ * (an open read), and each one's audit_logs chain, seals and anchored head,
++ * and its audit_events links and seals, are verified on a read-only snapshot
++ * in that organisation's own scope (runWithOrgJobScope), where its policies
++ * admit every one of its rows and nothing of another's; the verdicts are
++ * merged per store, and `organizationId` names where the worst one was found
++ * (auditChainOrganizationVerdicts.ts).
++ * Only the stores with no tenant key (audit.tamper_proof_log, the triggers,
++ * the archive ledger) are read on the infrastructure connection, itself inside
++ * a transaction. Not verified here: audit_logs rows with no tenant, which no
++ * organisation's scope admits, and an organisation's legacy (pre-chain_seq)
++ * rows, which link across tenants: the walk refuses them on a tenant-scoped
++ * connection, so that organisation's chain and seals are `unverifiable`. Both
++ * wait for the platform door the design names for the cross-tenant walk
++ * (docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md §3.4). A store in which
++ * no organisation has a row is `unverifiable`, never ok: nothing was verified.
++ *
+  * Read-only and defensive: every store is checked even when another fails,
+  * and nothing is thrown, so the sweep cannot affect request handling. Part 11
+  * tamper-evidence monitoring defaults ON in production (opt out explicitly
+@@ -79,12 +102,7 @@
+ 
+ import cron from 'node-cron';
+ import { pool } from '../db.js';
+-import { verifyAuditEventsChainSeals, type PoolClient } from '../services/audit/chain.js';
+-import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service.js';
+-import {
+-  summarizeChainLinkage,
+-  type AuditEventChainRow,
+-} from '../services/audit/chainIntegrityMonitor.js';
++import type { PoolClient } from '../services/audit/chain.js';
+ import { assertAuditImmutabilityTriggers } from '../services/audit/audit-immutability-triggers.js';
+ import { verifyTamperProofLogRows, type TamperProofLogRow } from '../lib/tamper-proof-audit.js';
+ import {
+@@ -93,13 +111,22 @@ import {
+   writeAuditChainAnchor,
+   type AnchorBreak,
+   type AuditAnchorStore,
++  type InOrganizationScope,
+ } from '../services/audit/chain-anchor.js';
++import {
++  auditEventsVerdicts,
++  guarded,
++  mergeOrganizationVerdicts,
++  verifyOrganization,
++  type OrganizationSweep,
++} from './auditChainOrganizationVerdicts.js';
+ import { reportSecurityAlert } from '../services/security-alerts.js';
+ import { resolveAuditChainSweepPosture } from '../startup/audit-enforcement.js';
+ import { createScopedLogger } from '../utils/logger.js';
+-import { runWithSystemTenantScope } from '../db/tenantStore';
++import { runWithOrgJobScope, runWithSystemTenantScope } from '../db/tenantStore';
+ import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
+ 
++const CALLER = 'audit-chain-integrity-sweep';
+ const logger = createScopedLogger('audit-chain-integrity');
+ 
+ const HOUR_MS = 60 * 60 * 1000;
+@@ -136,6 +163,8 @@ export interface AuditStoreVerdict {
+   rowsChecked?: number;
+   /** The first failing identifier — a row id, a sequence number, an index, a trigger name. Never content. */
+   firstFailure?: string;
++  /** For a store verified per organisation: the organisation the verdict's firstFailure and reason come from. */
++  organizationId?: number;
+   reason?: string;
+ }
+ 
+@@ -165,6 +194,8 @@ export interface AuditChainCheckResult {
+   brokenAt?: { id: string; expected: string; stored: string };
+   /** Set when the sweep itself could not run (no connection). */
+   error?: string;
++  /** Organisations whose stores were verified, each in its own scope. */
++  organizations?: number;
+   stores: AuditStoreVerdict[];
+   /** Stores whose status is an incident: broken, missing or error. */
+   failures: AuditStoreName[];
+@@ -188,179 +219,6 @@ async function tableExists(client: PoolClient, qualified: string): Promise<boole
+   return r.rows[0]?.present === true;
+ }
+ 
+-/** Run one store's verifier; a throw is that store's `error`, not the sweep's. */
+-async function guarded(
+-  store: AuditStoreName,
+-  fn: () => Promise<AuditStoreVerdict>,
+-): Promise<AuditStoreVerdict> {
+-  try {
+-    return await fn();
+-  } catch (err) {
+-    return { store, status: 'error', reason: err instanceof Error ? err.message : String(err) };
+-  }
+-}
+-
+-/** audit_logs: the sha256 chain and the HMAC seals, through the canonical integrity service. */
+-async function verifyAuditLogsStore(client: PoolClient): Promise<{
+-  verdicts: [AuditStoreVerdict, AuditStoreVerdict];
+-  rowsChecked: number;
+-  brokenAt?: AuditChainCheckResult['brokenAt'];
+-}> {
+-  try {
+-    const integrity = await verifyAuditIntegrity(client);
+-    const rowsChecked = integrity.chain.rowsChecked;
+-    const chain: AuditStoreVerdict = integrity.chain.ok
+-      ? { store: 'audit_logs.chain', status: 'ok', rowsChecked }
+-      : {
+-          store: 'audit_logs.chain',
+-          status: 'broken',
+-          rowsChecked,
+-          firstFailure: integrity.chain.brokenAt?.id,
+-          reason: 'sha256_chain mismatch',
+-        };
+-    const s = integrity.seals;
+-    const seals: AuditStoreVerdict = !s.checked
+-      ? { store: 'audit_logs.seals', status: 'unverifiable', reason: s.reason }
+-      : !s.valid
+-        ? {
+-            store: 'audit_logs.seals',
+-            status: 'broken',
+-            firstFailure: String(s.brokenAt),
+-            reason: 'hmac_seal does not verify',
+-          }
+-        : s.unsealedAfterSealed > 0
+-          ? {
+-              store: 'audit_logs.seals',
+-              status: 'unverifiable',
+-              rowsChecked: s.verified,
+-              firstFailure: s.firstUnsealedAfterSealed ?? undefined,
+-              reason: `${s.unsealedAfterSealed} row(s) written after sealing began carry no hmac_seal; their seals could not be verified`,
+-            }
+-          : {
+-              store: 'audit_logs.seals',
+-              status: 'ok',
+-              rowsChecked: s.verified,
+-              ...(s.unsealed > 0
+-                ? { reason: `${s.unsealed} row(s) predate sealing and are covered by the sha256 chain only` }
+-                : {}),
+-            };
+-    const brokenAt = integrity.chain.brokenAt
+-      ? {
+-          id: integrity.chain.brokenAt.id,
+-          expected: integrity.chain.brokenAt.expected,
+-          stored: integrity.chain.brokenAt.stored,
+-        }
+-      : undefined;
+-    return { verdicts: [chain, seals], rowsChecked, brokenAt };
+-  } catch (err) {
+-    const reason = err instanceof Error ? err.message : String(err);
+-    return {
+-      verdicts: [
+-        { store: 'audit_logs.chain', status: 'error', reason },
+-        { store: 'audit_logs.seals', status: 'error', reason },
+-      ],
+-      rowsChecked: 0,
+-    };
+-  }
+-}
+-
+-/** audit_events: per-org linkage (the monitor's walk) and the HMAC seals. */
+-async function verifyAuditEventsStore(client: PoolClient): Promise<AuditStoreVerdict[]> {
+-  if (!(await tableExists(client, 'public.audit_events'))) {
+-    const reason = 'table absent';
+-    return [
+-      { store: 'audit_events.linkage', status: 'missing', reason },
+-      { store: 'audit_events.seals', status: 'missing', reason },
+-    ];
+-  }
+-
+-  const linkage = await guarded('audit_events.linkage', async () => {
+-    const { rows } = await client.query(
+-      `SELECT id, organization_id, sequence_number, record_hash, previous_hash
+-         FROM audit_events
+-        ORDER BY organization_id, sequence_number ASC`,
+-    );
+-    const { broken, hashedEntries, unhashedEntries } = summarizeChainLinkage(
+-      rows as unknown as AuditEventChainRow[],
+-    );
+-    const rowsChecked = rows.length;
+-    if (broken.length > 0) {
+-      return {
+-        store: 'audit_events.linkage',
+-        status: 'broken',
+-        rowsChecked,
+-        firstFailure: String(broken[0].id),
+-        reason: `${broken.length} broken link(s)`,
+-      };
+-    }
+-    // Precedence as the monitor applies it: a break outranks "cannot tell",
+-    // and "cannot tell" outranks ok. Only a chain in which EVERY row carried a
+-    // record_hash may be called verified (WO-16C finding 72).
+-    if (rowsChecked === 0) {
+-      return { store: 'audit_events.linkage', status: 'unverifiable', rowsChecked, reason: 'no entries: there is no chain to verify' };
+-    }
+-    if (hashedEntries === 0) {
+-      return {
+-        store: 'audit_events.linkage',
+-        status: 'unverifiable',
+-        rowsChecked,
+-        reason: 'no row carries a record_hash: the chain has never been hashed, so no link could be checked',
+-      };
+-    }
+-    if (unhashedEntries > 0) {
+-      return {
+-        store: 'audit_events.linkage',
+-        status: 'unverifiable',
+-        rowsChecked,
+-        reason: `${unhashedEntries} of ${rowsChecked} rows carry no record_hash; the links through them could not be checked`,
+-      };
+-    }
+-    return { store: 'audit_events.linkage', status: 'ok', rowsChecked };
+-  });
+-
+-  const seals = await guarded('audit_events.seals', async () => {
+-    if (!process.env.AUDIT_HMAC_KEY) {
+-      return {
+-        store: 'audit_events.seals',
+-        status: 'unverifiable',
+-        reason: 'AUDIT_HMAC_KEY not configured; HMAC seals cannot be verified',
+-      };
+-    }
+-    const result = await verifyAuditEventsChainSeals(client);
+-    if (!result.valid) {
+-      return {
+-        store: 'audit_events.seals',
+-        status: 'broken',
+-        firstFailure: String(result.brokenAt),
+-        reason: 'hmac_seal does not verify',
+-      };
+-    }
+-    // Rows exist and none is sealed: the audit_events seal writer has not
+-    // shipped (migrations 20260617_audit_events_hmac_seal.sql), so nothing was
+-    // verified. This read "ok" every day.
+-    if (result.verified === 0 && result.unsealed > 0) {
+-      return {
+-        store: 'audit_events.seals',
+-        status: 'unverifiable',
+-        rowsChecked: 0,
+-        reason: `none of the ${result.unsealed} chained rows carries an hmac_seal, so no seal was verified`,
+-      };
+-    }
+-    if (result.unsealedAfterSealed > 0) {
+-      return {
+-        store: 'audit_events.seals',
+-        status: 'unverifiable',
+-        rowsChecked: result.verified,
+-        firstFailure: result.firstUnsealedAfterSealed ?? undefined,
+-        reason: `${result.unsealedAfterSealed} row(s) written after their organisation's sealing began carry no hmac_seal`,
+-      };
+-    }
+-    return { store: 'audit_events.seals', status: 'ok', rowsChecked: result.verified };
+-  });
+-
+-  return [linkage, seals];
+-}
+-
+ /** audit.tamper_proof_log: the Part 11 store, walked with the writer's own pure verifier. */
+ async function verifyTamperProofStore(client: PoolClient): Promise<AuditStoreVerdict> {
+   const store = 'audit.tamper_proof_log';
+@@ -419,16 +277,21 @@ function anchorAgeOf(anchorKey: string | null, anchoredAt: string | null): Ancho
+   return { anchorKey, anchoredAt, hours, staleAfterHours: ANCHOR_STALE_AFTER_HOURS };
+ }
+ 
+-/** audit_logs against the latest chain-head anchor in the evidence bucket (P0-8, DP-04), and how old that anchor is. */
++/**
++ * audit_logs against the latest chain-head anchor in the evidence bucket (P0-8,
++ * DP-04), and how old that anchor is. Each anchored head is compared in its own
++ * organisation's scope (`inScope`); `client` reads only the archive ledger.
++ */
+ async function verifyAnchorStore(
+   client: PoolClient,
+   anchorStore: AuditAnchorStore | null,
++  inScope: InOrganizationScope,
+ ): Promise<{ verdict: AuditStoreVerdict; age: AnchorAge | null }> {
+   const store = 'audit_logs.anchor';
+   if (!anchorStore) return { verdict: { store, status: 'unverifiable', reason: ANCHOR_NOT_CONFIGURED }, age: null };
+   let age: AnchorAge | null = null;
+   const verdict = await guarded(store, async () => {
+-    const v = await verifyAuditChainAnchor(client, anchorStore);
++    const v = await verifyAuditChainAnchor(client, anchorStore, new Date(), { inOrganizationScope: inScope });
+     age = anchorAgeOf(v.anchorKey, v.anchoredAt);
+     if (v.status === 'broken') {
+       return { store, status: 'broken', firstFailure: v.breaks[0]?.rowId, reason: v.breaks.map(describeAnchorBreak).join('; ') };
+@@ -456,12 +319,15 @@ async function verifyAnchorStore(
+ /**
+  * Anchor every organisation's head, only over a run that found no incident.
+  * `blocking` is every incident but a stale anchor: today's anchor is what ends
+- * that one.
++ * that one. Each head is read in its own organisation's scope; `at` is taken
++ * before the first is read (chain-anchor.ts writeAuditChainAnchor).
+  */
+ async function writeAnchor(
+   client: PoolClient,
+   anchorStore: AuditAnchorStore | null,
+   failures: AuditStoreName[],
++  organizations: readonly number[],
++  inScope: InOrganizationScope,
+ ): Promise<AnchorWriteOutcome> {
+   if (!anchorStore) return { written: false, reason: ANCHOR_NOT_CONFIGURED };
+   if (failures.length > 0) {
+@@ -471,8 +337,8 @@ async function writeAnchor(
+     };
+   }
+   try {
+-    const { key, organizations } = await writeAuditChainAnchor(client, anchorStore);
+-    return { written: true, key, organizations };
++    const written = await writeAuditChainAnchor(client, anchorStore, new Date(), { inOrganizationScope: inScope, organizations });
++    return { written: true, key: written.key, organizations: written.organizations };
+   } catch (err) {
+     const reason = `anchor write failed: ${err instanceof Error ? err.message : String(err)}`;
+     logger.error(`Audit chain head NOT anchored to ${anchorStore.location}: ${reason}`);
+@@ -543,15 +409,79 @@ function reportSweepOutcome(
+   }
+ }
+ 
+-/** One sweep on one connection: verify every store, then anchor a clean state. */
+-async function sweepOnce(client: PoolClient, anchorStore: AuditAnchorStore | null): Promise<AuditChainCheckResult> {
+-  const auditLogs = await verifyAuditLogsStore(client);
+-  const anchor = await verifyAnchorStore(client, anchorStore);
+-  const auditEvents = await verifyAuditEventsStore(client);
++/**
++ * A read-only snapshot on one pooled connection, in the caller's scope: the
++ * pool applies that scope when the transaction begins. Every statement the
++ * sweep sends is inside one; outside a transaction the pool applies none.
++ */
++async function onSnapshot<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
++  const client = await pool.connect();
++  let rollbackFailed: Error | undefined;
++  try {
++    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
++    try {
++      return await fn(client as unknown as PoolClient);
++    } finally {
++      await client.query('ROLLBACK').catch((err: unknown) => {
++        rollbackFailed = err instanceof Error ? err : new Error(String(err));
++      });
++    }
++  } finally {
++    // A connection whose transaction could not be ended is not returned to the pool.
++    client.release(rollbackFailed);
++  }
++}
++
++/** `fn` on a read-only snapshot in ONE organisation's own scope: its tenant id, no role. */
++const inOrganizationSnapshot: InOrganizationScope = (organizationId, fn) =>
++  runWithOrgJobScope(organizationId, CALLER, () => onSnapshot(fn));
++
++/** Every organisation, from `organizations`, whose read policy is open; purged ones keep their row and their audit trail. */
++async function listOrganizations(): Promise<number[]> {
++  return runWithSystemTenantScope(CALLER, () =>
++    onSnapshot(async (client) => {
++      const { rows } = await client.query('SELECT id FROM public.organizations ORDER BY id');
++      return rows.map((r) => Number(r.id)).filter((id) => Number.isSafeInteger(id) && id > 0);
++    }),
++  );
++}
++
++/**
++ * One sweep: every organisation's stores, each in its own scope, then the
++ * stores with no tenant key on `client` (the infrastructure scope), then the
++ * anchor of a clean state.
++ */
++async function sweepOnce(
++  client: PoolClient,
++  organizations: readonly number[],
++  anchorStore: AuditAnchorStore | null,
++): Promise<AuditChainCheckResult> {
++  const auditEventsShape = {
++    present: await tableExists(client, 'public.audit_events'),
++    sealKey: Boolean(process.env.AUDIT_HMAC_KEY),
++  };
++  const perOrganization: OrganizationSweep[] = [];
++  for (const organizationId of organizations) {
++    perOrganization.push(
++      await inOrganizationSnapshot(organizationId, (c) => verifyOrganization(c, organizationId, auditEventsShape)),
++    );
++  }
++  const nothing = organizations.length === 0
++    ? 'no organisation exists, so no audit_logs row was verified'
++    : 'no organisation has a chained audit_logs row, so nothing was verified';
++  const auditLogsVerdicts: [AuditStoreVerdict, AuditStoreVerdict] = [
++    mergeOrganizationVerdicts('audit_logs.chain', perOrganization.map((o) => ({ organizationId: o.organizationId, verdict: o.auditLogs.chain })), nothing),
++    mergeOrganizationVerdicts('audit_logs.seals', perOrganization.map((o) => ({ organizationId: o.organizationId, verdict: o.auditLogs.seals })), nothing),
++  ];
++  const rowsChecked = perOrganization.reduce((n, o) => n + o.auditLogs.rowsChecked, 0);
++  const brokenAt = perOrganization.find((o) => o.auditLogs.brokenAt)?.auditLogs.brokenAt;
++
++  const anchor = await verifyAnchorStore(client, anchorStore, inOrganizationSnapshot);
++  const auditEvents = auditEventsVerdicts(perOrganization, auditEventsShape);
+   const tamperProof = await verifyTamperProofStore(client);
+   const triggers = await verifyImmutabilityTriggers(client);
+ 
+-  const stores: AuditStoreVerdict[] = [...auditLogs.verdicts, anchor.verdict, ...auditEvents, tamperProof, triggers];
++  const stores: AuditStoreVerdict[] = [...auditLogsVerdicts, anchor.verdict, ...auditEvents, tamperProof, triggers];
+   const failures = stores.filter((s) => INCIDENT_STATUSES.has(s.status)).map((s) => s.store);
+   const unverifiable = stores.filter((s) => s.status === 'unverifiable').map((s) => s.store);
+   const ok = failures.length === 0 && unverifiable.length === 0;
+@@ -559,14 +489,15 @@ async function sweepOnce(client: PoolClient, anchorStore: AuditAnchorStore | nul
+ 
+   // After every store is verified, never before: the anchor records a state
+   // this run found no incident in, a stale anchor aside.
+-  const anchorWrite = await writeAnchor(client, anchorStore, blocking);
++  const anchorWrite = await writeAnchor(client, anchorStore, blocking, organizations, inOrganizationSnapshot);
+ 
+   reportSweepOutcome(
+     stores,
+     failures,
+     unverifiable,
+     { anchorWrite, anchorAge: anchor.age },
+-    `audit_logs ${auditLogs.rowsChecked} rows, ` +
++    `${organizations.length} organisation(s), each in its own scope: ` +
++      `audit_logs ${rowsChecked} rows, ` +
+       `audit_events ${auditEvents[0].rowsChecked ?? 0} rows, ` +
+       `tamper_proof_log ${tamperProof.rowsChecked ?? 0} rows, ` +
+       `${triggers.rowsChecked ?? 0} immutability triggers, chain heads anchored`,
+@@ -574,8 +505,9 @@ async function sweepOnce(client: PoolClient, anchorStore: AuditAnchorStore | nul
+ 
+   return {
+     ok,
+-    rowsChecked: auditLogs.rowsChecked,
+-    ...(auditLogs.brokenAt ? { brokenAt: auditLogs.brokenAt } : {}),
++    rowsChecked,
++    ...(brokenAt ? { brokenAt } : {}),
++    organizations: organizations.length,
+     stores,
+     failures,
+     unverifiable,
+@@ -592,26 +524,20 @@ export async function runAuditChainIntegrityCheck(
+   options: AuditChainCheckOptions = {},
+ ): Promise<AuditChainCheckResult> {
+   const anchorStore = options.anchorStore !== undefined ? options.anchorStore : resolveAuditAnchorStore();
+-  return runWithSystemTenantScope('audit-chain-integrity-sweep', async () => {
+-    try {
+-      const client = await pool.connect();
+-      try {
+-        return await sweepOnce(client, anchorStore);
+-      } finally {
+-        client.release();
+-      }
+-    } catch (err: any) {
+-      logger.error(`Audit integrity sweep could not run: ${err?.message}`);
+-      return {
+-        ok: false,
+-        rowsChecked: 0,
+-        error: err?.message,
+-        stores: [],
+-        failures: [],
+-        unverifiable: [],
+-      };
+-    }
+-  });
++  try {
++    const organizations = await listOrganizations();
++    return await runWithSystemTenantScope(CALLER, () => onSnapshot((client) => sweepOnce(client, organizations, anchorStore)));
++  } catch (err: any) {
++    logger.error(`Audit integrity sweep could not run: ${err?.message}`);
++    return {
++      ok: false,
++      rowsChecked: 0,
++      error: err?.message,
++      stores: [],
++      failures: [],
++      unverifiable: [],
++    };
++  }
+ }
+ 
+ /**
+diff --git a/server/jobs/auditChainOrganizationVerdicts.ts b/server/jobs/auditChainOrganizationVerdicts.ts
+new file mode 100644
+index 000000000..947c2b42e
+--- /dev/null
++++ b/server/jobs/auditChainOrganizationVerdicts.ts
+@@ -0,0 +1,286 @@
++/**
++ * The audit integrity sweep's per-organisation verdicts (P-72 slice 1b,
++ * 2026-10-30; docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/): one
++ * organisation's audit_logs chain and seals and its audit_events links and
++ * seals, each read on a connection in that organisation's own scope, and the
++ * merge of every organisation's verdict into one verdict per store. Split from
++ * auditChainIntegritySweep.ts, which lists the organisations, opens each one's
++ * scope, verifies the stores with no tenant key, anchors and reports.
++ *
++ * @module server/jobs/auditChainOrganizationVerdicts
++ */
++
++import { verifyAuditEventsChainSeals, type PoolClient } from '../services/audit/chain.js';
++import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service.js';
++import {
++  summarizeChainLinkage,
++  type AuditEventChainRow,
++} from '../services/audit/chainIntegrityMonitor.js';
++import type {
++  AuditChainCheckResult,
++  AuditStoreName,
++  AuditStoreStatus,
++  AuditStoreVerdict,
++} from './auditChainIntegritySweep.js';
++
++/** Run one store's verifier; a throw is that store's `error`, not the sweep's. */
++export async function guarded(
++  store: AuditStoreName,
++  fn: () => Promise<AuditStoreVerdict>,
++): Promise<AuditStoreVerdict> {
++  try {
++    return await fn();
++  } catch (err) {
++    return { store, status: 'error', reason: err instanceof Error ? err.message : String(err) };
++  }
++}
++
++/**
++ * Most severe first: a merged store takes the worst organisation's status.
++ * An organisation with no row in a store contributes no verdict (null).
++ */
++const SEVERITY: readonly AuditStoreStatus[] = ['broken', 'missing', 'error', 'stale', 'unverifiable', 'ok'];
++
++/** One organisation's verdict on a store, or null when it has no row there. */
++interface OrganizationVerdict {
++  organizationId: number;
++  verdict: AuditStoreVerdict | null;
++}
++
++/**
++ * One store's verdict over every organisation: the worst status, the rows
++ * checked summed, and the first worst organisation's failure and reason. A
++ * store in which no organisation has a row verified nothing: `unverifiable`
++ * with `nothing`, never ok.
++ */
++export function mergeOrganizationVerdicts(store: AuditStoreName, perOrganization: OrganizationVerdict[], nothing: string): AuditStoreVerdict {
++  const found = perOrganization.filter((o): o is { organizationId: number; verdict: AuditStoreVerdict } => o.verdict !== null);
++  if (found.length === 0) return { store, status: 'unverifiable', rowsChecked: 0, reason: nothing };
++  const worst = SEVERITY.find((status) => found.some((o) => o.verdict.status === status)) ?? 'error';
++  const first = found.find((o) => o.verdict.status === worst)!;
++  const rowsChecked = found.reduce((n, o) => n + (o.verdict.rowsChecked ?? 0), 0);
++  const others = found.filter((o) => o.verdict.status === worst).length - 1;
++  const reason = first.verdict.reason === undefined
++    ? undefined
++    : others > 0 ? `${first.verdict.reason} (and ${others} other organisation(s))` : first.verdict.reason;
++  return {
++    store,
++    status: worst,
++    rowsChecked,
++    ...(first.verdict.firstFailure === undefined ? {} : { firstFailure: first.verdict.firstFailure }),
++    ...(worst === 'ok' ? {} : { organizationId: first.organizationId }),
++    ...(reason === undefined ? {} : { reason }),
++  };
++}
++
++/** The chain walk refused a tenant-scoped connection: this organisation's legacy rows link across tenants. */
++function isPartialView(err: unknown): boolean {
++  return (err as { code?: unknown } | null)?.code === 'AUDIT_CHAIN_PARTIAL_VIEW';
++}
++
++/** One organisation's audit_logs chain and seals; their verdicts are null when it has no chained row. */
++interface OrganizationAuditLogs {
++  chain: AuditStoreVerdict | null;
++  seals: AuditStoreVerdict | null;
++  rowsChecked: number;
++  brokenAt?: AuditChainCheckResult['brokenAt'];
++}
++
++/** audit_logs: one organisation's sha256 chain and HMAC seals, through the canonical integrity service. */
++async function verifyAuditLogsStore(client: PoolClient, organizationId: number): Promise<OrganizationAuditLogs> {
++  try {
++    const integrity = await verifyAuditIntegrity(client, { tenantId: organizationId });
++    const rowsChecked = integrity.chain.rowsChecked;
++    if (rowsChecked === 0 && integrity.chain.ok) return { chain: null, seals: null, rowsChecked: 0 };
++    const chain: AuditStoreVerdict = integrity.chain.ok
++      ? { store: 'audit_logs.chain', status: 'ok', rowsChecked }
++      : {
++          store: 'audit_logs.chain',
++          status: 'broken',
++          rowsChecked,
++          firstFailure: integrity.chain.brokenAt?.id,
++          reason: 'sha256_chain mismatch',
++        };
++    const s = integrity.seals;
++    const seals: AuditStoreVerdict = !s.checked
++      ? { store: 'audit_logs.seals', status: 'unverifiable', reason: s.reason }
++      : !s.valid
++        ? {
++            store: 'audit_logs.seals',
++            status: 'broken',
++            firstFailure: String(s.brokenAt),
++            reason: 'hmac_seal does not verify',
++          }
++        : s.unsealedAfterSealed > 0
++          ? {
++              store: 'audit_logs.seals',
++              status: 'unverifiable',
++              rowsChecked: s.verified,
++              firstFailure: s.firstUnsealedAfterSealed ?? undefined,
++              reason: `${s.unsealedAfterSealed} row(s) written after sealing began carry no hmac_seal; their seals could not be verified`,
++            }
++          : {
++              store: 'audit_logs.seals',
++              status: 'ok',
++              rowsChecked: s.verified,
++              ...(s.unsealed > 0
++                ? { reason: `${s.unsealed} row(s) predate sealing and are covered by the sha256 chain only` }
++                : {}),
++            };
++    const brokenAt = integrity.chain.brokenAt
++      ? {
++          id: integrity.chain.brokenAt.id,
++          expected: integrity.chain.brokenAt.expected,
++          stored: integrity.chain.brokenAt.stored,
++        }
++      : undefined;
++    return { chain, seals, rowsChecked, brokenAt };
++  } catch (err) {
++    const reason = err instanceof Error ? err.message : String(err);
++    // Legacy rows linked across tenants: not tampering, and not verified either.
++    const status: AuditStoreStatus = isPartialView(err) ? 'unverifiable' : 'error';
++    return {
++      chain: { store: 'audit_logs.chain', status, reason },
++      seals: { store: 'audit_logs.seals', status, reason },
++      rowsChecked: 0,
++    };
++  }
++}
++
++const NO_AUDIT_EVENTS = 'no entries: there is no chain to verify';
++
++/** audit_events: one organisation's linkage (the monitor's walk); null when it has no row. */
++async function verifyAuditEventsLinkage(client: PoolClient, organizationId: number): Promise<AuditStoreVerdict | null> {
++  const verdict = await guarded('audit_events.linkage', async () => {
++    const { rows } = await client.query(
++      `SELECT id, organization_id, sequence_number, record_hash, previous_hash
++         FROM audit_events
++        WHERE organization_id = $1
++        ORDER BY organization_id, sequence_number ASC`,
++      [organizationId],
++    );
++    const { broken, hashedEntries, unhashedEntries } = summarizeChainLinkage(
++      rows as unknown as AuditEventChainRow[],
++    );
++    const rowsChecked = rows.length;
++    if (broken.length > 0) {
++      return {
++        store: 'audit_events.linkage',
++        status: 'broken',
++        rowsChecked,
++        firstFailure: String(broken[0].id),
++        reason: `${broken.length} broken link(s)`,
++      };
++    }
++    // Precedence as the monitor applies it: a break outranks "cannot tell",
++    // and "cannot tell" outranks ok. Only a chain in which EVERY row carried a
++    // record_hash may be called verified (WO-16C finding 72).
++    if (rowsChecked === 0) {
++      return { store: 'audit_events.linkage', status: 'unverifiable', rowsChecked, reason: NO_AUDIT_EVENTS };
++    }
++    if (hashedEntries === 0) {
++      return {
++        store: 'audit_events.linkage',
++        status: 'unverifiable',
++        rowsChecked,
++        reason: 'no row carries a record_hash: the chain has never been hashed, so no link could be checked',
++      };
++    }
++    if (unhashedEntries > 0) {
++      return {
++        store: 'audit_events.linkage',
++        status: 'unverifiable',
++        rowsChecked,
++        reason: `${unhashedEntries} of ${rowsChecked} rows carry no record_hash; the links through them could not be checked`,
++      };
++    }
++    return { store: 'audit_events.linkage', status: 'ok', rowsChecked };
++  });
++  // An organisation with no audit_events row has no chain: it neither passes nor fails the store.
++  return verdict.status === 'unverifiable' && verdict.rowsChecked === 0 && verdict.reason === NO_AUDIT_EVENTS ? null : verdict;
++}
++
++/** audit_events: one organisation's HMAC seals; null when it has no chained row. */
++async function verifyAuditEventsSeals(client: PoolClient, organizationId: number): Promise<AuditStoreVerdict | null> {
++  let empty = false;
++  const verdict = await guarded('audit_events.seals', async () => {
++    const result = await verifyAuditEventsChainSeals(client, { organizationId });
++    if (!result.valid) {
++      return {
++        store: 'audit_events.seals',
++        status: 'broken',
++        firstFailure: String(result.brokenAt),
++        reason: 'hmac_seal does not verify',
++      };
++    }
++    if (result.verified === 0 && result.unsealed === 0) empty = true;
++    // Rows exist and none is sealed: the audit_events seal writer has not
++    // shipped (migrations 20260617_audit_events_hmac_seal.sql), so nothing was
++    // verified. This read "ok" every day.
++    if (result.verified === 0 && result.unsealed > 0) {
++      return {
++        store: 'audit_events.seals',
++        status: 'unverifiable',
++        rowsChecked: 0,
++        reason: `none of the ${result.unsealed} chained rows carries an hmac_seal, so no seal was verified`,
++      };
++    }
++    if (result.unsealedAfterSealed > 0) {
++      return {
++        store: 'audit_events.seals',
++        status: 'unverifiable',
++        rowsChecked: result.verified,
++        firstFailure: result.firstUnsealedAfterSealed ?? undefined,
++        reason: `${result.unsealedAfterSealed} row(s) written after their organisation's sealing began carry no hmac_seal`,
++      };
++    }
++    return { store: 'audit_events.seals', status: 'ok', rowsChecked: result.verified };
++  });
++  return empty ? null : verdict;
++}
++
++/** One organisation's verdicts on every per-organisation store, read on one snapshot in its own scope. */
++export interface OrganizationSweep {
++  organizationId: number;
++  auditLogs: OrganizationAuditLogs;
++  linkage: AuditStoreVerdict | null;
++  eventSeals: AuditStoreVerdict | null;
++}
++
++export async function verifyOrganization(
++  client: PoolClient,
++  organizationId: number,
++  auditEvents: { present: boolean; sealKey: boolean },
++): Promise<OrganizationSweep> {
++  const auditLogs = await verifyAuditLogsStore(client, organizationId);
++  const linkage = auditEvents.present ? await verifyAuditEventsLinkage(client, organizationId) : null;
++  const eventSeals = auditEvents.present && auditEvents.sealKey ? await verifyAuditEventsSeals(client, organizationId) : null;
++  return { organizationId, auditLogs, linkage, eventSeals };
++}
++
++/** The audit_events verdicts over every organisation, or why the store could not be read at all. */
++export function auditEventsVerdicts(
++  perOrganization: OrganizationSweep[],
++  auditEvents: { present: boolean; sealKey: boolean },
++): AuditStoreVerdict[] {
++  if (!auditEvents.present) {
++    const reason = 'table absent';
++    return [
++      { store: 'audit_events.linkage', status: 'missing', reason },
++      { store: 'audit_events.seals', status: 'missing', reason },
++    ];
++  }
++  const linkage = mergeOrganizationVerdicts(
++    'audit_events.linkage',
++    perOrganization.map((o) => ({ organizationId: o.organizationId, verdict: o.linkage })),
++    NO_AUDIT_EVENTS,
++  );
++  const seals: AuditStoreVerdict = !auditEvents.sealKey
++    ? { store: 'audit_events.seals', status: 'unverifiable', reason: 'AUDIT_HMAC_KEY not configured; HMAC seals cannot be verified' }
++    : mergeOrganizationVerdicts(
++        'audit_events.seals',
++        perOrganization.map((o) => ({ organizationId: o.organizationId, verdict: o.eventSeals })),
++        'no organisation has a chained audit_events row, so no seal was verified',
++      );
++  return [linkage, seals];
++}
+diff --git a/server/jobs/retentionCron.ts b/server/jobs/retentionCron.ts
+index 957d1e4e0..7dc7705af 100644
+--- a/server/jobs/retentionCron.ts
++++ b/server/jobs/retentionCron.ts
+@@ -27,6 +27,31 @@
+  * to chain it under, or the row cannot be written — is not made. Until
+  * 2026-09-26 the record of a deletion was a line in logs/audit.log on the
+  * task's disk.
++ *
++ * Each organisation is swept in its OWN scope: its tenant id and its
++ * organisation uuid, no role (P-72 slice 1b, 2026-10-30;
++ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/). Only the list of
++ * organisations is read in the system scope, from `organizations`, whose read
++ * policy is open. Until then the whole sweep ran in the system scope (tenant
++ * '0', no uuid), where vault.documents decides through core.can_access_program
++ * on the organisation uuid and admits nothing: on a production-shaped database
++ * it scanned 0 of 2 expired documents, so the Vault's retention never ran. It
++ * read the legal holds only through the platform arm, which P-72 removes. In
++ * its own scope an organisation's policies admit its documents, its programmes
++ * and its holds, with or without that arm, and nothing of another
++ * organisation's.
++ *
++ * An organisation sweeps the expired documents of the programmes it OWNS. A
++ * hold is always placed by the organisation that owns its programme or
++ * document (routes/vault-legal-holds.ts targetOwned), so that organisation's
++ * scope reads every hold that can cover them; a delegate's scope, which also
++ * admits a sponsor's programme (identity.org_relationships), does not read
++ * the sponsor's holds, and so never sweeps the sponsor's documents. A
++ * document that names a different organisation from its programme's owner
++ * (vault.documents carries no same-organisation key: scripts/db/
++ * program-same-org-preflight.mjs) is left in place and counted
++ * (organizationMismatch): its disposal would be audited under its own
++ * organisation, whose scope cannot read the owner's holds.
+  */
+ 
+ import cron from 'node-cron';
+@@ -40,11 +65,12 @@ import {
+ import { writeChainedAuditRow } from '../services/auditService';
+ import { reportSecurityAlert } from '../services/security-alerts';
+ import { sendGenericEmail } from '../services/emailService';
+-import { runWithSystemTenantScope } from '../db/tenantStore';
++import { runWithSystemTenantScope, runWithTenantScope } from '../db/tenantStore';
+ import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
+ import { createScopedLogger } from '../utils/logger';
+ 
+-const logger = createScopedLogger('retention-sweep');
++const CALLER = 'retention-sweep';
++const logger = createScopedLogger(CALLER);
+ 
+ type VaultDocument = typeof vaultDocuments.$inferSelect;
+ type RetentionPolicy = typeof vaultRetentionPolicies.$inferSelect;
+@@ -53,6 +79,14 @@ type RetentionPolicy = typeof vaultRetentionPolicies.$inferSelect;
+ const DEFAULT_BEHAVIOR = { archiveBeforeDelete: true, hardDelete: false } as const;
+ 
+ export interface RetentionSummary {
++  /** Organisations swept, each in its own scope. */
++  organizations: number;
++  /**
++   * Organisations with no uuid: their Vault cannot be read in their own scope,
++   * so none of their documents was swept. The deployed schema makes the column
++   * NOT NULL; a run that finds one fails rather than report a clean sweep.
++   */
++  organizationsNotSwept: number;
+   scanned: number;
+   archived: number;
+   softDeleted: number;
+@@ -66,6 +100,12 @@ export interface RetentionSummary {
+   destructionRefused: number;
+   /** Expired documents left in place because a legal hold covers them. */
+   heldByLegalHold: number;
++  /**
++   * Expired documents left in place because the document names another
++   * organisation than its programme's owner: no one scope reads every hold on
++   * it and can also audit its disposal. Not a clean sweep (runRetentionJob).
++   */
++  organizationMismatch: number;
+   /**
+    * Expired documents another run had already disposed of by the time this
+    * one reached them: nothing archived, nothing audited (U19).
+@@ -74,8 +114,14 @@ export interface RetentionSummary {
+   errors: number;
+ }
+ 
+-/** Documents whose retention_until has passed and that are not already deleted. */
+-async function findExpiredDocuments(): Promise<VaultDocument[]> {
++/**
++ * The expired, undeleted documents of the programmes this organisation owns,
++ * whatever organisation each document names (the sweep refuses a mismatch).
++ * The organisation's scope admits a programme it is a delegate on too
++ * (identity.org_relationships); that sponsor's documents are swept in the
++ * sponsor's own run, whose scope reads the sponsor's holds.
++ */
++async function findExpiredDocuments(organizationId: number): Promise<VaultDocument[]> {
+   return db
+     .select()
+     .from(vaultDocuments)
+@@ -83,7 +129,8 @@ async function findExpiredDocuments(): Promise<VaultDocument[]> {
+       and(
+         isNull(vaultDocuments.deletedAt),
+         sql`${vaultDocuments.retentionUntil} IS NOT NULL`,
+-        sql`${vaultDocuments.retentionUntil} < CURRENT_DATE`
++        sql`${vaultDocuments.retentionUntil} < CURRENT_DATE`,
++        sql`${vaultDocuments.programId} IN (SELECT rp.id FROM regulatory_programs rp WHERE rp.organization_id = ${organizationId})`
+       )
+     );
+ }
+@@ -121,6 +168,7 @@ async function organisationOf(client: TxClient, doc: VaultDocument): Promise<num
+ async function disposeDocument(
+   doc: VaultDocument,
+   behaviour: { archiveBeforeDelete: boolean; policyMatched: boolean },
++  scopeOrganizationId: number,
+ ): Promise<'disposed' | 'already_disposed'> {
+   const client = (await pool.connect()) as unknown as TxClient;
+   try {
+@@ -129,6 +177,9 @@ async function disposeDocument(
+     if (organizationId === null) {
+       throw new Error('no organisation for the document: the deletion cannot be audited, so it is not made');
+     }
++    if (organizationId !== scopeOrganizationId) {
++      throw new Error(`the document belongs to organisation ${organizationId}, not to the one being swept: it is not disposed of in another organisation's scope`);
++    }
+     if (behaviour.archiveBeforeDelete) {
+       await client.query(
+         `INSERT INTO vault.document_archives
+@@ -176,11 +227,6 @@ async function disposeDocument(
+   }
+ }
+ 
+-/**
+- * Run one retention sweep. Best-effort per document; returns counts. Throws only
+- * on a failure to enumerate work (e.g. the initial queries), not on per-document
+- * errors (those are counted and the sweep continues).
+- */
+ /**
+  * Programs and documents under an ACTIVE legal hold.
+  *
+@@ -189,15 +235,16 @@ async function disposeDocument(
+  *
+  * FAILS CLOSED. If the hold table cannot be read — it does not exist yet on this
+  * database, the query errors, anything — this THROWS, and the sweep aborts
+- * having deleted nothing. The alternative is a sweep that proceeds as though no
++ * having deleted nothing more. Read in the organisation's own scope, whose
++ * tenant arm admits its holds; in the system scope only the platform arm did. The alternative is a sweep that proceeds as though no
+  * holds existed, which is the same outcome as having no holds at all and is
+  * unrecoverable for the records it destroys.
+  */
+-async function loadActiveHolds(): Promise<{ programs: Set<string>; documents: Set<string> }> {
++async function loadActiveHolds(organizationId: number): Promise<{ programs: Set<string>; documents: Set<string> }> {
+   const rows = await db
+     .select({ programId: vaultLegalHolds.programId, documentId: vaultLegalHolds.documentId })
+     .from(vaultLegalHolds)
+-    .where(isNull(vaultLegalHolds.liftedAt));
++    .where(and(isNull(vaultLegalHolds.liftedAt), eq(vaultLegalHolds.organizationId, organizationId)));
+ 
+   const programs = new Set<string>();
+   const documents = new Set<string>();
+@@ -208,82 +255,150 @@ async function loadActiveHolds(): Promise<{ programs: Set<string>; documents: Se
+   return { programs, documents };
+ }
+ 
+-export async function runRetentionSweep(): Promise<RetentionSummary> {
+-  return runWithSystemTenantScope('retention-sweep', async () => {
+-    const summary: RetentionSummary = {
+-      scanned: 0,
+-      archived: 0,
+-      softDeleted: 0,
+-      destructionRefused: 0,
+-      heldByLegalHold: 0,
+-      alreadyDisposed: 0,
+-      errors: 0,
+-    };
+-
+-    /* Holds are loaded BEFORE anything is deleted, and a failure here aborts the
+-       whole sweep rather than one document — see loadActiveHolds. */
+-    const [expired, policies, holds] = await Promise.all([
+-      findExpiredDocuments(),
+-      loadPolicies(),
+-      loadActiveHolds(),
+-    ]);
+-    summary.scanned = expired.length;
+-
+-    for (const doc of expired) {
+-      try {
+-        /* LEGAL HOLD OUTRANKS RETENTION.
+-           Checked before the policy is even resolved, so no archive is written
+-           and no delete is attempted for a held record. A retention policy says
+-           when a record MAY be destroyed; a hold says it may not be, and the
+-           hold wins. Destroying a record under hold is spoliation and is the one
+-           thing in this job that cannot be undone. */
+-        if (holds.documents.has(doc.id) || holds.programs.has(doc.programId)) {
+-          summary.heldByLegalHold += 1;
+-          logger.info('Expired document left in place: legal hold', {
+-            documentId: doc.id,
+-            programId: doc.programId,
+-            retentionUntil: doc.retentionUntil,
+-            heldBy: holds.documents.has(doc.id) ? 'document' : 'program',
+-          });
+-          continue;
+-        }
+-
+-        const policy = doc.retentionPolicy ? policies.get(doc.retentionPolicy) : undefined;
+-        const archiveBeforeDelete = policy
+-          ? policy.archiveBeforeDelete
+-          : DEFAULT_BEHAVIOR.archiveBeforeDelete;
+-        const hardDelete = policy ? policy.hardDelete : DEFAULT_BEHAVIOR.hardDelete;
+-        if (hardDelete) {
+-          // Nothing is archived or tombstoned either: the policy asked for
+-          // destruction, not for this, and the record stays as it is.
+-          summary.destructionRefused += 1;
+-          logger.warn('Expired document left untouched: its policy asks for destruction, which is refused', {
+-            documentId: doc.id,
+-            programId: doc.programId,
+-            retentionPolicy: doc.retentionPolicy,
+-            retentionUntil: doc.retentionUntil,
+-          });
+-          continue;
+-        }
+-
+-        const outcome = await disposeDocument(doc, { archiveBeforeDelete, policyMatched: Boolean(policy) });
+-        if (outcome === 'already_disposed') {
+-          summary.alreadyDisposed += 1;
+-          continue;
+-        }
+-        if (archiveBeforeDelete) summary.archived += 1;
+-        summary.softDeleted += 1;
+-      } catch (error) {
+-        summary.errors += 1; // per-document best-effort; keep sweeping
+-        logger.error('Expired document not disposed of', {
++/** Every organisation, or only the ones named; read in the system scope, where `organizations` is an open read. */
++async function listOrganizations(organizationIds?: number[]): Promise<Array<{ id: number; uuid: string | null }>> {
++  return runWithSystemTenantScope(CALLER, async () => {
++    const { rows } = await pool.query<{ id: number; uuid: string | null }>(
++      `SELECT id, uuid::text AS uuid FROM public.organizations
++        WHERE ($1::int[] IS NULL OR id = ANY($1::int[])) ORDER BY id`,
++      [organizationIds ?? null],
++    );
++    return rows.map((r) => ({ id: Number(r.id), uuid: r.uuid ? String(r.uuid) : null }));
++  });
++}
++
++/**
++ * The other organisation an expired document names, when it names one that is
++ * not its programme's owner (the organisation being swept); null otherwise.
++ */
++function namesAnotherOrganization(doc: VaultDocument, organizationId: number): number | null {
++  const named = Number((doc as { organizationId?: unknown }).organizationId);
++  return Number.isInteger(named) && named > 0 && named !== organizationId ? named : null;
++}
++
++/** One organisation's expired documents, in that organisation's own scope. */
++async function sweepOrganization(
++  organizationId: number,
++  policies: Map<string, RetentionPolicy>,
++  summary: RetentionSummary,
++): Promise<void> {
++  /* Holds are loaded BEFORE anything is deleted, and a failure here aborts the
++     whole sweep rather than one document — see loadActiveHolds. */
++  const [expired, holds] = await Promise.all([
++    findExpiredDocuments(organizationId),
++    loadActiveHolds(organizationId),
++  ]);
++  summary.scanned += expired.length;
++
++  for (const doc of expired) {
++    try {
++      /* LEGAL HOLD OUTRANKS RETENTION.
++         Checked before the policy is even resolved, so no archive is written
++         and no delete is attempted for a held record. A retention policy says
++         when a record MAY be destroyed; a hold says it may not be, and the
++         hold wins. Destroying a record under hold is spoliation and is the one
++         thing in this job that cannot be undone. */
++      if (holds.documents.has(doc.id) || holds.programs.has(doc.programId)) {
++        summary.heldByLegalHold += 1;
++        logger.info('Expired document left in place: legal hold', {
++          organizationId,
+           documentId: doc.id,
