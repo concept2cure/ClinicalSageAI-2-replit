@@ -1,0 +1,28 @@
+{
+  "merged_canonical_base": "3ab7b72200a1a7b9d32ecc693136a91f38d8144c",
+  "merge_commit": "139af6412e2c06543192deda7f2893474a2edf8b",
+  "prior_qualified_source": "f3c748f31df6cad4af3383cd6947ff13e329574a",
+  "incoming_commits": 28,
+  "incoming_files": 162,
+  "incoming_qualification_overlap": [],
+  "incoming_browser_overlap": [],
+  "qualification_pins": 56,
+  "qualification_mismatches": [],
+  "browser_pins": 36,
+  "browser_mismatches": [],
+  "retained_qualification": {
+    "tests": 484,
+    "suites": 34,
+    "browser_checks": 8,
+    "regression_log": "convergence-regression.txt",
+    "browser_result": "ui/browser-converged/result.json"
+  },
+  "fresh_merged_build": {
+    "exit_code": 0,
+    "log": "final-integration-build.txt",
+    "sha256": "7ec5de18e39de39db8b92ca4bcc836025d4aa157a38db6eec14e5cdf15004e30"
+  },
+  "normal_push_gates": "pending",
+  "server5201": "owned qualification server stopped; intentional SIGTERM exit143",
+  "deployment_or_oq_claimed": false
+}
