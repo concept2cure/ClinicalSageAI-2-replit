@@ -154,7 +154,8 @@ import {
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
 import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
 import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
-import { savedSectionDraftTemplate, buildSectionDraftPrompt } from '../services/authoring/authoring-draft-template';
+import { savedSectionDraftTemplate, buildSectionDraftPrompt, draftRevisionFor } from '../services/authoring/authoring-draft-template';
+import { draftPassageFor } from '../services/authoring/authoring-draft-passage';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
 import {
   fileAuthoringDocumentToVault,
@@ -3426,6 +3427,11 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       tenantId, documentId: section.doc_id, programId: section.client_program_id,
       sectionId: String(sectionId), code: section.code,
     }, section, req.body.region);
+    // A passage of the saved section, for alternatives to it alone; never parked (slice 4).
+    const passage = draftPassageFor(req.body, section);
+    // A revision drafts from a live candidate of this section, read and never consumed (slice 3).
+    const revision = await draftRevisionFor(req.body, async draftId => (await import(
+      '../services/clinical-regulatory-evidence/draft-candidate-store.js')).readDraftCandidate(tenantId, String(sectionId), draftId, section));
     const sourceIdentity = { organizationId: tenantId, userId: Number(getActorId(req)), programId: section.client_program_id };
     const selectedSources = Object.hasOwn(req.body ?? {}, 'sources')
       ? await readDraftAssemblySources(requestConnectable(req), sourceIdentity, req.body.sources) : null;
@@ -3536,14 +3542,14 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       });
     }
 
-    const prompt = buildSectionDraftPrompt({ section, tone, region, context, requirements, evidenceBlock, referenceBlock });
+    const prompt = buildSectionDraftPrompt({ section, tone, region, context, requirements, evidenceBlock, referenceBlock, revision: revision.prompt, passage: passage.prompt });
 
     draftTurn = openDraftTurn(pool, {
       orgId: tenantId,
       userId: getActorId(req),
       sectionId: String(sectionId),
       request: { tone, region, context: context ?? null, requirements: requirements ?? null,
-        ...(assemblySources ? { sources: assemblySources } : {}) },
+        ...(assemblySources ? { sources: assemblySources } : {}), ...revision.turnRequest, ...passage.turnRequest },
       prompt,
       audit: { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
     });
@@ -3618,7 +3624,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       shownEvidence: retrievalStatus === 'ok' ? evidenceShown(evidenceBlock) : null,
       // The header lines exactly as the prompt shows them.
       sectionHeader: `Module: ${section.module}\nSection: ${section.code} - ${section.title}\nProduct: ${section.product_code || 'Medical Product'}`,
-      personWords: [context, requirements].filter((v) => typeof v === 'string' && v.trim()).join('\n'),
+      personWords: [context, requirements, revision.instruction].filter((v) => typeof v === 'string' && v.trim()).join('\n'),
       retrievalStatus,
     });
     // Park the draft + the sources it came from so the accept endpoint can
@@ -3670,7 +3676,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       const { createDraftCandidate, savedSectionDraftBase } = await import(
         '../services/clinical-regulatory-evidence/draft-candidate-store.js'
       );
-      const candidate = await createDraftCandidate(
+      // The whole-section accept is a candidate's one consumer, so a passage is never parked.
+      const candidate = passage.prompt ? null : await createDraftCandidate(
         tenantId,
         String(sectionId),
         generatedContent,
@@ -3694,10 +3701,11 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
           ...(vaultSourceReceipt ? { vaultSources: vaultSourceReceipt } : {}),
           ...(assemblySources ? { assemblySources } : {}),
           savedSectionBase: savedSectionDraftBase(section),
+          ...revision.generator,
         },
         assertions,
       );
-      draftId = candidate.id;
+      draftId = candidate?.id;
     } catch (attrErr: any) {
       console.warn(
         '[Authoring] draft-candidate creation failed (non-fatal):',
@@ -3718,6 +3726,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         // The engine's check of the draft as generated, and whether its turn was filed.
         check: drafted?.check ?? null,
         turnRecord: drafted?.turnRecord ?? { status: 'not_recorded', reason: 'This draft had no organization to file it under.' },
+        ...revision.generator,
+        ...passage.response,
         metadata: {
           tone,
           region,

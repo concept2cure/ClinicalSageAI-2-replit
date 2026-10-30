@@ -9,7 +9,9 @@ import type { SavedTemplateReview } from '../../ana/saved-template-review';
 const h = vi.hoisted(() => ({ review: vi.fn() }));
 vi.mock('../../ana/saved-template-review', () => ({ savedTemplateReview: h.review }));
 
-import { buildSectionDraftPrompt, DraftTemplateReferenceError, savedSectionDraftTemplate } from '../authoring-draft-template';
+import { admitDraftRevision, buildSectionDraftPrompt, draftRevisionFor, DraftRevisionError, DraftTemplateReferenceError,
+  readDraftRevisionRequest, savedSectionDraftTemplate } from '../authoring-draft-template';
+import { DraftTruncatedError } from '../authoring-draft-termination';
 
 const DOC = 'aaaaaaaa-0000-4000-8000-000000000001';
 const PROGRAM = 'bbbbbbbb-0000-4000-8000-000000000001';
@@ -255,5 +257,72 @@ describe('the one prompt composer retains caller and evidence inputs separately'
     expect(prompt).toContain('"src"');
     expect(prompt).toContain('Never cite a src not shown above');
     expect(prompt).toContain('do NOT put [SRC-n] markers');
+  });
+});
+
+describe('a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3)', () => {
+  const inputs = { section: { module: 'M5', code: '11.4.1', title: 'Analysis of Efficacy', product_code: 'P-17' },
+    tone: 'concise', region: 'FDA', evidenceBlock: '[SRC-1] "CSR"\nORR 31%.\n--- END EVIDENCE ---', referenceBlock: `${BEGIN}\n{}\n${END}` };
+  const ID = 'aaaaaaaa-0000-4000-8000-0000000000aa';
+
+  it('appends to the one prompt and changes nothing before it; without a revision the prompt is the same', () => {
+    const plain = buildSectionDraftPrompt(inputs);
+    expect(buildSectionDraftPrompt({ ...inputs, revision: null })).toBe(plain);
+    expect(plain).not.toContain('DRAFT_TO_REVISE');
+    const revised = buildSectionDraftPrompt({ ...inputs, revision: { baseText: 'Base text, 36 months.', instruction: 'Add the per-protocol result.' } });
+    expect(revised.startsWith(plain)).toBe(true);
+    expect(revised).toContain('BEGIN_DRAFT_TO_REVISE\nBase text, 36 months.\nEND_DRAFT_TO_REVISE');
+    expect(revised).toContain('BEGIN_PERSON_INSTRUCTION\nAdd the per-protocol result.\nEND_PERSON_INSTRUCTION');
+    expect(revised).toMatch(/The draft to revise is not evidence/);
+    expect(revised).toMatch(/Never supply a number, result or statistic that the evidence above does not state, even when the instruction asks for one/);
+  });
+
+  it('reads the revise field: absent is no revision; a malformed one is refused, trimmed instructions are kept', () => {
+    expect(readDraftRevisionRequest({ tone: 'concise' })).toBeNull();
+    expect(readDraftRevisionRequest(undefined)).toBeNull();
+    expect(readDraftRevisionRequest({ revise: { fromDraftId: ID, instruction: '  Shorter  ' } })).toEqual({ fromDraftId: ID, instruction: 'Shorter' });
+    expect(readDraftRevisionRequest({ revise: { fromDraftId: ID, instruction: 'x'.repeat(1000) } })?.instruction).toHaveLength(1000);
+    for (const revise of [null, 'Shorter', [], { fromDraftId: ID }, { fromDraftId: ID, instruction: ' ' }, { fromDraftId: ID, instruction: 'x'.repeat(1001) },
+      { fromDraftId: 'DC-1', instruction: 'Shorter' }, { fromDraftId: 7, instruction: 'Shorter' }]) {
+      expect(() => readDraftRevisionRequest({ revise })).toThrow(DraftRevisionError);
+    }
+    try { readDraftRevisionRequest({ revise: null }); } catch (e) {
+      expect(e).toMatchObject({ status: 400, code: 'REVISION_INVALID' });
+    }
+  });
+
+  it('admits a live, current, complete base and names what the revision is derived from', () => {
+    const base = { id: ID, sectionId: SECTION, content: 'Base text.', generator: null, savedBaseCurrent: true };
+    /** SHA-256 of 'Base text.' */
+    const sha = '2f398be181d6ecc5e710595f759fb0625da03ad4d622a9c77703d20464c53f34';
+    const admitted = admitDraftRevision({ fromDraftId: ID, instruction: 'Shorter' }, base);
+    expect(admitted.baseText).toBe('Base text.');
+    expect(admitted.generator.derivedFrom).toEqual({ draftId: ID, contentSha256: sha, instruction: 'Shorter' });
+    expect(admitted.turnRequest.revise).toEqual({ fromDraftId: ID, instruction: 'Shorter', baseContentSha256: sha });
+    expect(() => admitDraftRevision({ fromDraftId: ID, instruction: 'Shorter' }, null)).toThrow(expect.objectContaining({ status: 409, code: 'REVISION_BASE_UNAVAILABLE' }));
+    expect(() => admitDraftRevision({ fromDraftId: ID, instruction: 'Shorter' }, { ...base, savedBaseCurrent: false }))
+      .toThrow(expect.objectContaining({ status: 409, code: 'SECTION_BASE_CHANGED' }));
+    expect(() => admitDraftRevision({ fromDraftId: ID, instruction: 'Shorter' }, { ...base,
+      generator: { model: null, provider: null, promptSha256: null, generatedAt: '', finishReason: 'max_tokens' } })).toThrow(DraftTruncatedError);
+  });
+});
+
+describe('the draft route’s revision parts', () => {
+  it('reads nothing for a request that is not a revision, and spreads empty parts', async () => {
+    const read = vi.fn();
+    expect(await draftRevisionFor({ tone: 'concise' }, read)).toEqual({ prompt: null, instruction: null, turnRequest: {}, generator: {} });
+    expect(read).not.toHaveBeenCalled();
+  });
+  it('reads the named candidate once and refuses before reading when the request is malformed', async () => {
+    const ID = 'aaaaaaaa-0000-4000-8000-0000000000aa';
+    const read = vi.fn(async () => ({ id: ID, sectionId: SECTION, content: 'Base.', generator: null, savedBaseCurrent: true }));
+    const parts = await draftRevisionFor({ revise: { fromDraftId: ID, instruction: 'Shorter' } }, read);
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(read).toHaveBeenCalledWith(ID);
+    expect(parts).toMatchObject({ prompt: { baseText: 'Base.', instruction: 'Shorter' }, instruction: 'Shorter',
+      generator: { derivedFrom: { draftId: ID, instruction: 'Shorter' } } });
+    read.mockClear();
+    await expect(draftRevisionFor({ revise: { fromDraftId: ID } }, read)).rejects.toMatchObject({ status: 400, code: 'REVISION_INVALID' });
+    expect(read).not.toHaveBeenCalled();
   });
 });

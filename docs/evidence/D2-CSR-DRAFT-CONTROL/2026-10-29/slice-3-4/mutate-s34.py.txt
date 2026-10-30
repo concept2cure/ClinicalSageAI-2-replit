@@ -1,0 +1,163 @@
+"""Slices 3 and 4 mutations (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md).
+
+Apply one source mutation at a time, run the named tests, record the result, restore the file
+byte for byte. Run from the repository root.
+
+The working tree is shared with other lanes, two of whose files this touches (authoring.router.ts,
+DocumentWorkbench.tsx). So the restore never copies a backup over a file someone else changed:
+when the file still holds exactly the mutated bytes, the original bytes are written back; otherwise
+the mutated text alone is reversed in place, and the run says so. Every `new` is unique in the
+mutated file (a deletion leaves a marker comment), so the reversal finds its one place.
+"""
+import json, subprocess, sys, hashlib, os, time
+ROOT = os.getcwd()
+OUT = os.path.dirname(os.path.abspath(__file__))
+E = 'client/src/concept2cure/v2/editor'
+STORE = 'server/services/clinical-regulatory-evidence/draft-candidate-store.ts'
+TPL = 'server/services/authoring/authoring-draft-template.ts'
+PASS = 'server/services/authoring/authoring-draft-passage.ts'
+ROUTER = 'server/routes/authoring.router.ts'
+WB = f'{E}/DocumentWorkbench.tsx'
+ROUTE3_T = 'server/routes/__tests__/authoring-ai-draft-revise.pglite.test.ts'
+ROUTE4_T = 'server/routes/__tests__/authoring-ai-draft-passage.pglite.test.ts'
+TPL_T = 'server/services/authoring/__tests__/authoring-draft-template.test.ts'
+PASS_T = 'server/services/authoring/__tests__/authoring-draft-passage.test.ts'
+STORE_T = 'server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts'
+PANEL_T = 'client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx'
+UNIT_T = f'{E}/__tests__/draftAlternatives.test.ts'
+WB4_T = f'{E}/__tests__/workbenchDraftPassage.test.tsx'
+PUNIT_T = f'{E}/__tests__/draftPassage.test.ts'
+M = [
+ # ── Slice 3: revise by instruction ──
+ ('S3-M1 the base is consumed instead of read', STORE,
+  "`SELECT id, section_id, content, generator FROM authoring_ai_draft_candidates\n      WHERE id = $1 AND organization_id = $2 AND section_id = $3 AND expires_at >= NOW()`",
+  "`DELETE FROM authoring_ai_draft_candidates\n      WHERE id = $1 AND organization_id = $2 AND section_id = $3 AND expires_at >= NOW() RETURNING id, section_id, content, generator`",
+  [ROUTE3_T, STORE_T]),
+ ('S3-M2 the new candidate parks no derivedFrom', ROUTER,
+  "          ...revision.generator,\n        },\n        assertions,", "          /*MUT-S3-M2*/\n        },\n        assertions,", [ROUTE3_T]),
+ ('S3-M3 the stored generator loses derivedFrom on read and accept', STORE,
+  "    ...(value.derivedFrom && typeof value.derivedFrom === 'object'\n      ? { derivedFrom: value.derivedFrom as DraftDerivation } : {}),\n",
+  "    /*MUT-S3-M3*/\n", [ROUTE3_T, STORE_T]),
+ ('S3-M4 the instruction is not the person’s words in the check', ROUTER,
+  "personWords: [context, requirements, revision.instruction]", "personWords: [context, requirements /*MUT-S3-M4*/]", [ROUTE3_T]),
+ ('S3-M5 the base text counts as a source of the check', ROUTER,
+  "personWords: [context, requirements, revision.instruction]", "personWords: [context, requirements, revision.instruction, revision.prompt?.baseText /*MUT-S3-M5*/]", [ROUTE3_T]),
+ ('S3-M6 a base drafted against an older saved section is admitted', TPL,
+  "  if (!base.savedBaseCurrent) {", "  if (false /*MUT-S3-M6*/) {", [ROUTE3_T, TPL_T]),
+ ('S3-M7 the turn record does not say what was asked', ROUTER,
+  ", ...revision.turnRequest, ...passage.turnRequest },", ", ...passage.turnRequest /*MUT-S3-M7*/ },", [ROUTE3_T]),
+ ('S3-M8 the revision prompt omits the base text', TPL,
+  "BEGIN_DRAFT_TO_REVISE\n${revision.baseText}\nEND_DRAFT_TO_REVISE", "BEGIN_DRAFT_TO_REVISE\nEND_DRAFT_TO_REVISE MUT-S3-M8", [ROUTE3_T, TPL_T]),
+ ('S3-M9 the revision prompt lets the model answer for a figure', TPL,
+  " Never supply a number, result or statistic that the evidence above does not state, even when the instruction asks for one; leave it out.", " MUT-S3-M9", [ROUTE3_T, TPL_T]),
+ ('S3-M10 the base read is not section-scoped', STORE,
+  "content, generator FROM authoring_ai_draft_candidates\n      WHERE id = $1 AND organization_id = $2 AND section_id = $3 AND",
+  "content, generator FROM authoring_ai_draft_candidates\n      WHERE id = $1 AND organization_id = $2 AND $3::uuid IS NOT NULL /*MUT-S3-M10*/ AND", [ROUTE3_T, STORE_T]),
+ ('S3-M11 the client revises the first entry, not the one shown', f'{E}/draftAlternatives.ts',
+  "return approach ? { from, fromDraftId: state.draft.draftId, approach } : null;",
+  "return approach ? { from, fromDraftId: list?.[0]?.draft.draftId ?? state.draft.draftId, approach } : null;", [PANEL_T]),
+ ('S3-M12 a revision overwrites the entry it revises', f'{E}/draftAlternatives.ts',
+  "const list = [...kept, { approach", "const list = [...kept.filter((_, i) => i !== target.from), { approach", [PANEL_T, UNIT_T]),
+ ('S3-M13 the client adds an answer the server did not derive from the text shown', f'{E}/useAuthoringDraftReview.ts',
+  "  if (result.draft.derivedFrom?.draftId !== target.fromDraftId || result.draft.derivedFrom.instruction !== instruction) {",
+  "  if (false /*MUT-S3-M13*/) {", [PANEL_T]),
+ ('S3-M14 the revision does not open against the text it revised', f'{E}/DraftAlternatives.tsx',
+  ": from !== null ? 'revised' : 'none';", ": 'none' /*MUT-S3-M14*/;", [PANEL_T]),
+ ('S3-M15 the revision drops the tone of the entry it revises', f'{E}/useAuthoringDraftReview.ts',
+  "...request, tone: target.approach,\n    revise:", "...request, /*MUT-S3-M15*/\n    revise:", [PANEL_T]),
+ ('S3-M16 the entry left loses its edits when a revision arrives', f'{E}/draftAlternatives.ts',
+  "seeded.map((a, i) => (i === shown && state.draft ? { ...a, body: state.body } : a))", "seeded.map(a => a /*MUT-S3-M16*/)", [PANEL_T, UNIT_T]),
+ ('S3-M17 a lone draft is not listed once revised', f'{E}/draftAlternatives.ts',
+  "    : state.draft ? [{ approach: target.approach, draft: state.draft, body: state.body, single: true }] : [];", "    : [] /*MUT-S3-M17*/;", [PANEL_T, UNIT_T]),
+ ('S3-M18 a lone draft beside its revisions reads as three alternatives', f'{E}/draftAlternatives.ts',
+  "const set = list.length > 0 && !list[0].single;", "const set = list.length > 0 /*MUT-S3-M18*/;", [PANEL_T, UNIT_T]),
+ ('S3-M19 the draft response does not say what it was derived from', ROUTER,
+  "        ...revision.generator,\n        ...passage.response,", "        /*MUT-S3-M19*/\n        ...passage.response,", [ROUTE3_T]),
+ ('S3-M20 focus dropped while AnA works is not returned', f'{E}/DraftAlternatives.tsx',
+  "if (control?.isConnected && (!document.activeElement || document.activeElement === document.body)) control.focus();",
+  "if (control?.isConnected && (!document.activeElement || document.activeElement === document.body)) void control /*MUT-S3-M20*/;", [PANEL_T, WB4_T]),
+ ('S3-M21 the revision takes focus the person moved elsewhere', f'{E}/DraftAlternatives.tsx',
+  "if (control?.isConnected && (!document.activeElement || document.activeElement === document.body)) control.focus();",
+  "if (control?.isConnected /*MUT-S3-M21*/) control.focus();", [PANEL_T]),
+ # ── Slice 4: alternatives for a selected passage ──
+ ('S4-M1 the proposal drops prefix and suffix', f'{E}/draftPassage.ts',
+  "operation: 'replace', quote, prefix, suffix, replacement: input.replacement };",
+  "operation: 'replace', quote, prefix: '', suffix: '', replacement: input.replacement /*MUT-S4-M1*/ };", [WB4_T, PUNIT_T]),
+ ('S4-M2 the editor sends no context with the selection', f'{E}/draftPassage.ts',
+  "const passage = { quote, prefix: before.slice(-PASSAGE_CONTEXT_CHARS), suffix: after.slice(0, PASSAGE_CONTEXT_CHARS) };",
+  "const passage = { quote, prefix: '', suffix: '' /*MUT-S4-M2*/ };", [WB4_T]),
+ ('S4-M3 the server takes the first occurrence when the context names none', PASS,
+  "const named = matches.length === 1 ? matches : matches.filter(fits);", "const named = matches.length === 1 ? matches : matches.slice(0, 1) /*MUT-S4-M3*/;", [ROUTE4_T, PASS_T]),
+ ('S4-M4 a passage is parked as a whole-section candidate', ROUTER,
+  "const candidate = passage.prompt ? null : await createDraftCandidate(", "const candidate = /*MUT-S4-M4*/ await createDraftCandidate(", [ROUTE4_T]),
+ ('S4-M5 the prompt does not hold the passage', TPL,
+  "${passage ? renderPassageBlock(passage) : ''}", "${passage ? '' : '' /*MUT-S4-M5*/}", [ROUTE4_T, PASS_T]),
+ ('S4-M6 a passage running into a pending change is admitted', PASS,
+  "  for (const s of r.spans) out.fill('\\u0000', s.labelStart, s.bodyEnd + 1);\n", "  /*MUT-S4-M6*/\n", [ROUTE4_T, PASS_T]),
+ ('S4-M7 the client lists an answer drafted for another passage', f'{E}/useAuthoringDraftReview.ts',
+  "if (passage && !samePassage(passage, result.draft.passage))", "if (false /*MUT-S4-M7*/)", [WB4_T]),
+ ('S4-M8 the replacement names no turn record', f'{E}/DraftPassage.tsx',
+  "draftParagraphAuthor(draft.turnRecord), draft.turnRecord, false);", "draftParagraphAuthor(undefined /*MUT-S4-M8*/), draft.turnRecord, false);", [WB4_T]),
+ ('S4-M9 the panel skips its own governed-write refusal', f'{E}/DraftPassage.tsx',
+  ": anaInsertRefusal(draft.turnRecord, false);", ": null /*MUT-S4-M9*/;", [WB4_T]),
+ ('S4-M10 the workbench does not wire the editor’s offer', WB,
+  "                    onOfferAlternatives={selectedSourceReviewMissing ? null : offerPassageAlternatives}\n",
+  "                    /*MUT-S4-M10*/\n", [WB4_T]),
+ ('S4-M11 closing the panel keeps the passage', WB,
+  "  useEffect(() => { if (!aiDraftOpen) setDraftPassage(null); }, [aiDraftOpen]);\n", "  /*MUT-S4-M11*/\n", [WB4_T]),
+ ('S4-M12 Draft from sources in Document view reopens the passage', WB,
+  "                if (viewMode === 'document') {\n                  setDraftPassage(null);\n", "                if (viewMode === 'document') {\n                  /*MUT-S4-M12*/\n", [WB4_T]),
+ ('S4-M19 a refusal of the passage is only a passing toast', f'{E}/useAuthoringDraftReview.ts',
+  "  if (run.options.passage && !arrived) { owner.patch({ refusal: `Couldn’t draft alternatives for this passage — ${sentence(failure.message)}.` }); return; }\n",
+  "  /*MUT-S4-M19*/\n", [WB4_T]),
+ ('S4-M20 the passage outlives a change of section', WB,
+  "  useEffect(() => { setDraftPassage(null); }, [activeSectionId]);\n", "  /*MUT-S4-M20*/\n", [WB4_T]),
+ ('S4-M13 focus is not returned after the replacement lands', f'{E}/DraftPassage.tsx',
+  "const pressed = useFocusReturn(proposing);", "const pressed = useFocusReturn(false /*MUT-S4-M13*/);", [WB4_T]),
+ ('S4-M14 the server does not say which passage it drafted for', ROUTER,
+  "        ...passage.response,\n", "        /*MUT-S4-M14*/\n", [ROUTE4_T]),
+ ('S4-M15 a passage that also revises a draft is admitted', PASS,
+  "  if (Object.hasOwn(body as object, 'revise')) {", "  if (false /*MUT-S4-M15*/) {", [ROUTE4_T, PASS_T]),
+ ('S4-M16 the passage block lets the model add a figure', PASS,
+  " Never add a number, result or statistic that neither the passage nor the evidence above states; leave it out.", " MUT-S4-M16", [PASS_T]),
+ ('S4-M17 a selection across paragraphs is offered', f'{E}/draftPassage.ts',
+  "  if (!start.parent.isTextblock || !start.sameParent(doc.resolve(to))) return { ok: false, reason: ACROSS };\n", "  /*MUT-S4-M17*/\n", [WB4_T]),
+ ('S4-M18 the editor offers a selection the door would not land in one place', f'{E}/draftPassage.ts',
+  "  if (located === 'ambiguous') return { ok: false, reason: AMBIGUOUS };\n", "  /*MUT-S4-M18*/\n", [WB4_T]),
+]
+sha = lambda b: hashlib.sha256(b).hexdigest()
+only = set(sys.argv[1:])
+results = []
+for name, rel, old, new, tests in M:
+    if only and name.split()[0] not in only: continue
+    path = os.path.join(ROOT, rel)
+    original = open(path, 'rb').read()
+    src = original.decode()
+    assert src.count(old) == 1, (name, 'old', src.count(old))
+    mutated = src.replace(old, new)
+    assert mutated.count(new) == 1, (name, 'new', mutated.count(new))
+    open(path, 'w').write(mutated)
+    mutated_b = mutated.encode()
+    t0 = time.time()
+    try:
+        r = subprocess.run(['npx', 'vitest', 'run', '--config', 'vitest.config.ts', *tests], cwd=ROOT, capture_output=True, text=True,
+                           timeout=900, env={**os.environ, 'NODE_OPTIONS': '--max-old-space-size=3072'})
+        out = r.stdout + r.stderr
+        failed = [l.strip() for l in r.stdout.splitlines() if l.strip().startswith('×')]
+        code = r.returncode
+    finally:
+        now = open(path, 'rb').read()
+        if now == mutated_b:
+            open(path, 'wb').write(original); how = 'original bytes written back'
+        else:
+            cur = now.decode(); assert cur.count(new) == 1, (name, 'concurrent edit lost the mutation marker')
+            open(path, 'w').write(cur.replace(new, old)); how = 'mutated text reversed in place (file changed by another writer meanwhile)'
+    restored = open(path, 'rb').read()
+    results.append({'mutation': name, 'file': rel, 'tests': tests, 'exitCode': code, 'killed': code != 0 and bool(failed),
+                    'failingTests': failed, 'seconds': round(time.time() - t0, 1), 'sha256Before': sha(original),
+                    'sha256Restored': sha(restored), 'restoredByteForByte': restored == original, 'restore': how})
+    print(json.dumps({k: results[-1][k] for k in ('mutation', 'killed', 'restoredByteForByte')}), len(failed), flush=True)
+tag = '-'.join(sorted(only)) if only else 'all'
+json.dump(results, open(os.path.join(OUT, f'mutations-{tag}.json'), 'w'), indent=1)
+print('killed', sum(x['killed'] for x in results), 'of', len(results), '; restored byte for byte', sum(x['restoredByteForByte'] for x in results))
+sys.exit(0 if all(x['killed'] and x['restoredByteForByte'] for x in results) else 1)

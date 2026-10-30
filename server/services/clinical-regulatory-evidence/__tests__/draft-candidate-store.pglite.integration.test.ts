@@ -29,7 +29,7 @@ const exec = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => exec.query(s, p) } }));
 
-import { createDraftCandidate, consumeDraftCandidate, type DraftGenerator } from '../draft-candidate-store';
+import { createDraftCandidate, consumeDraftCandidate, readDraftCandidate, savedSectionDraftBase, type DraftGenerator } from '../draft-candidate-store';
 import type { Queryable } from '../span-lineage.service';
 
 const ORG_A = 711;
@@ -316,4 +316,44 @@ describe('draft-candidate store — recorded termination metadata', () => {
       expect((await consumeDraftCandidate(ORG_A, SECTION, withoutGenerator.id, reader))?.generator).toBeNull();
     });
   }
+});
+
+describe('draft-candidate store — the read a revision is drafted from (CSR draft control, slice 3)', () => {
+  const section = { id: SECTION, doc_id: 'dddddddd-0000-4000-8000-000000000001', code: '11.4.1', title: 'Efficacy',
+    content: '<p>Saved.</p>', updated_at: '2026-10-29 10:00:00+00' };
+  const generator = (): DraftGenerator => ({ model: 'm', provider: 'p', promptSha256: null, generatedAt: '2026-10-29T10:00:00Z',
+    savedSectionBase: savedSectionDraftBase(section) });
+
+  it('reads a live candidate without claiming it, so it still accepts', async () => {
+    const { id } = await createDraftCandidate(ORG_A, SECTION, 'base text', [], 'user-1', exec, generator());
+    const read = await readDraftCandidate(ORG_A, SECTION, id, section, exec);
+    expect(read).toMatchObject({ id, sectionId: SECTION, content: 'base text', savedBaseCurrent: true });
+    expect(read!.generator?.savedSectionBase).toEqual(savedSectionDraftBase(section));
+    expect(await readDraftCandidate(ORG_A, SECTION, id, section, exec)).not.toBeNull();
+    expect((await consumeDraftCandidate(ORG_A, SECTION, id, exec))?.content).toBe('base text');
+    expect(await readDraftCandidate(ORG_A, SECTION, id, section, exec)).toBeNull();
+  });
+
+  it('is tenant-, section- and expiry-scoped, as the claim is', async () => {
+    const { id } = await createDraftCandidate(ORG_A, SECTION, 'scoped', [], 'user-1', exec, generator());
+    expect(await readDraftCandidate(ORG_B, SECTION, id, section, exec)).toBeNull();
+    expect(await readDraftCandidate(ORG_A, OTHER_SECTION, id, section, exec)).toBeNull();
+    await exec.query(`UPDATE authoring_ai_draft_candidates SET expires_at = NOW() - INTERVAL '1 minute' WHERE id = $1`, [id]);
+    expect(await readDraftCandidate(ORG_A, SECTION, id, section, exec)).toBeNull();
+  });
+
+  it('says when the saved section changed since the candidate was drafted, or the candidate names no base', async () => {
+    const { id } = await createDraftCandidate(ORG_A, SECTION, 'base text', [], 'user-1', exec, generator());
+    expect((await readDraftCandidate(ORG_A, SECTION, id, { ...section, content: '<p>Saved since.</p>' }, exec))?.savedBaseCurrent).toBe(false);
+    expect((await readDraftCandidate(ORG_A, SECTION, id, { ...section, updated_at: '2026-10-29 11:00:00+00' }, exec))?.savedBaseCurrent).toBe(false);
+    const legacy = await createDraftCandidate(ORG_A, SECTION, 'legacy', [], 'user-1', exec);
+    expect((await readDraftCandidate(ORG_A, SECTION, legacy.id, section, exec))?.savedBaseCurrent).toBe(false);
+  });
+
+  it('carries derivedFrom from park to accept', async () => {
+    const derivedFrom = { draftId: 'aaaaaaaa-0000-4000-8000-0000000000aa', contentSha256: 'c'.repeat(64), instruction: 'Shorter' };
+    const { id } = await createDraftCandidate(ORG_A, SECTION, 'revised', [], 'user-1', exec, { ...generator(), derivedFrom });
+    expect((await readDraftCandidate(ORG_A, SECTION, id, section, exec))?.generator?.derivedFrom).toEqual(derivedFrom);
+    expect((await consumeDraftCandidate(ORG_A, SECTION, id, exec))?.generator?.derivedFrom).toEqual(derivedFrom);
+  });
 });
