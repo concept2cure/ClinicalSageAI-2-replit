@@ -1,0 +1,510 @@
+# Item 1, green (working tree over 041880cbd).
+# 1) The pins and every suite the change edits, one run: npx vitest run <the 36 files below>
+#   client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx
+#   client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx
+#   client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx
+#   client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx
+#   client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts
+#   client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts
+#   client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+#   client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterIndForms.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx
+#   client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx
+#   client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts
+#   client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx
+#   server/middleware/__tests__/launch-scope-device-features.test.ts
+#   server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts
+#   server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+#   server/services/entitlements/__tests__/launch-scope.test.ts
+#   server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts
+#   server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts
+#   server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+#   server/services/tenant/__tests__/tenant-offboarding.test.ts
+#   tests/routes/estar-filing-row-gate.test.ts
+#   tests/routes/estar-submission-filing.test.ts
+#   tests/schema-contract/catalog-module-claims.contract.test.ts
+#   tests/schema-contract/estar-filing-one-store.pglite.test.ts
+#   tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > keeps folded dossier identities deprecated across replay without deleting their rows
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > replays every catalog writer in the deploy set, in deploy order
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > seeds a non-trivial catalog (guards against asserting over zero rows)
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > shares its rules with the source gate rather than restating them
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > makes no unsupported compliance claim in any module description or name
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > states what the authoring-engine page is, since it reads no program data
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > states no fixed count of report types — the registry grows
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes batch-draft to a customer, not by its function names
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes document-authoring by what it does, not by an internal handoff note
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes the IND lifecycle without offering what P-32 withholds
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes agency-question approval as what it is, not as a signature
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired filing catalogue subscriptions > fresh replay neither creates a retired filing identity nor requires it for packaging
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired filing catalogue subscriptions > keeps an existing filing catalogue and subscription retired across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > fresh replay neither creates device-tasks nor requires it for packaging, and Tasks stays offered
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > keeps an existing device-tasks row and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Artifacts center and device vault > fresh replay creates neither row nor requires either for packaging, and the Vault stays offered at free
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Artifacts center and device vault > keeps each existing row and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > fresh replay creates no part11-console row, and Audit trail stays uncatalogued
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > deprecates a part11-console row added by another path, and keeps its subscription, across replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > a fresh database replaying the whole catalogue set twice never creates the row nor requires it for packaging, and eCTD Compile stays offered
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > keeps a deployed row, its tier and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired risk, design-controls and ivd-completeness > a fresh database replaying the whole catalogue set twice holds none of the three, and both targets and human factors stay offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired risk, design-controls and ivd-completeness > keeps each deployed row, its tier and its subscription, deprecated, across replay of every writer
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired organization-wide blocker list > a fresh database replaying the whole catalogue set twice never holds device-validation, and Submission Center stays offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired organization-wide blocker list > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device submission packages > a fresh database replaying the whole catalogue set twice never holds device-submission, and Submission Center stays offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device submission packages > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > writes the signature with the artifact target, meaning, content binding and verified factors
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > without a verified sign-off it places nothing and signs nothing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > a failed signature write rolls the placement back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > refuses an artifact outside the caller's organization, writing nothing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > writes the tracked filing and its created event, and the signature over the ledger, claiming no content hash
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > takes a De Novo, a PMA or any eSTAR submission type by its catalogue key
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > refuses a family that is not a device filing, by name, writing nothing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > another organization's project is refused before anything is written, signature included (PF-03)
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > without a verified sign-off creates no filing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > a failed signature write rolls the filing and its event back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > writes the reverted content as a new version, bound to that content and version
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > without a verified sign-off writes no version
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > a failed signature write rolls the new version back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > signs first: a self-erasure is signed under the pre-erasure name, bound to the ledger
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > retains regulated artifact content and reports it with the legal basis
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > without a verified sign-off erases nothing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > a failed signature write rolls the whole erasure back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > a failing redaction statement returns failure with nothing committed
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > an absent table is reported as not applicable, not as zero, and the erasure completes
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > the erasure record is not optional: a missing request table fails the erasure
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data records the reason the person stated, and keeps the review record > retains the subject’s review comments, word for word, outside its scope (D5, 2026-10-01)
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data records the reason the person stated, and keeps the review record > takes it from the sign-off, not from what AnA wrote
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > tagArtifact into a section that already has an artifact > updates that artifact, merging its metadata
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > add_review_comment files AnA’s words as AnA’s > stamps author_role ana and chains the comment with origin ana
+ ✓ tests/schema-contract/estar-filing-one-store.pglite.test.ts > the file is on the deploy set > after every estar_submissions creator and before the final sweep pair
+ ✓ tests/schema-contract/estar-filing-one-store.pglite.test.ts > a database that never had the package store > gets the event history and migrates nothing, on every replay
+ ✓ tests/schema-contract/estar-filing-one-store.pglite.test.ts > a database holding device packages > makes each device package on its own organization's project one tracked filing, never filed
+ ✓ tests/schema-contract/estar-filing-one-store.pglite.test.ts > a database holding device packages > names what each package recorded in its import event, and keeps each milestone as an event
+ ✓ tests/schema-contract/estar-filing-one-store.pglite.test.ts > a database holding device packages > leaves the packages that are not device filings, and the package rows themselves, untouched
+ ✓ tests/schema-contract/estar-filing-one-store.pglite.test.ts > a database holding device packages > adds nothing on a replay
+ ✓ tests/schema-contract/estar-filing-one-store.pglite.test.ts > a database holding device packages > keeps a filing's history append-only, held to its organization, and gone with its filing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > agrees with the screens: each folded id opens its target
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves tasks's paths to an organization holding only device-tasks
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only device-vault
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only artifacts-center
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only risk
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only design-controls
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-diagnostics's paths to an organization holding only ivd-completeness
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-validation
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-submission
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > refuses a tiered target's own paths to an organization holding neither
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a revocation written on the target stands: the carried grant does not undo it
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a lapsed or revoked grant of the folded module carries nothing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > the target's own grant serves as before
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows a revoked target as revoked, and a tenant holding neither as below its tier
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only its own module names the mapping
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only the licence read derives the carried grants, once
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > discovers a substantial share of the schema, not a handful of tables
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > EVERY table the purge destroys is covered by the export
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > no purge target is on the export exclusion list
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > excludes secrets and cross-tenant infrastructure from the return
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > resolves one tenant column per table, preferring organization_id
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > provisions the receipts table the purge verifies against
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > is stable under key reordering — it depends on data, not insertion order
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > changes when any value changes
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > distinguishes nesting from flattening
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > canonicalizes arrays positionally — order is data, not noise
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > is prefixed so the algorithm is self-describing
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the Sequences row does not open the e-signature when the server would refuse the freeze
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the gates are asked again just before signing; a refusal then takes no signature
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > downloads the package through the canonical eCTD export for this sequence
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says the gateway is not configured, and offers no transmit, before any password is typed
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured account with an unavailable transport never asks for a transmit signature
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says what the package names as its applicant and its application, from the record
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > with no application number or applicant on record, says "not recorded" and the server refusal, never a placeholder
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > the pre-sign check carries the typed number; one the record contradicts takes no signature
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > a transmit that sent nothing says the signature given for it is void
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an unapproved Vault version reads "not approved", never "source verified"
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > removes a leaf with its reason, and nothing without one
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an identical re-placement says nothing was placed, and an original offers only New
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new fda release verdict after a confirmed dispatched to dispatched act
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new ema release verdict after a confirmed dispatched to dispatched act
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > reads the new jp release verdict after a confirmed dispatched to dispatched act
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > asks the ema release gates again before taking a new signature
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > asks the jp release gates again before taking a new signature
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved fda verdict when the governed act has no confirmed receipt
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved ema verdict when the governed act has no confirmed receipt
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > confirmed release renewal refreshes the existing dispatch assessment > preserves the unresolved jp verdict when the governed act has no confirmed receipt
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > keeps a US diagnostic on its recorded 510(k) route and adds the assay bench
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > gives MDR clinical evaluation and IVDR performance evaluation different leads and deliverables
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > shares evidence across recorded filings without converting a De Novo into a 510(k)
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > hands De Novo assembly to project authoring while preserving its filing identity
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > does not fabricate a 510(k) for an unknown device route or an MDX workflow for a drug
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens an existing feature and uses project evidence for specialist laboratory reports
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > states an unreadable additional-filing list and never offers a locked feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > opens a secondary MDR evaluation from its clinical evidence without changing the primary 510(k)
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > uses project evidence for US assay work and only opens IVDR evidence for a recorded IVDR filing
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a 510(k) project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a PMA project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a MDR project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a IVDR project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > names the software, agency, post-market and clinical-studies doors for their jobs
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > heads a filing with no recorded route by its kind, in words a client reads
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > places each of the 16 project features once: opened from Plan, or listed with why it has no door
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those twelve features from a device project's Plan, over every recorded route and product type
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-analytics from inside the project
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-workstream from inside the project
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts > the filing and its history commit together > starting to track a filing writes its created event
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts > the filing and its history commit together > a filing whose created event cannot be written is not tracked
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts > the filing and its history commit together > a status change writes its event, and does not land without it
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts > reading the history > in order, for the filing's organization only
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts > a migrated filing's review clock > is the catalogue's when the filing recorded none, and its own otherwise
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > sequence selector drives the per-sequence workspaces > Builder loads the SELECTED sequence leaves and switching the selector refetches
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > sequence selector drives the per-sequence workspaces > renders the honest empty state for a sequence with no leaves
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > placing a Co-Author document carries its reason > keeps Place disabled without a reason, then sends it with the leaf
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > lifecycle transitions post the real endpoint; verdict verbatim > surfaces the server refusal VERBATIM when the lifecycle refuses
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > lifecycle transitions post the real endpoint; verdict verbatim > announces success only from the server-confirmed row
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > governed freeze — the real e-sign chain, never bypassed > freeze opens the Part 11 modal; sign → freeze runs in order with the actionId
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > governed freeze — the real e-sign chain, never bypassed > a blocked governed freeze surfaces the server verdict and fabricates nothing
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > governed freeze — the real e-sign chain, never bypassed > a refused sign step stops the chain — the freeze endpoint is never called
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > governed freeze — the real e-sign chain, never bypassed > asks an MFA-enrolled signer for the code and forwards it with the sign request
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > dispatch workspace — the server gate, verbatim > renders the gate blockers verbatim and offers NO governed button while blocked
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > dispatch workspace — the server gate, verbatim > offers the governed freeze only when the gate is clear and the sequence is validated
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > dispatch workspace — the server gate, verbatim > fails closed when the readiness read fails — no gate, no governed buttons
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > validation workspace — findings verbatim with rule ids > renders the readiness findings with their rule codes
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > validation workspace — findings verbatim with rule ids > shows the honest clean state when the server reports zero findings
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > shadow review — real runs and persisted findings > lists the sequence runs and the selected run findings with acknowledged state
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > shadow review — real runs and persisted findings > a failed run POST surfaces the server error and records nothing locally
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > no MOCK-ACTION flag survives in the surface source > client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx carries no MOCK-ACTION marker
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > no MOCK-ACTION flag survives in the surface source > client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx carries no MOCK-ACTION marker
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a place act opens the placement form with Section filled in, and focus is on the line saying so
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a place act with no section opens the form empty and says which sequence it is for
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a leaf act marks the placed leaf at that section, matched by its CTD code
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a leaf placed under a non-canonical spelling (m1.3.1) is the leaf at 1.3.1
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a leaf act whose leaf is no longer placed marks nothing and says so
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > is applied once: back on the Builder after another tab, the form is closed and nothing is named
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a frozen sequence says no leaf can be placed in it
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a failed leaves read says the placement form was not opened, and how to retry
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the Builder opens at the section a readiness finding names > a failed leaves read for a leaf act says no leaf was marked, not that a section was not opened
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the section a sender names is read, not trusted > keeps a known act with a code-length section on a named sequence in the Builder
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18: the section a sender names is read, not trusted > drops an unknown act, an over-long code, a leaf act with no code, a section with no sequence, and a section for another tab
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18 review: the arrival is used once, then retires > after the placement it asked for, the form stays closed and the line is gone (at head it reopened at 1.2)
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18 review: the arrival is used once, then retires > Cancel retires the line, and a later write does not reopen the form
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18 review: the arrival is used once, then retires > the place line sits by the form it describes, after the leaf table
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18 review: the arrival is used once, then retires > a read that answers after the person has moved on leaves focus where they put it
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx > F18 review: the arrival is used once, then retires > two leaves at the section: the line says how many, and neither is called the one named
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > F19: a copied link opens the exact non-first sequence and a failed read retries that retained target
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > F19: a repeated notification handoff opens its exact submission and sequence while this surface is already mounted
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > an already mounted response handoff sets only an admitted follow-up type on the exact submission
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > after placing into sequence 7, the Submission Center opens on sequence 7 in the Builder
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > a sequence not in the submission is not guessed at: the sequence list, with a line saying so
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into > on the first submission too: an unknown sequence is said, never replaced by sequence 0000
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into — recovery > a failed sequence read is said as a failed read, not as "not found"
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into — recovery > a submission not in the list is not guessed at: the submission list, with a line saying so
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into — recovery > the line about the link is cleared once the person moves to another tab
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into — recovery > the line about the link is cleared once the person picks another submission
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx > F10: Open in Submission Center lands on the sequence placed into — recovery > with nothing carried, the Submission Center opens on its portfolio as before
+ ✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > the status filter > offers only the statuses the list holds, each with its count, and shows only that status
+ ✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each draft filing's gate, from its own readiness > names every blocker of a blocked filing, and says "Can file now" only where the assessment did
+ ✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each draft filing's gate, from its own readiness > asks only for drafts: a filing past draft is not assessed for filing
+ ✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each draft filing's gate, from its own readiness > a filing with no project is not assessed, and says why
+ ✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each draft filing's gate, from its own readiness > a failed read is an error with a retry, never a verdict
+ ✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > what the retired screen pinned, on the device filings > a readiness read in flight is said to be one, and is no verdict
+ ✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > what the retired screen pinned, on the device filings > a 200 that is not a gate is an unreadable gate, never a verdict
+ ✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > what the retired screen pinned, on the device filings > names no receiving authority, transmitter or signature the record does not carry
+ ✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each filing's history, on its record > lists the events in order, with who and what, and an unknown person as —
+ ✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each filing's history, on its record > an empty history is said to be empty, and a failed read to have failed
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > "Add a market" opens New submission on arrival (F9) > with the project open, the form is open on arrival with its filing preselected
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > "Add a market" opens New submission on arrival (F9) > with no project open, nothing opens on its own
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an NDA · FDA project opens on NDA · FDA (US), with the project's client type
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an MAA · EMA project opens on MAA · EU (EMA), not on a US IND
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a Health Canada project preselects Health Canada, whatever its spelling
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project opened from a link (no workspace on the shell) takes its client type from the project's product type
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an IVD product is an IVD client, whatever bucket its filing type falls in
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when that market already exists on the project, no region is preselected, and the field says why
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each defaulted field says it came from the project's record
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a small-molecule IND is a Pharma client: the product type decides, not the filing type's bucket
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > opens at once while the project is read: the dialog says so, with no fields and no submit
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a type the form does not offer (J-NDA) is not guessed
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project record that could not be read preselects nothing, and says why
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when the project's submissions cannot be read, no region is preselected, and the drawer says why
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission with no project open (F20) > preselects no application type, region or client type
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission over an unreadable submissions reply (F20) > a submissions reply with no list is a failed read: no region is preselected, and the drawer says why
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > reads the project-scoped list, not the organization, and lists only its submissions
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > says whose submissions these are and how many others the server left out
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > shows every submission of the organization on request, and can go back
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > does not guess the count of others when the server did not send one
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > creates the submission in the open project: no programme picker, the project named
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with no project open > reads the organization as before, with no scope line and the programme picker
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > keeps keyboard focus on the scope toggle in both directions
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > a project known only by its id is "the open project" once, not twice
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > a failed scoped read does not call the list the organization’s
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > AnA asking for another project’s submission is told it is not listed here, not that it does not exist
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx > Submission Center exact native filing entry > opens a copied filing UUID under StrictMode without needing canonical submissions or a programme switch
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx > Submission Center exact native filing entry > prefers one-shot handoff over an old copied URL
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx > Submission Center exact native filing entry > refuses malformed or ambiguous copied filing identifiers: 11111111-1111-4111-8111-111111111111&filingId=22222222-2222-4222-8222-222222222222
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx > Submission Center exact native filing entry > refuses malformed or ambiguous copied filing identifiers: 12
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx > Submission Center exact native filing entry > refuses malformed or ambiguous copied filing identifiers: not-a-uuid
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx > Submission Center exact native filing entry > opens and replaces an exact native target while already mounted
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx > Submission Center exact native filing entry > opens the exact record from the existing portfolio row
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx > Submission Center exact native filing entry > does not replay the original copied URL after detail closes and unrelated navigation arrives
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx > Submission Center exact native filing entry > preserves an actual new-submission form and entered title when a same-surface filing handoff arrives
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx > Submission Center exact native filing entry > preserves a registered signature ceremony and current exact filing when another target arrives
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — create posts the live schema > an EU MAA can be OPENED: the body carries title/applicationType/clientType/primaryRegion and the programme identity
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — create posts the live schema > the form offers the global markets, not only the US ones
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — the next sequence > starts the next sequence in the submission's region, numbered after the last, of the type chosen
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — the next sequence > numbers after the highest sequence in the submission's own region — numbering restarts per region
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — the next sequence > after sequences declared filed outside the platform, the first one here is numbered after them, and is a follow-up
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — the next sequence > an empty submission with nothing declared offers 0000, or a declaration
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > loads only the requested record and renders its saved fields without lifecycle actions
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > shows unknown saved statuses verbatim and does not fabricate missing bindings, dates or notes
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > distinguishes an HTTP 401 response from a missing or empty record
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > distinguishes an HTTP 403 response from a missing or empty record
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > distinguishes an HTTP 404 response from a missing or empty record
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > distinguishes an HTTP 503 response from a missing or empty record
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > distinguishes an HTTP 500 response from a missing or empty record
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > preserves status semantics when apiRequest throws HTTP 403
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > preserves status semantics when apiRequest throws HTTP 404
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > preserves status semantics when apiRequest throws HTTP 503
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing detail > reports network failure and retries the exact record
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: missing data
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: false success
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: wrong native row
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: wrong home source
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: missing field
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > refuses malformed HTTP 200: invalid date
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > reports an unreadable JSON response explicitly
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > removes the previous record immediately on ID change while the next record loads
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > ignores a stale old-target success after the new target resolves
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > ignores a stale old-target failure after the new target resolves
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > clears the previous record failure on ID change
+ ✓ client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx > Tracked filing response and navigation integrity > survives StrictMode cleanup without publishing programme or navigation events
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx > SubmissionCenter — the per-sequence gate over an unread submission list > does not say "No submission selected" when the submission list failed to load
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx > SubmissionCenter — the per-sequence gate over an unread submission list > still says "No submission selected" when the list genuinely came back empty
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx > SubmissionCenter — the lead action over an unread sequence list > does not offer "Plan the submission" while the sequences are still loading
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx > SubmissionCenter — the lead action over an unread sequence list > does not offer "Plan the submission" — or route to the Planner — when the sequence read failed
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx > SubmissionCenter — the lead action over an unread sequence list > still offers "Plan the submission" and opens the Planner on a settled zero-sequence read
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx > SubmissionCenter — the lead action over an unread sequence list > offers the sequences when this submission has them
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx > SubmissionCenter — the Planner over a region profile > reports an unprofiled region as not codified, never as no requirements
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx > SubmissionCenter — the Planner over a region profile > reports a failed profile read as unreadable, never as not codified
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx > SubmissionCenter — the Planner over a region profile > does not answer from an unsettled read
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx > SubmissionCenter — the Planner over a region profile > shows the codified profile, scoped to THIS application type
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterIndForms.test.tsx > Submission Center — the IND forms screen, from the US IND > a US IND opens the IND forms screen scoped to that submission
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterIndForms.test.tsx > Submission Center — the IND forms screen, from the US IND > an NDA and a non-US IND are not offered it
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — idle offers the one action that fixes it > renders a real control, not an instruction, and it reaches the shell
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — idle offers the one action that fixes it > states why it is empty without instructing, and names its regulation
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — idle offers the one action that fixes it > honours a hook's own reason, and still renders the button beside it
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — idle offers the one action that fixes it > takes a surface override, and stands down entirely only when told to
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — empty never renders a dead end > prefers the action that populates THIS panel
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — empty never renders a dead end > falls back to the refresh rather than to nothing
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — one announcement per state > a failure is an alert, and is NOT wrapped in a polite status
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — one announcement per state > loading is a polite status that says it is busy
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — one announcement per state > ready renders the children and no panel at all
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > the synthesized Part 11 record is gone, and cannot be reintroduced > the pathway fixtures carry no audit or approvals bundle
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > the synthesized Part 11 record is gone, and cannot be reintroduced > the bundle TYPE no longer has the fields, so a revert does not compile
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > the synthesized Part 11 record is gone, and cannot be reintroduced > no pathway pane is handed sample content any more
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > the synthesized Part 11 record is gone, and cannot be reintroduced > the dossier Activity tab merges no seed chain
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > the synthesized Part 11 record is gone, and cannot be reintroduced > no MDX surface hand-rolls a failure panel any more
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > the synthesized Part 11 record is gone, and cannot be reintroduced > no MDX surface names a schema object or an endpoint in its copy
+ ✓ client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > the synthesized Part 11 record is gone, and cannot be reintroduced > the passive instruction is retired from the whole lane
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > an SE attribute with no verdict is unassessed, not equivalent
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > an IVD with no Annex VIII class is not classified, not class B
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > a submitted program is in flight, not cleared
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > explains the mixed scope and keeps reporting-clock requests narrowed to the project
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > shows no count while the triage read has failed
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > counts MDRs due within 72h and open CAPAs from the server-computed queue
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > resolves the old id to Submission Center from a link, an in-app move and AnA, with or without a project open
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > lands on Submission Center, which lists the tracked device filings; each filing's readiness is EstarFilingPanel's
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > leaves no client code that lists the organization's blockers or names the retired screen
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts > device-submission is folded into Submission Center > resolves the old id to Submission Center from a link, an in-app move and AnA, with or without a project open
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts > device-submission is folded into Submission Center > lands on Submission Center, whose device filings card reads the filing store, each draft's gate and each filing's history
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts > device-submission is folded into Submission Center > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish, no file
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts > device-submission is folded into Submission Center > leaves no client code that names the retired screen or reads the package store
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts > device-submission is folded into Submission Center > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx > SubmissionCenter — real rows render (no fixture) > renders the REAL submission in the portfolio table (not a constant)
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx > SubmissionCenter — real rows render (no fixture) > derives the AnswerLead sequence count from the REAL sequences array
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx > SubmissionCenter — real rows render (no fixture) > renders the REAL sequence rows in the Sequences workspace
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx > SubmissionCenter — honest empty state > shows an EmptyState — never a fixture — when the org has no submissions
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx > SubmissionCenter — honest error state > shows an error EmptyState — never a fixture — when the read fails
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx > SubmissionCenter — no fixture/SampleTag symbol remains in source > imports and renders no retired sample-content fixture constant
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx > SubmissionCenter — no fixture/SampleTag symbol remains in source > neither imports nor renders SampleTag
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx > SubmissionCenter — no fixture/SampleTag symbol remains in source > stays on the honest data path (useLiveRows + EmptyState)
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings render from the real API > renders the tracked filings with status, tracking number and review clock
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings render from the real API > derives the assembly-readiness header line from the REAL assemble verdict
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings render from the real API > deep-links each filing row to the 510(k) surface via the surface router
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings render from the real API > never fabricates a status: an unknown enum value renders raw, a decision only when present
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings honest empty state > shows the honest empty state — no rows, no fixture
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx > SubmissionCenter — device filings honest error state > shows the error EmptyState and an unavailable readiness line — never fabricated rows
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > names the linked program from the program record
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > says a submission with no program has none, and does not borrow a program code from its product name
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx > Submission Center — the Program column reads the program by its key > labels the product name as the product, not as a program
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > moves an active organization to pending_deletion and starts the clock
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > clamps a short retention request up to the minimum
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > is idempotent — a second request does NOT reset or shorten the window
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an unknown organization
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an already-purged organization
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > returns a pending_deletion organization to active and clears the evidence
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses when the organization is not scheduled for deletion
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses to restore a purged organization
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses without a final export digest
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > VERIFIES the digest — a fabricated string does not open the gate
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > scopes the receipt lookup to THIS organization
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > checks the digest BEFORE reading the organization — cheapest refusal first
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses while the retention window is still open
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses to purge a tenant that was never scheduled for deletion
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > purges once the window has closed
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > KEEPS the organization row, in status purged, carrying the evidence
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > clears commercial identifiers so a purged tenant cannot be re-billed
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes child tables inside a transaction
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > rejects an unsafe table name rather than interpolating it
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > lists every table a purge door erases, since a door opens only for a listed table
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > ships a frozen child-table list that excludes the audit trail and billing
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > names the vault tables where they actually live
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes chunks before the documents their scoping predicate reads
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > the organisation's live AnA runs stop (AnA detach DT3, §2.9) > requestDeletion stops them with session_ended once the organisation is pending deletion
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > the organisation's live AnA runs stop (AnA detach DT3, §2.9) > purgeTenant stops them FIRST, before any table is purged
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > resolves the old id to Tasks from a link, an in-app move and AnA, with or without a project open
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > lands on the Tasks board, which the shell can mount
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > leaves no client code naming TasksSurface
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > is in neither project scope list nor the device rail, and the tour stops at Tasks
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx > SubmissionCenter — 510(k) device assembly caption > reports the 11 missing and 7 undetermined sections, not "2 blockers"
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx > SubmissionCenter — 510(k) device assembly caption > counts a template blocker beside the section counts as one more blocker
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx > SubmissionCenter — 510(k) device assembly caption > still reads "0 blockers" for a verdict with nothing blocking (over-correction guard)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > unset ⇒ on in production, off elsewhere
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > explicit values win in either environment
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > an explicit off in production is said once, as an error; off elsewhere and on are quiet
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > a value that is neither on nor off refuses to boot in production, and is off elsewhere
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > reaches MDX as project features without adding app or module grants
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > has seven apps and every app surface is in the id set
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC / Module 3 is a launch app — decision P-28, 2026-10-12
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC grants NO module, so the professional band still decides who sees it
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > Reporting & analytics is a launch app — founder decision, 2026-09-26
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > protocol development is in the Authoring app — founder decision, 2026-09-21
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the authoring engine explainer is outside the scope — swapped out for protocol development
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > keeps the Part 11 surface the catalog may never gate
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > program-journey is out of the projects app — fixture-demo: empty for every program a client creates
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > filings-catalog is out of the projects app — folded identity: reference discovery and creation live in the New project wizard
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > regulatory-workspace is out of the authoring app — a fixed paragraph where the editor should be
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > template-library is out of the authoring app — a saved template formats no document
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-coauthor is out of the submission-center app — a second editor whose checks report a fixed failure
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > dossier-map is out of the projects app — retired screen: its tracked records are reached in project Author
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-publishing is out of the submission-center app — a reference page that publishes nothing
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > qmp is out of the qms app — a plan cannot be given its gates, and nothing reads them
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-command — enterprise-only, and says runs are recorded that are not
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-memory — shows a store nothing writes, not the memory AnA loads
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries training — no path, lesson or certification exists
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > every app keeps a screen a client can work in
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device task workbench > is in neither project scope list: Tasks holds it (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Artifacts center and device vault > are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Part 11 console > is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded eCTD publishing reference > is in no scope list and no grant: eCTD Compile holds the reference (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded billing screen > is in no scope list and no grant: Licensing holds the invoices, usage keeps the limits (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded AnA memory > is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded risk file, design-control trace and IVDR readiness board > are in no scope list and no new grant: Engineering and IVDR evidence hold them (D2, folds F1c and F2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the retired organization-wide blocker list > is in no scope list and no new grant: each filing's readiness holds its blockers (D2, fold F5 item 2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device submission packages > are in no scope list and no new grant: Submission Center holds the device filings (D2, fold F5 item 1, 2026-10-30)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > agency questions stay locked until approval is a signed act
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > P-32 grants NO module: the Submission Center modules are its own three plus dispatch-readiness, and the standard tier still decides
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > pharmacovigilance, which holds the IND safety-report routes, stays outside the scope (P-32)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > leaves a launch surface verdict untouched, whatever it said
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > locks a bought module outside the scope — the boundary never widens
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > emits a verdict for every registered surface outside the scope that has no catalog row
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > never emits a launch-scope verdict for a launch surface
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > is no longer an app of its own
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > its surface and module moved to Submission Center, so the readiness verdict stays reachable
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > grants a new organisation exactly the modules it was granted before the fold
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > the walk reaches each device screen's own hooks, and each names a call
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > serves every call a device screen names, under the gate production builds
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > claims no /api/mdx or /api/submission-ops root, nor a family no screen of it calls
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > files with the artifact, the declared meaning and what was actually verified
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > records a second factor only when one was actually presented
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with no artifact, and nothing is advanced
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with no reason, and nothing is advanced
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with a too-short reason, and nothing is advanced
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing whose re-authentication failed, before anything is advanced
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > has nowhere to put a client-supplied filing date
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > leaves every other transition unsigned and un-gated
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — signing authority before the password > refuses a filing by a manager 403 ESIGNATURE_NO_AUTHORITY before the password, and nothing is advanced
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — signing authority before the password > refuses a filing by a member 403 ESIGNATURE_NO_AUTHORITY before the password, and nothing is advanced
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — signing authority before the password > asks nothing of the role for a transition that is not a signature
+ ✓ tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/readiness — the filing's own gate > answers what the filing-readiness panel answers for the filing's type, variant and project
+ ✓ tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/readiness — the filing's own gate > does not assess a filing tracked under no project, and says so
+ ✓ tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/readiness — the filing's own gate > does not assess a filing whose project anchors no program, and says so
+ ✓ tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/readiness — the filing's own gate > assesses nothing for a caller the filing's project does not admit
+ ✓ tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/events — the filing's history > returns the history once the filing's project admits the caller
+ ✓ tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/events — the filing's history > reads nothing for a caller the project does not admit
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > permits the forward path draft → filed → under_review → decision
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > allows the additional-info round trip
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > allows withdrawal from any non-terminal status
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > treats decision and withdrawn as terminal
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > rejects illegal jumps (draft → decision, filed → draft)
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > computeDecisionDue (review clock) > adds reviewGoalDays to filedAt
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > computeDecisionDue (review clock) > returns null when there is no review clock (meeting-based requests)
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > binds the filing to the vault row, and to the hash the VAULT holds
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > refuses an artifact that is not in this organization vault
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > refuses a retained administrative PreSTAR prefill before any filing, audit or signature write
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > signs nothing when the row moved underneath it
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > records the governed action and an electronic signature bound to the artifact
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > writes the filed event to the filing's history on the same client, after the signature
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > maps the bare base path to home
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > maps every registry id to itself
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > resolves deep-link aliases to their canonical surfaces
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > /concept2cure/features is Subscription & features (section 12: no id with "app" in the address bar)
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > ignores trailing segments and query strings
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > treats non-base locations as home
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > locationForSurface (the path the shell writes) > writes /concept2cure/features for apps, and the id itself for every other surface
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > locationForSurface (the path the shell writes) > every address it writes reads back to the same surface
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > the retired kit paths still land somewhere real > /concept2cure/mdx resolves to Projects with its existing MDX filter
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > the retired kit paths still land somewhere real > /concept2cure/pdev resolves to itself — it is a real surface id now
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > the retired kit paths still land somewhere real > neither falls through to home
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts > createEstarSubmission — the filing’s project > a project of the organization is recorded on the filing
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts > createEstarSubmission — the filing’s project > another organization's project is refused NOT_FOUND — no row, no audit entry
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts > createEstarSubmission — the filing’s project > an id naming no project is refused NOT_FOUND — no row, no audit entry
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts > createEstarSubmission — the filing’s project > a project lookup that cannot complete writes nothing and is not a "not found"
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts > createEstarSubmission — the filing’s project > a filing tracked with no project yet looks nothing up and is recorded unattached
+ Test Files  36 passed (36)
+      Tests  448 passed (448)
+
+# 2) Every suite naming a list, store, route or screen this change edits: 511 files, one run (before the history moved into its own card; the 22 trackedFilingDetail failures below were that, fixed by the move, and the suite is green in run 1).
+ Test Files  7 failed | 504 passed (511)
+      Tests  28 failed | 8485 passed | 37 skipped (8550)
+# Failures, by file:
+     22  × client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx
+      1  × server/routes/__tests__/submissions-request-current-access.pglite.test.ts
+      1  × server/services/__tests__/ana-ri.test.ts
+      2  × server/services/ana/__tests__/document-template-description.test.ts
+      1  × tests/golden-journeys/drug-nda-ectd.journey.test.ts
+      1  × tests/routes/ana-ri-health.test.ts
+# The five not of this change, each failing alone the same way:
+ × tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+ × tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > refuses a committed transfer to a different accessible unique anchor at the final parent check
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last
+#   drug-nda-ectd.journey: [42P01] relation "public.submission_filed_baselines" does not exist (the D7 filed-baseline slice; the journey's DDL list lacks it).
+#   ana-ri-health: 'This turn had no organization to file it under.' (chat stream).
+#   submissions-request-current-access: expected 'PROJECT_ACCESS_CHANGED' to be 'SUBMISSION_ACCESS_CHANGED' (eCTD submissions access).
+#   document-template-description (2): CSR outline lists and the 1024-character trim (the CSR lane).
+#   ana-ri.test.ts 'includes all critical workflow commands': expects create_project, which head's command-executor has not registered since f9c84bdf1 (fails at head).

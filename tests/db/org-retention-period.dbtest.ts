@@ -315,8 +315,8 @@ describe('a tenant purge erases the period (GDPR Art. 17)', () => {
       [gone.orgId],
     );
     await owner.query(
-      `INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by)
-       VALUES ($1, $2, 1, 1, NULL)`,
+      `INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by, export_scope)
+       VALUES ($1, $2, 1, 1, NULL, 'organization')`,
       [gone.orgId, digest],
     );
     await owner.query(

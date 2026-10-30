@@ -1,0 +1,33 @@
+/**
+ * P-72 slice 0 / F5, function level: the export itself (companyExportSnapshot -> exportTenantFull -> withIntegrity,
+ * exactly as GET /api/tenant-export/full composes them; and exportTenantData, GET /) on the RUNTIME pool server/db
+ * builds (app_service, instrumented, RLS_ENFORCE=on), under the system scope the route runs in today and under the
+ * organization's own scope (tenant id + org uuid, no role). Per-table row counts for the tables that lose rows.
+ */
+const R = '/home/user/ClinicalSageAI-2-replit/server';
+const { pool } = await import(`${R}/db.ts`);
+const { runWithSystemTenantScope, runWithTenantScope } = await import(`${R}/db/tenantStore.ts`);
+const { exportTenantFull } = await import(`${R}/services/tenant-export/tenant-full-export.service.ts`);
+const { exportTenantData } = await import(`${R}/services/tenant-export/tenant-export.service.ts`);
+const { companyExportSnapshot } = await import(`${R}/services/tenant-export/company-export-snapshot.ts`);
+const { withIntegrity } = await import(`${R}/services/tenant-export/held-record-integrity.ts`);
+const pg = (await import('/home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/index.js')).default;
+const owner = new pg.Pool({ connectionString: process.env.DATABASE_OWNER_URL, max: 1 });
+const orgs = (await owner.query(`SELECT id, uuid::text AS uuid, slug FROM organizations WHERE slug IN ('p72-a','p72-b') ORDER BY slug`)).rows;
+await owner.end();
+const WATCH = ['vault.documents', 'vault.document_catalog', 'vault.document_read_receipts', 'vault.evidence_citations', 'vault.legal_holds',
+  'citation_chains', 'knowledge_graph_edges', 'knowledge_graph_nodes', 'lumen_knowledge_graph_edges', 'regulatory_programs', 'organization_users'];
+const show = (label: string, out: any) => {
+  const by = new Map(out.tables.map((t: any) => [t.table, t.rowCount]));
+  console.log(`${label}: tablesDiscovered=${out.coverage.tablesDiscovered} tablesExported=${out.coverage.tablesExported} tablesEmpty=${out.coverage.tablesEmpty} tablesFailed=${out.coverage.tablesFailed.length} totalRows=${out.coverage.totalRows}`);
+  console.log(`  ${WATCH.map((t) => `${t}=${by.get(t) ?? 'absent'}`).join(' ')}`);
+};
+const full = (o: any) => companyExportSnapshot(pool, o.id, async (c: any) => withIntegrity(c, o.id, await exportTenantFull(c, o.id)));
+for (const o of orgs) {
+  show(`${o.slug} GET /full, SYSTEM scope (today)`, await runWithSystemTenantScope('p72-slice0:f5', () => full(o)));
+  show(`${o.slug} GET /full, OWN scope (tenant id + org uuid)`, await runWithTenantScope({ tenantId: String(o.id), orgUuid: o.uuid, role: null, source: 'job', caller: 'p72-slice0:f5' }, () => full(o)));
+  const cur = await runWithSystemTenantScope('p72-slice0:f5', () => companyExportSnapshot(pool, o.id, (c: any) => exportTenantData(c, o.id)));
+  console.log(`${o.slug} GET / (curated), SYSTEM scope: counts ${JSON.stringify(cur.counts)}`);
+}
+await pool.end();
+process.exit(0);

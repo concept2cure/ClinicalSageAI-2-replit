@@ -169,27 +169,43 @@ Submission Twin's reviewer challenges should converge here as well.
 - [ ] AnA switches lens and sees the scores. From `ShadowReview.tsx:88-107,149-216`. Goes to: a "select lens" action in the Shadow Review workspace. Real today.
 
 #### From `device-submission` (a launch surface: this fold changes a shipping screen)
-Drop the invented target-authority label, the hard-coded "Package" pass and the row chips that default to zero.
+Folded 2026-10-30 (D2, fold F5 item 1), by decision P-61 item 1: one device-filing store, `estar_submissions`.
+`device-submission` is an alias of `submission-center`; `mdx/workbench/Workbench.tsx`, `mdx/hooks/useSubmissions.ts`
+and `mdx/data/workbench.ts` are deleted. Device packages of `c2c_submission_packages` (510(k), De Novo, PMA, on their own
+organization's project) are migrated into tracked filings, at draft or withdrawn, with their milestones as history
+(`migrations/20261030_estar_filing_one_store.sql`). A subscription carries to `submission-center` (P-61 item 4).
+Evidence and the fold guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/`, `foldDeviceSubmission.test.ts`.
 
-- [ ] List device submission packages. From `Workbench.tsx:514-680`. Goes to: one store for device filings (c2c_submission_packages or estar_submissions), with migration, in the Portfolio device filings (`SubmissionCenter.tsx:579-600`). Real today.
-- [ ] Filter packages by status. From `Workbench.tsx:565-575`. Goes to: a filter on the Portfolio device-filings table, if wanted. Real today.
-- [ ] Pipeline counts across seven stages. From `Workbench.tsx:600-618`. Goes to: the eSTAR status chips. No further work is named. Not real today.
-- [ ] Transmit gate for each package. From `Workbench.tsx:718-757`. Goes to: a gate on each eSTAR tracker row, read from EstarFilingPanel's filing readiness. Real today.
-- [ ] Milestone activity log. From `Workbench.tsx:759-769`. Goes to: an event history on the eSTAR filing record. Real today.
-- [ ] AnA's create_submission_package command. From `command-executor.ts:2004-2045`. Goes to: retire it, or repoint it onto the device-filing store, in the same change. Real today.
-- [ ] Transmit or view a receipt. From `Workbench.tsx:700-714`. Goes to: nothing to carry, because the button only sends AnA a prompt. Not real today.
-- [ ] Ask AnA what is blocking a package. From `Workbench.tsx:691-697`. Goes to: AnA's assemble_device_submission, assess_dispatch_readiness and scan_project_risks. No further work is named. Real today.
+- [x] List device submission packages: Submission Center's device filings (`v2/surfaces/DeviceFilings.tsx`) over `estar_submissions`, migrated packages included.
+- [x] Filter by status: a status filter on the device filings, offering the statuses the list holds, with counts.
+- [ ] Pipeline counts across seven stages. Not carried: no stage was recorded; the status chips stand.
+- [x] Transmit gate for each package: each draft filing's gate, from its own readiness (GET `/api/510k/estar/submissions/:id/readiness`, the assessment EstarFilingPanel shows). A filing with no project is not assessed and says so.
+- [x] Milestone activity log: each filing's history on its record (`estar_submission_events`, GET `.../:id/events`, `TrackedFilingDetail.tsx`), written with each change on its transaction; a migrated package's milestones are its first events.
+- [x] AnA's create_submission_package: repointed; it tracks a device filing in `estar_submissions` on its signed transaction, and refuses IND, NDA, BLA and CER by name.
+- [ ] Transmit or view a receipt. Nothing to carry (the button only sent AnA a prompt). Filing is the signed act on EstarFilingPanel.
+- [ ] Ask AnA what is blocking a package. Not carried as a button; AnA's assemble_device_submission and the row's gate name the blockers.
+- [x] Catalogue entry: 20260810's keep-list and upsert and 20260823's packaging row, amended in place (Rule 1); grants carried, not re-written.
 
 #### From `device-validation` (a launch surface)
-Low-severity blockers render as "Pass" (`Workbench.tsx:492`). That is a defect and is not carried.
+Retired 2026-10-29 (D2, fold F5 item 2), by decision P-61 item 2: no organization-wide blocker list. A blocker
+belongs to a filing, from that filing's deterministic readiness (`EstarFilingPanel.tsx` over POST
+`/api/510k/estar/filing-readiness`, `assessEstarFilingReadiness`), and is closed by fixing it. `device-validation` is
+an alias of `submission-center`, which lists every tracked device filing; `ValidationSurface`, `useWorkbench.ts` and
+the kit's validation shapes are deleted. A subscription carries to `submission-center` (P-61 item 4,
+`server/services/entitlements/folded-module-successors.ts`). No signed waiver of a filing blocker exists in the
+product; none is built. Evidence and the fold guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/`,
+`foldDeviceValidation.test.ts`.
 
-- [ ] Organisation-wide list of open blockers. From `Workbench.tsx:334-505`. Goes to: Reporting & analytics, if a portfolio blocker list is kept. Real today.
-- [ ] Filter blockers by severity. From `Workbench.tsx:341-345`. Goes to: with that list. Real today.
-- [ ] Filter blockers by program. From `Workbench.tsx:344,418-420`. Goes to: nothing real, because the filter always returns nothing. A project filter belongs with the list, if it is kept. Not real today.
-- [ ] Readiness by program. From `Workbench.tsx:403-454`. Goes to: Insights portfolio readiness and the Project home dossier. No further work is named. Real today.
-- [ ] KPI cards. From `Workbench.tsx:388-400`. Goes to: Insights totals and the digest counts. No further work is named. Real today.
-- [ ] Export the report as CSV. From `Workbench.tsx:364-380`. Goes to: with the list, if kept. Real today.
-- [ ] Ask AnA to triage blockers. From `Workbench.tsx:381-386`. Goes to: an organisation-wide triage, if kept. Drop the hard-coded count. Real today.
+- [ ] Organisation-wide list of open blockers. Not carried, by P-61 item 2. `c2c_blockers` keeps its one live writer (correspondence intake); no screen lists it.
+- [ ] Filter blockers by severity. Not carried, with the list. The filing readiness has no severities: every blocker blocks.
+- [ ] Filter blockers by program. Not carried; it always returned nothing.
+- [x] Each filing's blockers: the eSTAR filing readiness panel on the 510(k), PMA and IVD screens, for the open project.
+- [ ] Readiness by program (recorded progress). Not carried here; Insights and the Project home dossier read progress.
+- [ ] KPI cards. Not carried, with the list.
+- [ ] Export the report as CSV. Not carried, with the list.
+- [ ] Ask AnA to triage the organisation's blockers. Not carried, with the list.
+- [x] Low-severity blockers drawn as "Pass": not carried (the defect).
+- [x] Catalogue entry: 20260810's keep-list and upsert and 20260823's packaging row, amended in place (Rule 1); grants carried, not re-written.
 
 ### Into labeling (`labeling-pi`, outside the launch catalogue)
 
@@ -976,8 +992,8 @@ Not applicable: the 'ectd-coauthor' entitlement id (repoint submission_center.mo
 | maa-cockpit | 6 | 0 | 6 | 0 | 0 | 6 | No |
 | nda-cockpit | 14 | 0 | 7 | 6 | 1 | 13 | No |
 | shadow-review | 10 | 3 | 5 | 2 | 0 | 9 | No |
-| device-submission | 10 | 1 | 6 | 2 | 1 | 7 | No |
-| device-validation | 8 | 0 | 5 | 2 | 1 | 6 | No |
+| device-submission | 10 | 1 | 6 | 2 | 1 | 7 | Yes (2026-10-30) |
+| device-validation | 8 | 0 | 5 | 2 | 1 | 6 | Retired (2026-10-29, P-61 item 2) |
 
 Present: switching lens, findings ranked by severity, and re-running a lens (`SubmissionSeqWorkspaces.tsx:1544-1554,1502-1531`, `ShadowFindingDisposition.tsx:250-299`). Starting a new submission (`SubmissionCenter.tsx:333-349`).
 Not applicable: the cockpit's AnA tab switching (covered by submissions.set-workspace). The invented target-authority label (drop it). The program and section columns of blockers (that store has no such fields).

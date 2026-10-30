@@ -1,0 +1,533 @@
+# Gates (D6, P-58 and P-59, 2026-10-29/30). Each is npm run <gate> on the working tree; the database gates on a fresh
+# copy of c2c_custody_new7_tpl. Two runs: before and after fold F5's purge line and P-72's new migration reached the tree.
+
+## Run 2, the final tree (HEAD 486d3af3c, with other lanes' uncommitted work present)
+===== npm run ci:purge-coverage
+   note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+   records with explicit retention policy (regulated content can block erasure): 6
+   platform records of a purge, kept by design and not residue (PURGE_PLATFORM_RECORDS): 2
+   keys from a table the purge does not erase (a held row stops the purge; a platform record is written after it): 2
+     public.submission_orchestrator_inputs (program_id) → public.regulatory_programs, NO ACTION [submission_orchestrator_inputs_program_id_fkey]
+     public.tenant_offboarding_certificates (custody_signature_id) → public.electronic_signatures, NO ACTION [tenant_offboarding_certificates_custody_signature_fk]
+✅ purge-coverage: no foreign key stops the purge part-way (2 from tables it does not erase, each named).
+✅ purge-coverage: 454 org-keyed tables outside the purge reach (baseline 468, new 0, 14 now covered).
+   Newly covered — re-run with --write-baseline to lock the gain in:
+     coauthor_import_history
+     coauthor_status_history
+     compliance_review_records
+     csr_extraction_log
+     document_audit_log
+     indemnification_attestations
+     knowledge_graph_edges
+     knowledge_graph_nodes
+     lumen_knowledge_graph_edges
+     qmp_audit_trail
+     reg_responses
+     report_atom_provenance
+     report_seal_events
+     tenant_export_receipts
+===== exit 0 (ci:purge-coverage)
+===== npm run ci:purge-coverage:selftest
+  ✓ FAILS on an immutable receipt that has no explicit retained-record policy
+  ✓ quiet — explicitly retained immutable receipts are reported separately without expanding the baseline
+  ✓ FAILS on unrelated content even beside explicitly retained evidence
+  ✓ FAILS when a retained record has no meaningful reason
+  ✓ FAILS when retained evidence is explicitly listed for erasure
+  ✓ FAILS when retained evidence has a cascade path from a purged table
+  ✓ FAILS closed when the explicit retention policy cannot be parsed
+  ✓ FAILS on an unclassified receipt despite a commented-out fake retention declaration
+  ✓ FAILS on a new org-keyed table nothing reaches — and a commented-out entry does not count as listed
+  ✓ FAILS on a foreign key to a purged table that does not cascade (SET NULL, NO ACTION)
+  ✓ FAILS on an unlisted parent of a purged table — a purged child does not reach its parent
+  ✓ FAILS on a table that cascades only from organizations — a purge UPDATEs that row, never deletes it
+  ✓ FAILS on a cascade from a parent the purge never reaches (cascade is followed only from reached tables)
+  ✓ FAILS on NO ACTION into a listed table from a table the list deletes LATER (23503, the purge rolls back)
+  ✓ quiet — the same key, its table listed BEFORE the table it names
+  ✓ FAILS on RESTRICT into a table a listed delete CASCADES to
+  ✓ quiet — a referrer the SAME statement removes (it cascades from the deleted table as well)
+  ✓ FAILS on ON DELETE SET NULL on a NOT NULL column, from a table the purge never deletes
+  ✓ quiet — ON DELETE SET NULL on a nullable column
+  ✓ FAILS on a listed table with no organization_id and no PURGE_PARENT_SCOPED predicate — the purge skips it
+  ✓ quiet — that table with its PURGE_PARENT_SCOPED predicate
+  ✓ FAILS closed when PURGE_PARENT_SCOPED is declared but no key can be read from it
+  ✓ FAILS on a referrer in another schema
+  ✓ quiet — a referrer named in PURGE_REFERRERS_NOT_ERASED is reported with its key, and is not residue
+  ✓ FAILS on that referrer once it is not named (its residue baselined, so only the order fails)
+  ✓ quiet — an unreached org-keyed table named in PURGE_REFERRERS_NOT_ERASED is not NEW residue
+  ✓ FAILS on that table when it is not named
+  ✓ FAILS when PURGE_REFERRERS_NOT_ERASED names a table the list erases
+  ✓ FAILS when a PURGE_REFERRERS_NOT_ERASED table is reached by a cascade from a purged table
+  ✓ FAILS closed when a PURGE_REFERRERS_NOT_ERASED entry has no meaningful reason
+  ✓ FAILS when one table is named in both PURGE_RETAINED_RECORDS and PURGE_REFERRERS_NOT_ERASED
+  ✓ quiet — a platform record named in PURGE_PLATFORM_RECORDS is reported as one, and is not residue
+  ✓ FAILS on that table when it is not named
+  ✓ FAILS when the purge list names a platform record
+  ✓ FAILS when a platform record is reached by a cascade from a purged table
+  ✓ FAILS when a platform record is also named in PURGE_REFERRERS_NOT_ERASED
+  ✓ FAILS closed when a PURGE_PLATFORM_RECORDS entry has no meaningful reason
+  ✓ quiet — entries spread from a sibling module are read in place, before the table they name
+  ✓ FAILS on the same spread placed AFTER the table it names — its position is the order
+  ✓ FAILS closed on a spread no purge source declares
+  ✓ quiet — PURGE_REFERRERS_NOT_ERASED declared in the sibling module is read there
+  ✓ FAILS closed when PURGE_REFERRERS_NOT_ERASED is declared in two service files
+  ✓ quiet — listed, cascade-reached in one and two hops, or baselined; view / non-org / vault tables ignored
+  ✓ quiet — entries after a `/*` inside a // note are still read as listed
+  ✓ FAILS when the entry after that note is only inside a real block comment
+  ✓ quiet — a residue table already in the baseline stays suppressed
+  ✓ reports a baselined table the purge now reaches, and asks for the gain to be locked in
+  ✓ --write-baseline KEEPS a baselined table this database cannot see, drops only an earned one
+  ✓ FAILS closed on a missing baseline — every residue table counts as NEW
+  ✓ FAILS closed when DATABASE_URL is unset
+  ✓ FAILS closed on a placeholder DATABASE_URL
+  ✓ FAILS closed, readably, when the database cannot be reached
+  ✓ FAILS closed on a partly provisioned database (3 of 4 probe tables) rather than measuring it
+  ✓ FAILS closed on an empty database rather than measuring it
+  ✓ FAILS closed when the offboarding service is missing
+  ✓ FAILS closed when PURGE_CHILD_TABLES is not a frozen literal it can read
+  ✓ FAILS closed on an entry it cannot interpret instead of dropping it
+  ✓ FAILS closed on a list with no public-schema entries
+  ✓ FAILS closed on a list that parses to zero entries
+[ci:purge-coverage:selftest] 59 passed — the gate fails on what it exists to catch.
+===== exit 0 (ci:purge-coverage:selftest)
+===== npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 455 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 19 dynamic DROP(s) in 19 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+===== exit 0 (ci:migration-drop-safety)
+===== npm run ci:migration-drop-safety:selftest
+  ✓ REPEATED — dropper after creator (re-added and re-dropped every deploy)
+  ✓ UNDONE — dropper before creator (the drop reverts on the next deploy)
+  ✓ quiet — drop-and-re-add of the same name in one file
+  ✓ quiet — a DROP nothing in the set re-creates
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✓ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+  ✓ quiet — the earlier replacement is conditional on the current definition
+  ✓ NARROWED — a guard that names a different constraint does not count
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+===== exit 0 (ci:migration-drop-safety:selftest)
+===== npm run ci:migration-set-order
+[ci:migration-set-order] OK — 455 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+===== exit 0 (ci:migration-set-order)
+===== npm run ci:migration-deploy-path
+[ci:migration-deploy-path] FAIL — 1 new migration(s) no deploy applies:
+  migrations/20261030b_platform_scope_role.sql
+  install-fresh would apply this to a NEW database, but deploy-migrate applies
+  only C2C_MIGRATION_FILES. Every database already provisioned would never get
+  it, and any code reading what it creates fails there.
+  Add it to C2C_MIGRATION_FILES in scripts/db/migration-set.mjs, above the
+  final tenant-sweep pair. It re-runs on every deploy (CLAUDE.md Rule 1), so it
+  must be replayable: IF NOT EXISTS, and no DROP of anything another file creates.
+===== exit 1 (ci:migration-deploy-path)
+===== npm run ci:migration-deploy-path:selftest
+[ci:migration-deploy-path:selftest] FAIL — probe caught=true, clean=false, listed passes=true
+===== exit 1 (ci:migration-deploy-path:selftest)
+===== npm run ci:sql-interpolation
+[ci:sql-interpolation] 29 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/routes/c2c/project-vault.ts:1696:21 vaultLifecycleStageSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1715:44 vaultUnfiledSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1716:44 vaultSuggestedSql('d') <- ../../services/vault/vault-document-filter.js
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:36:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:95:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:652:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+===== exit 0 (ci:sql-interpolation)
+===== npm run ci:sql-interpolation:selftest
+  ✓ RED — a new route interpolates a request value into SQL text
+  ✓ RED — sql.raw in a new service
+  ✓ RED — a baselined file gains one
+  ✓ RED — a typed .query<T>( call is counted
+  ✓ RED — a file fixed but its baseline not lowered
+  ✓ quiet — bind parameters, drizzle sql`` (which parameterizes), and the same text in a comment
+  ✓ quiet — test files and __tests__ are not scanned; code outside server/ is not scanned
+  ✓ quiet — today's shape: a baselined file at its exact count
+  ✓ quiet — all three exact canonical predicates in the reviewed source caller
+  ✓ quiet — the second reviewed caller uses the same canonical binding
+  ✓ quiet — report legal originals use the exact canonical binary predicate and fixed alias
+  ✓ RED — report helper from a wrong module receives no proof
+  ✓ RED — report helper with a variable alias receives no proof
+  ✓ RED — report parameter shadowing the canonical helper receives no proof
+  ✓ RED — report request values beside the proved predicate remain counted
+  ✓ RED — report caller does not gain other canonical builder allowances
+  ✓ quiet — eSTAR attachments use only the exact canonical binary predicate and literal alias
+  ✓ RED — eSTAR wrong helper import receives no proof
+  ✓ RED — eSTAR dynamic alias receives no proof
+  ✓ RED — eSTAR shadowed helper receives no proof
+  ✓ RED — eSTAR extra request interpolation remains counted
+  ✓ RED — eSTAR cannot approve another eligibility builder
+  ✓ RED — a same-named helper imported from another module receives no proof
+  ✓ RED — a request value beside the approved helper remains counted
+  ✓ RED — a request-controlled helper argument receives no proof
+  ✓ RED — a SQL-bearing literal alias receives no proof
+  ✓ RED — a parameter shadowing the canonical import receives no proof
+  ✓ RED — a block-local replacement of the imported name receives no proof
+  ✓ RED — a destructured parameter replacing the helper receives no proof
+  ✓ RED — a property call is not the canonical imported binding
+  ✓ RED — wrapping the helper result in another call receives no proof
+  ✓ RED — another caller does not inherit the reviewed caller allowance
+  ✓ RED — a type-only import cannot prove a runtime builder
+  ✓ RED — sql.raw still counts even when passed a canonical predicate
+  ✓ RED — conditional SQL strings are not approved canonical calls
+  ! KNOWN GAP 1 — SQL text assembled in a variable, then passed to .query(text)
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+  ! KNOWN GAP 2 — string concatenation
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+[ci:sql-interpolation:selftest] 2 known gap(s), NOT counted below.
+[ci:sql-interpolation:selftest] 35 passed — the gate fails on what it exists to catch.
+===== exit 0 (ci:sql-interpolation:selftest)
+===== npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+===== exit 0 (ci:sign-ceremony)
+===== npm run ci:sign-ceremony:selftest
+[ci:sign-ceremony:selftest]
+  ✓ the pre-fix protocol finalize route fails the gate
+  ✓ an AnA tool that signs from a chat turn fails the gate
+  ✓ re-authentication without a signature row still fails
+  ✓ the full ceremony passes
+  ✓ a ceremony in another handler does not count for this one
+  ✓ writeMutation("sign") needs the caller to re-authenticate
+  ✓ comments, type annotations and other commands are not sites
+  ✓ a command chosen by a ternary is still a sign write (IRB approval, as it stood on 2026-09-23)
+  ✓ a ternary or template-literal command inside recordGovernedAction is a site
+  ✓ "sign" in a reason, a target or a callback is not a command
+  ✓ the baseline is a ceiling per file, not a pass
+  ✓ a baseline that allows more than exists is reported, so a fixed site cannot be refilled
+  ✓ a baseline entry without a written reason fails
+  ✓ an approval stamped under a non-sign verb fails the gate (the QMS AnA tool before e1c224f69)
+  ✓ an approval stamp built up in a service fails the gate (transitionChange before 028a0c704)
+  ✓ an approval stamp written beside its signature row passes
+  ✓ an authoring approval stamp beside its authoring_signatures write passes
+  ✓ the same authoring approval stamp with no signature write fails
+  ✓ an approval stamp inside signGovernedAct passes (the labeling translation approval, 2026-10-29)
+  ✓ the same approval stamp with no signGovernedAct fails (the labeling PATCH before 2026-10-29)
+  ✓ a status-only act signed through signGovernedAct is a site, and passes (the residual-risk acceptance)
+  ✓ the same write without the ceremony fails: in the same file as the signed one, or anywhere once the pair is governed
+  ✓ the governed flag alone, without the ceremony, fails too (acceptable = TRUE)
+  ✓ creating a hazard already accepted is a status act (INSERT … VALUES)
+  ✓ without a ceremony or a record, the pair is not governed: why the baseline records signed pairs
+  ✓ a non-governed status is not an act: draft, in_progress, open, mitigating
+  ✓ a declared signed status is governed on every table (an IRB approval written outside its ceremony fails)
+  ✓ a condition is not a write: WHERE, FILTER, a CASE test, a SELECT
+  ✓ a status the product signs only on some tables counts only there (superseded)
+  ✓ a `$n` whose value is a literal in the inline parameter array is read; a computed one is not
+  ✓ for a status act, writeMutation counts only as writeMutation('sign')
+  ✓ a statement that stamps an approval and sets a status is one site, the stamp
+  ✓ a status act is baselined like a stamp: a ceiling with a written reason
+  ✓ the declared statuses are read from the product, never copied: Set, object keys, and a missing declaration
+  ✓ the repository's declarations are where the gate reads them, and give the vocabulary it governs
+  ✓ clearing an approval (a revision) is not a stamp
+  ✓ the pre-fix Gateway transmit (re-authentication, no authority) fails the authority rule
+  ✓ the same transmit asking checkSigningAuthority first passes
+  ✓ reverifySigner is held to the rule too, and checkSigningAuthority satisfies it
+  ✓ an inline copy of the policy (isSigningAuthorized in the handler) no longer satisfies the rule
+  ✓ the retired local wrappers no longer satisfy the rule
+  ✓ an authority check in another handler does not count for this one
+  ✓ a declaration of the primitive is not a call; a commented check is not a check
+  ✓ an authority baseline entry is a ceiling with a written reason, as the sign baseline is
+[ci:sign-ceremony:selftest] 44 passed — the gate fails on what it exists to catch.
+===== exit 0 (ci:sign-ceremony:selftest)
+===== npm run ci:tenant-isolation:no-regression
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+===== exit 0 (ci:tenant-isolation:no-regression)
+
+Run 2 notes:
+- ci:purge-coverage passes. Its 14 'newly covered' tables include tenant_export_receipts, now declared a platform record,
+  and the three knowledge-graph tables. docs/reports/purge-coverage-baseline.json is not rewritten (see README, Reported).
+- ci:migration-deploy-path and its selftest fail on migrations/20261030b_platform_scope_role.sql, an untracked file of the
+  P-72 lane that is not yet in C2C_MIGRATION_FILES. It is not this change's file. Both passed in run 1, below, before that
+  file existed.
+
+## Run 1, before F5's line and P-72's file (HEAD 86c90e66f)
+===== npm run ci:purge-coverage
+   note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+   records with explicit retention policy (regulated content can block erasure): 6
+   platform records of a purge, kept by design and not residue (PURGE_PLATFORM_RECORDS): 2
+   keys from a table the purge does not erase (a held row stops the purge; a platform record is written after it): 2
+     public.submission_orchestrator_inputs (program_id) → public.regulatory_programs, NO ACTION [submission_orchestrator_inputs_program_id_fkey]
+     public.tenant_offboarding_certificates (custody_signature_id) → public.electronic_signatures, NO ACTION [tenant_offboarding_certificates_custody_signature_fk]
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - estar_submission_events
+First: confirm the table still exists on a CURRENT schema. This gate reads the
+live database, and a table some migration drops can linger on a local one
+that has not replayed it — in which case the fix is to migrate, not to list
+a table that a correctly-migrated database does not have. Listing a phantom
+here makes the purge look more complete than it is, which is the opposite of
+what this gate is for.
+If it is real: add it to PURGE_CHILD_TABLES (FK-safe order) or give it an ON
+DELETE CASCADE path from a table already there. A tenant that asks to be
+erased must not keep rows in a table nobody remembered to list.
+===== exit 1 (ci:purge-coverage)
+===== npm run ci:purge-coverage:selftest
+  ✓ FAILS on an immutable receipt that has no explicit retained-record policy
+  ✓ quiet — explicitly retained immutable receipts are reported separately without expanding the baseline
+  ✓ FAILS on unrelated content even beside explicitly retained evidence
+  ✓ FAILS when a retained record has no meaningful reason
+  ✓ FAILS when retained evidence is explicitly listed for erasure
+  ✓ FAILS when retained evidence has a cascade path from a purged table
+  ✓ FAILS closed when the explicit retention policy cannot be parsed
+  ✓ FAILS on an unclassified receipt despite a commented-out fake retention declaration
+  ✓ FAILS on a new org-keyed table nothing reaches — and a commented-out entry does not count as listed
+  ✓ FAILS on a foreign key to a purged table that does not cascade (SET NULL, NO ACTION)
+  ✓ FAILS on an unlisted parent of a purged table — a purged child does not reach its parent
+  ✓ FAILS on a table that cascades only from organizations — a purge UPDATEs that row, never deletes it
+  ✓ FAILS on a cascade from a parent the purge never reaches (cascade is followed only from reached tables)
+  ✓ FAILS on NO ACTION into a listed table from a table the list deletes LATER (23503, the purge rolls back)
+  ✓ quiet — the same key, its table listed BEFORE the table it names
+  ✓ FAILS on RESTRICT into a table a listed delete CASCADES to
+  ✓ quiet — a referrer the SAME statement removes (it cascades from the deleted table as well)
+  ✓ FAILS on ON DELETE SET NULL on a NOT NULL column, from a table the purge never deletes
+  ✓ quiet — ON DELETE SET NULL on a nullable column
+  ✓ FAILS on a listed table with no organization_id and no PURGE_PARENT_SCOPED predicate — the purge skips it
+  ✓ quiet — that table with its PURGE_PARENT_SCOPED predicate
+  ✓ FAILS closed when PURGE_PARENT_SCOPED is declared but no key can be read from it
+  ✓ FAILS on a referrer in another schema
+  ✓ quiet — a referrer named in PURGE_REFERRERS_NOT_ERASED is reported with its key, and is not residue
+  ✓ FAILS on that referrer once it is not named (its residue baselined, so only the order fails)
+  ✓ quiet — an unreached org-keyed table named in PURGE_REFERRERS_NOT_ERASED is not NEW residue
+  ✓ FAILS on that table when it is not named
+  ✓ FAILS when PURGE_REFERRERS_NOT_ERASED names a table the list erases
+  ✓ FAILS when a PURGE_REFERRERS_NOT_ERASED table is reached by a cascade from a purged table
+  ✓ FAILS closed when a PURGE_REFERRERS_NOT_ERASED entry has no meaningful reason
+  ✓ FAILS when one table is named in both PURGE_RETAINED_RECORDS and PURGE_REFERRERS_NOT_ERASED
+  ✓ quiet — a platform record named in PURGE_PLATFORM_RECORDS is reported as one, and is not residue
+  ✓ FAILS on that table when it is not named
+  ✓ FAILS when the purge list names a platform record
+  ✓ FAILS when a platform record is reached by a cascade from a purged table
+  ✓ FAILS when a platform record is also named in PURGE_REFERRERS_NOT_ERASED
+  ✓ FAILS closed when a PURGE_PLATFORM_RECORDS entry has no meaningful reason
+  ✓ quiet — entries spread from a sibling module are read in place, before the table they name
+  ✓ FAILS on the same spread placed AFTER the table it names — its position is the order
+  ✓ FAILS closed on a spread no purge source declares
+  ✓ quiet — PURGE_REFERRERS_NOT_ERASED declared in the sibling module is read there
+  ✓ FAILS closed when PURGE_REFERRERS_NOT_ERASED is declared in two service files
+  ✓ quiet — listed, cascade-reached in one and two hops, or baselined; view / non-org / vault tables ignored
+  ✓ quiet — entries after a `/*` inside a // note are still read as listed
+  ✓ FAILS when the entry after that note is only inside a real block comment
+  ✓ quiet — a residue table already in the baseline stays suppressed
+  ✓ reports a baselined table the purge now reaches, and asks for the gain to be locked in
+  ✓ --write-baseline KEEPS a baselined table this database cannot see, drops only an earned one
+  ✓ FAILS closed on a missing baseline — every residue table counts as NEW
+  ✓ FAILS closed when DATABASE_URL is unset
+  ✓ FAILS closed on a placeholder DATABASE_URL
+  ✓ FAILS closed, readably, when the database cannot be reached
+  ✓ FAILS closed on a partly provisioned database (3 of 4 probe tables) rather than measuring it
+  ✓ FAILS closed on an empty database rather than measuring it
+  ✓ FAILS closed when the offboarding service is missing
+  ✓ FAILS closed when PURGE_CHILD_TABLES is not a frozen literal it can read
+  ✓ FAILS closed on an entry it cannot interpret instead of dropping it
+  ✓ FAILS closed on a list with no public-schema entries
+  ✓ FAILS closed on a list that parses to zero entries
+[ci:purge-coverage:selftest] 59 passed — the gate fails on what it exists to catch.
+===== exit 0 (ci:purge-coverage:selftest)
+===== npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 455 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 19 dynamic DROP(s) in 19 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+===== exit 0 (ci:migration-drop-safety)
+===== npm run ci:migration-drop-safety:selftest
+  ✓ REPEATED — dropper after creator (re-added and re-dropped every deploy)
+  ✓ UNDONE — dropper before creator (the drop reverts on the next deploy)
+  ✓ quiet — drop-and-re-add of the same name in one file
+  ✓ quiet — a DROP nothing in the set re-creates
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✓ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+  ✓ quiet — the earlier replacement is conditional on the current definition
+  ✓ NARROWED — a guard that names a different constraint does not count
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+===== exit 0 (ci:migration-drop-safety:selftest)
+===== npm run ci:migration-set-order
+[ci:migration-set-order] OK — 455 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+===== exit 0 (ci:migration-set-order)
+===== npm run ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+===== exit 0 (ci:migration-deploy-path)
+===== npm run ci:migration-deploy-path:selftest
+[ci:migration-deploy-path:selftest] OK — an unlisted new file fails; the tree as it stands passes; a listed file passes.
+===== exit 0 (ci:migration-deploy-path:selftest)
+===== npm run ci:sql-interpolation
+[ci:sql-interpolation] 29 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/routes/c2c/project-vault.ts:1696:21 vaultLifecycleStageSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1715:44 vaultUnfiledSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1716:44 vaultSuggestedSql('d') <- ../../services/vault/vault-document-filter.js
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:36:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:95:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:652:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+===== exit 0 (ci:sql-interpolation)
+===== npm run ci:sql-interpolation:selftest
+  ✓ RED — a new route interpolates a request value into SQL text
+  ✓ RED — sql.raw in a new service
+  ✓ RED — a baselined file gains one
+  ✓ RED — a typed .query<T>( call is counted
+  ✓ RED — a file fixed but its baseline not lowered
+  ✓ quiet — bind parameters, drizzle sql`` (which parameterizes), and the same text in a comment
+  ✓ quiet — test files and __tests__ are not scanned; code outside server/ is not scanned
+  ✓ quiet — today's shape: a baselined file at its exact count
+  ✓ quiet — all three exact canonical predicates in the reviewed source caller
+  ✓ quiet — the second reviewed caller uses the same canonical binding
+  ✓ quiet — report legal originals use the exact canonical binary predicate and fixed alias
+  ✓ RED — report helper from a wrong module receives no proof
+  ✓ RED — report helper with a variable alias receives no proof
+  ✓ RED — report parameter shadowing the canonical helper receives no proof
+  ✓ RED — report request values beside the proved predicate remain counted
+  ✓ RED — report caller does not gain other canonical builder allowances
+  ✓ quiet — eSTAR attachments use only the exact canonical binary predicate and literal alias
+  ✓ RED — eSTAR wrong helper import receives no proof
+  ✓ RED — eSTAR dynamic alias receives no proof
+  ✓ RED — eSTAR shadowed helper receives no proof
+  ✓ RED — eSTAR extra request interpolation remains counted
+  ✓ RED — eSTAR cannot approve another eligibility builder
+  ✓ RED — a same-named helper imported from another module receives no proof
+  ✓ RED — a request value beside the approved helper remains counted
+  ✓ RED — a request-controlled helper argument receives no proof
+  ✓ RED — a SQL-bearing literal alias receives no proof
+  ✓ RED — a parameter shadowing the canonical import receives no proof
+  ✓ RED — a block-local replacement of the imported name receives no proof
+  ✓ RED — a destructured parameter replacing the helper receives no proof
+  ✓ RED — a property call is not the canonical imported binding
+  ✓ RED — wrapping the helper result in another call receives no proof
+  ✓ RED — another caller does not inherit the reviewed caller allowance
+  ✓ RED — a type-only import cannot prove a runtime builder
+  ✓ RED — sql.raw still counts even when passed a canonical predicate
+  ✓ RED — conditional SQL strings are not approved canonical calls
+  ! KNOWN GAP 1 — SQL text assembled in a variable, then passed to .query(text)
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+  ! KNOWN GAP 2 — string concatenation
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+[ci:sql-interpolation:selftest] 2 known gap(s), NOT counted below.
+[ci:sql-interpolation:selftest] 35 passed — the gate fails on what it exists to catch.
+===== exit 0 (ci:sql-interpolation:selftest)
+===== npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+===== exit 0 (ci:sign-ceremony)
+===== npm run ci:sign-ceremony:selftest
+[ci:sign-ceremony:selftest]
+  ✓ the pre-fix protocol finalize route fails the gate
+  ✓ an AnA tool that signs from a chat turn fails the gate
+  ✓ re-authentication without a signature row still fails
+  ✓ the full ceremony passes
+  ✓ a ceremony in another handler does not count for this one
+  ✓ writeMutation("sign") needs the caller to re-authenticate
+  ✓ comments, type annotations and other commands are not sites
+  ✓ a command chosen by a ternary is still a sign write (IRB approval, as it stood on 2026-09-23)
+  ✓ a ternary or template-literal command inside recordGovernedAction is a site
+  ✓ "sign" in a reason, a target or a callback is not a command
+  ✓ the baseline is a ceiling per file, not a pass
+  ✓ a baseline that allows more than exists is reported, so a fixed site cannot be refilled
+  ✓ a baseline entry without a written reason fails
+  ✓ an approval stamped under a non-sign verb fails the gate (the QMS AnA tool before e1c224f69)
+  ✓ an approval stamp built up in a service fails the gate (transitionChange before 028a0c704)
+  ✓ an approval stamp written beside its signature row passes
+  ✓ an authoring approval stamp beside its authoring_signatures write passes
+  ✓ the same authoring approval stamp with no signature write fails
+  ✓ an approval stamp inside signGovernedAct passes (the labeling translation approval, 2026-10-29)
+  ✓ the same approval stamp with no signGovernedAct fails (the labeling PATCH before 2026-10-29)
+  ✓ a status-only act signed through signGovernedAct is a site, and passes (the residual-risk acceptance)
+  ✓ the same write without the ceremony fails: in the same file as the signed one, or anywhere once the pair is governed
+  ✓ the governed flag alone, without the ceremony, fails too (acceptable = TRUE)
+  ✓ creating a hazard already accepted is a status act (INSERT … VALUES)
+  ✓ without a ceremony or a record, the pair is not governed: why the baseline records signed pairs
+  ✓ a non-governed status is not an act: draft, in_progress, open, mitigating
+  ✓ a declared signed status is governed on every table (an IRB approval written outside its ceremony fails)
+  ✓ a condition is not a write: WHERE, FILTER, a CASE test, a SELECT
+  ✓ a status the product signs only on some tables counts only there (superseded)
+  ✓ a `$n` whose value is a literal in the inline parameter array is read; a computed one is not
+  ✓ for a status act, writeMutation counts only as writeMutation('sign')
+  ✓ a statement that stamps an approval and sets a status is one site, the stamp
+  ✓ a status act is baselined like a stamp: a ceiling with a written reason
+  ✓ the declared statuses are read from the product, never copied: Set, object keys, and a missing declaration
+  ✓ the repository's declarations are where the gate reads them, and give the vocabulary it governs
+  ✓ clearing an approval (a revision) is not a stamp
+  ✓ the pre-fix Gateway transmit (re-authentication, no authority) fails the authority rule
+  ✓ the same transmit asking checkSigningAuthority first passes
+  ✓ reverifySigner is held to the rule too, and checkSigningAuthority satisfies it
+  ✓ an inline copy of the policy (isSigningAuthorized in the handler) no longer satisfies the rule
+  ✓ the retired local wrappers no longer satisfy the rule
+  ✓ an authority check in another handler does not count for this one
+  ✓ a declaration of the primitive is not a call; a commented check is not a check
+  ✓ an authority baseline entry is a ceiling with a written reason, as the sign baseline is
+[ci:sign-ceremony:selftest] 44 passed — the gate fails on what it exists to catch.
+===== exit 0 (ci:sign-ceremony:selftest)
+===== npm run ci:tenant-isolation:no-regression
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+===== exit 0 (ci:tenant-isolation:no-regression)
+
+Run 1 note: ci:purge-coverage failed only on estar_submission_events, fold F5's new table, which F5's own line in
+PURGE_CHILD_TABLES covers; with that line present it passes (run 2).
+
+## deploy-migrate replayed a second time over the built template (Rule 1: every migration re-runs on every deploy)
+  ✓ 455/455 migration files applied
+✅ Schema migration complete — safe to roll services.
+exit 0
+tenant_export_receipts_export_scope_known constraints after the replay: 1 (created once, not re-imposed)
+
+## The template's own build
+install-fresh exit 0
+  ✓ 455/455 migration files applied
+deploy-migrate exit 0
+
+## security-definer-functions dbtest (in the related set, green.txt)
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > the runtime role exists, so the privilege check means something
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > every baseline entry carries a status and a reason
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: a definer function planted in a rolled-back transaction is caught
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: the runtime role's grant recipe revokes an unlisted one, and keeps a listed one
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > no callable definer function is missing from the reviewed allowlist
+
+## Run 3, after P-72 listed its file in C2C_MIGRATION_FILES (456 entries)
+[ci:migration-set-order] OK — 456 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+[ci:migration-deploy-path:selftest] OK — an unlisted new file fails; the tree as it stands passes; a listed file passes.
+[ci:migration-drop-safety] OK — 456 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).

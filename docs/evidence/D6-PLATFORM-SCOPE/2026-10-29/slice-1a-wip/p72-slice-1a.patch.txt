@@ -1,0 +1,777 @@
+diff --git a/migrations/20260926_organization_users_own_writes.sql b/migrations/20260926_organization_users_own_writes.sql
+index 47f641c39..afdcd2c61 100644
+--- a/migrations/20260926_organization_users_own_writes.sql
++++ b/migrations/20260926_organization_users_own_writes.sql
+@@ -60,6 +60,29 @@
+ --
+ -- Converges on every run: ALTER POLICY when a policy exists, CREATE when it
+ -- does not. Nothing is dropped (Rule 1).
++--
++-- AMENDED IN PLACE 2026-10-30 (Rule 1; D6, P-72 slice 1a; evidence
++-- docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). ADDED: the CHECK
++-- organization_users_role_known, last in this file. organization_users.role
++-- had no CHECK, so any writer the policies admit could store any string. A
++-- scope whose role string was 'app_super_admin' wrote that string onto its own
++-- membership: the trigger above reads the setting, so it let it through
++-- (slice 0, item 5). Every later sign-in then minted the platform role. Now the
++-- column admits:
++--   - the roles an administrator assigns (shared/constants/org-roles.ts
++--     ASSIGNABLE_ORG_ROLES);
++--   - the legacy organization roles the server still reads on memberships
++--     (owner, editor: server/middleware/auth.ts ORG_ROLE_FUNCTIONAL_GRANTS);
++--   - the staff spellings the trigger above guards (super_admin, superadmin,
++--     platform_admin);
++--   - any other value a database already holds when this runs, so no existing
++--     row stops being writable.
++-- It never admits 'app_super_admin', from any writer, owner and superuser
++-- included. The constraint is added NOT VALID and validated only once every row
++-- passes, so a row that already holds a refused value cannot fail the deploy.
++-- A warning names such rows. The replacement is conditional on the stored
++-- definition (pg_get_constraintdef), so a second run changes nothing (Rule 1's
++-- corollary).
+ 
+ CREATE OR REPLACE FUNCTION public.organization_users_staff_role_platform_only()
+ RETURNS trigger
+@@ -135,3 +158,62 @@ BEGIN
+   RAISE NOTICE '[organization-users-writes] own-org or platform writes; staff roles minted by the platform only';
+ END
+ $$;
++
++-- Added 2026-10-30 (P-72 slice 1a; see the amendment note in the header).
++DO $role_known$
++DECLARE
++  -- What the column admits whatever a database holds. Never 'app_super_admin'.
++  v_known   CONSTANT text[] := ARRAY[
++    'admin', 'approver', 'manager', 'reviewer', 'member', 'viewer',   -- ASSIGNABLE_ORG_ROLES
++    'owner', 'editor',                                                -- legacy organization roles still read
++    'super_admin', 'superadmin', 'platform_admin'                     -- the staff spellings the trigger guards
++  ];
++  v_held    text[];
++  v_admit   text[];
++  v_def     text;
++  v_have    text[];
++  v_valid   boolean;
++  v_refused integer;
++BEGIN
++  IF to_regclass('public.organization_users') IS NULL
++     OR NOT EXISTS (SELECT 1 FROM information_schema.columns
++                     WHERE table_schema = 'public' AND table_name = 'organization_users' AND column_name = 'role') THEN
++    RAISE NOTICE '[organization-users-writes] role check skipped — public.organization_users.role not provisioned';
++    RETURN;
++  END IF;
++
++  -- Values rows already hold (organization_users' read policy is open, so the
++  -- applier sees every row on any owner). Kept writable, except the platform role.
++  SELECT array_agg(DISTINCT u.role) INTO v_held
++    FROM public.organization_users u
++   WHERE u.role IS NOT NULL AND u.role <> 'app_super_admin' AND NOT (u.role = ANY (v_known));
++  SELECT array_agg(DISTINCT r ORDER BY r) INTO v_admit FROM unnest(v_known || COALESCE(v_held, '{}')) AS r;
++
++  SELECT pg_get_constraintdef(c.oid), c.convalidated INTO v_def, v_valid
++    FROM pg_constraint c
++   WHERE c.conrelid = 'public.organization_users'::regclass AND c.conname = 'organization_users_role_known';
++  IF v_def IS NOT NULL THEN
++    SELECT array_agg(DISTINCT m[1] ORDER BY m[1]) INTO v_have FROM regexp_matches(v_def, '''([^'']*)''', 'g') AS m;
++  END IF;
++
++  IF v_def IS NULL OR v_have IS DISTINCT FROM v_admit THEN
++    EXECUTE format(
++      'ALTER TABLE public.organization_users DROP CONSTRAINT IF EXISTS organization_users_role_known, '
++      'ADD CONSTRAINT organization_users_role_known CHECK (role IN (%s)) NOT VALID',
++      (SELECT string_agg(quote_literal(r), ', ' ORDER BY r) FROM unnest(v_admit) AS r));
++    v_valid := false;
++    IF v_held IS NOT NULL THEN
++      RAISE WARNING '[organization-users-writes] organization_users_role_known also admits % (held by existing rows, kept writable)', v_held;
++    END IF;
++  END IF;
++
++  IF NOT v_valid THEN
++    SELECT count(*) INTO v_refused FROM public.organization_users u WHERE NOT (u.role = ANY (v_admit));
++    IF v_refused = 0 THEN
++      ALTER TABLE public.organization_users VALIDATE CONSTRAINT organization_users_role_known;
++    ELSE
++      RAISE WARNING '[organization-users-writes] % membership row(s) hold app_super_admin; the check stays NOT VALID and refuses any write to them until an administrator corrects the role', v_refused;
++    END IF;
++  END IF;
++END
++$role_known$;
+diff --git a/migrations/20260928_invitations_for_member.sql b/migrations/20260928_invitations_for_member.sql
+index 9bd9b7ea1..a08c6a0c4 100644
+--- a/migrations/20260928_invitations_for_member.sql
++++ b/migrations/20260928_invitations_for_member.sql
+@@ -38,12 +38,34 @@
+ -- organization's scope, where the table's own policy admits the row, after the
+ -- invitation is confirmed as the caller's (tenant-users.ts).
+ --
+--- SECURITY DEFINER with the platform role set for its own body, so it answers
+--- on any owner (the table is FORCEd); the membership test reads
+--- app.current_tenant_id, which that SET does not touch. EXECUTE is revoked from
+--- PUBLIC and granted to app_service. The table's own policy is unchanged.
++-- SECURITY DEFINER, owned by the NOLOGIN role c2c_platform_scope (see the
++-- 2026-10-30 note below), so it answers on any owner (the table is FORCEd); the
++-- membership test reads app.current_tenant_id, the caller's own tenant. EXECUTE
++-- is revoked from PUBLIC and granted to app_service. The table's tenant policy
++-- is unchanged.
+ --
+--- Converges on every run (CREATE OR REPLACE). Nothing is dropped (Rule 1).
++-- Converges on every run (CREATE OR REPLACE; ALTER POLICY when the policy
++-- exists, CREATE when it does not). Nothing is dropped (Rule 1).
++--
++-- AMENDED IN PLACE 2026-10-30 (Rule 1; D1 and D6, P-72 slice 1a; design
++-- docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md §3.5; evidence
++-- docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). REMOVED: the clause
++-- `SET app.current_user_role = 'app_super_admin'`. PostgreSQL 15 and later
++-- refuse a function whose SET clause names a custom setting to any creator that
++-- is not a superuser, so a deploy by the RDS master could not create it. The
++-- clause also entered the platform scope through a session setting, which
++-- P-72 retires. What replaces it:
++--   - migrations/20261030b_platform_scope_role.sql hands the function to the
++--     NOLOGIN role c2c_platform_scope, which the runtime role is never granted,
++--     with SELECT on only the columns it reads;
++--   - ADDED here: organization_invitations_platform_scope_read, a SELECT policy
++--     admitting CURRENT_USER = 'c2c_platform_scope' (the design's P' arm, for
++--     this one table until the sweep's template carries it). CURRENT_USER is
++--     that role only inside a SECURITY DEFINER function it owns, so no session
++--     can set it. Policies are permissive and OR together, so the tenant policy
++--     still decides every other reader. The sweep and its heal pass touch only a
++--     policy named tenant_isolation_policy.
++-- The signature, the grant and the columns returned are unchanged.
+ 
+ -- AMENDED IN PLACE 2026-09-29 (Rule 1): the function was created
+ -- unconditionally, and a LANGUAGE sql body is validated when it is created, so
+@@ -75,7 +97,6 @@ BEGIN
+     STABLE
+     SECURITY DEFINER
+     SET search_path = pg_catalog, public
+-    SET app.current_user_role = 'app_super_admin'
+     AS $body$
+       SELECT i.id, i.organization_id, i.email, i.role, i.status, i.invited_by_id,
+              i.created_at, i.responded_at
+@@ -94,6 +115,16 @@ BEGIN
+   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_service') THEN
+     GRANT EXECUTE ON FUNCTION public.invitations_for_member(integer) TO app_service;
+   END IF;
++
++  -- Added 2026-10-30 (see the amendment note above): the function owner's read.
++  IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'organization_invitations'
++                AND policyname = 'organization_invitations_platform_scope_read') THEN
++    ALTER POLICY organization_invitations_platform_scope_read ON public.organization_invitations
++      USING (CURRENT_USER = 'c2c_platform_scope'::name);
++  ELSE
++    CREATE POLICY organization_invitations_platform_scope_read ON public.organization_invitations
++      FOR SELECT USING (CURRENT_USER = 'c2c_platform_scope'::name);
++  END IF;
+   RAISE NOTICE '[invitations-for-member] an invitee finds their own invitations from their own organization';
+ END
+ $do$;
+diff --git a/migrations/20260928_users_membership_rls.sql b/migrations/20260928_users_membership_rls.sql
+index fd31e41ed..4b628bb05 100644
+--- a/migrations/20260928_users_membership_rls.sql
++++ b/migrations/20260928_users_membership_rls.sql
+@@ -66,14 +66,38 @@
+ --     about an account outside it — "does this address already have an account"
+ --     — when an administrator adds a member (an existing account in another
+ --     organization gets a consent invitation, not a membership). It answers with
+---     the id only; no other column crosses. SECURITY DEFINER with the platform
+---     role set for its own body, so it answers on any owner.
++--     the id only; no other column crosses. SECURITY DEFINER, owned by the
++--     NOLOGIN role c2c_platform_scope (see the 2026-10-30 note below), so it
++--     answers on any owner.
+ --
+ -- users is not org-keyed, so neither the tenant sweep nor its heal pass touches
+ -- it, and the policy names are its own. RLS is enabled and FORCEd.
+ --
+ -- Converges on every run: ALTER POLICY when a policy exists, CREATE when it does
+ -- not; CREATE OR REPLACE for the function. Nothing is dropped (Rule 1).
++--
++-- AMENDED IN PLACE 2026-10-30 (Rule 1; D1 and D6, P-72 slice 1a; design
++-- docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md §3.5; evidence
++-- docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). REMOVED: the clause
++-- `SET app.current_user_role = 'app_super_admin'` from user_id_for_email and
++-- user_id_for_reset_token. Two reasons:
++--   - PostgreSQL 15 and later refuse a function whose SET clause names a custom
++--     setting to any creator that is not a superuser ("permission denied to set
++--     parameter"). The RDS master is not one, so deploy-migrate halted at this
++--     file (321 of 455) on a production-shaped applier, measured in slice 0
++--     (docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-0/item1-deploy-replay.txt).
++--     CI's applier is a superuser, so CI never showed it.
++--   - The clause entered the platform scope through a session setting, which
++--     P-72 retires.
++-- What replaces it: migrations/20261030b_platform_scope_role.sql hands both
++-- functions to the NOLOGIN role c2c_platform_scope, which the runtime role is
++-- never granted, with SELECT on only the columns they read. Each policy below
++-- gains the arm CURRENT_USER = 'c2c_platform_scope' beside the platform-role
++-- arm (the design's P'). CURRENT_USER is that role only inside a SECURITY
++-- DEFINER function it owns, so no session can set it, and the arm admits
++-- nothing else. On a database where that file has not run yet, the functions
++-- belong to their creator and answer as before on a superuser owner.
++-- Signatures, grants and the id-only answers are unchanged.
+ 
+ -- AMENDED IN PLACE 2026-09-29 (Rule 1): this function was created
+ -- unconditionally, and a LANGUAGE sql body is validated when it is created, so
+@@ -93,7 +117,6 @@ BEGIN
+     STABLE
+     SECURITY DEFINER
+     SET search_path = pg_catalog, public
+-    SET app.current_user_role = 'app_super_admin'
+     AS $body$
+       SELECT id FROM public.users WHERE email = p_email
+     $body$
+@@ -111,7 +134,6 @@ BEGIN
+       STABLE
+       SECURITY DEFINER
+       SET search_path = pg_catalog, public
+-      SET app.current_user_role = 'app_super_admin'
+       AS $body$
+         SELECT id FROM public.users WHERE reset_token = p_token_hash AND p_token_hash IS NOT NULL
+       $body$
+@@ -126,6 +148,8 @@ DECLARE
+   off        CONSTANT text := $e$(NULLIF(current_setting('app.rls_enforce', true), '') IS DISTINCT FROM 'on')$e$;
+   account    CONSTANT text := $e$(users.id = (substring(current_setting('app.current_account_id', true) from '^[0-9]+$'))::integer)$e$;
+   super      CONSTANT text := $e$(current_setting('app.current_user_role', true) = 'app_super_admin')$e$;
++  -- 2026-10-30 (P-72 slice 1a): the pre-auth lookups' owner, inside its own definers only.
++  platform   CONSTANT text := $e$(CURRENT_USER = 'c2c_platform_scope'::name)$e$;
+   member     CONSTANT text := $e$(EXISTS (
+     SELECT 1 FROM public.organization_users ou
+      WHERE ou.user_id = users.id
+@@ -140,7 +164,7 @@ BEGIN
+     RETURN;
+   END IF;
+ 
+-  may_reach := format('(%s OR %s OR %s OR %s)', off, super, member, account);
++  may_reach := format('(%s OR %s OR %s OR %s OR %s)', off, super, platform, member, account);
+ 
+   ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE public.users FORCE ROW LEVEL SECURITY;
+diff --git a/scripts/db/migration-set.mjs b/scripts/db/migration-set.mjs
+index 511653012..0c59dce0c 100644
+--- a/scripts/db/migration-set.mjs
++++ b/scripts/db/migration-set.mjs
+@@ -3740,6 +3740,21 @@ export const C2C_MIGRATION_FILES = [
+   // 20260524 and 20260814. Public with organization_id INTEGER NOT NULL, so the
+   // sweeps below police the history. Every statement guarded; no DROP, no DELETE.
+   'migrations/20261030_estar_filing_one_store.sql',
++  // Platform scope is a role: the pre-auth lookups (D1 and D6, P-72 slice 1a,
++  // 2026-10-30; docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md §3.5 and
++  // §4.2; docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). Creates the
++  // NOLOGIN role c2c_platform_scope if absent, with the applier as a member.
++  // Re-creates user_id_for_email, user_id_for_reset_token and
++  // invitations_for_member from their stored definitions without a SET clause
++  // that names a custom setting (PostgreSQL 15+ refuses such a clause to the
++  // non-superuser RDS master, so the deploy halted at 20260928). Then hands the
++  // three to the role, with SELECT on only the columns they read. Then fails
++  // the deploy if any function's SET clause names a custom setting, or if
++  // app_service is a member of the role. After their creators (20260928, the
++  // policies of which admit the role) and before the isolation tail. Reads no
++  // other entry's objects, so its place among the 20261029–30 files is free.
++  // Creates no table, column or policy; every step conditional on stored state.
++  'migrations/20261030b_platform_scope_role.sql',
+   UUID_TENANT_ISOLATION_NONPUBLIC,
+ 
+   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
+diff --git a/server/db/poolInstrumentation.ts b/server/db/poolInstrumentation.ts
+index 6e868dd5a..4b374b10f 100644
+--- a/server/db/poolInstrumentation.ts
++++ b/server/db/poolInstrumentation.ts
+@@ -18,7 +18,7 @@
+  */
+ 
+ import type { Pool, PoolClient, QueryConfig, QueryResult } from 'pg';
+-import { getTenantScope, type TenantScope } from './tenantStore';
++import { assertScopeRoleAdmissible, getTenantScope, type TenantScope } from './tenantStore';
+ import { readEnforcementMode } from './rlsEnforcement';
+ import { tenantSessionVarMissing, tenantSessionVarPresent } from './tenantSessionMetrics';
+ import { createScopedLogger } from '../utils/logger';
+@@ -172,9 +172,27 @@ const tenantSetConfigSql = (): string =>
+   switchPinTerms(true);
+ 
+ function scopeParams(scope: TenantScope): [string, string, string, string] {
++  // Re-checked here, not only at the pool's entry: a scope object is mutable, and
++  // this is the statement that writes the role to app.current_user_role (P-72).
++  assertScopeRoleAdmissible(scope, 'pool');
+   return [scope.tenantId, scope.orgUuid ?? '', scope.role ?? '', scope.accountId != null ? String(scope.accountId) : ''];
+ }
+ 
++/**
++ * The refusal for a scope that carries the platform role outside the system
++ * scope's shape (tenantStore.assertScopeRoleAdmissible, P-72 slice 1a), or null.
++ * Checked at the pool's entry, like a missing scope, so no connection is taken.
++ */
++function refusedScopeRole(scope: TenantScope | null): Error | null {
++  if (!scope) return null;
++  try {
++    assertScopeRoleAdmissible(scope, 'pool');
++    return null;
++  } catch (error) {
++    return error as Error;
++  }
++}
++
+ /**
+  * The scope to APPLY, or null when the primitive must stay inert. Inert unless
+  * RLS is actually enforcing AND a tenant scope is set AND the statement is not
+@@ -284,7 +302,7 @@ function wrapClientForScope(client: PoolClient, scope: TenantScope): PoolClient
+             return;
+           }
+           transactionOpen = true;
+-          (originalClientQuery as any)(tenantSetConfigSql(), scopeParams(scope)).then(
++          Promise.resolve().then(() => (originalClientQuery as any)(tenantSetConfigSql(), scopeParams(scope))).then(
+             () => callback(null, result),
+             (error: unknown) => {
+               poisonError = error instanceof Error
+@@ -381,8 +399,9 @@ export function instrumentPool(pool: Pool): Pool {
+     const enforcing = readEnforcementMode() === 'on';
+     const isInfra = isInfrastructureQuery(queryText);
+     const scope = enforcingScope(queryText);
+-    if (enforcing && !isInfra && !scope) {
+-      const error = missingTenantScopeError('pool.query');
++    const refused = refusedScopeRole(scope);
++    if ((enforcing && !isInfra && !scope) || refused) {
++      const error = refused ?? missingTenantScopeError('pool.query');
+       if (hasCallback) {
+         const callback = args[args.length - 1] as (error: Error) => void;
+         queueMicrotask(() => callback(error));
+@@ -422,8 +441,9 @@ export function instrumentPool(pool: Pool): Pool {
+     recordCheck('pool.connect', undefined);
+     const hasCallback = typeof args[args.length - 1] === 'function';
+     const scope = enforcingScope(undefined);
+-    if (readEnforcementMode() === 'on' && !scope) {
+-      const error = missingTenantScopeError('pool.connect');
++    const refused = refusedScopeRole(scope);
++    if ((readEnforcementMode() === 'on' && !scope) || refused) {
++      const error = refused ?? missingTenantScopeError('pool.connect');
+       if (hasCallback) {
+         const callback = args[args.length - 1] as Function;
+         queueMicrotask(() => callback(error, undefined, undefined));
+diff --git a/server/db/tenantStore.ts b/server/db/tenantStore.ts
+index b3c764148..6265e0453 100644
+--- a/server/db/tenantStore.ts
++++ b/server/db/tenantStore.ts
+@@ -66,19 +66,66 @@ export interface TenantScope {
+ 
+ const tenantStorage = new AsyncLocalStorage<TenantScope>();
+ 
++/**
++ * The role string the platform arm of about 977 tenant policies compares with
++ * (`current_setting('app.current_user_role') = 'app_super_admin'`). Until P-72
++ * retires that arm (docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md), any
++ * scope that sends it reads and writes every tenant's rows.
++ */
++export const PLATFORM_SCOPE_ROLE = 'app_super_admin';
++
++/** A scope carried the platform role where only the system scope may (P-72 slice 1a). */
++export class PlatformScopeRoleRefusedError extends Error {
++  readonly code = 'PLATFORM_SCOPE_ROLE_REFUSED';
++  constructor(where: string) {
++    super(
++      `${where}: the platform role '${PLATFORM_SCOPE_ROLE}' is refused on a tenant, per-user or request scope; ` +
++        'only the system scope (runWithSystemTenantScope) carries it (P-72)',
++    );
++    this.name = 'PlatformScopeRoleRefusedError';
++  }
++}
++
++/** Whether `role` is the platform role string, however it is cased or padded. */
++export function isPlatformScopeRole(role: unknown): boolean {
++  return typeof role === 'string' && role.trim().toLowerCase() === PLATFORM_SCOPE_ROLE;
++}
++
++/**
++ * Refuse the platform role on every scope but the system scope's own shape:
++ * tenant '0', no organization, no bound account (D6, P-72 slice 1a;
++ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). A request's scope always
++ * names a real organization, so a role string taken from a token or a membership
++ * row can never open the platform scope. As app_service in tenant A's scope,
++ * the string read B's tasks, audit trail, users and legal holds, updated B's
++ * task, and wrote itself onto A's membership (slice 0, item 5).
++ */
++export function assertScopeRoleAdmissible(
++  scope: Pick<TenantScope, 'tenantId' | 'role' | 'orgUuid' | 'accountId'>,
++  where: string,
++): void {
++  if (!isPlatformScopeRole(scope.role)) return;
++  const systemShape =
++    scope.tenantId === '0' && scope.role === PLATFORM_SCOPE_ROLE && !scope.orgUuid && scope.accountId == null;
++  if (!systemShape) throw new PlatformScopeRoleRefusedError(where);
++}
++
+ /**
+  * Run `fn` inside a tenant scope. Returns whatever `fn` returns. Used by
+  * the request middleware (so `next()` runs in scope) and by
+- * `withTenantConnection` (which adds session-var setup on top).
++ * `withTenantConnection` (which adds session-var setup on top). Throws,
++ * before `fn` runs, on a scope that carries the platform role outside the
++ * system scope's shape (`assertScopeRoleAdmissible`).
+  */
+ export function runWithTenantScope<T>(scope: TenantScope, fn: () => T): T {
++  assertScopeRoleAdmissible(scope, 'runWithTenantScope');
+   return tenantStorage.run(scope, fn);
+ }
+ 
+ /** Explicit scope for audited estate-wide schedulers and workers. */
+ export function runWithSystemTenantScope<T>(caller: string, fn: () => T): T {
+   if (!caller.trim()) throw new Error('runWithSystemTenantScope: caller is required');
+-  return runWithTenantScope({ tenantId: '0', role: 'app_super_admin', source: 'job', caller }, fn);
++  return runWithTenantScope({ tenantId: '0', role: PLATFORM_SCOPE_ROLE, source: 'job', caller }, fn);
+ }
+ 
+ /**
+diff --git a/server/middleware/auth.js b/server/middleware/auth.js
+index 19f9dd537..982c16e59 100644
+--- a/server/middleware/auth.js
++++ b/server/middleware/auth.js
+@@ -46,6 +46,7 @@ export {
+   nonAccessTokenReason,
+   invalidateOrgMembershipCache,
+   authenticateToken,
++  applyOrganizationRole,
+   authenticateJWT,
+   authenticate,
+   requireAuth,
+diff --git a/server/middleware/auth.ts b/server/middleware/auth.ts
+index 22854ddee..940db5c30 100644
+--- a/server/middleware/auth.ts
++++ b/server/middleware/auth.ts
+@@ -319,8 +319,12 @@ function admitLiveSession(
+  * the global gate in front of it already served the new one. A membership
+  * without a role value (never the case: the column is NOT NULL with a
+  * default) leaves the token's claims in place.
++ *
++ * Exported for the authoring router, which builds its own req.user from the
++ * token and so sent the token's role claim to the database (P-72 slice 1a,
++ * authoring.router.ts).
+  */
+-function applyOrganizationRole(req: Request): void {
++export function applyOrganizationRole(req: Request): void {
+   const user = req.user as ({ organizationRole?: unknown } & NonNullable<Request['user']>) | undefined;
+   if (!user) return;
+   const role = roleReadOnThisRequest(req, user) ?? user.organizationRole;
+diff --git a/server/middleware/establishRequestTenantScope.ts b/server/middleware/establishRequestTenantScope.ts
+index 555b83285..625928902 100644
+--- a/server/middleware/establishRequestTenantScope.ts
++++ b/server/middleware/establishRequestTenantScope.ts
+@@ -50,6 +50,9 @@ import type { PoolClient } from 'pg';
+ import { getPool } from '../db';
+ import {
+   getTenantScope,
++  isPlatformScopeRole,
++  PLATFORM_SCOPE_ROLE,
++  PlatformScopeRoleRefusedError,
+   runWithTenantScope,
+   runWithSystemTenantScope,
+   type TenantScope,
+@@ -111,7 +114,7 @@ export function isSystemScopedPath(req: Request): boolean {
+  * `runWithSystemTenantScope` / `establishRequestSystemScope` produce this shape.
+  */
+ function isSystemScope(scope: TenantScope | undefined): boolean {
+-  return !!scope && scope.tenantId === '0' && scope.role === 'app_super_admin';
++  return !!scope && scope.tenantId === '0' && scope.role === PLATFORM_SCOPE_ROLE;
+ }
+ 
+ /**
+@@ -168,19 +171,24 @@ function attachLazyClient(
+   bindRequestDbClient(req, res, new LazyRequestDbClient(getPool(), applySessionVars));
+ }
+ 
+-/** Session-var applier for a per-user tenant scope. */
++/**
++ * Session-var applier for a per-user tenant scope. A per-user scope never
++ * carries the platform role (P-72 slice 1a): the applier refuses it before any
++ * statement, whatever its caller checked.
++ */
+ function tenantSessionVars(
+   tenantId: string,
+   role: string | null,
+   orgUuid: string | null,
+ ): (client: PoolClient) => Promise<void> {
++  if (isPlatformScopeRole(role)) throw new PlatformScopeRoleRefusedError('tenantSessionVars');
+   // With the isolation switches pinned in the same statement (sessionScope.ts).
+   return (client: PoolClient) => applySessionScope(client, { tenantId, role, orgUuid });
+ }
+ 
+ /** Session-var applier for the cross-tenant system scope (super-admin). */
+ function systemSessionVars(): (client: PoolClient) => Promise<void> {
+-  return (client: PoolClient) => applySessionScope(client, { tenantId: '0', role: 'app_super_admin', orgUuid: '' });
++  return (client: PoolClient) => applySessionScope(client, { tenantId: '0', role: PLATFORM_SCOPE_ROLE, orgUuid: '' });
+ }
+ 
+ /**
+@@ -234,6 +242,28 @@ export function establishRequestTenantScope(
+   const orgUuid = resolveOrgUuid(req);
+   const role = req.user?.role != null ? String(req.user.role) : null;
+ 
++  // The role a request carries is its membership row's (server/auth.ts,
++  // middleware/auth.ts applyOrganizationRole). No assignable role is the
++  // platform role, and organization_users refuses it (organization_users_role_known),
++  // but the database must not take the platform scope from a request's string:
++  // at the database that string read and wrote every tenant (P-72 slice 1a;
++  // docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). Refused, with no scope
++  // opened and no client attached.
++  if (isPlatformScopeRole(role)) {
++    logger.warn('Refused a request scope carrying the platform role', {
++      path: fullPath(req),
++      tenantId,
++      userId: req.user?.userId ?? req.user?.id,
++    });
++    res.status(403).json({
++      error: {
++        code: 'PLATFORM_SCOPE_ROLE_REFUSED',
++        message: 'This account\'s role in the organization cannot open a session. An administrator must correct the role.',
++      },
++    });
++    return;
++  }
++
+   // Publish the verified tenant identity on the request, UNCONDITIONALLY.
+   //
+   // Historically the only writer of req.tenantContext on the global path was
+diff --git a/server/routes/authoring.router.ts b/server/routes/authoring.router.ts
+index 141e19fbb..5304229f0 100644
+--- a/server/routes/authoring.router.ts
++++ b/server/routes/authoring.router.ts
+@@ -13,6 +13,7 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify';
+ import { nonAccessTokenReason } from '../middleware/tokenType';
+ import { isUuid } from '../middleware/uuidParam';
+ import { enforceOrgMembership, requireEditorAccess } from '../middleware/orgMembership';
++import { applyOrganizationRole } from '../middleware/auth';
+ import { getPool } from '../db';
+ import { requestConnectable, requestPgClient } from '../db/requestDb';
+ import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
+@@ -180,9 +181,10 @@ const router = Router();
+ // resolves to the same file under vitest, tsx, and the production build —
+ // verifyJwtWithRotation via ../utils/jwtVerify (whose .js is a shim that
+ // re-exports the .ts), nonAccessTokenReason via ../middleware/tokenType (no .js
+-// twin), enforceOrgMembership via ../middleware/orgMembership (no .js twin). An
+-// extensionless import of '../middleware/auth' would instead bind to the stale
+-// auth.js twin under vitest and silently drop AUTH_008/AUTH_009.
++// twin), enforceOrgMembership via ../middleware/orgMembership (no .js twin),
++// applyOrganizationRole via ../middleware/auth, whose .js twin is now a pure
++// re-export of auth.ts (KNOWN_ISSUES_LEDGER M-5), so every resolver runs the
++// same code.
+ router.use((req: Request, res: Response, next: any) => {
+   // SECURITY (ledger C-18): drop every caller-supplied identity header BEFORE
+   // anything downstream reads them. requireAny() reads x-roles, createAuditTrail
+@@ -260,7 +262,16 @@ router.use((req: Request, res: Response, next: any) => {
+   // AUTH_009 (terminal): live organization_users re-check — fail-closed 403 on a
+   // revoked membership, fail-open only on infra-indeterminate. Same control and
+   // ~60s cache as authenticateToken.
+-  return enforceOrgMembership(req, res, next);
++  return enforceOrgMembership(req, res, () => {
++    // The membership row's role replaces the token's claim, as authenticateToken
++    // does (IAM-10). Until 2026-10-30 req.user.role stayed the claim, and the
++    // image upload re-entered its scope with it, so the token's copy of the role
++    // at sign-in reached app.current_user_role (P-72 slice 1a). x-roles follows.
++    applyOrganizationRole(req);
++    const liveRoles = Array.isArray(req.user?.roles) && req.user.roles.length ? req.user.roles : undefined;
++    setOrClear('x-roles', liveRoles ? liveRoles.map((r) => String(r).toUpperCase()).join(',') : undefined);
++    next();
++  });
+ });
+ /* A disk-backed multer instance and its MIME allowlist stood here, attached
+    to no route. The two upload routes this file does serve build their own
+diff --git a/migrations/20261030b_platform_scope_role.sql b/migrations/20261030b_platform_scope_role.sql
+new file mode 100644
+index 000000000..e12eb11ba
+--- /dev/null
++++ b/migrations/20261030b_platform_scope_role.sql
+@@ -0,0 +1,200 @@
++-- =============================================================================
++-- 20261030b — platform scope is a role: the pre-auth lookups (P-72 slice 1a)
++-- =============================================================================
++-- Rows D1 (the deploy) and D6 (tenant isolation). Decision P-72
++-- (docs/LAUNCH_DEFINITION_OF_DONE.md, "### P-72" and its amendment). Design:
++-- docs/design/PLATFORM_SCOPE_AS_A_ROLE_2026-10-29.md, §1, §3.5 and §4.2. This
++-- is the design's converge file; its later slices extend it in place.
++-- Evidence: docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/
++--
++-- ── What was open ────────────────────────────────────────────────────────────
++-- Three SECURITY DEFINER functions entered the platform scope through a SET
++-- clause, `SET app.current_user_role = 'app_super_admin'`, stored in
++-- pg_proc.proconfig:
++--   - public.user_id_for_email(text) and public.user_id_for_reset_token(text)
++--     (migrations/20260928_users_membership_rls.sql), the sign-in and
++--     password-reset lookups;
++--   - public.invitations_for_member(integer)
++--     (migrations/20260928_invitations_for_member.sql).
++-- PostgreSQL 15 and later refuse a SET clause that names a custom setting to
++-- any creator that is not a superuser. So deploy-migrate halted at file 321 of
++-- 455 when its applier was the RDS master, a CREATEROLE non-superuser
++-- (docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-0/item1-deploy-replay.txt).
++-- CI's applier is a superuser and never showed it. P-70's assertion
++-- (20261029j) reads function bodies (prosrc), not proconfig, and did not see
++-- the three either. Their creators are amended in place the same day: no SET
++-- clause, and the policies the three read admit their new owner.
++--
++-- ── What this does ───────────────────────────────────────────────────────────
++--   1. Creates the NOLOGIN role c2c_platform_scope if it is absent. It refuses
++--      a role that already exists with any attribute beyond NOLOGIN NOINHERIT.
++--      It makes the applier a member, so it can hand functions to the role
++--      (the installer idiom of 20261008f and 20261029k). Nothing grants the
++--      role to the runtime role, and step 4 fails the deploy if anything has.
++--   2. Re-creates each of the three whose stored SET clause still names a
++--      custom setting from its own stored definition, with that clause
++--      removed, as 20261029j re-creates the identity helpers. This is for a
++--      database whose creating file has not re-run since. CREATE OR REPLACE
++--      keeps the signature, SECURITY DEFINER, the pinned search_path, the owner
++--      and the grants, so the definer allowlist entries
++--      (scripts/db/security-definer-allowlist.json) still name them. A
++--      definition the edit cannot clean fails the deploy.
++--   3. Grants c2c_platform_scope SELECT on only the columns the three read and
++--      their policies test, and hands the three to it. Their policies admit
++--      CURRENT_USER = 'c2c_platform_scope' (the creating files). CURRENT_USER
++--      is that role only inside a SECURITY DEFINER function it owns, so no
++--      session can set it, and nothing else passes the arm.
++--   4. Fails the deploy, naming each offender, if any function outside
++--      pg_catalog and information_schema names a custom setting in its SET
++--      clause, whatever created it, or if the runtime role app_service is a
++--      member of c2c_platform_scope by any path.
++--
++-- Creates no table, column, constraint or policy. Every step is conditional on
++-- the stored state, so a second run changes nothing.
++-- =============================================================================
++
++-- ── 1. The role ──────────────────────────────────────────────────────────────
++DO $platform_scope_role$
++DECLARE
++  v_role             record;
++  v_applier_is_super boolean;
++  v_applier_can_set  boolean;
++BEGIN
++  -- Roles are cluster-wide and this file re-runs on every deploy: never a plain CREATE ROLE.
++  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'c2c_platform_scope') THEN
++    CREATE ROLE c2c_platform_scope
++      NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS NOREPLICATION;
++  END IF;
++  SELECT * INTO v_role FROM pg_roles WHERE rolname = 'c2c_platform_scope';
++  IF v_role.rolcanlogin OR v_role.rolsuper OR v_role.rolcreatedb OR v_role.rolcreaterole
++     OR v_role.rolinherit OR v_role.rolbypassrls OR v_role.rolreplication THEN
++    RAISE EXCEPTION 'P-72: role c2c_platform_scope exists with attributes beyond NOLOGIN NOINHERIT (login %, superuser %, createdb %, createrole %, inherit %, bypassrls %, replication %)',
++      v_role.rolcanlogin, v_role.rolsuper, v_role.rolcreatedb, v_role.rolcreaterole,
++      v_role.rolinherit, v_role.rolbypassrls, v_role.rolreplication
++      USING HINT = 'Have a superuser run: ALTER ROLE c2c_platform_scope NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS NOREPLICATION; then re-run the migration set.';
++  END IF;
++
++  -- A non-superuser applier (the RDS master) must be able to SET ROLE to the
++  -- owner it hands the functions to: ask first, grant itself membership if it
++  -- can, otherwise fail closed with the remedy.
++  SELECT rolsuper INTO v_applier_is_super FROM pg_roles WHERE rolname = current_user;
++  IF NOT COALESCE(v_applier_is_super, false) THEN
++    IF current_setting('server_version_num')::int >= 160000 THEN
++      v_applier_can_set := pg_has_role(current_user, 'c2c_platform_scope', 'SET');
++    ELSE
++      v_applier_can_set := pg_has_role(current_user, 'c2c_platform_scope', 'MEMBER');
++    END IF;
++    IF NOT v_applier_can_set THEN
++      BEGIN
++        EXECUTE format('GRANT c2c_platform_scope TO %I', current_user);
++      EXCEPTION WHEN insufficient_privilege THEN
++        RAISE EXCEPTION '[platform_scope_role] % cannot become a member of c2c_platform_scope and so cannot hand the pre-auth lookups to it', current_user
++          USING HINT = format('Have a superuser run: GRANT c2c_platform_scope TO %I; then re-run the migration set.', current_user);
++      END;
++    END IF;
++  END IF;
++END
++$platform_scope_role$;
++
++-- ── 2. No custom setting in a stored SET clause ──────────────────────────────
++DO $platform_scope_lookups$
++DECLARE
++  v_fn  text;
++  v_def text;
++  v_new text;
++BEGIN
++  FOREACH v_fn IN ARRAY ARRAY[
++    'public.user_id_for_email(text)',
++    'public.user_id_for_reset_token(text)',
++    'public.invitations_for_member(integer)'
++  ] LOOP
++    CONTINUE WHEN to_regprocedure(v_fn) IS NULL;
++    CONTINUE WHEN NOT EXISTS (
++      SELECT 1 FROM pg_proc p CROSS JOIN LATERAL unnest(p.proconfig) AS c(setting)
++       WHERE p.oid = to_regprocedure(v_fn) AND split_part(c.setting, '=', 1) LIKE '%.%');
++    v_def := pg_get_functiondef(to_regprocedure(v_fn));
++    -- pg_get_functiondef writes each SET clause on its own line, a custom
++    -- setting's name double-quoted for its dot: ` SET "app.x" TO 'value'`.
++    v_new := regexp_replace(v_def, '\n[ \t]*SET[ \t]+"[^"\n]*\.[^"\n]*"[ \t]+TO[ \t]+[^\n]*', '', 'g');
++    IF v_new = v_def THEN
++      RAISE EXCEPTION 'P-72: % names a custom setting in its SET clause and its stored definition is not the shape pg_get_functiondef writes; replace it by hand.', v_fn;
++    END IF;
++    EXECUTE v_new;
++    IF EXISTS (
++      SELECT 1 FROM pg_proc p CROSS JOIN LATERAL unnest(p.proconfig) AS c(setting)
++       WHERE p.oid = to_regprocedure(v_fn) AND split_part(c.setting, '=', 1) LIKE '%.%') THEN
++      RAISE EXCEPTION 'P-72: % still names a custom setting in its SET clause after the edit; replace it by hand.', v_fn;
++    END IF;
++    RAISE NOTICE '[platform_scope_role] % re-created without its custom SET clause', v_fn;
++  END LOOP;
++END
++$platform_scope_lookups$;
++
++-- ── 3. What the role reads, and the three handed to it ───────────────────────
++DO $platform_scope_lookups_owner$
++DECLARE
++  v_owner oid := (SELECT oid FROM pg_roles WHERE rolname = 'c2c_platform_scope');
++  v_fn    text;
++  v_cols  text;
++  v_grant RECORD;
++BEGIN
++  -- CREATE: a non-superuser may hand a function to a role only when that role
++  -- may create in the function's schema (ALTER FUNCTION … OWNER TO).
++  GRANT USAGE, CREATE ON SCHEMA public TO c2c_platform_scope;
++  -- Column by column, and only the columns that exist: the lookups' WHERE and
++  -- result columns, and the columns their tables' policies test.
++  FOR v_grant IN
++    SELECT * FROM (VALUES
++      ('users',                    ARRAY['id', 'email', 'reset_token']),
++      ('organization_users',       ARRAY['user_id', 'organization_id']),
++      ('organization_invitations', ARRAY['id', 'organization_id', 'user_id', 'email', 'role', 'status',
++                                         'invited_by_id', 'created_at', 'responded_at'])
++    ) AS g(tbl, cols)
++  LOOP
++    CONTINUE WHEN to_regclass('public.' || v_grant.tbl) IS NULL;
++    SELECT string_agg(quote_ident(c.column_name::text), ', ' ORDER BY c.ordinal_position) INTO v_cols
++      FROM information_schema.columns c
++     WHERE c.table_schema = 'public' AND c.table_name::text = v_grant.tbl AND c.column_name::text = ANY (v_grant.cols);
++    CONTINUE WHEN v_cols IS NULL;
++    EXECUTE format('GRANT SELECT (%s) ON public.%I TO c2c_platform_scope', v_cols, v_grant.tbl);
++  END LOOP;
++
++  FOREACH v_fn IN ARRAY ARRAY[
++    'public.user_id_for_email(text)',
++    'public.user_id_for_reset_token(text)',
++    'public.invitations_for_member(integer)'
++  ] LOOP
++    CONTINUE WHEN to_regprocedure(v_fn) IS NULL;
++    IF (SELECT proowner FROM pg_proc WHERE oid = to_regprocedure(v_fn)) IS DISTINCT FROM v_owner THEN
++      EXECUTE format('ALTER FUNCTION %s OWNER TO c2c_platform_scope', to_regprocedure(v_fn));
++      RAISE NOTICE '[platform_scope_role] % now owned by c2c_platform_scope', v_fn;
++    END IF;
++  END LOOP;
++END
++$platform_scope_lookups_owner$;
++
++-- ── 4. Fail the deploy on a custom setting in any SET clause, and on a runtime member ─
++DO $platform_scope_assert$
++DECLARE
++  v_left text;
++BEGIN
++  SELECT string_agg(format('function %s sets %s', p.oid::regprocedure, split_part(c.setting, '=', 1)), '; '
++                    ORDER BY p.oid::regprocedure::text)
++    INTO v_left
++    FROM pg_proc p
++    JOIN pg_namespace n ON n.oid = p.pronamespace
++    CROSS JOIN LATERAL unnest(p.proconfig) AS c(setting)
++   WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
++     AND split_part(c.setting, '=', 1) LIKE '%.%';
++  IF v_left IS NOT NULL THEN
++    RAISE EXCEPTION 'P-72: a function''s SET clause names a custom setting: %', v_left
++      USING HINT = 'A custom setting in a SET clause enters a scope through a session setting, and PostgreSQL 15+ refuses it to a non-superuser applier (the RDS master). Remove the clause in the creating file (CLAUDE.md Rule 1); a cross-tenant read goes through a definer owned by c2c_platform_scope. docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/README.md';
++  END IF;
++
++  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_service')
++     AND pg_has_role('app_service', 'c2c_platform_scope', 'MEMBER') THEN
++    RAISE EXCEPTION 'P-72: the runtime role app_service is a member of c2c_platform_scope'
++      USING HINT = 'Platform scope is a role the runtime role cannot become (P-72). Have a superuser REVOKE c2c_platform_scope FROM app_service (and from any role app_service belongs to); then re-run the migration set.';
++  END IF;
++END
++$platform_scope_assert$;

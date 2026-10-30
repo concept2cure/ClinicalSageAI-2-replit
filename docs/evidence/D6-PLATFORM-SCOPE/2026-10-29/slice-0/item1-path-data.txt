@@ -1,0 +1,22 @@
+SET
+UPDATE 2
+UPDATE 2
+UPDATE 1
+UPDATE 2
+UPDATE 2
+UPDATE 1
+SET
+?column? | count
+unified_tasks overdue | 2
+vault expired | 2
+holds active | 1
+ana_runs running w/ user | 2
+proposals pending expired | 2
+scheduled claim A finished | 1
+(6 rows)
+SET
+UPDATE 2
+SET
+?column? | count
+ivdr jobs queued | 2
+(1 row)

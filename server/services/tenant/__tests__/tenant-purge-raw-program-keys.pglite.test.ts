@@ -19,8 +19,9 @@
  * written there, in set order. The purge runs the
  * real list in its real order, narrowed to the tables this schema has (as
  * tenant-purge-device-records.pglite.test.ts narrows it). The Part 11 change
- * histories of the IVDR records are not erased (PURGE_REFERRERS_NOT_ERASED): a
- * tenant holding one is not purged, which the last case pins.
+ * histories of the IVDR records are erased with the tenant since P-58, once
+ * its administrator signs custody of the export: without that, a tenant
+ * holding one is not purged, which the last case pins.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFile } from 'node:fs/promises';
@@ -117,7 +118,7 @@ beforeEach(async () => {
       stripe_subscription_id text, updated_at timestamptz, settings jsonb DEFAULT '{}', slug text);
     CREATE TABLE users (id int PRIMARY KEY);
     CREATE TABLE tenant_export_receipts (organization_id int, digest text,
-      table_count int, row_count bigint, created_at timestamptz, created_by int);
+      table_count int, row_count bigint, created_at timestamptz, created_by int, export_scope text);
     CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id int NOT NULL);
     CREATE TABLE qms_documents (id int PRIMARY KEY, organization_id int, status text, metadata jsonb DEFAULT '{}');
     CREATE TABLE authoring_documents (id uuid PRIMARY KEY, tenant_id int);
@@ -134,7 +135,7 @@ beforeEach(async () => {
       (11, 'Synthetic tenant', 'pending_deletion', now() - interval '1 day'),
       (22, 'Other synthetic tenant', 'active', NULL);
     INSERT INTO users VALUES (7);
-    INSERT INTO tenant_export_receipts VALUES (11, 'synthetic-final-export', 5, 9, now(), 7);
+    INSERT INTO tenant_export_receipts VALUES (11, 'synthetic-final-export', 5, 9, now(), 7, 'organization');
     INSERT INTO regulatory_programs VALUES
       ('11111111-1111-4111-8111-111111111111', 11),
       ('22222222-2222-4222-8222-222222222222', 22);
@@ -150,6 +151,9 @@ beforeEach(async () => {
     'migrations/20261018_company_document_export_receipts.sql',
   ]) await file(f);
   for (const [f, table] of CREATORS) await db.exec(await tableDdl(f, table));
+  // The offboarding certificate the purge writes and the held records' doors
+  // (P-58), after the tables the doors erase.
+  await file('migrations/20261029k_tenant_offboarding_custody.sql');
 
   validationOfOrg = await fileRecords(ORG, PROGRAM);
   await fileRecords(OTHER, OTHER_PROGRAM);
@@ -215,7 +219,7 @@ describe('a tenant whose device and IVD records name its project with no delete 
     const LONE = 33;
     const LONE_PROGRAM = '33333333-3333-4333-8333-333333333333';
     await db.query(`INSERT INTO organizations (id, name, status, purge_eligible_at) VALUES ($1, 'Lone tenant', 'pending_deletion', now() - interval '1 day')`, [LONE]);
-    await db.query(`INSERT INTO tenant_export_receipts VALUES ($1, 'lone-export', 1, 1, now(), 7)`, [LONE]);
+    await db.query(`INSERT INTO tenant_export_receipts VALUES ($1, 'lone-export', 1, 1, now(), 7, 'organization')`, [LONE]);
     await db.query('INSERT INTO regulatory_programs VALUES ($1, $2)', [LONE_PROGRAM, LONE]);
     await fileRecords(LONE, LONE_PROGRAM, table);
     const result = await purgeTenant(pool, {
@@ -225,11 +229,14 @@ describe('a tenant whose device and IVD records name its project with no delete 
     expect(await orgsIn(table)).toEqual([ORG, OTHER]);
   });
 
-  it('holding a Part 11 change history of a validation, is not purged: 23503, rolled back, nothing erased', async () => {
+  // P-58 (2026-10-29): a Part 11 change history is exported and erased with the
+  // tenant, but only once its administrator signed custody of the export
+  // (tests/db/tenant-offboarding-custody.dbtest.ts runs the signed path).
+  it('holding a Part 11 change history of a validation, is not purged without custody: refused, rolled back, nothing erased', async () => {
     await db.query(
       `INSERT INTO ivdr_validation_parameter_history (validation_id, parameters, reason) VALUES ($1, '{}', 'Recalibrated')`,
       [validationOfOrg]);
-    await expect(purge()).rejects.toMatchObject({ code: '23503' });
+    await expect(purge()).rejects.toMatchObject({ code: 'CUSTODY_ATTESTATION_REQUIRED' });
     expect((await db.query<{ status: string }>('SELECT status FROM organizations WHERE id = $1', [ORG])).rows[0].status)
       .toBe('pending_deletion');
     for (const table of RECORDS) expect(await orgsIn(table), table).toEqual([ORG, OTHER]);

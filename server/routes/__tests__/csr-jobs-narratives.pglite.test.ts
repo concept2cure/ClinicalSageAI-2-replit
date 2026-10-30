@@ -97,6 +97,16 @@ describe('POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data)', () => {
     const qc = await request(app).get('/api/csr/jobs/1/narratives');
     expect(qc.status).toBe(200);
     expect(qc.body.subjects.length).toBe(run.subjectsTotal);
+    // The read-only §14.3.3 viewer in Authoring reads the text a page at a time, each checked by the database (2026-10-30).
+    const first = await request(app).get('/api/csr/jobs/1/narratives/text?limit=2');
+    expect(first.status).toBe(200);
+    expect(first.body.narratives).toHaveLength(2);
+    expect(first.body.narratives[0]).toMatchObject({ subjectId: qc.body.subjects[0].subjectId, verified: true, text: expect.any(String) });
+    const next = first.body.next;
+    expect(next).toEqual({ sequence: first.body.narratives[1].sequence, subjectId: first.body.narratives[1].subjectId });
+    const second = await request(app).get(`/api/csr/jobs/1/narratives/text?limit=2&afterSequence=${next.sequence}&afterSubject=${encodeURIComponent(next.subjectId)}`);
+    expect(second.body.narratives[0].subjectId).toBe(qc.body.subjects[2].subjectId);
+    expect((await request(app).get('/api/csr/jobs/1/narratives/text?afterSequence=x')).body).toMatchObject({ code: 'CSR_NARRATIVE_PAGE_INVALID' });
   });
 
   it('refuses a build with no bound run at once, and queues nothing', async () => {

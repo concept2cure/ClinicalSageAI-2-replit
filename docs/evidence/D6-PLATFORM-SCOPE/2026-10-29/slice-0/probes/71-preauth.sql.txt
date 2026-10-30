@@ -1,0 +1,18 @@
+-- P-72 slice 0, §3.5: the pre-authentication lookups, as the runtime role, in the scopes their callers use.
+\set ON_ERROR_STOP off
+\pset footer off
+SELECT id AS a_id, uuid AS a_uuid FROM organizations WHERE slug = 'p72-a' \gset
+SELECT id AS b_id, uuid AS b_uuid FROM organizations WHERE slug = 'p72-b' \gset
+\echo '== pre-auth scope (tenant 0, no role, no account): sign-in and password reset (server/services/auth/pre-auth-account.ts)'
+BEGIN;
+SELECT set_config('app.current_tenant_id','0',true), set_config('app.current_org_id','',true), set_config('app.current_user_role','',true), set_config('app.current_account_id','',true), set_config('app.rls_enforce','on',true) \gset
+SELECT public.user_id_for_email('p72-b-admin@example.invalid') AS user_id_for_email_b, public.user_id_for_reset_token('p72-reset-hash') AS user_id_for_reset_token_b,
+       (SELECT count(*) FROM public.users WHERE email LIKE 'p72-%') AS users_visible_directly;
+ROLLBACK;
+\echo '== tenant B scope (tenant id + org uuid, role admin): invitations_for_member and actor_name, as their callers use them'
+BEGIN;
+SELECT set_config('app.current_tenant_id',:'b_id',true), set_config('app.current_org_id',:'b_uuid',true), set_config('app.current_user_role','admin',true), set_config('app.rls_enforce','on',true) \gset
+SELECT (SELECT count(*) FROM public.invitations_for_member((SELECT user_id FROM organization_users WHERE organization_id = :b_id LIMIT 1))) AS invitations_for_member_b,
+       (SELECT name FROM public.actor_name((SELECT user_id FROM organization_users WHERE organization_id = :b_id LIMIT 1))) AS actor_name_member_of_b,
+       (SELECT name FROM public.actor_name((SELECT user_id FROM organization_users WHERE organization_id = :a_id LIMIT 1))) AS actor_name_member_of_a_seen_from_b;
+ROLLBACK;

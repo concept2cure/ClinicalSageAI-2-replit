@@ -1,0 +1,10 @@
+p72-a GET /full, SYSTEM scope (today): tablesDiscovered=872 tablesExported=872 tablesEmpty=18 tablesFailed=0 totalRows=861
+  vault.documents=0 vault.document_catalog=0 vault.document_read_receipts=0 vault.evidence_citations=0 vault.legal_holds=1 citation_chains=0 knowledge_graph_edges=0 knowledge_graph_nodes=0 lumen_knowledge_graph_edges=0 regulatory_programs=3 organization_users=1
+p72-a GET /full, OWN scope (tenant id + org uuid): tablesDiscovered=872 tablesExported=872 tablesEmpty=10 tablesFailed=0 totalRows=872
+  vault.documents=4 vault.document_catalog=1 vault.document_read_receipts=1 vault.evidence_citations=1 vault.legal_holds=1 citation_chains=1 knowledge_graph_edges=1 knowledge_graph_nodes=1 lumen_knowledge_graph_edges=1 regulatory_programs=3 organization_users=1
+p72-a GET / (curated), SYSTEM scope: counts {"programs":3,"qSubmissions":0,"qSubQuestions":0,"qSubCommitments":0,"evidenceSufficiencyAssessments":1,"postMarketDocuments":1,"gsprMappings":1,"sections":1,"auditLogs":1}
+p72-b GET /full, SYSTEM scope (today): tablesDiscovered=872 tablesExported=872 tablesEmpty=19 tablesFailed=0 totalRows=860
+  vault.documents=0 vault.document_catalog=0 vault.document_read_receipts=0 vault.evidence_citations=0 vault.legal_holds=1 citation_chains=0 knowledge_graph_edges=0 knowledge_graph_nodes=0 lumen_knowledge_graph_edges=0 regulatory_programs=3 organization_users=1
+p72-b GET /full, OWN scope (tenant id + org uuid): tablesDiscovered=872 tablesExported=872 tablesEmpty=11 tablesFailed=0 totalRows=872
+  vault.documents=5 vault.document_catalog=1 vault.document_read_receipts=1 vault.evidence_citations=1 vault.legal_holds=1 citation_chains=1 knowledge_graph_edges=1 knowledge_graph_nodes=1 lumen_knowledge_graph_edges=1 regulatory_programs=3 organization_users=1
+p72-b GET / (curated), SYSTEM scope: counts {"programs":3,"qSubmissions":0,"qSubQuestions":0,"qSubCommitments":0,"evidenceSufficiencyAssessments":1,"postMarketDocuments":1,"gsprMappings":1,"sections":1,"auditLogs":1}

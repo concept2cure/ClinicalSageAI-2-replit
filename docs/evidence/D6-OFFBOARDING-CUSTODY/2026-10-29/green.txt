@@ -1,0 +1,247 @@
+# Green: the change's tests and the suites around it, on the final tree (D6, P-58 and P-59, 2026-10-29/30)
+# Real PostgreSQL 16 + pgvector on 127.0.0.1:55441. Template c2c_custody_new7_tpl: install-fresh then deploy-migrate
+# of the tree at d966ddfab plus this change, 455/455 migration files applied; each run on a fresh copy.
+# The runtime role is app_service (no superuser, no BYPASSRLS), RLS_ENFORCE=on. Verdict lines only.
+
+## The custody, purge and blocking-keys dbtests (tenant-offboarding-custody, tenant-purge, tenant-purge-blocking-keys)
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > seeds one row of every held table for D and for E
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > every held table is one the export reads
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > D's export holds D's row of every held table and none of E's
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > holds D's row of every table the platform scope returned none of, the Vault's among them, and none of E's
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries the verdict of the audit ledger every signature cites
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > walks each of D's report seal chains with the report engine's own link check, and names the event where a link breaks
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries each of D's signatures with its manifest and the §11.200 hash verdict, and none of E's
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > the purge of a tenant holding a held record is refused without it, and nothing is touched
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > an export made the old way, in the platform scope, records no receipt, and a receipt from before opens neither custody nor the purge
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator reads what they will sign: every held record, and those inside the retention period
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > nobody else signs it: a member, the other tenant, a digest that is not this tenant's, a changed attestation
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator signs custody through the ceremony: one signature on the export's digest, its manifest the attestation
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > with custody signed, the purge's custody check passes on that receipt and no other
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > a held record added after custody was signed makes it stale, and the purge is refused
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2b. the doors hold the database to it, and the runtime role has no way around them > each door refuses the other tenant's held records without custody, in the platform scope
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 2b. the doors hold the database to it, and the runtime role has no way around them > the runtime role cannot delete a held record itself, nor become the doors' role
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > purges D
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > writes one certificate: the digest, the counts, the custody signature, the purge; no customer content
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the certificate is a platform record: it cannot be changed or removed
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the database refuses a certificate of an export whose receipt states no scope
+ ✓ tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > has that row, and so does the other tenant: every such table is seeded for both
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is exported from every table the purge erases: by its tenant column, or through its parent
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it, once custody of its export is signed
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase, or a held record without custody > is not purged, and keeps everything; with the retained rows gone and custody signed, it purges
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export read in the platform scope, or one that states no scope
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export, read in the organization's own scope, with that scope
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > erases the vault through the route's own connection: the runtime role in the platform scope (VR-07)
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove
+ Test Files  3 passed (3)
+      Tests  40 passed (40)
+exit 0
+
+## The custody and review-route guard dbtests on the template after a SECOND deploy-migrate replay (Rule 1)
+ Test Files  2 passed (2)
+      Tests  42 passed (42)
+
+## The related dbtest set: 29 files
+  tests/db/agency-response-signed-approval.dbtest.ts
+  tests/db/append-only-store-grants.dbtest.ts
+  tests/db/cmc-agency-questions-converged.dbtest.ts
+  tests/db/commitment-fulfilment-database.dbtest.ts
+  tests/db/compliance-review-fix-round.dbtest.ts
+  tests/db/compliance-review-records.dbtest.ts
+  tests/db/domain-history-append-only.dbtest.ts
+  tests/db/no-session-rls-bypass.dbtest.ts
+  tests/db/provenance-audit-outcomes.dbtest.ts
+  tests/db/review-comments-record.dbtest.ts
+  tests/db/review-record-export.dbtest.ts
+  tests/db/review-route-guard.dbtest.ts
+  tests/db/review-route-qms-rr2.dbtest.ts
+  tests/db/review-route-qms-rr4.dbtest.ts
+  tests/db/security-definer-functions.dbtest.ts
+  tests/db/task-assignment-delegation.dbtest.ts
+  tests/db/task-board-every-store.dbtest.ts
+  tests/db/task-filing-home.dbtest.ts
+  tests/db/task-link-completion-lock-order.dbtest.ts
+  tests/db/tenant-export-withheld-columns.dbtest.ts
+  tests/db/tenant-offboarding-custody.dbtest.ts
+  tests/db/tenant-purge-artifact-records.dbtest.ts
+  tests/db/tenant-purge-audit.dbtest.ts
+  tests/db/tenant-purge-blocking-keys.dbtest.ts
+  tests/db/tenant-purge.dbtest.ts
+  tests/db/tenant-source-read-receipt-retention.dbtest.ts
+  tests/db/turn-record-purge-door.dbtest.ts
+  tests/db/vault-isolation-hardening.dbtest.ts
+  tests/db/vault-record-immutability.dbtest.ts
+ Test Files  29 passed (29)
+      Tests  401 passed (401)
+
+## The Vault-fixture dbtests (database platform_ci_vault_fixture_custody, C2C_VAULT_LEGACY_FIXTURE_DATABASE set): 7 files
+  ✓ tests/db/org-retention-period.dbtest.ts
+  ✓ tests/db/review-route-vault-rr1b.dbtest.ts
+  ✓ tests/db/review-route-vault-rr2.dbtest.ts
+  ✓ tests/db/review-route-vault-rr3.dbtest.ts
+  ✓ tests/db/review-route-vault.dbtest.ts
+  ✓ tests/db/vault-data-room-seal.dbtest.ts
+  ✓ tests/db/vault-lifecycle.dbtest.ts
+ Test Files  7 passed (7)
+      Tests  91 passed (91)
+
+## PGlite route, purge and unit lane: 87 files
+  server/jobs/__tests__/taskDueSweep-route.pglite.test.ts
+  server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+  server/routes/__tests__/governed-signed-act-pending-org.pglite.test.ts
+  server/routes/__tests__/mdx-qms-retire.test.ts
+  server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts
+  server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+  server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts
+  server/routes/__tests__/tenant-data-return-authority.pglite.test.ts
+  server/routes/__tests__/tenants-simple-purge-audit.test.ts
+  server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts
+  server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+  server/services/part11/__tests__/commitment-fulfilment-binder.test.ts
+  server/services/part11/__tests__/ectd-sequence-binding-applicant.test.ts
+  server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts
+  server/services/part11/__tests__/electronic-signature-meaning-required.test.ts
+  server/services/part11/__tests__/governed-actor.test.ts
+  server/services/part11/__tests__/governed-sign-meaning.test.ts
+  server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts
+  server/services/part11/__tests__/labeling-risk-content-binders.test.ts
+  server/services/part11/__tests__/one-signing-authority-policy.test.ts
+  server/services/part11/__tests__/resolve-signer-identity.test.ts
+  server/services/part11/__tests__/reverify-signer.test.ts
+  server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts
+  server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts
+  server/services/part11/__tests__/signed-content-lock.test.ts
+  server/services/part11/__tests__/signer-org-scope.test.ts
+  server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts
+  server/services/part11/__tests__/signing-authority.test.ts
+  server/services/part11/__tests__/version-binding.test.ts
+  server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+  server/services/qms/__tests__/controlled-document-content.test.ts
+  server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+  server/services/qms/__tests__/deviations.pglite.test.ts
+  server/services/qms/__tests__/document-approval-signature.test.ts
+  server/services/qms/__tests__/qms-approval-checks-the-filing.pglite.test.ts
+  server/services/qms/__tests__/qms-record-tasks.test.ts
+  server/services/qms/__tests__/qms-send-for-review-respects-the-seal.pglite.test.ts
+  server/services/qms/__tests__/qms-signed-decisions.pglite.test.ts
+  server/services/qms/__tests__/register-signatures.test.ts
+  server/services/qms/__tests__/training-compliance.pglite.test.ts
+  server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts
+  server/services/qms/__tests__/training.pglite.integration.test.ts
+  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts
+  server/services/review/__tests__/route-writer-setting.gate.test.ts
+  server/services/review/__tests__/vault-review-queue.test.ts
+  server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts
+  server/services/tasking/__tests__/my-work.pglite.test.ts
+  server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts
+  server/services/tasking/__tests__/seed-task-templates.pglite.integration.test.ts
+  server/services/tasking/__tests__/source-task.test.ts
+  server/services/tasking/__tests__/task-audit-outcome.test.ts
+  server/services/tasking/__tests__/task-audit-transaction.test.ts
+  server/services/tasking/__tests__/task-audit.test.ts
+  server/services/tasking/__tests__/task-event-reason-not-invented.test.ts
+  server/services/tasking/__tests__/task-home-programs.pglite.test.ts
+  server/services/tasking/__tests__/task-project.pglite.test.ts
+  server/services/tasking/__tests__/task-signoff.test.ts
+  server/services/tasking/__tests__/workflow-templates.test.ts
+  server/services/tenant/__tests__/pending-invitation-delivery.test.ts
+  server/services/tenant/__tests__/tenant-lifecycle-background.test.ts
+  server/services/tenant/__tests__/tenant-lifecycle.test.ts
+  server/services/tenant/__tests__/tenant-offboarding.test.ts
+  server/services/tenant/__tests__/tenant-purge-audit.test.ts
+  server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts
+  server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts
+  server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts
+  server/services/tenant/__tests__/tenant-purge-referrers.test.ts
+  server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts
+  server/services/tenant/__tests__/tenant-purge-saved-views.pglite.test.ts
+  server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts
+  server/services/tenant/__tests__/tenant-session-policy-audit.test.ts
+  server/services/tenant/__tests__/tenant-source-read-receipts.test.ts
+  server/services/tenant/__tests__/tenant-storage.test.ts
+  tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+  server/__tests__/routes/tenant-export.test.ts
+  server/routes/__tests__/tenant-export-5xx-containment.test.ts
+  server/services/export/__tests__/recorded-downloads.contract.test.ts
+  server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts
+  server/services/tenant-export/__tests__/company-document-export.pglite.test.ts
+  server/services/tenant-export/__tests__/company-export-snapshot.pglite.test.ts
+  server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts
+  server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts
+  server/services/__tests__/report-attestations-honest.test.ts
+  server/services/ana-ri/__tests__/generate-report-draft-not-sealed.test.ts
+  server/__tests__/security/tenant-isolation-intelligent-reports.contract.test.ts
+  server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts
+  server/services/tenant-export/__tests__/attestation-report.test.ts
+ Test Files  87 passed (87)
+      Tests  1049 passed (1049)
+
+## Scoped type check (tsc -p, 60 files: every TypeScript file of the change and its direct context)
+tsc exit 0 in 101s over 60 files
+  errors: 0
+
+## ESLint, per file, the working tree against HEAD (HEAD through --stdin; scripts/*.mjs are ignored by the config)
+server/__tests__/routes/tenant-export.test.ts head=0 now=0
+server/jobs/__tests__/taskDueSweep-route.pglite.test.ts head=0 now=0
+server/routes/__tests__/governed-signed-act-pending-org.pglite.test.ts head=new now=0
+server/routes/__tests__/tenant-data-return-authority.pglite.test.ts head=0 now=0
+server/routes/__tests__/tenant-export-5xx-containment.test.ts head=0 now=0
+server/routes/governed-signed-act.ts head=0 now=0
+server/routes/tenant-export.ts head=0 now=0
+server/routes/tenants-simple.ts head=0 now=0
+server/routes/vault-retention-period.ts head=0 now=0
+server/services/intelligent-report-engine.ts head=17 now=17
+server/services/part11/custody-signature.ts head=new now=0
+server/services/part11/resolve-signer-role.ts head=0 now=0
+server/services/part11/signing-authority-gate.ts head=0 now=0
+server/services/review/__tests__/route-writer-setting.gate.test.ts head=0 now=0
+server/services/review/review-route.ts head=0 now=0
+server/services/tasking/create-task.ts head=0 now=0
+server/services/tasking/task-assignment.ts head=0 now=0
+server/services/tenant-export/__tests__/company-document-export.pglite.test.ts head=0 now=0
+server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts head=0 now=0
+server/services/tenant-export/company-export-snapshot.ts head=0 now=0
+server/services/tenant-export/held-record-integrity.ts head=new now=0
+server/services/tenant-export/tenant-full-export.service.ts head=0 now=0
+server/services/tenant/__tests__/tenant-offboarding.test.ts head=1 now=1
+server/services/tenant/__tests__/tenant-purge-audit.test.ts head=0 now=0
+server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts head=0 now=0
+server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts head=0 now=0
+server/services/tenant/__tests__/tenant-purge-referrers.test.ts head=0 now=0
+server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts head=0 now=0
+server/services/tenant/__tests__/tenant-purge-saved-views.pglite.test.ts head=0 now=0
+server/services/tenant/__tests__/tenant-source-read-receipts.test.ts head=0 now=0
+server/services/tenant/held-records.ts head=new now=0
+server/services/tenant/offboarding-certificate.ts head=new now=0
+server/services/tenant/offboarding-custody.ts head=new now=0
+server/services/tenant/purge-held-doors.ts head=new now=0
+server/services/tenant/purge-parent-scope.ts head=0 now=0
+server/services/tenant/purge-referrers.ts head=0 now=0
+server/services/tenant/tenant-offboarding.ts head=1 now=1
+server/services/vault/retention-period.ts head=new now=0
+tests/db/agency-response-signed-approval.dbtest.ts head=1 now=1
+tests/db/commitment-fulfilment-database.dbtest.ts head=0 now=0
+tests/db/offboarding-custody-fixture.ts head=new now=0
+tests/db/offboarding-custody-signature.ts head=new now=0
+tests/db/org-retention-period.dbtest.ts head=0 now=0
+tests/db/review-route-guard.dbtest.ts head=0 now=0
+tests/db/review-route-qms-rr2.dbtest.ts head=0 now=0
+tests/db/tenant-offboarding-custody.dbtest.ts head=new now=0
+tests/db/tenant-purge-artifact-records.dbtest.ts head=0 now=0
+tests/db/tenant-purge-audit.dbtest.ts head=0 now=0
+tests/db/tenant-purge-blocking-keys.dbtest.ts head=0 now=0
+tests/db/tenant-purge-row-seeder.ts head=0 now=0
+tests/db/tenant-purge.dbtest.ts head=0 now=0
+tests/db/turn-record-purge-door.dbtest.ts head=0 now=0
+tests/schema-contract/tenant-export-covers-purge.contract.test.ts head=0 now=0

@@ -1,0 +1,183 @@
+# Item 2, red: the four pins written before any product change (working tree over 96a9ecf58).
+# npx vitest run client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts server/services/entitlements/__tests__/launch-scope.test.ts tests/schema-contract/catalog-module-claims.contract.test.ts
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > keeps folded dossier identities deprecated across replay without deleting their rows
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > replays every catalog writer in the deploy set, in deploy order
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > seeds a non-trivial catalog (guards against asserting over zero rows)
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > shares its rules with the source gate rather than restating them
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > makes no unsupported compliance claim in any module description or name
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > states what the authoring-engine page is, since it reads no program data
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > states no fixed count of report types — the registry grows
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes batch-draft to a customer, not by its function names
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes document-authoring by what it does, not by an internal handoff note
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes the IND lifecycle without offering what P-32 withholds
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes agency-question approval as what it is, not as a signature
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired filing catalogue subscriptions > fresh replay neither creates a retired filing identity nor requires it for packaging
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired filing catalogue subscriptions > keeps an existing filing catalogue and subscription retired across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > fresh replay neither creates device-tasks nor requires it for packaging, and Tasks stays offered
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > keeps an existing device-tasks row and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Artifacts center and device vault > fresh replay creates neither row nor requires either for packaging, and the Vault stays offered at free
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Artifacts center and device vault > keeps each existing row and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > fresh replay creates no part11-console row, and Audit trail stays uncatalogued
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > deprecates a part11-console row added by another path, and keeps its subscription, across replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > a fresh database replaying the whole catalogue set twice never creates the row nor requires it for packaging, and eCTD Compile stays offered
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > keeps a deployed row, its tier and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired risk, design-controls and ivd-completeness > a fresh database replaying the whole catalogue set twice holds none of the three, and both targets and human factors stay offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired risk, design-controls and ivd-completeness > keeps each deployed row, its tier and its subscription, deprecated, across replay of every writer
+ × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired organization-wide blocker list > a fresh database replaying the whole catalogue set twice never holds device-validation, and Submission Center stays offered at standard
+ × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired organization-wide blocker list > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > unset ⇒ on in production, off elsewhere
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > explicit values win in either environment
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > an explicit off in production is said once, as an error; off elsewhere and on are quiet
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > a value that is neither on nor off refuses to boot in production, and is off elsewhere
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > reaches MDX as project features without adding app or module grants
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > has seven apps and every app surface is in the id set
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC / Module 3 is a launch app — decision P-28, 2026-10-12
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC grants NO module, so the professional band still decides who sees it
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > Reporting & analytics is a launch app — founder decision, 2026-09-26
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > protocol development is in the Authoring app — founder decision, 2026-09-21
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the authoring engine explainer is outside the scope — swapped out for protocol development
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > keeps the Part 11 surface the catalog may never gate
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > program-journey is out of the projects app — fixture-demo: empty for every program a client creates
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > filings-catalog is out of the projects app — folded identity: reference discovery and creation live in the New project wizard
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > regulatory-workspace is out of the authoring app — a fixed paragraph where the editor should be
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > template-library is out of the authoring app — a saved template formats no document
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-coauthor is out of the submission-center app — a second editor whose checks report a fixed failure
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > dossier-map is out of the projects app — retired screen: its tracked records are reached in project Author
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-publishing is out of the submission-center app — a reference page that publishes nothing
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > qmp is out of the qms app — a plan cannot be given its gates, and nothing reads them
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-command — enterprise-only, and says runs are recorded that are not
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-memory — shows a store nothing writes, not the memory AnA loads
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries training — no path, lesson or certification exists
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > every app keeps a screen a client can work in
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device task workbench > is in neither project scope list: Tasks holds it (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Artifacts center and device vault > are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Part 11 console > is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded eCTD publishing reference > is in no scope list and no grant: eCTD Compile holds the reference (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded billing screen > is in no scope list and no grant: Licensing holds the invoices, usage keeps the limits (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded AnA memory > is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded risk file, design-control trace and IVDR readiness board > are in no scope list and no new grant: Engineering and IVDR evidence hold them (D2, folds F1c and F2, 2026-10-29)
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the retired organization-wide blocker list > is in no scope list and no new grant: each filing's readiness holds its blockers (D2, fold F5 item 2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > agency questions stay locked until approval is a signed act
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > P-32 grants NO module: the Submission Center modules are its own three plus dispatch-readiness, and the standard tier still decides
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > pharmacovigilance, which holds the IND safety-report routes, stays outside the scope (P-32)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > leaves a launch surface verdict untouched, whatever it said
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > locks a bought module outside the scope — the boundary never widens
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > emits a verdict for every registered surface outside the scope that has no catalog row
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > never emits a launch-scope verdict for a launch surface
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > is no longer an app of its own
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > its surface and module moved to Submission Center, so the readiness verdict stays reachable
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > grants a new organisation exactly the modules it was granted before the fold
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > agrees with the screens: each folded id opens its target
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves tasks's paths to an organization holding only device-tasks
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only device-vault
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only artifacts-center
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only risk
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only design-controls
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-diagnostics's paths to an organization holding only ivd-completeness
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-validation
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > refuses a tiered target's own paths to an organization holding neither
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a revocation written on the target stands: the carried grant does not undo it
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a lapsed or revoked grant of the folded module carries nothing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > the target's own grant serves as before
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows a revoked target as revoked, and a tenant holding neither as below its tier
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only its own module names the mapping
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only the licence read derives the carried grants, once
+ × client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > resolves the old id to Submission Center from a link, an in-app move and AnA, with or without a project open
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > lands on Submission Center, which lists the tracked device filings; each filing's readiness is EstarFilingPanel's
+ × client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish
+ × client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > leaves no client code that lists the organization's blockers or names the retired screen
+ × client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+ Test Files  4 failed (4)
+      Tests  13 failed | 84 passed (97)
+
+# Failures (trimmed):
+ FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired organization-wide blocker list > a fresh database replaying the whole catalogue set twice never holds device-validation, and Submission Center stays offered at standard
+AssertionError: replay 0: expected [ { metadata: { …(2) } } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "metadata": {
++       "industries": [],
++       "tiers": [
++         "standard",
+--
+ FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired organization-wide blocker list > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+AssertionError: replay 0: expected [ { metadata: { …(2) } } ] to deeply equal [ { metadata: { …(4) } } ]
+- Expected
++ Received
+@@ -1,11 +1,9 @@
+-       "deprecated": true,
+-       "legacyMarker": "kept",
+--
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+AssertionError: expected { 'device-tasks': 'tasks', …(6) } to deeply equal { 'device-tasks': 'tasks', …(7) }
+- Expected
++ Received
+    "artifacts-center": "vault",
+    "design-controls": "device-engineering",
+    "device-tasks": "tasks",
+-   "device-validation": "submission-center",
+    "device-vault": "vault",
+    "ectd-publishing": "ectd-compile",
+--
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > agrees with the screens: each folded id opens its target
+AssertionError: device-validation: expected undefined to be 'submission-center' // Object.is equality
+- Expected:
+"submission-center"
++ Received:
+ ❯ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts:185:100
+--
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant
+AssertionError: device-validation is deprecated by its fold: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts:195:75
+--
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-validation
+AssertionError: expected { …(6) } to deeply equal { '/api/submissions': 'served', …(5) }
+- Expected
++ Received
+-   "/api/510k/estar/assemble": "served",
+-   "/api/510k/estar/submissions": "served",
+-   "/api/c2c/actions/sign": "served",
++   "/api/510k/estar/assemble": "403 MODULE_NOT_LICENSED",
++   "/api/510k/estar/submissions": "403 MODULE_NOT_LICENSED",
++   "/api/c2c/actions/sign": "403 MODULE_NOT_LICENSED",
+--
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+AssertionError: submission-center: expected { allowed: false, …(1) } to match object { allowed: true }
+- Expected
++ Received
+-   "allowed": true,
++   "allowed": false,
+ ❯ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts:245:80
+--
+ FAIL  server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+AssertionError: submission-center: expected { id: 'submission-center', …(4) } to match object { Object (entitled, source) }
+- Expected
++ Received
+-   "entitled": true,
+-   "source": "subscribed",
++   "entitled": false,
++   "source": "tier",
+--
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the retired organization-wide blocker list > is in no scope list and no new grant: each filing's readiness holds its blockers (D2, fold F5 item 2, 2026-10-29)
+AssertionError: expected [ 'projects', 'project-home', …(18) ] to not include 'device-validation'
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:320:35
+    318|        Center (P-61 item 4), which its old address opens. */
+    320|     expect(projects.surfaces).not.toContain('device-validation');
+    322|     expect(isLaunchSurface('device-validation')).toBe(false);

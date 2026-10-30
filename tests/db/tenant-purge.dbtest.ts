@@ -28,6 +28,7 @@ import { purgeTenant } from '../../server/services/tenant/tenant-offboarding';
 import { recordExportReceipt } from '../../server/services/tenant-export/tenant-full-export.service';
 import { LocalStorageProvider } from '../../server/services/storage/local-provider';
 import { resetStorageProvider } from '../../server/services/storage';
+import { forgetOffboardingCertificate } from './offboarding-custody-signature';
 import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -84,6 +85,8 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  // A purge leaves the tenant's offboarding certificate (P-58), one per tenant; each case purges this one again.
+  await forgetOffboardingCertificate(owner, ORG);
   await owner.query(
     `INSERT INTO organizations (id, name, slug, status, deletion_requested_at, purge_eligible_at)
      VALUES ($1, $2, $2, 'pending_deletion', now() - interval '40 days', now() - interval '1 day')
@@ -93,8 +96,8 @@ beforeEach(async () => {
   );
   await owner.query('DELETE FROM tenant_export_receipts WHERE organization_id = $1', [ORG]);
   await owner.query(
-    `INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by)
-     VALUES ($1, $2, 5, 10, NULL)`,
+    `INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by, export_scope)
+     VALUES ($1, $2, 5, 10, NULL, 'organization')`,
     [ORG, DIGEST],
   );
   await owner.query('DELETE FROM vault.legal_holds WHERE organization_id = $1', [ORG]);
@@ -117,6 +120,7 @@ afterAll(async () => {
   await owner.query('DELETE FROM vault.legal_holds WHERE organization_id = $1', [ORG]);
   await owner.query('DELETE FROM vault.documents WHERE organization_id = $1', [ORG]);
   await owner.query('DELETE FROM regulatory_programs WHERE organization_id = $1', [ORG]);
+  await forgetOffboardingCertificate(owner, ORG);
   await owner.query('DELETE FROM organizations WHERE id = $1', [ORG]);
   await owner.end();
   await fs.rm(path.resolve(process.cwd(), 'storage', 'vault', String(ORG)), { recursive: true, force: true });
@@ -174,7 +178,7 @@ describe('only a complete export authorizes a purge', () => {
       tableCount: 5,
       rowCount: 10,
       createdBy: null,
-      coverage: { tablesFailed: [], truncatedTables: ['vault.documents'] },
+      coverage: { tablesFailed: [], truncatedTables: ['vault.documents'], scope: { kind: 'organization' } },
     } as never);
     expect(outcome.recorded, 'an incomplete return must not become purge evidence').toBe(false);
     await expect(purge(owner, [ROWS], digest)).rejects.toMatchObject({ code: 'EXPORT_EVIDENCE_UNVERIFIED' });
@@ -188,21 +192,39 @@ describe('only a complete export authorizes a purge', () => {
       tableCount: 5,
       rowCount: 10,
       createdBy: null,
-      coverage: { tablesFailed: [{ table: 'projects', error: 'permission denied' }], truncatedTables: [] },
+      coverage: { tablesFailed: [{ table: 'projects', error: 'permission denied' }], truncatedTables: [], scope: { kind: 'organization' } },
     } as never);
     expect(outcome.recorded).toBe(false);
   });
 
-  it('records one for a complete export', async () => {
+  it('records no receipt for an export read in the platform scope, or one that states no scope', async () => {
+    // P-58's data return (2026-10-29): read there, vault.* and the knowledge graph returned none of the
+    // organization's rows and nothing failed.
+    for (const [suffix, scope] of [['platform', { kind: 'restricted' }], ['unstated', undefined]] as const) {
+      const outcome = await recordExportReceipt(owner, {
+        organizationId: ORG,
+        digest: `${TAG}-${suffix}`,
+        tableCount: 5,
+        rowCount: 10,
+        createdBy: null,
+        coverage: { tablesFailed: [], truncatedTables: [], ...(scope ? { scope } : {}) },
+      } as never);
+      expect(outcome, suffix).toMatchObject({ recorded: false, incomplete: { scope: scope?.kind ?? 'unstated' } });
+    }
+  });
+
+  it('records one for a complete export, read in the organization\'s own scope, with that scope', async () => {
     const outcome = await recordExportReceipt(owner, {
       organizationId: ORG,
       digest: `${TAG}-complete`,
       tableCount: 5,
       rowCount: 10,
       createdBy: null,
-      coverage: { tablesFailed: [], truncatedTables: [] },
+      coverage: { tablesFailed: [], truncatedTables: [], scope: { kind: 'organization' } },
     } as never);
     expect(outcome.recorded).toBe(true);
+    const { rows } = await owner.query('SELECT export_scope FROM tenant_export_receipts WHERE organization_id = $1 AND digest = $2', [ORG, `${TAG}-complete`]);
+    expect(rows[0]?.export_scope).toBe('organization');
   });
 });
 
