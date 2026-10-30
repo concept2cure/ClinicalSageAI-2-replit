@@ -286,7 +286,11 @@ Four things differ from the steps below, and the evidence says why:
 - the unique index the steps did not mention had to be narrowed;
 - the verified reader has not moved.
 
-Steps 3–6 and the legal-hold half of step 1 are open.
+**Step 4 and the legal-hold half of step 1 done 2026-10-29** (`docs/evidence/D5/2026-10-29-vault-legal-holds-append-only/`):
+- A hold is placed once and lifted once. A row trigger admits only the write-once lift and an owner DELETE, a statement trigger refuses TRUNCATE, and both are on the boot list (`migrations/20261029b_vault_legal_holds_append_only.sql`).
+- Step 5's register already existed (`LegalHoldsCard.tsx` in Admin Settings). Its on-document notice is open.
+
+Steps 3, 5 (the notice) and 6 are open.
 
 1. **Red first.**
    - Add `tests/db/vault-version-restore.dbtest.ts`. Check in v1, then v2, then `POST …/versions/<v1>/restore` with a reason, and expect v3 with v1's `content_hash` superseding v2. At HEAD the route 404s, and re-uploading v1's bytes returns 409 `CONTENT_ALREADY_A_VERSION`.

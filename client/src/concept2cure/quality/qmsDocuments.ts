@@ -8,10 +8,19 @@ export interface QmsEditingCopy {
   programId: string;
   qmsDocument: { id: number; status: string; doc_number?: string; version?: string };
 }
+/** Where a version stands today, as the server's in-force reader decides it (in-force-release.ts). */
+export type QmsVersionStanding =
+  | { state: 'in-force'; effectiveFrom: string | null }
+  | { state: 'pending-effective'; effectiveFrom: string | null }
+  | { state: 'superseded'; by: string; from: string | null }
+  | { state: 'retired'; at: string | null }
+  | { state: 'not-in-force' };
+
 export interface QmsSignedVersion {
   version: string;
   approved_at: string | null;
   record_kind?: 'signed' | 'legacy-registry';
+  standing?: QmsVersionStanding;
   sections: { id: string; code: string; title: string; content: string; orderIndex: number }[];
 }
 interface MutationRow { id: number; authoring_document_id: string }

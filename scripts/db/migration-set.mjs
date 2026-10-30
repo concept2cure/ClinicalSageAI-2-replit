@@ -2185,6 +2185,11 @@ export const C2C_MIGRATION_FILES = [
   // retention_until), which is the point: the guard has to exist before the
   // clock starts, not after the first record is destroyed.
   'migrations/20260906b_vault_legal_holds.sql',
+  // MR-08 Stage 5 step 4 (2026-10-29): a legal hold is placed once and lifted
+  // once. A row trigger admits only the write-once lift and an owner DELETE;
+  // a statement trigger refuses TRUNCATE. Right after the table it guards. No
+  // table, no column, no DROP.
+  'migrations/20261029b_vault_legal_holds_append_only.sql',
   'migrations/20260906c_vault_documents_content_hash_idx.sql',
   'migrations/20260917_vault_documents_storage_version.sql',
   'migrations/20260917b_submission_leaf_document_uuid.sql',
