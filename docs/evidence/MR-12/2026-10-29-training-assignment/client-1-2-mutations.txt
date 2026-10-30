@@ -1,0 +1,14 @@
+# Client mutations (2026-10-30): each rule broken in TrainingCoverage.tsx, the panels' test run, the file restored (cmp clean).
+# C1: every role offered its admin controls. C2: a failed or unread assignments read shown as nobody assigned. C3: the reader's own line replaced by every name.
+== C1
+ × TrainingAssignments.test.tsx > Job roles > lists each role and its holders; someone who is not an administrator is offered no change 74ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 passed (15)
+== C2
+ × TrainingAssignments.test.tsx > Who must train on a document > reads this document's assignments; a failed read says so, never "Nobody is assigned" 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 passed (15)
+== C3
+ × TrainingAssignments.test.tsx > Who must train on a document > anyone else sees the count and their own line, not the names (P-50) 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 passed (15)
