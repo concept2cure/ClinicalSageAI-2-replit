@@ -31,6 +31,7 @@
     background:var(--bg-050);border:1px solid var(--border);
     border-radius:var(--radius-lg);padding:11px 13px;margin:0 0 12px;}
   .pde-note strong{color:var(--text-200);font-weight:600;}
+  .pde-work-heading{margin:0 0 6px;font-size:16px;font-weight:600;color:var(--text-100);}
 
   /* The protocol picker (2026-10-17): shown when the organisation has more
      than one protocol in development. */

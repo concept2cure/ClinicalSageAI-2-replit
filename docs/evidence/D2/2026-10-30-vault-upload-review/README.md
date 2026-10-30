@@ -30,7 +30,7 @@ A complete send without a reply says **not known whether recorded** and tells th
 
 ## Adjacent follow-up
 
-`useVaultUpload` already treats an HTTP 2xx with missing/malformed JSON as a success without adding a document ID. That pre-existing receipt-validation gap is separate from this no-reply recovery slice and remains open; this evidence does not claim complete governed ingest-receipt validation.
+`useVaultUpload` originally treated an HTTP 2xx with missing/malformed JSON as a success without a document ID. That follow-up is completed in `docs/evidence/D2/2026-10-30-vault-upload-receipts/`: identity/context/coherence checks precede success, unknown server outcomes remain unknown, actual API receipts are checked and invalid JSON is exercised in the browser. This earlier review evidence remains scoped to its original no-reply recovery slice.
 
 ## Browser verification
 

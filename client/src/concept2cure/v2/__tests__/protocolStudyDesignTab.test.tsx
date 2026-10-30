@@ -142,6 +142,8 @@ describe('protocol-dev — Study design tab, unbound', () => {
   it('says no design is bound and offers the bind action, claiming nothing', async () => {
     route();
     await openTab();
+    expect(screen.getByRole('heading', { name: 'Study & Protocol Design' })).toBeTruthy();
+    expect(screen.getByText(/continue in the shared document canvas and editor/)).toBeTruthy();
     expect(await screen.findByText(/No study design is bound to this protocol/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Bind a study design/ })).toBeTruthy();
     // Nothing on this tab that could read as a passed gate.

@@ -81,6 +81,18 @@ every service is admitted, complete, entitled or shown on the rail.
 
 #### Tailoring inside a project
 
+Project initiation also reaches the existing **Study & Protocol Design** identity
+(`study_protocol_design` → `protocol-dev`, `shared/regulatory/app-registry.ts`)
+from Plan's core-work selection, alongside CMC, RBM and Biostatistics where each
+is available. Study design and protocol design are one selection and one existing
+workspace, not separate apps. CMC retains its composition boundary; this placement
+does not admit RBM or Biostatistics to launch. The existing AnA document generator,
+`editor/DocumentCanvas.tsx`, `DocumentWorkbench.tsx` and `RichSectionEditor.tsx`
+serve every use case. No workflow gets another canvas, generator or editor.
+The implementation inventory and verification boundary are recorded in
+`docs/design/STUDY_PROTOCOL_PROJECT_INITIATION.md` and
+`docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/README.md`.
+
 The same workflow screens reveal the work that applies to the selected project, using:
 
 - **Product type:** the recorded drug, biologic, device, IVD or other supported product context; a tenant's industry
