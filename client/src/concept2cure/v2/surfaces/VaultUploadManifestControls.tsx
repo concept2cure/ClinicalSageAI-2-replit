@@ -8,7 +8,7 @@
  * is sent: the rows show what will be recorded, and Upload sends them as
  * before. What a manifest could not apply is said line by line.
  */
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import { downloadBlob } from '../download';
 import { applyManifest, manifestNote, manifestOf, parseManifest } from './vaultUploadManifest';
@@ -32,6 +32,9 @@ export function VaultUploadManifestControls({ rows, folders, busy, onChange }: {
 }) {
   const [note, setNote] = useState<{ text: string; ok: boolean } | null>(null);
   const picker = useRef<HTMLInputElement>(null);
+  const current = useRef({ rows, folders, busy });
+  current.current = { rows, folders, busy };
+  useEffect(() => { if (busy) setNote(null); }, [busy]);
 
   const download = () => {
     if (busy) return;
@@ -50,14 +53,18 @@ export function VaultUploadManifestControls({ rows, folders, busy, onChange }: {
       setNote({ text: `${file.name} could not be read. Nothing in the list changed.`, ok: false });
       return;
     }
+    if (current.current.busy) {
+      setNote({ text: `${file.name} was not applied because an upload is in progress. Nothing in the list changed.`, ok: false });
+      return;
+    }
     const parsed = parseManifest(text);
     if (!parsed.ok) {
       setNote({ text: `${file.name} was not applied. ${parsed.reason} Nothing in the list changed.`, ok: false });
       return;
     }
-    const outcome = applyManifest(rows, parsed.lines, folders);
+    const outcome = applyManifest(current.current.rows, parsed.lines, current.current.folders);
     for (const [key, patch] of outcome.patches) onChange(key, patch);
-    setNote({ text: manifestNote(outcome), ok: outcome.refused.length === 0 });
+    setNote({ text: manifestNote(outcome, file.name), ok: outcome.refused.length === 0 });
   };
 
   return (
@@ -70,7 +77,8 @@ export function VaultUploadManifestControls({ rows, folders, busy, onChange }: {
       </button>
       <input ref={picker} type="file" accept=".csv,text/csv" hidden aria-label="Manifest to apply" data-testid="vault-stage-manifest-file"
         onChange={(e) => { void apply(e.target.files?.[0]); e.target.value = ''; }} />
-      {note ? <p className={note.ok ? 'vd-d-idx' : 'vd-dr-err'} role={note.ok ? 'status' : 'alert'}>{note.text}</p> : null}
+      <p className={note?.ok ? 'vd-d-idx' : 'sr-only'} role="status" aria-live="polite">{note?.ok ? note.text : ''}</p>
+      <p className={note && !note.ok ? 'vd-dr-err' : 'sr-only'} role="alert">{note && !note.ok ? note.text : ''}</p>
     </div>
   );
 }

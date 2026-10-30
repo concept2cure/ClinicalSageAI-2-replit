@@ -23,7 +23,7 @@ vi.mock('../download', async (importOriginal) => ({
 
 import { Vault } from '../surfaces/Vault';
 import { PID, ok, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
-import { stubIngestXhr } from './_ingest-xhr-fake';
+import { ingestReceipt, stubIngestXhr } from './_ingest-xhr-fake';
 
 const HEADER = 'File,Title,Document type,Classification,Folder,Evidence kind,CTD section';
 
@@ -31,7 +31,7 @@ function stubIngest() {
   const sent: FormData[] = [];
   stubIngestXhr(vi.fn(async (_url: string, init: { body?: unknown }) => {
     sent.push(init.body as FormData);
-    return { ok: true, status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+    return { ok: true, status: 201, json: async () => ingestReceipt(init.body as FormData) };
   }));
   return sent;
 }
@@ -57,7 +57,7 @@ const applyCsv = (panel: HTMLElement, csv: string, name = 'manifest.csv') =>
   fireEvent.change(within(panel).getByTestId('vault-stage-manifest-file'), { target: { files: [new File([csv], name, { type: 'text/csv' })] } });
 const manifestNote = async (panel: HTMLElement, role: 'status' | 'alert') => {
   const block = within(panel).getByTestId('vault-stage-manifest');
-  await waitFor(() => expect(block.querySelector(`[role="${role}"]`)).not.toBeNull());
+  await waitFor(() => expect(block.querySelector(`[role="${role}"]`)?.textContent).toBeTruthy());
   return block.querySelector(`[role="${role}"]`)!.textContent;
 };
 const blobText = (blob: Blob) => new Promise<string>((resolve) => {
@@ -72,7 +72,7 @@ describe('a manifest describes the files in the upload list (Veeva gap 7)', () =
     const sent = stubIngest();
     const panel = await choose([new File(['a'], 'spec-dp.pdf'), new File(['b'], 'letter.pdf')]);
     applyCsv(panel, `${HEADER}\nspec-dp.pdf,Drug product specification,Module 3 · quality,Controlled,Module 3 · Quality,Specification,3.2.P.5.1\n`);
-    expect(await manifestNote(panel, 'status')).toBe('Manifest applied to 1 file. Nothing has been uploaded; check the rows, then upload. '
+    expect(await manifestNote(panel, 'status')).toBe('manifest.csv: fields applied to 1 file. Nothing has been uploaded; check the rows, then upload. '
       + '1 file in the list is not in the manifest and keeps its fields: letter.pdf.');
     const [row] = within(panel).getAllByTestId('vault-stage-row');
     expect([value(row, 'Title'), value(row, 'Document type'), value(row, 'Classification'), value(row, 'Folder'),

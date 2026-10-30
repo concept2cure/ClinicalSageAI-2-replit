@@ -1,0 +1,10 @@
+
+/workspace/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts
+   229:1  warning  Async function 'readProjectMemory' has too many parameters (6). Maximum allowed is 5        max-params
+   312:1  warning  Async function 'enrichWithProjectMemory' has too many parameters (6). Maximum allowed is 5  max-params
+   720:1  warning  File has too many lines (1553). Maximum allowed is 500                                      max-lines
+  1140:1  warning  Async function 'enrichWithProjectSummary' has a complexity of 24. Maximum allowed is 15     complexity
+  1226:8  warning  Async function 'enrichContextForChat' has too many lines (688). Maximum allowed is 100      max-lines-per-function
+  1226:8  warning  Async function 'enrichContextForChat' has a complexity of 186. Maximum allowed is 15        complexity
+
+✖ 6 problems (0 errors, 6 warnings)

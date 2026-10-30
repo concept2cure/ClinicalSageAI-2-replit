@@ -1,0 +1,15 @@
+{
+  "recordedAtUtc": "2026-10-23T20:49:19.960737+00:00",
+  "incomingRemote": "a2a34279f0d5a1cd098cc1d2fc2e7e37d9451d9b",
+  "mergedHead": "8192566736b7b524309712f12ed803a6aba8ae5d",
+  "incomingCommits": 3,
+  "boundSourceOverlap": [],
+  "allBoundInputsUnchanged": 88,
+  "runtimePaths": [
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts",
+    "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx"
+  ],
+  "qualification": "No settings/runtime source edits; retain exact previous proof, rerun combined build and whole-program incremental TypeScript, plus settings/home/launch-scope integration."
+}

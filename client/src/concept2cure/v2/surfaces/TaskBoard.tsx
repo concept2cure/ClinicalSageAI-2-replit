@@ -9,7 +9,7 @@ import { registerSurfaceLeaveGuard, surfaceLeaveRefusal } from '../navParams';
 import type { ListState } from '../dataConnect';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
-import { useLiveRows, useLiveData, hasKeys, isRowsWith, EmptyState } from '../dataConnect';
+import { useLiveRows, useLiveData, hasKeys, isRowsWith, EmptyState, ErrorState } from '../dataConnect';
 import { taskAnalyticsScope } from './taskBoardAnalyticsScope';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
@@ -462,22 +462,33 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
      see after an action is what the server actually stored — no client-built
      rows, no window.C2C write-back. */
   const [reloadKey, setReloadKey] = useState(0);
+  const boardRetrying = useRef(false);
   const liveTasks = useLiveRows<TaskItem>(
     '/api/task-management/board',
     ['/api/task-management/board', reloadKey],
     isRowsWith<TaskItem>('taskId', 'title', 'project', 'moduleType', 'status', 'priority'),
   );
+  useEffect(() => { if (!liveTasks.loading) boardRetrying.current = false; }, [liveTasks.loading]);
+  const retryBoard = () => {
+    if (liveTasks.loading || boardRetrying.current) return;
+    boardRetrying.current = true;
+    setReloadKey(key => key + 1);
+  };
   const tasks: TaskItem[] = liveTasks.rows;
   /* Which stores the board could not read. The board reads every task store
      (its own, the schedule's, correspondence's, filings'); one it could not
      read is named, so a short board is never taken for a complete one. */
   const unreadStores: string[] = useMemo(
     () =>
-      liveTasks.meta?.partial === true && Array.isArray(liveTasks.meta.unreadSources)
+      Array.isArray(liveTasks.meta?.unreadSources)
         ? (liveTasks.meta.unreadSources as unknown[]).map(String)
         : [],
     [liveTasks.meta],
   );
+  const boardIncomplete = liveTasks.meta?.partial === true || unreadStores.length > 0;
+  const unreadReason = unreadStores.length
+    ? `${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')} could not be read`
+    : 'some task stores could not be read';
 
   /* The org's REAL programmes, for the project filter below. This filter used to
      be driven by TB_PROJECTS — three invented programmes ("BX-204 -- NDA 212345",
@@ -486,7 +497,22 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
      stringified numeric projects.id (taskBoard.routes.ts), so selecting a fixture
      slug matched zero rows and silently emptied the board. The same endpoint was
      already being read by the create modal fifty lines below. */
-  const projectOpts = useLiveRows<ProjectOpt>('/api/projects');
+  const [projectReloadKey, setProjectReloadKey] = useState(0);
+  const projectRetrying = useRef(false);
+  const projectOpts = useLiveRows<ProjectOpt>(
+    '/api/projects',
+    ['/api/projects', projectReloadKey],
+    (value): value is ProjectOpt[] => isRowsWith<ProjectOpt>('id', 'name')(value) &&
+      value.every((project) => project != null && typeof project === 'object' &&
+        typeof project.name === 'string' && typeof project.id === 'number' &&
+        Number.isSafeInteger(project.id) && project.id > 0),
+  );
+  useEffect(() => { if (!projectOpts.loading) projectRetrying.current = false; }, [projectOpts.loading]);
+  const retryProjects = () => {
+    if (projectOpts.loading || projectRetrying.current) return;
+    projectRetrying.current = true;
+    setProjectReloadKey(key => key + 1);
+  };
 
   /* The org's real assignable members, so a live row's numeric assigneeId can be
      shown as a person's name. See makeNameOf above. */
@@ -595,15 +621,22 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
       const guarded = boardBusyGuard();
       if (guarded) return guarded;
       if (liveTasks.error) return { ok: false, reason: 'The task board could not be read.' };
-      if (liveTasks.loading || projectOpts.loading)
+      if (liveTasks.loading)
         return { ok: false, reason: 'The task board is still loading.', retry: true };
       const applied: string[] = [];
+      let nextProject: string | undefined;
+      let nextModule: string | undefined;
+      let nextMine: boolean | undefined;
       if (params.project) {
         const wanted = params.project.trim();
         if (wanted.toLowerCase() === 'all') {
-          setProj('all');
+          nextProject = 'all';
           applied.push('all projects');
         } else {
+          if (projectOpts.loading)
+            return { ok: false, reason: 'The project list is still loading.', retry: true };
+          if (projectOpts.error)
+            return { ok: false, reason: 'The project list could not be read. Retry the project list before choosing a named project.' };
           const lower = wanted.toLowerCase();
           const exact = projectOpts.rows.find(
             (p) => String(p.id) === wanted || p.name.toLowerCase() === lower,
@@ -621,7 +654,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
                   : `No project named "${params.project}" on this board.`,
             };
           }
-          setProj(String(match.id));
+          nextProject = String(match.id);
           applied.push(`project ${match.name}`);
         }
       }
@@ -629,14 +662,18 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         const wanted = params.module.trim().toLowerCase();
         const match = modules.find((m) => m.toLowerCase() === wanted);
         if (!match) return { ok: false, reason: `No module named "${params.module}" on this board.` };
-        setMod(match);
+        nextModule = match;
         applied.push(match === 'all' ? 'all modules' : `module ${match}`);
       }
       if (params.mine) {
-        setMine(params.mine === 'true');
+        nextMine = params.mine === 'true';
         applied.push(params.mine === 'true' ? 'my tasks only' : "everyone's tasks");
       }
       if (applied.length === 0) return { ok: false, reason: 'No filter named.' };
+      // Refusing any part of a combined directive leaves every filter as it was.
+      if (nextProject !== undefined) setProj(nextProject);
+      if (nextModule !== undefined) setMod(nextModule);
+      if (nextMine !== undefined) setMine(nextMine);
       return { ok: true, detail: `Filtered to ${applied.join(', ')}` };
     },
     'tasking.open-task': (params) => {
@@ -651,7 +688,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
       if (liveTasks.error) return { ok: false, reason: 'The task board could not be read.' };
       if (liveTasks.loading)
         return { ok: false, reason: 'The task board is still loading.', retry: true };
-      if (liveTasks.empty) return { ok: false, reason: 'There are no tasks on the board.' };
+      if (liveTasks.empty && !boardIncomplete) return { ok: false, reason: 'There are no tasks on the board.' };
       const lower = wanted.toLowerCase();
       // Scoped to `list` — the tasks on screen under the active filters — so
       // AnA can only open what the person can see.
@@ -666,7 +703,9 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           reason:
             contains.length > 1
               ? `"${params.task}" matches ${contains.length} tasks — name one exactly.`
-              : `No task named "${params.task}" on the board under the current filters.`,
+              : boardIncomplete
+                ? `The task board is incomplete: ${unreadReason}. Retry before concluding whether "${params.task}" is on this board.`
+                : `No task named "${params.task}" on the board under the current filters.`,
         };
       }
       setSel(match);
@@ -878,6 +917,13 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         availableActions: ['Retry the task-board read'],
       };
     }
+    if (boardIncomplete && liveTasks.empty) {
+      return {
+        summary: `The task board is incomplete: ${unreadReason}. No tasks can be confirmed from this read; the counts are unknown.`,
+        facts: { mine, partial: true, unreadStores },
+        availableActions: ['Retry the task-board read'],
+      };
+    }
     // `t.due` is server data, not a local invariant: a task row without it is a
     // plausible response and must not crash the board. Same class as the
     // ectd-compile defect — the guard has to cover the member, not the container.
@@ -888,13 +934,14 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         `Tasks for the organisation: ${stats.total} tasks, ${stats.open} open, ` +
         `${stats.blocked} blocked, ${stats.blocking} holding the submission, ` +
         `${overdue.length} overdue, ${stats.appr} awaiting approval.` +
-        (unreadStores.length
-          ? ` These counts are incomplete: ${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')} could not be read.`
+        (boardIncomplete
+          ? ` These counts are incomplete: ${unreadReason}.`
           : '') +
         (sel0 ? ` The task "${sel0.title}" (${sel0.taskId}) is open in the detail panel.` : ''),
       facts: {
         view,
         mine,
+        partial: boardIncomplete,
         unreadStores,
         totals: {
           all: stats.total, open: stats.open, blocked: stats.blocked, blocking: stats.blocking,
@@ -925,7 +972,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         'Filter the board by module, priority, assignee or search text',
       ],
     };
-  }, [list, stats, sel, view, mine, liveTasks.loading, liveTasks.error, unreadStores]);
+  }, [list, stats, sel, view, mine, liveTasks.loading, liveTasks.error, liveTasks.empty, boardIncomplete, unreadReason, unreadStores]);
   usePublishSurfaceContext('tasks', anaContext);
 
   /* The tasks a person marked critical-path (unified_tasks.critical_path), in
@@ -1007,18 +1054,30 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           <button onClick={() => setActionErr('')} aria-label="Dismiss error">{I.close}</button>
         </div>
       )}
+      {projectOpts.error ? (
+        <ErrorState
+          title="Couldn't load the project list"
+          message="Retry to restore the project choices. Tasks already shown remain available."
+          retry={retryProjects}
+          retryLabel="Retry project list"
+          busy={projectOpts.loading}
+          testId="tb-project-read-error"
+        />
+      ) : projectOpts.loading && !liveTasks.loading ? (
+        <div role="status" className="scaf-note">Loading project choices…</div>
+      ) : null}
 
       {liveTasks.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
-      ) : liveTasks.error || (liveTasks.empty && unreadStores.length > 0) ? (
+      ) : liveTasks.error || (liveTasks.empty && boardIncomplete) ? (
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the task board"
-          retry={() => setReloadKey((k) => k + 1)}
+          retry={retryBoard}
           hint={liveTasks.error
             ? "The org-wide task board didn't respond. These are the organization's tasks — sign in and retry, or check that the task service is reachable."
-            : `The board is incomplete: ${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')} could not be read. Retry to load the missing work.`}
+            : `The board is incomplete: ${unreadReason}. Retry to load the missing work.`}
         />
       ) : liveTasks.empty ? (
         <EmptyState
@@ -1065,9 +1124,10 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         secondary="Or work the board, critical path, and analytics below."
       />
 
-      {unreadStores.length > 0 && (
+      {boardIncomplete && (
         <div className="ph-sub" role="status" data-testid="tb-partial">
-          {I.alertTriangle} Not every task store could be read: {unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')}. The columns and counts show only what was read.
+          {I.alertTriangle} Not every task store could be read{unreadStores.length ? `: ${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')}` : ''}. The columns and counts show only what was read.
+          <button type="button" className="c2c-error-retry" onClick={retryBoard} disabled={liveTasks.loading}>Retry task board</button>
         </div>
       )}
 

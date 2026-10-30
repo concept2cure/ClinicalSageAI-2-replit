@@ -115,7 +115,7 @@ describe('projects — an unrecorded fact stays unrecorded', () => {
     H.projects = [project({ id: 1, name: 'Unrecorded', metadata: {} })];
     const intel = (await load(1))!;
     const moduleId = detectActiveModule(intel);
-    expect(moduleId).not.toBe('ind-filing');
+    expect(moduleId).not.toBe('ind-checklist');
     const addon = getModuleIntelligence(moduleId!, intel.activeProject)!.systemPromptAddon;
     expect(addon).not.toContain('Investigational New Drug');
     expect(addon).not.toContain('Phase 1');

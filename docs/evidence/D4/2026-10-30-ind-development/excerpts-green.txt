@@ -1,0 +1,41 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > retains distant CSR metadata, methods, denominator, result, safety and limitations beyond the table of contents 31ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > keeps different efficacy and exposed-safety populations attached to their own denominators 23ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > uses relevant CMC text without clinical-topic windows or instructions 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > does not convert nonclinical safety pharmacology into a clinical-topic search 6ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > preserves Unicode source coordinates after lowercase expansion and never slices a surrogate pair 16ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > masks long dotted ToC entries for searching without shifting original Unicode offsets 4ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > uses the full short chunk without claiming a whole-document review 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > bounds every chunk and the passed remaining total allowance across seven sources 21ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > shows no source text at budget zero and names the omitted characters 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets -1 7ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets 1.5 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets NaN 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets Infinity 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets 9007199254740992 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > deduplicates nearby clinical topics rather than charging the same source characters twice 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 0 character allowance 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 1 character allowance 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 2 character allowance 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 3 character allowance 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 7 character allowance 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects a quote present only in omitted text or stitched across two shown spans 7ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects a changed original even when the requested quote and all shown text are unchanged 46ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > authenticates an unrelated shown span before accepting a quote from the first 11ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"version":2} 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"originalTextSha256":"not-a-hash"} 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"originalTextLength":-1} 48ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"shownChars":100000} 26ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"omittedChars":-1} 51ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"budgetChars":2401} 149ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"promptChars":null} 111ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"basis":"sufficient"} 10ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects reversed, out-of-bounds, overlapping and split-surrogate span receipts 43ms
+
+ Test Files  1 passed (1)
+      Tests  32 passed (32)
+   Start at  16:55:29
+   Duration  3.16s (transform 537ms, setup 355ms, import 316ms, tests 637ms, environment 0ms)
+

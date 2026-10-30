@@ -1,0 +1,65 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/unified-work/__tests__/unified-work-view.test.ts
+{
+  "timestamp": "2026-10-30T17:30:11.451Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T17:30:11.452Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/unified-work/__tests__/unified-work-view.test.ts
+{
+  "timestamp": "2026-10-30T17:30:11.453Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/unified-work/__tests__/unified-work-view.test.ts
+[database] Database connection successful
+
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > status normalization across the three systems > maps project_tasks vocabulary 2ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > status normalization across the three systems > maps work-item vocabulary (resolved and closed are both done) 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > status normalization across the three systems > treats a filing awaiting additional info as BLOCKED, not merely in flight 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > priority normalization > passes through the shared scale 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > priority normalization > maps correspondence severities onto the shared scale 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > priority normalization > returns null for unknown/absent rather than inventing a priority 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > flags a blocked task and a critical-to-quality task as blocking 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > routes correspondence work items into their own lane 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > does not treat a resolved work item as blocking even with a blockerType 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > maps a filing awaiting agency info to a blocking item with its decision clock 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > gives every source a globally unique composite id 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > merge + ordering > puts blockers first, then soonest due, with undated last 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > merge + ordering > is a stable, deterministic comparator 10ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > merge + ordering > handles the empty case without inventing anything 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > does not count a completed board task with retained dependencies as blocking 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > does not count a cancelled board task with retained dependencies as blocking 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > retains an active blocker for 'blocked' / dependencies [] / critical path false 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > retains an active blocker for 'pending' / dependencies [ 'TASK-PREDECESSOR' ] / critical path false 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > retains an active blocker for 'in-progress' / dependencies [] / critical path true 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > rolls up active blockers without completed or cancelled dependency history 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > summary roll-up > counts by status and by source 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > summary roll-up > adapts canonical board tasks (unified_tasks) into the shared shape 1ms
+stdout | tests/gates/unverified-verdicts/unified-work-view.gate.test.ts
+[database] Database connection successful
+
+ ✓ tests/gates/unverified-verdicts/unified-work-view.gate.test.ts > unified work view: a count only over the sources that were read > names the source whose SELECT failed instead of counting it as zero rows 8ms
+ ✓ tests/gates/unverified-verdicts/unified-work-view.gate.test.ts > unified work view: a count only over the sources that were read > gives the operator the driver reason in the log, and not to the client 2ms
+ ✓ tests/gates/unverified-verdicts/unified-work-view.gate.test.ts > unified work view: a count only over the sources that were read > does not present "nothing outstanding" when every source rejected 3ms
+ ✓ tests/gates/unverified-verdicts/unified-work-view.gate.test.ts > unified work view: a count only over the sources that were read > marks a clean read complete — four empty tables are not a degraded view 2ms
+
+ Test Files  2 passed (2)
+      Tests  26 passed (26)
+   Start at  17:30:09
+   Duration  3.01s (transform 898ms, setup 122ms, import 2.35s, tests 47ms, environment 0ms)
+

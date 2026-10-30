@@ -1,0 +1,211 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts
+{
+  "timestamp": "2026-10-30T16:42:54.459Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:42:54.460Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts
+{
+  "timestamp": "2026-10-30T16:42:54.460Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a database without the anchor column is no linked project, not a failure
+{
+  "timestamp": "2026-10-30T16:42:58.744Z",
+  "level": "warn",
+  "message": "[program-project-anchor] projects.regulatory_program_id absent — program exports stay registry-unplaced (apply migrations/20260814_projects_regulatory_program_anchor.sql)",
+  "context": {
+    "context": "ana-ri.enrichment"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed riskFactors unavailable while preserving other sources
+{
+  "timestamp": "2026-10-30T16:42:58.771Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "Recorded project profile notes could not be verified"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > reads the profile and workflow of the linked project, org-scoped, and reports nothing unavailable 47ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a program with no linked project is an honest empty: nothing read, nothing unavailable, and the model is told why 22ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a database without the anchor column is no linked project, not a failure 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > eCTD project memory is read by the integer project id, never the UUID 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /safety reads no memory and says nothing about what is recorded; it is not a failure 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /cmc reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /csr reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /device reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /cms reads no memory and says nothing about what is recorded; it is not a failure 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /diagnostics reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /ectd reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, Draft the Module 2.5 clinical overview for Vorelinib BX-512. reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > the CMC build state keeps the program UUID; CMC memory takes the integer 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a project the caller already resolved is used as given, with no second lookup 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > an integer project id is still itself, with no lookup 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > preserves populated risks, decisions and their recorded context without inventing severity or status 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > does not invent unrecorded confidence, optional mitigation/source or inject profile instructions 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > retains the existing five-risk and three-note slice limits 6ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed riskFactors unavailable while preserving other sources 2ms
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed keyDecisions unavailable while preserving other sources
+{
+  "timestamp": "2026-10-30T16:42:58.773Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "Recorded project profile notes could not be verified"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed openQuestions unavailable while preserving other sources
+{
+  "timestamp": "2026-10-30T16:42:58.774Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "Recorded project profile notes could not be verified"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed learnedInsights unavailable while preserving other sources
+{
+  "timestamp": "2026-10-30T16:42:58.776Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "Recorded project profile notes could not be verified"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD
+{
+  "timestamp": "2026-10-30T16:42:58.780Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection due to administrator command"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /cmc keeps the Module 3 build state when the CMC memory read fails, and names only the CMC records
+{
+  "timestamp": "2026-10-30T16:42:58.781Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection due to administrator command"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a failed domain-memory read marks the source unavailable instead of passing as empty
+{
+  "timestamp": "2026-10-30T16:42:58.782Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed keyDecisions unavailable while preserving other sources 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed openQuestions unavailable while preserving other sources 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > the existing profile source renders recorded canonical notes > reports malformed learnedInsights unavailable while preserving other sources 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /safety marks the project records unavailable and asserts no absence 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /cmc marks the project records unavailable and asserts no absence 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /csr marks the project records unavailable and asserts no absence 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on Draft the Module 2.5 clinical overview for Vorelinib BX-512. marks the project records unavailable and asserts no absence 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > an unresolved project from the caller is reported with its reason, and nothing is looked up again 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a program with no organization to scope its lookup is could-not-tell, not "no linked project" 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /cmc keeps the Module 3 build state when the CMC memory read fails, and names only the CMC records 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a failed domain-memory read marks the source unavailable instead of passing as empty 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > records a timeout as a timeout and a failure as a failure 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a project lookup that cannot finish marks the project record unavailable and reads nothing 1ms
+stdout | server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:42:59.998Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:42:59.999Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:42:59.999Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > an unscored memory entry says it is unscored > /precedent 14ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > an unscored memory entry says it is unscored > /safety 6ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > an unscored memory entry says it is unscored > /claims 4ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > an unscored memory entry says it is unscored > /knowledge 11ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > the claims evidence chain is built only from recorded confidences > prints no chain strength or confidence when no entry is scored 12ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > the claims evidence chain is built only from recorded confidences > computes over the scored entries only and says how many were left out 4ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > a recorded confidence of 0 is shown as recorded > /precedent 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > a recorded confidence of 0 is shown as recorded > /safety 4ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > a recorded confidence of 0 is shown as recorded > /claims 6ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > a recorded confidence of 0 is shown as recorded > /knowledge 5ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts > a recorded confidence of 0 is shown as recorded > enters the claims chain at its recorded 0, not 0.5 5ms
+stdout | server/services/ana-ri/__tests__/context-enrichment-program-uuid.test.ts
+{
+  "timestamp": "2026-10-30T16:43:03.848Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:43:03.849Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-uuid.test.ts
+{
+  "timestamp": "2026-10-30T16:43:03.850Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-uuid.test.ts > enrichContextForChat — project profile for a program UUID > reads the profile of the project the program is anchored to 29ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-uuid.test.ts > enrichContextForChat — project profile for a program UUID > an unanchored program has no profile — nothing read with NaN, nothing reported missing 15ms
+ ✓ server/routes/__tests__/project-home-readiness-is-not-completeness.test.ts > GET /api/project-home/:projectId > with completeness alone: no readiness score, no "Ready", and the unassessed dimensions named 20ms
+ ✓ server/routes/__tests__/project-home-readiness-is-not-completeness.test.ts > GET /api/project-home/:projectId > a recorded assessment still yields its readiness score and verdict 4ms
+ ✓ server/routes/__tests__/project-home-readiness-is-not-completeness.test.ts > GET /api/intelligence/projects/:projectId/readiness > returns no overall readiness score when only completeness was measured 4ms
+ ✓ server/routes/__tests__/project-home-readiness-is-not-completeness.test.ts > GET /api/intelligence/projects/:projectId/readiness > keeps the score of a recorded assessment 3ms
+ ✓ server/services/intelligence/__tests__/project-memory-confidence-not-defaulted.test.ts > getProjectMemory > passes a recorded confidence through and invents none 3ms
+
+ Test Files  5 passed (5)
+      Tests  51 passed (51)
+   Start at  16:42:50
+   Duration  16.16s (transform 6.28s, setup 188ms, import 13.00s, tests 2.12s, environment 0ms)

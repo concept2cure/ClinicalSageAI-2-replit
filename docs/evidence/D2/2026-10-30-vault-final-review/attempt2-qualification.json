@@ -1,0 +1,18 @@
+{
+  "canonicalMerged": "c3f16c8a2",
+  "mergeCommit": "398857da7933f78b782ea907b933402563ec3533",
+  "productionUnchangedFrom": "65609db5e",
+  "productionFilesSha256": {
+    "client/src/concept2cure/v2/useVaultUpload.ts": "64c19779124547d550e62519f1c05105cad9f2001fda11c35ebbcb9b8c54734c",
+    "client/src/concept2cure/v2/vaultUploadVisit.ts": "2ad913b2f58ae90a33eb3705d2e60a91c229370de0e5ddee552feb1c5e719f8f",
+    "client/src/concept2cure/v2/vaultIngestReceipt.ts": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx": "6704a1fab8888cb2f2e92c3b75b104d704f2c3a4892a648fd7b1317cad2b1efc",
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx": "c1f0af4f48a26efe096ab9300969cb14b802b5f9686ce394a4f41227bc35a0c7",
+    "server/routes/c2c/project-vault.ts": "bf8ff5c575f5986da752c0ac86acccc25523921a23afd3413d7a2f52104a08aa"
+  },
+  "postMergeChecks": 133,
+  "postMergeFiles": 6,
+  "build": "passed",
+  "firstPush": "Every normal gate passed including tsc0; rejected only because canonical branch advanced.",
+  "resolution": "Retained one indexed, snapshotted selection handler with the existing owner-retirement/busy guards and shared failure display. Retained all incoming actual picker/drop controls and both scope rows. No dependency, baseline or hook change."
+}

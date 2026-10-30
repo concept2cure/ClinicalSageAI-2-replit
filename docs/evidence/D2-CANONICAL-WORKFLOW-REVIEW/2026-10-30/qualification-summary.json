@@ -1,0 +1,50 @@
+{
+  "branch": "concept2cure-v2",
+  "merged_baseline": "13be18d3de41170072498f460ab92073638ec838",
+  "first_published_increment": "f0e0ff86352efde626a149a256c42303bc04dfd7",
+  "source_regression": {
+    "suites": 35,
+    "passed": 489
+  },
+  "merged_convergence_regression": {
+    "suites": 19,
+    "passed": 163
+  },
+  "overlap": {
+    "suites": 1,
+    "passed": 8,
+    "name": "workbenchSourceReceiptOwnership.test.tsx"
+  },
+  "distinct_vitest": {
+    "suites": 59,
+    "passed": 743
+  },
+  "node_lint_gate_tests": {
+    "passed": 6
+  },
+  "merged_production_build": "passed",
+  "source_lint_errors": 0,
+  "source_lint_warning_growth": 0,
+  "source_existing_workbench_warnings": 12,
+  "normal_publication_gates": "all passed; see complete source push logs",
+  "qualification_limit": "Local engineering evidence with synthetic UI/API fixtures. No deployed acceptance, formal OQ, live signatures, model qualification or agency transmission is claimed.",
+  "csr_convergence": {
+    "canonical_incoming": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
+    "merged_commit": "096ed3d27",
+    "tests": 107,
+    "suites": 7,
+    "overlap_tests": 8,
+    "overlap_suites": 1,
+    "merged_production_build": "passed",
+    "source_pins": "unchanged"
+  },
+  "first_source_push": {
+    "whole_project_typescript_errors": 0,
+    "all_normal_gates": "passed",
+    "git_result": "rejected because remote moved during compilation; no acceptance claimed"
+  },
+  "accepted_source_commit": "162f2845e487e310657ea75d15120fe3e95beefc",
+  "accepted_tree": "baf2b0b79f5033ee479b3dd61c5b6c462ff3c4c1",
+  "whole_project_typescript_errors": 0,
+  "publication_receipt": "publication.json"
+}

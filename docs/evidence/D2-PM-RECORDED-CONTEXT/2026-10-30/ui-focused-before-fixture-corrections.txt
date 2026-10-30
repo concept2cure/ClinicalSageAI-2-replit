@@ -1,0 +1,113 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > reads lazily, renders actual fields, prevents a no-op and records only the reasoned difference 289ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > clears description and recorded target with null without inventing another change 88ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > leaves an admitted reader read-only when the fresh capability is false 34ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > does not propose trimming a legacy description that the person has not edited 37ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > pins writes to the verified GET parent when the global workspace was empty 62ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed program settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed actor settings read without blank editable defaults 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed organization settings read without blank editable defaults 8ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed anchor settings read without blank editable defaults 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed workspace settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed revision settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed date settings read without blank editable defaults 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed priority settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed pending settings read without blank editable defaults 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > bounds the governed reason before sending a write 69ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a network outcome across collapse until an explicit reload 137ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a zero outcome across collapse until an explicit reload 131ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a server outcome across collapse until an explicit reload 113ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a explicit outcome across collapse until an explicit reload 121ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a receipt outcome across collapse until an explicit reload 135ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a audit outcome across collapse until an explicit reload 102ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a scope outcome across collapse until an explicit reload 155ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a unchanged-field outcome across collapse until an explicit reload 94ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a changed-fields outcome across collapse until an explicit reload 86ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > requires a fresh read after a stale row refusal and never automatically repeats PATCH 63ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > withdraws editable private values after a current access refusal 56ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > blocks duplicate saves and settings Escape/close until the pending reply settles 86ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a account change 66ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a role change 66ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a organization change 69ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a workspace change 59ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a program-roundtrip change 55ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a token change 56ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > withholds a delayed GET after a token switch without another render 8ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > blocks a stale same-frame review click before any PATCH dispatch 40ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > preserves a pending save through ordinary same-account bearer refresh 66ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > opens real settings within the current project instead of leaving for the portfolio 356ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > refreshes saved metadata and activity without resetting the open workflow stage for 'generic project' 328ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > refreshes saved metadata and activity without resetting the open workflow stage for 'IVD 510K project' 509ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > leaves only the honest way out of the project workspace 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Plan step of a drug IND offers no locked tool, and names what comes later in one bare line of words 157ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Plan step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 169ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Evidence step of a drug IND offers no locked tool, and names what comes later in one bare line of words 66ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Evidence step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Author step of a drug IND offers no locked tool, and names what comes later in one bare line of words 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Author step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Review step of a drug IND offers no locked tool, and names what comes later in one bare line of words 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Review step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit step of a drug IND offers no locked tool, and names what comes later in one bare line of words 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond step of a drug IND offers no locked tool, and names what comes later in one bare line of words 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond step of a device 510(k) offers no locked tool, and names what comes later in one bare line of words 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 150ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's document in that module, not the locked dossier map 33ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > reads one scoped profile for both cards and identifies its recorded source 87ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > distinguishes a verified absent profile from a profile with no recorded fields 25ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > bounds each recorded list with shown and total counts and escapes saved text 25ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > states loading without an absence claim and permits an unselected workspace to bind the actual saved parent 14ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign program answer as unavailable 120ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign actor answer as unavailable 30ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign organization answer as unavailable 24ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign workspace answer as unavailable 26ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but invalid anchor answer as unavailable 21ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but false success answer as unavailable 20ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but absent profile field answer as unavailable 19ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but malformed risk row answer as unavailable 19ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but invented missing confidence answer as unavailable 18ms
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > makes no profile request for a foreign current tenant selection
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > keeps HTTP 403 unavailable and retries the actual same scoped read 32ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > keeps HTTP 503 unavailable and retries the actual same scoped read 28ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > makes no profile request for a foreign current tenant selection 7ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after account changes 14ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after role changes 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after organization changes 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after workspace changes 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after program changes 14ms
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > withdraws a loaded profile immediately when the selected workspace changes
+An update to ScopedRead inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after program-roundtrip changes 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after token-only changes 8ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > withdraws a loaded profile immediately when the selected workspace changes 23ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > refuses a retained retry handler after a bearer account switch before another render 30ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > preserves a pending profile read through canonical same-account bearer refresh 18ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSideNotRead.test.tsx > Author side column: no selected project > offers no profile absence claim or request without a current project 151ms
+
+ Test Files  5 passed (5)
+      Tests  81 passed (81)
+   Start at  16:33:10
+   Duration  13.35s (transform 3.13s, setup 407ms, import 4.53s, tests 5.44s, environment 2.25s)

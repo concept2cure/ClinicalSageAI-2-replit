@@ -1,0 +1,12 @@
+{
+  "client/src/concept2cure/v2/useVaultUpload.ts": "797126194d16f45fbaa337ba7fbcf0518db2b10b514f9d9b3b18c621606a8be3",
+  "client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx": "9d095e296eaf7cac20469ebeee53a02ee1cab522e85c1d8643b54d2d983e7b06",
+  "client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx": "431bb53db06e619c95b5fae2f32ba36f57e575bc7020e7bc637b0980add0d096",
+  "client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx": "fa96a5c20ed6065c261642559ff8eb7728d8eff68f9c4dc1698610ad607d5642",
+  "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx": "851e38f86dff04ba69b630d2dba313feda53ae53d7a0cfdc168624bde4e48111",
+  "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx": "00721e030f8578712c404b21ede3f882e86952abe61066e0a7199b2a2d82c018",
+  "client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx": "20199c711974c5346d2e1b2185fd4e78d45b823575881581aadd8371f80567ca",
+  "client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx": "ad3f6ad264f2faf3f82f42dd2d1314a80a7836fff9eb3d3c97ec52e5e997988b",
+  "client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx": "7589aabb5ab0733f2532888826ad929658973e651cc67e77557e40e07c799eda",
+  "client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx": "99e7c36925fa2c486622cb795c4367048579c8a5501950659f1da03c680b61c8"
+}

@@ -1,0 +1,119 @@
+{
+  "kind": "read-only STF and licensed validator source audit",
+  "recordedAtUtc": "2026-10-30T17:57:05.660371+00:00",
+  "source": {
+    "url": "https://www.fda.gov/media/159383/download",
+    "document": "ICH eCTD STF Specification V2.6.1",
+    "documentDate": "2008-06-03",
+    "sha256": "63132c3751682193f6f13db125ee03583b740680851c0f0e6412561438b482da",
+    "readExistingLocalCopy": true,
+    "DTDOrStylesheetAcquired": false
+  },
+  "sourceConfirmedFindings": [
+    {
+      "id": "STF-STYLESHEET",
+      "pages": [
+        4,
+        5
+      ],
+      "finding": "Specification places the stylesheet in util/style; root examples name ich-stf-stylesheet.xsl through an XML stylesheet PI. Current generator emits no PI and bundler stylesheet requirements do not condition on STFs.",
+      "owners": [
+        "server/services/ectd/stf-generator.ts",
+        "server/services/ectd/dtd-bundler.ts",
+        "server/services/submission-gateways/regional-packager.ts"
+      ],
+      "minimalCorrection": "Reuse existing bundler: add a named STF stylesheet constant and conditional requirement when STFs exist; compute its path relative to each STF, emit PI, retain existing checksum/presence gates. No official artifact may be invented."
+    },
+    {
+      "id": "STF-REGIONAL-INFO-TYPE",
+      "pages": [
+        7,
+        9,
+        10
+      ],
+      "finding": "info-type must match ICH versus regional table classification. Generator unconditionally writes ich, including existing table-listed US roles.",
+      "existingListValuesExplicitlyUs": [
+        "data-tabulation-data-definition",
+        "data-listing-dataset",
+        "data-listing-data-definition",
+        "analysis-program",
+        "analysis-data-definition",
+        "annotated-crf",
+        "subject-profiles",
+        "safety-report",
+        "antibacterial",
+        "special-pathogen"
+      ],
+      "minimalCorrection": "Scope a mapping to exact source-observed values; preserve ICH CSR body/appendix roles and unknown-role advice. Modern SDTM/SEND/ADaM and legacy-suffixed names need current technical source before claiming their provenance."
+    },
+    {
+      "id": "STF-LEAF-LIFECYCLE",
+      "pages": [
+        4,
+        5,
+        10,
+        11
+      ],
+      "finding": "Spec requires new for first STF for a study in that CTD element and append thereafter to the most recently submitted STF, with modified-file reference; version cites STF version2.2. Current synthetic STF leaf is always new and leaf renderer emits no version attribute.",
+      "owners": [
+        "server/services/submission-gateways/regional-packager.ts",
+        "server/services/submission-gateways/ectd-packager/types.ts"
+      ],
+      "boundary": "Packager currently has no prior-STF input in PackagerInput. Fix requires a trusted existing predecessor/manifest seam, not guessing from sequence number. A first STF can occur in a nonzero sequence."
+    },
+    {
+      "id": "STF-CATEGORY-INPUT",
+      "pages": [
+        5,
+        6,
+        7
+      ],
+      "finding": "Controlled studies in5.3.5.1 are grouped by typed type-of-control category; current studyCategory string is intentionally warned and not emitted. Complete qualification needs the real typed study facts, without fabricating a control type.",
+      "boundary": "Do not broaden a stylesheet/grammar correction into invented study metadata."
+    },
+    {
+      "id": "STF-SITE-PROPERTY",
+      "pages": [
+        7,
+        9,
+        10
+      ],
+      "finding": "US subject-profiles/case-report-forms should include property name=site-identifier with info-type=us and actual site text; current leaf interface supplies no property.",
+      "boundary": "No site identity should be inferred from title or study id."
+    }
+  ],
+  "grammarUncertainty": {
+    "docContentTitle": "Current doc-content adds title. SectionIII p7 describes property and file-tag, and all examples omit doc-content/title; source supports a concern, but formal exclusivity/cardinality is not proven without the actual DTD. Do not call this agency DTD-qualified based on an authored synthetic DTD.",
+    "rootLanguage": "All official examples use xml:lang=en; no conclusion that it is required can be drawn from examples alone."
+  },
+  "suggestedTestSeams": [
+    "server/services/ectd/__tests__/stf-generator.test.ts: independent parsed prolog and knownUS-vsICH info-type assertions; paths from injected package location.",
+    "server/services/ectd/__tests__/dtd-bundler.test.ts: STFs conditionally require stylesheet; no STF keeps original requirement; report-only and required-production missing outcomes unchanged.",
+    "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts: actual generated ZIP supportive path resolution, manifest coverage, required missing stylesheet refusal with synthetic labelled bytes only.",
+    "server/services/submission-gateways/__tests__/stf-packaging.test.ts and server/services/ectd/qualification/__tests__/qualification-stf.test.ts: actual STF bytes and independent prolog/path checks, not sole checks of production constants."
+  ],
+  "safeRuntimeSelectorPresence": {
+    "EVALIDATOR_BINARY": false,
+    "EVALIDATOR_ENDPOINT": false,
+    "EVALIDATOR_PROFILE_FDA": false,
+    "EVALIDATOR_ARGS": false,
+    "ECTD_REQUIRE_EVALIDATOR": false,
+    "EVALIDATOR_USE_FDA_CRITERIA_FALLBACK": false,
+    "ECTD_DTD_DIR": false
+  },
+  "licensedValidator": {
+    "existingContract": "EVALIDATOR_INTEGRATION_SPEC.md",
+    "configurationOwners": [
+      "server/services/ectd/external-validator/config.ts",
+      "server/services/ectd/external-validator/lorenz-adapter.ts"
+    ],
+    "requiredExternalInputs": [
+      "Licensed/authorized engine binary or endpoint accessible by the existing adapter",
+      "Pinned tool version and exact FDAeCTD3.2.2 validation profile/dated criteria coverage",
+      "Known-good and independently known-bad package validation, exact package hashes, raw reports and reviewed mapping/coverage",
+      "Qualified report-to-package binding evidence using existing compilation report/history owner"
+    ],
+    "notEstablishedByCurrentConfig": "No engine or profile selector is present. No external validator invocation occurred; installed but unselected tools were not searched. External pass would still not be an FDA ACK or complete agency acceptance."
+  },
+  "workPerformed": "Read-only repository/source/selector-presence audit; factual JSON only. No tests, builds, compilers, code edits, DTD/XSL acquisitions, providers, external messages or agency submissions."
+}

@@ -1,0 +1,30 @@
+{
+  "inputCommit": "f4abb13aa0c65a3f3898684386bfe3c2b2910497",
+  "incomingCanonical": "0ad3a15ceed158232dfb1cb18e543820027c0488",
+  "tests": [
+    {
+      "passed": 137,
+      "suites": 8,
+      "failed": 0,
+      "scope": "Own catalog/tasking41 plus current Vault receipts/upload/open/check-in"
+    },
+    {
+      "passed": 46,
+      "suites": 3,
+      "failed": 0,
+      "scope": "Project initiation and protocol design"
+    }
+  ],
+  "theseTwoGroupsDisjoint": true,
+  "earlierCohortsOverlap": true,
+  "build": {
+    "passed": true,
+    "clientAssets": [
+      "index-CAFmGms5.js"
+    ],
+    "serverCommitMatches": true
+  },
+  "review": "No blocker. Own recovery sources unchanged; Vault receipt validation is local/pure, project initiation reuses existing navigation; shared transport/startup/board unchanged.",
+  "priorGate": "All normal checks including fullTypeScript0 passed on preceding candidate; expected-head check found new Vault source, so no stale ref update occurred.",
+  "finalGate": "Complete exact-tree normal gate required before connected publication."
+}
