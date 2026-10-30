@@ -166,6 +166,12 @@
 /* split list/detail */
 .c2c-v2 .split{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start;}
 .c2c-v2 .split-list{display:flex;flex-direction:column;gap:8px;}
+/* At a phone's width the list and its detail stack (RR5 phone acceptance,
+   2026-10-30). Side by side, the 340px list alone was wider than the page
+   column at 390px: the page scrolled sideways under the rail, and the
+   detail, with the Review board's "Open in editor" and "Request changes...",
+   sat off the right of the screen where no tap could reach it. */
+@media (max-width:760px){.c2c-v2 .split{grid-template-columns:minmax(0,1fr);}}
 /* Named properties rather than `all`: the only things that actually change on
    :hover and [data-on] are paint-only (see the two rules below), and `all`
    would silently start animating whatever property is added here next. */
@@ -185,6 +191,7 @@
 
 .c2c-v2 .split-detail{border:1px solid var(--border);border-radius:var(--radius-2xl);background:var(--bg-050);overflow:hidden;}
 .c2c-v2 .dt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid var(--border);}
+.c2c-v2 .dt-acts{display:flex;gap:8px;}
 .c2c-v2 .dt-eyebrow{font-size:11px;color:var(--text-400);font-weight:500;}
 .c2c-v2 .dt-eyebrow .agency{color:var(--text-200);}
 .c2c-v2 .dt-title{font-size:17px;font-weight:600;letter-spacing:-.01em;margin:5px 0 0;}
@@ -307,6 +314,7 @@
 .c2c-v2 .rv-doc-l{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);}
 .c2c-v2 .rv-doc-l svg{width:14px;height:14px;}
 .c2c-v2 .rv-doc-acts{display:flex;align-items:center;gap:10px;}
+.c2c-v2 .btn.rv-doc-open{height:28px;}
 .c2c-v2 .rv-conf{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:5px;}
 .c2c-v2 .rv-conf[data-tone="ok"]{background:var(--success-muted);color:var(--success);}
 .c2c-v2 .rv-conf[data-tone="warn"]{background:var(--warning-muted);color:var(--warning);}
@@ -330,6 +338,24 @@
 .c2c-v2 .rv-reply{display:flex;gap:8px;align-items:center;padding:0 20px 20px;}
 .c2c-v2 .rv-reply-in{flex:1;height:36px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);padding:0 12px;font:inherit;font-size:13px;color:var(--text-100);}
 .c2c-v2 .rv-reply-in:focus{outline:none;border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
+/* The Review board at a phone's width (RR5 phone acceptance, 2026-10-30).
+   Measured at 390px, the detail's overflow:hidden cut off what did not fit:
+   "Record review decision" and half of "Request changes..." past the right
+   edge of the head, "Open in editor" past the right of the document's bar,
+   and Comment past the right of the reply row. Each now
+   wraps onto a line of its own, and every control a reviewer taps here is a
+   44px target ("Open in editor" was 28px). The project switch names the
+   project, and a button does not wrap: a long name (or, opened from a link,
+   the project's id) ran 36px past the screen; it wraps inside the column. */
+@media (max-width:760px){
+  .c2c-v2 .dt-head{flex-wrap:wrap;}
+  .c2c-v2 .dt-acts{flex-wrap:wrap;}
+  .c2c-v2 .rv-doc-h{flex-wrap:wrap;}
+  .c2c-v2 .dt-acts .btn,.c2c-v2 .btn.rv-doc-open,.c2c-v2 .rv-reply .btn{height:auto;min-height:44px;}
+  .c2c-v2 .rv-reply{flex-wrap:wrap;}
+  .c2c-v2 .rv-reply-in{min-width:0;min-height:44px;}
+  .c2c-v2 .btn.rv-scope-program{max-width:100%;height:auto;min-height:32px;white-space:normal;overflow-wrap:anywhere;text-align:left;}
+}
 .c2c-v2 .thread{display:flex;flex-direction:column;gap:10px;padding:0 20px 20px;}
 .c2c-v2 .cmt{border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;background:var(--bg-000);}
 .c2c-v2 .cmt[data-ai="true"]{border-color:var(--accent-muted);background:var(--accent-000);}

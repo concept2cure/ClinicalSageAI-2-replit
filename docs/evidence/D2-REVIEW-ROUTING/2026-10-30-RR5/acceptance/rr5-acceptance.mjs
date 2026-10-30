@@ -25,6 +25,13 @@
  *   3. Rob records "changes requested" on the Review board, with a reason.
  *      The route stops: it is returned with his reason, his task and nobody
  *      else's opens, and the author is told.
+ *
+ * At 390 x 844 (`phone`, a mobile viewport with touch) the same steps run, and
+ * on every screen they cross the page must not scroll sideways and every
+ * control the step works must be a 44 px target that is not cut off
+ * (phoneChecks). Two steps differ only because the layout does: the Tasks rail
+ * covers the document, so Rae closes it before E-sign, and the signature's
+ * receipt is closed with its Done before the rail is opened again.
  */
 import { chromium } from '/opt/node-tools/node_modules/playwright-core/index.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -89,18 +96,49 @@ async function snap(s, name, focus) {
   if (text) note(`    text: ${text.slice(0, 700)}`);
 }
 
-/** Phone checks: no horizontal scroll, every control in `selector` at least 44 px tall. */
-async function phoneChecks(s, where, selector) {
+/**
+ * Phone checks: no horizontal scroll, and every control in `selector` a touch
+ * target at least 44 px tall that is not cut off.
+ *
+ * The overflow is measured against the screen's width, not `innerWidth`. On a
+ * mobile viewport `innerWidth` is the layout viewport, which a phone browser
+ * widens to fit a page that is too wide, so `scrollWidth - innerWidth` was 0
+ * on a page 485 px wide (the first phone run, 2026-10-30). The shell's page
+ * column scrolls on its own, so its sideways scroll counts too. A control's
+ * target is its `<label>` when it is inside one: tapping the label works it.
+ * A control is cut off when an ancestor that clips without scrolling sideways
+ * (overflow hidden or clip) hides part of its width: no scroll reaches it.
+ * `{ assert: false }` records what it measures without failing the run: for a
+ * known open item outside this slice, so the log still shows it.
+ */
+async function phoneChecks(s, where, selector, { assert = true } = {}) {
   if (viewport !== 'phone') return;
-  const r = await s.page.evaluate((sel) => {
-    const overflow = document.documentElement.scrollWidth - window.innerWidth;
-    const small = [...document.querySelectorAll(sel)].filter((el) => el.offsetParent !== null)
-      .map((el) => ({ text: (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 40), h: Math.round(el.getBoundingClientRect().height) }))
-      .filter((x) => x.h < 44);
-    return { overflow, small };
-  }, selector);
-  note(`  phone ${where}: horizontal overflow ${r.overflow}px; controls under 44px: ${JSON.stringify(r.small)}`);
-  if (r.overflow > 0) throw new Error(`${where}: horizontal scroll of ${r.overflow}px at 390 wide`);
+  const r = await s.page.evaluate(({ sel, screenWidth }) => {
+    /* The shell's page column (`.page`) scrolls on both axes, so a page too
+       wide for it scrolls sideways inside it, not in the document. */
+    const column = [...document.querySelectorAll('.page')].filter((el) => el.offsetParent !== null)
+      .reduce((most, el) => Math.max(most, el.scrollWidth - el.clientWidth), 0);
+    const page = Math.max(document.documentElement.scrollWidth, window.innerWidth) + column;
+    const small = sel ? [...document.querySelectorAll(sel)].filter((el) => el.offsetParent !== null)
+      .map((el) => ({ el, target: el.closest('label') ?? el }))
+      .map(({ el, target }) => ({ text: (el.getAttribute('aria-label') || target.textContent || '').trim().slice(0, 40), h: Math.round(target.getBoundingClientRect().height) }))
+      .filter((x) => x.h < 44) : [];
+    const cut = sel ? [...document.querySelectorAll(sel)].filter((el) => el.offsetParent !== null).filter((el) => {
+      const box = el.getBoundingClientRect();
+      let left = box.left, right = box.right;
+      for (let n = el.parentElement; n; n = n.parentElement) {
+        const ox = window.getComputedStyle(n).overflowX;
+        if (ox === 'hidden' || ox === 'clip') { const b = n.getBoundingClientRect(); left = Math.max(left, b.left); right = Math.min(right, b.right); }
+      }
+      return right - left < box.width - 1;
+    }).map((el) => (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 40)) : [];
+    return { overflow: page - screenWidth, layout: `${window.innerWidth}x${window.innerHeight}`, small, cut };
+  }, { sel: selector ?? '', screenWidth: SIZE.width });
+  note(`  phone ${where}: horizontal overflow ${r.overflow}px (layout viewport ${r.layout}); controls under 44px: ${JSON.stringify(r.small)}; controls cut off: ${JSON.stringify(r.cut)}`);
+  if (!assert) return;
+  if (r.overflow > 0) throw new Error(`${where}: horizontal scroll of ${r.overflow}px at ${SIZE.width} wide`);
+  if (r.small.length) throw new Error(`${where}: ${r.small.length} control(s) under 44 px`);
+  if (r.cut.length) throw new Error(`${where}: ${r.cut.length} control(s) cut off`);
 }
 
 async function openInWorkbench(s) {
@@ -130,6 +168,18 @@ async function openTasksRail(s) {
   await s.page.getByTestId('tasks-rail-open').click();
   await s.page.getByTestId('ar-round').waitFor({ timeout: 30000 });
   await s.page.waitForTimeout(800);
+}
+
+/**
+ * At a phone's width the Tasks rail is a sheet over the whole document, so the
+ * document's own controls (E-sign) are under it. A person closes it with its
+ * close control first; on the desktop it sits beside the document.
+ */
+async function closeTasksRailOnPhone(s) {
+  if (viewport !== 'phone') return;
+  await phoneChecks(s, 'the Tasks rail\'s close control', 'aside.ed-comments .ed-comments-close');
+  await s.page.getByRole('button', { name: 'Close tasks' }).click();
+  await s.page.getByTestId('ar-round').waitFor({ state: 'detached', timeout: 10000 });
 }
 
 try {
@@ -180,15 +230,21 @@ try {
   await snap(r, 'tasks-tray', '.tt-panel');
   note(`  rae's Tasks list "Review: ${TITLE}": ${listed}; her notices include "Review requested: ${TITLE}": ${told}`);
   if (!listed || !told) throw new Error('Rae\'s Tasks do not list her review task and its notice');
+  await phoneChecks(r, 'Rae\'s Tasks tray', '.tt-panel button');
+  await phoneChecks(r, 'the shell\'s top bar, with the tray\'s trigger (open item, recorded and not asserted)', '.topbar button, .topbar a', { assert: false });
   await r.page.keyboard.press('Escape').catch(() => {});
   await openFromBoard(r);
   await snap(r, 'review-board-awaiting', '.split-detail');
+  await phoneChecks(r, 'the Review board', '.split-detail .dt-acts .btn, [data-testid="rv-open-in-editor"], .rv-reply .btn');
   await r.page.getByTestId('rv-open-in-editor').click();
   await r.page.waitForTimeout(2500);
   await openTasksRail(r);
   await snap(r, 'round-your-turn', '[data-testid="ar-round"]');
   const turn = await r.page.getByTestId('ar-round-headline').innerText();
   if (turn.trim() !== 'Your turn: sign the review.') throw new Error(`Rae's headline: ${turn}`);
+  await phoneChecks(r, 'Rae\'s round in the Tasks rail', '[data-testid="ar-round"] button');
+  await closeTasksRailOnPhone(r);
+  await phoneChecks(r, 'the document\'s E-sign control', '.ed-doc-commit button');
   await r.page.getByRole('button', { name: /E-sign/ }).first().click();
   const sign = r.page.getByRole('dialog');
   const commit = sign.getByRole('button', { name: /Sign and commit/ });
@@ -200,11 +256,23 @@ try {
     await r.page.waitForTimeout(400);
   }
   await snap(r, 'reviewer-esign', '[role="dialog"]');
+  await phoneChecks(r, 'the REVIEWER e-sign dialog', '[role="dialog"] button');
   await commit.click();
-  await r.page.getByText(/Signed|recorded/i).first().waitFor({ timeout: 30000 }).catch(() => {});
-  const close = sign.getByRole('button', { name: /Close|Done/ }).first();
-  if (await close.isVisible().catch(() => false)) await close.click();
+  if (viewport === 'phone') {
+    /* The receipt ("Signature applied") is a modal over the document, and
+       the Tasks rail's toggle is under it: Done closes it. */
+    const done = r.page.locator('.es-modal').getByRole('button', { name: 'Done' });
+    await done.waitFor({ timeout: 30000 });
+    await phoneChecks(r, 'the signature receipt', '.es-modal button');
+    await done.click();
+    await done.waitFor({ state: 'detached', timeout: 10000 });
+  } else {
+    await r.page.getByText(/Signed|recorded/i).first().waitFor({ timeout: 30000 }).catch(() => {});
+    const close = sign.getByRole('button', { name: /Close|Done/ }).first();
+    if (await close.isVisible().catch(() => false)) await close.click();
+  }
   await r.page.waitForTimeout(2500);
+  if (viewport === 'phone') await openTasksRail(r);
   await snap(r, 'round-after-review-signature', '[data-testid="ar-round"]');
   const signed = await r.page.getByTestId('ar-round-headline').innerText();
   if (!/^You signed at \d\d:\d\d UTC; waiting for Rob Reviewer\.$/.test(signed.trim())) throw new Error(`Rae after signing: ${signed}`);
@@ -212,12 +280,14 @@ try {
   // 3 ── Rob: "changes requested" on the Review board; the route stops ───────
   const b = await session('rob');
   await openFromBoard(b);
+  await phoneChecks(b, 'Rob\'s Review board', '.split-detail .dt-acts .btn, [data-testid="rv-open-in-editor"], .rv-reply .btn');
   await b.page.getByRole('button', { name: /Request changes/ }).first().click();
   const decision = b.page.locator('.rv-decision-dialog');
   await decision.waitFor();
   await decision.locator('#rv-decision').selectOption('changes_requested');
   await decision.locator('#rv-reason').fill(CHANGES);
   await snap(b, 'changes-requested-decision', '.rv-decision-dialog');
+  await phoneChecks(b, 'Rob\'s decision dialog', '.rv-decision-dialog button, .rv-decision-dialog select');
   await decision.getByRole('button', { name: 'Record change request' }).click();
   await decision.locator('.rv-decision-receipt').waitFor({ timeout: 30000 });
   await snap(b, 'changes-requested-recorded', '.rv-decision-receipt');
@@ -235,6 +305,7 @@ try {
   if (returned.trim() !== `Returned by Rob Reviewer: ${CHANGES}`) throw new Error(`author's headline after the change request: ${returned}`);
   const [returnedNotice] = await tray(a, [`Returned for revision: ${TITLE}`]);
   await snap(a, 'notice-returned-for-revision', '.tt-panel');
+  await phoneChecks(a, 'the author\'s Tasks tray', '.tt-panel button');
   note(`  author's notices include "Returned for revision: ${TITLE}": ${returnedNotice}`);
   if (!returnedNotice) throw new Error('the author was not told the route was returned');
   await a.page.keyboard.press('Escape').catch(() => {});

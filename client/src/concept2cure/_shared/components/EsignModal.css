@@ -1,7 +1,15 @@
 /* EsignModal — 21 CFR Part 11 governed-action modal.
  * Tokens only (colors_and_type.css). No raw hex. 200ms ease-out motion,
  * respecting prefers-reduced-motion. Claude orange via --accent-main-100,
- * used only for the primary confirm and focus ring. */
+ * used only for the primary confirm and focus ring.
+ *
+ * The modal's buttons are styled through `.es-modal` (RR5 phone acceptance,
+ * 2026-10-30). Inside the v2 shell, `.c2c-v2 button` (app-v2.css) resets every
+ * button's padding and background, and it outranks a single class. So
+ * "Sign and commit", Cancel, Done and the close control rendered as bare text,
+ * 20px tall (the close control 26px), on every surface that signs: measured at
+ * 390px in the RR5 run, and visible in its desktop screenshot 08. Two classes
+ * outrank the reset. At a phone's width each is a 44px target. */
 
 .es-overlay {
   position: fixed;
@@ -42,12 +50,12 @@
 }
 .es-head-title { font-size: 14px; font-weight: 600; color: var(--text-100); }
 .es-head-sub { font-size: 10.5px; color: var(--text-400); font-family: var(--font-mono, monospace); margin-top: 1px; }
-.es-close {
+.es-modal .es-close {
   margin-left: auto; width: 26px; height: 26px; border-radius: var(--radius-sm, 6px);
   color: var(--text-400); display: inline-flex; align-items: center; justify-content: center;
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
-.es-close:hover { background: var(--bg-100); color: var(--text-100); }
+.es-modal .es-close:hover { background: var(--bg-100); color: var(--text-100); }
 
 .es-target {
   background: var(--bg-050); border: 1px solid var(--border);
@@ -83,17 +91,18 @@
 .es-field-hint { display: block; font-size: 11px; color: var(--text-400); margin-top: 5px; }
 
 .es-meaning { display: flex; flex-wrap: wrap; gap: 5px; }
-.es-meaning-opt {
+.es-modal .es-meaning-opt {
   padding: 5px 11px; border-radius: var(--radius-sm, 7px); border: 1px solid var(--border);
   background: var(--bg-000); font-size: 12px; font-weight: 500; color: var(--text-300);
   transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
 }
-.es-meaning-opt:hover { background: var(--bg-050); color: var(--text-100); }
-.es-meaning-opt[data-active="true"] {
+.es-modal .es-meaning-opt:hover { background: var(--bg-050); color: var(--text-100); }
+.es-modal .es-meaning-opt[data-active="true"] {
   background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-on-strong);
 }
-.es-meaning-opt:focus-visible {
+.es-modal .es-meaning-opt:focus-visible {
   outline: 2px solid var(--accent-main-200); outline-offset: 2px;
+  border-radius: var(--radius-sm, 7px);
 }
 
 .es-error {
@@ -105,23 +114,23 @@
 .es-error-ico { display: inline-flex; flex-shrink: 0; margin-top: 1px; }
 
 .es-foot { display: flex; gap: 8px; margin-top: 18px; }
-.es-btn-secondary {
+.es-modal .es-btn-secondary {
   flex: 0 0 auto; padding: 9px 16px; border-radius: var(--radius-sm, 8px);
   background: var(--bg-100); color: var(--text-200); font-size: 12.5px; font-weight: 500;
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
-.es-btn-secondary:hover { background: var(--bg-200); color: var(--text-100); }
-.es-btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
-.es-btn-primary {
+.es-modal .es-btn-secondary:hover { background: var(--bg-200); color: var(--text-100); }
+.es-modal .es-btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+.es-modal .es-btn-primary {
   flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   padding: 9px 16px; border-radius: var(--radius-sm, 8px);
   background: var(--accent-strong); color: var(--accent-on-strong); font-size: 12.5px; font-weight: 600;
   transition: background 200ms var(--ease), opacity 200ms var(--ease);
 }
-.es-btn-primary:disabled { background: var(--bg-300); color: var(--text-400); opacity: 0.5; cursor: not-allowed; }
-.es-btn-primary:focus-visible,
-.es-btn-secondary:focus-visible,
-.es-close:focus-visible {
+.es-modal .es-btn-primary:disabled { background: var(--bg-300); color: var(--text-400); opacity: 0.5; cursor: not-allowed; }
+.es-modal .es-btn-primary:focus-visible,
+.es-modal .es-btn-secondary:focus-visible,
+.es-modal .es-close:focus-visible {
   outline: 2px solid var(--accent-main-200); outline-offset: 2px;
 }
 
@@ -150,9 +159,16 @@
 .es-manifest-row > span:last-child { color: var(--text-100); font-weight: 500; text-align: right; word-break: break-word; }
 .es-mono { font-family: var(--font-mono, monospace); font-size: 11px; }
 
+@media (max-width: 760px) {
+  .es-modal .es-close { width: 44px; height: 44px; }
+  .es-modal .es-btn-primary,
+  .es-modal .es-btn-secondary,
+  .es-modal .es-meaning-opt { min-height: 44px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .es-overlay, .es-modal { animation: none; }
   .es-spin { animation: none; }
-  .es-close, .es-meaning-opt, .es-btn-primary, .es-btn-secondary,
+  .es-modal .es-close, .es-modal .es-meaning-opt, .es-modal .es-btn-primary, .es-modal .es-btn-secondary,
   .es-field textarea, .es-field input { transition: none; }
 }
