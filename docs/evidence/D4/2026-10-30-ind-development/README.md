@@ -179,3 +179,16 @@ new `writingAgencyPresentation.ts` is an extraction of the existing panel's
 display decisions, not a filing resolver or new workflow. Both rejected gate
 logs are retained; only a subsequently successful normal push establishes
 publication.
+
+The later push run passed the warning ratchet (net -1) and reached the compiler,
+but its process ended without a compiler or push result. It is retained as an
+interrupted run and is not a passing publication receipt. New canonical CSR
+changes through `6747c4470` were then merged cleanly; five focused merged-owner
+suites pass 56/56. Build/compiler/publication checks are serialized from here.
+
+Final legacy parity review found that `submissionType: ''` or whitespace skipped
+the recorded filing through the direct service while the existing batch path
+treated it as omitted. Two real-service cases failed before correcting only
+blank-choice normalization and the conflict comparison. The resulting 19
+real-service, 287 declared-product and 39 batch-context cases pass 345/345;
+nonblank literal choices remain unchanged. See `blank-submission-selection.md`.

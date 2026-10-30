@@ -990,7 +990,9 @@ async function draftProductInputs(req: DocumentDraftRequest) {
   const { resolveDraftSubmissionType, UNASSESSED_DRAFT_SUBMISSION_NOTE } = await import('./draft-submission-context.js');
   const recordedSubmissionType = productRead.context.programId
     ? await resolveDraftSubmissionType(contextSql, { organizationId: Number(req.organizationId), projectRef: productRead.context.programId }) : undefined;
-  const submissionType = req.submissionType ?? recordedSubmissionType;
+  const requestedSubmissionType = typeof req.submissionType === 'string' && !req.submissionType.trim()
+    ? undefined : req.submissionType;
+  const submissionType = requestedSubmissionType ?? recordedSubmissionType;
   return { productRead, recordedSubmissionType, submissionType, unassessedNote: UNASSESSED_DRAFT_SUBMISSION_NOTE };
 }
 
@@ -1021,8 +1023,8 @@ function draftUserPrompt(req: DocumentDraftRequest, product: Awaited<ReturnType<
     productRead.context, getSubmissionTypeContext(submissionType ?? '')?.region,
     registryId === 'ICH_CSR' ? 'csr' : registryId === 'ICH_PROTOCOL' ? 'protocol' : 'ctd');
   userPrompt += productAdvisory.prompt;
-  if (recordedSubmissionType && req.submissionType && resolveToRegistryEntry(req.submissionType)?.id !== recordedSubmissionType) {
-    userPrompt += `Recorded application ${recordedSubmissionType} differs from the requested application ${req.submissionType}. Requirements follow the explicit request; confirm the receiving application before relying on this draft.\n\n`;
+  if (recordedSubmissionType && submissionType && resolveToRegistryEntry(submissionType)?.id !== recordedSubmissionType) {
+    userPrompt += `Recorded application ${recordedSubmissionType} differs from the requested application ${submissionType}. Requirements follow the explicit request; confirm the receiving application before relying on this draft.\n\n`;
   }
 
   userPrompt += `INSTRUCTIONS:\n${req.instructions}`;

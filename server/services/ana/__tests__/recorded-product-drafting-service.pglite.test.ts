@@ -73,13 +73,14 @@ beforeEach(async () => {
 afterAll(async () => { await pg.close(); });
 
 describe('real service drafts from the admitted recorded product and application', () => {
-  it('uses the recorded Canadian CTA when the request omits filing type', async () => {
-    const result = await service.draftDocument(request({ sectionType: '1.2.1' }));
+  it.each([undefined, '', '   '])('uses the recorded Canadian CTA for an omitted or blank filing choice: %j', async submissionType => {
+    const result = await service.draftDocument(request({ sectionType: '1.2.1', submissionType }));
     expect(result.content).toBe('Captured section draft.');
     expect(captured().metadata).toMatchObject({ submissionType: 'CA_CTA', recordedSubmissionType: 'CA_CTA',
       productContextSource: 'recorded-unqualified', therapeuticProfile: 'oncology', productModality: 'mab' });
     expect(prompt()).toContain('HC/SC 3011');
     expect(prompt()).not.toContain('US IND regional requirements');
+    expect(prompt()).not.toContain('differs from the requested application');
     expect(h.provider).toHaveBeenCalledTimes(1);
   });
 
