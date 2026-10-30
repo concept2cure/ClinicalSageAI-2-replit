@@ -1808,3 +1808,17 @@ No new visual component. Every placement reuses one of these.
 - **Administration** keeps its ids (`admin-console`, `apps`, `licensing`, `usage`, `billing`, `access-requests`,
   `audit-trail`, `onboarding`, `master-licensing`); Subscription & billing is one surface with tabs, and the other ids
   open it on their tab.
+
+
+## A3 source convergence, qualified 2026-10-30
+
+The legacy prompt-key carry is complete in its actual mounted Cortex owner and
+six workspace configuration mappings. Canonical keys reuse existing intelligence;
+explicit legacy callers/history remain compatible. Required recorded scope and
+selected blocks now survive real-base assembly, while empty/unread module lists
+stay generic. Non-US and missing facts acquire no FDA application by default.
+Current streaming AnA uses a separate context builder and is unchanged. No
+remaining screen, stored record, clinical feature or CMC composition boundary is
+retired or admitted by this change. `SLICE_A3_PLAN.md` and
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-27/slice-A3/README.md` record the precise
+scope and engineering evidence; they confer no formal OQ/model qualification.
