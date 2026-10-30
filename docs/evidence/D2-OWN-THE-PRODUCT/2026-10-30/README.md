@@ -151,3 +151,22 @@ of these fixes changes product code: each harness had fallen behind a product ru
     now seeds `admin`, so a revoked membership, not the gate, is what refuses (AUTH_009). 7 of 7 pass.
 - **Environment.** `run-pdf` (15 tests) needs `fonts-noto-core`, which CI and the production image install.
   Installed here, it passes.
+
+## Batch 6: the last 13 files from shards 1–5
+
+Each was run alone at trunk. In every case, a correct change elsewhere had moved under the test.
+
+| File | What moved | The test now |
+|---|---|---|
+| `node-status-follows-work`, `filing-lock-write-through` (shared `_filing-write-harness`) | A signature reads its review-route standing (RR1a), and roles come from the membership row (P-72 1a) | applies `20261023_review_routes`, and seeds the independent approver's row as `approver` |
+| `governed-signed-act.request-context` | The authority read admits only an active organization's signers (`59cb0f54c4`) | pins all four arguments, the restriction included |
+| `smoke` | The router's `POST /projects` was retired onto canonical intake (`fb73f05f81`) | asserts it stays retired, and that `/api/c2c/projects` creates |
+| `ana-ri` | AnA's `create_project` was retired onto the Projects wizard (`f9c84bdf1f`) | asserts the command stays retired |
+| `notification-category-schema` | `task_*` and `ana_turn` became server-only (RR1b M4, `2dd1861602`) | asserts AnA is not offered them, one by one; making `task_assigned` creatable turns it red |
+| `provision-app-role-append-only` | `concept2cure_artifact_versions` refuses UPDATE and TRUNCATE by trigger, and keeps DELETE for the tenant purge (`20261029k`) | records why provisioning must not revoke DELETE there |
+| `verify-audit-chain-production-bundle` | The production stage copies with `--chown` (OPS-19) | matches the flag |
+| `coverage-report-verdict` | The need is spelled "expanded-access" | matches either spelling |
+| `connector-results…source-rank` (EMA EPAR) | The client reads EMA's JSON feeds (`0a07f49d7c`) | serves that shape |
+| `ana-ri-health`, `engineChoices` | Whole-module mocks lacked new exports | keep the real module, and override only what they stand in for |
+
+**Result.** 325 of 325 across the 10 files, and 25 of 25 across the two harness users.
