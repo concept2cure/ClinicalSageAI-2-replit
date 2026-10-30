@@ -34,6 +34,7 @@ import { redactInternals } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { VaultClassification, VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
 import { vaultDocumentCodeForFile } from '@shared/constants/domain/vault-document-code';
+import { sendIngest, type IngestProgress, type IngestReply } from './vaultIngestTransport';
 export { VAULT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 
 export interface VaultUploadOutcome {
@@ -92,7 +93,8 @@ export type VaultPlacement = 'confirmed' | 'suggested' | 'unfiled';
 
 /** Where one file of a batch stands, reported as each settles. */
 export type VaultUploadFileStatus =
-  | { state: 'uploading' }
+  /** `sent` of `total` bytes of its request have gone out; once they all have, the server is scanning and storing it. */
+  | { state: 'uploading'; sent?: number; total?: number }
   | { state: 'stored'; version: string | null; folderLabel: string | null; placement: VaultPlacement; already: boolean;
       /** Its text is still being read by the server (a scanned PDF's OCR is off the upload, MR-08 Stage 3). */
       readingText?: true }
@@ -171,8 +173,7 @@ async function uploadOne(
   programId: string,
   file: File,
   documentType: VaultIngestDocumentType,
-  newVersionOf?: VaultUploadOptions['newVersionOf'],
-  fields?: VaultUploadFileFields,
+  how: { newVersionOf?: VaultUploadOptions['newVersionOf']; fields?: VaultUploadFileFields; onProgress?: IngestProgress },
 ): Promise<
   | {
       ok: true;
@@ -186,6 +187,7 @@ async function uploadOne(
     }
   | { ok: false; reason: string; code: string | null }
 > {
+  const { newVersionOf, fields, onProgress } = how;
   const form = new FormData();
   form.append('file', file);
   form.append('programId', programId);
@@ -206,32 +208,27 @@ async function uploadOne(
   }
   form.append('documentType', fields?.documentType ?? documentType);
 
-  let res: Response;
+  let res: IngestReply;
   try {
-    res = await fetch('/api/vault/ingest', {
-      method: 'POST',
-      body: form,
-      credentials: 'include',
-      /* THE UPLOAD COULD NOT AUTHENTICATE WITHOUT THIS.
-         `/api/vault/ingest` is mounted behind `authMiddleware`
-         (server/bootstrap/register-inline-routes.ts), whose header reads
-         "Validates Bearer JWT tokens only" and which answers a request with no
-         Authorization header `401 { error: 'Bearer token required' }`. It reads
-         `req.headers.authorization` and has no cookie fallback, so
-         `credentials: 'include'` alone never authenticated this request — every
-         upload through this hook was refused, on all three of its callers (the
-         v2 Vault, the MDX Document vault, the MDX pathway attach).
+    /* THE UPLOAD COULD NOT AUTHENTICATE WITHOUT THIS.
+       `/api/vault/ingest` is mounted behind `authMiddleware`
+       (server/bootstrap/register-inline-routes.ts), whose header reads
+       "Validates Bearer JWT tokens only" and which answers a request with no
+       Authorization header `401 { error: 'Bearer token required' }`. It reads
+       `req.headers.authorization` and has no cookie fallback, so
+       `credentials: 'include'` alone never authenticated this request — every
+       upload through this hook was refused, on all three of its callers (the
+       v2 Vault, the MDX Document vault, the MDX pathway attach).
 
-         The irony worth recording: Etmf.tsx's hand-rolled copy of this request
-         — the one the assessment recommended deleting in favour of this hook —
-         sent these headers and was the only upload path that worked.
+       The irony worth recording: Etmf.tsx's hand-rolled copy of this request
+       — the one the assessment recommended deleting in favour of this hook —
+       sent these headers and was the only upload path that worked.
 
-         NO Content-Type here, deliberately: the browser must set it so the
-         multipart boundary is generated, and naming it produces a body the
-         server cannot parse. `getAuthHeaders()` sets only Authorization and
-         x-organization-id. */
-      headers: { ...getAuthHeaders() },
-    });
+       NO Content-Type here, deliberately: the browser must set it so the
+       multipart boundary is generated, and naming it produces a body the
+       server cannot parse. `getAuthHeaders()` sets only Authorization and
+       x-organization-id. */
+    res = await sendIngest(form, { ...getAuthHeaders() }, onProgress);
   } catch {
     /* A transport failure, not a server refusal. The distinction matters: the
        user can retry this one, and nothing was filed. */
@@ -331,6 +328,17 @@ function outcomeNote(outcome: VaultUploadOutcome): NonNullable<VaultUploadState[
   };
 }
 
+/** Tell `onFileStatus` how far file `index` has been sent, once per whole percent. */
+function progressOf(index: number, onFileStatus: NonNullable<VaultUploadOptions['onFileStatus']>): IngestProgress {
+  let told = -1;
+  return (sent, total) => {
+    const percent = total > 0 ? Math.floor((sent * 100) / total) : 0;
+    if (percent === told) return;
+    told = percent;
+    onFileStatus(index, { state: 'uploading', sent, total });
+  };
+}
+
 /**
  * @param programId The regulatory program to file under. Uploading is disabled
  *   while this is null — every vault document is program-scoped, and the server
@@ -359,13 +367,19 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
       try {
         /* Sequential, deliberately. These are 50 MB-capped uploads that each
            run a virus scan and a text extraction server-side; firing a whole
-           drop-zone's worth in parallel is how one user stalls the pool. */
+           drop-zone's worth in parallel is how one user stalls the pool.
+           MR-08 Stage 6 step 2 proposed two at a time; it stays one. A
+           second file in flight shares the same person's upload bandwidth, so
+           the batch finishes no sooner, and one at a time keeps each outcome
+           in the order the list shows. What the step needed was each row
+           saying how far its file has got, which it now does. */
         for (const [index, file] of list.entries()) {
           opts?.onFileStatus?.(index, { state: 'uploading' });
-          const r = await uploadOne(
-            programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE, opts?.newVersionOf,
-            opts?.newVersionOf ? undefined : opts?.fields?.[index],
-          );
+          const r = await uploadOne(programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE, {
+            newVersionOf: opts?.newVersionOf,
+            fields: opts?.newVersionOf ? undefined : opts?.fields?.[index],
+            onProgress: opts?.onFileStatus ? progressOf(index, opts.onFileStatus) : undefined,
+          });
           opts?.onFileStatus?.(index, r.ok
             ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, placement: r.placement, already: Boolean(r.already),
               ...(r.readingText ? { readingText: true as const } : {}) }
