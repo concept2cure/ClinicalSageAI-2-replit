@@ -59,6 +59,19 @@ function freshHazard(): Row {
   };
 }
 
+function currentAdmission(sql: string): { rows: Row[]; rowCount: number } | null {
+    if (/SELECT ou\.role/.test(sql)) return { rows: [{ role: h.role ?? 'member' }], rowCount: 1 };
+    if (/FROM regulatory_programs/.test(sql)) return { rows: [{ id: PROGRAM }], rowCount: 1 };
+    if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return { rows: [{
+      id: 11, owner_id: SIGNER, created_by_id: SIGNER, settings: {}, visibility: 'private', members: [], review_assigned: false,
+    }], rowCount: 1 };
+    if (/FROM projects/.test(sql)) return { rows: [{ id: 11, clientWorkspaceId: 71 }], rowCount: 1 };
+    if (/SELECT id, program_id FROM risk_items/.test(sql)) {
+      return { rows: h.hazard ? [{ id: 1, program_id: h.hazard.program_id }] : [], rowCount: h.hazard ? 1 : 0 };
+    }
+    return null;
+}
+
 /* The request's pinned connection, on which the ceremony runs the acceptance. */
 const tx = {
   query: vi.fn(async (sql: string, params: unknown[] = []) => {
@@ -66,14 +79,18 @@ const tx = {
     const word = sql.trim().split(/\s+/)[0].toUpperCase();
     if (word === 'BEGIN' || word === 'COMMIT' || word === 'ROLLBACK') { h.log.push(word); return { rows: [], rowCount: 0 }; }
     if (/pg_advisory_xact_lock/.test(sql)) { h.log.push(`LOCK:${String(params[0])}`); return { rows: [], rowCount: 0 }; }
+    const admission = currentAdmission(sql);
+    if (admission) return admission;
     if (/FROM risk_items/.test(sql) && /FOR UPDATE/.test(sql)) {
       h.log.push('READ');
       return h.hazard ? { rows: [{ ...h.hazard }], rowCount: 1 } : { rows: [], rowCount: 0 };
     }
     if (/^\s*UPDATE risk_items/.test(sql)) {
       h.log.push('UPDATE');
-      return { rows: [{ ...(h.hazard ?? {}), status: 'accepted', acceptable: true }], rowCount: 1 };
+      const accepting = /status = 'accepted'/.test(sql);
+      return { rows: [{ ...(h.hazard ?? {}), ...(accepting ? { status: 'accepted', acceptable: true } : {}) }], rowCount: 1 };
     }
+    if (/^\s*INSERT INTO risk_items/.test(sql)) return { rows: [{ id: 1, program_id: null, status: 'open' }], rowCount: 1 };
     return { rows: [], rowCount: 0 };
   }),
   release: vi.fn(),
@@ -150,6 +167,7 @@ function app() {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: SIGNER, organizationId: ORG, role: h.role };
+    Object.assign(req, { dbClient: tx });
     next();
   });
   a.use('/api/mdx', riskRouter);
@@ -266,17 +284,18 @@ describe('the ceremony refuses, and nothing is accepted', () => {
     expect(h.log).toContain('ROLLBACK');
   });
 
-  it('a hazard the organization does not hold, or one deleted: 404, rolled back', async () => {
+  it('a hazard the organization does not hold, or one deleted: 404 before asking for credentials', async () => {
     h.hazard = null;
     const res = await accept({ status: 'accepted', ...SIGNATURE });
     nothingWritten();
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe('RISK_ITEM_NOT_FOUND');
-    expect(h.log).toContain('ROLLBACK');
+    expect(h.log).not.toContain('BEGIN');
+    expect(reverifySigner).not.toHaveBeenCalled();
     const read = h.statements.find((s) => /FOR UPDATE/.test(s.sql))!;
-    expect(read.sql).toMatch(/organization_id = \$2/);
+    expect(read.sql).toMatch(/organization_id\s*=\s*\$2/);
     expect(read.sql).toMatch(/deleted_at IS NULL/);
-    expect(read.params).toEqual([1, ORG]);
+    expect(read.params).toEqual([1, ORG, null]);
   });
 
   it('the signature row cannot be written: the acceptance rolls back with it', async () => {
@@ -399,17 +418,17 @@ describe('recording the residual risk as acceptable is the same judgment', () =>
     const res = await accept({ acceptable });
     expect(res.status).toBe(200);
     expect(writes()).toHaveLength(1);
-    expect(writes()[0].via).toBe('pool');
+    expect(writes()[0].via).toBe('tx');
     expect(reverifySigner).not.toHaveBeenCalled();
   });
 });
 
 describe('what is not an acceptance asks for no signature, as before', () => {
-  it.each(['open', 'mitigating', 'verified', 'closed'])('a status change to %s updates the row on the pool and signs nothing', async (status) => {
+  it.each(['open', 'mitigating', 'verified', 'closed'])('a status change to %s updates the row on the request transaction and signs nothing', async (status) => {
     const res = await accept({ status });
     expect(res.status).toBe(200);
     expect(writes()).toHaveLength(1);
-    expect(writes()[0].via).toBe('pool');
+    expect(writes()[0].via).toBe('tx');
     expect(reverifySigner).not.toHaveBeenCalled();
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });

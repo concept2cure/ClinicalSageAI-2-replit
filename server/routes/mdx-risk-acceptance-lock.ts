@@ -37,6 +37,8 @@ import { z } from 'zod';
 import { clientError, notFoundInTenant } from '../lib/api-response';
 import { pool } from '../db';
 import type { RequestDbClient } from '../middleware/lazyRequestDbClient';
+import type { RequestSqlClient } from '../db/requestDb';
+import { RISK_ACCESS_CODE_STATUS } from './mdx-risk-access';
 import { signGovernedAct } from './governed-signed-act';
 import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { BINDING_BASIS, isSignatureWithdrawn } from '../services/part11/signature-persistence';
@@ -81,8 +83,8 @@ export function hazardEditWhere(n: number, patch: Record<string, unknown>): { wh
  * no live one (an unguarded edit matches nothing only then), else the refusal,
  * or a hazard that moved while it was saved.
  */
-export async function refuseAcceptedHazardEdit(res: Response, id: number, orgId: number, guard: HazardEditGuard) {
-  const state = await hazardAcceptanceState(pool, orgId, id);
+export async function refuseAcceptedHazardEdit(res: Response, id: number, orgId: number, guard: HazardEditGuard, q: RequestSqlClient = pool) {
+  const state = await hazardAcceptanceState(q, orgId, id);
   if (!state) return notFoundInTenant(res, 'Risk item');
   if (!state.accepted) {
     return clientError(res, 409, 'This hazard changed while it was being saved. Reload it and try again. Nothing was saved.', { code: 'RISK_ITEM_CHANGED' });
@@ -107,13 +109,13 @@ export function answerControlWrite(res: Response, w: Exclude<ChildWrite, { outco
 }
 
 /** After a guarded control PATCH changed nothing: why, from the control's hazard. */
-export async function refuseAcceptedControlEdit(res: Response, controlId: number, orgId: number) {
-  const { rows } = await pool.query<{ risk_item_id: number }>(
+export async function refuseAcceptedControlEdit(res: Response, controlId: number, orgId: number, q: RequestSqlClient = pool) {
+  const { rows } = await q.query(
     `SELECT risk_item_id FROM risk_controls WHERE id = $1 AND organization_id = $2`,
     [controlId, orgId],
   );
   if (!rows[0]) return notFoundInTenant(res, 'Risk control');
-  const w = await hazardChildRefusal(pool, orgId, Number(rows[0].risk_item_id));
+  const w = await hazardChildRefusal(q, orgId, Number(rows[0].risk_item_id));
   return answerControlWrite(res, w.outcome === 'written' ? { outcome: 'changed' } : w, 'Risk control');
 }
 
@@ -158,7 +160,8 @@ async function acceptanceInForce(client: RequestDbClient, orgId: number, target:
 type HazardRow = { status: string; acceptable: boolean | null };
 
 /** The signed reopen of hazard `id`'s accepted residual risk. Answers the request itself. */
-export async function reopenResidualAcceptanceSigned(req: Request, res: Response, id: number): Promise<void> {
+export async function reopenResidualAcceptanceSigned(req: Request, res: Response, id: number,
+  admit?: (client: RequestDbClient, orgId: number, userId: number) => Promise<void>): Promise<void> {
   const parsed = reopenBody.safeParse({ status: req.body?.status });
   if (!parsed.success) {
     clientError(res, 422, 'A reopened hazard returns to a status before acceptance: open, mitigating or verified. Nothing was signed.', parsed.error.flatten().fieldErrors);
@@ -169,10 +172,13 @@ export async function reopenResidualAcceptanceSigned(req: Request, res: Response
     domain: 'risk',
     target,
     meanings: DECISION_ACT_MEANINGS,
-    codeStatus: REOPEN_CODE_STATUS,
+    codeStatus: { ...REOPEN_CODE_STATUS, ...RISK_ACCESS_CODE_STATUS },
     // The hazard as it stood when it was reopened: what the acceptance signed, unchanged since.
     contentBasis: BINDING_BASIS.RISK_RESIDUAL_ACCEPTANCE_CONTENT,
-    run: async (client, orgId) => {
+    precheck: admit,
+    run: async (client, orgId, userId) => {
+      // Re-evaluated on the signing transaction; precheck cannot grant access.
+      await admit?.(client, orgId, userId);
       // Under the ceremony's lock on this target (DP-65), as the acceptance runs.
       const { rows } = await client.query<HazardRow>(
         `SELECT status, acceptable FROM risk_items
