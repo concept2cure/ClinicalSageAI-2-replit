@@ -88,7 +88,10 @@ test('native and broad failures remain blocking for build and release evidence',
 });
 
 test('native and broad suites retain distinct databases and production RLS', () => {
-  assert.equal(broad.run, 'npm test');
+  // MR-02 Stage 3 (2026-10-30): the broad step runs the files that read
+  // RUN_INTEGRATION_TESTS, not the Test job's whole suite a second time.
+  assert.match(broad.run, /process\\\.env\\\.RUN_INTEGRATION_TESTS/);
+  assert.match(broad.run, /vitest run --config vitest\.config\.ts/);
   assert.equal(broad.env.DATABASE_URL, 'postgresql://postgres@localhost:5432/concept2cure-ri_test');
   assert.equal(broad.env.TEST_DATABASE_URL, broad.env.DATABASE_URL);
   assert.equal(broad.env.RUN_INTEGRATION_TESTS, 'true');
@@ -112,15 +115,28 @@ test('both artifacts upload after failures with the existing pinned action and p
   }
 });
 
-for (const [step, code] of [[native, 17], [broad, 19]]) {
-  test(`${step.name} propagates the actual shell failure status`, () => {
-    const result = runShellStep(step.run, step.env, { npm: `exit ${code}` }, shellFor(wf, job, step));
-    assert.equal(result.status, code);
-    assert.deepEqual(result.argv, [step === native
-      ? 'npm run test:db -- --reporter=verbose --reporter=json --outputFile.json=test-results-db/vitest.json'
-      : 'npm test']);
-  });
-}
+test(`${native.name} propagates the actual shell failure status`, () => {
+  const result = runShellStep(native.run, native.env, { npm: 'exit 17' }, shellFor(wf, job, native));
+  assert.equal(result.status, 17);
+  assert.deepEqual(result.argv, ['npm run test:db -- --reporter=verbose --reporter=json --outputFile.json=test-results-db/vitest.json']);
+});
+
+// MR-02 Stage 3 (2026-10-30): the broad step finds the files that read
+// RUN_INTEGRATION_TESTS and runs only those (the Test job runs the rest).
+const FOUND = 'server/db/__tests__/rlsPolicy.integration.test.ts';
+test(`${broad.name} propagates the actual shell failure status`, () => {
+  const result = runShellStep(broad.run, broad.env, { grep: `echo ${FOUND}`, npx: 'exit 19' }, shellFor(wf, job, broad));
+  assert.equal(result.status, 19);
+  const vitest = result.argv.filter((line) => line.startsWith('npx '));
+  assert.deepEqual(vitest, [`npx vitest run --config vitest.config.ts --reporter=verbose --reporter=json --outputFile=test-results/vitest.json ${FOUND}`]);
+});
+
+test(`${broad.name} fails, and runs nothing, when no file reads RUN_INTEGRATION_TESTS`, () => {
+  const result = runShellStep(broad.run, broad.env, { grep: 'exit 1', npx: 'exit 0' }, shellFor(wf, job, broad));
+  assert.equal(result.status, 1);
+  assert.match(result.out, /no test file reads RUN_INTEGRATION_TESTS/);
+  assert.ok(!result.argv.some((line) => line.startsWith('npx ')), 'vitest must not run on an empty file list');
+});
 
 test('a failed fresh install cannot execute the deploy migration', () => {
   const result = runShellStep(provision.run, provision.env, {

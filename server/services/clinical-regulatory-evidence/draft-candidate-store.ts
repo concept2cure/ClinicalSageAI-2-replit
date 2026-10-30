@@ -24,7 +24,8 @@
  * across tenants. Run on the caller's transaction client, the claim commits with
  * the content write and rolls back with it (a refused accept leaves the candidate
  * for a retry). The table also carries RLS (see the migration) as defence in
- * depth behind these explicit predicates.
+ * depth behind these explicit predicates. readDraftCandidate reads one, under the
+ * same predicates, for a revision drafted from it, and never claims it.
  *
  * @module server/services/clinical-regulatory-evidence/draft-candidate-store
  */
@@ -76,6 +77,17 @@ export interface DraftGenerator {
   /** The saved section the server actually drafted against. Never accepted
    * from the client. Kept in the existing generator JSON, without new storage. */
   savedSectionBase?: SavedSectionDraftBase;
+  /** Set on a revision: the live candidate it was drafted from, read and never
+   * consumed, and the person's instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3). */
+  derivedFrom?: DraftDerivation;
+}
+
+/** What a revision was drafted from: the candidate shown, as parked, and the instruction. */
+export interface DraftDerivation {
+  draftId: string;
+  /** SHA-256 of the candidate's content as parked, which is the text the revision prompt held. */
+  contentSha256: string;
+  instruction: string;
 }
 
 export interface SavedSectionDraftBase {
@@ -295,6 +307,42 @@ export async function consumeDraftCandidate(
   };
 }
 
+/** A live candidate as read for a revision: never claimed, never locked. */
+export interface DraftCandidateRead {
+  id: string;
+  sectionId: string;
+  content: string;
+  generator: DraftGenerator | null;
+  /** Whether the saved section the candidate was drafted against is still the saved section. */
+  savedBaseCurrent: boolean;
+}
+
+/**
+ * Read a parked candidate without claiming it, for a revision drafted from it
+ * (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3). Scoped as the
+ * claim is (org, section, unexpired), so a candidate of another tenant or
+ * section, an accepted one and an expired one all read as null. The candidate
+ * stays live: the person may still accept it, or revise it again.
+ */
+export async function readDraftCandidate(
+  orgId: number,
+  sectionId: string,
+  draftId: string,
+  currentSection: Record<string, unknown>,
+  exec: Queryable = defaultExec,
+): Promise<DraftCandidateRead | null> {
+  const { rows } = await exec.query<{ id: string; section_id: string; content: string; generator: unknown }>(
+    `SELECT id, section_id, content, generator FROM authoring_ai_draft_candidates
+      WHERE id = $1 AND organization_id = $2 AND section_id = $3 AND expires_at >= NOW()`,
+    [draftId, orgId, sectionId],
+  );
+  const r = rows[0];
+  if (!r) return null;
+  const generator = parsedDraftGenerator(r.generator);
+  return { id: r.id, sectionId: r.section_id, content: r.content, generator,
+    savedBaseCurrent: sameSavedBase(generator?.savedSectionBase, savedSectionDraftBase(currentSection)) };
+}
+
 function parsedDraftGenerator(raw: unknown): DraftGenerator | null {
   const g = typeof raw === 'string' ? safeParseObject(raw) : raw;
   if (!g || typeof g !== 'object' || Array.isArray(g)) return null;
@@ -316,6 +364,8 @@ function parsedDraftGenerator(raw: unknown): DraftGenerator | null {
       ? { assemblySources: value.assemblySources as DraftGenerator['assemblySources'] } : {}),
     ...(value.savedSectionBase && typeof value.savedSectionBase === 'object'
       ? { savedSectionBase: value.savedSectionBase as SavedSectionDraftBase } : {}),
+    ...(value.derivedFrom && typeof value.derivedFrom === 'object'
+      ? { derivedFrom: value.derivedFrom as DraftDerivation } : {}),
   };
 }
 
