@@ -363,6 +363,13 @@ Steps 3 and 6 are open; each waits on a decision named below.
 - Exporting 5 versions returns 202, then a ZIP whose `SHA256SUMS` verifies against each version's `content_hash`. Tampering with one stored object makes the export fail as a whole.
 - A DOCX preview renders inline with the rendition label, and download of the same document still returns the original bytes with a matching `X-Content-SHA256`.
 
+**Step 3 done 2026-10-30, as a folder export** (`docs/evidence/D2/2026-10-30-vault-folder-export/`):
+- **The route:** `GET /api/c2c/project-vault/:id/folders/:folderId/export` composes the builder VR-20 built (`vault-archive-builder.ts`) and the verified reader. The archive holds the folder's current versions, `manifest.json`, `INDEX.txt`, `SHA256SUMS` and the chained audit rows of those versions.
+- **Refusals:** one file that fails its hash refuses the whole export, and the refusal names it. A disposition-withdrawn file is listed as withheld.
+- **Audit:** a chained `vault.folder.export` row carries the archive's SHA-256 before a byte is sent.
+- **The client:** "Export <folder>" on the Vault's filing folders saves the file only when it matches that hash.
+- **What changed from the step as written:** it is a synchronous, staged download rather than the 202 job and `public.vault_exports` table. FD10's decision for the seal archive covers both archives: no copy of governed bytes is left at rest to need its own retention and hold handling. The queued variant calls the same staging loop, and waits until a folder is too large for one request. The evidence README records the reasoning.
+
 ### Stage 7 — Folder and document permissions (Phase 3 · L · engineering) — closes CAT1-13
 
 1. **Settle the database half with evidence.** On the deploy-shaped database the `production-boot-smoke` job builds, record three things under `docs/evidence/MR-08/<date>/cat1-13-rls/`:

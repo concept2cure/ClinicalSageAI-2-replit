@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { CsrSourceReceipt, CsrSourceSelection } from '@shared/csr-source-input';
 import { apiCall, apiErrorText } from '../apiCall';
 import { CsrBuildDraftControl } from './CsrBuildProgress';
+import { CsrRunBuilds } from './CsrRunBuilds';
 import { StudyPivotalDeclarations } from './StudyPivotalDeclarations';
 
 const FORMAT = 'concept2cure.csr-source.v1';
@@ -208,7 +209,9 @@ function ClinicalSourcePreview({ activePreview, blocked, included, setIncluded, 
   </>; }
 function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry, onNav }: {
   runId: string | null; activeSaved: SavedState | null; blocked: boolean; onRetry: () => void; onNav?: (surface: string) => void;
-}) { return <>
+}) {
+  const [queued, setQueued] = useState<number | null>(null);
+  return <>
     {runId && <div aria-label="Frozen run clinical tables">
       <h4>Frozen clinical tables for {runId}</h4>
       {!activeSaved && <p role="status">Loading frozen clinical tables…</p>}
@@ -217,10 +220,14 @@ function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry, onNav }: {
         <p>Historical source versions are retained with this run. They can differ from the current Vault version.</p>
         {activeSaved.data.studies.length === 0 && <p>This run has no linked clinical source tables.</p>}
         {activeSaved.data.studies.map(study => <SourceTables key={`${study.source.documentId}:${study.source.sha256}`} source={study.source} tables={study.tables} />)}
-        <CsrBuildDraftControl programId={activeSaved.programId} runId={activeSaved.runId} studies={activeSaved.data.studies} blocked={blocked} onNav={onNav} />
+        <CsrBuildDraftControl programId={activeSaved.programId} runId={activeSaved.runId} studies={activeSaved.data.studies} blocked={blocked} onQueued={setQueued} />
+        {/* The build's section review and import into Authoring, narratives, assembly and placement
+            (D2/W1, 2026-10-30): on this launch card, not the csr-workflow board, which production refuses. */}
+        {activeSaved.data.studies.length > 0 && <CsrRunBuilds programId={activeSaved.programId} runId={activeSaved.runId} focus={queued} onNav={onNav} />}
       </>}
     </div>}
-  </>; }
+  </>;
+}
 
 function savedTablesForRun(saved: SavedState | null, programId: string | null, runId: string | null): SavedState | null {
   return saved?.programId === programId && saved.runId === runId ? saved : null;

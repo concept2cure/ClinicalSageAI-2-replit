@@ -1,0 +1,6 @@
+launch       /api/csr-workflow/pivotal  [ectd-compile]
+launch       /api/csr/jobs  [project-home, communication-center, device-510k, device-pma, device-cer, device-diagnostics, vault, document-authoring, review, protocol-dev, submission-center, ectd-compile, ind-checklist, dispatch-readiness, quality, cmc, insights, conversation-thread, admin-console, onboarding, (shell chrome)]
+launch       /api/csr/jobs/:p/assembly  [ectd-compile]
+launch       /api/csr/jobs/:p/assembly/supply-candidates  [ectd-compile]
+launch       /api/csr/jobs/:p/narratives  [project-home, communication-center, device-510k, device-pma, device-cer, device-diagnostics, vault, document-authoring, review, protocol-dev, submission-center, ectd-compile, ind-checklist, dispatch-readiness, quality, cmc, insights, conversation-thread, admin-console, onboarding, (shell chrome)]
+launch       /api/csr/jobs/:p/narratives/text  [project-home, communication-center, device-510k, device-pma, device-cer, device-diagnostics, vault, document-authoring, review, protocol-dev, submission-center, ectd-compile, ind-checklist, dispatch-readiness, quality, cmc, insights, conversation-thread, admin-console, onboarding, (shell chrome)]

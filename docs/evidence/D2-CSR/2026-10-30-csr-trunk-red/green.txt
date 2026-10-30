@@ -1,0 +1,119 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > preserves all 446 prior builtin objects and their recorded snapshots 102ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_STRATEGY with its exact source, no filing placement and no authored facts 38ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_GAP_ANALYSIS with its exact source, no filing placement and no authored facts 45ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_COMPETITIVE with its exact source, no filing placement and no authored facts 38ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_HA_MEETING with its exact source, no filing placement and no authored facts 50ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > includes the same exact internal outlines in existing AnA coverage discovery 5ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_STRATEGY entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_GAP_ANALYSIS entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_COMPETITIVE entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_HA_MEETING entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with inactive 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with different region 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with different segment 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with different category 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with submission format 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with dossier format 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with unknown identifier 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit QMS_GMP_INSPECTION through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit QMS_GCP_COMPLIANCE through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit QMS_GLP_COMPLIANCE through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit ICH_CTD_M1 through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit ICH_ICSR through the planning selector 0ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > refuses an explicitly malformed project instead of enqueueing an organization-wide build 41ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 202 with { jobId, status: "queued" } when authenticated 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 401 when organizationId is missing from req 3ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns the status object when found in the same org 5ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 404 when getCSRBuildJobStatus returns null 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 400 when :jobId is non-numeric 3ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId/sections > returns the section array 3ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > transitions status to "cancelled" via the org-scoped Drizzle update 3ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > returns 409 when status is already "complete" 2ms
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-30T01:53:04.381Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T01:53:04.382Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-30T01:53:04.382Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+[database] Database connection successful
+
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > carries exactly the headings E3 numbers, in report order 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading sits under a heading that exists 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.1 has its 12 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.3 has its 2 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §14.3 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §11.4.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.2 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.3.1 has its 3 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.4 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.5 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading cites its own E3 number; every checked source names its URL and date 4ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > a heading that names data sources says they are practice, not a requirement 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > E3 §16.2.7 and §12.2.4 name both the preferred and the investigator’s term; §16.3.1 names 314.50(f)(2) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > resolves a number however it is written, and answers nothing for one E3 does not have 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > csr-builder's outline is the overlay's tree, every heading and title 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR scaffold behind get_csr_template carries every E3 heading 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt covers §1–§16 with E3's headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the medical-writing base outlines the CSR with E3's sixteen headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the stream's 5.3.5 playbook lists E3's sixteen headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt says, under each heading, what the E3 tree says (one summary helper) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the market-specs CSR spine (get_document_template) is every E3 heading, in order, each with the tree’s summary 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the DOCX blueprint csr-ich-e3 numbers and titles every heading as E3 does, to E3’s depth 6ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > a section supplied by title only lands once, even where E3 repeats a title 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > clinical-intelligence-service keeps no hand copy of the E3 outline 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > e3SectionSummary — the one statement of what a heading carries > is the purpose, else what it carries, else the headings under it, else its title — never empty 8ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the market-specs Investigator's Brochure cites ICH E6(R3) Appendix A, not E6(R2) §7 > names E6(R3) Appendix A, carries a structured basis, and shows recall as recall 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > every heading says what it is for or what it carries 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > every heading AnA drafts carries its writing rules, and its brief renders them 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > every §14–§16 heading says how its outputs are displayed or compiled 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > writing rules hold slots, never figures (Rule 2: the engine supplies every number) 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > no brief is clipped, so its basis always reaches the reader 8ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > §9.7.1, §11.4 and §11.4.1 carry the ICH E9(R1) estimand attributes and cite E9(R1) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > E3 Annexes I–IVb are display models, each tied to the heading it serves 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > every basis is well formed; a regulator-text basis carries a quoted span; a quote is never shown as checked unless it is 3ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 4ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 6ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > separates existing platform blueprints from agency records and verifies each projection against its source 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > advertises preparation as questions and regional route, with no evidence or readiness claim 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal every node of ICH_E3_GUIDANCE, §1–§16 among them 2ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > every section says what it is for, and §14 is the displays NOT in the text 2ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§20 > carries every numbered section in order, after the title page and executive summary 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§20 > §12–§19 carry the E2C(R2) headings 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > is not served for CTD 1.1 (FDA Forms) 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > carries no single CTD code, and its basis names FDA 1.2 and EU 1.0 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — unaffected lookups (guard) > Clinical Overview stays at 2.5 and the QOS still resolves by 2.3 0ms
+
+ Test Files  5 passed (5)
+      Tests  83 passed (83)
+   Start at  01:52:56
+   Duration  8.97s (transform 3.42s, setup 148ms, import 7.29s, tests 563ms, environment 1ms)
+

@@ -24,7 +24,7 @@ import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/l
 import { useAuthUser } from '@/services/portal/authService';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
 import { useVaultCanWrite } from './VaultViewOnly';
-import { downloadBlob } from '../download';
+import { saveVerifiedArchive, type ArchiveOutcome } from './vaultArchiveDownload';
 
 export interface VaultSealShape {
   id: string;
@@ -116,15 +116,6 @@ async function postSeal(projectId: string, input: { meaning: string; reason: str
     ...(typeof json.sha256Chain === 'string' ? { hash: json.sha256Chain } : {}) };
 }
 
-async function sha256Hex(buf: ArrayBuffer): Promise<string | null> {
-  const subtle = globalThis.crypto?.subtle;
-  if (!subtle) return null;
-  const digest = await subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-type ArchiveOutcome = { text: string; saved: boolean };
-
 /** A refused archive request in words: the seal's verdict when the server sent one. */
 function archiveRefusal(e: unknown): ArchiveOutcome {
   const payload = e instanceof ApiRequestError ? (e.payload as { verification?: unknown } | undefined) : undefined;
@@ -133,35 +124,16 @@ function archiveRefusal(e: unknown): ArchiveOutcome {
   return { text: redactInternals(e instanceof ApiRequestError ? serverMessage(e.payload) : null, `${ARCHIVE_FAILED} Nothing was saved.`), saved: false };
 }
 
-/** Save a received archive only when it hashes to what the server recorded for it. */
-async function saveArchive(res: Response, sealId: string): Promise<ArchiveOutcome> {
-  const header = (name: string) => (res.headers && typeof res.headers.get === 'function' ? res.headers.get(name) : null);
-  const recorded = (header('X-Content-SHA256') ?? '').toLowerCase();
-  if (!/^[0-9a-f]{64}$/.test(recorded)) {
-    return { text: `${ARCHIVE_FAILED} The server did not state the archive's SHA-256, so it was not saved.`, saved: false };
-  }
-  const bytes = await res.arrayBuffer();
-  const received = await sha256Hex(bytes);
-  if (received !== null && received !== recorded) {
-    return { text: `${ARCHIVE_FAILED} The file received does not match the SHA-256 the server recorded for it, so it was not saved.`, saved: false };
-  }
-  const named = /filename="?([^";]+)"?/.exec(header('Content-Disposition') ?? '');
-  const name = named ? named[1] : `vault-seal-${sealId.slice(0, 8)}-closing-archive.zip`;
-  if (!downloadBlob(name, new Blob([bytes], { type: 'application/zip' }))) {
-    return { text: 'The closing archive was received, but the browser refused to save it.', saved: false };
-  }
-  const withheld = Number(header('X-Archive-Withheld') ?? '0');
-  const saved = received === null
-    ? `Closing archive saved. SHA-256 recorded by the server: ${recorded}. This browser could not check it; sha256sum will.`
-    : `Closing archive saved. Its SHA-256, checked on receipt against the server's record: ${recorded}.`;
-  return {
-    text: withheld > 0
-      ? `${saved} ${withheld === 1
-        ? '1 sealed document’s original file was removed under a data disposition and is not in it; the index lists it.'
-        : `${withheld} sealed documents’ original files were removed under a data disposition and are not in it; the index lists them.`}`
-      : saved,
-    saved: true,
-  };
+/** Save a received closing archive only when it hashes to what the server recorded for it. */
+function saveArchive(res: Response, sealId: string): Promise<ArchiveOutcome> {
+  return saveVerifiedArchive(res, {
+    failed: ARCHIVE_FAILED,
+    noun: 'Closing archive',
+    fallbackName: `vault-seal-${sealId.slice(0, 8)}-closing-archive.zip`,
+    withheld: (n) => (n === 1
+      ? '1 sealed document’s original file was removed under a data disposition and is not in it; the index lists it.'
+      : `${n} sealed documents’ original files were removed under a data disposition and are not in it; the index lists them.`),
+  });
 }
 
 /**

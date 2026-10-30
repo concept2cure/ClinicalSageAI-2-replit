@@ -6,13 +6,18 @@
  *   frozen clinical tables of a saved run. It renders only when that run holds
  *   retained tables, and starts POST /api/csr/jobs bound to the run
  *   (evidenceSource). A refusal is shown as the server stated it.
+ *   A queued build is handed to the card's build list (CsrRunBuilds.tsx),
+ *   which carries its narratives and assembly. Until 2026-10-30 the queued
+ *   line offered "Open build progress", a navigation to the csr-workflow
+ *   board, which is not a launch surface and is refused in production.
  * - CsrHeadingReview sits on the csr-workflow board (CsrWorkflow in
- *   BiopharmaProject.tsx), the build's progress view, reached from the card.
- *   It lists the job's headings against the canonical ICH E3 tree with their
+ *   BiopharmaProject.tsx), not reached at launch, and since 2026-10-30 on the
+ *   CSR card for the selected build (CsrRunBuilds.tsx, from
+ *   GET /api/csr/jobs/:jobId/headings). It lists the job's headings against the canonical ICH E3 tree with their
  *   review state, records a decision as the signed-in reviewer, and hands the
  *   approved set to the existing Authoring import (workflow-source-import).
  * - CsrNarrativeBuild sits under the section review on the same board (slice
- *   7): "Build narratives" queues the build of the patient safety narratives
+ *   7), and on the card for the selected build (CsrRunBuilds.tsx): "Build narratives" queues the build of the patient safety narratives
  *   from its bound run's ADaM data into §14.3.3 and §12.3.2 (off the request
  *   since 2026-10-30), polls its status (queued, running with subjects done of
  *   total, complete, incomplete with the refused subjects, failed, cancelled,
@@ -27,7 +32,7 @@ import { I } from '../icons';
 
 const JOBS = '/api/csr/jobs';
 
-/** One heading of GET /api/csr-workflow/board `headings`. */
+/** One heading of GET /api/csr/jobs/:jobId/headings and of the board's `headings` (server csr-headings.ts). */
 export interface CsrBoardHeading {
   num: string;
   label: string;
@@ -51,9 +56,9 @@ const STATE_TONE: Record<CsrBoardHeading['state'], string> = {
 type Outcome = { kind: 'queued'; jobId: number } | { kind: 'refused'; text: string };
 
 /** Start a CSR draft from one study's retained tables in a saved run. */
-export function CsrBuildDraftControl({ programId, runId, studies, blocked, onNav }: {
+export function CsrBuildDraftControl({ programId, runId, studies, blocked, onQueued }: {
   programId: string; runId: string; studies: Array<{ source: CsrSourceReceipt }>;
-  blocked: boolean; onNav?: (surface: string) => void;
+  blocked: boolean; onQueued?: (jobId: number) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Record<string, Outcome>>({});
@@ -66,29 +71,29 @@ export function CsrBuildDraftControl({ programId, runId, studies, blocked, onNav
       evidenceSource: { programId, runId, studyId: source.studyId },
     });
     const jobId = Number(result.body?.jobId);
-    setOutcome(current => ({ ...current, [source.sha256]: result.ok && Number.isSafeInteger(jobId) && jobId > 0
+    const queued = result.ok && Number.isSafeInteger(jobId) && jobId > 0;
+    setOutcome(current => ({ ...current, [source.sha256]: queued
       ? { kind: 'queued', jobId }
       : { kind: 'refused', text: apiErrorText(result, 'The CSR draft was not started.') } }));
     setBusy(false);
+    if (queued) onQueued?.(jobId);
   };
   return <div aria-label="CSR draft from this run" style={{ display: 'grid', gap: 6 }}>
     <p>Draft the clinical study report from these retained tables. Results sections are written over the tables; every figure is checked against them.</p>
     {studies.map(({ source }) => <StudyBuildRow key={source.sha256} source={source} outcome={outcome[source.sha256]}
-      disabled={busy || blocked} busy={busy} onStart={() => void start(source)} onNav={onNav} />)}
+      disabled={busy || blocked} busy={busy} onStart={() => void start(source)} />)}
   </div>;
 }
 
-function StudyBuildRow({ source, outcome, disabled, busy, onStart, onNav }: {
-  source: CsrSourceReceipt; outcome: Outcome | undefined; disabled: boolean; busy: boolean;
-  onStart: () => void; onNav?: (surface: string) => void;
+function StudyBuildRow({ source, outcome, disabled, busy, onStart }: {
+  source: CsrSourceReceipt; outcome: Outcome | undefined; disabled: boolean; busy: boolean; onStart: () => void;
 }) {
   return <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
     <button type="button" className="nda-open" disabled={disabled} onClick={onStart}>
       {I.fileText} {busy ? 'Starting…' : `Build CSR draft · ${source.protocolNumber}`}
     </button>
     {outcome?.kind === 'queued' && <span role="status">
-      CSR build {outcome.jobId} is queued.{' '}
-      {onNav && <button type="button" className="nda-open" onClick={() => onNav('csr-workflow')}>{I.arrowRight} Open build progress</button>}
+      CSR build {outcome.jobId} is queued. Its progress, narratives and files are under “CSR builds from this run”.
     </span>}
     {outcome?.kind === 'refused' && <p role="alert">{outcome.text}</p>}
   </div>;

@@ -49,6 +49,9 @@ export const authoringReviewContextSchema = z.object({
   }).strict().nullable(),
   canReview: z.boolean(),
   unavailableReason: z.string().min(1).nullable(),
+  /** The server's CSR rule for this document (requiresCsrScientificReview), so
+   * the screen opens the scientific-review step for a CSR its label does not name. */
+  csrScientificReviewRequired: z.boolean().optional(),
 }).superRefine((value, ctx) => {
   if (value.snapshot.id !== value.documentId || (value.canReview && (!value.myReview || value.unavailableReason !== null))) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'A decision needs this document and an authorized current review request.' });

@@ -137,21 +137,32 @@ const interactionSchema = z.object({
  * Answers the refusal and returns false; true when admitted or when the
  * meeting names no submission.
  */
-async function admitSubmissionWrite(req: Request, res: Response, orgId: number, submissionId: number | null | undefined): Promise<boolean> {
+async function admitSubmissionWrite(req: Request, res: Response, orgId: number, submissionId: number | null | undefined, forWrite = true): Promise<boolean> {
   if (submissionId == null) return true;
   const { rows } = await requestPgClient(req).query(
     `SELECT p.id FROM submissions s
        JOIN projects p ON p.regulatory_program_id = s.program_id AND p.organization_id = s.organization_id AND p.status IS DISTINCT FROM 'deleted'
       WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NULL LIMIT 2`, [submissionId, orgId]);
   if (rows.length !== 1) {
-    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'That submission is not one of a project you may change. Nothing was recorded.' } });
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: forWrite ? 'That submission is not one of a project you may change. Nothing was recorded.' : 'Interaction not found for this organization.' } });
     return false;
   }
-  try { await requireProjectAdmission(req, String(rows[0].id), true); return true; } catch (err) {
+  try { await requireProjectAdmission(req, String(rows[0].id), forWrite); return true; } catch (err) {
     if (!(err instanceof ProjectAdmissionRefusal)) throw err;
-    res.status(err.status).json({ error: { code: err.code, message: `${err.message} Nothing was recorded.` } });
+    // A read refused is a meeting this person cannot see: said as not found, never confirmed.
+    if (!forWrite) res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Interaction not found for this organization.' } });
+    else res.status(err.status).json({ error: { code: err.code, message: `${err.message} Nothing was recorded.` } });
     return false;
   }
+}
+
+/** Admit a read or write of meeting `id` by its submission's project; answers the refusal and returns false. */
+async function admitMeeting(req: Request, res: Response, id: number, forWrite: boolean): Promise<boolean> {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return true; // governedMutation and the reads answer the missing identity themselves
+  return meetingSubmission(req, orgId, id)
+    .then((sub) => admitSubmissionWrite(req, res, orgId, sub, forWrite))
+    .catch((err) => { fail(res, err); return false; });
 }
 
 router.post('/interactions', async (req, res) => {
@@ -200,11 +211,7 @@ router.patch('/interactions/:id/status', async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = statusSchema.safeParse(req.body ?? {});
   if (!parsed.success) return validationRefusal(res, parsed.error);
-  const orgId = resolveOrgId(req);
-  if (orgId) {
-    const admitted = await meetingSubmission(req, orgId, id).then((sub) => admitSubmissionWrite(req, res, orgId, sub)).catch((err) => { fail(res, err); return false; });
-    if (!admitted) return;
-  }
+  if (!(await admitMeeting(req, res, id, true))) return;
   await governedMutation(req, res, 'transition', parsed.data.reason, async (client, orgId) => {
     await updateInteractionStatusTx(client, orgId, id, parsed.data.status, parsed.data);
     return { target: `ha-interaction:${id}`, payload: { status: parsed.data.status }, body: { id, status: parsed.data.status } };
@@ -225,6 +232,7 @@ router.post('/interactions/:id/questions', async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = questionSchema.safeParse(req.body ?? {});
   if (!parsed.success) return validationRefusal(res, parsed.error);
+  if (!(await admitMeeting(req, res, id, true))) return;
   await governedMutation(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
     const { id: qid } = await addQuestionTx(client, orgId, userId, id, parsed.data);
     return { target: `ha-interaction:${id}`, payload: { questionId: qid }, body: { interactionId: id, questionId: qid } };
@@ -236,6 +244,7 @@ router.get('/interactions/:id/readiness', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  if (!(await admitMeeting(req, res, id, false))) return;
   const client = await pool.connect();
   try {
     const input = await getInteractionReadinessInput(client, orgId, id);

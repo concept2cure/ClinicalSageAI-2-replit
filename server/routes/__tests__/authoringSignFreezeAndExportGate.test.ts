@@ -166,10 +166,12 @@ describe('F2 — POST /docs/:id/sign auto-freezes when the final step approves t
   });
 
   it('writes a frozen_documents row on the transaction client, between BEGIN and COMMIT', async () => {
+    // APPROVER: since 2026-10-30 only an approval signature approves at the last
+    // step (authoring-approval-independence.test.ts); a REVIEWER one records review.
     const res = await request(makeApp())
       .post(`/api/authoring/docs/${DOC_ID}/sign`)
-      .set('Authorization', await bearer(['REVIEWER']))
-      .send({ password: PASSWORD, meaning: 'REVIEWER', reason: 'reviewed and approved' });
+      .set('Authorization', await bearer(['APPROVER']))
+      .send({ password: PASSWORD, meaning: 'APPROVER', reason: 'reviewed and approved' });
 
     expect(res.status).toBe(200);
 

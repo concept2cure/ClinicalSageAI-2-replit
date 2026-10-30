@@ -786,7 +786,7 @@ Heap stays flat as the narratives grow, because the text is never held whole. Th
 
 ### Not done, and why
 
-- **The server does not refuse a save to the §14.3.3 section.** The editor shows it read-only, but the Authoring save paths in `authoring.router.ts` (8,407 lines) do not know the reference. If the opening is edited through the API, the document's copy differs from the reference's `openingSha256`. The import, the assembly and release still read the store and the landed row, not the document's copy, so the filed narratives cannot change that way. The opening shown in Authoring can.
+- ~~**The server does not refuse a save to the §14.3.3 section.**~~ **Fixed, 2026-10-30 (follow-up below).**
 - **The AnA saved-document critique** (`server/services/ana/csr-saved-evidence.ts`) does not re-read the store for a reference. Release governance does, through `verifySavedWorkflowImport`.
 - **Import time is superlinear** (above). It is under 5 s at 5,000 narratives, 5 times the design's target.
 - **The measurement is PGlite in-process,** not a production Postgres.
@@ -805,6 +805,21 @@ Heap stays flat as the narratives grow, because the text is never held whole. Th
 | `ci:launch-scope-api` | 567 paths, none refused |
 | `ci:migration-drop-safety` | OK (no migration changed) |
 | `NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p .` | exit 0, no error (on the final tree) |
+
+### Follow-up (2026-10-30): the server refuses a save over the reference
+
+**What already exists.** The shared write gate `reserveWritableSection` (`server/services/authoring/document-lock.ts`) is called by the content-changing section paths: `PATCH /api/authoring/sections/:id`, revert and accept-AI-draft (`authoring.router.ts`), and the filing-only refile. The authority for a section's import origin is its immutable creation receipt (`authoring_audit_trail` CREATE row written by `insertSectionSeedTx`), as `workflow-import-governance.ts` `retainedOrigin` already reads it, not the document's editable provenance.
+
+**Change.** `refuseNarrativeReferenceContentWrite` (document-lock.ts) refuses, with 409 `CSR_NARRATIVE_REFERENCE_READ_ONLY`, a write to a section whose CSR creation receipt carries a `narrativeReference` for that section's code. It is called after `reserveWritableSection` on the save (when content is sent), revert and accept paths. The filing-only refile does not change the text and is not refused. Renaming the section does not lift it, because the receipt decides.
+
+| Check | Result |
+|---|---|
+| `narrative-reference-write.pglite.test.ts` with the throw disabled (`ref-write-guard-red.txt`) | 3 failed (the three refusals), 2 passed (the allowed cases) |
+| Same, restored (`ref-write-guard-green.txt`) | 5 passed |
+| `authoring-save-governed-write.pglite.test.ts`, PATCH call removed (`ref-write-route-red.txt`) | the refusal case fails: expected 200 to be 409 |
+| Same, restored (`ref-write-route-green.txt`) | 21 passed |
+
+**Not covered by a route test:** the revert and accept call sites (each is the same one-line call after the same gate).
 
 ### Commands (§14.3.3 by reference)
 

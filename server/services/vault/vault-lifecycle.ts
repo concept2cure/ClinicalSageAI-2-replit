@@ -302,7 +302,7 @@ export function roundSignOffs(round: RouteRound | null, role: RouteRole, stored:
   const signed = round.members.flatMap((m) => (m.role === role && m.signature ? [{ userId: m.userId, signature: m.signature }] : []));
   if (!signed.some((m) => m.signature.id === ref)) return null;
   return signed
-    .sort((a, b) => a.signature.signedAt.localeCompare(b.signature.signedAt) || a.signature.id - b.signature.id)
+    .sort((a, b) => a.signature.signedAt.localeCompare(b.signature.signedAt) || Number(a.signature.id) - Number(b.signature.id))
     .map(({ userId, signature }) => ({
       printedName: signature.printedName, meaning: signature.meaning, signedAt: signature.signedAt,
       signatureRef: `esig:${signature.id}`, signerId: userId,

@@ -123,10 +123,17 @@ describe('unresolved project facts never become an inferred US filing', () => {
     expectUnassessed();
   });
 
-  it.each(['EMA', 'MHRA', 'US FDA', null])('does not map an IND with unsupported or absent agency %j', async agency => {
+  it.each(['EMA', 'TGA', 'US FDA', null])('does not map an IND with unsupported or absent agency %j', async agency => {
     await seed({ metadata: {}, agency });
     await run();
     expectUnassessed();
+  });
+
+  // P-73: an IND filed with an agency that has exactly one trial application is that application.
+  it.each([['MHRA', 'UK_CTA'], ['MFDS', 'KR_IND'], ['NMPA', 'CN_CTA']])('maps an IND filed with %s to %s', async (agency, registryId) => {
+    await seed({ metadata: {}, agency });
+    await run();
+    expect(request().metadata.submissionType).toBe(registryId);
   });
 
   it.each([

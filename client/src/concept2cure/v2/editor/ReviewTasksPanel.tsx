@@ -56,6 +56,7 @@ import { EmptyState } from '../dataConnect';
 import type { FireToast } from '../toast';
 import { TaskSignOffDialog, type TaskSignOffRequest } from './TaskSignOffDialog';
 import { CLOSED_TASK, reviewStandingOf, reviewStateNote, taskReviewState, type TaskReviewState } from './reviewTaskState';
+import { AuthoringReviewRound } from './AuthoringReviewRound';
 import type { AuthoringReviewStanding } from '@shared/authoring/peer-review';
 
 export { reviewStatusLabel } from './reviewTaskState';
@@ -77,6 +78,8 @@ export interface AuthoringTaskRow {
   createdAt: string | null;
   /** 'review' for a review task (buildReviewTaskBody); null when not recorded. */
   taskType: string | null;
+  /** RR5: the review route the task is a member row of; null for a task raised any other way. */
+  reviewRouteId: string | null;
 }
 
 export const AUTHORING_TASK_MODULE = 'Authoring';
@@ -130,6 +133,7 @@ function toAuthoringTaskRow(row: Record<string, unknown>): AuthoringTaskRow {
     approvalStatus: optionalText(row.approvalStatus),
     createdAt: optionalText(row.createdAt),
     taskType: optionalText(row.taskType),
+    reviewRouteId: optionalText(row.reviewRouteId),
   };
 }
 
@@ -413,12 +417,28 @@ interface ReviewTaskRowProps {
  * not offered for completion: completing it would show a finished review the
  * Review board does not have.
  */
+/**
+ * RR5: a review route's member row is the route's. It is not started or
+ * completed here (the server refuses it, ROUTE_TASK_OWNED_BY_ROUTE): the
+ * reviewer's review signature closes it, and the route above says whose turn
+ * it is.
+ */
+export const ROUTE_TASK_NOTE = 'On this document’s review route: it closes when its reviewer signs the review (E-sign, meaning Review). The route is shown above.';
+
+/** The transitions a row offers, and what it says about its review. A route's member row offers none (RR5). */
+function rowOffers(task: AuthoringTaskRow, review: TaskReviewState): { canStart: boolean; canComplete: boolean; note: string | null } {
+  if (task.reviewRouteId !== null) return { canStart: false, canComplete: false, note: CLOSED_TASK.has(task.status) ? null : ROUTE_TASK_NOTE };
+  const verdictAllows = review.kind === 'none' || review.kind === 'recorded';
+  return {
+    canStart: task.status === 'pending' || task.status === 'blocked',
+    canComplete: verdictAllows && (task.status === 'in-progress' || task.status === 'review'),
+    note: reviewStateNote(task, review),
+  };
+}
+
 function ReviewTaskRow({ task, busy, review, onTransition, onOpenBoard }: ReviewTaskRowProps) {
   const st = TASK_STATE_LABEL[task.status] ?? { label: task.status.replace(/-/g, ' '), tone: 'idle' as const };
-  const canStart = task.status === 'pending' || task.status === 'blocked';
-  const verdictAllows = review.kind === 'none' || review.kind === 'recorded';
-  const canComplete = verdictAllows && (task.status === 'in-progress' || task.status === 'review');
-  const note = reviewStateNote(task, review);
+  const { canStart, canComplete, note } = rowOffers(task, review);
   return (
     <div className="rt-row" role="listitem" data-status={task.status} data-testid="rt-row">
       <div className="rt-row-h">
@@ -471,6 +491,9 @@ export interface ReviewTasksPanelProps {
   onOpenBoard?: () => void;
   onClose: () => void;
   fireToast: FireToast;
+  /** RR5: the reader's account id and whether they administer the organization, for the route's acts. */
+  meId?: number | null;
+  admin?: boolean;
 }
 
 const TASK_LEDGER_HINT =
@@ -600,16 +623,19 @@ function TaskList({ rows, reviews, busy, onTransition, onOpenBoard }: {
   );
 }
 
-export function ReviewTasksPanel({ docId, docTitle, refreshKey, onSendForReview, sendRefusal, signer, onOpenBoard, onClose, fireToast }: ReviewTasksPanelProps) {
+export function ReviewTasksPanel({ docId, docTitle, refreshKey, onSendForReview, sendRefusal, signer, onOpenBoard, onClose, fireToast, meId = null, admin = false }: ReviewTasksPanelProps) {
   const refusalId = useId();
   const { state, rows, error, reload: reloadTasks } = useDocumentTasks(docId, refreshKey);
   const reviews = useDocumentReviews(docId, refreshKey);
   const reloadReviews = reviews.reload;
   /* The tasks and the review requests are re-read together, so a row never
      pairs a fresh task state with a stale verdict. */
+  /* RR5: the route is read again with them, so its round and its task rows agree. */
+  const [tasksRead, setTasksRead] = useState(0);
   const reload = useCallback((id: string) => {
     reloadTasks(id);
     reloadReviews();
+    setTasksRead(n => n + 1);
   }, [reloadTasks, reloadReviews]);
   const { busy, transition, signing, closeSigning, signed } = useTaskTransitions(docId, reload, fireToast);
 
@@ -633,6 +659,10 @@ export function ReviewTasksPanel({ docId, docTitle, refreshKey, onSendForReview,
           refusalId={refusalId}
           onRefresh={() => reload(docId)}
         />
+      )}
+      {docId && (
+        <AuthoringReviewRound docId={docId} title={docTitle ?? 'Authoring document'} meId={meId} admin={admin}
+          refreshKey={refreshKey + tasksRead} onChanged={() => reload(docId)} />
       )}
       {!docId ? (
         <EmptyState icon={I.checkSquare} title="No document selected" hint="Select a document to see the tasks linked to it." />

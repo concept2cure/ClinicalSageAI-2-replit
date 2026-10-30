@@ -77,6 +77,8 @@ export const ROUTE_COLUMN_KEYS = [
   'route_signature_id',
   'routeActId',
   'route_act_id',
+  'routeAuthoringSignatureId',
+  'route_authoring_signature_id',
 ] as const;
 
 export const ROUTE_TASK_REFUSAL_MESSAGE =

@@ -4516,6 +4516,8 @@ export function DocumentWorkbench({
                 onChanged={() => {
                   void loadDocs();
                   if (activeDocId) void loadSections(activeDocId);
+                  /* RR5: a review signature closes its signer's task on the document's review route; the Tasks rail and its round are read again. */
+                  setTasksEpoch(e => e + 1);
                 }}
                 fireToast={fireToast}
                 signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
@@ -6140,6 +6142,8 @@ export function DocumentWorkbench({
             onOpenBoard={() => onNav('review')}
             onClose={closeRail}
             fireToast={fireToast}
+            meId={user?.id && /^\d+$/.test(String(user.id)) ? Number(user.id) : null}
+            admin={((user as { roles?: string[] } | null)?.roles ?? []).some((r) => String(r).toLowerCase() === 'admin')}
           />
         </aside>
       )}

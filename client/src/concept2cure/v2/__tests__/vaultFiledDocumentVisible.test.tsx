@@ -176,7 +176,7 @@ describe('Vault — a document filed through the API is on the page', () => {
 
     // Breadcrumb now names the cabinet folder, and the folder list carries the row.
     const list = document.querySelector('.vd-list') as HTMLElement;
-    expect(within(list).getByText(/Module 5 · Clinical/)).toBeTruthy();
+    expect(within(list.querySelector('.vd-breadcrumb') as HTMLElement).getByText(/Module 5 · Clinical/)).toBeTruthy();
     expect(within(list).getAllByText(DOC_TITLE).length).toBeGreaterThan(0);
     // The detail pane shows the selected document (its filing decision is a
     // real column, rendered as such).

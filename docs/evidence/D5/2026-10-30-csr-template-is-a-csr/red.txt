@@ -1,0 +1,24 @@
+# Red: the committed rule (HEAD db53f8b43), with only the new CSR_TEMPLATE_IDS constant added so the test can import it
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > the built-in CSR templates > are exactly the IND 5.3.5.1 and 5.3.5.2 sections, the registry CSR and the E3 component, by the ids the library resolves 229ms
+ × server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > a CSR is recognised by its stored template, not its title > a document made from the IND 5.3.5.1 template is a CSR 14ms
+   → expected false to be true // Object.is equality
+ × server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > a CSR is recognised by its stored template, not its title > a document made from the IND 5.3.5.2 template and renamed is a CSR, read from its stored row when the caller does not pass the template 4ms
+   → expected false to be true // Object.is equality
+ × server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > a CSR is recognised by its stored template, not its title > a document made from the E3 template and renamed is a CSR 4ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > a CSR is recognised by its stored template, not its title > another Module 5 template is not (control) 2ms
+ × server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > a CSR is recognised by its stored template, not its title > the release gate refuses a template-made CSR with no scientific-review receipt 5ms
+   → promise resolved "undefined" instead of rejecting
+ × server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > the label > names a CSR in the singular or the plural 1ms
+   → 5.3.5.1 · Clinical Study Reports of Controlled Studies: expected false to be true // Object.is equality
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > the label > does not name a nonclinical study report, a protocol or a clinical overview 0ms
+ Test Files  1 failed (1)
+      Tests  5 failed | 3 passed (8)
+
+# Red: the review dialog on the committed hook
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > asks for the scientific review before an approval, and sends the completed map with it 421ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the label does not name is caught by the server's refusal, and the panel opens instead of a reload 74ms
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the server names (made from a CSR template, or renamed) opens the scientific review before any approval is sent 5025ms
+   → Unable to find role="region" and name "CSR scientific review"
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a document that is not a CSR approves as before, with no map 50ms
+      Tests  1 failed | 3 passed (4)

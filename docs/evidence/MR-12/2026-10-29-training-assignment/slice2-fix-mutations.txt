@@ -1,0 +1,30 @@
+# Mutations of review round 1's fixes and of the branches it pinned: each rule broken in the working tree, tests/db/qms-training-assignments.dbtest.ts run (the review cases were in that file then; they moved unchanged to qms-training-assignments-review.dbtest.ts when the file passed 500 lines), the two source files restored (cmp clean after each). PostgreSQL 16, RLS_ENFORCE=on, app_service.
+# M14 survived its first run (no case reached a check that could not run); the 503 case was added and M14 re-run, killed.
+== M13: the designee's role is not read inside the transaction
+ × review round 1: the designee's role is part of the authority, read on the write's transaction > a designated QMS approver whose role is viewer is offered nothing and refused; nothing is written 29ms
+ × review round 1: the designee's role is part of the authority, read on the write's transaction > a designee demoted to viewer while the write waits on the membership row is seen: 403, nothing written 1522ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 22 passed (24)
+== M14: a check that could not run reads as may-not
+      Tests  24 passed (24)
+== M15: every member sees every person assigned
+ × who is assigned: the one resolver > the read lists the assignments and resolves the people: active only, each once, with every path 266ms
+ × review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > administrators and designated QMS approvers see every person assigned; anyone else sees their own line and the count 95ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 22 passed (24)
+== M16: a pending version is never reported (reviewer MG)
+ × review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > a first version approved for a later day is pending, with nothing yet in force 50ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+== M17: coversActor ignores removed_at (reviewer MD)
+ × review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > an administrator who has left a role may withdraw that role's assignment; while they held it, they could not 116ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+== M18: covered-since is the assignment's instant only (reviewer MI)
+ × review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > a person is covered from the later of the assignment and their joining the role: the instant a late assignment's grace runs from 1170ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+== M14 (re-run with the 503 case): a check that could not run reads as may-not
+ × review round 1: the designee's role is part of the authority, read on the write's transaction > canAssign is unknown (null), never "may not", when whether the reader can read the document could not be checked 31ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 24 passed (25)

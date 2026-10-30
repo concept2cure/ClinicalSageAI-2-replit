@@ -123,12 +123,12 @@ describe('the route writer is a role, never a setting (P-59)', () => {
     }
   });
 
-  it('the guard admits the role alone, through seven reviewed doors the server calls', () => {
+  it('the guard admits the role alone, through eight reviewed doors the server calls', () => {
     expect(routeWriterFindings(sql, allowlist, callers)).toEqual([]);
     const doors = [...sql.matchAll(DOOR_DEF)].map((m) => m[1]).filter((d) => /SECURITY DEFINER/.test(functionBody(sql, d) ?? ''));
     expect(doors.sort()).toEqual([
       'review_route_cancel_member', 'review_route_enlist_member', 'review_route_open_step', 'review_route_reassign_member',
-      'review_route_record_signature', 'review_route_restep_approver', 'review_route_stamp_act',
+      'review_route_record_authoring_signature', 'review_route_record_signature', 'review_route_restep_approver', 'review_route_stamp_act',
     ]);
   });
 

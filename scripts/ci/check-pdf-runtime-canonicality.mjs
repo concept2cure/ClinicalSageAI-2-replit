@@ -143,6 +143,15 @@ const APPROVED = new Set([
   // artefact whose hash changed on every print would be the one document in the
   // platform least able to afford it.
   'server/services/clinical-regulatory-evidence/data-origins-pdf.ts',
+  // CSR slice 8 (2026-10-29, approved 2026-10-30 in the own-the-product sweep):
+  //   csr-pdf-writer.ts    — streams an assembled CSR of thousands of pages page by page
+  //                          through pdfkit, hashing the bytes as they leave, with the fixed
+  //                          producer and content-derived dates leaf-pdf.ts pins. There is no
+  //                          DOCX for pdf-converter.ts to convert, and it buffers whole files.
+  //   csr-pdf-structure.ts — READS the assembled PDFs (pdf-lib) to verify bookmark depth and
+  //                          that every link resolves, before handover; it writes no PDF.
+  'server/services/csr/csr-pdf-writer.ts',
+  'server/services/csr/csr-pdf-structure.ts',
 ]);
 
 // See scripts/ci/lib/allowlist-paths.mjs: an entry for an absent file is a
