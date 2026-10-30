@@ -5,6 +5,7 @@ import * as PG from './ProtocolGov';
 import { ProtocolDevForm } from './ProtocolDevForms';
 import { FileProtocolProgramDrawer } from './ProtocolDevFileProgram';
 import { APP_REGISTRY } from '@shared/regulatory/app-registry';
+import { surfaceLeaveRefusal } from '../navParams';
 
 interface ProtocolIndexRow { id: string; title: string; shortTitle?: string; status?: string; programId?: string | null }
 const isIndex = (value: unknown): value is ProtocolIndexRow[] => Array.isArray(value) && value.every((row) =>
@@ -56,6 +57,11 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
   const [starting, setStarting] = useState(false);
   const [filing, setFiling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const changeSelection = (act: () => void) => {
+    const reason = surfaceLeaveRefusal();
+    setError(reason);
+    if (!reason) act();
+  };
   return <div className="pde-note" style={{ margin: 16 }}>
     <h2 className="pde-work-heading">{APP_REGISTRY.study_protocol_design.label}</h2>
     <p>Start or select a protocol, create or bind its study design, then use its statistics, assessments, design checks and review tools.
@@ -65,18 +71,18 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
         fell to the shell reset — no border, no background — and read as plain
         text (weekly review 2026-10-19, DS-F1). */}
     <div className="pde-actions pde-picker">
-      <label>Protocol scope <select aria-label="Protocol scope" value={scope} onChange={(event) => setScope(event.target.value)}>
+      <label>Protocol scope <select aria-label="Protocol scope" value={scope} onChange={(event) => changeSelection(() => setScope(event.target.value))}>
         {programId && <option value={programId}>Open project: {programName || programId}</option>}
         <option value="unfiled">Unfiled protocols</option><option value="all">All organization protocols</option>
       </select></label>
-      {selection.index.rows.length > 0 && <label>Protocol <select aria-label="Protocol document" value={selection.selectedId ?? ''} onChange={(event) => selection.select(event.target.value)}>
+      {selection.index.rows.length > 0 && <label>Protocol <select aria-label="Protocol document" value={selection.selectedId ?? ''} onChange={(event) => changeSelection(() => selection.select(event.target.value))}>
         {selection.index.rows.map((row) => <option key={row.id} value={row.id}>
           {[row.shortTitle, row.title, row.status, !row.programId && 'Unfiled'].filter(Boolean).join(' · ')}
         </option>)}
       </select></label>}
-      <PG.Btn icon="plus" variant="primary" onClick={() => setStarting(true)} disabled={!programId}>Start a protocol</PG.Btn>
+      <PG.Btn icon="plus" variant="primary" onClick={() => changeSelection(() => setStarting(true))} disabled={!programId}>Start a protocol</PG.Btn>
       {programId && selection.doc && !selection.doc.programId && !['finalized', 'superseded'].includes(selection.doc.status) &&
-        <PG.Btn icon="folder" variant="outline" onClick={() => setFiling(true)}>File protocol in open project</PG.Btn>}
+        <PG.Btn icon="folder" variant="outline" onClick={() => changeSelection(() => setFiling(true))}>File protocol in open project</PG.Btn>}
     </div>
     {!programId && <p>Open a project to create a protocol. Existing protocols remain available for review.</p>}
     {selection.doc && !selection.doc.programId && <p>This protocol is unfiled. It has no recorded project association.</p>}

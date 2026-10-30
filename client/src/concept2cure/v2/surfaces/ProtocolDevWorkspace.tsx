@@ -34,6 +34,8 @@ import { ComplianceTab } from './ProtocolDevCompliance';
 import { IrbPackageTab } from './IrbPackage';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
+import { ProtocolWorkflowGuide } from './ProtocolWorkflowGuide';
+import { useProtocolWorkNavigation } from './ProtocolWorkNavigation';
 
 const Ic = PG.Ic;
 type Row = Record<string, unknown>;
@@ -326,7 +328,7 @@ function StaleNotice() {
 const PD_TABPANEL_ID = 'pd-tabpanel';
 const pdTabId = (id: string) => 'pd-tab-' + id;
 
-function TabStrip({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
+function TabStrip({ tab, onTab }: { tab: string; onTab: (id: string) => boolean }) {
   const onKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     const idx = TABS.findIndex((t) => t.id === tab);
     let next = -1;
@@ -336,8 +338,9 @@ function TabStrip({ tab, onTab }: { tab: string; onTab: (id: string) => void }) 
     else if (e.key === 'End') next = TABS.length - 1;
     if (next < 0) return;
     e.preventDefault();
-    onTab(TABS[next].id);
-    (e.currentTarget.parentElement?.children[next] as HTMLElement | undefined)?.focus();
+    if (onTab(TABS[next].id)) {
+      (e.currentTarget.parentElement?.children[next] as HTMLElement | undefined)?.focus();
+    }
   };
   return (
     <div className="pd-tabs" role="tablist" aria-label="Protocol sections">{TABS.map((t) => (
@@ -354,8 +357,6 @@ function TabStrip({ tab, onTab }: { tab: string; onTab: (id: string) => void }) 
 type FormState = { kind: PdevFormKind; target?: PdevFormTarget };
 
 export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadError, onChanged, onOpenSection }: WorkspaceDocProps) {
-  const [tab, setTab] = useState('document');
-  const [activeSec, setActiveSec] = useState(str(doc.openSection));
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -366,15 +367,16 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   const [form, setForm] = useState<FormState | null>(null);
   const [signing, setSigning] = useState<ProtocolSigning | null>(null);
   const [toast, fireToast] = useToast();
+  const sections = asRows(doc.sections);
+  const { tab, activeSec, sec, openSectionId, onSec, requestTab, workChangeRefusal, navigationNotice } = useProtocolWorkNavigation({
+    initialSection: str(doc.openSection), sections, pending: sourcePending,
+    dialogs: [form, reg, signing, exportOpen, importOpen], tabs: TABS,
+  });
 
   // The write routers key on the numeric protocol_documents id.
   const numericDocId = Number(doc.id);
   const canWrite = Number.isInteger(numericDocId) && numericDocId > 0;
   useEffect(() => { setImportOpen(false); }, [numericDocId, programId]);
-  const sections = asRows(doc.sections);
-  const sec = sections.find((s) => s.id === activeSec) ?? sections[0];
-  const onSec = (s: Row) => { setActiveSec(str(s.id)); setTab(str(s.tab) || 'document'); };
-  const openSectionId = sec ? str(sec.id) : null;
   useEffect(() => { onOpenSection?.(openSectionId); }, [openSectionId, onOpenSection]);
 
   const openReg = (kind: RegisterKind) => {
@@ -393,9 +395,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   /* AnA can open any protocol section by its number or title — the same click
      a person makes. The parent's honest-state reads have already resolved to a
      real document, so there is no not-ready state to gate here. */
-  useSurfaceActionHandlers('protocol-dev', {
-    'protocol-dev.open-section': (params) => openSectionAction(sections, str(params.section), activeSec, onSec),
-  });
+  useProtocolSectionAction(sections, activeSec, onSec, workChangeRefusal);
 
   const runExport = async (v: Record<string, string>) => {
     const format = (v.format || 'docx') as 'docx' | 'pdf' | 'markdown';
@@ -421,7 +421,9 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
         handoffBlocked={protocolHandoffBlocked({ canWrite, programId, pending: sourcePending, dialogs: [form, reg, signing] })}
         onOpenDraft={() => setImportOpen(true)} sourcePending={sourcePending} programId={programId} reloadError={reloadError}
       />
-      <TabStrip tab={tab} onTab={setTab} />
+      <ProtocolWorkflowGuide doc={doc} tab={tab} onTab={requestTab} />
+      {navigationNotice && <div className="pde-flow-refusal" role="status">{navigationNotice}</div>}
+      <TabStrip tab={tab} onTab={requestTab} />
       <div className="pd-grid">
         <Outline doc={doc} activeSec={activeSec} onSec={onSec} onFinalize={openFinalize} />
         <div className="pd-work" role="tabpanel" id={PD_TABPANEL_ID} aria-labelledby={pdTabId(tab)}>
@@ -567,6 +569,16 @@ function signedMessage(s: ProtocolSigning, result: Record<string, unknown>): str
 
 /** AnA's "open section N" — resolved against the sections actually loaded. */
 type SurfaceActionResult = { ok: true; detail?: string } | { ok: false; reason: string };
+
+function useProtocolSectionAction(sections: Row[], activeSec: string, onSec: (section: Row) => void, refuse: () => string | null) {
+  useSurfaceActionHandlers('protocol-dev', {
+    'protocol-dev.open-section': params => {
+      const reason = refuse();
+      if (reason) return { ok: false, reason };
+      return openSectionAction(sections, str(params.section), activeSec, onSec);
+    },
+  });
+}
 
 function openSectionAction(
   sections: Row[], raw: string, activeSec: string, onSec: (s: Row) => void,

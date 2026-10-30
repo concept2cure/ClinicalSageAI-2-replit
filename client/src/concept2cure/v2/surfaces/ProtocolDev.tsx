@@ -22,7 +22,7 @@ import { shellProgramName, shellProgramId, useShellProject } from '../shellProje
 import { ProtocolWorkspaceDoc } from './ProtocolDevWorkspace';
 import { ProtocolSelectionBar, useProtocolSelection } from './ProtocolDevSelection';
 import '../styles/protocol-dev-editing.css';
-import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
+import { consumeNavParams, NAV_PARAMS_EVENT, surfaceLeaveRefusal } from '../navParams';
 
 /** Next major protocol version (kit PDEV_nextMajor). */
 const pdevNextMajor = (v: string) => { const m = /^(\d+)\./.exec(v || ''); return m ? ((+m[1]) + 1) + '.0' : '1.0'; };
@@ -195,10 +195,14 @@ export function ProtocolWorkspace(props: SurfaceViewProps) {
   });
   const scope = requestedScope === 'all' || requestedScope === 'unfiled' ? requestedScope : (programId || 'all');
   const [navigationEpoch, setNavigationEpoch] = useState(0);
+  const [navigationError, setNavigationError] = useState<string | null>(null);
   useEffect(() => {
     const receive = () => {
       const params = consumeNavParams('protocol-dev');
       if (!params?.protocol || !/^[1-9]\d*$/.test(params.protocol)) return;
+      const refusal = surfaceLeaveRefusal();
+      setNavigationError(refusal);
+      if (refusal) return;
       const scopeParam = params.protocolScope === 'unfiled' || params.protocolScope === 'all' ? params.protocolScope : null;
       const url = new URL(window.location.href); url.searchParams.set('protocol', params.protocol);
       if (scopeParam) url.searchParams.set('protocolScope', scopeParam); else url.searchParams.delete('protocolScope');
@@ -220,8 +224,11 @@ export function ProtocolWorkspace(props: SurfaceViewProps) {
     window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
     rememberScope(value);
   };
-  return <ScopedProtocolWorkspace key={`${programId}:${scope}:${navigationEpoch}`} {...props}
-    programId={programId} scope={scope} setScope={changeScope} onCreatedScope={rememberScope} />;
+  return <>
+    {navigationError && <div className="pde-refusal" role="alert">{navigationError}</div>}
+    <ScopedProtocolWorkspace key={`${programId}:${scope}:${navigationEpoch}`} {...props}
+      programId={programId} scope={scope} setScope={changeScope} onCreatedScope={rememberScope} />
+  </>;
 }
 
 function ScopedProtocolWorkspace({ onAsk, onNav, programId, scope, setScope, onCreatedScope }: SurfaceViewProps & {
