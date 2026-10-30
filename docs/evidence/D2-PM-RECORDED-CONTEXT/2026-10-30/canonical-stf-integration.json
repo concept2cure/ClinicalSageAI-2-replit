@@ -1,0 +1,6 @@
+{
+  "incoming_commit": "a97f503b521930b838f310c9087c80644a1e4717",
+  "integration_commit": "7584e50c9ab64a73a28fe36b6eb63c2fe3d93dba",
+  "selected_pm_inputs_unchanged": 144,
+  "review": "Retain the canonical correction of CSR study-tagging roles and its published qualification. No selected PM source/test/browser/runtime input changes. Existing584 distinct focused cases, native8 and component-browser results remain qualified; no repeated counts are added. A fresh production build and unchanged complete pre-push hook qualify the composed application before expected-head publication."
+}

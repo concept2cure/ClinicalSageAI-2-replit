@@ -25,6 +25,12 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }), useAuthUser: () => actual.authService.getUser() };
+});
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: 4 }, currentClientWorkspace: { id: '9', organizationId: '4' } }) }));
+import { authService } from '@/services/portal/authService';
 import { ProjectHome } from '../surfaces/ProjectHome';
 
 const PID = '22222222-2222-4222-8222-222222222222';
@@ -55,11 +61,14 @@ function mockProgram(row: Record<string, unknown>) {
   });
 }
 beforeEach(() => {
+  authService.setToken(`x.${btoa(JSON.stringify({ userId: 7, organizationId: 4 }))}.x`,
+    { id: '7', organizationId: '4', permissions: [] }, 'fixture-refresh', 3600);
   // The navigation handoff carries display hints only; the facts must not use them.
   (window as any).C2C_PROJECT = { id: PID, title: 'Handoff title', product: 'HANDOFF-PRODUCT' };
 });
 afterEach(() => {
   cleanup();
+  authService.endSession(null);
   delete (window as any).C2C_PROJECT;
 });
 

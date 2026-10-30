@@ -36,6 +36,19 @@ features apps." This document applies it as follows:
   clients by the founder's decision once it works. Section 8 gives the order, and names a slice for every item that is
   not live now.
 
+### Implementation update: recorded project context (2026-10-30)
+
+Author's existing Memory and Instructions cards are now reached by
+`surfaces/ProjectRecordedContext.tsx` from `ProjectSide.tsx`, through the existing
+profile reader and the UUID Projects router's current actor/anchor/client scope.
+This supersedes the historical inventory remarks below saying those cards read
+nothing: they now distinguish recorded profile notes, authoritative absence and
+failed reads. Profile instructions remain separate from authored project instructions
+and ProjectSkills; no writer, context source or navigation entry is added.
+The existing AnA profile formatter is corrected to carry recorded risk/decision
+fields without inventing severity or decision status. Qualification and its limits:
+[`D2-PM-RECORDED-CONTEXT`](../../docs/evidence/D2-PM-RECORDED-CONTEXT/2026-10-30/README.md).
+
 ### Accepted direction and implementation boundary (2026-10-26)
 
 **Accepted founder direction:** move specialized former "apps" into the core product's project workflow screens.
@@ -77,6 +90,11 @@ workspace, not separate apps. CMC retains its composition boundary; this placeme
 does not admit RBM or Biostatistics to launch. The existing AnA document generator,
 `editor/DocumentCanvas.tsx`, `DocumentWorkbench.tsx` and `RichSectionEditor.tsx`
 serve every use case. No workflow gets another canvas, generator or editor.
+The existing workspace also offers a suggested order through its same tabs:
+Study design → Statistics → Write protocol → Run checks → Review protocol.
+The guide reports recorded design-link/findings states, not completion. Pending
+section edits protect guide, tab, outline and protocol/scope changes through the
+existing shared leave-guard registry; no approval or write is triggered by a step.
 The implementation inventory and verification boundary are recorded in
 `docs/design/STUDY_PROTOCOL_PROJECT_INITIATION.md` and
 `docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/README.md`.

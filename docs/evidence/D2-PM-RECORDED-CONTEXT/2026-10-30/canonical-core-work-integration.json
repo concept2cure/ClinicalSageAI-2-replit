@@ -1,0 +1,10 @@
+{
+  "incoming_commit": "0ad3a15ceed158232dfb1cb18e543820027c0488",
+  "integration_commit": "f41877d0833c0ddcd9d0653eeb979c7f57e0c32a",
+  "previous_selected_inputs_changed": [
+    "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx"
+  ],
+  "previous_selected_inputs": 137,
+  "current_selected_inputs": 144,
+  "review": "Retain canonical ProjectCoreWork and Plan initiation entry plus existing ProtocolSelectionBar guidance and scoped CSS. The existing ProjectPlan input is the only changed previous binding. Add the newly reached component, selection,3 incoming test files and2 styles to selected binding. Requalify81 actual settings/context/Home cases and46 incoming Plan/core/protocol cases, with no duplicate counts. Both recorded-context browser widths and production build pass. The final unchanged complete hook qualifies the composed application before expected-head publication."
+}

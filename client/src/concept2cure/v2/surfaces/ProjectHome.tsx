@@ -47,6 +47,7 @@ import { ProjectPlan } from './ProjectPlan';
 import { biotechPlanEntry } from './ProjectBiotechPlan';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
+import { ProjectSettings } from './ProjectSettings';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -1492,12 +1493,13 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
 
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
+  const [metadataEpoch, setMetadataEpoch] = useState(0);
   const projectPath = pid ? `/api/c2c/projects/${pid}` : null;
-  const progState = useLiveData<ProgramRow>(projectPath, [projectPath], undefined,
-    { key: JSON.stringify([pid, projectSession.actor, projectSession.key]), current: projectSession.sameRevision });
+  const progState = useLiveData<ProgramRow>(projectPath, [projectPath, metadataEpoch], undefined,
+    { key: JSON.stringify([pid, projectSession.actor, projectSession.key, metadataEpoch]), current: projectSession.sameRevision });
   const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
   const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
-  const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
+  const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null, [pid, metadataEpoch]);
   /* The dossier (FILING_SPINE F23): the readiness card, the module rows and
      what AnA is told, from one read. */
   const dossier = useProjectDossier(pid);
@@ -1815,6 +1817,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           )}
           <ProjectReportsDoor onNav={onNav} />
         </div>
+        {pid && <ProjectSettings programId={pid} onSaved={() => setMetadataEpoch(value => value + 1)} />}
       </div>
 
       {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict

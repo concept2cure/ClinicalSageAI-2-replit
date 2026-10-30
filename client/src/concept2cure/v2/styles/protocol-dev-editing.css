@@ -32,6 +32,13 @@
     border-radius:var(--radius-lg);padding:11px 13px;margin:0 0 12px;}
   .pde-note strong{color:var(--text-200);font-weight:600;}
   .pde-work-heading{margin:0 0 6px;font-size:16px;font-weight:600;color:var(--text-100);}
+  .pde-flow{margin:0 24px 12px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-050);}
+  .pde-flow-label{margin:0;font-size:12px;font-weight:600;color:var(--text-200);}
+  .pde-flow ol{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:8px 0;padding:0;}
+  .pde-flow button[aria-current="step"]{border-color:var(--accent-200);font-weight:600;}
+  .pde-flow-hint{margin:0;font-size:12.5px;line-height:1.55;color:var(--text-300);}
+  .pde-flow-refusal{margin:0 24px 12px;font-size:13px;line-height:1.5;color:var(--text-200);}
+  @media(max-width:600px){.pde-flow{margin-right:12px;margin-left:12px;}.pde-flow li{flex:1 1 140px;}.pde-flow button{width:100%;height:auto;min-height:36px;white-space:normal;}}
 
   /* The protocol picker (2026-10-17): shown when the organisation has more
      than one protocol in development. */

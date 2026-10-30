@@ -1,0 +1,6 @@
+{
+  "incoming_commit": "819029e2c187f2a8d5f092fd3bce836b200977e3",
+  "integration_commit": "85b6fc2cb8a9d5d2b1d734c70450ddbf8a0d364a",
+  "selected_pm_inputs_unchanged": 144,
+  "review": "Retain canonical Vault upload receipts and saved-title confirmations with the accepted upstream qualification. No selected PM source/test/browser/runtime input changes. Existing584 distinct focused cases, native8 and component-browser results remain qualified; no repeated counts are added. A fresh production build and unchanged complete pre-push hook qualify the composed application before expected-head publication."
+}
