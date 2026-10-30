@@ -34,7 +34,9 @@ export function usePeerReviewDecision(scope: PeerReviewScope | null, isCurrent: 
       if (owns()) {
         blockedRef.current = false; setContext(result); setBlocked(false);
         setCsrEvidence(null);
-        setCsrRequired([result.snapshot.module, result.snapshot.productCode, result.snapshot.title].some(labelledCsr));
+        // The server's rule decides (a CSR template or a renamed CSR); the label is the floor.
+        setCsrRequired(result.csrScientificReviewRequired === true
+          || [result.snapshot.module, result.snapshot.productCode, result.snapshot.title].some(labelledCsr));
       }
     } catch (failure) {
       if (owns()) setError(redactInternals(failure instanceof Error ? failure.message : null, 'The complete saved document could not be read. Reload the review record.'));

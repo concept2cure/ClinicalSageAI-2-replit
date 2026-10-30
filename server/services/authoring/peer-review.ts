@@ -157,7 +157,21 @@ async function contextFor(client: RequestSqlClient, input: PeerReviewInput, curr
   return { documentId: input.documentId, actorId: current.actor.id, organizationId: input.tenantId,
     snapshot: current.snapshot, snapshotHash: current.snapshotHash, bindingBasis: AUTHORING_REVIEW_BINDING_BASIS,
     myReview: own && requestAt ? { reviewId: own.id, requestedAt: requestAt, reviewStatus: own.review_status } : null,
-    canReview: reason === null, unavailableReason: reason };
+    canReview: reason === null, unavailableReason: reason,
+    csrScientificReviewRequired: await csrReviewRequired(client, input, current) };
+}
+
+/** The server's own rule, so the screen opens the CSR step for a CSR its label
+ * does not name (2026-10-30: one made from a CSR template, or renamed). When
+ * what the document is cannot be read, the step is shown: the approval itself
+ * refuses either way. */
+async function csrReviewRequired(client: RequestSqlClient, input: PeerReviewInput, current: AdmittedReview): Promise<boolean> {
+  const { requiresCsrScientificReview } = await import('./csr-scientific-review.js');
+  try {
+    return await requiresCsrScientificReview(client, { tenantId: input.tenantId, document: current.document, snapshot: current.snapshot });
+  } catch {
+    return true;
+  }
 }
 
 export async function readAuthoringPeerReviews(connection: RequestConnectable, input: PeerReviewInput) {

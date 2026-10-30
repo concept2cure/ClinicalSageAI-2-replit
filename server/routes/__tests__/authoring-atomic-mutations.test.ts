@@ -323,10 +323,12 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
   });
 
   it('brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT', async () => {
+    // APPROVER: since 2026-10-30 only an approval signature approves at the last
+    // step (authoring-approval-independence.test.ts); a REVIEWER one records review.
     const res = await request(makeApp())
       .post(`/api/authoring/docs/${DOC_ID}/sign`)
-      .set('Authorization', await bearer(['REVIEWER']))
-      .send({ password: PASSWORD, meaning: 'REVIEWER', reason: 'reviewed and approved' });
+      .set('Authorization', await bearer(['APPROVER']))
+      .send({ password: PASSWORD, meaning: 'APPROVER', reason: 'reviewed and approved' });
 
     expect(res.status).toBe(200);
     const begin = sawBegin();
