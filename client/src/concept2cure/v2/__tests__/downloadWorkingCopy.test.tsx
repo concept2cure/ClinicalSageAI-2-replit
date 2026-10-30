@@ -24,9 +24,15 @@
  *  - the menu is not laid out inside the toolbar that scrolls (it was cut off
  *    there): it opens as a manual popover, placed from its button in viewport
  *    coordinates. The clipping itself is shown in a real browser
- *    (docs/evidence/D2-ONE-ANA/2026-10-08/ana-2b-canvas-documents-download/).
+ *    (docs/evidence/D2-ONE-ANA/2026-10-08/ana-2b-canvas-documents-download/);
+ *  - at phone width the toolbar that scrolls is the containing block of the
+ *    menu's 1 px live region, so that box cannot make the page wider than the
+ *    screen (docs/evidence/D2-REVIEW-ROUTING/2026-10-30-RR5/, phone run).
  */
 import React from 'react';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ApiRequestError } from '@/lib/queryClient';
@@ -291,5 +297,41 @@ describe('The menu opens outside the toolbar that scrolls', () => {
   it('taller than the room below, it scrolls inside itself rather than running off the screen', () => {
     expect(placed({ top: 100, bottom: 132, left: 520, right: 600 }, { width: 260, height: 2000 }).maxHeight)
       .toBe(`${window.innerHeight - 132 - 14}px`);
+  });
+});
+
+/* RR5 phone acceptance, 2026-10-30. The menu's live region is `.sr-only`, an
+   absolutely placed 1 px box. The toolbar that scrolls (`.ed-doc-actions` at
+   phone width) was not its containing block, so it did not clip it: the box
+   sat at its place in the unscrolled row, 484 px from the left of a 390 px
+   screen, and made the whole page 485 px wide. A phone browser then laid
+   every fixed layer out on a 485 x 1048 viewport, and Send for review's
+   footer, with its Send button, opened off the bottom right of the screen.
+   jsdom has no layout, so this pins the rules that decide it. */
+describe('The toolbar that scrolls holds what it scrolls', () => {
+  const CSS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'styles');
+  const rules = (file: string, selector: string) => {
+    const css = fs.readFileSync(path.join(CSS_DIR, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const esc = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return [...css.matchAll(new RegExp(`(?:^|[}\\s])${esc}\\s*\\{([^}]*)\\}`, 'g'))].map(m => m[1]);
+  };
+  const declares = (body: string, prop: string, value: string) =>
+    new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*${value}\\s*(?:;|$)`).test(body);
+
+  it('the live region is an absolutely placed box inside the menu’s own wrapper', () => {
+    render(<AuthoringCreateExport {...base} docStatus="DRAFT" fireToast={vi.fn()} />);
+    const live = document.querySelector('.dlm > .sr-only[aria-live="polite"]');
+    expect(live).not.toBeNull();
+    expect(rules('app-v2.css', '.c2c-v2 .sr-only').some(b => declares(b, 'position', 'absolute'))).toBe(true);
+  });
+
+  it('where the toolbar scrolls sideways it is the containing block, so it clips that box', () => {
+    const scrollers = rules('authoring-v2.css', '.ed-doc-actions').filter(b => declares(b, 'overflow-x', 'auto'));
+    expect(scrollers.length).toBeGreaterThan(0);
+    for (const body of scrollers) expect(declares(body, 'position', 'relative'), body).toBe(true);
+  });
+
+  it('the menu itself stays fixed, so the toolbar does not cut it off', () => {
+    expect(rules('authoring-v2.css', '.dlm-menu').some(b => declares(b, 'position', 'fixed'))).toBe(true);
   });
 });

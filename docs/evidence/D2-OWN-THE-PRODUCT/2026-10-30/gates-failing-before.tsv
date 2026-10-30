@@ -1,0 +1,13 @@
+ci:canonicalizers	1	3s	A second canonicalizer is a second answer to "what does this content hash to".
+ci:check-client-reachability	1	0s	mechanism in the PR — do not add it to the baseline silently.
+ci:check-pdf-runtime	1	1s	Total: 2 file(s). New PDF generation should route through server/services/pdf-converter.ts for deterministic, audit-bound output. If this file is a legitimate exception, add it to the APPROVED list wi
+ci:check-unrun-tests	1	0s	  scripts/ci/check-unrun-tests.mjs with the reason.
+ci:dependency-risk	1	9s	Dependency risk gate: unreviewed Critical/High finding(s): @figma/code-connect, body-parser, dompurify, multer, undici, zod
+ci:error-envelope	1	1s	  the commit message.
+ci:lineage-save-gate	1	3s	no longer writes prose — remove it from GUARDED in this script with a reason.
+ci:replay-rebuilds-nothing	2	0s	[ci:replay-rebuilds-nothing] DATABASE_URL is not set. This guard needs a provisioned database; it never skips.
+ci:server-bundle-prod-imports	1	0s	  Build it first: node scripts/build-server.mjs
+ci:tables-live-schema	1	1s	      DATABASE_URL='postgres://…' node scripts/db/deploy-migrate.mjs
+ci:tenant-entry-points	1	1s	  the digest: npm run ci:tenant-entry-points:write-baseline
+ci:toast-canonicality	1	1s	  For a prop, use the exported `FireToast` type — never `(m: string) => void`.
+ci:validation-traceability	1	0s	to the code's new home, or remove the requirement.

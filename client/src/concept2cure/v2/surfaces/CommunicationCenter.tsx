@@ -42,6 +42,7 @@ import { CC_SOURCE_TYPES, CC_INTERACTION_TYPES } from '../fixtures/commcenter';
 import { AgencyInboxList, daysTo, dueInWords, draftResponseWithAna, letterSourceOptions, letterSourceRef, submissionLabel, useAgencyInbox, type LetterOpening } from './AgencyInbox';
 import { programSubmissionsPath, type MarketSubmission } from './programSequence';
 import { MoveMeetingForm, RecordMeetingForm, meetingMoves } from './HaMeetings';
+import { openLetterInCommunication } from './cmcAgencyQuestions';
 import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 import { isSourcesPage, sourcesUrl, type SourcesPage } from './projectSources';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -76,6 +77,9 @@ interface InteractionRow {
   requested_date: string | null;
   scheduled_date: string | null;
   held_date: string | null;
+  /** The meeting's project, when its submission names exactly one; the inbox letter holding its minutes. */
+  project_id?: number | null;
+  minutes_event_id?: string | null;
 }
 
 /* The commitment row, its shape guard and its chip tone live in
@@ -750,6 +754,12 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                   >
                     {m.status ? m.status.replace(/_/g, ' ') : 'unknown'}
                   </span>
+                  {/* The minutes are a letter in the meeting's project inbox, opened here when that project is the open one. */}
+                  {m.minutes_event_id && m.project_id != null && String(m.project_id) === projectId && (
+                    <button className="cc-btn sm" onClick={() => openLetterInCommunication(nav, m.minutes_event_id!)} aria-label={`Open the minutes of ${m.title}`}>
+                      Minutes
+                    </button>
+                  )}
                   {meetingMoves(m.status).length > 0 && (
                     <button className="cc-btn sm" onClick={() => setMovingMeeting(m)} aria-label={`Move ${m.title}`} data-testid="cc-move-meeting">
                       Move

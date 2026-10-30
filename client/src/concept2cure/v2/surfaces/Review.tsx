@@ -140,7 +140,7 @@ function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
       ))}
       {program && (
         <button
-          className="btn ghost"
+          className="btn ghost rv-scope-program"
           aria-pressed={onlyProgram}
           data-on={onlyProgram || undefined}
           style={{ marginLeft: 'auto', ...(onlyProgram ? on : {}) }}
@@ -641,7 +641,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
               <div className="dt-eyebrow">{item.prog ?? item.module ?? ''}{item.role ? ' · ' + item.role : ''}</div>
               <h3 className="dt-title">{item.doc}</h3>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="dt-acts">
               {item.awaitingMyReview
                 ? <>
                     <button className="btn ghost" onClick={() => setDecisionFor(item)}>{I.close} Request changes...</button>
@@ -731,7 +731,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
                     {Math.round(item.conf * 100)}% confidence
                   </span>
                 )}
-                <button className="btn ghost" style={{ height: 28 }} onClick={openEditor} data-testid="rv-open-in-editor">{I.externalLink} Open in editor</button>
+                <button className="btn ghost rv-doc-open" onClick={openEditor} data-testid="rv-open-in-editor">{I.externalLink} Open in editor</button>
               </div>
             </div>
             <div className="rv-doc-page">

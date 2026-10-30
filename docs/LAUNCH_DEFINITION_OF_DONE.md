@@ -659,6 +659,10 @@ deletion record the working agreement requires:
        letter (`source_type` `meeting_minutes`, already in the vocabulary) linked to the interaction. Its agreements
        and commitments become that letter's questions and `regulatory_commitments` (`meeting_commitment`).
      - `c2c_agency_meetings` and the Agency Meetings surface retire in that change.
+     - *2026-10-30:* Communication records and moves meetings, admitted by the meeting's project
+       (`docs/evidence/D2-MEETINGS-IN-COMMUNICATION/2026-10-30/`). A meeting names its minutes letter
+       (`ha_interactions.minutes_event_id`; `docs/evidence/D2-MEETING-MINUTES-IN-INBOX/2026-10-30/`). The retirement of
+       `c2c_agency_meetings` and its surface is next.
 
 ### P-40 — A sealed editing copy is revisable, and the refusal says so
 
@@ -989,6 +993,8 @@ MR-12 Stage 5 step 3. Stage 7's review step is RR4's.
 
 ### P-53 — Parked, with no sessions
 
+*2026-10-30: superseded for eTMF, registrations, NDA/BLA, QC/LIMS and study start-up by P-74, which admits them in order.*
+
 - eTMF;
 - CTMS;
 - safety case processing and E2B;
@@ -1303,6 +1309,46 @@ therapeutic areas and all geographical regions", the founder chose drafting firs
   content (Q5A(R2), Q6B, Q5C), the EU IMPD quality part, the QOS-CE and regional 3.2.R are built and verified.
 - **Unchanged.** Submission Center's packaging and transmission bounds, and the agency gateways, are not widened by
   this decision.
+
+### P-74 — Six areas outside the catalog are admitted, in order: eTMF, nonclinical and IB authoring, registrations, NDA/BLA, QC/LIMS, study start-up
+
+Decided by the founder on 2026-10-30, answering the six catalog questions of the Weave and Veeva Basics parity work
+(`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §6, P-48): "Yes to the sequence but all are needed."
+
+- **Admitted, in this order.** Each is worked only after the one before it lands:
+  1. **eTMF** — `Etmf.tsx`, `etmf.routes.ts`, `tmf-completeness.ts`.
+  2. **Nonclinical study-report ingest into 2.4/2.6, and Investigator's Brochure authoring** — `routes/preclinical.ts`,
+     `m26-nonclinical-summaries.ts`, the `nonclinical` and `investigator-brochure` surfaces.
+  3. **Registrations (RIM lite)** — `routes/rim.ts`, `Registrations.tsx`.
+  4. **NDA/BLA** — `nda-cockpit`, `maa-cockpit`; and CMC / Module 3 widened beyond P-28, slice by slice as P-73 sets
+     out (biologic content, marketing-application Module 3), each verified before it is admitted.
+  5. **QC operations / LIMS** — batch release, CoA, external results, stability; the CMC registers and the `/api/qc`
+     stubs are the starting point, and integrating a CMO's LIMS is weighed against building.
+  6. **Study start-up** — site activation, over the IRB, ICF, 1572 and budget pieces already in the catalog.
+- **This decides timing and scope, not readiness.** The parity design recommended "after D10" for these; the founder
+  overrides the timing. The prerequisites its §6 names still bind each slice, and an area joins `LAUNCH_APPS` in
+  `shared/constants/launch-scope.ts` only when its slice lands with them:
+  - one study store, and one TMF store (`etmf.ts` and `etmf.routes.ts` converged; the losing migration amended in
+    place, RULE 1);
+  - every migration a surface needs added to `C2C_MIGRATION_FILES` (`rim_lite`, the TMF store);
+  - a URS and OQ for each new regulated function, as CMC had (`URS-007`, `OQ-008`);
+  - extracted values confirmed by a person before any composer reads them, and PQ for any model step (RULE 2).
+- **Unchanged.** RULE 3 holds for every slice: each is named "complete", "reach" or "converge" against the existing
+  code listed in the parity design, never "build". Safety/PV, EDC and a content LMS stay "partner or integrate" as the
+  parity design recommends; this decision does not admit them.
+
+### P-75 — eTMF files against the protocol-design study, lives inside Vault, and is a professional-tier module
+
+Decided by the founder on 2026-10-30, the three questions the eTMF slice of P-74 raised
+(`docs/design/ETMF_CONVERGENCE_2026-10-30.md`):
+
+- **Study record.** eTMF files against `cdisc_prm_studies`, the study created in Protocol Development (project-scoped,
+  same-organisation keyed), picked from the open project. It is reached, not rebuilt. Device and CRO trials get no
+  TMF until CTMS converges the study stores.
+- **Placement.** eTMF is a feature of the **Vault** app: `LAUNCH_APPS` vault gains the `etmf` surface, and the app
+  count stays seven.
+- **Tier.** eTMF is a **professional**-tier module. Its catalog row is kept and healed with that tier; it is not
+  listed in the launch `modules`, which would grant it to every organisation.
 
 ## How sessions run under this file
 

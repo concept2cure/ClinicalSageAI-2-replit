@@ -1151,6 +1151,13 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run test:ci-scripts
 
+      # The CSR cortex suites run under node:test (they transpile the real modules into
+      # an isolated directory). They matched no runner until 2026-10-30, so 95 tests,
+      # two of them failing, had never run (ci:check-unrun-tests).
+      - name: CSR cortex suites (node:test)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run test:cortex
+
       - name: Run TypeScript check (no regression vs baseline)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The .typecheck-baseline.json count has been ratcheted down to 0

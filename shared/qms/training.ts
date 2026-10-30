@@ -58,8 +58,8 @@ export const qmsTrainingSectionSchema = z.object({
   body: z.string().min(1).refine(value => value.trim().length > 0, 'Controlled text must not be blank.'),
 });
 
-/** Added to meta.training on GET /api/mdx/qms/documents/:id; data stays intact. */
-export const qmsTrainingContextSchema = z.object({
+/** One version's training context. */
+const qmsTrainingVersionContextBase = z.object({
   documentId: id,
   docNumber: z.string().min(1),
   title: z.string().min(1),
@@ -71,7 +71,13 @@ export const qmsTrainingContextSchema = z.object({
   unavailableReason: z.string().min(1).nullable(),
   sections: z.array(qmsTrainingSectionSchema),
   acknowledgement: qmsTrainingAcknowledgementSchema.nullable(),
-}).superRefine((value, ctx) => {
+  /** Whether this version is in force today (false: approved for a later day, and acknowledgeable ahead of it; P-49). */
+  inForce: z.boolean().optional(),
+  /** The day this version takes or took effect (UTC), when it has one. */
+  effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+});
+type VersionContext = z.infer<typeof qmsTrainingVersionContextBase>;
+function versionContextRules(value: VersionContext, ctx: z.RefinementCtx) {
   if (value.eligible && (value.status !== 'effective' || !value.contentDigest || !value.sections.length || value.unavailableReason !== null)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Eligible training requires verified readable release content.' });
   }
@@ -79,7 +85,16 @@ export const qmsTrainingContextSchema = z.object({
   if (ack && (ack.documentId !== value.documentId || ack.documentVersion !== value.documentVersion || ack.contentDigest !== value.contentDigest)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'The acknowledgement must cover this document revision.' });
   }
-});
+}
+
+/**
+ * Added to meta.training on GET /api/mdx/qms/documents/:id; data stays intact.
+ * The version in force, and (`successor`) the version approved for a later day
+ * while it waits, which the people assigned read and acknowledge ahead of it.
+ */
+export const qmsTrainingContextSchema = qmsTrainingVersionContextBase.extend({
+  successor: qmsTrainingVersionContextBase.superRefine(versionContextRules).nullable().optional(),
+}).superRefine(versionContextRules);
 
 export const qmsTrainingAcknowledgementResponseSchema = z.object({
   data: qmsTrainingAcknowledgementSchema,
