@@ -156,9 +156,10 @@ describe('project MDX workflow — doors and headings', () => {
    docs/evidence/D2-ONE-ANA/2026-10-29/device-features-in-project/). The founder made 21 MDX surfaces features of the
    client's project (MDX_PROJECT_FEATURE_SURFACE_IDS, 62a8d5e7). device-tasks has since folded into Tasks
    (fold-device-tasks), device-vault into the Vault (fold-f3-vault), risk and design-controls into device-engineering
-   (fold F1c) and ivd-completeness into device-diagnostics (fold F2; grant-continuity-and-f1c-f2), so 16 remain. Plan's
-   device workflow opens twelve of them. Each of the other four has no door from inside the project, for the reason
-   given below. Three fold into a place the project already reaches, and one is the old device home
+   (fold F1c), ivd-completeness into device-diagnostics (fold F2; grant-continuity-and-f1c-f2), and the
+   organization-wide blocker list device-validation retired (fold F5 item 2; fold-f5-device-filing), so 15 remain.
+   Plan's device workflow opens twelve of them. Each of the other three has no door from inside the project, for the
+   reason given below. Two fold into a place the project already reaches, and one is the old device home
    (FUNCTION_PARITY.md; INFORMATION_ARCHITECTURE.md section 5 and convergences 3, 7, 8, 11). */
 const REACHED_FROM_PLAN = [
   'device-510k', 'device-pma', 'device-cer', 'device-diagnostics',
@@ -171,7 +172,6 @@ const REACHED_FROM_PLAN = [
 const NO_PROJECT_DOOR: Record<string, string> = {
   /* (b) Folds into a place the project already reaches; a door would keep a duplicate. */
   'device-analytics': 'folds into Reporting & analytics',
-  'device-validation': 'folds into Submission Center',
   'device-submission': 'folds into Submission Center',
   /* (c) The old device home. */
   'device-workstream': 'the old device portfolio, which folds into Projects (A2.10)',

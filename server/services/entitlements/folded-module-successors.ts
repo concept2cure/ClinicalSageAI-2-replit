@@ -62,6 +62,9 @@ export const FOLDED_MODULE_SUCCESSORS: Readonly<Record<string, string>> = Object
   // Fold F2: the IVDR readiness board folded into IVDR evidence (product
   // 1a6701ea6; retired with this entry).
   'ivd-completeness': 'device-diagnostics',
+  // Fold F5 item 2 (decision P-61 item 2): the organization-wide blocker list
+  // retired into each filing's readiness; its address opens Submission Center.
+  'device-validation': 'submission-center',
 });
 
 /** Folded screens with no catalogue row ever, so no subscription to carry. */

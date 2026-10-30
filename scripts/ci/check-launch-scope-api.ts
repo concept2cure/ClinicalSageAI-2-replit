@@ -238,7 +238,7 @@ export const REAL: Layout = {
       'device-presub': 'PreSubManager',
       // No device-vault: it folded into the Vault (D2, fold F3, 2026-10-29).
       // No device-tasks: it folded into Tasks (D2, 2026-10-29).
-      'device-validation': 'ValidationSurface',
+      // No device-validation: the organization-wide blocker list retired (D2, fold F5 item 2, 2026-10-29).
       'device-submission': 'SubmissionsSurface',
       'device-analytics': 'AnalyticsSurface',
     },

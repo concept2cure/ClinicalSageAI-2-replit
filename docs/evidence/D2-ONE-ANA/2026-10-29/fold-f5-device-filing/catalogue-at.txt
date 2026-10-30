@@ -1,0 +1,10 @@
+# Catalogue rows on a fresh database replaying every catalogue writer of C2C_MIGRATION_FILES, in deploy order (tools/catalog-at.mjs.txt).
+# ref HEAD: 13 catalogue writers replayed on a fresh database
+device-validation: row, tiers ["standard"], industries [], deprecated false
+device-submission: row, tiers ["standard"], industries [], deprecated false
+submission-center: row, tiers ["standard"], industries [], deprecated false
+
+# ref WT: 13 catalogue writers replayed on a fresh database
+device-validation: no row
+device-submission: row, tiers ["standard"], industries [], deprecated false
+submission-center: row, tiers ["standard"], industries [], deprecated false

@@ -59,7 +59,8 @@ describe('the real registry with the device features in Projects (62a8d5e7)', ()
     ['device-engineering', 'mdx/hooks/useEngineering.ts'], ['device-software', 'mdx/hooks/useSoftware.ts'],
     ['device-postmarket', 'mdx/hooks/usePostmarket.ts'], ['device-analytics', 'mdx/hooks/useAnalytics.ts'],
     ['device-workstream', 'mdx/hooks/useClientReview.ts'], ['device-submission', 'mdx/hooks/useSubmissions.ts'],
-    ['device-validation', 'mdx/hooks/useWorkbench.ts'], ['human-factors', 'v2/surfaces/HumanFactors.tsx'],
+    // No device-validation: the organization-wide blocker list retired (fold F5 item 2, 2026-10-29), with its hook.
+    ['human-factors', 'v2/surfaces/HumanFactors.tsx'],
     // The IVDR family board names its read, and the workbench beside it; device-diagnostics mounts both (F2, folded 2026-10-29).
     ['device-diagnostics', 'v2/surfaces/IvdReadinessBoard.tsx'], ['device-diagnostics', 'v2/surfaces/IvdAssessmentWorkbench.tsx'],
     // The risk register and the design-controls trace name their reads; Engineering mounts them (F1 slice B; F1c folded 2026-10-29).

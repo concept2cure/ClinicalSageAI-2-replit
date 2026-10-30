@@ -507,24 +507,12 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   // No device-vault. The device kit's document vault folded into the Vault (D2,
   // fold F3, 2026-10-29); 'device-vault' is a DEEP_LINK_ALIASES entry for 'vault'.
   // Its claim, /api/mdx/vault, went with its router (server/routes/mdx-vault.ts).
-  {
-    id: 'device-validation',
-    label: 'Submission blockers',
-    navTier: 'project',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'shieldAlert',
-    uiKit: 'mdx',
-    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/submission-ops root.
-    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/submission-ops/blockers'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Open blockers across programs. The only blockers view in the product.',
-  },
+  // No device-validation. The organization-wide blocker list retired (D2, fold F5
+  // item 2, 2026-10-29; decision P-61 item 2): a blocker belongs to a filing, from
+  // that filing's deterministic readiness (EstarFilingPanel), and is closed by
+  // fixing it. 'device-validation' is a DEEP_LINK_ALIASES entry for
+  // 'submission-center'. Its claim, /api/submission-ops/blockers, has no client
+  // caller now, so no screen claims it.
   {
     id: 'device-submission',
     label: 'Device submission packages',
@@ -535,7 +523,11 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     uiKit: 'mdx',
     // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/submission-ops root.
     // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/submission-ops/blockers'],
+    // 2026-10-29 (D2, fold F5 item 2): /api/submission-ops/blockers was the
+    // retired blocker list's call, reached through the one Workbench file both
+    // screens shared. This screen calls only /api/submission-ops/packages, which
+    // the Vault and Tasks claim.
+    apiPrefixes: [],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

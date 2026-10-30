@@ -72,12 +72,15 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // trace folded into Engineering evidence, and the IVDR readiness board into
     // IVDR evidence, both already here; their old addresses resolve there, and a
     // subscription to either carries (P-61 item 4, folded-module-successors.ts).
+    // 2026-10-29 (D2, fold F5 item 2): the organization-wide blocker list
+    // retired; a blocker is its filing's readiness (P-61 item 2). Its address
+    // opens Submission Center, and a subscription carries there.
     surfaces: [
       'projects', 'project-home', 'tasks', 'communication-center',
       'device-workstream', 'device-510k', 'device-pma', 'device-cer',
       'device-diagnostics', 'device-clinical-studies', 'device-software',
       'device-engineering', 'device-udi', 'device-postmarket', 'device-presub',
-      'device-validation', 'device-submission',
+      'device-submission',
       'device-analytics', 'human-factors', 'labeling',
     ],
     modules: ['projects', 'tasks'],

@@ -1,16 +1,21 @@
 /**
- * Cross-program workbench surfaces:
- *   - ValidationSurface    Validation center — programs matrix + rule list
+ * Cross-program workbench surface:
  *   - SubmissionsSurface   Submission center — pipeline + list + detail drawer
  *
  * Ported verbatim from ui_kits/mdx/Workbench.jsx.
- * The vault lives in surfaces/VaultSurface.tsx (data/vault.ts +
- * hooks/useVault.ts) alongside the other extracted surfaces.
  *
  * No task panel. The task workbench folded into Tasks (D2, 2026-10-29;
  * docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/): it drew the per-owner
  * rows of /api/submission-ops/workload as untitled, unassigned task cards, while
  * Tasks (v2/surfaces/TaskBoard.tsx) reads the same work item by item.
+ *
+ * No validation panel. The organization-wide blocker list (device-validation)
+ * retired (D2, fold F5 item 2, 2026-10-29; decision P-61 item 2;
+ * docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/): it listed the open
+ * c2c_blockers rows of every project and drew a low-severity one as "Pass". A
+ * blocker belongs to a filing, from that filing's deterministic readiness
+ * (mdx/surfaces/EstarFilingPanel.tsx), and is closed by fixing it. Its address
+ * opens Submission Center, which lists every tracked device filing.
  */
 
 import * as React from 'react';
@@ -18,104 +23,19 @@ import { I } from '../icons';
 import {
   SUBMISSION_PIPELINE,
   type Submission,
-  type ValidationProgram,
-  type ValidationRule,
-  type ValidationSummary,
 } from '../data/workbench';
 import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
-import { useWorkbenchValidation } from '../hooks/useWorkbench';
-import { useMdxPrograms } from '../hooks/useMdxPrograms';
 import { EmptyState } from '../../v2/dataConnect';
-import { downloadCsv } from '../../v2/download';
 
 /**
- * Column widths for the validation-rules table, shared by its head and its rows
- * so the two cannot drift.
+ * The empty read, shared so a panel awaiting its first response renders the
+ * same zero every time instead of allocating a new array each render.
  *
- * Every column but Sev and Since is fractional. The fixed widths they replace —
- * 88/110/110/140 plus a bare `1fr` — summed to 608px of tracks and gaps inside
- * the 590px this table is given on a 748px surface, which left `1fr` pinned at
- * the min-content width of the word "Message" and still overflowed. Fractions
- * divide the room that exists instead of asserting room that does not, and
- * `minmax(0, …)` is what lets them go below their content rather than refusing.
+ * It replaced an example set reached through sample mode (see the note in
+ * data/workbench.ts). The panel has a live endpoint, so the honest reading
+ * before it answers is nothing, not somebody else's work.
  */
-const VALIDATION_COLS =
-  '76px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2fr) 88px';
-
-/**
- * Empty reads, shared so a panel awaiting its first response renders the same
- * zero every time instead of allocating a new array each render.
- *
- * Each of these replaced an example set reached through sample mode. Three of
- * the four had no banner, so the surface showed invented tasks, validation
- * findings and templates as if they were the tenant's own; the fourth is
- * documented where it was removed. Every panel here has a live endpoint, so
- * the honest reading before it answers is nothing, not somebody else's work.
- */
-const NO_VALIDATION_RULES: ValidationRule[] = [];
-const NO_VALIDATION_PROGRAMS: ValidationProgram[] = [];
-const NO_VALIDATION_SUMMARY: ValidationSummary[] = [];
 const NO_SUBMISSIONS: Submission[] = [];
-
-/**
- * The three readings a panel can be in when it is holding no rows: still
- * fetching, failed, or genuinely empty. They are not the same statement, and
- * rendering all three as blank space is how a surface comes to tell a user
- * "you have no work" about a request that never landed.
- *
- * Returns null the moment there is anything to show, so it composes in front
- * of an existing list without wrapping it.
- */
-export function PanelState({
-  rows,
-  loading,
-  error,
-  refresh,
-  icon,
-  title,
-  errorTitle,
-  hint,
-  action,
-  testId,
-}: {
-  rows: readonly unknown[];
-  loading: boolean;
-  error: string | null;
-  refresh: () => void;
-  icon: React.ReactNode;
-  /** What it means for this panel to be legitimately empty. */
-  title: string;
-  /** What to say when the read FAILED. Deliberately a separate string: a
-   *  failure is a different statement from an emptiness, not a rewording. */
-  errorTitle: string;
-  hint: string;
-  action?: { label: string; onAct: () => void };
-  testId: string;
-}) {
-  if (rows.length > 0) return null;
-  if (error) {
-    return (
-      <EmptyState
-        tone="error"
-        icon={icon}
-        title={errorTitle}
-        hint={error}
-        retry={refresh}
-        testId={`${testId}-error`}
-      />
-    );
-  }
-  return (
-    <EmptyState
-      busy={loading}
-      icon={icon}
-      title={loading ? 'Loading…' : title}
-      hint={loading ? '' : hint}
-      {...(loading ? {} : action ? { action } : {})}
-      testId={testId}
-    />
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared props
@@ -123,243 +43,6 @@ export function PanelState({
 
 export interface WorkbenchProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Validation
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function ValidationSurface({ onAskAna }: WorkbenchProps) {
-  const [sev, setSev] = React.useState<'all' | 'err' | 'warn'>('all');
-  /* Slice 0 (map row `device-validation`): each card used to set a program
-     filter on the rules. A c2c_blockers row names a project and no program,
-     so the filter matched nothing and one click left a bare table header,
-     which read as "this program has no blockers". There is no filter until
-     the blockers read carries a key that joins a blocker to a program. */
-
-  /* Live validation: per-program readiness matrix derived by joining
-     /api/submission-ops/blockers with the live program list, plus the
-     full rules table (each blocker becomes one row). Falls back to the
-     kit fixture during load + on error. */
-  const programsState = useMdxPrograms();
-  const programsList = programsState.programs ?? [];
-  const validation = useWorkbenchValidation(programsList);
-  const sourceRules    = validation.rules ?? NO_VALIDATION_RULES;
-  const sourcePrograms = validation.programs ?? NO_VALIDATION_PROGRAMS;
-  const sourceSummary  = validation.summary ?? NO_VALIDATION_SUMMARY;
-
-  const rules = sourceRules.filter(r => sev === 'all' || r.severity === sev);
-
-  return (
-    <>
-      <div className="page-header">
-        <div>
-          <div className="page-eyebrow">Workbench</div>
-          <h1 className="page-title">Validation center</h1>
-          {/* Slice 0 (map row `device-validation`): this read "eSTAR required-field
-              rules and claim-evidence checks, every program, one dashboard". The
-              page runs neither; it reads the open rows of c2c_blockers. */}
-          <div className="page-sub">
-            Open blockers recorded against your organization’s projects.
-          </div>
-        </div>
-        <div className="page-actions">
-          {/* Slice 0 (map row `device-validation`): on a failed or unanswered
-              read this wrote a header-only CSV, which reads as a clean report.
-              It exports only a read that answered. */}
-          <button
-            className="btn ghost small"
-            disabled={validation.rules === null}
-            title={validation.rules === null ? 'Available once the open blockers have been read' : undefined}
-            onClick={() => {
-              if (validation.rules === null) return;
-              const headers = ['Severity', 'Rule', 'Project', 'Category', 'Message', 'Since'];
-              const rows = validation.rules.map(r => [r.severity, r.id, r.project, r.category, r.msg, r.since]);
-              downloadCsv(
-                `validation-report-${new Date().toISOString().slice(0, 10)}.csv`,
-                headers,
-                rows,
-              );
-            }}
-          >
-            {I.download} Export report
-          </button>
-          <button
-            className="btn primary small"
-            /* Slice 0 (map row `device-validation`): the prompt hard-coded "the 3
-               blockers" whatever the list held. It states the count this screen
-               read, and no count before the read has answered. */
-            onClick={() =>
-              onAskAna(
-                validation.rules
-                  ? `Summarize the ${validation.rules.length} open blocker${validation.rules.length === 1 ? '' : 's'} recorded across my projects`
-                  : 'Summarize the open blockers recorded across my projects',
-              )
-            }
-          >
-            {I.sparkles} Ask Claude to triage
-          </button>
-        </div>
-      </div>
-
-      <div className="metrics-row">
-        {sourceSummary.map((m, i) => (
-          <div key={i} className="metric-card" data-tone={m.tone || ''}>
-            <div className="metric-label">{m.label}</div>
-            <div className="metric-val">
-              {m.metric}
-              {m.unit && <span className="unit">{m.unit}</span>}
-            </div>
-            <div className="metric-meta">{m.meta}</div>
-          </div>
-        ))}
-      </div>
-
-      <section className="section">
-        {/* Slice 0 (map row `device-validation`): this read "Readiness by
-            program · Column order · errors · warnings · pass". Each card draws
-            the project's stored progressPercent, not an assessment, and no
-            card can show counts (see `errs` below). A project with none
-            recorded reads 0% (useMdxPrograms), so the line says so. */}
-        <div className="section-head">
-          <h2>Recorded progress by project</h2>
-          <span className="section-sub">
-            Stored project progress, not an eSTAR assessment. A project with none recorded shows 0%.
-          </span>
-        </div>
-        {/* Slice 0 (map row `device-validation`): the project read's failure
-            was dropped (`programs ?? []`), so a failed read showed the idle
-            "nothing to validate". Both reads feed this panel; either failing
-            is a failure, and retry re-runs both. */}
-        <PanelState
-          rows={sourcePrograms}
-          loading={validation.loading || programsState.loading}
-          error={validation.error ?? programsState.error}
-          refresh={() => {
-            validation.refresh();
-            programsState.refresh();
-          }}
-          icon={I.shieldCheck}
-          title="No projects to show"
-          errorTitle="Could not load the validation matrix"
-          hint="Each project appears here with its recorded progress."
-          testId="workbench-no-validation-programs"
-        />
-        <div className="val-matrix">
-          {/* A card, not a button: it filters nothing (see `sev` above). The
-              inline style takes off the pointer and the hover lift the
-              stylesheet gives the card for its old click. */}
-          {sourcePrograms.map(p => (
-            <div
-              key={p.id}
-              className="val-prog-card"
-              data-status={p.status}
-              style={{ cursor: 'default', transform: 'none' }}
-            >
-              <div className="val-prog-head">
-                <span className="val-prog-code mono">{p.code}</span>
-                <span className={`status-pill ${p.status}`}>{p.status}</span>
-              </div>
-              <div className="val-prog-title">{p.title}</div>
-              <div className="val-prog-path">{p.pathway}</div>
-              <div className="val-prog-path">Recorded progress</div>
-              <div className="val-prog-bars">
-                {p.readiness !== null && <div
-                  className="val-bar"
-                  role="img"
-                  aria-label={`Recorded progress ${p.readiness}%`}
-                >
-                  <div className="val-bar-fill" style={{ width: `${p.readiness}%` }} />
-                </div>}
-                <span className="val-bar-pct mono">{p.readiness === null ? 'Not recorded' : `${p.readiness}%`}</span>
-              </div>
-              <div className="val-prog-counts">
-                {p.errs === null ? (
-                  <span className="val-count" title="Blockers are recorded on the tracking record and cannot be attributed to this project">
-                    Blockers not linked to this project
-                  </span>
-                ) : (
-                  <>
-                    <span className="val-count err">{p.errs} err</span>
-                    <span className="val-count warn">{p.warns} warn</span>
-                    <span className="val-count ok">{p.ok} ok</span>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="section-head">
-          <h2>Rules</h2>
-          <div className="seg small">
-            <button className="seg-btn" data-on={sev === 'all'} onClick={() => setSev('all')}>All</button>
-            <button className="seg-btn" data-on={sev === 'err'} onClick={() => setSev('err')}>Blockers</button>
-            <button className="seg-btn" data-on={sev === 'warn'} onClick={() => setSev('warn')}>Warnings</button>
-          </div>
-        </div>
-        {/* Slice 0 (map row `device-validation`): an empty read rendered a table
-            header over blank space. It says none is recorded and where a
-            filing's readiness is assessed. Only on a read that answered: a
-            failed one says so here too, never as empty. */}
-        {validation.error && validation.rules === null && (
-          <EmptyState
-            tone="error"
-            icon={I.shieldCheck}
-            title="Could not load the open blockers"
-            hint={validation.error}
-            retry={validation.refresh}
-            testId="workbench-blockers-error"
-          />
-        )}
-        {validation.rules !== null && validation.rules.length === 0 && (
-          <EmptyState
-            icon={I.shieldCheck}
-            title="No open blockers recorded"
-            hint={
-              'Blockers are not added on this screen. They are recorded against a project’s submission ' +
-              'package, for example from a blocking issue in agency correspondence. Each device filing’s ' +
-              'readiness is assessed on the eSTAR filing readiness panel in its 510(k), PMA or IVD workspace.'
-            }
-            testId="workbench-no-blockers"
-          />
-        )}
-        <div className="ctable">
-          <div
-            className="ctable-head"
-            style={{ gridTemplateColumns: VALIDATION_COLS }}
-          >
-            <div>Sev</div>
-            <div>Rule</div>
-            <div>Project</div>
-            <div>Category</div>
-            <div>Message</div>
-            <div>Since</div>
-          </div>
-          {rules.map(r => (
-            <div
-              key={r.id}
-              className="ctable-row"
-              style={{ gridTemplateColumns: VALIDATION_COLS }}
-            >
-              <div>
-                <span className={`sev-pill ${r.severity}`}>
-                  {r.severity === 'err' ? 'Blocker' : r.severity === 'warn' ? 'Warning' : 'Pass'}
-                </span>
-              </div>
-              <div className="mono">{r.id}</div>
-              <div>{r.project}</div>
-              <div>{r.category}</div>
-              <div>{r.msg}</div>
-              <div>{r.since}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-    </>
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

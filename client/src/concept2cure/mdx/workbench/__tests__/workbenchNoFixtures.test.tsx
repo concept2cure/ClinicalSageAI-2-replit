@@ -21,8 +21,10 @@
  * The data module keeps no fabricated record. The Tasks panel and its three
  * live-read cases went with the fold into Tasks (D2, 2026-10-29;
  * docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/); Tasks pins the same
- * failed-read-is-not-empty rule in taskBoardResponseShape.test.tsx. The Validation and
- * Submissions panels have their own tests beside this file.
+ * failed-read-is-not-empty rule in taskBoardResponseShape.test.tsx. The Validation
+ * panel and its test retired with the organization-wide blocker list (D2, fold F5
+ * item 2, 2026-10-29; decision P-61 item 2). The Submissions panel has its own
+ * test beside this file.
  */
 import { describe, it, expect } from 'vitest';
 

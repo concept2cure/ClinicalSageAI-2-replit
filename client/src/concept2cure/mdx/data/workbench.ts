@@ -1,5 +1,5 @@
 /**
- * Workbench shapes — Validation Center, Submission Center.
+ * Workbench shapes — Submission Center.
  *
  * This module is types and fixed taxonomy now; the row sets it was ported
  * from data-workbench.jsx with are gone. See the note at the foot of the file
@@ -14,17 +14,12 @@ export type Tone = 'ok' | 'warn' | 'err' | 'default' | 'active' | 'review' | 'bl
 
 
 
-// ── Validation Center ────────────────────────────────────────────────────
-
-export interface ValidationSummary { label: string; metric: string; unit?: string; meta: string; tone?: Tone }
-/** errs / warns / ok are null when no blocker can be attributed to the program
- *  — see useWorkbenchValidation. Never 0 by default: 0 is a finding.
- *  `readiness` is the project's stored progressPercent, not an assessment; it
- *  is null when none is recorded. */
-export interface ValidationProgram { id: string; code: string; title: string; pathway: string; errs: number | null; warns: number | null; ok: number | null; status: 'blocked' | 'active' | 'complete'; readiness: number | null }
-/** Slice 0: `project` replaces `prog` and `sect`. A c2c_blockers row names a
- *  project and no program code or section label, so those were always '—'. */
-export interface ValidationRule { id: string; project: string; severity: 'err' | 'warn' | 'ok'; category: string; msg: string; since: string }
+/* No validation shapes. The organization-wide blocker list (device-validation)
+   retired (D2, fold F5 item 2, 2026-10-29; decision P-61 item 2): a blocker
+   belongs to a filing, from that filing's deterministic readiness
+   (EstarFilingPanel). Its ValidationSummary, ValidationProgram and
+   ValidationRule types went with it, the last with its "ok" severity, which
+   drew an open low-severity blocker as "Pass". */
 
 
 

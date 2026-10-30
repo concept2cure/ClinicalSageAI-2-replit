@@ -42,7 +42,10 @@ export const MDX_SURFACE_IDS = [
   // 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/): Tasks
   // reads the same work item by item, and the old id is a DEEP_LINK_ALIASES
   // entry that lands there.
-  'device-validation',
+  // No `device-validation`. The organization-wide blocker list retired (D2, fold
+  // F5 item 2, 2026-10-29; decision P-61 item 2): a blocker belongs to a filing,
+  // from that filing's deterministic readiness (EstarFilingPanel), and the old id
+  // is a DEEP_LINK_ALIASES entry for Submission Center.
   'device-submission',
   'device-analytics',
 ] as const;

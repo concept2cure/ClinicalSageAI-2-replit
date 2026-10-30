@@ -663,7 +663,8 @@ export const SEGMENT_MODULES = {
         'decision-lineage',
       ],
     },
-    { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
+    // 2026-10-29 (D2, fold F5 item 2): the organization-wide blocker list retired; each filing's readiness is its own.
+    { label: 'Submit & file', items: ['submission-center', 'device-submission', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
@@ -1030,6 +1031,15 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      IVDR readiness board and the IVD assessment workbench are device-diagnostics'
      readiness panel, for the open project (IvdSurface.tsx). */
   'ivd-completeness': 'device-diagnostics',
+  /* The organization-wide blocker list retired (D2, fold F5 item 2, 2026-10-29;
+     decision P-61 item 2; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/).
+     A blocker belongs to a filing, from that filing's deterministic readiness
+     (EstarFilingPanel, on the device pathway screens), and is closed by fixing
+     it; the list's "Pass" for a low-severity blocker is not carried. Submission
+     Center lists every tracked device filing. Old links, ⌘K hits and AnA's
+     `device-validation` target land there; a subscription carries to it
+     (decision P-61 item 4, server/services/entitlements/folded-module-successors.ts). */
+  'device-validation': 'submission-center',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate

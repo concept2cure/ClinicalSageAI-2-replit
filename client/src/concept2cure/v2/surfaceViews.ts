@@ -440,7 +440,8 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'device-software': { component: DeviceSurfaces['device-software'], full: true },
   'device-submission': { component: DeviceSurfaces['device-submission'], full: true },
   'device-udi': { component: DeviceSurfaces['device-udi'], full: true },
-  'device-validation': { component: DeviceSurfaces['device-validation'], full: true },
+  // No device-validation: the organization-wide blocker list retired (D2, fold F5
+  // item 2, 2026-10-29); its address opens Submission Center (DEEP_LINK_ALIASES).
   'device-workstream': { component: DeviceSurfaces['device-workstream'], full: true },
   'dispatch-readiness': { component: DispatchReadiness, full: true },
   'doc-journey': { component: DocJourney },

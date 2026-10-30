@@ -316,8 +316,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         say: 'On the same screen, design controls are the engineering backbone: requirements, verification and validation traced end to end — the spine an auditor follows and the team maintains here.',
       },
       {
-        say: 'The validation center is where V&V evidence lands and its completeness is tracked against the plan — protocols, runs, and what is still open.',
-        navigate: { target: 'device-validation' },
+        // 2026-10-29 (D2, fold F5 item 2): no organization-wide blocker list. A
+        // blocker is its filing's own readiness, and Submission Center lists the filings.
+        say: 'What stops a device filing belongs to that filing: its eSTAR filing readiness, assessed against the project\'s own authored content, names every gap, and a gap closes when it is fixed. Submission Center lists every filing being tracked.',
+        navigate: { target: 'submissions' },
       },
       {
         say: 'The significant-change worklist is the call they make all the time: for each change, is it a letter-to-file or a new 510(k), and what is the EU MDR significant-change determination.',

@@ -1,0 +1,108 @@
+V1: device-validation has no alias (an old link is a 404)
+  file: client/src/concept2cure/v2/registryModel.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-validation is retired into each filing's own readiness > resolves the old id to Submission Center from a link, an in-app move and AnA, with or without a project open
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (1 failed | 22 passed (23))
+    x the mapping > agrees with the screens: each folded id opens its target
+  restored byte for byte: yes (sha256 075a8d297336ad9a)
+
+V2: device-validation left in the Projects scope list
+  file: shared/constants/launch-scope.ts
+  test: server/services/entitlements/__tests__/launch-scope.test.ts
+  result: RED (1 failed | 43 passed (44))
+    x the retired organization-wide blocker list > is in no scope list and no new grant: each filing's readiness holds its blockers (D2, fold F5 item 2, 2026-10-29)
+  test: client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-validation is retired into each filing's own readiness > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 d01f894e7ff6e608)
+
+V3: device-validation left in the MDX project features
+  file: shared/constants/mdx-project-features.ts
+  test: server/services/entitlements/__tests__/launch-scope.test.ts
+  result: RED (2 failed | 42 passed (44))
+    x the scope list itself > reaches MDX as project features without adding app or module grants
+    x the retired organization-wide blocker list > is in no scope list and no new grant: each filing's readiness holds its blockers (D2, fold F5 item 2, 2026-10-29)
+  test: client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-validation is retired into each filing's own readiness > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 38971894f469a037)
+
+V4: the host publishes device-validation again
+  file: client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+  test: client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-validation is retired into each filing's own readiness > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish
+  restored byte for byte: yes (sha256 a8e6af3b4cc942cc)
+
+V5: a client screen lists the organization's blockers again
+  file: client/src/concept2cure/mdx/workbench/Workbench.tsx
+  test: client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-validation is retired into each filing's own readiness > leaves no client code that lists the organization's blockers or names the retired screen
+  restored byte for byte: yes (sha256 1d5e09cc39cc8763)
+
+V6: device-validation back on the device rail
+  file: client/src/concept2cure/v2/registryModel.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-validation is retired into each filing's own readiness > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 075a8d297336ad9a)
+
+V7: the medtech tour stops at device-validation again
+  file: shared/navigation/demo-scripts.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-validation is retired into each filing's own readiness > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+  restored byte for byte: yes (sha256 4e454bc5c106276b)
+
+V8: AnA's handle describes the retired validation workbench again
+  file: shared/navigation/index.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-validation is retired into each filing's own readiness > resolves the old id to Submission Center from a link, an in-app move and AnA, with or without a project open
+  restored byte for byte: yes (sha256 6d5a410cbed6631b)
+
+V9: the kit keeps a ValidationRule shape with its 'ok' severity
+  file: client/src/concept2cure/mdx/data/workbench.ts
+  test: client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+  result: RED (1 failed | 4 passed (5))
+    x device-validation is retired into each filing's own readiness > leaves no client code that lists the organization's blockers or names the retired screen
+  restored byte for byte: yes (sha256 77e90a29c4085c83)
+
+V10: the mapping drops device-validation
+  file: server/services/entitlements/folded-module-successors.ts
+  test: server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+  result: RED (4 failed | 19 passed (23))
+    x the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+    x the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-validation
+    x the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+    x the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+  restored byte for byte: yes (sha256 53a9e7a3c0dbf5ef)
+
+V11: 20260810 upserts device-validation again
+  file: db/migrations/20260810_reconcile_module_catalog.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (25 skipped (25))
+  restored byte for byte: yes (sha256 885b492e488fd129)
+
+V12: 20260810 keeps device-validation off its deprecation (keep-list)
+  file: db/migrations/20260810_reconcile_module_catalog.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (1 failed | 24 passed (25))
+    x Retired organization-wide blocker list > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+  restored byte for byte: yes (sha256 885b492e488fd129)
+
+V13: 20260823 keeps the device-validation packaging row
+  file: db/migrations/20260823_module_catalog_commercial_packaging.sql
+  test: tests/schema-contract/catalog-module-claims.contract.test.ts
+  result: RED (25 skipped (25))
+  restored byte for byte: yes (sha256 3ed0c81789ae3778)
+
+V11 and V13 are red by the suite not starting: its beforeAll replays every catalogue writer, and the
+mutated writer raises, as a deploy would (tools/why.py, run once each, restored byte for byte):
+  V11: error: catalog modules with no tier assigned: device-validation   (20260823's tier guard)
+  V13: error: packaging names modules that are not in available_modules: device-validation   (20260823's unknown-module guard)
+
+After the run: sha256sum -c over the 25 files item 2 changes that exist on disk (item2-sha-before.txt): 25 OK.

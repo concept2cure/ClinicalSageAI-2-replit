@@ -50,10 +50,7 @@ import type { EngineeringPanelsContext } from './surfaces/engineeringPanelsConte
 import { UdiSurface } from './surfaces/UdiSurface';
 import { PostmarketSurface } from './surfaces/PostmarketSurface';
 import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
-import {
-  ValidationSurface,
-  SubmissionsSurface,
-} from './workbench/Workbench';
+import { SubmissionsSurface } from './workbench/Workbench';
 import { PreSubManager } from './presub/PreSubManager';
 import { type Program } from './data/programs';
 import { useMdxPrograms } from './hooks/useMdxPrograms';
@@ -146,10 +143,6 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
     title: 'Pre-Sub manager',
     blurb: "the project's FDA Q-Submissions, with their questions, FDA's feedback and the commitments.",
   },
-  'device-validation': {
-    title: 'Validation center',
-    blurb: 'the validation workbench.',
-  },
   'device-submission': {
     title: 'Submission center',
     blurb: 'the submission-packages workbench.',
@@ -172,9 +165,11 @@ const DEVICE_SCREEN_ACTIONS: string[] = [
 
 /* device-udi and device-presub left this list on 2026-10-29: each reads the
    open project now (D2, device-features-reach-three). device-tasks left the kit
-   the same day: it folded into Tasks (D2, fold-device-tasks). */
+   the same day: it folded into Tasks (D2, fold-device-tasks). So did the
+   organization-wide blocker list: a blocker is its filing's readiness (D2, fold
+   F5 item 2, decision P-61 item 2). */
 const ORGANIZATION_VIEWS = new Set<MdxSurfaceId>([
-  'device-validation', 'device-submission', 'device-analytics',
+  'device-submission', 'device-analytics',
 ]);
 
 type ScreenContext = Omit<SurfaceContext, 'surfaceId'>;
@@ -383,13 +378,13 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   );
 
   /*
-   * One builder, fourteen literal publish calls. The AnA coverage gate counts
+   * One builder, thirteen literal publish calls. The AnA coverage gate counts
    * single-quoted literal surface ids, so a single dynamic
    * `usePublishSurfaceContext(nav, …)` would register as covering nothing —
    * this is the sanctioned multi-id shape (v2/surfaces/UsageBilling.tsx used it
    * for `usage` and `billing` until billing folded into Licensing, 2026-10-29).
    * Only the call whose id matches `nav` publishes; the store treats the
-   * thirteen null calls as no-ops (each clears only its own id), and hook order
+   * twelve null calls as no-ops (each clears only its own id), and hook order
    * stays fixed because every call runs unconditionally on every render.
    */
   usePublishSurfaceContext('device-workstream', nav === 'device-workstream' ? anaContext : null);
@@ -403,7 +398,6 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   usePublishSurfaceContext('device-udi', nav === 'device-udi' ? anaContext : null);
   usePublishSurfaceContext('device-postmarket', nav === 'device-postmarket' ? anaContext : null);
   usePublishSurfaceContext('device-presub', nav === 'device-presub' ? anaContext : null);
-  usePublishSurfaceContext('device-validation', nav === 'device-validation' ? anaContext : null);
   usePublishSurfaceContext('device-submission', nav === 'device-submission' ? anaContext : null);
   usePublishSurfaceContext('device-analytics', nav === 'device-analytics' ? anaContext : null);
 
@@ -450,9 +444,6 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     case 'device-presub':
       /* Keyed by the project for the same reason as device-udi. */
       surface = <PreSubManager key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} />;
-      break;
-    case 'device-validation':
-      surface = <ValidationSurface onAskAna={onAsk} />;
       break;
     case 'device-submission':
       surface = <SubmissionsSurface onAskAna={onAsk} />;

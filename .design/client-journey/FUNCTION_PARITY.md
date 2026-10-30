@@ -181,15 +181,25 @@ Drop the invented target-authority label, the hard-coded "Package" pass and the 
 - [ ] Ask AnA what is blocking a package. From `Workbench.tsx:691-697`. Goes to: AnA's assemble_device_submission, assess_dispatch_readiness and scan_project_risks. No further work is named. Real today.
 
 #### From `device-validation` (a launch surface)
-Low-severity blockers render as "Pass" (`Workbench.tsx:492`). That is a defect and is not carried.
+Retired 2026-10-29 (D2, fold F5 item 2), by decision P-61 item 2: no organization-wide blocker list. A blocker
+belongs to a filing, from that filing's deterministic readiness (`EstarFilingPanel.tsx` over POST
+`/api/510k/estar/filing-readiness`, `assessEstarFilingReadiness`), and is closed by fixing it. `device-validation` is
+an alias of `submission-center`, which lists every tracked device filing; `ValidationSurface`, `useWorkbench.ts` and
+the kit's validation shapes are deleted. A subscription carries to `submission-center` (P-61 item 4,
+`server/services/entitlements/folded-module-successors.ts`). No signed waiver of a filing blocker exists in the
+product; none is built. Evidence and the fold guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/`,
+`foldDeviceValidation.test.ts`.
 
-- [ ] Organisation-wide list of open blockers. From `Workbench.tsx:334-505`. Goes to: Reporting & analytics, if a portfolio blocker list is kept. Real today.
-- [ ] Filter blockers by severity. From `Workbench.tsx:341-345`. Goes to: with that list. Real today.
-- [ ] Filter blockers by program. From `Workbench.tsx:344,418-420`. Goes to: nothing real, because the filter always returns nothing. A project filter belongs with the list, if it is kept. Not real today.
-- [ ] Readiness by program. From `Workbench.tsx:403-454`. Goes to: Insights portfolio readiness and the Project home dossier. No further work is named. Real today.
-- [ ] KPI cards. From `Workbench.tsx:388-400`. Goes to: Insights totals and the digest counts. No further work is named. Real today.
-- [ ] Export the report as CSV. From `Workbench.tsx:364-380`. Goes to: with the list, if kept. Real today.
-- [ ] Ask AnA to triage blockers. From `Workbench.tsx:381-386`. Goes to: an organisation-wide triage, if kept. Drop the hard-coded count. Real today.
+- [ ] Organisation-wide list of open blockers. Not carried, by P-61 item 2. `c2c_blockers` keeps its one live writer (correspondence intake); no screen lists it.
+- [ ] Filter blockers by severity. Not carried, with the list. The filing readiness has no severities: every blocker blocks.
+- [ ] Filter blockers by program. Not carried; it always returned nothing.
+- [x] Each filing's blockers: the eSTAR filing readiness panel on the 510(k), PMA and IVD screens, for the open project.
+- [ ] Readiness by program (recorded progress). Not carried here; Insights and the Project home dossier read progress.
+- [ ] KPI cards. Not carried, with the list.
+- [ ] Export the report as CSV. Not carried, with the list.
+- [ ] Ask AnA to triage the organisation's blockers. Not carried, with the list.
+- [x] Low-severity blockers drawn as "Pass": not carried (the defect).
+- [x] Catalogue entry: 20260810's keep-list and upsert and 20260823's packaging row, amended in place (Rule 1); grants carried, not re-written.
 
 ### Into labeling (`labeling-pi`, outside the launch catalogue)
 
@@ -977,7 +987,7 @@ Not applicable: the 'ectd-coauthor' entitlement id (repoint submission_center.mo
 | nda-cockpit | 14 | 0 | 7 | 6 | 1 | 13 | No |
 | shadow-review | 10 | 3 | 5 | 2 | 0 | 9 | No |
 | device-submission | 10 | 1 | 6 | 2 | 1 | 7 | No |
-| device-validation | 8 | 0 | 5 | 2 | 1 | 6 | No |
+| device-validation | 8 | 0 | 5 | 2 | 1 | 6 | Retired (2026-10-29, P-61 item 2) |
 
 Present: switching lens, findings ranked by severity, and re-running a lens (`SubmissionSeqWorkspaces.tsx:1544-1554,1502-1531`, `ShadowFindingDisposition.tsx:250-299`). Starting a new submission (`SubmissionCenter.tsx:333-349`).
 Not applicable: the cockpit's AnA tab switching (covered by submissions.set-workspace). The invented target-authority label (drop it). The program and section columns of blockers (that store has no such fields).

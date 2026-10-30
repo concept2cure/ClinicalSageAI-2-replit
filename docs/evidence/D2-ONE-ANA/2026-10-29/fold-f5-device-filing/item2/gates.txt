@@ -1,0 +1,87 @@
+### npm run ci:launch-scope
+[ci:launch-scope] 7 apps · 44 surfaces · 12 modules · 30 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+### exit 0 (ci:launch-scope)
+### npm run ci:launch-scope:selftest
+✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+✅ selftest: gate exits 1 and names 'ectd-compile' when it is missing from the 20260810 keep-list
+✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route
+✅ selftest: gate passes on the real tree
+### exit 0 (ci:launch-scope:selftest)
+### npm run ci:launch-scope-api
+ci:launch-scope-api: 563 API paths named by launch and shell screens; none refused. {"launch":513,"infrastructure":2,"never-gated":48}
+### exit 0 (ci:launch-scope-api)
+### npm run ci:launch-scope-api:selftest
+  ✓ flags a launch screen calling a prefix only an out-of-scope surface claims
+  ✓ names the surface and the file
+  ✓ does not flag the launch prefix, or a never-gated shell call
+  ✓ passes once the launch surface declares the prefix it calls
+  ✓ flags a launch call no surface claims (unmapped)
+  ✓ resolves every registration it was given
+  ✓ reads the surface's own registration, not a longer id ending in it
+  ✓ flags a launch screen that computes the /api namespace
+  ✓ resolves a project MDX feature to its actual host import
+  ✓ keeps unrelated optional workbench imports outside that feature graph
+  ✓ an MDX feature with no component mapping fails closed
+
+selftest PASSED — the gate flags a launch screen that production would refuse.
+### exit 0 (ci:launch-scope-api:selftest)
+### npm run ci:ana-surface-context
+
+[ci:ana-surface-context] OK — 102 of 106 routable surface ids publish screen state (baseline 102 exact), 4 exempt, 0 still blind.
+  99 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (conversation-thread, ectd-coauthor, rbm) — full-width surfaces may
+  publish saved context and hand requests to the canonical conversation.
+  108 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router
+  rewrites before the shell has an active id, so they are not routable and cannot be
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (71 surface file(s) hold a call).
+
+### exit 0 (ci:ana-surface-context)
+### npm run ci:surface-discoverability
+
+[ci:surface-discoverability] OK — 108 renderable surface(s): 83 in the Apps catalog, 25 declared contextual.
+
+### exit 0 (ci:surface-discoverability)
+### npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 453 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 19 dynamic DROP(s) in 19 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+### exit 0 (ci:migration-drop-safety)
+### npm run ci:migration-drop-safety:selftest
+  ✓ REPEATED — dropper after creator (re-added and re-dropped every deploy)
+  ✓ UNDONE — dropper before creator (the drop reverts on the next deploy)
+  ✓ quiet — drop-and-re-add of the same name in one file
+  ✓ quiet — a DROP nothing in the set re-creates
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✓ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+  ✓ quiet — the earlier replacement is conditional on the current definition
+  ✓ NARROWED — a guard that names a different constraint does not count
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+### exit 0 (ci:migration-drop-safety:selftest)
+### npm run ci:migration-set-order
+[ci:migration-set-order] OK — 453 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+### exit 0 (ci:migration-set-order)
+### npm run ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+### exit 0 (ci:migration-deploy-path)
+### npm run ci:migration-deploy-path:selftest
+[ci:migration-deploy-path:selftest] OK — an unlisted new file fails; the tree as it stands passes; a listed file passes.
+### exit 0 (ci:migration-deploy-path:selftest)
+### npm run check:catalog-copy
+[ci:catalog-copy] OK — 108 catalog description(s) across 3 migration(s) read as product copy.
+### exit 0 (check:catalog-copy)
+### npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+### exit 0 (ci:undefined-css-classes)
+### npm run ci:unreferenced-modules
+Unreferenced modules: 73 (baseline 73)
+
+OK: no new unreachable modules.
+### exit 0 (ci:unreferenced-modules)
+### npm run ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+### exit 0 (ci:program-ownership-single-source)

@@ -84,7 +84,7 @@ const ALREADY_COVERED = new Set<string>([
   'device-workstream', 'device-510k', 'device-pma', 'device-cer', 'device-diagnostics',
   'device-clinical-studies', 'device-software', 'device-engineering', 'device-udi',
   'device-postmarket', 'device-presub',
-  'device-validation', 'device-submission', 'device-analytics',
+  'device-submission', 'device-analytics',
   'protocol-dev', 'pdev-cmc', 'pdev-nonclinical', 'pdev-clinical',
   'pdev-regulatory', 'pdev-ind-assembly', 'pdev-contradictions', 'pdev-fda-interactions',
 ]);
