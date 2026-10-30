@@ -1,0 +1,40 @@
+# Slice 3b client, mutations — each mutant applied alone to the working tree, the named suites run, the file restored (scratchpad/mut3b.py)
+M1 readsRow: predecessor not required to be in force: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a draft row beside a version not said to be in force 11ms
+M2 readsRow: successor of another document accepted: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a successor of another document 11ms
+M3 readsRow: any row beside the version in force accepted: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a later effective row with no successor read 10ms
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a row that is neither the version read nor its successor as unverifiab
+M4 successor receipt not checked: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a receipt of another person on the next version as unverifiable 5012ms
+    × client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects another person’s receipt on the successor 12ms
+M5 switching versions keeps the declaration: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > does not carry a declaration made on one version over to the other 42ms
+M6 acknowledge posts the version in force: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > acknowledges the version selected, and says the acknowledgement counts from th
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > keeps a confirmed receipt on the next version, and only there, when the follow
+M7 confirmed receipt put on the version in force: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > keeps a confirmed receipt on the next version, and only there, when the follow
+M8 reread ignores the successor receipt: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > acknowledges the version selected, and says the acknowledgement counts from th
+M9 no counts-from day: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens on the version in force and offers the next version with the day it take
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > acknowledges the version selected, and says the acknowledgement counts from th
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > keeps a confirmed receipt on the next version, and only there, when the follow
+M10 opens on the successor: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens on the version in force and offers the next version with the day it take
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > does not carry a declaration made on one version over to the other 32ms
+M11 no successor choice shown: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens on the version in force and offers the next version with the day it take
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > acknowledges the version selected, and says the acknowledgement counts from th
+    × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > keeps a confirmed receipt on the next version, and only there, when the follow
+M12 approval: today counted as a training period: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says effective today leaves the people assigned no training period 67ms
+M13 approval: failed read not said: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when the read failed, with no count 63ms
+M14 approval: inactive assignees said as nobody assigned: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when nobody assigned is an active member, with no count 65ms
+M15 approval: count dropped when nobody is active: KILLED (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯)
+    × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when nobody is assigned, with no count 61ms
+    × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when nobody assigned is an active member, with no count 57ms

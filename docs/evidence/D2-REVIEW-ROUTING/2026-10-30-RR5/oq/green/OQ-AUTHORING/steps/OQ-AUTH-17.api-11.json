@@ -1,0 +1,75 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5241/api/authoring/documents/5bdf2248-39a4-404b-9b5c-4689aed1bf16/request-review",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reviewers": [
+        {
+          "id": 2,
+          "name": "OQ Signer",
+          "email": "oq-signer@validation.local"
+        }
+      ],
+      "reason": "OQ-003 step 17: ready for medical review for validation",
+      "route": {
+        "reviewDueDate": "2026-11-06"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 123,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "reviews": [
+        {
+          "id": "ba8465cf-c7a8-40c4-aa39-1ede2b1103f8",
+          "doc_id": "5bdf2248-39a4-404b-9b5c-4689aed1bf16",
+          "reviewer_id": "2",
+          "tenant_id": 5,
+          "review_status": "pending",
+          "review_comments": null,
+          "reviewed_at": null,
+          "requested_at": "2026-10-30T15:05:02.841Z",
+          "requested_by": "1",
+          "reviewed_snapshot": null,
+          "reviewed_snapshot_hash": null,
+          "review_binding_basis": null,
+          "standing": "pending",
+          "reviewer_name": "OQ Signer",
+          "reviewer_email": "oq-signer@validation.local",
+          "created_at": "2026-10-30T15:05:02.841Z",
+          "updated_at": "2026-10-30T15:05:02.841Z"
+        }
+      ],
+      "grants": [
+        {
+          "reviewerId": "2",
+          "granted": true,
+          "permissionId": "17400d75-e2a3-44bb-a6ca-281ebbeeee74"
+        }
+      ],
+      "route": {
+        "id": "ef388266-9772-4871-a917-52557fe8c7d8",
+        "added": false,
+        "timeZone": "UTC",
+        "tasks": [
+          {
+            "userId": 2,
+            "taskId": "ROUTE-ef388266-2",
+            "dueDate": "2026-11-06T23:59:59.999Z"
+          }
+        ]
+      },
+      "auditTrail": {
+        "persisted": true,
+        "chained": true
+      },
+      "message": "Review requested from 1 reviewer(s)"
+    }
+  }
+}
