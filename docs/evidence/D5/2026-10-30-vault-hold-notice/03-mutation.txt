@@ -1,0 +1,20 @@
+# MR-08 Stage 5 step 5, mutations: each applied alone, then its suite
+
+=== mutation: lifted holds included
+ × the Vault read says what is on legal hold > lists a project hold and a document hold to a viewer, with reference and date, and no reason
+   → expected [ [ 'program', …(2) ], …(2) ] to deeply equal [ [ 'program', …(2) ], …(1) ]
+      Tests  1 failed | 1 passed (2)
+=== mutation: the reason leaks into the notice
+ × the Vault read says what is on legal hold > lists a project hold and a document hold to a viewer, with reference and date, and no reason
+   → expected [ 'documentId', 'placedAt', …(3) ] to deeply equal [ 'documentId', 'placedAt', …(2) ]
+      Tests  1 failed | 1 passed (2)
+=== mutation: a project hold does not cover every document
+ × a document on legal hold says so > a project hold covers every document; a document hold only the version it names
+   → expected [] to deeply equal [ { scope: 'program', …(3) } ]
+ × a document on legal hold says so > shows a project hold on every document
+   → Unable to find an element by: [data-testid="vault-hold-notice"]
+      Tests  2 failed | 2 passed (4)
+=== mutation: unread holds shown as none
+ × a document on legal hold says so > says the holds could not be read, rather than nothing
+   → Unable to find an element by: [data-testid="vault-hold-unreadable"]
+      Tests  1 failed | 3 passed (4)
