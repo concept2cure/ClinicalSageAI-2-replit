@@ -37,7 +37,7 @@ describe('RBM canonical project roster', () => {
  });
  it('uses the actual site-score DDL and includes a project whose only legacy monitoring record is its site snapshot', async () => {
   const id = '55555555-5555-4555-8555-555555555555';
-  const columns = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name='rbm_site_risk_scores'");
+  const columns = await db.query<{ column_name: string }>("SELECT column_name FROM information_schema.columns WHERE table_name='rbm_site_risk_scores'");
   expect(columns.rows.map(row => row.column_name)).not.toContain('deleted_at');
   await db.query("INSERT INTO regulatory_programs(id,organization_id,name,metadata) VALUES($1,7,'Site-only monitored project','{}')", [id]);
   await db.query('INSERT INTO rbm_site_risk_scores(organization_id,program_id) VALUES(7,$1)', [id]);

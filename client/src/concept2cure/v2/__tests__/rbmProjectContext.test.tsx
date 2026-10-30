@@ -24,6 +24,11 @@ vi.mock('../surfaces/RbmSurfaces', async original => ({ ...(await original<typeo
 import { Rbm } from '../surfaces/Rbm';
 import { clearShellProject, publishShellProject, readShellProject } from '../shellProject';
 import { setAuthToken } from '@/utils/authToken';
+import { getSurface } from '@shared/constants/ui-surface-registry';
+
+const rbmSurface = getSurface('rbm');
+if (!rbmSurface) throw new Error('Registered RBM surface is required');
+const viewProps = { surface: rbmSurface, segment: 'biopharma' };
 
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222', C = '33333333-3333-4333-8333-333333333333';
 const rows = [{ id: A, label: 'Actual project A', code: 'A-1', productType: 'drug' }, { id: B, label: 'Actual project B', code: 'B-1', productType: 'device' }];
@@ -52,7 +57,7 @@ afterEach(() => { cleanup(); endCompanySession(); clearShellProject(); vi.unstub
 describe('RBM project selection and read admission', () => {
   it('opens the selected empty project instead of the first roster row and does not seed data', async () => {
     publishShellProject({ id: B, title: 'Unverified shell label' });
-    render(<Rbm onNav={vi.fn()} />);
+    render(<Rbm {...viewProps} onNav={vi.fn()} />);
     expect(await screen.findByText('No RBM data for Actual project B yet')).toBeTruthy();
     expect(picker()).toHaveProperty('value', B);
     expect(boardReads().map(([, path]) => path)).toEqual([`/api/mdx-rbm/rbm-board/${B}`]);
@@ -60,7 +65,7 @@ describe('RBM project selection and read admission', () => {
     expect(h.send).not.toHaveBeenCalled();
   });
   it('requires a choice without a shell project and carries an admitted choice to Vault and Tasks', async () => {
-    const onNav = vi.fn(); render(<Rbm onNav={onNav} />);
+    const onNav = vi.fn(); render(<Rbm {...viewProps} onNav={onNav} />);
     await screen.findByText('Choose a project for risk-based monitoring');
     expect(boardReads()).toHaveLength(0);
     fireEvent.change(picker(), { target: { value: B } });
@@ -73,13 +78,13 @@ describe('RBM project selection and read admission', () => {
   });
   it('does not replace an unavailable explicit project with another project', async () => {
     publishShellProject({ id: C, title: 'Unavailable project' });
-    render(<Rbm onNav={vi.fn()} />);
+    render(<Rbm {...viewProps} onNav={vi.fn()} />);
     await screen.findByText('This project is not available for risk-based monitoring');
     expect(boardReads()).toHaveLength(0); expect(readShellProject()?.id).toBe(C);
     expect(screen.getByRole('button', { name: /Vault Monitoring reports/ })).toHaveProperty('disabled', true);
   });
   it('withdraws the old project while the next board is pending', async () => {
-    publishShellProject({ id: A }); render(<Rbm onNav={vi.fn()} />);
+    publishShellProject({ id: A }); render(<Rbm {...viewProps} onNav={vi.fn()} />);
     await screen.findByText('No RBM data for Actual project A yet');
     const waiting = deferred<Response>(), normal = h.request.getMockImplementation()!;
     h.request.mockImplementation((method: string, path: string) => path.endsWith(`/rbm-board/${B}`) ? waiting.promise : normal(method, path));
@@ -91,13 +96,13 @@ describe('RBM project selection and read admission', () => {
   });
   it.each(['malformed', 'unavailable'])('reports a %s roster read as failure, with no wrong-project board', async mode => {
     h.request.mockResolvedValue(mode === 'malformed' ? envelope([{ id: 'invalid', label: 'Rejected private row' }]) : envelope(null, 503));
-    publishShellProject({ id: B }); render(<Rbm onNav={vi.fn()} />);
+    publishShellProject({ id: B }); render(<Rbm {...viewProps} onNav={vi.fn()} />);
     await screen.findByText("Couldn't load RBM studies");
     expect(boardReads()).toHaveLength(0); expect(screen.queryByText('Rejected private row')).toBeNull();
   });
   it('keeps relationship reconciliation distinct from a successful empty roster', async () => {
     h.request.mockResolvedValue(new Response(JSON.stringify({ success: true, data: [], meta: { reconciliationRequired: true } }), { headers: { 'Content-Type': 'application/json' } }));
-    render(<Rbm onNav={vi.fn()} />);
+    render(<Rbm {...viewProps} onNav={vi.fn()} />);
     expect(await screen.findByText('Monitoring project relationships need repair')).toBeTruthy();
     expect(screen.queryByText('No monitoring projects yet')).toBeNull(); expect(boardReads()).toHaveLength(0);
   });
@@ -105,7 +110,7 @@ describe('RBM project selection and read admission', () => {
 
 describe('RBM project ownership and continuity', () => {
   it('retires retained project selection after account replacement and project A to B to A', async () => {
-    publishShellProject({ id: A }); render(<Rbm onNav={vi.fn()} />);
+    publishShellProject({ id: A }); render(<Rbm {...viewProps} onNav={vi.fn()} />);
     await screen.findByText('No RBM data for Actual project A yet');
     const oldSelection = retained(picker(), 'onChange');
     await act(async () => { publishShellProject({ id: B }); });
@@ -119,7 +124,7 @@ describe('RBM project ownership and continuity', () => {
     expect(readShellProject()?.id).not.toBe(B);
   });
   it('retires the old selector and admits a fresh visit after a batched project A to B to A', async () => {
-    publishShellProject({ id: A }); render(<Rbm onNav={vi.fn()} />);
+    publishShellProject({ id: A }); render(<Rbm {...viewProps} onNav={vi.fn()} />);
     await screen.findByText('No RBM data for Actual project A yet');
     const oldSelection = retained(picker(), 'onChange');
     await act(async () => { publishShellProject({ id: B }); publishShellProject({ id: A }); });
@@ -129,14 +134,14 @@ describe('RBM project ownership and continuity', () => {
     expect(await screen.findByText('No RBM data for Actual project B yet')).toBeTruthy();
   });
   it('blocks retained navigation after raw browser bearer drift or unmount', async () => {
-    const onNav = vi.fn(); publishShellProject({ id: B }); const view = render(<Rbm onNav={onNav} />);
+    const onNav = vi.fn(); publishShellProject({ id: B }); const view = render(<Rbm {...viewProps} onNav={onNav} />);
     await screen.findByText('No RBM data for Actual project B yet');
     const oldNav = retained(screen.getByRole('button', { name: /Vault Monitoring reports/ }), 'onClick');
     act(() => { setAuthToken('unadopted.browser.bearer'); oldNav(); });
     expect(onNav).not.toHaveBeenCalled(); view.unmount(); oldNav(); expect(onNav).not.toHaveBeenCalled();
   });
   it('preserves the selected project across canonical bearer refresh without extra reads', async () => {
-    publishShellProject({ id: B }); render(<Rbm onNav={vi.fn()} />);
+    publishShellProject({ id: B }); render(<Rbm {...viewProps} onNav={vi.fn()} />);
     await screen.findByText('No RBM data for Actual project B yet');
     const count = h.request.mock.calls.length;
     await act(async () => { await rotateCompanyBearer(); });
@@ -145,7 +150,7 @@ describe('RBM project ownership and continuity', () => {
   it('keeps admitted project and conversation scope during the normal persisted-record board reload', async () => {
     const recordedBoard = { ...emptyBoard(A), assessment: { id: 1, framework: 'ich_e6r3', version: 1, status: 'draft', updated: null, approval: null } };
     h.request.mockImplementation(async (_method: string, path: string) => path.endsWith('/rbm-programs') ? envelope(rows) : envelope(recordedBoard));
-    publishShellProject({ id: A }); render(<Rbm onNav={vi.fn()} />);
+    publishShellProject({ id: A }); render(<Rbm {...viewProps} onNav={vi.fn()} />);
     await screen.findByRole('button', { name: 'Persisted monitoring record — reload' });
     const normal = h.request.getMockImplementation()!, waiting = deferred<Response>();
     h.request.mockImplementation((method: string, path: string) => path.endsWith(`/rbm-board/${A}`) ? waiting.promise : normal(method, path));

@@ -5,7 +5,7 @@ import { DEFAULT_CTQ_FACTORS, scoreRisk, overallRiskFromScores } from './rbm-eng
 interface SeedInput { programId: string; title?: string; framework?: string }
 interface SeedLease extends RequestSqlClient { release(error?: Error): void }
 export interface RbmSeedPool { connect(): Promise<SeedLease> }
-async function writeSeed(client: RequestSqlClient, actor: RbmActor, input: SeedInput) {
+async function writeSeed(client: RequestSqlClient, actor: RbmActor, input: SeedInput): Promise<Record<string, unknown> & { items: Array<Record<string, unknown>> }> {
   await requireRbmProgram(client, actor, { programId: input.programId }, true);
   const overall = overallRiskFromScores(DEFAULT_CTQ_FACTORS.map(f => scoreRisk(f.likelihood, f.impact).score));
   const { rows } = await client.query(`INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status, created_by)

@@ -13,6 +13,7 @@ const h = vi.hoisted(() => ({
   access: vi.fn(), write: vi.fn(), authority: vi.fn(), verify: vi.fn(),
   poolForbidden: false,
   activateAfterPlanRead: false,
+  malformedAuthor: false,
   calls: [] as string[],
 }));
 vi.mock('../../db', () => ({ pool: {
@@ -68,7 +69,10 @@ beforeAll(async () => {
   db = new PGlite();
   h.query = async (sql, args) => {
     h.calls.push(sql);
-    const result = await db.query(sql, args);
+    const result = await db.query<Record<string, unknown>>(sql, args);
+    if (h.malformedAuthor && /SELECT created_by,status,program_id,version/.test(sql)) {
+      result.rows[0].created_by = 'unverified-author';
+    }
     if (h.activateAfterPlanRead && /SELECT status, version FROM rbm_monitoring_plans/.test(sql)) {
       h.activateAfterPlanRead = false;
       await db.query("UPDATE rbm_monitoring_plans SET status='active' WHERE id=$1", [22]);
@@ -101,7 +105,7 @@ beforeAll(async () => {
 afterAll(async () => { await db?.close(); });
 
 beforeEach(async () => {
-  h.poolForbidden = false; h.activateAfterPlanRead = false; h.calls.length = 0;
+  h.poolForbidden = false; h.activateAfterPlanRead = false; h.malformedAuthor = false; h.calls.length = 0;
   h.authority.mockReset().mockResolvedValue(null);
   h.verify.mockReset().mockResolvedValue({ ok: true, authenticationMethod: 'password', secondFactorVerified: false });
   h.access.mockReset().mockImplementation(async (_q: unknown, input: { programId: string }) => {
@@ -183,6 +187,14 @@ describe('a failed signature rolls back the whole approval', () => {
 });
 
 describe('approval refusals sign nothing', () => {
+  it.each(KINDS)('$kind refuses an unverified non-null author instead of treating it as a legacy record', async item => {
+    h.malformedAuthor = true;
+    expect((await approve(item)).status).toBe(500);
+    expect(await row(item)).toMatchObject({ status: 'draft', approved_by: null });
+    expect(await rows('SELECT * FROM audit_logs')).toHaveLength(0);
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+  });
+
   it.each(KINDS)('$kind requires signing authority before checking credentials', async item => {
     h.authority.mockResolvedValue({ status: 403, code: 'ESIGNATURE_NO_AUTHORITY', message: 'No signing authority' });
     expect((await approve(item)).status).toBe(403);

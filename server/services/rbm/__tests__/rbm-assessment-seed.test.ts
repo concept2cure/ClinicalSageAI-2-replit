@@ -10,7 +10,7 @@ beforeAll(async () => { db = new PGlite(); await db.exec(`CREATE TABLE rbm_risk_
  CREATE TABLE rbm_risk_items(id serial PRIMARY KEY,organization_id integer,assessment_id integer,program_id uuid,category text,ctq_factor text,risk_description text,likelihood integer,impact integer,risk_score integer,is_critical boolean,mitigation text,status text);`); }, 30000);
 afterAll(async () => { await db.close(); });
 beforeEach(async () => { await db.exec('TRUNCATE rbm_risk_items,rbm_risk_assessments'); h.access.mockReset().mockResolvedValue({}); h.write.mockReset().mockResolvedValue(undefined); });
-const q = () => ({ query: (sql: string, args?: unknown[]) => db.query(sql, args) });
+const q = () => ({ query: (sql: string, args?: unknown[]) => db.query<Record<string, unknown>>(sql, args) });
 describe('shared canonical assessment seed', () => {
  it('commits a draft and its default factors together, with the actor and no signature', async () => {
   const out = await seedRbmAssessment(q(), { organizationId: 7, userId: 3 }, { programId: PROGRAM }, 'owned');
@@ -20,7 +20,7 @@ describe('shared canonical assessment seed', () => {
  });
  it('rolls back the assessment and already-written factors when a later factor fails', async () => {
   let writes = 0;
-  const client = { query: async (sql: string, args?: unknown[]) => { if (sql.includes('INSERT INTO rbm_risk_items') && ++writes === 2) throw new Error('Controlled second factor failure'); return db.query(sql, args); } };
+  const client = { query: async (sql: string, args?: unknown[]) => { if (sql.includes('INSERT INTO rbm_risk_items') && ++writes === 2) throw new Error('Controlled second factor failure'); return db.query<Record<string, unknown>>(sql, args); } };
   await expect(seedRbmAssessment(client, { organizationId: 7, userId: 3 }, { programId: PROGRAM }, 'owned')).rejects.toThrow('Controlled second factor failure');
   expect(writes).toBe(2);
   expect((await db.query('SELECT COUNT(*)::int AS count FROM rbm_risk_assessments')).rows[0]).toEqual({ count: 0 });
@@ -57,7 +57,7 @@ describe('shared canonical assessment seed', () => {
   try {
    await db.exec("INSERT INTO rbm_risk_assessments(title) VALUES('Caller work')");
    let writes = 0;
-   const client = { query: async (sql: string, args?: unknown[]) => { if (sql.includes('INSERT INTO rbm_risk_items') && ++writes === 2) throw new Error('Caller-owned seed failure'); return db.query(sql, args); } };
+   const client = { query: async (sql: string, args?: unknown[]) => { if (sql.includes('INSERT INTO rbm_risk_items') && ++writes === 2) throw new Error('Caller-owned seed failure'); return db.query<Record<string, unknown>>(sql, args); } };
    await expect(seedRbmAssessment(client, { organizationId: 7, userId: 3 }, { programId: PROGRAM }, 'caller-owned')).rejects.toThrow('Caller-owned seed failure');
    expect((await db.query("SELECT COUNT(*)::int AS count FROM rbm_risk_assessments WHERE title='Caller work'")).rows[0]).toEqual({ count: 1 });
    await db.exec('ROLLBACK'); open = false;

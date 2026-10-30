@@ -1039,6 +1039,15 @@ function rbmApprovalFailed(res: Response, where: string, err: unknown) {
   return serverError(res, log, where, err);
 }
 
+/** Only genuinely missing legacy attribution bypasses the author comparison. */
+function rbmRecordedAuthor(value: unknown): number | null {
+  if (value == null) return null;
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) {
+    throw new Error('The recorded RBM author identity could not be verified.');
+  }
+  return value;
+}
+
 /**
  * checkSigningAuthority's refusal in this router's envelope (clientError's,
  * which takes no 5xx), with its own code for a role that may not sign.
@@ -1098,7 +1107,7 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
       await client.query('ROLLBACK');
       return clientError(res, 409, 'Only a draft assessment can be approved. The signed version stays on file.');
     }
-    const authorId: number | null = authorRow.rows[0].created_by ?? null;
+    const authorId = rbmRecordedAuthor(authorRow.rows[0].created_by);
     if (authorId !== null && authorId === signerId) {
       await client.query('ROLLBACK');
       return clientError(
@@ -1225,7 +1234,7 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
       await client.query('ROLLBACK');
       return clientError(res, 409, 'Only a draft monitoring plan can be approved. The signed version stays on file.');
     }
-    const authorId: number | null = authorRow.rows[0].created_by ?? null;
+    const authorId = rbmRecordedAuthor(authorRow.rows[0].created_by);
     if (authorId !== null && authorId === signerId) {
       await client.query('ROLLBACK');
       return clientError(
