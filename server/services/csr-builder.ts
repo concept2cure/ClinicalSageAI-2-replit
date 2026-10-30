@@ -89,17 +89,6 @@ function applyContentStatus(section: CSRSection): void {
   section.needsData = section.status === 'needs_data';
 }
 
-/**
- * A section counts as *data-complete* only when it has content AND that
- * content has no residual placeholders (status 'drafted' or further along
- * the review pipeline — 'reviewed'/'approved'). Used to compute build-level
- * progress/status so a job can never report 'complete'/100 while any
- * section is still 'empty' or 'needs_data'.
- */
-function isSectionDataComplete(section: CSRSection): boolean {
-  return section.status === 'drafted' || section.status === 'reviewed' || section.status === 'approved';
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // THE OUTLINE IS ICH_E3_GUIDANCE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -213,70 +202,17 @@ export interface CSRBuildRequest {
   evidenceSource?: { programId: string; runId: string; studyId: string };
 }
 
-export interface CSRBuildJob {
-  id: number;
-  // 'needs_data' — drafting finished but one or more targeted sections still
-  // carry unresolved data placeholders; NOT the same as 'complete'. See
-  // computeBuildCompleteness.
-  status: 'queued' | 'generating' | 'complete' | 'needs_data' | 'failed';
-  progress: number;
-  sections: CSRSection[];
-  studyInfo: CSRBuildRequest['studyInfo'];
-  createdAt: Date;
-}
-
-/**
- * Compute a build job's overall status/progress from its drafted section
- * tree. A job is 'complete'/100 ONLY when every *targeted* section
- * (respecting sectionsToGenerate — mirrors csr-job-runner's target-list
- * semantics so a partial build isn't held to the full ICH-E3 backbone) is
- * data-complete: it has content, and that content has no residual
- * [DATA TO BE INSERTED]-style placeholder (see hasUnresolvedPlaceholders).
- * Any targeted section still 'empty' (no template/AI content — e.g. a
- * section number with no template case) or 'needs_data' (placeholders
- * remain) holds the whole job at 'needs_data' with progress < 100.
- *
- * Fail closed: a CSR with any residual data placeholder — or any required
- * section that never got drafted at all — must never surface as
- * 'complete'/100. A downstream consumer gating export on job status depends
- * on this.
- */
-function computeBuildCompleteness(
-  sections: CSRSection[],
-  sectionsToGenerate?: string[]
-): { status: 'complete' | 'needs_data'; progress: number } {
-  // Unknown or manual requested sections, including a wholly invalid
-  // selection, must never be treated as a complete CSR.
-  if (csrSectionSelectionRefusal(sectionsToGenerate?.length ? sectionsToGenerate : undefined)) {
-    return { status: 'needs_data', progress: 0 };
-  }
-  const targetNumbers = new Set(resolveCSRDraftTargets(sectionsToGenerate?.length ? sectionsToGenerate : undefined).map(s => s.number));
-  const targets = flattenICHE3Sections(sections).filter(s => targetNumbers.has(s.number));
-  if (targets.length === 0) return { status: 'needs_data', progress: 0 };
-
-  const completeCount = targets.filter(isSectionDataComplete).length;
-  if (completeCount === targets.length) {
-    return { status: 'complete', progress: 100 };
-  }
-  return {
-    status: 'needs_data',
-    progress: Math.floor((completeCount / targets.length) * 100),
-  };
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Shared quota + usage envelope. Called from BOTH launchCSRBuild (sync) and
- * launchCSRBuildAsync (queued) so the async path can't silently bypass
- * billing once a route migrates to it. Throws an upgrade-required Error on
- * quota failure — callers should let that propagate so the HTTP response is
- * identical to the sync path.
+ * Quota + usage envelope, reserved by launchCSRBuildAsync before enqueue so a
+ * build cannot bypass billing. Throws an upgrade-required Error on quota
+ * failure; callers let it propagate.
  *
  * Usage is recorded at enqueue time, not at job completion, so a failed job
- * still counts (matches sync behavior, which records before drafting).
+ * still counts.
  */
 async function reserveCSRBuilderQuota(request: CSRBuildRequest): Promise<void> {
   const quota = await checkQuota(request.organizationId, 'csr_builder');
@@ -300,45 +236,18 @@ export function validateCSRSectionSelection(sectionsToGenerate?: string[]): void
 }
 
 /**
- * Launch a CSR build job.
- */
-export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuildJob> {
-  validateCSRSectionSelection(request.sectionsToGenerate);
-  await resolveCsrBuildContext(db, request, { organizationId: request.organizationId, projectId: request.projectId, requestedBy: request.userId });
-  await reserveCSRBuilderQuota(request);
-
-  // Initialize section structure
-  const sections = getICHE3Structure();
-
-  // Generate content for each section based on study info
-  const generated = await generateCSRSections(sections, request);
-
-  // Fail closed: only report complete/100 when every targeted section is
-  // actually data-complete (no residual placeholders). See
-  // computeBuildCompleteness.
-  const completeness = computeBuildCompleteness(generated, request.sectionsToGenerate);
-
-  return {
-    id: Date.now(),
-    status: completeness.status,
-    progress: completeness.progress,
-    sections: generated,
-    studyInfo: request.studyInfo,
-    createdAt: new Date(),
-  };
-}
-
-/**
- * Async variant of launchCSRBuild.
+ * Launch a CSR build: the one build path (POST /api/csr/jobs).
  *
  * Inserts a csr_build_jobs row in the queued state, kicks off the worker
  * out-of-band via setImmediate (deliberately NOT awaited), and returns the
  * jobId immediately so the HTTP request never blocks on AI drafting.
  *
- * Back-compat: launchCSRBuild (synchronous, in-process, single shot) is
- * preserved untouched for legacy callers. New callers — and the route
- * layer in Phase 3c — should prefer launchCSRBuildAsync. The two share the
- * same CSRBuildRequest input shape so the call site change is a 1-liner.
+ * 2026-10-30: the synchronous launchCSRBuild, which no production code
+ * called, was deleted. Its section-selection refusals are this function's
+ * (validateCSRSectionSelection, before quota), and its fail-closed status
+ * rule is the job runner's completion gate (runCSRBuildJob: missing outputs,
+ * unresolved placeholders and checksum mismatches end the job 'failed', never
+ * 'complete'; csr-job-runner.placeholder-gate.test.ts).
  *
  * Lazy import of csr-job-runner avoids a module-load circular dependency
  * (csr-job-runner imports generateCSRSections from this file).
@@ -350,8 +259,7 @@ export async function launchCSRBuildAsync(
   validateCSRSectionSelection(request.sectionsToGenerate);
   const scope = await resolveCsrBuildContext(db, request, ctx);
   // Quota + usage are reserved BEFORE enqueue so the async path can't bypass
-  // billing. Throws the same upgrade-required error as launchCSRBuild on
-  // quota failure — the HTTP response shape is identical at the route layer.
+  // billing. Throws an upgrade-required error on quota failure.
   await reserveCSRBuilderQuota(request);
 
   const { enqueueCSRBuildJob, runCSRBuildJob } = await import(
@@ -392,8 +300,7 @@ export interface CSRAIContext {
  * Uses AI Gateway (Claude) when available, falls back to templates.
  *
  * Exported so the async job runner (server/services/csr/csr-job-runner.ts)
- * can drive section drafting without going through launchCSRBuild's
- * quota / single-shot envelope.
+ * can drive section drafting; quota is reserved once, at launch.
  *
  * NOTE: sectionsToGenerate is a *filter* over which sections to draft —
  * it does NOT switch off AI. AI is used whenever the unified AI client is
@@ -858,7 +765,6 @@ export function getICHE3Structure(): CSRSection[] {
 }
 
 export default {
-  launchCSRBuild,
   launchCSRBuildAsync,
   generateCSRSections,
   draftCSRSectionWithProvenance,
