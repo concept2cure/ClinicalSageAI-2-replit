@@ -72,6 +72,9 @@ beforeAll(async () => {
     INSERT INTO projects (id,organization_id,name,regulatory_program_id) VALUES (43,${ORG},'second anchor','${PROGRAM_B}');
     UPDATE projects SET owner_id=7,created_by_id=7;
     INSERT INTO project_visibility_settings VALUES (42,${ORG},'org_public'),(43,${ORG},'org_public');
+    -- A viewer of the same organization: the editor role is read from this row, never from a token's role claim.
+    INSERT INTO users (id, name, email) VALUES (18, 'Vic Viewer', 'viewer@canvas.example');
+    INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, 18, 'viewer');
     CREATE TABLE file_uploads (id text PRIMARY KEY, organization_id integer, user_id integer, original_name text,
       mime_type text, file_size bigint, storage_path text, checksum_sha256 text, status text);
     CREATE TABLE cre_evidence_sources (id serial PRIMARY KEY, organization_id integer, client_program_id uuid,
@@ -79,9 +82,11 @@ beforeAll(async () => {
       deleted_at timestamptz, previous_version_id integer);
   ` });
   h.db = db.db; h.pool = sourceFaultPool(() => db, importFault);
-  const token = (role: string) => new SignJWT({ userId: AUTHOR.id, email: AUTHOR.email, organizationId: ORG, role })
+  const token = (role: string, user: { id: string; email: string } = AUTHOR) => new SignJWT({ userId: user.id, email: user.email, organizationId: ORG, role })
     .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('1h').sign(new TextEncoder().encode(JWT_SECRET));
-  author = asToken(await token('member')); viewer = asToken(await token('viewer'));
+  author = asToken(await token('member'));
+  // The viewer is a different person whose membership row says viewer (C2C-SEC-001: the row decides, not the claim).
+  viewer = asToken(await token('viewer', { id: '18', email: 'viewer@canvas.example' }));
   const { default: router } = await import('../authoring.router');
   const requestRouter = express.Router();
   // Supply the existing request-client contract against this test's PGlite

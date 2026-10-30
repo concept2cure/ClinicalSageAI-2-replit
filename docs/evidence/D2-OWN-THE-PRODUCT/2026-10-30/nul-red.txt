@@ -1,0 +1,6 @@
+ × server/services/ocr/__tests__/extracted-text-nul.test.ts > extracted text is safe for a PostgreSQL text column > replaces each NUL with U+FFFD and keeps eve
+   → expected 'Section 1\u0000overview\u0000\u0000end' not to contain '\u0000'
+ ✓ server/services/ocr/__tests__/extracted-text-nul.test.ts > extracted text is safe for a PostgreSQL text column > leaves text without a NUL exactly as extra
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ server/services/ocr/__tests__/extracted-text-nul.test.ts:19:26
+      Tests  1 failed | 1 passed (2)
