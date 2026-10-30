@@ -1,0 +1,57 @@
+# Reach existing ZIP integrity validation from qualification
+
+W5 / D7, MR-10 Stage3 continuation, 2026-10-30. Starting canonical source `32eafdbf2c57bfa70d98429b8d312652eb08afe5`. Evidence `docs/evidence/MR-10/2026-10-30-qualification-integrity/`.
+
+## What already exists
+
+- `server/services/ectd/qualification/qualify.ts` owns the existing golden qualification orchestration. Its private `verifyZipChecksums` chooses `util/index-md5.txt` first and checks only its listed entries. It does not verify the required root `index-md5.txt` against `index.xml`, or each backbone leaf's declared checksum against payload bytes. Native XML/DTD and captured supportive-file proof do not supply those missing payload checks. The preceding correction already distinguishes passed/failed/blocked, preserves local checks and assesses both sequences. Extend this owner; do not replace its outcomes or historical reports.
+- `server/services/submission-gateways/ectd-structural-validator.ts` owns `validateEctdPackage`. It already verifies root MD5, each index/regional leaf's checksum/type, href resolution, region/file/PDF rules, optional util manifest and XML shape. `EctdZipValidationResult` retains full errors/warnings. `server/routes/ectd-export.ts` already calls it on platform-generated archives with `origin:'platform-generated'`; uploads retain SEC-17's default archive limit. The qualification harness does not reach this existing ZIP validator. Reach this owner, never create another checksum/XML/path parser.
+- `server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts` already exercises wrong/missing root hashes and index/regional leaf checksums, including coherent util/root checks that cannot hide wrong leaf declarations. Existing gateway tests were updated on canonical for actual PDF fixture acceptance; preserve them.
+- `server/services/ectd/checksum-manifest.ts` owns SHA-256 vendored DTD/XSD/stylesheet integrity, including exact captured buffers. It is distinct from the eCTD root/leaf MD5 contract and remains unchanged.
+- `server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts` has explicitly controlled synthetic packager/native/external outputs with canonical DTD/external truth interpreters. Its minimal fake ZIP lacks root MD5/XML declarations; if the real ZIP validator becomes mandatory, the fixture must faithfully supply those structural prerequisites without mocking the validator or weakening assertions. Existing real qualification, STF and CLI suites are available.
+- `server/services/ectd/ectd4/rps-packager.ts` emits RPS `submissionUnit.xml` and its local util manifest. It is not a v3 eCTD ZIP and must not be sent to a validator requiring index.xml/rootMD5. The existing explicit missing captured/confined RPS-schema proof remains BLOCKED; no v4 expansion is authorized here.
+- `docs/evidence/MR-10/2026-10-30-agency-qualification/ASSET_REVIEW.md` holds the unsigned official asset/validator input packet. No signoff/configuration arrived with Continue; current runtime reports no configured variables/secrets/identities. Agency acceptance prerequisites remain open; no asset acquisition, endpoint calls or enforcement-default changes belong to this correction.
+
+Discovery searched checksum/index-md5/integrity/qualification/validateEctdPackage names across eCTD, gateway, export routes, scripts, client surfaces, shared schemas and migrations, plus deleted history. The only applicable ZIP owner is the existing structural validator; deleted-history hits were the unrelated gstack/CMC removals, not another qualification checksum owner. No parallel route, result store, UI, database or dependency is warranted.
+
+## Trace and review boundary
+
+Root owns source/evidence contracts, all jobs and Git on concept2cure-v2. Up to two disjoint workers may trace the existing integration and prepare regression tests, but no production edits or jobs before the bounded contract and genuine root-observed RED. Proposed bounded correction: reach the existing validator for both v3 original/amendment archives, preserve full canonical results as local evidence and propagate known errors through existing FAILED/availability/lifecycle aggregation. Keep native/captured/external gates and raw diagnostics. Existing util checksum detail remains separately labelled. Do not apply v3 assumptions to RPS, copy parser logic, rewrite historical evidence or imply agency qualification. Clarify exact report/test interfaces after traces before production.
+
+## Status
+
+Software integration published: implementation `c53e8fa5a`, accepted canonical source `8a1c1448c`. Every normal source-push gate passed, including full TypeScript0. Actual agency qualification remains blocked on the preceding asset/validator prerequisites.
+
+## Approved bounded interfaces and ownership
+
+V3 calls existing `validateEctdPackage` on both emitted ZIPs with `origin:'platform-generated'`. Add optional v3-only report `packageValidation: { original: EctdZipValidationResult; amendment: EctdZipValidationResult }`; v3 always emits it and v4 omits it. Preserve full errors/warnings. Add local rows `ectd-zip-structure` and `0001/ectd-zip-structure`, canonical errors to existing failure arrays, and let executed-row aggregation reflect failures. Original errors fail the report independently of an otherwise clean amendment; amendment errors also fail lifecycle. Warnings remain warnings; current DTD/external prerequisite blockers remain intact. No new parser, checksum validator, route/store or dependency. `checksum` remains a backward-compatible diagnostic of the platform util manifest, also used by the RPS harness, not the full eCTD integrity verdict; the canonical ZIP validator owns that verdict. Do not change the canonical validator or RPS in this slice.
+
+Worker A owns ONLY `qualification/__tests__/qualification-outcomes.test.ts`: prepare the existing synthetic V3 fixture with XML declarations, root MD5 and faithful leaf checksums; keep all assertions/native/DTD/external controls and V4 writer unchanged. Add both-sequence wrong/missing root and index/regional leaf-declaration faults with util/root/unrelated checksums made coherent. Directly prove canonical rejection, clean util/native evidence, then failed expectation; old qualifier must demonstrate the missed failure before production. Keep complete positive and original/amendment independence.
+
+Worker B owns ONLY new `qualification/__tests__/qualification-package-integrity.test.ts`: real golden packager/native output, scoped wrapper mutating only ZIP root checksum/missing root for each sequence, rebuilding util manifest and package size/SHA facts. No engine/asset endpoint: explicitly isolated empty assets/selectors and restored env. Assert actual native checks and util pass, canonical result rejects intended ZIP fault, then old qualification blocked vs expected FAILED; new lifecycle failure only on amendment. Preserve actual original/amendment package bytes in memory/tmp only; no governed records. Root owns `qualify.ts`, evidence/docs and ALL test/lint/build/compiler/Git jobs. Workers write tests only and stop; root freezes inputs and observes genuine RED before production. No mock of canonical ZIP validator or deleted/softened existing assertions.
+
+## Verification
+
+Root serialized every job. Workers wrote disjoint tests and reviewed source, without running jobs or Git. No canonical validator, RPS owner, policy defaults, dependencies or historical reports changed.
+
+- Read-only compatibility probe: both previously retained real golden ZIPs are canonically valid with zero errors. Missing supportive assets/module folders remain warnings; they do not manufacture structural failures.
+- Genuine RED on frozen ten inputs, before qualifier edits: **13 failed /17 passed,30 tests**. Eight controlled root/missing-root/index-leaf/regional-leaf faults across0000/0001 incorrectly returned PASSED. Four real-package root faults incorrectly returned BLOCKED with available checks passing, despite canonical rejection. The thirteenth failure was the complete-positive control missing the new raw-result projection. All canonical-error/native/util positive preconditions passed before those intended assertions. The frozen source snapshot is `red-inputs.tar.gz` with adjacent SHA-256 manifest; qualifier production was exactly canonical before RED.
+- Final affected cohort: **375 passed /25 test files**, no failures/skips. `final-inputs.json` pins335 source/configuration/test inputs, exact test paths and base32eafdbf2. This includes the30 controlled/real native integration cases, all prior qualification/external/confinement/RPS checks and actual CLI, plus canonical ZIP integrity and regional-backbone tests.
+- Scoped lint: three changed TypeScript files, **zero errors and warning delta−1** against canonical. No baseline/rule change.
+- Independent read-only production review: both calls, rawresults, attributed full errors, original/amendment independence, warnings and unchanged RPS path confirmed; no further concrete defect.
+
+## Actual command
+
+`actual-unconfigured-run/execution.json` preserves the exact existing CLI invocation, selector presence only and byte hashes. It selected FDA v3 only, native xmllint available, no asset/engine/profile/fallback selectors configured. Both canonical ZIP assessments were valid with zero errors, both local rows executed and passed, and full warnings were retained. The real command returned **exit1 / BLOCKED / availableChecksPassed:true** because official schemas/captured proof and qualifying external execution are absent. Both newly generated golden ZIPs and raw reports are retained unchanged, bound to their hashes. No provider/agency endpoint or governed records were used. These are software evidence over synthetic golden documents, never agency acceptance.
+
+## Remaining acceptance
+
+The per-DTD counsel-signoff prerequisite in [the existing vendoring runbook](../../../runbooks/ectd-dtd-vendoring.md) and exact unsigned [asset/validator packet](../2026-10-30-agency-qualification/ASSET_REVIEW.md) remain open. No DTD/XSL/archive was acquired; no external validator/profile or current-criteria coverage, human witnessing, agency acceptance or deployment completion is claimed. RPS retains its explicit captured/confined schema qualification blocker. This software slice does not close MR-10 Stage3/CAT2-01.
+
+Complete client/server/audit-chain-verifier production build passed on the pinned inputs. Accepted-source/compiler proof is in [publication.json](publication.json).
+
+## Accepted source
+
+[publication.json](publication.json) binds implementation `c53e8fa5a821694e143666f1335a6331b8c035cc` to accepted canonical source `8a1c1448cac417697e33e49368ae9aff88674df8`. All335 pinned inputs match accepted Git blobs, not just working-tree files. Complete application build and every normal gate passed, including TypeScript exit0/errors0, tracked imports and no lint warning growth (one fewer warning). No hook, baseline or branch bypass.
+
+Three earlier pushes passed every gate/whole compiler but lost the remote-ref race. Full logs and subsequent merges are preserved. Disjoint attachment, narrative and protocol work stayed intact. Work-order conflicts preserved this claim and the other lane’s current accepted status. The fourth normal source push was accepted. No remote CI/deployment or agency acceptance is implied. Paused A3/biotech work remains paused, not canceled or declared complete.

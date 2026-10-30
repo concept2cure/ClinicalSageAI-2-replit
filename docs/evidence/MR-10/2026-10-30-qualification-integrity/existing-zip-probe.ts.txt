@@ -1,0 +1,12 @@
+import { readFile } from 'node:fs/promises';
+import { validateEctdPackage } from '/workspace/ClinicalSageAI-2-replit/server/services/submission-gateways/ectd-structural-validator.ts';
+async function main() {
+  const base = '/workspace/ClinicalSageAI-2-replit/docs/evidence/MR-10/2026-10-30-qualification-outcomes/actual-unconfigured-run/';
+  const results = [];
+  for (const sequence of ['original', 'amendment']) {
+    const result = await validateEctdPackage(await readFile(base + sequence + '.zip'), { origin: 'platform-generated' });
+    results.push({ sequence, ...result });
+  }
+  process.stdout.write(JSON.stringify({ purpose: 'Read-only compatibility probe of prior preserved golden ZIPs, no agency validation', results }, null, 2) + '\n');
+}
+main().catch(error => { process.stderr.write(String(error)); process.exitCode = 1; });

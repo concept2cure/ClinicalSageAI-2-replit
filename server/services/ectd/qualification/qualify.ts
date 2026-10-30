@@ -29,6 +29,7 @@ import { packageEctdSubmission } from '../../submission-gateways/regional-packag
 // Region is declared in the gateway's types module; regional-packager only
 // imports it (TS2459 if re-imported from there).
 import type { Region, SubmissionBundle } from '../../submission-gateways/types';
+import { validateEctdPackage, type EctdZipValidationResult } from '../../submission-gateways/ectd-structural-validator';
 import { packageRpsSubmission, validateRpsMessage } from '../ectd4';
 import {
   checkWellFormed,
@@ -70,6 +71,7 @@ export const SPEC_VERSIONS = {
 export type EctdVersion = keyof typeof SPEC_VERSIONS;
 
 export interface ChecksumVerification {
+  /** Platform manifest detail; the canonical ZIP result owns v3 integrity. */
   manifest: string;
   filesChecked: number;
   mismatches: Array<{ relPath: string; expected: string; actual: string }>;
@@ -85,6 +87,9 @@ export interface QualificationReport extends QualificationOutcome {
   package: { path: string; sha256: string; sizeBytes: number };
   validators: ValidatorRunReport[];
   checksum: ChecksumVerification;
+  /** V3 ZIP validation, including the root and backbone-leaf MD5 contract.
+   * RPS has a different structure and does not supply this v3 evidence. */
+  packageValidation?: { original: EctdZipValidationResult; amendment: EctdZipValidationResult };
   externalValidation: { original: QualificationExternalEvidence; amendment: QualificationExternalEvidence };
   lifecycle: Omit<QualificationOutcome, 'passed'> & {
     package: { path: string; sha256: string; sizeBytes: number };
@@ -125,7 +130,7 @@ export function stfCoverageFindings(stf: { untagged: number }): Array<{ severity
     : [];
 }
 
-/** Reopen a ZIP and re-verify every entry against its util/index-md5.txt line. */
+/** Platform-manifest detail, also used by RPS; not the full v3 checksum contract. */
 async function verifyZipChecksums(zipPath: string): Promise<ChecksumVerification> {
   const buf = await fs.readFile(zipPath);
   const zip = await JSZip.loadAsync(buf);
@@ -297,6 +302,13 @@ async function v3Native(packageDir: string, regionalRel: string, bundle: Submiss
     ...await validateStudyTaggingFiles(packageDir, bundle.leafManifest)];
 }
 
+function zipStructureRow(result: EctdZipValidationResult, sequence: string): ValidatorRunReport {
+  return tally(`${sequence === '0000' ? '' : `${sequence}/`}ectd-zip-structure`, true, [
+    ...result.errors.map(message => ({ severity: 'error', message })),
+    ...result.warnings.map(message => ({ severity: 'warning', message })),
+  ]);
+}
+
 /** Qualify one region for eCTD v3.2.2 using complete per-sequence evidence. */
 export async function qualifyV3(region: Region, workDir: string): Promise<QualificationReport> {
   const notes = ['Automated technical qualification only; no licence, current criteria coverage, human witnessing or agency acceptance is established by this report.'];
@@ -311,7 +323,8 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
   const originalNative = await v3Native(pkgDir, regionalRel, bundle);
   const originalExternal = await qualificationExternal(pkgDir, region, '0000', bundle.sha256);
   const originalContent = bundleContentReports(bundle, '0000');
-  const originalRows = [...sequenceValidators(originalNative, '0000'), ...originalContent,
+  const originalZip = await validateEctdPackage(await fs.readFile(bundle.path), { origin: 'platform-generated' });
+  const originalRows = [...sequenceValidators(originalNative, '0000'), ...originalContent, zipStructureRow(originalZip, '0000'),
     ...(originalExternal.validator ? [originalExternal.validator] : [])];
   const dtdManifest = await verifyChecksumManifest(resolveDtdDir(), 'checksums.txt', ['.dtd', '.xsl']);
   const manifestRow = tally('dtd-checksum-manifest', true, [
@@ -327,7 +340,8 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
   const amendmentNative = await v3Native(lcDir, regionalRel, lcBundle);
   const amendmentExternal = await qualificationExternal(lcDir, region, '0001', lcBundle.sha256);
   const amendmentContent = bundleContentReports(lcBundle, '0001');
-  const amendmentRows = [...sequenceValidators(amendmentNative, '0001'), ...amendmentContent,
+  const amendmentZip = await validateEctdPackage(await fs.readFile(lcBundle.path), { origin: 'platform-generated' });
+  const amendmentRows = [...sequenceValidators(amendmentNative, '0001'), ...amendmentContent, zipStructureRow(amendmentZip, '0001'),
     ...(amendmentExternal.validator ? [{ ...amendmentExternal.validator, name: `0001/${amendmentExternal.validator.name}` }] : [])];
   const validators = [...originalRows, ...amendmentRows];
   const lcChecksum = await verifyZipChecksums(lcBundle.path);
@@ -340,15 +354,15 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
   const originalCaptured = capturedDtdProblems(bundle, '0000');
   const amendmentCaptured = capturedDtdProblems(lcBundle, '0001');
   const amendmentFailures = [...amendmentProblems.failures, ...amendmentCaptured.failures, ...amendmentExternal.failures,
-    ...knownReportFailures(amendmentContent), ...(!lcChecksum.ok ? ['0001: Package checksum verification failed.'] : []),
+    ...knownReportFailures(amendmentContent), ...amendmentZip.errors.map(reason => `0001: ${reason}`),
     ...unresolved.map(reason => `0001: ${reason}`)];
   const amendmentBlockers = [...amendmentProblems.blockers, ...amendmentCaptured.blockers, ...amendmentExternal.blockers];
-  const amendmentAvailable = executedChecksPassed(amendmentRows) && lcChecksum.ok && unresolved.length === 0 && amendmentCaptured.failures.length === 0;
+  const amendmentAvailable = executedChecksPassed(amendmentRows) && unresolved.length === 0 && amendmentCaptured.failures.length === 0;
   const { passed: nextPackagePassed, ...lifecycleOutcome } = qualificationOutcome(amendmentAvailable, amendmentFailures, amendmentBlockers);
   const failures = [...originalProblems.failures, ...originalCaptured.failures, ...originalExternal.failures, ...knownReportFailures([...originalContent, manifestRow]),
-    ...(!checksum.ok ? ['0000: Package checksum verification failed.'] : []), ...amendmentFailures];
+    ...originalZip.errors.map(reason => `0000: ${reason}`), ...amendmentFailures];
   const blockers = [...originalProblems.blockers, ...originalCaptured.blockers, ...originalExternal.blockers, ...amendmentBlockers];
-  const outcome = qualificationOutcome(executedChecksPassed(validators) && checksum.ok && amendmentAvailable && originalCaptured.failures.length === 0, failures, blockers);
+  const outcome = qualificationOutcome(executedChecksPassed(validators) && amendmentAvailable && originalCaptured.failures.length === 0, failures, blockers);
   notes.push(...bundleNotes(bundle, '0000'), ...bundleNotes(lcBundle, '0001'));
   const skips = [...sequenceDtdSkips(originalNative, '0000'), ...sequenceDtdSkips(amendmentNative, '0001')];
   if (skips.length) notes.push(await dtdSkipNote(skips));
@@ -357,6 +371,7 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
     : 'Every modified-file pointer names a leaf ID the 0000 package carries, at the traversal its backbone needs.');
   return { id: `v3.2.2-${region}`, version: 'v3.2.2', region, specVersions: SPEC_VERSIONS['v3.2.2'],
     package: { path: bundle.path, sha256: bundle.sha256, sizeBytes: bundle.sizeBytes }, validators, checksum,
+    packageValidation: { original: originalZip, amendment: amendmentZip },
     externalValidation: { original: originalExternal.evidence, amendment: amendmentExternal.evidence },
     lifecycle: { ...lifecycleOutcome, package: { path: lcBundle.path, sha256: lcBundle.sha256, sizeBytes: lcBundle.sizeBytes },
       priorSequence: '0000', nextSequence: '0001', operations: observedOps.filter(operation => operation !== 'new'),
