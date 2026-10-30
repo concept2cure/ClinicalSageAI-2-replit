@@ -7284,6 +7284,15 @@ async function workflowApprovalMayRelease(client: Queryable, current: Awaited<Re
   }
 }
 
+/** Whether this signature may decide a workflow step. 2026-10-30: authorship
+ * decides none. An AUTHOR signature skips the separation-of-duties check
+ * (signingRefused), so an author with the QA role could clear their own step
+ * with it and seal their own CSR. */
+function decidesWorkflowStep(meaning: string, userRoles: string[]): boolean {
+  if (meaning === 'AUTHOR') return false;
+  return userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC');
+}
+
 async function advanceWorkflowForSignature(args: {
   client: Queryable;
   req: Request;
@@ -7303,7 +7312,7 @@ async function advanceWorkflowForSignature(args: {
   // (ledger C-18).
   const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
     .map((r) => String(r).toUpperCase());
-  if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
+  if (decidesWorkflowStep(meaning, userRoles)) {
     // RETURNING, read as rows (PGlite does not populate rowCount): whether THIS
     // signature decided a pending step. Spine F1 approves filing sections only
     // for the signature that clears the last step, never for a later signature
@@ -7344,7 +7353,10 @@ async function advanceWorkflowForSignature(args: {
     const totalSteps = Number(stepCounts.rows[0]?.total ?? 0);
     const pendingCount = Number(stepCounts.rows[0]?.pending ?? 0);
 
-    if (totalSteps > 0 && pendingCount === 0) {
+    // 2026-10-30: only an approval signature approves. A REVIEWER signature
+    // that clears the last step records the review and leaves the document
+    // unapproved, as /e-sign does; it no longer seals on "Review".
+    if (totalSteps > 0 && pendingCount === 0 && meaning === 'APPROVER') {
       if (!await workflowApprovalMayRelease(client, args.current, meaning)) return false;
       await approveAndFreezeDocument({ client, docId, tenantId, signerEmail, contentHash });
       // Spine F1: true only when this signature cleared the last pending step.

@@ -136,3 +136,16 @@ across the three suites, `wide.txt`).
   `765f2b399`): one `BINDING_BASIS` entry.
 - `server/services/tenant/tenant-offboarding.ts` (`e2cf417ba`, `07d0116f9`):
   one purge-list entry.
+
+## Follow-up (2026-10-30): a journey this change broke
+
+`tests/golden-journeys/drug-nda-ectd.journey.test.ts` went red with this
+change. Creating a sequence now reads `public.submission_filed_baselines`, and
+the journey's database did not have the table. Its harness stops on that gap
+("missing 1 relation(s)"), then the create answered 500. The wide run here did
+not include the golden journeys, so it was not seen.
+
+The journey now applies the real migration
+(`migrations/20261029g_submission_filed_baselines.sql`). Red on the committed
+file: 1 failed, `[42P01] relation "public.submission_filed_baselines" does not
+exist`. Green: 1/1. No other journey creates a sequence.
