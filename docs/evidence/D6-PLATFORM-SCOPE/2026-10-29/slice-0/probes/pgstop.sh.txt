@@ -1,0 +1,4 @@
+#!/bin/bash
+# Stop P-72 slice 0's private PostgreSQL (fast).
+P=/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72
+unshare --user --map-user=1000 --map-group=1000 $P/root/usr/lib/postgresql/16/bin/pg_ctl -D $P/pg/data stop -m fast

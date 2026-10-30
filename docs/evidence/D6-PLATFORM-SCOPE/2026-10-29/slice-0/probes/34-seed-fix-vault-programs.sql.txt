@@ -1,0 +1,12 @@
+-- P-72 slice 0, seeding fix (owner, past triggers): the catalog seeder gave its vault.documents rows a random program_id
+-- (the column has no foreign key), so no program resolves them to their organization. Point them at their organization's
+-- program, as every real Vault document is; the seeded children (catalog, read receipts, citations) reference them.
+\set ON_ERROR_STOP on
+SET session_replication_role = 'replica';
+UPDATE vault.documents d SET program_id = rp.id, content_hash = md5(d.id::text) || md5(d.id::text) FROM public.regulatory_programs rp
+ WHERE rp.organization_id = d.organization_id AND rp.code LIKE 'P72-%' AND d.organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%')
+   AND d.document_code IS NULL;
+SET session_replication_role = 'origin';
+SELECT d.organization_id, count(*) docs, count(*) FILTER (WHERE rp.id IS NOT NULL) resolved FROM vault.documents d
+  LEFT JOIN public.regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = d.organization_id
+ WHERE d.organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%') GROUP BY 1 ORDER BY 1;

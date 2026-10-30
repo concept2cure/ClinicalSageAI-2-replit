@@ -1,0 +1,56 @@
+# Build of the measured databases
+HEAD at first build: 769a43b683c6c2ffe9b325a6e9c1aa951b454803
+first build: 2026-10-29T23:34:32Z .. 2026-10-29T23:34:51Z
+inputs at first build:
+44194a4a0ceac043e2d34d54f4798da40033ffe124d9a95fcb919641abe4d4fc  scripts/db/migration-set.mjs
+2c5f5bcba77c1d44e5d03fd5ac36e1a00d46d512746406a87efcf7a99bf0cdca  migrations/20261029k_tenant_offboarding_custody.sql
+94bd9cecab9d702c79ac256edd23c1294e0c4c5cf0a440625d24a8a277b271d3  migrations/20261023_review_routes.sql
+5d6ef7a04b63614a33feda3951380a278d7434898eafa8056c2b7f847c4120da  scripts/db/security-definer-allowlist.json
+
+## install-fresh (tail)
+     the role is provisioned). Migrations keep using DATABASE_URL (the owner).
+     Production boot fails closed under RLS_ENFORCE=on if it connects as a superuser.
+   • leave SEED_DEMO_USER unset in production (no known-password admin).
+install-fresh exit 0
+## deploy-migrate (tail)
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+  role postgres on c2c_p72_tpl (superuser=true, bypassrls=true)
+  schemas: 3/3 present
+  extensions: 1/1 installed
+  critical tables: 2/2 present
+  security-critical tables: 5/5 present
+  Part 11 audit store: 1/1 present
+  SELECT reach: 8/8 contract tables readable by app_service
+  grant audit: 1326/1326 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+  authoring subsystem: 19/19 tables present
+  tenant-parentage FKs: 6/6 present
+  tenant_isolation_policy: 19/19 tables policied
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.
+deploy-migrate exit 0
+
+## upgraded copy (the seeded database replayed at 86c90e66f45b988bfe6c6321d383f2419f45281a)
+917498226b215049631d48d3daccda32fe16e42002ed850cc8d9d29a32fd54fc  migrations/20261029k_tenant_offboarding_custody.sql
+bfa8ee92d2913e1d6a01f09b7b6b8d32000863b520075d8b0830004e7238696f  scripts/db/migration-set.mjs
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.
+
+## RDS-shaped owner transform (41-rds-shaped-owner.sql), first copy
+SET
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72/probe/41-rds-shaped-owner.sql:49: NOTICE:  reassigned to c2c_rds_master: schemas 37, relations 1327, functions 246, types 129; not reassigned 0
+DO
+owner | count
+c2c_rds_master | 1279
+(1 row)
+owner | definers | count
+c2c_rds_master | 67 | 246
+postgres | 0 | 114
+review_route_writer | 7 | 7
+tenant_record_purger | 5 | 5
+ana_run_events_purger | 3 | 3
+ana_record_purger | 2 | 2
+artifact_record_purger | 1 | 1
+audit_archiver | 1 | 1
+(8 rows)
