@@ -24174,35 +24174,17 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Run a final adversarial pre-transmit QC pass and decide whether dispatch may proceed. Hard rule: never cleared when there are open error-severity validation findings or unacknowledged Shadow Review criticals. This does NOT transmit — it gates. Tenant comes from the active context; the call is audited.",
+      "description": "Run the final pre-transmit QC on a stored sequence and say whether dispatch may proceed. The verdict is the platform's dispatch-readiness assessment of that sequence (the gate freeze, dispatch and transmit enforce: validation findings, Shadow Review, the agency-grade validation gate, the release signature); it is never computed from counts you supply, and a model narrative, when one is configured, only explains it. This does NOT transmit. Tenant comes from the active context; the call is audited.",
       "scope": "project",
       "governed": false,
       "renderer": "result-card",
       "example": "",
       "inputs": [
         {
-          "name": "region",
-          "type": "string",
-          "required": true,
-          "description": ""
-        },
-        {
-          "name": "validation_errors",
+          "name": "sequence_id",
           "type": "number",
           "required": true,
-          "description": "Count of open error-severity validation findings."
-        },
-        {
-          "name": "unresolved_shadow_criticals",
-          "type": "number",
-          "required": true,
-          "description": "Count of unacknowledged Shadow Review criticals."
-        },
-        {
-          "name": "leaves",
-          "type": "array",
-          "required": true,
-          "description": ""
+          "description": "The stored sequence to assess."
         },
         {
           "name": "submission_id",
@@ -24212,10 +24194,7 @@
         }
       ],
       "requiredInputs": [
-        "region",
-        "validation_errors",
-        "unresolved_shadow_criticals",
-        "leaves"
+        "sequence_id"
       ],
       "derived": true
     },
