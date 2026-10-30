@@ -1,0 +1,10 @@
+assembles a complete serious-AE narrative in order with no missing fields 3ms
+flags missing required fields and never fabricates them 1ms
+uses onset date when day-on-study is absent and closes with causality vs study drug 0ms
+names the event as a (serious) adverse event with its intensity or grade 11ms
+states each seriousness criterion as what the event did 3ms
+states the action taken with the study drug (AEACN) as a sentence 1ms
+states the outcome (AEOUT) as a sentence 1ms
+states the investigator's causality category (AEREL) in words, keeping the category 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 3 passed (8)
