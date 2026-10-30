@@ -22,6 +22,26 @@ const PROGRAM_ID = '11111111-2222-3333-4444-000000000204';
 const queryFn = vi.fn();
 const connectFn = vi.fn();
 
+/** Risk/Engineering use the request's current actor and transaction, while these
+ * narrow envelope/score cases retain their existing domain-query fixtures. */
+function requestClient() {
+  const ownership = new Map<string, { rows: Array<Record<string, unknown>> }>();
+  return { query: async (sql: string, params?: unknown[]) => {
+    if (/^(BEGIN|COMMIT|ROLLBACK)$/.test(sql)) return { rows: [] };
+    if (sql.includes('SELECT ou.role')) return { rows: [{ role: 'admin' }] };
+    if (sql.includes('FROM regulatory_programs') && typeof params?.[0] === 'string') {
+      const key = params[0];
+      if (!ownership.has(key)) ownership.set(key, await queryFn(sql, params));
+      return ownership.get(key)!;
+    }
+    if (sql.includes('client_workspace_id AS "clientWorkspaceId"')) return { rows: [{ id: 11, clientWorkspaceId: 71 }] };
+    if (sql.includes('FROM projects p LEFT JOIN project_visibility_settings')) return { rows: [{
+      id: 11, owner_id: 777, created_by_id: 777, settings: {}, visibility: 'org_public', members: [], review_assigned: false,
+    }] };
+    return queryFn(sql, params);
+  } };
+}
+
 vi.mock('../server/db', () => ({
   pool: {
     query:   (...args: unknown[]) => queryFn(...args),
@@ -57,6 +77,7 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
          which is what it failed to notice. */
       (req as any).user = { id: 777, organizationId: 99, role: 'admin' };
       (req as any).userRole = 'admin';
+      Object.assign(req, { dbClient: requestClient() });
       next();
     });
   }

@@ -1,0 +1,126 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-23T20:06:49.781Z","pid":29835,"hostname":"d2bfc5cf7ebb","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-23T20:06:49.782Z","pid":29835,"hostname":"d2bfc5cf7ebb","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-23T20:06:49.782Z","pid":29835,"hostname":"d2bfc5cf7ebb","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ × tests/db/project-settings.dbtest.ts > native governed project settings > commits exact reviewed fields and their chained reason/before-after audit together, preserving actuals and approved work 257ms
+   → {"success":false,"error":"PROJECT_SETTINGS_UNAVAILABLE","message":"Project settings could not be verified. Reload before reviewing another change."}: expected 503 to be 200 // Object.is equality
+ × tests/db/project-settings.dbtest.ts > native governed project settings > persists deliberate clearing and refuses a semantic no-op without a second audit 197ms
+   → {"success":false,"error":"PROJECT_SETTINGS_UNAVAILABLE","message":"Project settings could not be verified. Reload before reviewing another change."}: expected 503 to be 200 // Object.is equality
+ × tests/db/project-settings.dbtest.ts > native governed project settings > serializes two real editors into one save and one stale refusal without a lock-upgrade deadlock 60159ms
+   → Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ✓ tests/db/project-settings.dbtest.ts > native governed project settings > rolls profile changes back if the actual chained-audit insert fails 351ms
+ × tests/db/project-settings.dbtest.ts > native governed project settings > reports unknown after a real committed save loses its acknowledgement and discards once 258ms
+   → expected 'PROJECT_SETTINGS_UNAVAILABLE' to be 'PROJECT_SETTINGS_OUTCOME_UNKNOWN' // Object.is equality
+ × tests/db/project-settings.dbtest.ts > native governed project settings > does not claim absence when rollback acknowledgement is lost 200ms
+   → expected 'PROJECT_SETTINGS_UNAVAILABLE' to be 'PROJECT_SETTINGS_OUTCOME_UNKNOWN' // Object.is equality
+ × tests/db/project-settings.dbtest.ts > native governed project settings > uses current persisted role and active membership rather than the stale administrator request claim 320ms
+   → expected 404 to be 403 // Object.is equality
+ ✓ tests/db/project-settings.dbtest.ts > native governed project settings > retains private/cross-organization admission and refuses a contradictory workspace claim 221ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/project-settings.dbtest.ts > native governed project settings > commits exact reviewed fields and their chained reason/before-after audit together, preserving actuals and approved work
+AssertionError: {"success":false,"error":"PROJECT_SETTINGS_UNAVAILABLE","message":"Project settings could not be verified. Reload before reviewing another change."}: expected 503 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 503
+
+ ❯ tests/db/project-settings.dbtest.ts:156:56
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/db/project-settings.dbtest.ts > native governed project settings > persists deliberate clearing and refuses a semantic no-op without a second audit
+AssertionError: {"success":false,"error":"PROJECT_SETTINGS_UNAVAILABLE","message":"Project settings could not be verified. Reload before reviewing another change."}: expected 503 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 503
+
+ ❯ tests/db/project-settings.dbtest.ts:173:58
+    171|   it('persists deliberate clearing and refuses a semantic no-op withou…
+    172|     const first = await read(); const cleared = await save(first.body.…
+    173|     expect(cleared.status, JSON.stringify(cleared.body)).toBe(200); ex…
+       |                                                          ^
+    174|     expect((await save(cleared.body.data.revision, { description: null…
+    175|     expect(await auditRows()).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/db/project-settings.dbtest.ts > native governed project settings > serializes two real editors into one save and one stale refusal without a lock-upgrade deadlock
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/db/project-settings.dbtest.ts:178:3
+    176|   });
+    177|
+    178|   it('serializes two real editors into one save and one stale refusal …
+       |   ^
+    179|     const first = await read(); let enter!: () => void, resume!: () =>…
+    180|     const entered = new Promise<void>(resolve => { enter = resolve; })…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/db/project-settings.dbtest.ts > native governed project settings > reports unknown after a real committed save loses its acknowledgement and discards once
+AssertionError: expected 'PROJECT_SETTINGS_UNAVAILABLE' to be 'PROJECT_SETTINGS_OUTCOME_UNKNOWN' // Object.is equality
+
+Expected: "PROJECT_SETTINGS_OUTCOME_UNKNOWN"
+Received: "PROJECT_SETTINGS_UNAVAILABLE"
+
+ ❯ tests/db/project-settings.dbtest.ts:204:64
+    202|   it('reports unknown after a real committed save loses its acknowledg…
+    203|     const first = await read(); lostCommit = true; const result = awai…
+    204|     expect(result.status).toBe(503); expect(result.body.error).toBe('P…
+       |                                                                ^
+    205|     expect((await read()).body.data.priority).toBe('high'); expect(awa…
+    206|     expect(JSON.stringify(result.body)).not.toMatch(/nothing (was )?(s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/db/project-settings.dbtest.ts > native governed project settings > does not claim absence when rollback acknowledgement is lost
+AssertionError: expected 'PROJECT_SETTINGS_UNAVAILABLE' to be 'PROJECT_SETTINGS_OUTCOME_UNKNOWN' // Object.is equality
+
+Expected: "PROJECT_SETTINGS_OUTCOME_UNKNOWN"
+Received: "PROJECT_SETTINGS_UNAVAILABLE"
+
+ ❯ tests/db/project-settings.dbtest.ts:211:117
+    209|   it('does not claim absence when rollback acknowledgement is lost', a…
+    210|     const first = await read(); await owner.query("ALTER TABLE audit_l…
+    211|     const result = await save(first.body.data.revision); expect(result…
+       |                                                                                                                     ^
+    212|     expect((await read()).body.data).toEqual(first.body.data); expect(…
+    213|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/db/project-settings.dbtest.ts > native governed project settings > uses current persisted role and active membership rather than the stale administrator request claim
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ tests/db/project-settings.dbtest.ts:218:103
+    216|     const first = await read(); await owner.query("UPDATE organization…
+    217|     expect((await read()).body.data.canChange).toBe(false); expect((aw…
+    218|     await owner.query("UPDATE users SET status='inactive' WHERE id=7")…
+       |                                                                                                       ^
+    219|   });
+    220|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  20:06:47
+   Duration  69.21s (transform 3.81s, setup 86ms, import 240ms, tests 68.53s, environment 0ms)

@@ -28,7 +28,7 @@ const onClose = vi.fn();
 const fireToast = vi.fn();
 function props(extra: Partial<AuthoringAiDraftProps> = {}): AuthoringAiDraftProps {
   return { sectionId: 'section-1', sectionCode: '2.5', sectionTitle: 'Overview', docId,
-    docSealed: false, editorDirty: false, onAccepted, onClose, fireToast, ...extra };
+    region: 'FDA', docSealed: false, editorDirty: false, onAccepted, onClose, fireToast, ...extra };
 }
 function deferred<T>() {
   let resolve!: (value: T) => void;

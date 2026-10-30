@@ -1,0 +1,5 @@
+[
+  "server/routes/__tests__/csr-study-pivotal.pglite.test.ts",
+  "server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts",
+  "server/services/csr/__tests__/csr-nct-number.test.ts"
+]

@@ -1,0 +1,4 @@
+563b1f5451649fb9a6f13d5033b563fa2eecf3aeb211dd0413cb0577353750d0  client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx
+7ec6969ffc6333f8a8ea9bf756d4547352a6c4ceefb659d527bb0b00a6777ce6  client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx
+51b03e8cf336df448663742c5b31bb4dc9c93f6879b437cc490420fcc6809815  client/src/concept2cure/v2/dataConnect.tsx
+169dd465b658b06756d3dda372bed53ef587052cd9b86702486d3852e4b6da3a  client/src/lib/queryClient.ts

@@ -1,0 +1,5 @@
+104/104 tests across 7 files pass on the completed implementation: 52 receipt controls plus 52 existing hook, staging, check-in, open-after-upload, manifest-panel and review tests.
+Positive fixtures explicitly construct real-shaped receipts from submitted FormData. The XHR fake does not decorate malformed replies. No-ID responses do not trigger success refresh or guessed document opening.
+Separate actual PostgreSQL native suite: 5/5 cases pass, including one multi-request client-contract case proving actual created, unchanged-reupload and check-in replies pass the parser under app_service, NOSUPERUSER/NOBYPASSRLS, RLS_ENFORCE=on.
+Native legacy setup was refused by a real guard; no bypass. README states the boundary; unit vectors and actual constructor review support those legacy cases.
+Browser: 32/32 flows, actual hook, XMLHttpRequest/JSON.parse, receipt parser, header utility and staging UI; synthetic HTTP/JWT/files; 1440/390 px light/dark; 8 screenshots. One write per flow, matched actor/project context, no page errors or overflow. Raw HTML201 proves actual JSON.parse rejection handling beyond the unit fake's null conversion.

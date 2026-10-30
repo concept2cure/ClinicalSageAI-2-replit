@@ -138,6 +138,46 @@ describe('merge + ordering', () => {
   });
 });
 
+describe('board dependency blockers', () => {
+  it.each(['completed', 'cancelled'])('does not count a %s board task with retained dependencies as blocking', status => {
+    const items = mergeUnifiedWork({
+      boardTasks: [{ taskId: 'TASK-FINISHED', title: 'Finished work', status,
+        blockedBy: ['TASK-PREDECESSOR'], criticalPath: true }],
+    });
+
+    expect(items[0].status).toBe('done');
+    expect(items[0].blocking).toBe(false);
+    expect(summarizeUnifiedWork(items)).toMatchObject({ total: 1, done: 1, blocking: 0 });
+  });
+
+  it.each([
+    { status: 'blocked', blockedBy: [], criticalPath: false },
+    { status: 'pending', blockedBy: ['TASK-PREDECESSOR'], criticalPath: false },
+    { status: 'in-progress', blockedBy: [], criticalPath: true },
+  ])('retains an active blocker for $status / dependencies $blockedBy / critical path $criticalPath', row => {
+    const items = mergeUnifiedWork({ boardTasks: [{ taskId: 'TASK-ACTIVE', title: 'Active work', ...row }] });
+
+    expect(items[0].status).not.toBe('done');
+    expect(items[0].blocking).toBe(true);
+    expect(summarizeUnifiedWork(items)).toMatchObject({ total: 1, done: 0, blocking: 1 });
+  });
+
+  it('rolls up active blockers without completed or cancelled dependency history', () => {
+    const items = mergeUnifiedWork({ boardTasks: [
+      { taskId: 'TASK-COMPLETE', title: 'Complete', status: 'completed', blockedBy: ['TASK-OLD'] },
+      { taskId: 'TASK-CANCELLED', title: 'Cancelled', status: 'cancelled', blockedBy: ['TASK-OLD'] },
+      { taskId: 'TASK-BLOCKED', title: 'Blocked', status: 'blocked' },
+      { taskId: 'TASK-DEPENDENT', title: 'Dependent', status: 'pending', blockedBy: ['TASK-PREDECESSOR'] },
+      { taskId: 'TASK-CRITICAL', title: 'Critical', status: 'in-progress', criticalPath: true },
+    ] });
+
+    expect(summarizeUnifiedWork(items)).toMatchObject({ total: 5, done: 2, blocking: 3, partial: false });
+    expect(items.filter(item => item.blocking).map(item => item.nativeId).sort()).toEqual([
+      'TASK-BLOCKED', 'TASK-CRITICAL', 'TASK-DEPENDENT',
+    ]);
+  });
+});
+
 describe('summary roll-up', () => {
   it('counts by status and by source', () => {
     const items = mergeUnifiedWork({

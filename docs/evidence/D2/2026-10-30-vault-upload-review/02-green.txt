@@ -1,0 +1,678 @@
+# Final focused regression suites after independent queue review
+# PATH uses the installed Node22 runtime.
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/{vaultUploadReview.test.tsx,useVaultUpload.test.tsx,vaultUploadStaging.test.tsx,vaultUploadManifest.test.ts,vaultUploadManifestPanel.test.tsx}
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > lists chosen files as rows and sends nothing until asked 430ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > sends each row's title, type, classification and the folder chosen, with its kind and section, and no version 360ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > leaves every blank field to the Vault, and the folder to its classifier 109ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says what the Vault refused, row by row, and tries only that one again 261ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says when a recorded file’s text is still being read (MR-08 Stage 3) 300ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > flags a second file with the same name before it is sent 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > opens with focus on the list and says what was added; a removed row hands focus on; Close returns it 256ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > names each row by its file, offers only this view’s folders, and moves focus to Close once the upload settles 157ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > shows the share sent with a progress bar, and the rows behind it wait their turn 143ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > says the server is scanning and storing a file once all of it is sent, and only "Uploading…" before it knows 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > retry queue and current upload failures remain distinct > clears old refusals for a new attempt so a retry queued behind another file waits 309ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > retry queue and current upload failures remain distinct > keeps a new refusal or unknown result visible while the next file is uploading (unknown=false) 450ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > retry queue and current upload failures remain distinct > keeps a new refusal or unknown result visible while the next file is uploading (unknown=true) 270ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > gives each named file its fields, sends nothing until Upload, and the upload sends them 222ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > applies no part of a line the Vault cannot take, and names it 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > changes nothing when the manifest has a column the Vault does not record 75ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > downloads the list as a manifest to fill in 231ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > a full send with no reply is unknown in the row and batch, never claimed not recorded 70ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: honest results and spreadsheet recovery > tracks a full send even without a progress callback and preserves partial-send refusal 13ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: spreadsheet fields and controls > refuses a File-only line rather than claiming its empty patch applied 8ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: spreadsheet fields and controls > names the chosen CSV and states the actual zero applied count 211ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: spreadsheet fields and controls > caps the details while keeping exact counts for large refused and unnamed lists 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: spreadsheet fields and controls > exports a UTF-8 BOM so spreadsheet folder labels retain their characters 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: spreadsheet fields and controls > refuses to apply a delayed file read once upload starts 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx > Vault upload review: spreadsheet fields and controls > keeps its live regions mounted, then clears stale notes when upload starts 117ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion 85ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review 64ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the document each file was recorded as > lists the ids the server returned, in the order sent, and invents none
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the document each file was recorded as > lists the ids the server returned, in the order sent, and invents none
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > sends each file its own title, type, classification and filing, and never a version
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > sends each file its own title, type, classification and filing, and never a version
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > says a folder the person chose is their filing, not a suggestion awaiting confirmation
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > says a folder the person chose is their filing, not a suggestion awaiting confirmation
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05) 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file 55ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the document each file was recorded as > lists the ids the server returned, in the order sent, and invents none 4ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires 2ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials 2ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > sends each file its own title, type, classification and filing, and never a version 6ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts, as its bytes go out, and as it settles
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts, as its bytes go out, and as it settles
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — a re-upload whose filing was not applied (Part 11 review F3) > a file the Vault already holds, sent to another folder, says where its filing is changed (Part 11 review F3)
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — a re-upload whose filing was not applied (Part 11 review F3) > a file the Vault already holds, sent to another folder, says where its filing is changed (Part 11 review F3)
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > tells the row once per whole percent, not once per packet
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > tells the row once per whole percent, not once per packet
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a connection that drops is a refusal the person can retry, and nothing was filed
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a connection that drops is a refusal the person can retry, and nothing was filed
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a reply that is not JSON is refused with its status, never read as recorded
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a reply that is not JSON is refused with its status, never read as recorded
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > says a folder the person chose is their filing, not a suggestion awaiting confirmation 55ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts, as its bytes go out, and as it settles 2ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — a re-upload whose filing was not applied (Part 11 review F3) > a file the Vault already holds, sent to another folder, says where its filing is changed (Part 11 review F3) 54ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > tells the row once per whole percent, not once per packet 2ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a connection that drops is a refusal the person can retry, and nothing was filed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a reply that is not JSON is refused with its status, never read as recorded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > reading a manifest > takes its columns by heading, in any order and case, and skips blank lines 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > reading a manifest > refuses a column it does not know, naming it, so a misspelt Folder cannot leave every file Unfiled 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > reading a manifest > refuses a manifest with no File column, and one with a column twice 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > reading a manifest > says when the text is not CSV 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > gives each named file its fields, by the reader's names or the Vault's codes 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > applies no part of a line with any value the Vault does not have, and says which 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > leaves a field as it is when its cell is blank 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > refuses an evidence kind or CTD section with no folder, as the row itself offers them only with one 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > refuses a file the list does not have, a name two files share, a file named twice, and one already recorded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > says what it did in one paragraph, and that nothing was uploaded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > downloading the list as a manifest > writes every file not yet recorded with its fields, and reads back to the same fields 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > downloading the list as a manifest > guards a cell a spreadsheet would run as a formula, and reads it back as written 2ms
+
+ Test Files  5 passed (5)
+      Tests  51 passed (51)
+   Start at  16:19:55
+   Duration  15.80s (transform 5.51s, setup 543ms, import 7.35s, tests 4.72s, environment 2.22s)

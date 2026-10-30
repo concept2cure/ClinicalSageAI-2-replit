@@ -56,3 +56,7 @@ Searches run, in client and server: `export`, `bulk export`, `vault_exports`, `e
 - Step 4, previews: it waits on the renditions decision in this work order.
 - The queued variant, for a folder too large for one request: see above.
 - VR-20 part 2, the tenant data return calling the same builder: it waits on a founder decision about the released D6 lane.
+
+## Security review follow-through (2026-10-30)
+
+The shared folder/closing archive safeguards are completed in `docs/evidence/D5/2026-10-30-vault-archive-review/`: Audit trail authority controls named identities and IP addresses; both routes share per-account build admission and closed-response cleanup; the archive and each actual exported document are audited in one transaction before delivery; folder placement matches the tree and a missing planned document refuses the export.

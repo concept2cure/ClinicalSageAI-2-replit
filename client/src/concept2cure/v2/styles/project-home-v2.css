@@ -516,6 +516,11 @@
 .c2c-v2 .pj-plan-assigned::before{content:'·';margin-right:8px;color:var(--text-400);}
 .c2c-v2 .pj-plan-assign-msg{flex-basis:100%;order:10;margin:0;}
 .c2c-v2 .pj-plan-door{margin:4px 0 10px;}
+.c2c-v2 .pj-core-work-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;}
+.c2c-v2 .pj-core-work-controls label{font-size:13px;font-weight:600;color:var(--text-200);}
+.c2c-v2 .pj-core-work-controls select{font:inherit;min-width:0;max-width:100%;padding:8px 12px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);color:var(--text-100);}
+.c2c-v2 .pj-core-work-controls select:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+@media(max-width:600px){.c2c-v2 .pj-core-work-controls select{flex:1 1 100%;}.c2c-v2 .pj-core-work-controls button{width:100%;}}
 /* A door names its job in a sentence, so it wraps rather than overflow (as .pj-sec-acts does). */
 .c2c-v2 .pj-plan-door>button{height:auto;min-height:32px;padding-top:6px;padding-bottom:6px;white-space:normal;text-align:left;}
 /* The device workstreams sit in the step body, whose gap spaces them. */

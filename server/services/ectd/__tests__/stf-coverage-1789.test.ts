@@ -108,7 +108,7 @@ async function pack(region: 'fda' | 'ema', extra: Array<Partial<EctdLeaf> & { ct
     { ctdSection: '1.2', operation: 'new', sourcePath: await mk('cover.pdf'), fileName: 'cover.pdf', title: 'Cover' },
     {
       ctdSection: '5.3.5.1', operation: 'new', sourcePath: await mk('s1-report.pdf'), fileName: 's1-report.pdf',
-      title: 'Study 1 report', studyId: 'STUDY-001', stfFileTag: 'study-report',
+      title: 'Study 1 report', studyId: 'STUDY-001', stfFileTag: 'study-report-body',
     },
   ];
   for (const e of extra) {

@@ -10,9 +10,9 @@
  *   investigator list, signatures, SAP, CRFs). The platform never composes
  *   one; an unsupplied document is listed as missing.
  * - §16.2.x: subject listings generated from the source the run retained.
- * - Every leaf's Study Tagging File role, from the reviewed file-tag list
- *   STF_DOCUMENT_FILE_TAGS (stf-generator.ts; recall, not yet checked against
- *   the ICH STF specification, as that list says).
+ * - The CSR roles are the ICH values in STF v2.6.1 §III.B pp8–9,
+ *   checked against the FDA-hosted specification on 2026-10-30. This does not
+ *   verify the generator's other regional/dataset roles or XML/DTD conformity.
  *
  * Pure: no DB, no filesystem, no model. Every heading title comes from
  * ICH_E3_GUIDANCE, the platform's one E3 tree.
@@ -21,6 +21,7 @@ import { ICH_E3_GUIDANCE, getE3Section } from '../ind/ctd/csr-e3-guidance.js';
 import { STF_DOCUMENT_FILE_TAGS } from '../ectd/stf-generator.js';
 import { FILENAME_PATTERN, FILENAME_RULE_TEXT } from '../../../shared/regulatory/ectd-leaf-rules.js';
 import { csrSectionTableKeys, CSR_TABLE_KEYS, type CsrTableKey } from './cortex-authoring-context.js';
+export { ICH_STF_SPEC_261 as CSR_STF_ROLE_BASIS } from '../ind/ctd/regulatory-basis.js';
 
 export type CsrTable = { title: string; headers: string[]; rows: string[][] };
 
@@ -28,8 +29,13 @@ export type CsrTable = { title: string; headers: string[]; rows: string[][] };
 export const CSR_CTD_SECTIONS = ['5.3.5.1', '5.3.5.2', '5.3.5.3', '5.3.5.4'] as const;
 export type CsrCtdSection = typeof CSR_CTD_SECTIONS[number];
 
-/** The STF file-tag of the body and of the §14 tables leaf. */
-export const CSR_BODY_FILE_TAG = 'study-report';
+/**
+ * ICH STF v2.6.1 §III.B p8 assigns study-report-body, info-type ich, to
+ * E3 sections 1 and 3–15. The §14 tables are within that range. Source and
+ * retrieval provenance are carried by CSR_STF_ROLE_BASIS, not the generator's
+ * mixed document-list basis. Prior retained output is not normalized here.
+ */
+export const CSR_BODY_FILE_TAG = 'study-report-body';
 
 /** §14 numbering of every engine table (slice 4's convention). */
 export const CSR_TFL_NUMBERS: Readonly<Record<CsrTableKey, string>> = Object.freeze({
@@ -79,11 +85,10 @@ export const CSR_TABLES_FILE = 'csr-14-tables.pdf';
 export const CSR_NARRATIVES_SECTION = '14.3.3';
 export const CSR_NARRATIVES_FILE = 'csr-14-3-3-narratives.pdf';
 /**
- * The reviewed STF list (STF_DOCUMENT_FILE_TAGS, recall) has no role for E3
- * narratives; 'subject-profiles' is patient profiles, a different document.
- * §14.3.3 is part of the report, so it is filed as the §14 tables leaf is,
- * 'study-report'. A narratives-specific role, if the ICH STF specification
- * has one, is unverified until that list is checked against it.
+ * The specification names no separate narrative role. E3 §14.3.3 is within
+ * the body role's stated 1,3–15 range, so this leaf uses study-report-body.
+ * This follows that section range; subject-profiles is a distinct regional
+ * role and is not inferred from the fact that a narrative concerns a subject.
  */
 export const CSR_NARRATIVES_FILE_TAG = CSR_BODY_FILE_TAG;
 /** The named destination of one subject's narrative in the §14.3.3 leaf. */
@@ -100,6 +105,17 @@ export function appendixFileName(number: CsrAppendixNumber): string {
 
 export function appendixFileTag(number: CsrAppendixNumber): string {
   return (CSR_SUPPLIED_APPENDICES as Record<string, string>)[number] ?? (CSR_LISTING_APPENDICES as Record<string, string>)[number];
+}
+
+/** The expected role of an exact CSR output identity; unknown parts have none. */
+export function csrAssemblyFileTag(appendix: string): string | undefined {
+  if (appendix === 'body' || appendix === '14') return CSR_BODY_FILE_TAG;
+  if (appendix === CSR_NARRATIVES_SECTION) return CSR_NARRATIVES_FILE_TAG;
+  if (Object.prototype.hasOwnProperty.call(CSR_SUPPLIED_APPENDICES, appendix) ||
+      Object.prototype.hasOwnProperty.call(CSR_LISTING_APPENDICES, appendix)) {
+    return appendixFileTag(appendix as CsrAppendixNumber);
+  }
+  return undefined;
 }
 
 /** E3's own applicability for a heading ('always', 'when-applicable', 'authority-dependent'). */
@@ -171,7 +187,7 @@ export function supportingOutputs(sectionNumber: string, tfls: readonly PlannedT
   return [...tables, ...listings];
 }
 
-/** Assert the plan's tags are the reviewed STF list's own (a typo here would file a wrong role). */
+/** Cross-check the CSR roles against the generator's shared allowed spelling list. */
 export function assertKnownFileTags(): void {
   const tags = [CSR_BODY_FILE_TAG, CSR_NARRATIVES_FILE_TAG, ...Object.values(CSR_SUPPLIED_APPENDICES), ...Object.values(CSR_LISTING_APPENDICES)];
   const unknown = tags.filter(tag => !STF_DOCUMENT_FILE_TAGS.tags.includes(tag));

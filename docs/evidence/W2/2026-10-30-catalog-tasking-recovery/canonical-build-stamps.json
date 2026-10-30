@@ -1,0 +1,13 @@
+{
+  "qualifiedSourceCommit": "542b23a13e616a8a693b726cac9f3583cb4e840b",
+  "clientAssets": [
+    "index-ChJ1Z6ca.js"
+  ],
+  "serverMatches": true,
+  "buildExitCode": 0,
+  "commitSelection": "git rev-parse HEAD; frozen during build",
+  "supersedes": [
+    "intermediate-build-stamp.json",
+    "catchup-build-stamp-red.json"
+  ]
+}

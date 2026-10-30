@@ -12,6 +12,7 @@ import { readDocumentProvenance } from './authoring-from-draft';
 import { decideAuthoringPermission, resolveAuthoringDocumentScope, type AuthoringPermissionDecision,
   type AuthoringPrincipal } from './authoring-permissions';
 import { getCurrentAuthoringReadScope, requireAuthoringReadScopeStillCurrent, AuthoringReadScopeError } from './authoring-read-scope';
+import { projectSectionDraftingRegions } from './authoring-draft-region-projection';
 
 const logger=createScopedLogger('authoring-document-read');
 type Scope=Awaited<ReturnType<typeof getCurrentAuthoringReadScope>>;
@@ -150,7 +151,20 @@ export async function readAuthoringDocumentSections(q:RequestSqlClient,input:Aut
     LEFT JOIN authoring_citations ct ON ct.section_id=s.id AND ct.tenant_id=s.tenant_id
     WHERE s.doc_id=$1 AND s.tenant_id=$2 AND s.id=ANY($3::uuid[]) GROUP BY s.id ORDER BY s.order_index,s.created_at,s.id`,
   [captured.documentId,captured.organizationId,access.sectionIds]);
+  // Private source metadata is read only after parent/section admission. The
+  // response contains agency/state only, never the parent's provenance payload.
+  const parent=await q.query(`SELECT d.template_id,to_jsonb(d)->'provenance' AS provenance,
+    to_jsonb(d)->>'client_program_id' AS client_program_id FROM authoring_documents d
+    WHERE d.id=$1 AND d.tenant_id=$2 AND d.id=ANY($3::uuid[])`,
+  [captured.documentId,captured.organizationId,parents(access)]);
+  if(parent.rows.length!==1)changed();
+  const header=parent.rows[0];
+  const regions=await projectSectionDraftingRegions(q,{tenantId:captured.organizationId,documentId:captured.documentId,
+    programId:typeof header.client_program_id==='string'?header.client_program_id:null},header,
+  result.rows.map(row=>({sectionId:String(row.id),code:typeof row.code==='string'?row.code:null})));
+  const sections=result.rows.map(row=>({...row,...(regions.get(String(row.id))??
+    {draftingRegion:null,draftingRegionState:'unavailable' as const})}));
   const structure=readScope==='document'?sectionStructureIssues(result.rows.map(row=>String(row.code??''))):null;
   await requireAuthoringReadScopeStillCurrent(q,captured,access);
-  return {success:true,sections:result.rows,count:result.rows.length,structure,readScope};
+  return {success:true,sections,count:sections.length,structure,readScope};
 }

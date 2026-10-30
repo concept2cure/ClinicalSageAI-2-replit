@@ -26,12 +26,12 @@ const leaf = (over: Partial<StfLeaf> & { studyId: string; fileTag: string }): St
 
 describe('STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1)', () => {
   it('names the file after the study, not stf.xml', () => {
-    const res = generateStfFiles([leaf({ studyId: 'abc-301', fileTag: 'study-report' })]);
+    const res = generateStfFiles([leaf({ studyId: 'abc-301', fileTag: 'study-report-body' })]);
     expect(res.files[0].fileName).toBe('stf-abc-301.xml');
   });
 
   it('keeps the sponsor study-id verbatim in the XML and case-folds only the file name', () => {
-    const res = generateStfFiles([leaf({ studyId: 'ABC-301', fileTag: 'study-report' })]);
+    const res = generateStfFiles([leaf({ studyId: 'ABC-301', fileTag: 'study-report-body' })]);
     expect(res.files[0].fileName).toBe('stf-abc-301.xml');
     expect(res.files[0].xml).toContain('<study-id>ABC-301</study-id>');
     expect(stfFileName('ABC-301')).toBe('stf-abc-301.xml');
@@ -46,15 +46,15 @@ describe('STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1)', () => {
   it.each(['S&1', 'abc 301', 'abc_301', 'abc/301', 'x'.repeat(64)])(
     'refuses a study id that cannot form an eCTD file name (%s) instead of escaping it',
     (studyId) => {
-      expect(() => generateStfFiles([leaf({ studyId, fileTag: 'study-report' })])).toThrow(/eCTD file-name rule/);
+      expect(() => generateStfFiles([leaf({ studyId, fileTag: 'study-report-body' })])).toThrow(/eCTD file-name rule/);
     },
   );
 
   it('refuses two studies whose ids fold to the same STF file name', () => {
     expect(() =>
       generateStfFiles([
-        leaf({ studyId: 'ABC-301', fileTag: 'study-report' }),
-        leaf({ studyId: 'abc-301', fileTag: 'study-report' }),
+        leaf({ studyId: 'ABC-301', fileTag: 'study-report-body' }),
+        leaf({ studyId: 'abc-301', fileTag: 'study-report-body' }),
       ]),
     ).toThrow(/same STF file name/);
   });
@@ -82,7 +82,7 @@ describe('STF file-tags on standardized datasets (FDA TRC 1735)', () => {
   it('throws citing 1735 for a define.xml carrying a document tag', () => {
     expect(() =>
       generateStfFiles([
-        leaf({ studyId: 'abc-301', fileTag: 'study-report', href: 'm5/datasets/abc-301/tabulations/sdtm/define.xml' }),
+        leaf({ studyId: 'abc-301', fileTag: 'study-report-body', href: 'm5/datasets/abc-301/tabulations/sdtm/define.xml' }),
       ]),
     ).toThrow(/TRC 1735/);
   });
@@ -102,7 +102,7 @@ describe('STF file-tags on standardized datasets (FDA TRC 1735)', () => {
 describe('STF XML shape: doc-content -> index.xml leaf ID, holding file-tag', () => {
   it('writes a doc-content per leaf pointing at its index.xml leaf, holding an info-type file-tag, and no <leaf>', () => {
     const res = generateStfFiles([
-      leaf({ studyId: 'abc-301', fileTag: 'study-report', title: 'Body', indexLeafId: 'leaf-5-3-5-1-body' }),
+      leaf({ studyId: 'abc-301', fileTag: 'study-report-body', title: 'Body', indexLeafId: 'leaf-5-3-5-1-body' }),
       leaf({ studyId: 'abc-301', fileTag: 'protocol-or-amendment', title: 'Protocol', indexLeafId: 'leaf-5-3-5-1-protocol', operation: 'replace' }),
     ]);
     const xml = res.files[0].xml;
@@ -110,7 +110,7 @@ describe('STF XML shape: doc-content -> index.xml leaf ID, holding file-tag', ()
     expect(xml).toContain(
       '<doc-content xlink:href="../../../index.xml#leaf-5-3-5-1-body">\n' +
         '      <title>Body</title>\n' +
-        '      <file-tag name="study-report" info-type="ich"/>\n' +
+        '      <file-tag name="study-report-body" info-type="ich"/>\n' +
         '    </doc-content>',
     );
     expect(xml).toContain('<doc-content xlink:href="../../../index.xml#leaf-5-3-5-1-protocol">');
@@ -120,14 +120,14 @@ describe('STF XML shape: doc-content -> index.xml leaf ID, holding file-tag', ()
   });
 
   it('refuses a leaf with no index.xml leaf ID or no path to index.xml', () => {
-    expect(() => generateStfFiles([leaf({ studyId: 'abc-301', fileTag: 'study-report', indexLeafId: '' })])).toThrow(/index\.xml leaf ID/);
-    expect(() => generateStfFiles([leaf({ studyId: 'abc-301', fileTag: 'study-report', indexRelPath: '' })])).toThrow(/index\.xml/);
+    expect(() => generateStfFiles([leaf({ studyId: 'abc-301', fileTag: 'study-report-body', indexLeafId: '' })])).toThrow(/index\.xml leaf ID/);
+    expect(() => generateStfFiles([leaf({ studyId: 'abc-301', fileTag: 'study-report-body', indexRelPath: '' })])).toThrow(/index\.xml/);
   });
 
   it('does not tag a deleted leaf: it ships no file to describe', () => {
     const res = generateStfFiles([
-      leaf({ studyId: 'abc-301', fileTag: 'study-report', indexLeafId: 'kept' }),
-      leaf({ studyId: 'abc-301', fileTag: 'study-report', indexLeafId: 'gone', operation: 'delete' }),
+      leaf({ studyId: 'abc-301', fileTag: 'study-report-body', indexLeafId: 'kept' }),
+      leaf({ studyId: 'abc-301', fileTag: 'study-report-body', indexLeafId: 'gone', operation: 'delete' }),
     ]);
     expect(res.files[0].xml).toContain('index.xml#kept');
     expect(res.files[0].xml).not.toContain('index.xml#gone');
@@ -136,7 +136,7 @@ describe('STF XML shape: doc-content -> index.xml leaf ID, holding file-tag', ()
 
   it('writes the study title from metadata and never invents a category', () => {
     const res = generateStfFiles(
-      [leaf({ studyId: 'abc-301', fileTag: 'study-report' })],
+      [leaf({ studyId: 'abc-301', fileTag: 'study-report-body' })],
       [{ studyId: 'abc-301', studyTitle: 'A Phase 1 FIH Study', studyCategory: 'clinical-study-report' }],
     );
     expect(res.files[0].xml).toContain('<title>A Phase 1 FIH Study</title>');
@@ -147,15 +147,15 @@ describe('STF XML shape: doc-content -> index.xml leaf ID, holding file-tag', ()
 
   it('warns, without refusing, on a document tag outside the recall list', () => {
     expect(STF_DOCUMENT_FILE_TAGS.basis.confidence).toBe('recall');
-    const known = generateStfFiles([leaf({ studyId: 'abc-301', fileTag: 'study-report' })]);
+    const known = generateStfFiles([leaf({ studyId: 'abc-301', fileTag: 'study-report-body' })]);
     expect(known.warnings).toEqual([]);
-    const unknown = generateStfFiles([leaf({ studyId: 'abc-301', fileTag: 'study-report-body' })]);
+    const unknown = generateStfFiles([leaf({ studyId: 'abc-301', fileTag: 'unverified-regional-role' })]);
     expect(unknown.files).toHaveLength(1);
-    expect(unknown.warnings.join('\n')).toMatch(/"study-report-body".*not in the reviewed STF file-tag list/);
+    expect(unknown.warnings.join('\n')).toMatch(/"unverified-regional-role".*not in the reviewed STF file-tag list/);
   });
 
   it('escapes XML metacharacters in titles', () => {
-    const res = generateStfFiles([leaf({ studyId: 's-1', fileTag: 'study-report', title: 'A <b> & "c"' })]);
+    const res = generateStfFiles([leaf({ studyId: 's-1', fileTag: 'study-report-body', title: 'A <b> & "c"' })]);
     const xml = res.files[0].xml;
     expect(xml).toContain('A &lt;b&gt; &amp; &quot;c&quot;');
     expect(xml).not.toContain('A <b> & "c"');
@@ -163,8 +163,8 @@ describe('STF XML shape: doc-content -> index.xml leaf ID, holding file-tag', ()
 
   it('skips and counts untagged (no studyId) leaves', () => {
     const res = generateStfFiles([
-      leaf({ studyId: '', fileTag: 'study-report' }),
-      leaf({ studyId: 's-001', fileTag: 'study-report' }),
+      leaf({ studyId: '', fileTag: 'study-report-body' }),
+      leaf({ studyId: 's-001', fileTag: 'study-report-body' }),
     ]);
     expect(res.summary).toMatchObject({ studies: 1, leaves: 1, untagged: 1 });
   });
@@ -175,8 +175,8 @@ describe('STF XML shape: doc-content -> index.xml leaf ID, holding file-tag', ()
 
   it('emits the DTD declaration and ectd/xlink namespaces, one file per study in sorted order', () => {
     const res = generateStfFiles([
-      leaf({ studyId: 's-002', fileTag: 'study-report' }),
-      leaf({ studyId: 's-001', fileTag: 'study-report' }),
+      leaf({ studyId: 's-002', fileTag: 'study-report-body' }),
+      leaf({ studyId: 's-001', fileTag: 'study-report-body' }),
     ]);
     expect(res.files.map((f) => f.fileName)).toEqual(['stf-s-001.xml', 'stf-s-002.xml']);
     const xml = res.files[0].xml;
@@ -202,7 +202,7 @@ describe('regional packager writes the STF under its spec name and links it to i
       }
       const leaves: EctdLeaf[] = [
         { ctdSection: '1.2', operation: 'new', sourcePath: files['cover.pdf'], fileName: 'cover.pdf', title: 'Cover' },
-        { ctdSection: '5.3.5.1', operation: 'new', sourcePath: files['s1-report.pdf'], fileName: 's1-report.pdf', title: 'Study 1 report', studyId: 'STUDY-001', stfFileTag: 'study-report' },
+        { ctdSection: '5.3.5.1', operation: 'new', sourcePath: files['s1-report.pdf'], fileName: 's1-report.pdf', title: 'Study 1 report', studyId: 'STUDY-001', stfFileTag: 'study-report-body' },
         { ctdSection: '5.3.5.1', operation: 'new', sourcePath: files['s1-protocol.pdf'], fileName: 's1-protocol.pdf', title: 'Study 1 protocol', studyId: 'STUDY-001', stfFileTag: 'protocol-or-amendment' },
       ];
       const bundle = await packageEctdSubmission({
@@ -250,7 +250,7 @@ describe('regional packager writes the STF under its spec name and links it to i
       // The report is tagged correctly; a second leaf in the same study names an
       // .xpt with a free-text tag — the generator must refuse the whole package.
       const leaves: EctdLeaf[] = [
-        { ctdSection: '5.3.5.1', operation: 'new', sourcePath: report, fileName: 'report.pdf', title: 'Report', studyId: 'study-001', stfFileTag: 'study-report' },
+        { ctdSection: '5.3.5.1', operation: 'new', sourcePath: report, fileName: 'report.pdf', title: 'Report', studyId: 'study-001', stfFileTag: 'study-report-body' },
         { ctdSection: '5.3.5.1', operation: 'new', sourcePath: report, fileName: 'ts.xpt', title: 'TS', studyId: 'study-001', stfFileTag: 'datasets' },
       ];
       await expect(

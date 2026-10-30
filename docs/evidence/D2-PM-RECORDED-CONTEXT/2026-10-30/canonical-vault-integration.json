@@ -1,0 +1,32 @@
+{
+  "incoming_commit": "13be18d3d",
+  "integration_commit": "6d7644f850cf5fcde6c7c14b13581d7f61e0cf4e",
+  "changed_runtime_test_and_gate_paths": [
+    "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts",
+    "client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx",
+    "client/src/concept2cure/v2/surfaces/VaultUploadManifestControls.tsx",
+    "client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx",
+    "client/src/concept2cure/v2/surfaces/vaultUploadManifest.ts",
+    "client/src/concept2cure/v2/useVaultUpload.ts",
+    "client/src/concept2cure/v2/vaultIngestTransport.ts",
+    "scripts/ci/__tests__/eslint-ratchet-source-versions.test.mjs",
+    "scripts/ci/check-eslint-warning-ratchet.mjs",
+    "scripts/ci/lib/lint-source-versions.mjs",
+    "server/routes/c2c/project-vault.ts",
+    "server/services/vault/__tests__/vault-archive-audit-projection.test.ts",
+    "server/services/vault/__tests__/vault-archive-delivery.test.ts",
+    "server/services/vault/__tests__/vault-folder-export.test.ts",
+    "server/services/vault/vault-archive-delivery.ts",
+    "server/services/vault/vault-filing.service.ts",
+    "server/services/vault/vault-folder-export.ts",
+    "server/services/vault/vault-seal-archive.ts"
+  ],
+  "pm_binding_overlap": [],
+  "pm_bound_inputs_unchanged": 132,
+  "review": "Vault upload/archive/audit and the ESLint historical-source reader changed. No bound PM source, canonical project access, auth/session, anchor, profile/audit writer, calendar/shared contract or direct PM caller changed. ProjectHome/Plan/Side do not import the changed Vault upload owners. The existing PM cohorts remain source-bound. The combined production build and whole TypeScript are repeated before direct publication.",
+  "limits": "Upstream Vault test counts are not added to the 512 PM/context cases; no deployed Vault claim."
+}

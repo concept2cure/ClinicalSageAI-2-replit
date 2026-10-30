@@ -292,10 +292,10 @@ export function unifiedTaskToUnified(r: UnifiedTaskRowLike): UnifiedWorkItem {
     priority: normalizePriority(r.priority),
     dueAt: iso(r.dueDate),
     ownerName: r.assigneeName ?? null,
-    // Blocked, or on the critical path and not finished — either holds the
-    // submission timeline.
+    // Only unfinished work blocks. Completed/cancelled rows may retain their
+    // dependency history without continuing to hold the submission timeline.
     blocking:
-      status === 'blocked' || blockedByArray || (!!r.criticalPath && status !== 'done'),
+      status !== 'done' && (status === 'blocked' || blockedByArray || !!r.criticalPath),
     detail: r.moduleType ?? null,
   };
 }

@@ -1,0 +1,200 @@
+[
+  {
+    "path": "receipts/browser-green.txt.gz",
+    "raw_sha256": "1ce60108a5402d5e4d897905c7b10caa12cf3f8f1a3d37157cffdd51a2b511d0",
+    "stored_sha256": "87c69c997abb3333d1b0f1674fff39edf3745648fd10e40dfaaabfacb6d3ddc4",
+    "stored_bytes": 423
+  },
+  {
+    "path": "receipts/browser-mobile-red.txt.gz",
+    "raw_sha256": "789c057895dbdf43b0487bdae5b5439b92797bcb8e0ac45bbc48ac81dc37ad92",
+    "stored_sha256": "812cf8eb1dabe3ada9e08780f50452ce10a016492bf0f45987c740b7ef778358",
+    "stored_bytes": 695
+  },
+  {
+    "path": "receipts/column-gate.txt.gz",
+    "raw_sha256": "4ec8e1d6e092be00e715ad30473ba5641ec82fa4890c7ae2d6c66dc1c18f992f",
+    "stored_sha256": "af5a33a7c0e68b416dc0f6caaed70a93d79ee8e258cebc2c3b1260f9aa79a2b2",
+    "stored_bytes": 158
+  },
+  {
+    "path": "receipts/companion-tests.txt.gz",
+    "raw_sha256": "19b7e334979cd2d108b851427198ce187f1c020c635874d9c0d353d0034c3e1e",
+    "stored_sha256": "175693601f062daee647ea80dcb60b13126f968f70839b2f0effa0c749dad1d0",
+    "stored_bytes": 241
+  },
+  {
+    "path": "receipts/csr-follow-through-integration.txt.gz",
+    "raw_sha256": "7b5eca647eebcc9bd8f7255497bae9ed34dad7660f1e52d008d4c50193cc2598",
+    "stored_sha256": "762ab58885ee7564c1c4586b4a47fa6c41dd84652784b1eeb6e3ab881369e452",
+    "stored_bytes": 11758
+  },
+  {
+    "path": "receipts/csr-integrated-prepush.txt.gz",
+    "raw_sha256": "c62dfdb3750d785dd556bdf6a973596bef4adf27002cd9fc8967c9188be30cb3",
+    "stored_sha256": "5ce0b55768d1a29fd12cd2a237975edf8fedef825deed7cefc6982ad3c6d6f9d",
+    "stored_bytes": 4578
+  },
+  {
+    "path": "receipts/csr-integration.txt.gz",
+    "raw_sha256": "a2048b8dd1192dbe4fcd71cf650569fc5d89a29bdae57ffa222fafbde45b4d8f",
+    "stored_sha256": "9a5461a903a559e3068458437d9d11db45d357edf6769c346a52fee5c1edd229",
+    "stored_bytes": 9149
+  },
+  {
+    "path": "receipts/editor-integrated-prepush.txt.gz",
+    "raw_sha256": "adb489fcb1df4a57dd806462d00b8f299220f23e067b9902bc18003ac2677102",
+    "stored_sha256": "ae4c5cdbac94a06dab69c9473d304f06e9967e6374aa3ef4d6cb94ad589c5e80",
+    "stored_bytes": 4578
+  },
+  {
+    "path": "receipts/editor-integration.txt.gz",
+    "raw_sha256": "f5a5fa23ac38ab950348140276a1db78284dfa16c294c555fb38fc2570827d47",
+    "stored_sha256": "4ce961fe6fabe6209a25f84ed88dc4be20689e4f7cc74b6487b55c2ba3b0703d",
+    "stored_bytes": 3093
+  },
+  {
+    "path": "receipts/engineering-owner-red.txt.gz",
+    "raw_sha256": "1772903642fb5f1c88933c7b55bedaad124c6c6476232e1bf46fd13a30310cc1",
+    "stored_sha256": "22bb56cb297671676d800959c1fa9bc25b19c59edba6936ea0e7d5c545fd1837",
+    "stored_bytes": 1038
+  },
+  {
+    "path": "receipts/eslint.json.gz",
+    "raw_sha256": "d44a9e6a3cdfb83386ef3d9008fe54ccfe046ed4831446b4668a4aae8484769a",
+    "stored_sha256": "39fae08dd0cf87c33b0939ca19bd3a59dde1664ecbe62200674fc94f63303d4b",
+    "stored_bytes": 58150
+  },
+  {
+    "path": "receipts/first-integrated-prepush.txt.gz",
+    "raw_sha256": "6fd4db1d5254fba2b2911e4126da1f1e530cba188d939ff9a98d841f8f620aa2",
+    "stored_sha256": "10801343d9311677b9ad7bbff8ade1fc1833cf6f3d309fbb1daecb81831dc0e1",
+    "stored_bytes": 4576
+  },
+  {
+    "path": "receipts/full-prepush.txt.gz",
+    "raw_sha256": "b6ed572981595416fc7618a0f6eb7541ec201a9a2fd5404e5454e8f3c69dcbd4",
+    "stored_sha256": "2ff6d797e7dd072d99dbd03cef0196770136e99f7f7de1a51452e230d3e2e46a",
+    "stored_bytes": 4593
+  },
+  {
+    "path": "receipts/integration-green.txt.gz",
+    "raw_sha256": "216fd10d051a6b1ac948c642504f417635ee4fee822843e82a0ac6883c55ed13",
+    "stored_sha256": "8135a235413f3eeffe389cb561215e2ea8384fb148332e52a9c489f6369f6b90",
+    "stored_bytes": 8239
+  },
+  {
+    "path": "receipts/production-build.txt.gz",
+    "raw_sha256": "2debafece6421603fb801e51073a41fb7a492ba245f5bec33096f7611157ba13",
+    "stored_sha256": "c8478908b2a4ee735ce032180f96cff6cb6ddc71e329cc39f655d7b2c7c7aebb",
+    "stored_bytes": 4736
+  },
+  {
+    "path": "receipts/program-gate.txt.gz",
+    "raw_sha256": "a7ce4dbf5e667eba807b7a3f2fd22789d4043ef03658318db43c64e6b3123a2b",
+    "stored_sha256": "a7395ea0923715c1dadf26e5f186403a05d05a2aabfe65f7c9ebdb8f773e87a7",
+    "stored_bytes": 175
+  },
+  {
+    "path": "receipts/protocol-integrated-prepush.txt.gz",
+    "raw_sha256": "06cb533182e35286bec26179339783df4a3b34260a511223dd0e9dbc6e0f6ed9",
+    "stored_sha256": "7a349f9140e536a66123317fa803710fe70d0ca94733e539d223f4706ca9cace",
+    "stored_bytes": 4593
+  },
+  {
+    "path": "receipts/protocol-integration.txt.gz",
+    "raw_sha256": "5d32206fb84b415f19fcaa34c9329e08ac98be42aae55eaa23f7939c638ee5a4",
+    "stored_sha256": "20bbb35de5f082635b648bb700663b7be56f893f5b055ea8ff7c2b9d246adccd",
+    "stored_bytes": 3471
+  },
+  {
+    "path": "receipts/ratchet-integration.txt.gz",
+    "raw_sha256": "b92554f881e6bf44a74af32a04d35e5c6f369a245e93e520d602dfe1a517e7ff",
+    "stored_sha256": "1d3e98acb9bf27fdef7565af23e2b60ef0c06da81ba93fed9e5e6339ba8ce379",
+    "stored_bytes": 488
+  },
+  {
+    "path": "receipts/risk-access-red-diagnostic.txt.gz",
+    "raw_sha256": "6478f997f0d59e5afbb367157d70a008fa7f234f087a35e5e66cfe9a48bdf44d",
+    "stored_sha256": "bb8ed519d5b64564bb5b830f05ca493b233b3e5725b1474eb62b7b25fc4a0ec1",
+    "stored_bytes": 4336
+  },
+  {
+    "path": "receipts/risk-entry-red.txt.gz",
+    "raw_sha256": "5891108ced7776338f23bafc9a024c230ad2a7a409bda0d27bc86b06cd29ee21",
+    "stored_sha256": "85e295e365bf901f29167719621c20c163cd8a9ff03ffe1b9d90180eec1137dc",
+    "stored_bytes": 1401
+  },
+  {
+    "path": "receipts/risk-server-green.txt.gz",
+    "raw_sha256": "51a835b16e8f7a4d6cc922594ee525d9d95ec558e85d26c6d3101f6b3ab44f6d",
+    "stored_sha256": "bb49cdfe5f5311d79daaa33fc31cf3dcb8811ba9b8aa0bb07967adcb3770dd92",
+    "stored_bytes": 8541
+  },
+  {
+    "path": "receipts/risk-ui-green.txt.gz",
+    "raw_sha256": "ab63f949731f8bd5bf63c0f53383a3b4b76e1a5d2294738229341e764e5636ea",
+    "stored_sha256": "ed7acc78ccccea48691fda354f3e54536288f8bf237b83d887b41c12ff646b09",
+    "stored_bytes": 3642
+  },
+  {
+    "path": "receipts/risk-ui-red.txt.gz",
+    "raw_sha256": "0b73005573fe5f865ff5191639d00dc32432c9a3d01377a0e43ff79794d983ee",
+    "stored_sha256": "24841d71eb0fb1dd42bb16d2049be242af2c6a29f2ba765d5b3c1dfe04c38dc0",
+    "stored_bytes": 5861
+  },
+  {
+    "path": "receipts/root-green.txt.gz",
+    "raw_sha256": "7c05186eb66a8c826548cb8c546551ac93201373e37f4c51f55ab21484dc1dd0",
+    "stored_sha256": "3b7a5a5e4f80890f36d6fb2b778ecf5538dc24295967c22ad7b2753a5056db6f",
+    "stored_bytes": 2231
+  },
+  {
+    "path": "receipts/source-prepush.txt.gz",
+    "raw_sha256": "7af31744b6a350e7575887640a9d2c5269aaf80a7d9e6f4ddd74102a434070c9",
+    "stored_sha256": "c7db3de466bbeb0b0cf1100de44a17f55ad8ead4f8e35320e2759e4be174b323",
+    "stored_bytes": 4576
+  },
+  {
+    "path": "receipts/sql-gate.txt.gz",
+    "raw_sha256": "993619170542e57f26835b038f9bb3b716ef56038a9f610647883fa9ac5069ed",
+    "stored_sha256": "152d5eaee0000bb173a5dd8e668217c32116aadcf9b37fd07fb6d8e3df59cb49",
+    "stored_bytes": 800
+  },
+  {
+    "path": "receipts/stf-integrated-prepush.txt.gz",
+    "raw_sha256": "18e5e55de821b698b3abde5232bac639dfac057a031aec939a64779c7ff884d7",
+    "stored_sha256": "bd06697667bf6f1dc0f2b2c11ff5f3342d468fd1dbfdbb3b5fc8520c095a0e97",
+    "stored_bytes": 4594
+  },
+  {
+    "path": "receipts/stf-integration.txt.gz",
+    "raw_sha256": "9aadc121bf6b90d793111e01c8d22a5cca3494e5fc469e640f7336511fc06349",
+    "stored_sha256": "1c96a86ecd9b1660314cb69433d1f85d77cd81aa1ed2b7c8314f3daf13978f23",
+    "stored_bytes": 2071
+  },
+  {
+    "path": "receipts/upload-receipt-integration.txt.gz",
+    "raw_sha256": "58069bd56a489abe45da80bacdca1c3a1dbab2a1e0c70056792998863c2e25a9",
+    "stored_sha256": "cb6941c2ed0a6001ad023f2096ff20dd202f88baacb850e0b49ae89c2d496660",
+    "stored_bytes": 4783
+  },
+  {
+    "path": "receipts/vault-convergence-integration.txt.gz",
+    "raw_sha256": "ea663abce8acdf27c7c95dd47a25dae07da343aec28d0302bd6cbd17c19a85fe",
+    "stored_sha256": "b51e4c39f0e09f6b6f9ea8d7c067b09629f1273e365489d7e8e3297b726b1631",
+    "stored_bytes": 4446
+  },
+  {
+    "path": "receipts/vault-integrated-prepush.txt.gz",
+    "raw_sha256": "89820c7b37a5f95cb0dad72d55c775a1a46fbdb811df7c990e532e2e5767a86a",
+    "stored_sha256": "380ee518ed4a541ecec1d4b1ca96765e51192639bcb2df36ceea51b036a76842",
+    "stored_bytes": 4580
+  },
+  {
+    "path": "receipts/vault-integration.txt.gz",
+    "raw_sha256": "79c84cb6857169d86fc8d7aeb14c6c08738b38e1e6cfe96e16e2a1d892e7738e",
+    "stored_sha256": "8cca7fb2579630521050006661121872b0e93ef5a67211bf2511d853ff93a191",
+    "stored_bytes": 4892
+  }
+]

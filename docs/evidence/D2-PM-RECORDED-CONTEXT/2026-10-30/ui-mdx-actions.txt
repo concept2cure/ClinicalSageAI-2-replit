@@ -1,0 +1,31 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > does not send project A’s unsent question from the same-mounted project B composer 563ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires draft, older pages, activity and dossier in B’s first commit before passive read resets 426ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > a later A visit is fresh and ignores an older-page reply from the first A visit 595ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > ignores late first-page threads, activity and dossier replies from an abandoned project 146ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires same-UUID state when the 'account' changes 150ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires same-UUID state when the 'organization' changes 127ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > a new sign-in of the same account retires unsent state even though the actor and project match 183ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps one fenced workspace during pending adoption and creates one fresh adopted workspace 365ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > preserves the exact composer and loaded history through stage/title changes and ordinary bearer refresh 745ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps the remembered step while retiring global source pins after a project ownership change 227ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > keeps the newer personal selection after an older team filter finally receives readiness 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > reports replacement once and clears the old retry timer after a newer immediate success 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves an older filter when the newer handler refused 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves an older filter when the newer handler throws 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > keeps an independent queued view action when a filter on that same surface applies 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > leaves a queued action for another surface owned by that surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves work queued inside the newer handler (reuses original directive: false) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves work queued inside the newer handler (reuses original directive: true) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > retains the existing queued-to-queued replacement behavior 14ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves the deferred outcome when the caller retries the identical directive object 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > preserves a newer action queued by the old replacement observer 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts > returns the exact newer commit promise and detail while retiring its older retry 1ms
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  18:12:19
+   Duration  10.56s (transform 4.49s, setup 398ms, import 5.35s, tests 3.57s, environment 755ms)
+

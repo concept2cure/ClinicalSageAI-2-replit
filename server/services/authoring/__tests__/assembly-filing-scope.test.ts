@@ -19,7 +19,7 @@ const document = (over: Record<string, unknown> = {}): AssemblyDocument => ({
 });
 
 function fixture(docType = 'mdl', agency = 'hc', options: {
-  missing?: boolean; fail?: boolean; stored?: Record<string, unknown>; bound?: Record<string, unknown>;
+  missing?: boolean; fail?: boolean; stored?: Record<string, unknown>; bound?: Record<string, unknown>; program?: Record<string, unknown>;
 } = {}) {
   const calls: Array<{ sql: string; params?: unknown[] }> = [];
   const bound = { id: 'filing', project_id: PROGRAM, org_id: 1, doc_type: docType, agency, filing_scope: 'home', ...options.bound };
@@ -33,6 +33,7 @@ function fixture(docType = 'mdl', agency = 'hc', options: {
       return { rows: options.missing ? [] : [bound] };
     }
     if (sql.includes('to_regclass')) return { rows: [{ available: false }] };
+    if (sql.includes('FROM regulatory_programs')) return { rows: options.program ? [options.program] : [] };
     if (sql.includes('FROM authoring_templates')) return { rows: [stored] };
     throw new Error('Unexpected fixture query: ' + sql);
   } };
@@ -44,6 +45,32 @@ async function recorded(registry: string): Promise<AssemblyDocument> {
   return document({ c2c_document_id: null, template_id: template!.id,
     provenance: { templateSource: builtinTemplateSource(template) } });
 }
+
+describe('assembly does not assume a writing jurisdiction from a legacy outline', () => {
+  const legacy = getIndAuthoringTemplates().find(row => row.module === 'M2' && row.aiDraftable)!;
+  it('holds an unbound legacy outline with no recorded receiving region', async () => {
+    const result = await resolveAssemblyTemplate(fixture().q, 1, legacy.id,
+      document({ module: legacy.module, c2c_document_id: null }), false);
+    expect(result.draftRegion).toBeNull(); expect(result.aiDraftable).toBe(false);
+  });
+
+  it('uses a verified Canadian bound filing for a shared legacy module instead of FDA', async () => {
+    const f = fixture('nda', 'ich', { bound: { program_type: 'nda', primary_agency: 'Health_Canada' } });
+    const result = await resolveAssemblyTemplate(f.q, 1, legacy.id, document({ module: legacy.module }), false);
+    expect(result.draftRegion).toBe('Health Canada');
+  });
+
+  it.each([['FDA', 'FDA'], ['Health_Canada', 'Health Canada'], ['EMA', 'EMA'], ['PMDA', 'PMDA']])(
+    'uses exact recorded program authority %s for an otherwise unqualified legacy outline', async (agency, expected) => {
+      const f = fixture('nda', 'ich', { program: { primary_agency: agency } });
+      const result = await resolveAssemblyTemplate(f.q, 1, legacy.id,
+        document({ module: legacy.module, c2c_document_id: null }), true);
+      expect(result.draftRegion).toBe(expected);
+      const read = f.calls.find(call => call.sql.includes('FROM regulatory_programs'));
+      expect(read?.params).toEqual([PROGRAM, 1]);
+      expect(read?.sql).toContain('deleted_at IS NULL'); expect(read?.sql).toContain('FOR SHARE');
+    });
+});
 
 describe('actual bound filing scope before assembly', () => {
   it.each(regional)('%s refuses a different full application without relying on parent template provenance', async (registry, docType, agency) => {

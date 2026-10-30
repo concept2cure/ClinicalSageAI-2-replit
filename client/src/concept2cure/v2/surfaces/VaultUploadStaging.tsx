@@ -139,8 +139,11 @@ function uploadingText(s: { sent?: number; total?: number }): string {
 export function statusText(s: VaultUploadFileStatus | null): string | null {
   if (!s) return null;
   if (s.state === 'uploading') return uploadingText(s);
-  if (s.state === 'refused') return `Not recorded: ${s.reason}`;
+  if (s.state === 'refused') return s.unknown
+    ? `Not known whether it was recorded: ${s.reason}. Reload the Vault and check before trying again.`
+    : `Not recorded: ${s.reason}`;
   if (s.already) {
+    if (s.recordUpdated) return 'Already in the Vault with these bytes. Its record was updated; review its history for details.';
     return 'Already in the Vault with these bytes. Nothing was changed, including the details above; change them with Edit details or Move.';
   }
   const where = s.placement === 'unfiled' || !s.folderLabel
@@ -157,16 +160,20 @@ function announcement(staging: Staging, uploading: boolean): string {
   if (uploading) return `Uploading ${n(rows.filter((r) => r.status?.state === 'uploading' || !r.status).length, 'file')}.`;
   const settled = rows.filter((r) => r.status && r.status.state !== 'uploading');
   if (settled.length) {
-    const refused = rows.filter((r) => r.status?.state === 'refused');
-    const recorded = settled.length - refused.length;
-    return `${n(recorded, 'file')} recorded.` + (refused.length ? ` ${refused.length} not recorded: ${refused.map((r) => r.path).join(', ')}.` : '');
+    const refused = rows.filter((r) => r.status?.state === 'refused' && !r.status.unknown);
+    const unknown = rows.filter((r) => r.status?.state === 'refused' && r.status.unknown);
+    const recorded = settled.length - refused.length - unknown.length;
+    return `${n(recorded, 'file')}${unknown.length ? ' confirmed' : ''} recorded.`
+      + (refused.length ? ` ${refused.length} not recorded: ${refused.map((r) => r.path).join(', ')}.` : '')
+      + (unknown.length ? ` It is not known whether ${n(unknown.length, 'file')} ${unknown.length === 1 ? 'was' : 'were'} recorded: ${unknown.map((r) => r.path).join(', ')}. Reload the Vault and check.` : '');
   }
   return `${n(added, 'file')} added to the upload list.` + (notStaged.length ? ` ${n(notStaged.length, 'file')} not uploaded.` : '');
 }
 
 /** A row's words: its file's outcome, or, while the batch runs, that it waits for the files before it. */
 function rowStatusText(row: StagedFile, busy: boolean): string | null {
-  return statusText(row.status) ?? (busy ? 'Waiting: files are sent one at a time.' : null);
+  if (busy && !row.status) return 'Waiting: files are sent one at a time.';
+  return statusText(row.status);
 }
 
 /** The share of a row's file sent so far, while its bytes are going out. */

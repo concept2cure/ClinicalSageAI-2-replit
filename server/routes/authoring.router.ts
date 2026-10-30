@@ -3611,7 +3611,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       userId: Number(getActorId(req)),
       projectRef: section.client_program_id,
     });
-    const { region: templateRegion, recordedRegion, referenceBlock } = await savedSectionDraftTemplate(pool, {
+    const { region: templateRegion, recordedRegion, referenceBlock, documentKind } = await savedSectionDraftTemplate(pool, {
       tenantId, documentId: section.doc_id, programId: section.client_program_id,
       sectionId: String(sectionId), code: section.code,
     }, section, req.body.region);
@@ -3625,6 +3625,13 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       { tenantId, programId: projectScope ? section.client_program_id : null, code: section.code },
       String(templateRegion), recordedRegion ?? null);
     const region = filing.region;
+    const { loadRecordedDraftProductContext } = await import('../services/ana/draft-product-context.js');
+    const { renderDraftProductAdvisory } = await import('../services/ana/draft-product-advisory.js');
+    const productRead = await loadRecordedDraftProductContext(pool, { organizationId: tenantId,
+      userId: Number(getActorId(req)), projectRef: projectScope?.programId ?? undefined,
+      projectId: projectScope?.projectId ?? undefined });
+    const productAdvisory = renderDraftProductAdvisory(undefined, String(section.code ?? ''), filing.requirementsSource,
+      productRead.context, region, documentKind);
     const sourceIdentity = { organizationId: tenantId, userId: Number(getActorId(req)), programId: section.client_program_id };
     const selectedSources = Object.hasOwn(req.body ?? {}, 'sources')
       ? await readDraftAssemblySources(requestConnectable(req), sourceIdentity, req.body.sources) : null;
@@ -3646,6 +3653,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     // defensively (best-effort): a build without the retrieval enrichment simply
     // leaves sourceId null and the draft is still attributed honestly (all author).
     const retrievedChunks: Array<{ content: string; title: string; sourceId: string | null }> = [];
+    const retrievalExcerpts: NonNullable<import('../services/clinical-regulatory-evidence/draft-candidate-store.js').DraftGenerator['retrievalExcerpts']> = [];
     let vaultSourceReceipt: import('../services/authoring/authoring-draft-sources.js').SectionDraftSourceReceipt | undefined;
     try {
       if (!projectScope?.projectId) throw new Error('This document has no verified project scope. No Data Room sources were read.');
@@ -3674,12 +3682,20 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
             sourceId: typeof r.sourceId === 'string' ? r.sourceId : null,
           });
         }
+        const { buildDraftExcerpts, DRAFT_EXCERPT_TOTAL_CHARS } = await import('../services/authoring/authoring-draft-excerpts.js');
+        let remainingChars = DRAFT_EXCERPT_TOTAL_CHARS;
         evidenceBlock =
           '\n\n--- PROJECT DATA ROOM EVIDENCE (cite as [SRC-n]; not organization reference material) ---\n' +
           searchResults
             .map((r: any, i: number) => {
-              const content = assemblySources ? r.content :
-                r.content.length > 600 ? r.content.substring(0, 600) + '…' : r.content;
+              let content = r.content;
+              if (!assemblySources) {
+                const { promptText, ...selection } = buildDraftExcerpts(retrievedChunks[i].content,
+                  { query: searchQuery, code: section.code, remainingChars });
+                remainingChars -= selection.shownChars;
+                retrievalExcerpts.push({ sourceNumber: i + 1, sourceId: retrievedChunks[i].sourceId, selection });
+                content = promptText;
+              }
               return `[SRC-${i + 1}] "${r.title}"\n${content}`;
             })
             .join('\n\n') +
@@ -3735,7 +3751,13 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       });
     }
 
-    const prompt = buildSectionDraftPrompt({ section, tone, region, context, requirements, evidenceBlock, referenceBlock, filingBlock: filing.block, revision: revision.prompt, passage: passage.prompt });
+    const prompt = buildSectionDraftPrompt({ section, tone, region, context, requirements, evidenceBlock, referenceBlock, filingBlock: [filing.block, productAdvisory.prompt].filter(Boolean).join('\n\n'), revision: revision.prompt, passage: passage.prompt });
+    const { assertSectionDraftSourcesCurrent } = await import('../services/authoring/authoring-draft-sources.js');
+    const assertDraftInputsCurrent = async () => {
+      await productRead.assertCurrent();
+      await assertSectionDraftSourcesCurrent(requestConnectable(req), tenantId, vaultSourceReceipt, Number(getActorId(req)));
+      if (assemblySources) await readDraftAssemblySources(requestConnectable(req), sourceIdentity, assemblySources);
+    };
 
     draftTurn = openDraftTurn(pool, {
       orgId: tenantId,
@@ -3760,8 +3782,15 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         // break drafting.
         jsonMode: true,
         callerModule: 'authoring-router/generate-draft',
+        organizationId: tenantId,
+        userId: Number(getActorId(req)),
+        projectId: projectScope?.projectId ?? undefined,
+        beforeDispatch: assertDraftInputsCurrent,
+        metadata: { ...productAdvisory.audit },
       });
     } catch (aiError) {
+      if (aiError instanceof AnaProjectScopeError) throw aiError;
+      if ((aiError as { code?: string }).code === 'DRAFT_SOURCES_UNAVAILABLE' || assemblySourceErrorDetails(aiError)) throw aiError;
       /* A gateway refusal (rate limit, overload, too large, no provider that
          could serve it) answers with its classified code and status; a fault of
          ours is a 500. Neither ever answers with content. */
@@ -3779,6 +3808,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
 
     // Retain the served response for the failed turn, but never expose or park
     // known cutoff prose, even when its structured envelope looks usable.
+    await assertDraftInputsCurrent();
     draftTurn?.served(gwResponse);
     assertEditorDraftNotTruncated({ finishReason: gwResponse.finishReason });
 
@@ -3807,7 +3837,6 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         },
       });
     }
-    if (assemblySources) await readDraftAssemblySources(requestConnectable(req), sourceIdentity, assemblySources);
     /* The engine's check of the draft against what the model was SHOWN, and
        the turn's record, filed before the candidate is parked so the parked
        generator can name it. */
@@ -3844,12 +3873,15 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         evidenceByRaw = await resolveEvidenceSourceIdsByArtifact(tenantId, rawSourceIds);
       }
       const candidateSources = retrievedChunks
-        .filter((c) => c.sourceId && evidenceByRaw.has(c.sourceId))
-        .map((c) => ({
-          evidenceSourceId: evidenceByRaw.get(c.sourceId as string) as number,
-          content: c.content,
-          title: c.title || null,
-        }));
+        .flatMap((c, index) => {
+          const evidenceSourceId = c.sourceId ? evidenceByRaw.get(c.sourceId) : undefined;
+          if (!evidenceSourceId) return [];
+          // Keep each shown span separate: joining across an omission could
+          // manufacture a quotation the model never received.
+          const texts = assemblySources ? [c.content] : (retrievalExcerpts[index]?.selection.spans ?? [])
+            .map(span => c.content.slice(span.start, span.end));
+          return texts.map(content => ({ evidenceSourceId, content, title: c.title || null }));
+        });
       attributableSources = new Set(candidateSources.map((s) => s.evidenceSourceId)).size;
 
       // Resolve the model's [SRC-n] paraphrase claims to canonical source
@@ -3862,7 +3894,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         .map((a) => {
           const chunk = retrievedChunks[a.src - 1];
           const esid = chunk && chunk.sourceId ? evidenceByRaw.get(chunk.sourceId) : undefined;
-          return esid && a.quote.trim() ? { quote: a.quote, sourceId: esid } : null;
+          const shown = assemblySources || (retrievalExcerpts[a.src - 1]?.selection.shownChars ?? 0) > 0;
+          return esid && shown && a.quote.trim() ? { quote: a.quote, sourceId: esid } : null;
         })
         .filter((x): x is { quote: string; sourceId: number } => x !== null);
 
@@ -3870,6 +3903,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         '../services/clinical-regulatory-evidence/draft-candidate-store.js'
       );
       // The whole-section accept is a candidate's one consumer, so a passage is never parked.
+      await assertDraftInputsCurrent();
       const candidate = passage.prompt ? null : await createDraftCandidate(
         tenantId,
         String(sectionId),
@@ -3893,13 +3927,17 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
           truncated: isTruncated(gwResponse.finishReason),
           ...(vaultSourceReceipt ? { vaultSources: vaultSourceReceipt } : {}),
           ...(assemblySources ? { assemblySources } : {}),
+          ...(!assemblySources && retrievalExcerpts.length ? { retrievalExcerpts } : {}),
           savedSectionBase: savedSectionDraftBase(section),
+          recordedProductContext: productAdvisory.audit,
           ...revision.generator,
         },
         assertions,
       );
       draftId = candidate?.id;
     } catch (attrErr: any) {
+      if (attrErr instanceof AnaProjectScopeError) throw attrErr;
+      if ((attrErr as { code?: string }).code === 'DRAFT_SOURCES_UNAVAILABLE' || assemblySourceErrorDetails(attrErr)) throw attrErr;
       console.warn(
         '[Authoring] draft-candidate creation failed (non-fatal):',
         attrErr?.message,
@@ -3951,6 +3989,10 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
             : 'AI draft generated with no Data Room sources above the relevance threshold',
     });
   } catch (error) {
+    if ((error as { code?: string }).code === 'DRAFT_SOURCES_UNAVAILABLE') {
+      await fileFailedDraftTurn(draftTurn, 'The project source version could not be verified. No candidate was retained.');
+      return res.status(409).json({ success: false, error: { code: 'DRAFT_SOURCES_UNAVAILABLE', message: (error as Error).message } });
+    }
     if (error instanceof DraftTruncatedError) {
       await fileFailedDraftTurn(draftTurn, 'The AI draft was cut off (DRAFT_TRUNCATED). No candidate was retained.');
       return res.status(422).json({ success: false, error: { code: error.code, message: error.message } });
@@ -3961,6 +4003,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       return res.status(sourceFailure.status).json({ success: false, error: { code: sourceFailure.code, message: sourceFailure.message } });
     }
     if (error instanceof AnaProjectScopeError) {
+      await fileFailedDraftTurn(draftTurn, 'Current project or product context could not be verified. No candidate was retained.');
       return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
     }
     console.error('Error generating AI draft:', error);
@@ -4003,7 +4046,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
 
     const priorContent: string | null = sectionResult.rows[0].content ?? null;
 
-    const { consumeDraftCandidate, DraftCandidateBaseChangedError } = await import(
+    const { consumeDraftCandidate, DraftCandidateBaseChangedError, DraftCandidateProvenanceError } = await import(
       '../services/clinical-regulatory-evidence/draft-candidate-store.js'
     );
     const { enforceSourceAndAuthorLineage } = await import(
@@ -4190,7 +4233,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       if (err instanceof DraftTruncatedError) {
         return res.status(422).json({ success: false, error: { code: err.code, message: err.message } });
       }
-      if (err instanceof DraftCandidateBaseChangedError) {
+      if (err instanceof DraftCandidateBaseChangedError || err instanceof DraftCandidateProvenanceError) {
         return res.status(409).json({ success: false, error: { code: err.code, message: err.message } });
       }
       if ((err as { code?: string }).code === 'DRAFT_SOURCES_UNAVAILABLE') {

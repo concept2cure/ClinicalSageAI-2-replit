@@ -10,6 +10,7 @@
  * `answer` that throws is a dropped connection.
  */
 import { vi } from 'vitest';
+import type { ReuploadChange, ReuploadDiffer } from '../../../../../server/services/vault/vault-reupload';
 
 export interface IngestInit {
   method: string;
@@ -18,6 +19,43 @@ export interface IngestInit {
   credentials: 'include' | 'same-origin';
 }
 export type IngestAnswer = (url: string, init: IngestInit) => Promise<{ ok?: boolean; status: number; json: () => Promise<unknown> }>;
+
+/** Explicit synthetic success receipt, shaped by the real ingest constructor. */
+interface ReceiptOverrides {
+  document?: Partial<{ id: string; programId: string; documentCode: string; documentTitle: string | null; version: string;
+    extraction: 'extracted' | 'pending' | 'failed' }>;
+  filing?: Partial<{ folderId: string | null; folderLabel: string | null;
+    placementStatus: 'confirmed' | 'suggested' | 'unfiled'; needsReview: boolean }>;
+  reupload?: { unchanged: boolean; changes: ReuploadChange[]; differs: ReuploadDiffer[] };
+}
+
+let receiptSerial = 0;
+
+/** Build only when a test explicitly declares a recorded response; malformed bodies stay untouched. */
+export function ingestReceipt(form: FormData, overrides: ReceiptOverrides = {}) {
+  receiptSerial += 1;
+  const folderId = String(form.get('folderId') || '') || null;
+  return {
+    success: true,
+    document: {
+      id: `77777777-7777-4777-8777-${String(receiptSerial).padStart(12, '0')}`,
+      programId: String(form.get('programId')),
+      documentCode: String(form.get('documentCode') || 'retained-document.pdf'),
+      documentTitle: String(form.get('documentTitle') || 'Uploaded document'),
+      version: '1.0',
+      extraction: 'extracted' as const,
+      ...overrides.document,
+    },
+    filing: {
+      folderId,
+      folderLabel: folderId || '',
+      placementStatus: folderId ? 'confirmed' as const : 'unfiled' as const,
+      needsReview: !folderId,
+      ...overrides.filing,
+    },
+    ...(overrides.reupload ? { reupload: overrides.reupload } : {}),
+  };
+}
 
 /** The total each fake request reports sending, in bytes. */
 export const FAKE_BODY_BYTES = 2_000_000;

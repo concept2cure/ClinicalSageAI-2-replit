@@ -1,0 +1,7 @@
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+- content-duplicate groups: 0 (0 files)   [gated]
+- duplicate basenames: 256   [reported, not gated]
+- files over byte threshold: 56
+- files over line threshold: 111
+
+✅ repo health strict gate passed.

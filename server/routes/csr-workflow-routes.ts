@@ -261,7 +261,7 @@ export default function createCsrWorkflowRoutes(): Router {
       }
       const database = db;
       const actorUserId = resolveActorUserId(req);
-      const actor = await readCsrProjectActor(database, orgId, actorUserId);
+      const actor = await readCsrProjectActor(database, orgId, actorUserId, { allowReadOnlyTenant: true });
       const scope = await resolveCsrScope(database, orgId, { projectId, programId: req.query.programId, clientWorkspaceId: req.query.clientWorkspaceId }, { forWrite: false, actorUserId });
       projectId = scope.projectId;
 

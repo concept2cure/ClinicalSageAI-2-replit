@@ -42,7 +42,7 @@
  * @module server/services/clinical-regulatory-evidence/source-attribution
  */
 
-import { detectSpans, type SpanGranularity } from '../sentenceTraceabilityService';
+import { detectSpans, type SentenceSpan, type SpanGranularity } from '../sentenceTraceabilityService';
 import {
   recordSourceSpan,
   type SpanUsage,
@@ -145,23 +145,38 @@ export function attributeQuotedSpans(
     // Too short to be a confident quotation, or empty after normalization.
     if (needle.length < minChars) continue;
 
-    for (const h of haystacks) {
-      if (h.norm.includes(needle)) {
-        out.push({
-          charStart: span.charStart,
-          charEnd: span.charEnd,
-          sourceId: h.sourceId,
-          usage: 'quoted',
-          spanText: span.text,
-        });
-        if (!multiSource) break;
-      }
-    }
+    out.push(...quotedMatchesForSpan(span, needle, haystacks, multiSource));
   }
 
   // Document order, then ascending sourceId — stable and reader-friendly.
   out.sort((a, b) => a.charStart - b.charStart || a.charEnd - b.charEnd || a.sourceId - b.sourceId);
   return out;
+}
+
+/** Match one generated range to distinct sources while keeping each excerpt
+ * separate. A later excerpt may contain the first actual match for a source. */
+function quotedMatchesForSpan(
+  span: SentenceSpan,
+  needle: string,
+  haystacks: Array<{ sourceId: number; norm: string }>,
+  multiSource: boolean,
+): AttributedSpan[] {
+  const matches: AttributedSpan[] = [];
+  const attributedSources = new Set<number>();
+  for (const source of haystacks) {
+    if (!attributedSources.has(source.sourceId) && source.norm.includes(needle)) {
+      matches.push({
+        charStart: span.charStart,
+        charEnd: span.charEnd,
+        sourceId: source.sourceId,
+        usage: 'quoted',
+        spanText: span.text,
+      });
+      attributedSources.add(source.sourceId);
+      if (!multiSource) break;
+    }
+  }
+  return matches;
 }
 
 /** One model-asserted derivation: a snippet of the generated text the model

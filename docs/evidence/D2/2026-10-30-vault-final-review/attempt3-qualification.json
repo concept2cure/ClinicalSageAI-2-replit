@@ -1,0 +1,16 @@
+{
+  "canonicalMerged": "03cb814a9",
+  "mergeCommit": "852bcc2ef41da44560ca65bd7be44e4c683eb279",
+  "vaultProductionUnchangedFrom": "65609db5e",
+  "postMergeChecks": 136,
+  "postMergeFiles": 6,
+  "build": "passed",
+  "tooling": {
+    "reason": "Four packaging controls required actual xmllint; original run correctly recorded ran=false when it was absent.",
+    "installation": "Rootless extraction of matching official Debian libxml2-utils package into /tmp; no product dependency or test/assertion changed.",
+    "source": "https://deb.debian.org/debian/pool/main/libx/libxml2/libxml2-utils_2.12.7+dfsg+really2.9.14-2.1+deb13u3_amd64.deb",
+    "packageSha256": "cfa40541f9b314491c53b6c63e23ee1a2afa2ac309e6ca379c1081ef2b62e773",
+    "version": "/tmp/vault-xml-tools/root/usr/bin/xmllint: using libxml version 20914\n   compiled with: Threads Tree Output Push Reader Patterns Writer SAXv1 FTP HTTP DTDValid HTML Legacy C14N Catalog XPath XPointer XInclude Iconv ISO8859X Unicode Regexps Automata Schemas Schematron Modules Debug Zlib Lzma \n"
+  },
+  "secondPush": "All normal gates and TypeScript0 passed; rejected only because canonical advanced."
+}

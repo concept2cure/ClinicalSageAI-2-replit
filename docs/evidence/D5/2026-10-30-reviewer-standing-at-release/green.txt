@@ -1,0 +1,56 @@
+# Green: the fixed code
+
+$ npx vitest run server/services/authoring/__tests__/csr-reviewer-standing.test.ts
+  ✓ a deactivated scientific reviewer > is named as the reason, not "no receipt" 289ms
+  ✓ a deactivated scientific reviewer > reaches the release boundary as that reason, 409, with its own sentence 3ms
+  ✓ a scientific reviewer who no longer stands, at the release boundary > removed from the project: 409 naming it, not a 500 3ms
+  ✓ a scientific reviewer who no longer stands, at the release boundary > the project itself unresolved: 409 saying so, not that the reviewer lost access 2ms
+  ✓ a scientific reviewer who no longer stands, at the release boundary > now recorded as an author of the CSR: 409 naming it, not a 500 2ms
+  ✓ a scientific reviewer who no longer stands, at the release boundary > when the check cannot run: 503 "could not be checked", not a 500 2ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+$ node --test scripts/ci/csr-scientific-review/scientific-review.test.mjs
+# tests 41
+# pass 41
+# fail 0
+
+$ npm run test:ci-scripts   (the CI step)
+# tests 530
+# pass 530
+# fail 0
+exit=0
+
+# The 30 vitest files that reach csr-scientific-review, workflow-import-governance or the e-sign/freeze/export/file-to-vault routes
+ Test Files  30 passed (30)
+      Tests  345 passed (345)
+  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx
+  client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts
+  client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts
+  server/routes/__tests__/audit-export-tenant-scope.test.ts
+  server/routes/__tests__/authoring-approval-independence.test.ts
+  server/routes/__tests__/authoring-record-export.pglite.test.ts
+  server/routes/__tests__/authoring-signing-authority.test.ts
+  server/routes/__tests__/authoring-signing-reason-stated.test.ts
+  server/routes/__tests__/authoringApprovalNoWorkflow.test.ts
+  server/routes/__tests__/authoringApprovalSealBinding.test.ts
+  server/routes/__tests__/authoringExportHistory.test.ts
+  server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+  server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+  server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts
+  server/routes/__tests__/authoringSignerPrintedName.test.ts
+  server/routes/__tests__/authoringWorkingCopy.test.ts
+  server/routes/__tests__/coauthorSnapshotFromSource.test.ts
+  server/routes/__tests__/ectd-export-records-the-review-assertion.test.ts
+  server/routes/__tests__/ectd-export-refuses-an-unidentified-user.test.ts
+  server/routes/__tests__/o01-core-project-audits.pglite.test.ts
+  server/routes/__tests__/review-board-reads-authoring-store.test.ts
+  server/services/authoring/__tests__/authoring-content-digests.test.ts
+  server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+  server/services/authoring/__tests__/csr-claim-in-context.test.ts
+  server/services/authoring/__tests__/csr-reviewer-standing.test.ts
+  server/services/authoring/__tests__/csr-scientific-release-order.test.ts
+  server/services/authoring/__tests__/csr-template-identity.pglite.test.ts
+  server/services/authoring/__tests__/saved-draft-source-export.test.ts
+  server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+  server/services/authoring/__tests__/workflow-production-import.test.ts

@@ -1,0 +1,34 @@
+{
+  "sourceBase": "fc1ece8d961c33f7f00c16367b30f7aa95d05b71",
+  "sourceFreezeUnchanged": true,
+  "testFiles": 43,
+  "tests": 436,
+  "passed": 436,
+  "failed": 0,
+  "pending": 0,
+  "success": true,
+  "lint": {
+    "errorCount": 0,
+    "warningDelta": 0
+  },
+  "build": "passed: Vite client, server, audit-chain verifier",
+  "publicationBase": "9c4085a395e7ba2e2a4d258c5934a976598a96ba",
+  "mergedHead": "cc00cdcdafa97a7cb2dd84de9e67cf6337de3bc5",
+  "incomingClientQualification": {
+    "files": 2,
+    "passed": 22,
+    "failed": 0
+  },
+  "mergedBuild": "passed",
+  "postTypeFixQualification": {
+    "files": 1,
+    "passed": 23,
+    "failed": 0,
+    "emittedJavaScriptIdentical": true,
+    "reason": "Fix test-driver static result type mismatch; no production or runtime test change."
+  },
+  "acceptedSourceHead": "84853e7bc5c3a81e1b0634703e0585954dac8b9c",
+  "normalPushGates": "all passed",
+  "typeScriptErrors": 0,
+  "committedFrozenInputsVerified": 64
+}

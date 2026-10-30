@@ -35,8 +35,27 @@ import { tmpdir } from 'node:os';
 import { databaseUrl } from '../setup.db';
 import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer } from './vault-current-access-fixture';
 
+/** Test-controlled pause after the real ZIP is finished; all production work remains real. */
+const archiveAccessRace = vi.hoisted(() => ({
+  afterFinish: undefined as (() => Promise<void>) | undefined,
+  afterAudit: undefined as (() => Promise<void>) | undefined,
+}));
+vi.mock('../../server/services/vault/vault-archive-builder', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../server/services/vault/vault-archive-builder')>();
+  return { ...real, openVaultArchive: async (...args: Parameters<typeof real.openVaultArchive>) => {
+    const stage = await real.openVaultArchive(...args);
+    return { ...stage, finish: async (...params: Parameters<typeof stage.finish>) => {
+      const built = await stage.finish(...params);
+      const change = archiveAccessRace.afterFinish;
+      archiveAccessRace.afterFinish = undefined;
+      await change?.();
+      return built;
+    } };
+  } };
+});
+
 /* The chained writer, real unless a case asks the next export row to fail. */
-const failExportAudit = vi.hoisted(() => ({ on: false }));
+const failExportAudit = vi.hoisted(() => ({ on: false, document: false }));
 vi.mock('../../server/services/auditService', async (importOriginal) => {
   const real = await importOriginal<typeof import('../../server/services/auditService')>();
   return {
@@ -46,7 +65,17 @@ vi.mock('../../server/services/auditService', async (importOriginal) => {
         failExportAudit.on = false;
         throw new Error('injected audit write failure');
       }
-      return real.writeChainedAuditRow(...args);
+      if (failExportAudit.document && args[1]?.action === 'vault.document.exported') {
+        failExportAudit.document = false;
+        throw new Error('injected per-document audit write failure');
+      }
+      const written = await real.writeChainedAuditRow(...args);
+      if (args[1]?.action === 'vault.folder.export') {
+        const change = archiveAccessRace.afterAudit;
+        archiveAccessRace.afterAudit = undefined;
+        await change?.();
+      }
+      return written;
     },
   };
 });
@@ -147,6 +176,11 @@ beforeAll(async () => {
   ids.specV2 = await ingest(mine, 'Drug product specification, version 2.', { supersedesDocumentId: ids.specV1, documentTitle: 'Drug product specification' });
   ids.stability = await ingest(mine, 'Stability protocol, 25 C / 60 percent RH.', { documentCode: `${CODE}-STAB`, documentTitle: 'Stability protocol', folderId: 'module-3' });
   ids.csr = await ingest(mine, 'Clinical study report of the pivotal study.', { documentCode: `${CODE}-CSR`, documentTitle: 'Clinical study report', folderId: 'module-5' });
+  ids.overview = await ingest(mine, 'Nonclinical overview, confirmed.', { documentCode: `${CODE}-OV`, documentTitle: 'Nonclinical overview', folderId: 'module-2' });
+  ids.suggested = await ingest(mine, 'Clinical overview, suggested.', { documentCode: `${CODE}-SUG`, documentTitle: 'Clinical overview', folderId: 'module-2' });
+  ids.unfiled = await ingest(mine, 'Unfiled overview, despite an old folder.', { documentCode: `${CODE}-UNF`, documentTitle: 'Unfiled overview', folderId: 'module-2' });
+  await owner.query(`UPDATE vault.documents SET placement_status = 'suggested' WHERE id = $1`, [ids.suggested]);
+  await owner.query(`UPDATE vault.documents SET placement_status = 'unfiled' WHERE id = $1`, [ids.unfiled]);
 }, 90_000);
 
 afterAll(async () => {
@@ -251,4 +285,173 @@ describe("a Vault folder's export", () => {
     expect((await exportRows(mine)).length).toBe(before);
     await vi.waitFor(() => expect(leftovers()).toEqual([]));
   });
+
+});
+
+/** A change to the synthetic private project's only viewer grant, restored by each case. */
+async function removeViewerGrant(): Promise<() => Promise<void>> {
+  const removed = (await owner.query(`DELETE FROM project_members
+    WHERE organization_id=$1 AND user_id=$2 RETURNING project_id,organization_id,user_id,role,status,invited_by_id`,
+  [mine.orgId, viewer.userId])).rows;
+  expect(removed).toHaveLength(1);
+  return async () => {
+    for (const row of removed) await owner.query(`INSERT INTO project_members
+      (project_id,organization_id,user_id,role,status,invited_by_id) VALUES($1,$2,$3,$4,$5,$6)`,
+    [row.project_id,row.organization_id,row.user_id,row.role,row.status,row.invited_by_id]);
+  };
+}
+
+async function demoteEditor(): Promise<() => Promise<void>> {
+  await owner.query("UPDATE organization_users SET role='viewer' WHERE organization_id=$1 AND user_id=$2", [mine.orgId, editor.userId]);
+  return async () => { await owner.query("UPDATE organization_users SET role='admin' WHERE organization_id=$1 AND user_id=$2", [mine.orgId, editor.userId]); };
+}
+
+const disclosureRows = async () => (await owner.query(`SELECT id FROM audit_logs
+  WHERE tenant_id=$1 AND action=ANY($2::text[])`, [mine.orgId, ['vault.folder.export', 'vault.document.exported']])).rows;
+
+/** Observe both aggregate/per-document refusal and the existing cleanup/admission owners. */
+async function expectChangedAccessRefusal(input: {
+  actor: Actor; change: () => Promise<() => Promise<void>>; status: number; error: string;
+  phase?: 'afterFinish' | 'afterAudit';
+}) {
+  const before = (await disclosureRows()).length;
+  let restore: (() => Promise<void>) | undefined;
+  const phase = input.phase ?? 'afterFinish';
+  archiveAccessRace[phase] = async () => { restore = await input.change(); };
+  try {
+    const res = await exportFolder(mine, 'module-2', input.actor);
+    expect(restore, 'the change ran after the real ZIP was built').toBeTypeOf('function');
+    expect(res.status).toBe(input.status);
+    expect(json(res.body).error).toBe(input.error);
+    expect(res.headers['content-type']).toMatch(/json/);
+    expect(res.headers['x-content-sha256']).toBeUndefined();
+    expect((await disclosureRows()).length).toBe(before);
+    await vi.waitFor(() => expect(leftovers()).toEqual([]));
+    const { beginArchiveBuild } = await import('../../server/services/vault/vault-archive-delivery');
+    const release = beginArchiveBuild(mine.orgId, input.actor.userId);
+    try { expect(release).toBeTypeOf('function'); } finally { release?.(); }
+  } finally {
+    archiveAccessRace[phase] = undefined;
+    await restore?.();
+  }
+}
+
+describe('Vault archive current-access controls', () => {
+  it('refuses a finished folder archive after its viewer project grant was revoked', async () => {
+    await expectChangedAccessRefusal({ actor: viewer, change: removeViewerGrant, status: 404, error: 'PROJECT_NOT_FOUND' });
+  });
+
+  it('refuses a prepared named-actor archive after the current organization role changed', async () => {
+    await expectChangedAccessRefusal({ actor: editor, change: demoteEditor, status: 503, error: 'PROJECT_ACCESS_CHANGED' });
+  });
+
+  it('rolls back aggregate and document export rows when project access changes during audit recording', async () => {
+    await expectChangedAccessRefusal({ actor: viewer, change: removeViewerGrant, status: 404, error: 'PROJECT_NOT_FOUND', phase: 'afterAudit' });
+  });
+
+  it('refuses a finished folder archive when its client-workspace anchor changed', async () => {
+    await expectChangedAccessRefusal({ actor: editor, status: 503, error: 'PROJECT_ACCESS_CHANGED', change: async () => {
+      const previous = (await owner.query('SELECT id,client_workspace_id FROM projects WHERE organization_id=$1 AND regulatory_program_id=$2', [mine.orgId, mine.programId])).rows[0];
+      const workspace = (await owner.query(`INSERT INTO client_workspaces(organization_id,name,slug,status,created_by_id)
+        VALUES($1,$2,$2,'active',$3) RETURNING id`, [mine.orgId, `${PROBE}archive-anchor-change`, editor.userId])).rows[0];
+      await owner.query('UPDATE projects SET client_workspace_id=$1 WHERE id=$2 AND organization_id=$3', [workspace.id, previous.id, mine.orgId]);
+      return async () => { await owner.query('UPDATE projects SET client_workspace_id=$1 WHERE id=$2 AND organization_id=$3', [previous.client_workspace_id, previous.id, mine.orgId]); };
+    } });
+  });
+
+  it('uses the current database role for audit identities when the request still declares an old admin role', async () => {
+    const restore = await demoteEditor();
+    try {
+      const res = await exportFolder(mine, 'module-2', editor);
+      expect(res.status).toBe(200);
+      const trail = JSON.parse(new AdmZip(res.body as Buffer).readAsText('audit/audit-trail.json'));
+      expect(trail.actorIdentity).toBe('account references; IP addresses omitted');
+      expect(trail.entries.length).toBeGreaterThan(0);
+      for (const entry of trail.entries) { expect(entry).not.toHaveProperty('ip'); expect(entry.actor).toBe(entry.actorRef ?? 'System'); }
+    } finally { await restore(); }
+  });
+
+});
+
+describe('Vault archive review controls', () => {
+  it('a viewer archive reduces audit names to account references and omits IP addresses', async () => {
+    const res = await exportFolder(mine, 'module-5', viewer);
+    expect(res.status).toBe(200);
+    const zip = new AdmZip(res.body as Buffer);
+    const trail = JSON.parse(zip.readAsText('audit/audit-trail.json'));
+    expect(trail.entries.length).toBeGreaterThan(0);
+    for (const entry of trail.entries) {
+      expect(entry).not.toHaveProperty('ip');
+      expect(entry.actor).toBe(entry.actorRef ?? (entry.actor === 'System' ? 'System' : 'not named in this copy'));
+    }
+    expect(zip.readAsText('audit/audit-trail.json')).not.toContain('Ezra Exporter');
+    expect(trail.actorIdentity).toBe('account references; IP addresses omitted');
+    expect(JSON.parse(zip.readAsText('manifest.json')).auditTrail.actorIdentity).toBe(trail.actorIdentity);
+    expect(zip.readAsText('INDEX.txt')).toContain(trail.actorIdentity);
+  });
+
+  it('an audit reader keeps named actors and the extract identifies that rule', async () => {
+    const res = await exportFolder(mine, 'module-5');
+    expect(res.status).toBe(200);
+    const zip = new AdmZip(res.body as Buffer);
+    const trail = JSON.parse(zip.readAsText('audit/audit-trail.json'));
+    expect(trail.actorIdentity).toBe('named actors and IP addresses');
+    expect(trail.entries.some((entry: { actor: string }) => entry.actor === 'Ezra Exporter')).toBe(true);
+    expect(trail.entries.every((entry: object) => Object.hasOwn(entry, 'ip'))).toBe(true);
+  });
+
+  it('records each actual exported document and its hash on that document history, not withheld files', async () => {
+    const res = await exportFolder(mine, 'module-5');
+    expect(res.status).toBe(200);
+    const manifest = JSON.parse(new AdmZip(res.body as Buffer).readAsText('manifest.json'));
+    const rows = (await owner.query(`SELECT record_id, new_values FROM audit_logs
+      WHERE tenant_id = $1 AND action = 'vault.document.exported' AND new_values->>'archiveSha256' = $2`,
+    [mine.orgId, sha256(res.body as Buffer)])).rows;
+    expect(rows).toHaveLength(manifest.files.length);
+    for (const file of manifest.files) {
+      expect(rows.find((r) => r.record_id === file.id)?.new_values).toMatchObject({
+        documentId: file.id, contentHash: file.sha256, archiveSha256: sha256(res.body as Buffer),
+        programId: mine.programId, archiveAction: 'vault.folder.export',
+      });
+    }
+    for (const withheld of manifest.withheld) expect(rows.some((r) => r.record_id === withheld.id)).toBe(false);
+  });
+
+  it('exports the same placement as the tree and explicitly names suggested filings', async () => {
+    const res = await exportFolder(mine, 'module-2');
+    expect(res.status).toBe(200);
+    const zip = new AdmZip(res.body as Buffer);
+    const manifest = JSON.parse(zip.readAsText('manifest.json'));
+    expect(manifest.files.map((f: { id: string }) => f.id).sort()).toEqual([ids.overview, ids.suggested].sort());
+    expect(manifest.documents.find((d: { id: string }) => d.id === ids.suggested).placementStatus).toBe('suggested');
+    expect(zip.readAsText('INDEX.txt')).toMatch(/Suggested filings[\s\S]*Clinical overview/);
+    expect(zip.readAsText('INDEX.txt')).not.toContain('Unfiled overview');
+  });
+
+
+  it('refuses another archive build for this account and admits a later request after release', async () => {
+    const { beginArchiveBuild } = await import('../../server/services/vault/vault-archive-delivery');
+    const release = beginArchiveBuild(mine.orgId, editor.userId);
+    expect(release).toBeTypeOf('function');
+    try {
+      const res = await exportFolder(mine, 'module-5');
+      expect(res.status).toBe(429);
+      expect(json(res.body).error).toBe('ARCHIVE_BUILD_IN_PROGRESS');
+    } finally { release?.(); }
+    expect((await exportFolder(mine, 'module-5')).status).toBe(200);
+  });
+
+
+  it('rolls back the archive receipt if any per-document export audit write fails', async () => {
+    const before = (await exportRows(mine)).length;
+    failExportAudit.document = true;
+    try {
+      const res = await exportFolder(mine, 'module-5');
+      expect(res.status).toBe(500);
+      expect(json(res.body).error).toBe('AUDIT_WRITE_FAILED');
+      expect(failExportAudit.document).toBe(false);
+      expect((await exportRows(mine)).length).toBe(before);
+    } finally { failExportAudit.document = false; }
+  });
+
 });

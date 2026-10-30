@@ -1,0 +1,87 @@
+[
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/__tests__/surfaceActionSupersession.test.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/surfaceActions.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+    "errorCount": 0,
+    "warningCount": 6,
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'DataRoom' has too many lines (303). Maximum allowed is 100.",
+        "line": 393,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 393,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'DataRoom' has a complexity of 61. Maximum allowed is 15.",
+        "line": 393,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 393,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (1490). Maximum allowed is 500.",
+        "line": 668,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 1958,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'ProjectWorkspace' has too many lines (361). Maximum allowed is 100.",
+        "line": 1467,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 1467,
+        "endColumn": 26
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'ProjectWorkspace' has a complexity of 142. Maximum allowed is 15.",
+        "line": 1467,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 1467,
+        "endColumn": 26
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 52. Maximum allowed is 15.",
+        "line": 1623,
+        "column": 33,
+        "messageId": "complex",
+        "endLine": 1623,
+        "endColumn": 35
+      }
+    ]
+  }
+]

@@ -1,0 +1,262 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps null body unconfirmed 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps empty body unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps array body unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps scalar body unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing success unconfirmed 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps false success unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps string success unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps contradictory error unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing document unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps null document unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps array document unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing document id unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps blank document id unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps placeholder document id unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps numeric document id unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps another project unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing project unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps another file in this project unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid title unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid assigned version unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing assigned version unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps blank assigned version unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing stored title unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid extraction state unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing filing unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid folder label unconfirmed 7ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid folder id unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps blank folder id unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing placement unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps unfiled without needed review unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps unknown placement unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps string review flag unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps contradictory review flag unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps confirmed placement without folder unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing reupload on HTTP200 unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps reupload on HTTP201 unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps accepted without the route status unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps no-content status unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid reupload differences unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid difference row unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps unknown difference field unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid recorded difference unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps string unchanged flag unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps false unchanged with no changes unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps true unchanged despite changes unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid change row unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps nontext change before value unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing requested difference value unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps equal change values unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps equal requested and recorded values unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps duplicate change fields unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps duplicate difference fields unconfirmed 7ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps an unreadable successful reply unconfirmed and sends no retry 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > does not confirm the previous version as its own replacement 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > preserves the server’s explicit uncertain-commit result without claiming nothing was recorded 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > records the returned identity and exact filing, permitting extra response fields 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > honors explicit Unfiled despite a retained old folder and accepts a legacy null title 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > reports a valid repaired reupload without claiming nothing changed in the row or batch 47ms
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > keeps a valid new version with its retained code and server-assigned version 10ms
+   → expected [ { name: 'receipt.pdf', …(3) } ] to deeply equal [ { name: 'receipt.pdf', …(3) } ]
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > continues a mixed batch after a malformed receipt without counting it or retrying it 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > settles an undecodable successful raw response "" without retry 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > settles an undecodable successful raw response "<html>upstream response</html>" without retry 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > settles an undecodable successful raw response "{\"success\":" without retry 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > continues after both missing and malformed reupload receipts without another POST for either 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > accepts a real-shaped authenticated receipt: 'absent extraction and extra future fi…' 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > accepts a real-shaped authenticated receipt: 'extracted with null label and opaque …' 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > accepts a real-shaped authenticated receipt: 'pending with empty label' 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > accepts a real-shaped authenticated receipt: 'failed extraction stored unfiled' 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > keeps detail/filing guidance and repair flags truthful with unchanged=true 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > keeps detail/filing guidance and repair flags truthful with unchanged=false 2ms
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > uses generic check-in copy for a legacy stored title null without inventing a title 2ms
+   → expected [ { name: 'receipt.pdf', …(3) } ] to deeply equal [ { name: 'receipt.pdf', …(3) } ]
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > uses generic check-in copy for a legacy stored title "" without inventing a title 2ms
+   → expected [ { name: 'receipt.pdf', …(3) } ] to deeply equal [ { name: 'receipt.pdf', …(3) } ]
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > uses generic check-in copy for a legacy stored title "  " without inventing a title 2ms
+   → expected [ { name: 'receipt.pdf', …(3) } ] to deeply equal [ { name: 'receipt.pdf', …(3) } ]
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > keeps a missing-identity check-in unknown without completing its new-version outcome 3ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > keeps a malformed 201 file unknown and editable without opening its unverified ID or refreshing
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > retains the same check-in offer and File after a malformed version receipt, then permits a deliberate retry
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > keeps a malformed 201 file unknown and editable without opening its unverified ID or refreshing 378ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens only the confirmed saved ID in a mixed batch and keeps its second file unknown
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > retains the same check-in offer and File after a malformed version receipt, then permits a deliberate retry 724ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'newly saved' document from a complete producer-compatible receipt
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens only the confirmed saved ID in a mixed batch and keeps its second file unknown 222ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'already recorded' document from a complete producer-compatible receipt
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'newly saved' document from a complete producer-compatible receipt 204ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'already recorded' document from a complete producer-compatible receipt 189ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > does not add an attachment or activity from an affirmative response with no document receipt 200ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds the selected file after a full producer receipt and keeps activity server-owned 55ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds only confirmed files from a mixed batch of unique filenames 45ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > keeps a valid new version with its retained code and server-assigned version
+AssertionError: expected [ { name: 'receipt.pdf', …(3) } ] to deeply equal [ { name: 'receipt.pdf', …(3) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "folderLabel": "Module 3 · Quality",
+      "name": "receipt.pdf",
+-     "title": "Receipt",
++     "title": "Earlier request title",
+      "version": "revision-7B",
+    },
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx:192:35
+    190|       const outcome = await result.current.upload([file()], { newVersi…
+    191|       expect(outcome.recorded).toEqual([DOCUMENT]);
+    192|       expect(outcome.newVersions).toEqual([{ name: 'receipt.pdf', vers…
+       |                                   ^
+    193|       expect(outcome.failed).toEqual([]);
+    194|       expect(outcome.filings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > uses generic check-in copy for a legacy stored title null without inventing a title
+AssertionError: expected [ { name: 'receipt.pdf', …(3) } ] to deeply equal [ { name: 'receipt.pdf', …(3) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "folderLabel": "Module 3 · Quality",
+      "name": "receipt.pdf",
+-     "title": null,
++     "title": "Earlier request title",
+      "version": "2.0",
+    },
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx:375:35
+    373|     await act(async () => {
+    374|       const outcome = await result.current.upload([file()], { newVersi…
+    375|       expect(outcome.newVersions).toEqual([{ name: 'receipt.pdf', vers…
+       |                                   ^
+    376|       expect(outcome.recorded).toEqual([DOCUMENT]);
+    377|       expect(outcome.failed).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > uses generic check-in copy for a legacy stored title "" without inventing a title
+AssertionError: expected [ { name: 'receipt.pdf', …(3) } ] to deeply equal [ { name: 'receipt.pdf', …(3) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "folderLabel": "Module 3 · Quality",
+      "name": "receipt.pdf",
+-     "title": "",
++     "title": "Earlier request title",
+      "version": "2.0",
+    },
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx:375:35
+    373|     await act(async () => {
+    374|       const outcome = await result.current.upload([file()], { newVersi…
+    375|       expect(outcome.newVersions).toEqual([{ name: 'receipt.pdf', vers…
+       |                                   ^
+    376|       expect(outcome.recorded).toEqual([DOCUMENT]);
+    377|       expect(outcome.failed).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: consolidated transport and caller safeguards > uses generic check-in copy for a legacy stored title "  " without inventing a title
+AssertionError: expected [ { name: 'receipt.pdf', …(3) } ] to deeply equal [ { name: 'receipt.pdf', …(3) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "folderLabel": "Module 3 · Quality",
+      "name": "receipt.pdf",
+-     "title": "  ",
++     "title": "Earlier request title",
+      "version": "2.0",
+    },
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx:375:35
+    373|     await act(async () => {
+    374|       const outcome = await result.current.upload([file()], { newVersi…
+    375|       expect(outcome.newVersions).toEqual([{ name: 'receipt.pdf', vers…
+       |                                   ^
+    376|       expect(outcome.recorded).toEqual([DOCUMENT]);
+    377|       expect(outcome.failed).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  4 failed | 78 passed (82)
+   Start at  17:41:07
+   Duration  7.79s (transform 2.30s, setup 313ms, import 3.16s, tests 2.30s, environment 1.52s)
+
