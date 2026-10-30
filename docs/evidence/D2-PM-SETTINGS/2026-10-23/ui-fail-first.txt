@@ -1,0 +1,820 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > opens real settings within the current project instead of leaving for the portfolio 5130ms
+   → Unable to find role="button" and name "Project settings"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX204[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX204[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-desc"[39m
+          [36m>[39m
+            [0mPhase 3 BLA[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mApplication number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Where this filing stands"[39m
+        [33mclass[39m=[32m"pj-status"[39m
+        [33mdata-testid[39m=[32m"pj-status-line"[39m
+        [33mrole[39m=[32m"group"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"idle"[39m
+        [36m>[39m
+          [0mNo market yet[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [0m Reviews could not be read[0m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Retry reading the reviews"[39m
+            [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRetry[0m
+          [36m</button>[39m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-c...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX204[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX204[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-desc"[39m
+          [36m>[39m
+            [0mPhase 3 BLA[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mApplication number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Where this filing stands"[39m
+        [33mclass[39m=[32m"pj-status"[39m
+        [33mdata-testid[39m=[32m"pj-status-line"[39m
+        [33mrole[39m=[32m"group"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"idle"[39m
+        [36m>[39m
+          [0mNo market yet[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [0m Reviews could not be read[0m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Retry reading the reviews"[39m
+            [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRetry[0m
+          [36m</button>[39m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-c...
+ ↓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > leaves only the honest way out of the project workspace
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > opens real settings within the current project instead of leaving for the portfolio
+TestingLibraryElementError: Unable to find role="button" and name "Project settings"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX204[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX204[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-desc"[39m
+          [36m>[39m
+            [0mPhase 3 BLA[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mApplication number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Where this filing stands"[39m
+        [33mclass[39m=[32m"pj-status"[39m
+        [33mdata-testid[39m=[32m"pj-status-line"[39m
+        [33mrole[39m=[32m"group"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"idle"[39m
+        [36m>[39m
+          [0mNo market yet[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [0m Reviews could not be read[0m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Retry reading the reviews"[39m
+            [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRetry[0m
+          [36m</button>[39m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-c...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX204[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX204[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-desc"[39m
+          [36m>[39m
+            [0mPhase 3 BLA[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ok"[39m
+            [36m>[39m
+              [0mactive[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mApplication number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Where this filing stands"[39m
+        [33mclass[39m=[32m"pj-status"[39m
+        [33mdata-testid[39m=[32m"pj-status-line"[39m
+        [33mrole[39m=[32m"group"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"idle"[39m
+        [36m>[39m
+          [0mNo market yet[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-status-item"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [0m Reviews could not be read[0m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Retry reading the reviews"[39m
+            [33mclass[39m=[32m"btn ghost pj-mkt-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRetry[0m
+          [36m</button>[39m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-start"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pj-start-h"[39m
+          [33mclass[39m=[32m"pj-c...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx:93:34
+     91|
+     92|     expect(apiRequest.mock.calls.some(([, path]) => path === `/api/c2c…
+     93|     fireEvent.click(await screen.findByRole('button', { name: 'Project…
+       |                                  ^
+     94|     const description = await screen.findByRole('textbox', { name: 'Pr…
+     95|     expect((description as HTMLTextAreaElement).value).toBe('Phase 3 B…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 skipped (2)
+   Start at  19:59:33
+   Duration  8.15s (transform 1.67s, setup 166ms, import 2.10s, tests 5.14s, environment 544ms)

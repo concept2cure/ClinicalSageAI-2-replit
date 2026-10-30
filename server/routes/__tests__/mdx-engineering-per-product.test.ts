@@ -51,12 +51,24 @@ const h = vi.hoisted(() => {
     changesDown: null as null | { code: string },
   };
   const sent: Array<{ sql: string; args: unknown[] }> = [];
+  function admissionRows(sql: string, args: unknown[]): { rows: Array<Record<string, unknown>> } | null {
+    if (/SELECT ou\.role/.test(sql)) return { rows: [{ role: 'viewer' }] };
+    if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return { rows: [{
+      id: args[2], owner_id: 9, created_by_id: 9, settings: {}, visibility: 'org_public', members: [], review_assigned: false,
+    }] };
+    if (/client_workspace_id AS "clientWorkspaceId" FROM projects/.test(sql)) return { rows: [{
+      id: args[0] === 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' ? 11 : 12, clientWorkspaceId: 71,
+    }] };
+    return null;
+  }
   const query = vi.fn(async (sql: string, args: unknown[] = []): Promise<{ rows: Array<Record<string, unknown>> }> => {
     sent.push({ sql, args });
     if (/FROM regulatory_programs/.test(sql)) {
       const [id, org] = args as [string, number];
       return { rows: state.owner.get(id) === org ? [{ id }] : [] };
     }
+    const admission = admissionRows(sql, args);
+    if (admission) return admission;
     if (/FROM c2c_document_sections/.test(sql)) {
       if (state.sectionsDown) throw Object.assign(new Error('relation unreadable'), state.sectionsDown);
       /* Each predicate the read carries, as that read would apply it. */
@@ -111,6 +123,7 @@ function app() {
   const a = express();
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: 5, organizationId: ORG, role: 'viewer' };
+    Object.assign(req, { dbClient: { query: (sql: string, params?: unknown[]) => h.query(sql, params) } });
     next();
   });
   a.use('/api/mdx', engineeringRouter);

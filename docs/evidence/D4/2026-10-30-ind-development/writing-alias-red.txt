@@ -1,0 +1,93 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > uses canonical agency names for the existing four-region template contract
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary Health Canada
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary health_canada
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary  CA 
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary ca
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias hc 8ms
+   → expected null to be 'Health Canada' // Object.is equality
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias Canada 1ms
+   → expected null to be 'Health Canada' // Object.is equality
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias Japan 1ms
+   → expected null to be 'PMDA' // Object.is equality
+ × shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias EMEA 1ms
+   → expected null to be 'EMA' // Object.is equality
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown undefined unresolved
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown null unresolved
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown  unresolved
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown GLOBAL unresolved
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown ICH unresolved
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown UK unresolved
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown MHRA unresolved
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown NMPA unresolved
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown invented unresolved
+ ↓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown 7 unresolved
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias hc
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias Canada
+AssertionError: expected null to be 'Health Canada' // Object.is equality
+
+- Expected:
+"Health Canada"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:18:36
+     16|   it.each([['hc', 'Health Canada'], ['Canada', 'Health Canada'], ['Jap…
+     17|   ('retains the existing assembly writing alias %s', (value, expected)…
+     18|     expect(writingAgencyOf(value)).toBe(expected);
+       |                                    ^
+     19|     expect(writingAgencyOf(` ${value.toUpperCase()} `)).toBe(expected);
+     20|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias Japan
+AssertionError: expected null to be 'PMDA' // Object.is equality
+
+- Expected:
+"PMDA"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:18:36
+     16|   it.each([['hc', 'Health Canada'], ['Canada', 'Health Canada'], ['Jap…
+     17|   ('retains the existing assembly writing alias %s', (value, expected)…
+     18|     expect(writingAgencyOf(value)).toBe(expected);
+       |                                    ^
+     19|     expect(writingAgencyOf(` ${value.toUpperCase()} `)).toBe(expected);
+     20|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias EMEA
+AssertionError: expected null to be 'EMA' // Object.is equality
+
+- Expected:
+"EMA"
+
++ Received:
+null
+
+ ❯ shared/authoring/__tests__/writing-regions.test.ts:18:36
+     16|   it.each([['hc', 'Health Canada'], ['Canada', 'Health Canada'], ['Jap…
+     17|   ('retains the existing assembly writing alias %s', (value, expected)…
+     18|     expect(writingAgencyOf(value)).toBe(expected);
+       |                                    ^
+     19|     expect(writingAgencyOf(` ${value.toUpperCase()} `)).toBe(expected);
+     20|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 15 skipped (19)
+   Start at  16:54:15
+   Duration  695ms (transform 178ms, setup 149ms, import 56ms, tests 14ms, environment 0ms)
+

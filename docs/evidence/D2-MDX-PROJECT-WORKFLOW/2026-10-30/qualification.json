@@ -1,0 +1,118 @@
+{
+  "branch": "concept2cure-v2",
+  "canonical_base": "819029e2c187f2a8d5f092fd3bce836b200977e3",
+  "checked_local_source_revision": "1c1d4e7f6bfd5d11439cc0db27954cc5c3887fba",
+  "local_revision_note": "Local checkpoint identifier; source-fingerprints.json and exact publication-tree verification establish the published bytes.",
+  "qualified_at_utc": "2026-10-30T18:05:57.387246+00:00",
+  "scope": "Complete the canonical project risk register, current access and engineering subsection handoffs; no duplicate app or store.",
+  "source_fingerprints": {
+    "path": "source-fingerprints.json",
+    "files": 37,
+    "sha256": "b1f2ff1f4bd1a7c363898fcab00956e1a3cc47b8de8205cd3d6293fad80e50a5"
+  },
+  "test_cohorts": [
+    {
+      "name": "owned server",
+      "files": 13,
+      "tests": 280,
+      "receipt": "receipts/risk-server-green.txt.gz"
+    },
+    {
+      "name": "owned risk UI",
+      "files": 9,
+      "tests": 94,
+      "receipt": "receipts/risk-ui-green.txt.gz"
+    },
+    {
+      "name": "owned project and navigation",
+      "files": 4,
+      "tests": 49,
+      "receipt": "receipts/root-green.txt.gz"
+    },
+    {
+      "name": "first canonical integration (overlaps owned tests)",
+      "files": 18,
+      "tests": 298,
+      "receipt": "receipts/integration-green.txt.gz"
+    },
+    {
+      "name": "Vault canonical integration (overlaps owned tests)",
+      "files": 10,
+      "tests": 94,
+      "receipt": "receipts/vault-integration.txt.gz"
+    },
+    {
+      "name": "incoming CI snapshot regression",
+      "tests": 6,
+      "receipt": "receipts/ratchet-integration.txt.gz"
+    },
+    {
+      "name": "CSR canonical integration (overlaps owned tests)",
+      "files": 18,
+      "tests": 272,
+      "receipt": "receipts/csr-integration.txt.gz"
+    },
+    {
+      "name": "editor canonical integration (overlaps owned tests)",
+      "files": 7,
+      "tests": 69,
+      "receipt": "receipts/editor-integration.txt.gz"
+    },
+    {
+      "name": "CSR follow-through integration (overlaps owned tests)",
+      "files": 20,
+      "tests": 334,
+      "receipt": "receipts/csr-follow-through-integration.txt.gz"
+    },
+    {
+      "name": "Vault upload-receipt integration (overlaps owned tests)",
+      "files": 8,
+      "tests": 124,
+      "receipt": "receipts/upload-receipt-integration.txt.gz"
+    },
+    {
+      "name": "project initiation integration (overlaps owned tests)",
+      "files": 5,
+      "tests": 78,
+      "receipt": "receipts/protocol-integration.txt.gz"
+    },
+    {
+      "name": "CSR STF source correction integration",
+      "files": 5,
+      "tests": 59,
+      "receipt": "receipts/stf-integration.txt.gz"
+    },
+    {
+      "name": "Vault saved-title convergence (overlaps owned tests)",
+      "files": 7,
+      "tests": 128,
+      "receipt": "receipts/vault-convergence-integration.txt.gz"
+    }
+  ],
+  "browser": {
+    "passed": true,
+    "checks": 8,
+    "selected_source_pins": 44,
+    "unexpected_requests": 0,
+    "page_errors": 0,
+    "receipt": "ui/browser-result/result.json",
+    "synthetic": true,
+    "authenticated_client_acceptance": false
+  },
+  "production_build_passed": true,
+  "full_pre_push_passed": true,
+  "typecheck_errors": 0,
+  "pre_push_receipt": "receipts/full-prepush.txt.gz",
+  "forced_lint": {
+    "errors": 0,
+    "existing_warnings": 15,
+    "warning_ratchet_passed": true
+  },
+  "independent_read_only_review": "No scoped blockers found, including canonical editor, CSR, Vault upload-receipt, project-initiation and CSR STF correction integrations; reviewers ran no additional tests.",
+  "deployed_runtime_verified": false,
+  "native_postgres_rls_and_concurrency_qualified": false,
+  "release_dispatched": false,
+  "pre_push_comparison_base": "b1455c944cae51296784cc5c50c719f1255e5888",
+  "last_canonical_update_docs_only": true,
+  "last_canonical_source_update": "b1455c944cae51296784cc5c50c719f1255e5888"
+}

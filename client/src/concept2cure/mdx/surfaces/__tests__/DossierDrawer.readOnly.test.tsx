@@ -16,7 +16,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DossierDrawer } from '../pathway/PathwayPanes';
 import { DossierStore } from '../../store/dossierStore';
 
-vi.mock('@/utils/authToken', () => ({ getAuthToken: () => 'test-token', getOrgId: () => '7' }));
+vi.mock('@/utils/authToken', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/utils/authToken')>(),
+  getAuthToken: () => 'test-token', getOrgId: () => '7',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token', 'x-organization-id': '7' }),
+}));
 
 const fetchMock = vi.fn(async () =>
   new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'content-type': 'application/json' } }),

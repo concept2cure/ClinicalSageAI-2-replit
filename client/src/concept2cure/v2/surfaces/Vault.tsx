@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useId } from 'react';
+import { authService } from '@/services/portal/authService';
+import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
@@ -1153,12 +1155,12 @@ function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (
   </div>;
 }
 
-/* The Vault for the project open now. The body is keyed by the project, so a
-   switch remounts it with no data: the read hook keeps the last payload while a
-   new path loads, and the previous project's documents must not stand in for the
-   new project's while it loads. */
+/* Local files, private metadata and read state belong to this project and
+   canonical account session. Replacement remounts the existing body; ordinary
+   bearer refresh keeps the same session and preserves the person's work. */
 export function Vault(props: SurfaceViewProps) {
-  return <VaultForProject key={currentProjectId() ?? ''} {...props} />;
+  const session = useAuthoringReadSession(authService.getUser());
+  return <VaultForProject key={JSON.stringify([currentProjectId() ?? '', session.actor, session.key])} {...props} />;
 }
 
 function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
@@ -1237,6 +1239,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const uploadStaged = async () => {
     if (!staging) return;
     const pending = staging.rows.filter((r) => !r.status || r.status.state === 'refused');
+    // A new attempt starts its selected rows afresh; later refusals belong to this attempt.
+    const keys = new Set(pending.map((r) => r.key));
+    setStaging((st) => st && { ...st, rows: st.rows.map((r) => keys.has(r.key) ? { ...r, status: null } : r) });
     const outcome = await upload(pending.map((r) => r.file), {
       documentType: docType,
       fields: pending.map(fieldsOf),

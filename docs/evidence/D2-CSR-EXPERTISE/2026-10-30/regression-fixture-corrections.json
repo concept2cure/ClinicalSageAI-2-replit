@@ -1,0 +1,13 @@
+{
+  "initialReceipt": "qualified-regression.json",
+  "productionChanges": [],
+  "corrections": [
+    "Two older SQL/PGlite fixtures now include active users/organizations used by canonical admission. CSR pivotal positive writes also identify the actual owner, independent of the mocked preliminary project-admission check; negative denial controls remain unchanged.",
+    "NCT prompt assertion reads the quoted user-priority metadata and ensures the identifier is absent from trusted system instructions; title/synopsis template assertions retained."
+  ],
+  "correctedReceipt": "corrected-fixture-regression-final.json",
+  "correctedSummary": {
+    "suitesPassed": 3,
+    "testsPassed": 26
+  }
+}

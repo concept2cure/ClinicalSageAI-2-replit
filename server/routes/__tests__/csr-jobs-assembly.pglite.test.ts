@@ -77,7 +77,7 @@ it('refuses a short declaration and an unreachable job by status, not as an empt
 });
 
 it('refuses to place into a frozen sequence before the leaf writer is called', async () => {
-  const result = { status: 'complete', leaves: [{ appendix: 'body', title: 'Body', fileName: 'csr-body.pdf', fileTag: 'study-report', origin: 'generated', ctdSection: '5.3.5.1',
+  const result = { status: 'complete', leaves: [{ appendix: 'body', title: 'Body', fileName: 'csr-body.pdf', fileTag: 'study-report-body', origin: 'generated', ctdSection: '5.3.5.1',
     studyId: 'SYN-LMN201-B', pages: 3, bytes: 10, sha256: 'a'.repeat(64), md5: 'b'.repeat(32), renderedLeafFileId: 1 }], missing: [], notApplicable: [], bodyGaps: [],
     unresolvedReferences: [], placeholderSections: [], jobFingerprint: 'f'.repeat(64), structure: { ok: true, findings: [], bodyOutlineDepth: 4, linksChecked: 1 }, listings: [], stfWarnings: [], pdfa: '' };
   const { rows } = await pg.query<{ id: number }>(`UPDATE csr_assembly_runs SET status = 'assembled', progress = 100, result = $1::jsonb WHERE job_id = 41 RETURNING id`, [JSON.stringify(result)]);
@@ -92,14 +92,14 @@ it('refuses to place into a frozen sequence before the leaf writer is called', a
   const placed = await request(app).post(`/api/csr/jobs/41/assembly/${rows[0].id}/place`).send({ sequenceId: 90, reason: 'CSR for the Part B data cut' });
   expect(placed.status).toBe(200);
   expect(h.upsertLeaf).toHaveBeenCalledWith(expect.objectContaining({ sequenceId: 90, sectionCode: 'm5.3.5.1', documentTable: 'rendered_leaf_files', documentId: 1,
-    stfFileTag: 'study-report', studyId: 'SYN-LMN201-B' }), { organizationId: 7, userId: 5 });
+    stfFileTag: 'study-report-body', studyId: 'SYN-LMN201-B' }), { organizationId: 7, userId: 5 });
   expect(placed.body.placement).toMatchObject({ state: 'placed', leaves: [{ appendix: 'body', leafId: 501 }] });
 });
 
 it('refuses to place an assembly whose body cites a table or listing it does not contain, or a build that is not complete', async () => {
   h.upsertLeaf.mockClear();
   h.getSequence.mockResolvedValue({ id: 90, submissionId: 3, sequenceNumber: '0004', status: 'draft', dispatchStatus: null });
-  const leaf = { appendix: 'body', title: 'Body', fileName: 'csr-body.pdf', fileTag: 'study-report', origin: 'generated', ctdSection: '5.3.5.1',
+  const leaf = { appendix: 'body', title: 'Body', fileName: 'csr-body.pdf', fileTag: 'study-report-body', origin: 'generated', ctdSection: '5.3.5.1',
     studyId: 'SYN-LMN201-B', pages: 3, bytes: 10, sha256: 'a'.repeat(64), md5: 'b'.repeat(32), renderedLeafFileId: 1 };
   const result = (unresolvedReferences: unknown[]) => JSON.stringify({ status: unresolvedReferences.length ? 'incomplete' : 'complete', leaves: [leaf], missing: [], notApplicable: [], bodyGaps: [],
     unresolvedReferences, placeholderSections: [], jobFingerprint: 'f'.repeat(64), structure: { ok: true, findings: [], bodyOutlineDepth: 4, linksChecked: 1 }, listings: [], stfWarnings: [], pdfa: '' });
@@ -123,14 +123,15 @@ it('refuses to place an assembly whose body cites a table or listing it does not
 it('shows and places a revised body as a replace of the study\'s earlier body, and refuses to withdraw a placement that is not partial (SYNTHETIC)', async () => {
   h.upsertLeaf.mockReset().mockResolvedValue({ id: 801 });
   h.getSequence.mockResolvedValue({ id: 90, submissionId: 3, sequenceNumber: '0004', status: 'draft', dispatchStatus: null });
-  const leaf = { appendix: 'body', title: 'Body', fileName: 'csr-body.pdf', fileTag: 'study-report', origin: 'generated', ctdSection: '5.3.5.1',
+  const leaf = { appendix: 'body', title: 'Body', fileName: 'csr-body.pdf', fileTag: 'study-report-body', origin: 'generated', ctdSection: '5.3.5.1',
     studyId: 'SYN-LMN201-B', pages: 3, bytes: 10, sha256: 'a'.repeat(64), md5: 'b'.repeat(32), renderedLeafFileId: 2 };
   const result = JSON.stringify({ status: 'complete', studyId: 'SYN-LMN201-B', leaves: [leaf], missing: [], notApplicable: [], bodyGaps: [], unresolvedReferences: [], placeholderSections: [],
     jobFingerprint: 'f'.repeat(64), structure: { ok: true, findings: [], bodyOutlineDepth: 4, linksChecked: 1 }, listings: [], stfWarnings: [], pdfa: '' });
-  // Sequence 0003 holds this study's body, as an earlier CSR placement recorded it.
+  // Sequence 0003 retains the old role spelling; the new assembly replaces it without relabelling history.
+  const earlierResult = JSON.stringify({ ...JSON.parse(result), leaves: [{ ...leaf, fileTag: 'study-report', renderedLeafFileId: 9 }] });
   await pg.exec(`INSERT INTO submission_leaves VALUES (700, 7, 80, 'm5.3.5.1', 'Earlier body', 'new', 'SYN-LMN201-B', 'study-report', NULL, 'rendered_leaf_files', 9, NULL);`);
   await pg.query(`INSERT INTO csr_assembly_runs (organization_id, job_id, requested_by, status, progress, result, placement)
-    VALUES (7, 41, 5, 'assembled', 100, $1::jsonb, '{"state":"placed","sequenceId":80,"sequenceNumber":"0003","leaves":[{"appendix":"body","leafId":700,"fileName":"csr-body.pdf"}]}'::jsonb)`, [result]);
+    VALUES (7, 41, 5, 'assembled', 100, $1::jsonb, '{"state":"placed","sequenceId":80,"sequenceNumber":"0003","leaves":[{"appendix":"body","leafId":700,"fileName":"csr-body.pdf"}]}'::jsonb)`, [earlierResult]);
   const revised = await pg.query<{ id: number }>(`INSERT INTO csr_assembly_runs (organization_id, job_id, requested_by, status, progress, result)
     VALUES (7, 41, 5, 'assembled', 100, $1::jsonb) RETURNING id`, [result]);
   const id = revised.rows[0].id;

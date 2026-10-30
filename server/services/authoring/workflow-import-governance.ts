@@ -252,23 +252,49 @@ async function hasCurrentAdoption(q: Queryable, input: WorkflowGovernanceInput, 
  * snapshot it releases. A review may adopt uncertain authorship; it cannot turn
  * positively generated text without a qualified generation receipt into PQ. */
 
+/** Refusals about the reviewer of an intact receipt (csr-scientific-review.ts), answered in their own words. */
+const REVIEWER_STANDING_CODES = new Set([
+  'CSR_SCIENTIFIC_REVIEWER_NOT_CURRENT', 'CSR_EVIDENCE_REVIEWER_UNAVAILABLE',
+  'CSR_EVIDENCE_REVIEWER_NOT_INDEPENDENT', 'CSR_EVIDENCE_REVIEWER_INDEPENDENCE_UNRESOLVED',
+]);
+
+/** The reviewer's access or independence lookup did not run: not an answer about the reviewer. */
+function reviewerStandingUnchecked(error: unknown): boolean {
+  const failed = error as { name?: unknown; code?: unknown; status?: unknown } | null;
+  return failed?.code === 'SEPARATION_OF_DUTIES_UNVERIFIED'
+    || (failed?.name === 'AuthoringProgramAccessError' && failed.status === 503);
+}
+
+/** What the release boundary answers for a refusal from the CSR receipt check, or null for any other error. */
+function csrReleaseRefusal(error: unknown): WorkflowImportGovernanceError | null {
+  const code = error && typeof error === 'object' && 'code' in error && typeof error.code === 'string' ? error.code : '';
+  if (code === 'CSR_EVIDENCE_IDENTITY_UNAVAILABLE') {
+    // Not "no receipt": what the document is could not be read at all.
+    return new WorkflowImportGovernanceError(503, code,
+      'Whether this document is a clinical study report could not be checked, so nothing was signed or released. Try again; if it persists, contact an administrator.');
+  }
+  if (REVIEWER_STANDING_CODES.has(code) && error instanceof Error) {
+    // The receipt is intact; its reviewer no longer stands. The sentence says which way.
+    return new WorkflowImportGovernanceError(409, code, error.message);
+  }
+  if (reviewerStandingUnchecked(error)) {
+    return new WorkflowImportGovernanceError(503, 'CSR_EVIDENCE_REVIEWER_UNVERIFIED',
+      'The scientific reviewer’s current standing could not be checked, so nothing was signed or released. Try again; if it persists, contact an administrator.');
+  }
+  if (code.startsWith('CSR_')) {
+    return new WorkflowImportGovernanceError(sourceVerificationStatus(error), code,
+      'No current scientific-review receipt covers the saved CSR and its approved source versions. Nothing was signed or released.');
+  }
+  return null;
+}
+
 /** Same reserved transaction as the native freeze/sign/export caller. */
 async function requireCsrScientificRelease(q: Queryable, input: WorkflowGovernanceInput): Promise<void> {
   try {
     const { assertCsrScientificRelease } = await import('./csr-scientific-review.js');
     await assertCsrScientificRelease(q, input);
   } catch (error) {
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'CSR_EVIDENCE_IDENTITY_UNAVAILABLE') {
-      // Not "no receipt": what the document is could not be read at all.
-      throw new WorkflowImportGovernanceError(503, error.code,
-        'Whether this document is a clinical study report could not be checked, so nothing was signed or released. Try again; if it persists, contact an administrator.');
-    }
-    if (error && typeof error === 'object' && 'code' in error &&
-        typeof error.code === 'string' && error.code.startsWith('CSR_')) {
-      throw new WorkflowImportGovernanceError(sourceVerificationStatus(error), error.code,
-        'No current scientific-review receipt covers the saved CSR and its approved source versions. Nothing was signed or released.');
-    }
-    throw error;
+    throw csrReleaseRefusal(error) ?? error;
   }
 }
 

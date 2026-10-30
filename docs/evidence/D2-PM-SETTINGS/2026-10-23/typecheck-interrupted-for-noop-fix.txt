@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:typecheck:no-regression
+> node scripts/ci/typecheck-no-regression.mjs --incremental
+
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)

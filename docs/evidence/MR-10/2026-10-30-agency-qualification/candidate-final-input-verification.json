@@ -1,0 +1,90 @@
+{
+  "canonicalBase": "ed5c9105845e0f82f8a0579c41a06fcea63b7542",
+  "frozenInputCount": 46,
+  "allPinsMatch": true,
+  "repeatPackagesByteIdentical": false,
+  "agencyQualification": "blocked",
+  "comparisons": [
+    {
+      "kind": "original",
+      "previousSha256": "088977b35de103d8a3098f9d5aad27953e8962d788da39df12768719fb5907b4",
+      "finalSha256": "52f813893dc29de5a5b13fb053909c8352c22155a51b6e2971043245e3081ebb",
+      "added": [],
+      "removed": [],
+      "changedPayloads": [
+        "index-md5.txt",
+        "index.xml",
+        "m1/us/1-1/form-356h.pdf",
+        "m1/us/1-2/cover-letter.pdf",
+        "m1/us/us-regional.xml",
+        "m2/2-2/intro.pdf",
+        "m3/3-2-p-1/description-composition.pdf",
+        "m5/5-3-5-1/study-001/study-report.pdf",
+        "util/index-md5.txt"
+      ],
+      "changedArchiveTimestamps": [
+        "index-md5.txt",
+        "index.xml",
+        "m1/",
+        "m1/us/",
+        "m1/us/1-1/",
+        "m1/us/1-1/form-356h.pdf",
+        "m1/us/1-2/",
+        "m1/us/1-2/cover-letter.pdf",
+        "m1/us/us-regional.xml",
+        "m2/",
+        "m2/2-2/",
+        "m2/2-2/intro.pdf",
+        "m3/",
+        "m3/3-2-p-1/",
+        "m3/3-2-p-1/description-composition.pdf",
+        "m5/",
+        "m5/5-3-5-1/",
+        "m5/5-3-5-1/study-001/",
+        "m5/5-3-5-1/study-001/stf-study-001.xml",
+        "m5/5-3-5-1/study-001/study-report.pdf",
+        "util/",
+        "util/index-md5.txt"
+      ]
+    },
+    {
+      "kind": "amendment",
+      "previousSha256": "ce3a3a0e2b8e36513abf47de94a1164d69b37f58c9f3a5a7815efe872481daa2",
+      "finalSha256": "bc4837da6a62b0def1f7a136737db98a87c5216f7dfeff1b6ca023d8385c9bba",
+      "added": [],
+      "removed": [],
+      "changedPayloads": [
+        "index-md5.txt",
+        "index.xml",
+        "m1/us/1-1/form-356h.pdf",
+        "m1/us/1-2/cover-letter.pdf",
+        "m1/us/us-regional.xml",
+        "m2/2-2/intro.pdf",
+        "m5/5-3-5-1/study-001/study-report.pdf",
+        "util/index-md5.txt"
+      ],
+      "changedArchiveTimestamps": [
+        "index-md5.txt",
+        "index.xml",
+        "m1/",
+        "m1/us/",
+        "m1/us/1-1/",
+        "m1/us/1-1/form-356h.pdf",
+        "m1/us/1-2/",
+        "m1/us/1-2/cover-letter.pdf",
+        "m1/us/us-regional.xml",
+        "m2/",
+        "m2/2-2/",
+        "m2/2-2/intro.pdf",
+        "m5/",
+        "m5/5-3-5-1/",
+        "m5/5-3-5-1/study-001/",
+        "m5/5-3-5-1/study-001/stf-study-001.xml",
+        "m5/5-3-5-1/study-001/study-report.pdf",
+        "util/",
+        "util/index-md5.txt"
+      ]
+    }
+  ],
+  "limitation": "Observed PDF/package bytes and archive times differ between local runs. Each is bound to its own raw report and exact hashes; no repeat-byte identity claimed."
+}

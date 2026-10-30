@@ -1,0 +1,13 @@
+{
+  "url": "https://www.fda.gov/media/159383/download",
+  "retrievedAtUtc": "2026-10-30T17:08:46.010952+00:00",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 114803,
+  "sha256": "63132c3751682193f6f13db125ee03583b740680851c0f0e6412561438b482da",
+  "title": "ICH eCTD STF Specification V2.6.1",
+  "documentDate": "2008-06-03",
+  "pages": 22,
+  "verificationScope": "III.B pp7\u20139: CSR body and appendix roles; history correction pp13\u201315. No blanket regional/dataset/DTD certification.",
+  "sourceRetention": "PDF read locally; retain URL/hash and factual observations, not a full republished PDF."
+}

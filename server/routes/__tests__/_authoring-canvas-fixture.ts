@@ -56,11 +56,15 @@ export const PREREQ = `
     program_type TEXT,
     primary_agency TEXT,
     product_type TEXT,
+    indication TEXT,
     metadata JSON,
     deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
   );
   CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER, name TEXT, regulatory_program_id UUID);
+  CREATE TABLE project_charters (id SERIAL PRIMARY KEY, organization_id INTEGER, project_id INTEGER,
+    version INTEGER, updated_at TIMESTAMPTZ, approval_status TEXT, therapeutic_area TEXT,
+    development_stage TEXT, target_population TEXT);
   -- doc_type / agency are the resolver's own codes (document-class.ts: ind → 'ind', FDA → 'fda').
   CREATE TABLE c2c_documents (
     id TEXT PRIMARY KEY, project_id UUID, org_id INTEGER, doc_type TEXT, agency TEXT, title TEXT,

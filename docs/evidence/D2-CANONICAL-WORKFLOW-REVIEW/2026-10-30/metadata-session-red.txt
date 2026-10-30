@@ -1,0 +1,356 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > masks the prior complete catalog in the replacement-owner render before passive effects 80ms
+   → expected { sources: [ 5 ], error: null, …(1) } to deeply equal { sources: [], error: null, …(1) }
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > masks old associations before passive effects and keeps authoritative withheld details withheld 58ms
+   → expected { ids: [ '5' ], error: null, …(1) } to deeply equal { ids: [], error: null, …(1) }
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > a retained catalog retry cannot restart or invalidate the replacement owner’s in-flight read 5063ms
+   → expected "vi.fn()" to be called 2 times, but got 1 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > old admission retry and admit callbacks cannot erase or extend replacement-session associations 5056ms
+   → expected "vi.fn()" to be called 2 times, but got 1 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > does not resurrect old callbacks after A → B → A even when the original owner key is valid again 5061ms
+   → expected [ '5' ] to deeply equal [ '7' ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired catalog JSON body after a replacement read settles (old response ok: true) 5057ms
+   → expected [] to deeply equal [ 7 ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired catalog JSON body after a replacement read settles (old response ok: false) 5061ms
+   → expected [] to deeply equal [ 7 ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired admission JSON body after replacement associations settle (old response ok: true) 5056ms
+   → expected [] to deeply equal [ '7' ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired admission JSON body after replacement associations settle (old response ok: false) 5058ms
+   → expected [] to deeply equal [ '7' ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > never treats partial old-owner pages as complete citation authority for a replacement owner 5058ms
+   → expected [] to deeply equal [ 7 ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > keeps rows, associations, callbacks and read counts when the same valid owner is recreated 56ms
+ × client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > an invalid supplied owner exposes no source authority and cannot retry or admit into its retired visit 56ms
+   → expected [ { id: 5, …(6) } ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > masks the prior complete catalog in the replacement-owner render before passive effects
+AssertionError: expected { sources: [ 5 ], error: null, …(1) } to deeply equal { sources: [], error: null, …(1) }
+
+- Expected
++ Received
+
+  {
+    "error": null,
+-   "sources": [],
+-   "state": "loading",
++   "sources": [
++     5,
++   ],
++   "state": "ready",
+  }
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx:62:21
+     60|   activeOwner = B;
+     61|   view.rerender({ readOwner: owner(B) });
+     62|   expect(frames[0]).toEqual({ sources: [], error: null, state: 'loadin…
+       |                     ^
+     63|   await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(2));
+     64|   await act(async () => replacement.resolve(catalog([7], 'Replacement …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > masks old associations before passive effects and keeps authoritative withheld details withheld
+AssertionError: expected { ids: [ '5' ], error: null, …(1) } to deeply equal { ids: [], error: null, …(1) }
+
+- Expected
++ Received
+
+  {
+    "error": null,
+-   "ids": [],
+-   "state": "loading",
++   "ids": [
++     "5",
++   ],
++   "state": "ready",
+  }
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx:83:21
+     81|   activeOwner = B;
+     82|   view.rerender({ readOwner: owner(B) });
+     83|   expect(frames[0]).toEqual({ ids: [], error: null, state: 'loading' }…
+       |                     ^
+     84|   await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(2));
+     85|   await act(async () => replacement.resolve([association(7, 'Replaceme…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > a retained catalog retry cannot restart or invalidate the replacement owner’s in-flight read
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx:100:42
+     98|   activeOwner = B;
+     99|   view.rerender({ readOwner: owner(B) });
+    100|   await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(2));
+       |                                          ^
+    101|   act(() => oldRetry());
+    102|   expect(apiRequest).toHaveBeenCalledTimes(2);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > old admission retry and admit callbacks cannot erase or extend replacement-session associations
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx:123:42
+    121|   activeOwner = B;
+    122|   view.rerender({ readOwner: owner(B) });
+    123|   await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(2));
+       |                                          ^
+    124|   act(() => oldRetry());
+    125|   expect(apiRequest).toHaveBeenCalledTimes(2);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > does not resurrect old callbacks after A → B → A even when the original owner key is valid again
+AssertionError: expected [ '5' ] to deeply equal [ '7' ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+  [
+-   "7",
++   "5",
+  ]
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx:153:75
+    151|   phase = 'B'; activeOwner = B;
+    152|   view.rerender({ readOwner: owner(B) });
+    153|   await waitFor(() => expect(admissionIds(view.result.current.admissio…
+       |                                                                           ^
+    154|   phase = 'returned A'; activeOwner = A;
+    155|   view.rerender({ readOwner: owner(A) });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired catalog JSON body after a replacement read settles (old response ok: true)
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired catalog JSON body after a replacement read settles (old response ok: false)
+AssertionError: expected [] to deeply equal [ 7 ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- [
+-   7,
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx:176:63
+    174|   activeOwner = B;
+    175|   view.rerender({ readOwner: owner(B) });
+    176|   await waitFor(() => expect(catalogIds(view.result.current)).toEqual(…
+       |                                                               ^
+    177|   await act(async () => oldBody.resolve(oldOk ? catalog([5], 'Retired'…
+    178|   expect(view.result.current.state).toBe('ready');
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired admission JSON body after replacement associations settle (old response ok: true)
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > ignores a retired admission JSON body after replacement associations settle (old response ok: false)
+AssertionError: expected [] to deeply equal [ '7' ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- [
+-   "7",
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx:193:65
+    191|   activeOwner = B;
+    192|   view.rerender({ readOwner: owner(B) });
+    193|   await waitFor(() => expect(admissionIds(view.result.current)).toEqua…
+       |                                                                 ^
+    194|   await act(async () => oldBody.resolve(oldOk ? [association(5, 'Retir…
+    195|   expect(view.result.current.state).toBe('ready');
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > never treats partial old-owner pages as complete citation authority for a replacement owner
+AssertionError: expected [] to deeply equal [ 7 ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- [
+-   7,
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx:217:63
+    215|   activeOwner = B;
+    216|   view.rerender({ readOwner: owner(B) });
+    217|   await waitFor(() => expect(catalogIds(view.result.current)).toEqual(…
+       |                                                               ^
+    218|   await act(async () => oldLastPage.resolve(catalog([2], 'Prior', 1, 2…
+    219|   expect(view.result.current.state).toBe('ready');
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx > an invalid supplied owner exposes no source authority and cannot retry or admit into its retired visit
+AssertionError: expected [ { id: 5, …(6) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "dataEligible": true,
++     "extractionStatus": "extracted",
++     "id": 5,
++     "isCurrent": true,
++     "originalFileAvailable": true,
++     "textAvailable": true,
++     "title": "Recorded source 5",
++   },
++ ]
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx:263:47
+    261|   activeOwner = 'retired';
+    262|   view.rerender({ readOwner: owner(A) });
+    263|   expect(view.result.current.catalog.sources).toEqual([]);
+       |                                               ^
+    264|   expect(view.result.current.admission.admissions).toEqual([]);
+    265|   expect(view.result.current.catalog.error).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 1 passed (12)
+   Start at  16:40:10
+   Duration  41.68s (transform 234ms, setup 152ms, import 280ms, tests 40.72s, environment 400ms)
+

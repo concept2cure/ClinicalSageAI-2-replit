@@ -7,9 +7,9 @@ import { assertEditorDraftNotTruncated } from './authoring-draft-termination';
 import { renderPassageBlock } from './authoring-draft-passage';
 import { savedTemplateReview, type SavedTemplateReview } from '../ana/saved-template-review';
 import { e3ReferenceDraftingMode } from '../ind/ctd/csr-e3-guidance';
+import { writingAgencyOf } from '../../../shared/authoring/writing-regions';
 
 export const MAX_DRAFT_TEMPLATE_REFERENCE_BYTES = 16 * 1024;
-const WRITING_REGIONS: Record<string, string> = { US: 'FDA', CA: 'Health Canada', EU: 'EMA', JP: 'PMDA' };
 
 export class DraftTemplateReferenceError extends AnaProjectScopeError {
   constructor(status: 409 | 503, code: string, message: string) {
@@ -38,7 +38,7 @@ function recordedWritingRegion(source: Record<string, unknown> | null): string |
   const filing = source?.filingContext;
   if (!filing || typeof filing !== 'object' || Array.isArray(filing)) return null;
   const region = (filing as Record<string, unknown>).region;
-  return typeof region === 'string' ? WRITING_REGIONS[region] ?? null : null;
+  return writingAgencyOf(region);
 }
 
 function sourceRequiresManual(source: Record<string, unknown> | null): boolean {
@@ -51,11 +51,16 @@ function admitDraftReference(source: Record<string, unknown> | null, requestedRe
       'The recorded template requires manual preparation. Use the original form, dataset or signed record and the manual editor; nothing was drafted.');
   }
   const recordedRegion = recordedWritingRegion(source);
-  if (recordedRegion && requestedRegion !== undefined && requestedRegion !== recordedRegion) {
+  const requested = requestedRegion === undefined ? null : writingAgencyOf(requestedRegion);
+  if ((requestedRegion !== undefined && !requested) || (!recordedRegion && !requested)) {
+    throw new DraftTemplateReferenceError(409, 'DRAFT_REGION_REQUIRED',
+      'Choose a supported writing region for this draft. The saved section has no confirmed receiving jurisdiction; nothing was drafted.');
+  }
+  if (recordedRegion && requested && requested !== recordedRegion) {
     throw new DraftTemplateReferenceError(409, 'TEMPLATE_REGION_MISMATCH',
       `The recorded template is for ${recordedRegion}. Choose ${recordedRegion} in the Region control or use the correct template; nothing was drafted.`);
   }
-  return { region: requestedRegion === undefined ? recordedRegion ?? 'FDA' : requestedRegion, recordedRegion };
+  return { region: (requested ?? recordedRegion)!, recordedRegion };
 }
 
 /** One effective saved reference for drafting and read-only conversation oversight. */
@@ -94,7 +99,9 @@ export function renderSavedSectionTemplateReference(reference: Record<string, un
 function renderDraftReference(review: SavedTemplateReview, scope: DraftTemplateScope, requestedRegion: unknown) {
   const { source, sectionManual, reference } = savedSectionTemplateReference(review, scope);
   const { region, recordedRegion } = admitDraftReference(source, requestedRegion, sectionManual);
-  return { region, recordedRegion, referenceBlock: renderSavedSectionTemplateReference(reference) };
+  const filing = source?.filingContext as Record<string, unknown> | undefined;
+  const documentKind = filing?.registryId === 'ICH_CSR' ? 'csr' : filing?.registryId === 'ICH_PROTOCOL' ? 'protocol' : 'ctd';
+  return { region, recordedRegion, documentKind: documentKind as 'csr' | 'protocol' | 'ctd', referenceBlock: renderSavedSectionTemplateReference(reference) };
 }
 
 /** Caller admits this exact section's current edit/project access before reference reads. */

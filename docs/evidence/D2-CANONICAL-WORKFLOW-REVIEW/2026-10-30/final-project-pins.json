@@ -1,0 +1,66 @@
+{
+  "reviewer": "action_order_contract",
+  "date": "2026-10-30",
+  "approved": true,
+  "executionByReviewer": false,
+  "preImplementationSourceSha256": "c4e05775fb27ffcc014a705910286c12129bd79db9a0c63adc2933a264e5987c",
+  "redTestMatchesCurrent": true,
+  "pins": {
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": {
+      "sha256": "8c25ac8a223318f0f28c67222d7e11c208caa31260665d6e2835b77dbf5e8bd3",
+      "bytes": 103205
+    },
+    "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx": {
+      "sha256": "98f855e1de6951fe1a7289027c9f0533e4f2c162d3e42707c2f2a111d23ddc8e",
+      "bytes": 18739
+    },
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": {
+      "sha256": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7",
+      "bytes": 3869
+    },
+    "client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx": {
+      "sha256": "16cdad6bd49b92970bfaa900f79fa2bfb448caf3d1670e9aeea5cb42722f9251",
+      "bytes": 6917
+    },
+    "client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx": {
+      "sha256": "70b205d21fdb9314441da96c124bac786d2a94912ffd0cbe9ed27386736569f5",
+      "bytes": 10094
+    },
+    "client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts": {
+      "sha256": "c852568253e852a839e6e6c8234ae8b87f9f38e62bbd21427cf8ea1b8dc79d51",
+      "bytes": 2332
+    },
+    "client/src/concept2cure/v2/shellProject.ts": {
+      "sha256": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
+      "bytes": 15793
+    },
+    "client/src/concept2cure/v2/navParams.ts": {
+      "sha256": "1f65cb37fab1713c3de8782d351411fd4df7566edc45ea58b047a87aedd4aa9c",
+      "bytes": 6956
+    },
+    "client/src/concept2cure/v2/surfaces/projectThreads.ts": {
+      "sha256": "a5bf04435d712281605b1f6b119759332d5b13bf58df30150a412417c17f4ea4",
+      "bytes": 5956
+    },
+    "client/src/concept2cure/v2/dataConnect.tsx": {
+      "sha256": "51b03e8cf336df448663742c5b31bb4dc9c93f6879b437cc490420fcc6809815",
+      "bytes": 33020
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/scope-review.md": {
+      "sha256": "0c926e0b7cd2bd3918e97829a61834b2a1efab643e28d0f135ec88e6ad2b7370",
+      "bytes": 8764
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/project-red-inputs.json": {
+      "sha256": "0a20209050fa45bbad7b0feb2f13860be1b5293c4c1ae359e59a7adb4ffa6a24",
+      "bytes": 276
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/project-red.txt": {
+      "sha256": "ffef8363a43789754c086b9da11ab2f8481414728e5deea9048e6833dc5d1ed0",
+      "bytes": 49055
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/project-green-first.txt": {
+      "sha256": "56619e549877a1eede1feb255ab1495415dd5adfd4e1e5fac681f3d485b425d9",
+      "bytes": 6155
+    }
+  }
+}

@@ -47,8 +47,14 @@ beforeAll(async () => {
   database = new PGlite();
   h.database = drizzle(database);
   await database.exec(`
+    CREATE TABLE users (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    CREATE TABLE organizations (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    INSERT INTO users (id) VALUES (5),(99);
+    INSERT INTO organizations (id) VALUES (7),(8);
     CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, client_workspace_id integer, status text, regulatory_program_id uuid, owner_id integer, created_by_id integer, settings jsonb DEFAULT '{}'::jsonb);
     INSERT INTO projects (id,organization_id,client_workspace_id,status,regulatory_program_id) VALUES (11,7,71,'active','${PROGRAM}'),(13,7,71,'archived',NULL),(21,8,81,'active',NULL);
+    -- Positive write cases use an actual owner under the canonical CSR policy.
+    UPDATE projects SET owner_id=5, created_by_id=5 WHERE organization_id=7;
     CREATE FUNCTION public.actor_name(p_user_id integer) RETURNS TABLE (name text, email text) LANGUAGE sql AS $f$ SELECT 'Rena Author'::text, 'rena@example.test'::text WHERE p_user_id = 5 $f$;
     CREATE TABLE organization_users (organization_id integer, user_id integer, role text);
     INSERT INTO organization_users VALUES (7,5,'member');

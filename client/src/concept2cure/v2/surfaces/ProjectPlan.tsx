@@ -30,6 +30,7 @@ import { ComingLater } from './ProjectComingLater';
 import { STEP_DOORS } from '../projectDoors';
 import { biotechPlanEntry, ProjectBiotechPlan } from './ProjectBiotechPlan';
 import { FilingLifecycleReference } from './FilingLifecycleReference';
+import { ProjectCoreWork } from './ProjectCoreWork';
 
 /** The features a US IND phase is composed in, when they serve this project. Each opens on the open project, and
  *  is named as the same job is named wherever its door appears (projectDoors.ts). */
@@ -129,6 +130,7 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
   );
   return (
     <div className="pj-stagebody" data-testid="pj-plan">
+      {prog?.id === pid && <ProjectCoreWork key={pid} programId={pid} cmcComposes={cmcComposes} available={available} onNav={onNav} />}
       {!prog ? (
         /* The project record is still being read: which plan applies is not known yet. */
         <EmptyState busy icon={I.fileText} title="Reading this project…" />

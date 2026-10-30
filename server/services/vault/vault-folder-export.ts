@@ -12,10 +12,10 @@
  * route stages the bytes; this module describes them.
  */
 import type { Pool } from 'pg';
-import { readArchiveAuditExtract, type WithheldDocument } from './vault-seal-archive.js';
+import { readArchiveAuditExtract, archiveActorIdentity, type WithheldDocument } from './vault-seal-archive.js';
 import type { ArchivedFile } from './vault-archive-builder.js';
 import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
-import { folderLabel, isFolderInView, resolveVaultView } from './vault-filing.service.js';
+import { cabinetFolderOf, folderLabel, isFolderInView, resolveVaultView } from './vault-filing.service.js';
 import { readSealDocumentRows, VaultSealError } from './vault-seal.service.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
 
@@ -54,7 +54,7 @@ export async function planFolderExport(
     return { ok: false, status: 404, code: 'FOLDER_NOT_FOUND', message: `There is no such folder in this project's Vault. ${NOTHING}` };
   }
   const label = folderLabel(view, p.folderId) || p.folderId;
-  const rows = programRows.filter((r) => r.folder_id === p.folderId);
+  const rows = programRows.filter((r) => cabinetFolderOf(r) === p.folderId);
   if (!rows.length) {
     return { ok: false, status: 409, code: 'FOLDER_EMPTY', message: `${label} holds no documents to export. ${NOTHING}` };
   }
@@ -67,10 +67,14 @@ export async function planFolderExport(
     [rows.map((r) => String(r.id)), p.programId, p.organizationId],
   );
   const byId = new Map(files.rows.map((f) => [String(f.id), f]));
+  const missing = rows.find((row) => !byId.has(String(row.id)));
+  if (missing) return { ok: false, status: 409, code: 'EXPORT_DOCUMENT_CHANGED',
+    message: `${missing.document_title ?? missing.file_name ?? missing.id} is no longer available as planned. Reload the Vault before exporting again. ${NOTHING}` };
+
   const name = await q.query(`SELECT name FROM regulatory_programs WHERE id = $1::uuid AND organization_id = $2`, [p.programId, p.organizationId]);
   return {
     ok: true, view, folder: { id: p.folderId, label }, programName: String(name.rows[0]?.name ?? 'Vault'), programRows,
-    inFolder: rows.flatMap((row) => (byId.has(String(row.id)) ? [{ row, file: byId.get(String(row.id))! }] : [])),
+    inFolder: rows.map((row) => ({ row, file: byId.get(String(row.id))! })),
   };
 }
 
@@ -103,18 +107,20 @@ export async function buildFolderExportContents(
   pool: Pick<Pool, 'connect'>,
   input: {
     organizationId: number; userId: number | undefined; programId: string; programName: string;
-    folder: { id: string; label: string }; documents: FolderExportDocument[]; withheld: WithheldDocument[]; builtAt?: Date;
+    folder: { id: string; label: string }; documents: FolderExportDocument[]; withheld: WithheldDocument[]; builtAt?: Date; namedActors?: boolean;
   },
 ): Promise<{ manifest: (files: ArchivedFile[]) => Record<string, unknown>; indexHeader: string[]; attachments: Array<{ path: string; content: string }> }> {
   const { folder, documents, withheld } = input;
   const builtAt = (input.builtAt ?? new Date()).toISOString();
   const ids = [...documents.map((d) => d.id), ...withheld.map((w) => w.id)];
   const history = await readArchiveAuditExtract(pool, input.organizationId, input.userId,
-    { tableName: 'vault_document', recordId: ids }, `the documents in ${folder.label}`);
+    { tableName: 'vault_document', recordId: ids }, { of: `the documents in ${folder.label}`, namedActors: input.namedActors });
   const entries = [...history.data].reverse();
   const auditPath = 'audit/audit-trail.json';
+  const actorIdentity = archiveActorIdentity(input.namedActors);
   const audit = {
     schema: 'vault-folder-export-audit/1',
+    actorIdentity,
     readAt: builtAt,
     order: 'oldest first',
     records: { documents: ids },
@@ -135,7 +141,7 @@ export async function buildFolderExportContents(
       documents,
       files,
       withheld,
-      auditTrail: { path: auditPath, entries: entries.length, chain: history.meta.chain },
+      auditTrail: { path: auditPath, entries: entries.length, chain: history.meta.chain, actorIdentity },
     }),
     indexHeader: [
       `Export of a Vault folder: ${folder.label}`,
@@ -147,7 +153,11 @@ export async function buildFolderExportContents(
       '',
       'Every file in this archive is listed in SHA256SUMS; `sha256sum -c SHA256SUMS` checks them all.',
       'manifest.json lists each document with its version, recorded SHA-256 and filing.',
+      `Audit identities: ${actorIdentity}.`,
       `${auditPath} holds the chained audit rows of each exported version, oldest first.`,
+      ...(documents.some((d) => d.placementStatus === 'suggested')
+        ? ['', 'Suggested filings: these placements have not been confirmed by a person.',
+          ...documents.filter((d) => d.placementStatus === 'suggested').map((d) => `  ${d.title ?? d.id}`)] : []),
       ...(withheld.length
         ? ['', `Withheld (${withheld.length}): documents in this folder whose file this export does not hold.`,
           ...withheld.map((w) => `  ${w.title ?? w.id}  ${w.sha256 ?? '-'}  ${w.why}`)]

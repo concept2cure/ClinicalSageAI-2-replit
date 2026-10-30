@@ -32,6 +32,7 @@ vi.mock('../../services/csr/project-scope', async (original) => ({
 }));
 import router from '../csr-jobs';
 import { CsrSourceInputError } from '../../services/csr/source-access';
+import { CsrAuthoringContextError } from '../../services/csr/cortex-authoring-context';
 import { flattenICHE3Sections, getICHE3Structure } from '../../services/csr-builder.js';
 
 const RUN = '0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31';
@@ -109,6 +110,15 @@ describe('POST /api/csr/jobs bound to a retained run', () => {
     expect(res.body.code).toBe('CSR_EVIDENCE_PROGRAM_MISMATCH');
     expect(h.evidence).not.toHaveBeenCalled();
     expect(h.launch).not.toHaveBeenCalled();
+  });
+
+  it('preserves the typed refusal from canonical pre-quota evidence parsing', async () => {
+    h.evidence.mockResolvedValue({ source: { protocolNumber: 'NCT05330182' } });
+    h.launch.mockRejectedValueOnce(new CsrAuthoringContextError('CSR_EVIDENCE_SELECTION_INVALID', 400));
+    const res = await build();
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'CSR_EVIDENCE_SELECTION_INVALID', code: 'CSR_EVIDENCE_SELECTION_INVALID' });
+    expect(h.launch).toHaveBeenCalledOnce();
   });
 });
 
