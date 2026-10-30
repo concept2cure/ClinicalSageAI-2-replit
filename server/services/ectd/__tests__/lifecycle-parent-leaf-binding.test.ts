@@ -48,8 +48,10 @@ beforeAll(async () => {
       sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
       VALUES (1, 'SYNTHETIC LMN-201 IND', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
-    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, dispatch_status)
-      VALUES (1, 1, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (2, 1, 'fda', '0001', ${ORG}, ${USER}, NULL);
+    -- 0001 is an amendment to the Original Application 0000 opened (the FDA
+    -- identity rule refuses a second Original; 2026-10-30, D5 fixture fix).
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, dispatch_status)
+      VALUES (1, 1, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (2, 1, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL);
     -- 0000 filed the body (rendered file 500) and the §14 tables (502).
     INSERT INTO submission_leaves (id, sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by, study_id, stf_file_tag)
       VALUES (10, 1, 'm5.3.5.1', 'CSR body', 'new', 'rendered_leaf_files', 500, ${ORG}, ${USER}, 'SYN-LMN201-B', 'study-report'),
