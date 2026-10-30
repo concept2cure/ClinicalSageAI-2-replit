@@ -42,6 +42,7 @@ import type { Program } from '../data/programs';
 import type { KitDocument } from '../components/DocumentsPanel';
 import { useReportPanelsContext, type EngineeringPanelsContextProps } from './engineeringPanelsContext';
 import { EngineeringDesignHistory } from './EngineeringDesignHistory';
+import { useEngineeringPanelTarget } from './engineeringPanelTarget';
 
 /* `onPanelsContext` (EngineeringPanelsContextProps) hands the risk register's
    and the trace's AnA context to the host, which publishes device-engineering's. */
@@ -115,6 +116,7 @@ function listOf(items: string[], conj: 'or' | 'and'): string {
 
 export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsContext }: EngineeringSurfaceProps) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
+  const panelTarget = useEngineeringPanelTarget(program ? String(program.id) : null);
 
   const live = useEngineering(program?.id ?? null);
 
@@ -507,7 +509,7 @@ export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsCo
       {program && (
         <section className="section" data-testid="eng-risk-register">
           <div className="section-head">
-            <h2>Risk management · ISO 14971</h2>
+            <h2 ref={panelTarget.risk} tabIndex={-1}>Risk management · ISO 14971</h2>
             {risk.canWrite && (
               <button className="btn ghost small" onClick={() => risk.setForm(true)} disabled={!risk.mayAdd} type="button">
                 {I.plus} New hazard
@@ -521,7 +523,7 @@ export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsCo
       {program && (
         <section className="section" data-testid="eng-design-controls">
           <div className="section-head">
-            <h2>Design controls · DHF</h2>
+            <h2 ref={panelTarget.designControls} tabIndex={-1}>Design controls · DHF</h2>
             {designControls.canWrite && (
               <button className="btn ghost small" onClick={() => designControls.setForm(true)} disabled={!designControls.mayAdd} type="button">
                 {I.plus} New design input

@@ -426,7 +426,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       surface = <SoftwareSurface program={programForContext} onAskAna={onAsk} />;
       break;
     case 'device-engineering':
-      surface = <EngineeringSurface program={programForContext} onAskAna={onAsk} onPanelsContext={setEngineeringPanels} />;
+      surface = <EngineeringSurface key={programForContext?.id ?? 'none'} program={programForContext} onAskAna={onAsk} onPanelsContext={setEngineeringPanels} />;
       break;
     case 'device-udi':
       /* Keyed by the project, so a switch starts the read afresh and never
