@@ -178,3 +178,25 @@ export async function readCsrNarrativeQc(q: NarrativeQueryable, organizationId: 
     FROM csr_narrative_outputs WHERE organization_id = $1 AND job_id = $2 ORDER BY sequence, subject_id`, [organizationId, jobId]);
   return rows.map(savedOf).map(({ content: _content, factsDigest: _digest, ...row }) => row);
 }
+
+/**
+ * One page of the build's composed narratives with their text, for the
+ * read-only §14.3.3 viewer in Authoring (2026-10-30: the import holds §14.3.3
+ * by reference, not as text). `verified` is the database's own check that the
+ * text is its recorded SHA-256; a row that fails it is shown as failing, never
+ * hidden.
+ */
+export async function readCsrNarrativeTextPage(q: NarrativeQueryable, organizationId: number, jobId: number, after: { sequence: number; subjectId: string } | null, limit: number) {
+  const size = Math.max(1, Math.min(50, Math.trunc(limit) || 20));
+  const { rows } = await q.query(`SELECT subject_id, sequence, content, content_hash, qc,
+      content_hash = encode(sha256(convert_to(content, 'UTF8')), 'hex') AS verified
+    FROM csr_narrative_outputs WHERE organization_id = $1 AND job_id = $2 AND status = 'composed' AND (sequence, subject_id) > ($3::int, $4::text)
+    ORDER BY sequence, subject_id LIMIT $5`, [organizationId, jobId, after?.sequence ?? -1, after?.subjectId ?? '', size + 1]);
+  const page = rows.slice(0, size).map(row => {
+    const qc = (row.qc ?? {}) as NarrativeQc;
+    return { subjectId: String(row.subject_id), sequence: Number(row.sequence), armName: String(qc.armName ?? ''), events: Array.isArray(qc.events) ? qc.events : [],
+      categories: Array.isArray(qc.categories) ? qc.categories : [], text: String(row.content ?? ''), contentHash: typeof row.content_hash === 'string' ? row.content_hash : null, verified: row.verified === true };
+  });
+  const last = page[page.length - 1];
+  return { narratives: page, next: rows.length > size && last ? { sequence: last.sequence, subjectId: last.subjectId } : null };
+}
