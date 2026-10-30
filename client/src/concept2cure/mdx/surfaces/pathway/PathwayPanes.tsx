@@ -841,10 +841,14 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
    * actually accepted. */
   const onAttach = async (files: FileList) => {
     if (!files || !files.length) return;
-    const outcome = await attachUpload.upload(files);
-    const accepted = new Set(outcome.succeeded);
-    Array.from(files)
-      .filter((f) => accepted.has(f.name))
+    const selected = Array.from(files);
+    // Names and File objects can repeat; each selected position needs its own receipt.
+    const accepted = new Set<number>();
+    await attachUpload.upload(selected, {
+      onFileStatus: (index, status) => { if (status.state === 'stored') accepted.add(index); },
+    });
+    selected
+      .filter((_file, index) => accepted.has(index))
       .forEach((f) => {
         DossierStore.attachFile(pathway, safeTarget.id, safeTarget.label, {
           name: f.name, size: f.size, kind: DossierStore.guessKind(f.name),

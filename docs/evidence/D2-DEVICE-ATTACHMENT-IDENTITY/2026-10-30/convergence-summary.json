@@ -1,0 +1,14 @@
+{
+  "canonical_base": "ed5c9105845e0f82f8a0579c41a06fcea63b7542",
+  "tests": 265,
+  "suites": 20,
+  "failed": 0,
+  "skipped": 0,
+  "build_exit": 0,
+  "frozen_inputs": 40,
+  "input_mismatches": [],
+  "prior_qualification_inputs_unchanged": 20,
+  "new_lint_warnings": 0,
+  "publication": "pending normal hook/compiler/push gates",
+  "new_native_or_browser_qualification_claimed": false
+}
