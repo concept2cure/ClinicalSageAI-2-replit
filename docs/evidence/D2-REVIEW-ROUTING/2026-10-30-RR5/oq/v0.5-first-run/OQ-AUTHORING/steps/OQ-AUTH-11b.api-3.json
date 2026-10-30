@@ -1,0 +1,267 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5241/api/authoring/docs/afe3ea45-deba-4252-850b-7bde8dae2081/audit",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 44,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "events": [
+        {
+          "id": "c67ab952-8398-4e0d-9e3a-133c8231a006",
+          "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+          "section_id": "8a5b7ed2-88e9-4baf-9baa-4e42529953ab",
+          "event_type": "comment_resolved",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "ADMIN,REGULATORY-AUTHOR",
+          "change_reason": "OQ-003 step 11b: reviewer query answered; resolved before freeze",
+          "content_hash_before": null,
+          "content_hash_after": "e3a7c1ef4476f5f4b2321e64eacd9e839108dae3240cbcbcf4b09b81d1bd8539",
+          "metadata": {
+            "status": "resolved",
+            "comment_id": "8974bbe0-fb85-46a6-861e-f2c1a210b413",
+            "section_id": "8a5b7ed2-88e9-4baf-9baa-4e42529953ab",
+            "transition": "resolved",
+            "previous_status": "open",
+            "resolution_note": "OQ-003 step 11b: reviewer query answered; resolved before freeze",
+            "previous_resolution_note": null
+          },
+          "created_at": "2026-10-30T15:03:33.622Z",
+          "tenant_id": 5,
+          "integrity": {
+            "chained": true,
+            "intact": true,
+            "mismatches": [],
+            "chainPayloadIntact": true
+          }
+        },
+        {
+          "id": "7cafccad-82e9-4eff-8d2c-2e6abd54bb34",
+          "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+          "section_id": null,
+          "event_type": "SUBMIT",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "ADMIN,REGULATORY-AUTHOR",
+          "change_reason": null,
+          "content_hash_before": null,
+          "content_hash_after": null,
+          "metadata": {
+            "steps": [
+              {
+                "role": "QA",
+                "approver_email": "oq-runner@validation.local"
+              }
+            ],
+            "workflowId": "6aebdcd4-2fd3-4a3f-a816-ec73a93f448b"
+          },
+          "created_at": "2026-10-30T15:03:30.601Z",
+          "tenant_id": 5,
+          "integrity": {
+            "chained": true,
+            "intact": true,
+            "mismatches": [],
+            "chainPayloadIntact": true
+          }
+        },
+        {
+          "id": "0b91a3a1-91c0-403c-94e8-10f7148ee315",
+          "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+          "section_id": null,
+          "event_type": "review_requested",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "admin",
+          "change_reason": "OQ-003 step 17: ready for medical review for validation",
+          "content_hash_before": null,
+          "content_hash_after": null,
+          "metadata": {
+            "route": {
+              "id": "9fa7555c-a341-4437-9e0c-ce9d10aec49f",
+              "added": false,
+              "tasks": [
+                {
+                  "taskId": "ROUTE-9fa7555c-2",
+                  "userId": 2,
+                  "dueDate": "2026-11-06T23:59:59.999Z"
+                }
+              ],
+              "timeZone": "UTC"
+            },
+            "grants": [
+              {
+                "granted": true,
+                "reviewerId": "2",
+                "permissionId": "6b86de56-2791-47ec-bc57-2cf9bd231610"
+              }
+            ],
+            "reviewIds": [
+              "dcaab204-b36d-4814-99a5-f580973b6712"
+            ],
+            "reviewerIds": [
+              "2"
+            ],
+            "afterReviews": [
+              {
+                "id": "dcaab204-b36d-4814-99a5-f580973b6712",
+                "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+                "standing": "pending",
+                "tenant_id": 5,
+                "created_at": "2026-10-30T15:03:29.058Z",
+                "updated_at": "2026-10-30T15:03:29.058Z",
+                "reviewed_at": null,
+                "reviewer_id": "2",
+                "requested_at": "2026-10-30T15:03:29.058Z",
+                "requested_by": "1",
+                "review_status": "pending",
+                "reviewer_name": "OQ Signer",
+                "reviewer_email": "oq-signer@validation.local",
+                "review_comments": null,
+                "reviewed_snapshot": null,
+                "review_binding_basis": null,
+                "reviewed_snapshot_hash": null
+              }
+            ],
+            "beforeReviews": [],
+            "reopenedVerdicts": []
+          },
+          "created_at": "2026-10-30T15:03:29.058Z",
+          "tenant_id": 5,
+          "integrity": {
+            "chained": true,
+            "intact": true,
+            "mismatches": [],
+            "chainPayloadIntact": true
+          }
+        },
+        {
+          "id": "b506cc26-7b07-4a76-b107-339dedd82815",
+          "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+          "section_id": "8a5b7ed2-88e9-4baf-9baa-4e42529953ab",
+          "event_type": "comment_added",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "ADMIN,REGULATORY-AUTHOR",
+          "change_reason": null,
+          "content_hash_before": null,
+          "content_hash_after": "1f8f58bc787dd7fda2bf88118c469d895acadbde8cefbca956a2be1cf517fd61",
+          "metadata": {
+            "quote": null,
+            "anchor": null,
+            "comment_id": "8974bbe0-fb85-46a6-861e-f2c1a210b413",
+            "section_id": "8a5b7ed2-88e9-4baf-9baa-4e42529953ab",
+            "quoteSha256": null,
+            "parent_comment_id": null,
+            "sectionContentSha256": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4"
+          },
+          "created_at": "2026-10-30T15:03:24.750Z",
+          "tenant_id": 5,
+          "integrity": {
+            "chained": true,
+            "intact": true,
+            "mismatches": [],
+            "chainPayloadIntact": true
+          }
+        },
+        {
+          "id": "b741910d-4189-4138-8985-bb47e9507358",
+          "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+          "section_id": "8a5b7ed2-88e9-4baf-9baa-4e42529953ab",
+          "event_type": "REVERT",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "ADMIN,REGULATORY-AUTHOR",
+          "change_reason": "Reverted to revision d8bc1a1f-e359-4dfe-af98-585fd7567fbb",
+          "content_hash_before": "5f2aa1c0c7f6ce423a26acc9c5219b729b5f6601b73128f399231ff7fd36b1c4",
+          "content_hash_after": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "metadata": {
+            "revisionId": "d8bc1a1f-e359-4dfe-af98-585fd7567fbb",
+            "revisionCreatedAt": "2026-10-30T15:03:21.527Z"
+          },
+          "created_at": "2026-10-30T15:03:23.857Z",
+          "tenant_id": 5,
+          "integrity": {
+            "chained": true,
+            "intact": true,
+            "mismatches": [],
+            "chainPayloadIntact": true
+          }
+        },
+        {
+          "id": "a7a57f8d-8b85-4d14-a58f-460b14668c13",
+          "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+          "section_id": "8a5b7ed2-88e9-4baf-9baa-4e42529953ab",
+          "event_type": "UPDATE",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "ADMIN,REGULATORY-AUTHOR",
+          "change_reason": "OQ-003 step 05: controlled edit",
+          "content_hash_before": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "content_hash_after": "5f2aa1c0c7f6ce423a26acc9c5219b729b5f6601b73128f399231ff7fd36b1c4",
+          "metadata": {
+            "titleChanged": false
+          },
+          "created_at": "2026-10-30T15:03:22.127Z",
+          "tenant_id": 5,
+          "integrity": {
+            "chained": true,
+            "intact": true,
+            "mismatches": [],
+            "chainPayloadIntact": true
+          }
+        },
+        {
+          "id": "704959ef-55a5-43c6-9742-1cca51cafe58",
+          "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+          "section_id": "8a5b7ed2-88e9-4baf-9baa-4e42529953ab",
+          "event_type": "CREATE",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "ADMIN,REGULATORY-AUTHOR",
+          "change_reason": null,
+          "content_hash_before": null,
+          "content_hash_after": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "metadata": {
+            "code": "2.5",
+            "title": "Clinical Overview",
+            "section_code": "2.5"
+          },
+          "created_at": "2026-10-30T15:03:21.527Z",
+          "tenant_id": 5,
+          "integrity": {
+            "chained": true,
+            "intact": true,
+            "mismatches": [],
+            "chainPayloadIntact": true
+          }
+        },
+        {
+          "id": "4320b88f-c56a-4904-b0cd-af8470d5ecab",
+          "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+          "section_id": "37093d74-516a-4eff-8830-1d9fd12638e2",
+          "event_type": "CREATE",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "ADMIN,REGULATORY-AUTHOR",
+          "change_reason": null,
+          "content_hash_before": null,
+          "content_hash_after": "795ce1726eb546f0745c8eb2e6318d0dd1f3ad5b534dcc55eadd63b518add96d",
+          "metadata": {
+            "code": "2.7",
+            "title": "Clinical Summary",
+            "section_code": "2.7"
+          },
+          "created_at": "2026-10-30T15:03:21.216Z",
+          "tenant_id": 5,
+          "integrity": {
+            "chained": true,
+            "intact": true,
+            "mismatches": [],
+            "chainPayloadIntact": true
+          }
+        }
+      ],
+      "count": 8
+    }
+  }
+}

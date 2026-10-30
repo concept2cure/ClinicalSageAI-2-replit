@@ -1,0 +1,28 @@
+
+=== authoring ===
+  OQ-AUTH-00  pass
+  OQ-AUTH-01  pass
+  OQ-AUTH-02  pass
+  OQ-AUTH-03  pass
+  OQ-AUTH-04  pass
+  OQ-AUTH-05  pass
+  OQ-AUTH-06  pass
+  OQ-AUTH-07  pass
+  OQ-AUTH-08  pass
+  OQ-AUTH-09  pass
+  OQ-AUTH-10  pass
+  OQ-AUTH-17  FAIL  (request-review expected 2xx, got 400)
+  OQ-AUTH-17b  not-executed  (prerequisite step OQ-AUTH-17 did not pass)
+  OQ-AUTH-15  pass
+  OQ-AUTH-16  deviation  (AnA unavailable: no provider configured (ANTHROPIC_API_KEY / OPENAI_API_KEY unset in this environment). Re-execute with a PQ-passed model configured.)
+  OQ-AUTH-11a  pass
+  OQ-AUTH-11b  pass
+  OQ-AUTH-11  pass
+  OQ-AUTH-12  pass
+  OQ-AUTH-13  pass
+  OQ-AUTH-14  pass
+  OQ-AUTH-18  pass
+  OQ-AUTH-19  pass
+  OQ-AUTH-20  pass
+
+OQ-003 Authoring: 21 pass, 1 fail, 1 deviation, 1 not-executed → OQ-AUTHORING (written to the session scratch directory; filed beside this transcript)

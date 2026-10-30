@@ -1,0 +1,7 @@
+route status complete members [ '2:signed' ]
+author REVIEWER e-sign after the route completed: 200 {"signatureId":"293834ff-dce6-4188-a8f6-c4b23149c5e0"}
+signatures [
+  'oq-runner@validation.local:REVIEWER',
+  'oq-signer@validation.local:REVIEWER',
+  'oq-runner@validation.local:AUTHOR'
+]

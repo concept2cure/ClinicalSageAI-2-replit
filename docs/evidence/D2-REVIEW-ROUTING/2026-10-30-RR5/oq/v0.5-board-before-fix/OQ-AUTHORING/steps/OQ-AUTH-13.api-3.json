@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5242/api/authoring/docs/9a6313a3-6018-40e1-b7f7-478b05f5b231/e-sign",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "password": "[REDACTED]",
+      "meaning": "WHATEVER",
+      "intent": "OQ bad meaning"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 36,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Invalid signature meaning"
+    }
+  }
+}

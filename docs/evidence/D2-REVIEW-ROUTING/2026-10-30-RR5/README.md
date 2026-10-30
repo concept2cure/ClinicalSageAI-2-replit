@@ -290,6 +290,69 @@ was added, and the shell's own record of the project is unchanged.
 on the old switch, which shows the id. The Review board tests and the six other Review
 surface test files pass: 64 tests.
 
+## Authoring OQ (OQ-003 v0.5)
+
+The Authoring OQ protocol is `docs/validation/OQ-003-AUTHORING.md` (runner
+`tests/validation/oq/authoring/run.mjs`, `npm run validation:oq -- authoring`). Its v0.5 is a
+revision of v0.4 for RR5, not a new protocol. The records are in `oq/`.
+
+**Results:**
+
+| Run | Protocol | Result | Record |
+|---|---|---|---|
+| Red | v0.4, unchanged | 21 pass, 1 fail, 1 deviation, 1 not-executed | `oq/red/` |
+| Green | v0.5 | **25 pass, 0 fail, 1 deviation, 0 not-executed** | `oq/green/` |
+
+- **Red.** OQ-AUTH-17 failed. v0.4 asked for review naming the run identity, with no reason
+  and no route, and RR5 answers 400 `REASON_REQUIRED`. OQ-AUTH-17b was not executed.
+- **The deviation** is OQ-AUTH-16, as in every execution: no AI provider is configured.
+- **v0.5's changed steps.** The revision row lists each one. In short:
+  - OQ-AUTH-17 names the second identity, with a reason and a due date. It first shows the
+    refusals at naming, each with nothing written: `REASON_REQUIRED`,
+    `ROUTE_DUE_DATES_REQUIRED`, and `REVIEWER_IS_AUTHOR` for the author. Naming the same
+    reviewer twice is `MEMBER_ALREADY_NAMED`.
+  - NEW-4 holds for a reviewer. The request's own independence check refuses the author
+    first (`REVIEWER_IS_AUTHOR`). The route's member validator would refuse them too, and
+    the candidates read shows it: `MEMBER_IS_AUTHOR`.
+  - OQ-AUTH-17b reads the board and the work of the named reviewer.
+  - The review signature steps (12, 13, 14) are the named reviewer's. Their expected results
+    are unchanged.
+  - New OQ-AUTH-13b: the run identity's REVIEWER signature is refused 403 `ROUTE_NOT_NAMED`
+    before the credential is read.
+  - New OQ-AUTH-14b: the signature closes the reviewer's task and completes the route. The
+    board no longer has the document awaiting them.
+- **The new board check fails on the defect it exists to catch.** v0.5 was run against the
+  board read as it was before `a39ebbdd4` (`oq/v0.5-board-before-fix/`). OQ-AUTH-14b fails:
+  after the signature, that board still answers `awaitingMyReview: true`.
+- **Runner defects.** A first run of v0.5 failed on two defects of its own new steps
+  (`oq/v0.5-first-run/`). Both were corrected before the green run, and no expected result
+  was weakened. The protocol's §6 describes them.
+- **No product defect** was found that blocks the protocol, and no product code changed.
+
+**Posture:** the same as RR4's OQ run.
+- A private instance of the working tree at `42002a0a0` on `localhost:5241`. The database
+  is `c2c_oq_auth_rr5_20261030`, built fresh by `scripts/db/provision-test-db.sh`.
+- `RLS_ENFORCE=on`, runtime role `app_service`. `ALLOW_DEV_AUTH=0`, so dev-login is 404.
+- Synthetic identities only, in a synthetic organization: `oq-runner@validation.local`
+  (admin, the author) and `oq-signer@validation.local` (reviewer).
+- Each enrolled a TOTP factor through `/api/auth/mfa/setup` and `/mfa/enable`, and signed in
+  with password and authenticator code. The harness read the `VALIDATION_*` and `OQ_SIGNER_*`
+  variables. jm.smith and sarah.chen were not used.
+- The passwords, TOTP secrets and JWT secret lived only in the session's scratch directory.
+  A scan of `oq/` for each of them, and for bearer tokens, found none. The instance was
+  stopped afterwards.
+
+**Still owed:**
+- A URS-003 revision through change control, if the URS should name the route.
+  URS-AUTH-013 names a review requested from named reviewers. It does not name the route,
+  its refusals or its completion.
+- TM-001 regenerated from this record, and a human review of the execution.
+- **Seen, not asserted:** once a route is complete, no route is live, so a REVIEWER
+  signature takes the path kept for a document with no route (§2.13). The author then
+  signed REVIEWER on their own document and was answered 200
+  (`oq/observation-author-review-after-route-complete.txt`). v0.4's OQ-AUTH-14 asserted the
+  same signature as a pass. Whether it must be refused is a question for the design.
+
 ## Open
 
 1. **The shell's top bar at phone width.** It is 344 px wide in a 334 px column, so Get help
@@ -297,6 +360,8 @@ surface test files pass: 64 tests.
    trigger, which this run taps. The run records this and does not assert it. Fitting 44 px
    targets there needs a decision on what the bar holds at a phone's width. That is shell
    design, not RR5.
-2. **The Authoring OQ protocol** has not been run on RR5.
+2. **A REVIEWER signature outside a live route.** With no route on the document, or after
+   its route completes, the author can sign REVIEWER on their own document (see "Authoring
+   OQ" above, and the red run's OQ-AUTH-14). Design question (§2.13).
 3. **RR6:** Authoring approvers on the route, and deleting `POST /docs/:docId/submit` and
    `/docs/:docId/sign`, with `/e-sign` named as the replacement.
