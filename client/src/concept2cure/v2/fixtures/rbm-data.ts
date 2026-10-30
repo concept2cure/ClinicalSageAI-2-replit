@@ -91,7 +91,7 @@ export const RBM_NAV: RbmNavItem[] = [
   { id: 'signals', label: 'Central monitoring', icon: 'zap', tool: 'run_central_monitoring',
     starters: ['Prioritize the open signals by urgency', 'Which sites carry the most high-severity signals', 'Draft an action for the most critical signal'] },
   { id: 'patients', label: 'Patient profiles', icon: 'search', tool: 'scan_patient_profiles',
-    starters: ['Scan the patient cohort for atypical subjects', 'Which patients are flagged for medical review', 'Explain why subject 1104-014 is an anomaly'] },
+    starters: ['Scan the patient cohort for atypical subjects', 'Which patients are flagged for medical review', 'Explain the anomaly findings for the current patient cohort'] },
   { id: 'sites', label: 'Site risk', icon: 'network', tool: 'assess_site_risk',
     starters: ['Recompute site risk and show the enhanced-tier sites', 'Which sites should move to enhanced monitoring and why', 'Explain the drivers behind the highest-risk site'] },
   { id: 'oversight', label: 'Site oversight', icon: 'eye', tool: 'run_central_monitoring',

@@ -1,0 +1,75 @@
+/** The existing RBM service is admitted narrowly; commercial grants remain separate. */
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('../module-grants.js', () => ({ writeModuleGrant: vi.fn() }));
+vi.mock('../../license-manager.js', () => ({ getLicenseInfo: vi.fn(), getModuleCatalog: vi.fn() }));
+vi.mock('../../../db', () => ({ query: vi.fn() }));
+vi.mock('../../../utils/logger.js', () => ({ createScopedLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }) }));
+
+import { LAUNCH_APPS, LAUNCH_MODULE_IDS, isLaunchSurface } from '../../../../shared/constants/launch-scope';
+import { applyLaunchScope, type NavSurfaceEntitlement } from '../navigation-entitlements';
+import { buildPrefixMap, modulesForPath, NEVER_GATED } from '../api-prefix-map';
+import { launchScopeApiVerdict } from '../launch-scope-api';
+
+const prefixMap = buildPrefixMap();
+const verdict = (path: string) => launchScopeApiVerdict(path, prefixMap, NEVER_GATED);
+const program = '11111111-1111-4111-8111-111111111111';
+
+/** Requests emitted by Rbm, RbmSurfacesA/B and RbmIngest, rather than a broad namespace. */
+const CALLED = [
+  '/api/mdx-rbm/rbm-programs',
+  `/api/mdx-rbm/rbm-board/${program}`,
+  '/api/mdx/rbm-assessments/7/amend',
+  '/api/mdx/rbm-assessments/7/approve',
+  '/api/mdx/rbm-risk-items',
+  '/api/mdx/rbm-risk-items/7',
+  '/api/mdx/rbm-kris',
+  '/api/mdx/rbm-kris/7/values',
+  '/api/mdx/rbm-qtls',
+  '/api/mdx/rbm-qtls/7',
+  '/api/mdx/rbm-signals/7',
+  '/api/mdx/rbm-site-risk/recompute',
+  '/api/mdx/rbm-monitoring-plans/7/amend',
+  '/api/mdx/rbm-monitoring-plans/7/approve',
+  '/api/mdx/rbm-monitoring-actions',
+  '/api/mdx/rbm-monitoring-actions/7',
+  '/api/mdx/rbm-metric-ingest',
+  '/api/mdx/rbm-central-monitoring/run',
+  '/api/mdx/rbm-patient-profiles/score',
+];
+
+describe('RBM release admission', () => {
+  it('admits the existing surface without provisioning an RBM subscription grant', () => {
+    expect(isLaunchSurface('rbm')).toBe(true);
+    expect(LAUNCH_APPS.find(app => app.id === 'rbm')).toMatchObject({ surfaces: ['rbm'], modules: [] });
+    expect(LAUNCH_MODULE_IDS).not.toContain('rbm');
+  });
+
+  it.each(['tier', 'disabled'] as const)('keeps the existing %s refusal after release admission', source => {
+    const locked: NavSurfaceEntitlement = { id: 'rbm', label: 'Risk-based monitoring', entitled: false, source, requiredTier: 'professional' };
+    expect(applyLaunchScope([locked]).find(out => out.id === 'rbm')).toEqual(locked);
+  });
+
+  it('preserves a real subscription verdict instead of replacing it with a release lock', () => {
+    const subscribed: NavSurfaceEntitlement = { id: 'rbm', label: 'Risk-based monitoring', entitled: true, source: 'subscribed', requiredTier: 'professional' };
+    expect(applyLaunchScope([subscribed]).find(out => out.id === 'rbm')).toEqual(subscribed);
+  });
+
+  it.each(CALLED)('admits the called RBM path %s through its existing surface', path => {
+    expect(verdict(path)).toBe('launch');
+    expect(modulesForPath(path, prefixMap)?.has('rbm')).toBe(true);
+  });
+
+  it.each([
+    '/api/mdx-rbm/unrelated',
+    `/api/mdx-rbm/rbm-board-unrelated/${program}`,
+    '/api/mdx/rbm-risk-items-unrelated',
+    '/api/mdx/rbm-central-monitoring/unrelated',
+    '/api/mdx/rbm-patient-profiles/unrelated',
+    '/api/mdx/rbm-data-runs',
+    '/api/mdx/clinical-ops',
+    '/api/mdx/qms/readiness',
+  ])('does not make the unrelated or uncalled path %s a launch route', path => {
+    expect(verdict(path)).not.toBe('launch');
+  });
+});

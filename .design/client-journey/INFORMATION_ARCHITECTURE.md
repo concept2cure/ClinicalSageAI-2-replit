@@ -52,6 +52,18 @@ commercial grants or scope expansion. Reporting and Authoring retain their earli
 Communication and Quality also retain their existing homes and safeguards; their absence from the latest examples
 does not retire them. The founder's examples identify a central-service boundary, not an exhaustive replacement menu.
 
+#### Founder priority, 2026-10-30: reach RBM now
+
+The founder explicitly requests the existing Risk-Based Monitoring service in the
+main left rail alongside CMC, Projects, Tasking, Communication and Vault, and an
+optional choice in project setup (P-76). This supersedes the queued rail timing
+for RBM below. The existing owner is retained; real project context, access,
+licensing and signed approval safeguards must travel with it. The bounded
+completion is `docs/design/RBM_NAVIGATION_PROJECT_SETUP_2026-10-30.md`, with proof
+under `docs/evidence/D2-RBM-NAVIGATION/2026-10-30/`. Clinical-ops and study/deviation
+store convergence remain separate work; this request does not approve fabricated
+study data, automatic commercial grants or unsigned active assessments.
+
 #### Existing central-service owners
 
 Paths below are under `client/src/concept2cure/v2/` unless qualified. This is an ownership map, not a claim that

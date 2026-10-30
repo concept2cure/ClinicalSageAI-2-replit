@@ -26,6 +26,9 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 
 type Route = { match: RegExp; rows: unknown[] | ((args: unknown[]) => unknown[]) };
+// This domain suite retains its existing fixture admission; current project denial is covered separately.
+vi.mock('../../services/rbm/rbm-access', async original => ({ ...(await original<Record<string, unknown>>()), rbmRequestAdmission: (_req: unknown, _res: unknown, next: () => void) => next(), recheckRbmWrite: async () => {} }));
+
 const h = vi.hoisted(() => ({
   routes: [] as { match: RegExp; rows: unknown[] | ((args: unknown[]) => unknown[]) }[],
   calls: [] as { sql: string; args: unknown[] }[],
@@ -50,6 +53,7 @@ function app() {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: 7, userId: 7, organizationId: 1, role: 'admin' };
+    (req as Request & { dbClient?: unknown }).dbClient = { query };
     next();
   });
   a.use('/api/mdx', rbmRouter);

@@ -1,0 +1,12 @@
+{
+  "exitCode": 1,
+  "passed": 0,
+  "failed": 2,
+  "skippedOtherCases": 16,
+  "files": 2,
+  "all4InputsUnchanged": true,
+  "failures": [
+    "project Evidence monitoring entry retires an old entry and admits the fresh entry after a batched project A to B to A",
+    "RBM project context retires the old selector and admits a fresh visit after a batched project A to B to A"
+  ]
+}

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useId, useCallback } from 'react';
-import { useAuthUser } from '@/services/portal/authService';
+import { authService, useAuthUser } from '@/services/portal/authService';
+import { getAuthToken } from '@/utils/authToken';
 import { I } from '../icons';
 import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -9,7 +10,7 @@ import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL } from '../dossierReadiness';
 import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
-import { projectStepId, readShellProject, shellProgramId, updateShellProject, useShellProject } from '../shellProject';
+import { captureShellProjectGuard, projectStepId, readShellProject, shellProgramId, updateShellProject, useShellProject } from '../shellProject';
 import { consumeNavParams } from '../navParams';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
@@ -89,6 +90,7 @@ declare global {
 /** GET /api/c2c/projects/:id — regulatory_programs metadata (bare object). */
 interface ProgramRow {
   id: string;
+  riskBasedMonitoring?: boolean;
   registry_id?: string | null;
   code: string | null;
   name: string | null;
@@ -216,14 +218,16 @@ function Anchored<T>(props: {
    and PDF viewer, and the same honest states (a failed read is an error with a
    retry, not an empty vault). Filing, uploads and version history stay in the
    Vault, which the header opens. */
-function ProjectEvidence({ pid, name, onNav, onAsk, available }: {
+function ProjectEvidence({ pid, name, onNav, onAsk, available, monitoring, onMonitoring }: {
   pid: string; name: string | null; onNav: (id: string) => void; onAsk: (text: string) => void; available: (id: string) => boolean;
+  monitoring: boolean; onMonitoring: () => void;
 }) {
   const [toast, fireToast] = useToast();
   return (
     <section className="pj-sec pj-evidence" aria-labelledby="pj-evidence-h">
       <div className="pj-sec-h">
         <h2 id="pj-evidence-h">Project files</h2>
+        {monitoring && available('rbm') && <button type="button" className="btn ghost" onClick={onMonitoring}>Open risk-based monitoring {I.right}</button>}
         {available('vault') && (
           <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('vault')}>
             {STEP_DOORS.vault} {I.right}
@@ -1489,6 +1493,11 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   // it is why this resolves to null instead: no project is a state the surface
   // renders honestly, whereas the wrong project is not.
   const pid = typeof sel?.id === 'string' && sel.id !== 'new' ? sel.id : null;
+  const monitoringVisit = useRef(captureShellProjectGuard());
+  const monitoringMounted = useRef(true);
+  useEffect(() => { monitoringMounted.current = true; return () => { monitoringMounted.current = false; }; }, []);
+  if (!monitoringVisit.current()) monitoringVisit.current = captureShellProjectGuard();
+  const monitoringCurrent = monitoringVisit.current;
 
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
@@ -1880,7 +1889,9 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
               room sat under Author. */}
           {stage === 'evidence' && pid && (
             <div className="pj-stagebody">
-              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} />
+              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available}
+                monitoring={prog?.id === pid && prog.riskBasedMonitoring === true && !progState.loading && !progState.error}
+                onMonitoring={() => { const bearer = getAuthToken(); if (bearer && monitoringMounted.current && monitoringCurrent() && projectSession.sameRevision() && authService.captureSessionReadGuard(bearer).current()) onNav('rbm'); }} />
               <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
               <ComingLater stage="evidence" device={deviceFiling} />
             </div>

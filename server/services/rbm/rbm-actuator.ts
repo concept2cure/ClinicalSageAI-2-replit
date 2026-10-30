@@ -61,6 +61,20 @@ export function inferSecondaryLimit(threshold: number | null | undefined): numbe
   return Math.round(threshold * 0.75 * 10000) / 10000;
 }
 
+/** The existing amendment rule: a signed version and its factors are immutable. */
+export class RbmAssessmentEditError extends Error {
+  constructor(readonly status: 404 | 409, readonly code: string, message: string) { super(message); this.name = 'RbmAssessmentEditError'; }
+}
+export async function requireDraftAssessment(exec: Exec, organizationId: number, assessmentId: number, programId?: string, lock: 'share' | 'update' = 'share') {
+  const { rows } = await exec.query(`SELECT id,program_id,status,version FROM rbm_risk_assessments
+    WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL ${lock === 'update' ? 'FOR UPDATE' : 'FOR SHARE'}`, [assessmentId, organizationId]);
+  const row = rows[0];
+  if (!row) throw new RbmAssessmentEditError(404, 'RBM_ASSESSMENT_NOT_FOUND', 'Risk assessment not found.');
+  if (programId && String(row.program_id).toLowerCase() !== programId.toLowerCase()) throw new RbmAssessmentEditError(409, 'RBM_PROJECT_MISMATCH', 'The factor and assessment do not belong to the same project.');
+  if (row.status !== 'draft') throw new RbmAssessmentEditError(409, 'RBM_ASSESSMENT_IMMUTABLE', 'This assessment and its factors are read-only. Open an amendment to edit a new draft version; the signed version stays on file.');
+  return row;
+}
+
 // ── Risk assessment — Critical-to-Quality factors ────────────────────────────
 
 export interface AddCtqInput {
@@ -394,8 +408,8 @@ export async function amendAssessment(
   // copying the previous signer forward would be forging one.
   const draft = (await exec.query(
     `INSERT INTO rbm_risk_assessments (
-       organization_id, program_id, title, framework, overall_risk, status, version, metadata
-     ) VALUES ($1,$2,$3,$4,$5,'draft',$6,$7) RETURNING *`,
+       organization_id, program_id, title, framework, overall_risk, status, version, metadata, created_by
+     ) VALUES ($1,$2,$3,$4,$5,'draft',$6,$7,$8) RETURNING *`,
     [
       organizationId, current.program_id, current.title, current.framework,
       current.overall_risk, nextVersion,
@@ -405,6 +419,7 @@ export async function amendAssessment(
         amendmentReason: input.reason,
         amendmentOpenedBy: input.openedBy ?? null,
       }),
+      input.openedBy ?? null,
     ],
   )).rows[0];
 
@@ -421,9 +436,9 @@ export async function amendAssessment(
             risk_description, likelihood, impact, detectability, risk_score, is_critical,
             mitigation, residual_likelihood, residual_impact, residual_score, status, assigned_to
        FROM rbm_risk_items
-      WHERE organization_id = $2 AND assessment_id = $3 AND deleted_at IS NULL
+      WHERE organization_id = $2 AND assessment_id = $3 AND program_id = $4 AND deleted_at IS NULL
      RETURNING *`,
-    [draft.id, organizationId, current.id],
+    [draft.id, organizationId, current.id, current.program_id],
   )).rows;
 
   return { amended: true, assessment: draft, items, supersedes: current.version };

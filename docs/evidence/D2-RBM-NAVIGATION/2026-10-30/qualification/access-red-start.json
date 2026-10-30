@@ -1,0 +1,12 @@
+{
+  "commit": "6328a385bb54c2126d9c1f4b9f1835a0723a93bb",
+  "observedAt": "2026-10-30T16:45:40.464138+00:00",
+  "files": {
+    "server/routes/mdx-rbm.ts": "994577d60958b6fa1fecbba2e2aad4523fa464c41193bd87dd766f96e1943d9c",
+    "server/routes/mdx-rbm-data.ts": "78b3536deb86bf3ac915f421d2ffe71caa2affcd2c549ae0bf293d5c4c8fc4e9",
+    "server/routes/mdx-rbm-board.ts": "7ccefe3f11d07243ae557e588262f96b7cf952cd0d528d7385e3bb275984e9c9",
+    "server/services/ana/AnaToolExecutor.ts": "5df4351c23f0510bac2682b88f7e278521011df28974bbbe534efb55692c3d7a",
+    "server/routes/__tests__/rbm-current-project-admission.test.ts": "9df8faf85bd38cc24e885064f821953df49d6513f9aec7bedc9daa5d26a193c9",
+    "server/services/ana/__tests__/rbm-launch-admission.test.ts": "0769cf64057dc544db96fd0c118e9a35aac6967c1a5f93e7d2e60f02efac76ec"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "exitCode": 1,
+  "passed": 164,
+  "failed": 4,
+  "files": 8,
+  "all13InputsUnchanged": true,
+  "failures": [
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx",
+      "cases": [
+        "existing project setup monitoring choice reviews and persists the explicitly selected monitoring service without seeding a record"
+      ]
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+      "cases": [
+        "RBM project context requires a choice without a shell project and carries an admitted choice to Vault and Tasks",
+        "RBM project context does not replace an unavailable explicit project with another project",
+        "RBM project context blocks retained navigation after raw browser bearer drift or unmount"
+      ]
+    }
+  ]
+}

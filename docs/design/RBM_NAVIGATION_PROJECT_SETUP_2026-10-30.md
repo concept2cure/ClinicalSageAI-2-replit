@@ -45,7 +45,10 @@ clinical-study record, regulatory filing type or clinical-ops convergence.
 
 1. Root owns `registryModel.ts` rail entry, `launch-scope.ts` surfaces-only RBM
    app (`modules:[]`), exact called RBM API-family claims in the surface registry,
-   founder decision/IA update, this contract/evidence/work-order and root tests,
+   founder decision/IA update, reviewed presentation-only RBM navigation constants
+   (remove a legacy hard-coded subject starter), this contract/evidence/work-order and root tests,
+   plus explicit endpoint resolution in the existing `rbmWrites.tsx` transport
+   so its shared namespace base is not mistaken for a broad API claim,
    Git and global gates. Preserve professional-tier catalog and existing module
    enforcement mode; no default subscription grant or broad `/api/mdx` claim.
 2. Project worker owns client `surfaces/Projects.tsx`, `Rbm.tsx`, `rbmBoard.ts`,
@@ -59,7 +62,8 @@ clinical-study record, regulatory filing type or clinical-ops convergence.
    Preserve actual project when moving between RBM and Vault/Tasks.
 3. Server worker owns new small `services/rbm/rbm-access.ts` admission adapter,
    existing RBM board/data/record routers, narrowly bounded bootstrap call sites
-   if needed, the one RBM-specific AnA registry admission seam, and canonical
+   if needed, the one RBM-specific AnA registry admission seam, minimal description-only
+   tool definition correction, and canonical
    assessment seed extraction/reuse if required, plus adjacent tests. Reuse
    requestPgClient/current-program-access, current actor/editor-role and existing
    license/mode resolvers. Never gate the entire shared `/api/mdx` namespace.
@@ -80,7 +84,10 @@ clinical-study record, regulatory filing type or clinical-ops convergence.
    canonical project access and any supplied record/project identity coherence.
    Existing human-confirmation/editor/signature refusals remain. Converge the
    legacy AnA assessment seed onto canonical transactional DRAFT creation;
-   activation still requires the existing signed approval. No second seed or
+   activation still requires the existing signed approval. Minimal existing
+   assessment lifecycle parity also refuses unsigned changes to non-draft records
+   and persists the amendment creator in `rbm-actuator.ts`, so the existing
+   two-person signing check also covers that new version. No second seed or
    authorization policy engine and no unsigned active assessment.
 6. Workers first preserve meaningful failing checks on unchanged production,
    then implement within their files. Tests cover actual rail navigation and

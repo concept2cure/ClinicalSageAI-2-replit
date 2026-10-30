@@ -253,10 +253,25 @@ export interface RbmBoardFreshness {
   ageDays: number | null;
 }
 
-/** A program (study) that has real RBM data — GET /api/mdx-rbm/rbm-programs. */
+/** An admitted canonical project with RBM selected or recorded monitoring data. */
 export interface RbmProgram {
   id: string;
   label: string;
+  code?: string | null;
+  productType?: string | null;
+  programType?: string | null;
+}
+
+/** A malformed roster cannot authorize selection or masquerade as an empty list. */
+export function isRbmProgramRows(value: unknown): value is RbmProgram[] {
+  if (!Array.isArray(value)) return false;
+  const ids = new Set<string>();
+  return value.every((row: RbmProgram) => {
+    if (!row || typeof row.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.id)
+      || ids.has(row.id.toLowerCase()) || typeof row.label !== 'string' || !row.label.trim()) return false;
+    ids.add(row.id.toLowerCase());
+    return [row.code, row.productType, row.programType].every(field => field == null || typeof field === 'string');
+  });
 }
 
 /**

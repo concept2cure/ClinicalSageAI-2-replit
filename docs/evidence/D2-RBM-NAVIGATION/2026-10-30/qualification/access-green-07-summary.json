@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/rbm/__tests__/rbm-access.test.ts server/services/rbm/__tests__/rbm-assessment-seed.test.ts server/routes/__tests__/rbm-current-project-admission.test.ts server/routes/__tests__/rbm-board-current-project.test.ts server/services/ana/__tests__/rbm-launch-admission.test.ts server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts server/routes/__tests__/mdx-rbm-signed-records.test.ts server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts server/services/ana/__tests__/ana-cannot-sign.test.ts server/routes/__tests__/rbm-assessment-integrity.test.ts server/services/rbm/__tests__/rbm-actuator.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/access-green-07-results.json",
+  "exitCode": 0,
+  "passed": 184,
+  "failed": 0,
+  "skipped": 0,
+  "files": 11,
+  "unchangedInputs": true,
+  "failures": []
+}
