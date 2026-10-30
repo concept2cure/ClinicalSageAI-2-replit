@@ -39,14 +39,14 @@ export async function resolveExternalValidator(): Promise<ExternalValidator> {
 }
 
 /**
- * Resolve the active external validator, run it against an unzipped package, and
- * return its report. A configured engine that THROWS (spawn/parse failure) is
+ * Run the supplied server-selected adapter, or resolve the active validator when
+ * no selection is supplied, and return its report. A configured engine that THROWS (spawn/parse failure) is
  * caught and reported as a fail-closed un-run report (ran:false, passed:false) —
  * never a fabricated pass — so the dispatch gate blocks under
  * ECTD_REQUIRE_EVALIDATOR. Callers feed this into evaluateExternalValidationGate.
  */
-export async function runExternalValidation(args: ValidateArgs): Promise<ExternalValidationReport> {
-  const validator = await resolveExternalValidator();
+export async function runExternalValidation(args: ValidateArgs, selected?: ExternalValidator): Promise<ExternalValidationReport> {
+  const validator = selected ?? await resolveExternalValidator();
   try {
     return await validator.validate(args);
   } catch (err) {

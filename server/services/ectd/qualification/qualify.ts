@@ -14,7 +14,8 @@
  *   5. reopen the produced ZIP and re-verify EVERY checksum + per-document
  *      integrity.
  *
- * Deterministic and reproducible. Writes one JSON report per run.
+ * Fixture structure is repeatable; PDF/A and archive metadata may vary. Each
+ * run preserves its exact package hashes and one JSON report per target.
  *
  * @module server/services/ectd/qualification/qualify
  */
@@ -32,11 +33,10 @@ import { packageRpsSubmission, validateRpsMessage } from '../ectd4';
 import {
   checkWellFormed,
   validateAgainstXsd,
-  isXmllintAvailable,
 } from '../xml-validator';
-import { validateFdaCriteria, fdaCriteriaFallbackEnabled } from '../external-validator/fda-criteria-adapter';
-import { resolveExternalValidator, runExternalValidation } from '../external-validator';
-import type { EctdRegion } from '../external-validator/types';
+import { qualificationOutcome, qualificationExternal, nativeProblems, capturedDtdProblems, sequenceValidators, executedChecksPassed,
+  type QualificationOutcome, type QualificationExternalEvidence } from './outcome';
+export type { QualificationStatus } from './outcome';
 import { verifyChecksumManifest } from '../checksum-manifest';
 import { validateBackboneFile, tallyValidationReport as tally, type BackboneValidation, type ValidatorRunReport } from '../backbone-validation';
 export { validateBackboneFile } from '../backbone-validation';
@@ -49,7 +49,8 @@ import {
   v4GoldenMessage,
 } from './golden-fixtures';
 
-/** Exact spec versions each qualification run is measured against. */
+/** Declared reference targets; outcome evidence establishes what actually ran,
+ * not current agency coverage, licensing, human witnessing or acceptance. */
 export const SPEC_VERSIONS = {
   'v3.2.2': {
     ichBackbone: 'ICH eCTD v3.2.2',
@@ -76,7 +77,7 @@ export interface ChecksumVerification {
   ok: boolean;
 }
 
-export interface QualificationReport {
+export interface QualificationReport extends QualificationOutcome {
   id: string;
   version: EctdVersion;
   region: Region;
@@ -84,7 +85,9 @@ export interface QualificationReport {
   package: { path: string; sha256: string; sizeBytes: number };
   validators: ValidatorRunReport[];
   checksum: ChecksumVerification;
-  lifecycle: {
+  externalValidation: { original: QualificationExternalEvidence; amendment: QualificationExternalEvidence };
+  lifecycle: Omit<QualificationOutcome, 'passed'> & {
+    package: { path: string; sha256: string; sizeBytes: number };
     priorSequence: string;
     nextSequence: string;
     /** Operations OBSERVED in the emitted amendment backbone (replace/delete/
@@ -100,7 +103,6 @@ export interface QualificationReport {
     nextPackagePassed: boolean;
     checksum: ChecksumVerification;
   };
-  passed: boolean;
   ranAt: string;
   notes: string[];
 }
@@ -269,268 +271,182 @@ function sequenceDtdSkips(results: BackboneValidation[], sequence: string) {
   return results.flatMap(result => result.dtdSkipped ? [{ ...result.dtdSkipped, relPath: `${sequence}/${result.dtdSkipped.relPath}` }] : []);
 }
 
-/** Qualify one region for eCTD v3.2.2. */
-export async function qualifyV3(region: Region, workDir: string): Promise<QualificationReport> {
-  const notes: string[] = [];
-  const app = region === 'fda' ? '123456' : 'GOLDEN-APP';
-  const leavesDir = path.join(workDir, `v3-${region}-leaves`);
-  const paths = await writeGoldenLeaves(leavesDir);
-  const outDir = path.join(workDir, `v3-${region}-out`);
+/** The same actual STF and cross-reference controls for both sequences. */
+function bundleContentReports(bundle: SubmissionBundle, sequence: string): ValidatorRunReport[] {
+  const prefix = sequence === '0000' ? '' : `${sequence}/`;
+  const reports: ValidatorRunReport[] = [];
+  if (bundle.stf) reports.push(tally(`${prefix}stf-cross-linking`, true, stfCoverageFindings(bundle.stf)));
+  if (bundle.crossReferenceStatus) reports.push(tally(`${prefix}cross-references`, true,
+    bundle.crossReferenceStatus.broken.map(broken => ({ severity: 'error', message: `${broken.source}→${broken.target}: ${broken.reason}` }))));
+  return reports;
+}
 
-  // 1. Original sequence (0000).
+function bundleNotes(bundle: SubmissionBundle, sequence: string): string[] {
+  const notes: string[] = [];
+  if (bundle.stf) notes.push(`${sequence} STF: ${bundle.stf.studies} study tagging file(s) generated + cross-linked (${bundle.stf.leaves} tagged leaves).`);
+  if (bundle.crossReferenceStatus) notes.push(`${sequence} Cross-references: ${bundle.crossReferenceStatus.resolved} resolved, ${bundle.crossReferenceStatus.broken.length} broken.`);
+  return notes;
+}
+
+function knownReportFailures(reports: ValidatorRunReport[]): string[] {
+  return reports.filter(report => report.ran && !report.passed).map(report => `${report.name}: ${report.sample.join('; ') || 'validation failed'}`);
+}
+
+async function v3Native(packageDir: string, regionalRel: string, bundle: SubmissionBundle): Promise<BackboneValidation[]> {
+  return [await validateBackboneFile(packageDir, 'index.xml'), await validateBackboneFile(packageDir, regionalRel),
+    ...await validateStudyTaggingFiles(packageDir, bundle.leafManifest)];
+}
+
+/** Qualify one region for eCTD v3.2.2 using complete per-sequence evidence. */
+export async function qualifyV3(region: Region, workDir: string): Promise<QualificationReport> {
+  const notes = ['Automated technical qualification only; no licence, current criteria coverage, human witnessing or agency acceptance is established by this report.'];
+  const app = region === 'fda' ? '123456' : 'GOLDEN-APP';
+  const paths = await writeGoldenLeaves(path.join(workDir, `v3-${region}-leaves`));
+  const outDir = path.join(workDir, `v3-${region}-out`);
   const bundle = await packageEctdSubmission(v3GoldenInput({ region, sequence: '0000', applicationId: app, outputDir: outDir, paths }));
   const pkgDir = path.join(outDir, `${app}-0000-${region}`);
-
-  // 2. Validators.
-  const validators: ValidatorRunReport[] = [];
-  const indexBackbone = await validateBackboneFile(pkgDir, 'index.xml');
-  validators.push(...indexBackbone.reports);
-  // Regional Module-1 subfolder + backbone filename per region (fda→us/eu/jp/ca).
   const m1Sub: Partial<Record<Region, string>> = { fda: 'us', ema: 'eu', pmda: 'jp', ca: 'ca' };
   const sub = m1Sub[region] ?? region;
   const regionalRel = `m1/${sub}/${sub}-regional.xml`;
-  const regionalBackbone = await validateBackboneFile(pkgDir, regionalRel);
-  validators.push(...regionalBackbone.reports);
-  const stfBackbones = await validateStudyTaggingFiles(pkgDir, bundle.leafManifest);
-  validators.push(...stfBackbones.flatMap(result => result.reports));
-  /** Backbones whose DTD validity could NOT be attempted because the DTD their
-   *  own DOCTYPE names is not in the package. Stated in the notes below — a
-   *  skipped check must never read as a passed one. */
-  const dtdSkips = [indexBackbone.dtdSkipped, regionalBackbone.dtdSkipped, ...stfBackbones.map(result => result.dtdSkipped)]
-    .filter((sk): sk is NonNullable<typeof sk> => sk !== null)
-    // Prefixed with the sequence, because the lifecycle amendment below
-    // validates a backbone of the SAME relPath in its OWN package directory and
-    // its skip is folded into this same note. Unlabelled, three entries would
-    // read as one file listed twice.
-    .map((sk) => ({ ...sk, relPath: `0000/${sk.relPath}` }));
-  if (fdaCriteriaFallbackEnabled() && (region === 'fda' || region === 'ema' || region === 'pmda')) {
-    const rep = await validateFdaCriteria({ packageDir: pkgDir, region });
-    validators.push(tally(`fda-criteria-subset`, rep.ran, rep.findings));
-  }
-  const external = await resolveExternalValidator();
-  if (external.name !== 'noop' && (region === 'fda' || region === 'ema' || region === 'pmda')) {
-    // Fail-closed: a configured-but-failing engine yields an un-run report, never a throw.
-    const rep = await runExternalValidation({ packageDir: pkgDir, region: region as EctdRegion });
-    validators.push(tally(external.name, rep.ran, rep.findings));
-    notes.push(`External validator "${external.name}" ${rep.ran ? 'ran' : 'was configured but did not complete'}.`);
-  } else {
-    notes.push('No external eValidator configured; xmllint + FDA-criteria subset are the accepted validators for this run.');
-  }
-
-  // 2b. Vendored-artifact integrity: verify the drop-point checksum manifest so
-  //     a tampered, stale or unrecorded file is refused. The drop-point holds
-  //     BOTH the DTDs and the agency stylesheets, and checksums.txt records all
-  //     seven (see its header) — so verifying '.dtd' alone left the *.xsl
-  //     unexamined while this row still reported "passed", even though every
-  //     index.xml renders through util/style/ectd-2-0.xsl and the FDA backbone
-  //     through us-regional.xsl. When nothing is vendored this is a
-  //     trivially-ok no-op (nothing to verify).
-  //     THREE FAULT CLASSES, NOT TWO. `verifyChecksumManifest` reports
-  //     `mismatched` (tampered/stale), `unlistedFiles` (present, unrecorded) and
-  //     `missingFiles` (recorded, gone from disk) — and its own `ok` counts all
-  //     three. This row mapped the first two, so a drop point whose
-  //     checksums.txt still records a DTD after the file was deleted returned
-  //     `ok: false` from the verifier and `dtd-checksum-manifest: passed` in the
-  //     report a filer reads. That is the worst of the three to drop: a DTD
-  //     named in the manifest and absent from disk is exactly the
-  //     not-self-contained package the ECTD_REQUIRE_DTD gate exists to stop.
+  const originalNative = await v3Native(pkgDir, regionalRel, bundle);
+  const originalExternal = await qualificationExternal(pkgDir, region, '0000', bundle.sha256);
+  const originalContent = bundleContentReports(bundle, '0000');
+  const originalRows = [...sequenceValidators(originalNative, '0000'), ...originalContent,
+    ...(originalExternal.validator ? [originalExternal.validator] : [])];
   const dtdManifest = await verifyChecksumManifest(resolveDtdDir(), 'checksums.txt', ['.dtd', '.xsl']);
-  validators.push(tally('dtd-checksum-manifest', true, [
-    ...dtdManifest.mismatched.map((m) => ({ severity: 'error', message: `Vendored ${m.fileName} hash mismatch (tampered/stale).` })),
-    ...dtdManifest.unlistedFiles.map((f) => ({ severity: 'error', message: `Vendored file ${f} is not recorded in checksums.txt.` })),
-    ...dtdManifest.missingFiles.map((f) => ({ severity: 'error', message: `checksums.txt records ${f} but no such file is in the drop point.` })),
-  ]));
-  // The note itself is pushed AFTER the lifecycle package below, so the
-  // amendment's own skip can be in it — see there.
-
-  // 2c. STF cross-linking + intra-package cross-reference resolution evidence
-  //     (surfaced by the packager on the bundle).
-  if (bundle.stf) {
-    validators.push(tally('stf-cross-linking', true, stfCoverageFindings(bundle.stf)));
-    notes.push(`STF: ${bundle.stf.studies} study tagging file(s) generated + cross-linked (${bundle.stf.leaves} tagged leaves).`);
-  }
-  if (bundle.crossReferenceStatus) {
-    validators.push(tally('cross-references', true,
-      bundle.crossReferenceStatus.broken.map((b) => ({ severity: 'error', message: `${b.source}→${b.target}: ${b.reason}` }))));
-    notes.push(`Cross-references: ${bundle.crossReferenceStatus.resolved} resolved, ${bundle.crossReferenceStatus.broken.length} broken.`);
-  }
-
-  // 3. Reopen + verify checksums.
+  const manifestRow = tally('dtd-checksum-manifest', true, [
+    ...dtdManifest.mismatched.map(mismatch => ({ severity: 'error', message: `Vendored ${mismatch.fileName} hash mismatch (tampered/stale).` })),
+    ...dtdManifest.unlistedFiles.map(file => ({ severity: 'error', message: `Vendored file ${file} is not recorded in checksums.txt.` })),
+    ...dtdManifest.missingFiles.map(file => ({ severity: 'error', message: `checksums.txt records ${file} but no such file is in the drop point.` })),
+  ]);
+  originalRows.push(manifestRow);
   const checksum = await verifyZipChecksums(bundle.path);
 
-  // 4. Lifecycle: amendment 0001 with replace/delete/append.
   const lcBundle = await packageEctdSubmission(v3GoldenInput({ region, sequence: '0001', applicationId: app, outputDir: outDir, paths, lifecycle: true, priorSequence: '0000' }));
   const lcDir = path.join(outDir, `${app}-0001-${region}`);
-  const lcRegional = await validateBackboneFile(lcDir, regionalRel);
-  const lcStfs = await validateStudyTaggingFiles(lcDir, lcBundle.leafManifest);
-  validators.push(...lcStfs.flatMap(result => result.reports.map(report => ({ ...report, name: `0001/${report.name}` }))));
+  const amendmentNative = await v3Native(lcDir, regionalRel, lcBundle);
+  const amendmentExternal = await qualificationExternal(lcDir, region, '0001', lcBundle.sha256);
+  const amendmentContent = bundleContentReports(lcBundle, '0001');
+  const amendmentRows = [...sequenceValidators(amendmentNative, '0001'), ...amendmentContent,
+    ...(amendmentExternal.validator ? [{ ...amendmentExternal.validator, name: `0001/${amendmentExternal.validator.name}` }] : [])];
+  const validators = [...originalRows, ...amendmentRows];
   const lcChecksum = await verifyZipChecksums(lcBundle.path);
-  const lcPassed = [lcRegional, ...lcStfs].every(result => result.reports.every(v => v.passed)) && lcChecksum.ok;
-  /* THE AMENDMENT'S SKIP IS ITS OWN FACT. `lcRegional.dtdSkipped` was computed
-     here and discarded, and a skip emits NO row — so `lcPassed`, which is
-     `reports.every(v => v.passed)`, stayed true and the report carried
-     `lifecycle.nextPackagePassed: true` with nothing said about the amendment's
-     backbone never having been DTD-validated. That is the silence `dtdSkipNote`
-     exists to prevent: a skipped check must never read as a passed one.
-
-     It is NOT a duplicate of the 0000 skip above. Each package bundles its own
-     DTDs and this reads `lcDir`, not `pkgDir`, so a lifecycle packager that
-     stops copying them into 0001 produces exactly this divergence — and
-     produced a clean report. */
-  dtdSkips.push(...sequenceDtdSkips([lcRegional, ...lcStfs], '0001'));
-  if (dtdSkips.length) notes.push(await dtdSkipNote(dtdSkips));
-
-  // Read the operation attributes ACTUALLY emitted into the amendment's
-  // backbones (index.xml for m2–5, the regional backbone for m1), so the report
-  // proves what the packager produced instead of restating a fixed list.
   const lcLeafOps = await readEmittedLeafOps(lcDir, ['index.xml', regionalRel]);
-  const observedOps = Array.from(new Set(lcLeafOps.map((l) => l.operation))).sort();
-  // The amendment operations are everything except the baseline 'new'.
-  const lifecycleOps = observedOps.filter((o) => o !== 'new');
-  const opsWithModifiedFile = Array.from(
-    new Set(lcLeafOps.filter((l) => l.hasModifiedFile).map((l) => l.operation)),
-  ).sort();
-  notes.push(
-    `Lifecycle backbone operations emitted: ${observedOps.join(', ') || '(none)'}; ` +
-      `superseding operations carrying a modified-file pointer: ${opsWithModifiedFile.join(', ') || '(none)'}.`,
-  );
+  const observedOps = Array.from(new Set(lcLeafOps.map(leaf => leaf.operation))).sort();
+  const opsWithModifiedFile = Array.from(new Set(lcLeafOps.filter(leaf => leaf.hasModifiedFile).map(leaf => leaf.operation))).sort();
   const unresolved = await unresolvedModifiedFiles(lcDir, pkgDir, ['index.xml', regionalRel], '0000');
-  notes.push(
-    unresolved.length
-      ? `modified-file pointers that name no leaf of the 0000 package: ${unresolved.join('; ')}.`
-      : 'Every modified-file pointer names a leaf ID the 0000 package carries, at the traversal its backbone needs.',
-  );
-
-  const passed = validators.every((v) => v.passed) && checksum.ok;
-  return {
-    id: `v3.2.2-${region}`,
-    version: 'v3.2.2',
-    region,
-    specVersions: SPEC_VERSIONS['v3.2.2'],
-    package: { path: bundle.path, sha256: bundle.sha256, sizeBytes: bundle.sizeBytes },
-    validators,
-    checksum,
-    lifecycle: {
-      priorSequence: '0000',
-      nextSequence: '0001',
-      operations: lifecycleOps,
-      operationsWithModifiedFile: opsWithModifiedFile,
-      modifiedFileUnresolved: unresolved,
-      nextPackagePassed: lcPassed && unresolved.length === 0,
-      checksum: lcChecksum,
-    },
-    passed: passed && lcPassed && unresolved.length === 0,
-    ranAt: '(stamped by caller)',
-    notes,
-  };
+  const originalProblems = nativeProblems(originalNative, '0000');
+  const amendmentProblems = nativeProblems(amendmentNative, '0001');
+  const originalCaptured = capturedDtdProblems(bundle, '0000');
+  const amendmentCaptured = capturedDtdProblems(lcBundle, '0001');
+  const amendmentFailures = [...amendmentProblems.failures, ...amendmentCaptured.failures, ...amendmentExternal.failures,
+    ...knownReportFailures(amendmentContent), ...(!lcChecksum.ok ? ['0001: Package checksum verification failed.'] : []),
+    ...unresolved.map(reason => `0001: ${reason}`)];
+  const amendmentBlockers = [...amendmentProblems.blockers, ...amendmentCaptured.blockers, ...amendmentExternal.blockers];
+  const amendmentAvailable = executedChecksPassed(amendmentRows) && lcChecksum.ok && unresolved.length === 0 && amendmentCaptured.failures.length === 0;
+  const { passed: nextPackagePassed, ...lifecycleOutcome } = qualificationOutcome(amendmentAvailable, amendmentFailures, amendmentBlockers);
+  const failures = [...originalProblems.failures, ...originalCaptured.failures, ...originalExternal.failures, ...knownReportFailures([...originalContent, manifestRow]),
+    ...(!checksum.ok ? ['0000: Package checksum verification failed.'] : []), ...amendmentFailures];
+  const blockers = [...originalProblems.blockers, ...originalCaptured.blockers, ...originalExternal.blockers, ...amendmentBlockers];
+  const outcome = qualificationOutcome(executedChecksPassed(validators) && checksum.ok && amendmentAvailable && originalCaptured.failures.length === 0, failures, blockers);
+  notes.push(...bundleNotes(bundle, '0000'), ...bundleNotes(lcBundle, '0001'));
+  const skips = [...sequenceDtdSkips(originalNative, '0000'), ...sequenceDtdSkips(amendmentNative, '0001')];
+  if (skips.length) notes.push(await dtdSkipNote(skips));
+  notes.push(`Lifecycle backbone operations emitted: ${observedOps.join(', ') || '(none)'}; superseding operations carrying a modified-file pointer: ${opsWithModifiedFile.join(', ') || '(none)'}.`);
+  notes.push(unresolved.length ? `modified-file pointers that name no leaf of the 0000 package: ${unresolved.join('; ')}.`
+    : 'Every modified-file pointer names a leaf ID the 0000 package carries, at the traversal its backbone needs.');
+  return { id: `v3.2.2-${region}`, version: 'v3.2.2', region, specVersions: SPEC_VERSIONS['v3.2.2'],
+    package: { path: bundle.path, sha256: bundle.sha256, sizeBytes: bundle.sizeBytes }, validators, checksum,
+    externalValidation: { original: originalExternal.evidence, amendment: amendmentExternal.evidence },
+    lifecycle: { ...lifecycleOutcome, package: { path: lcBundle.path, sha256: lcBundle.sha256, sizeBytes: lcBundle.sizeBytes },
+      priorSequence: '0000', nextSequence: '0001', operations: observedOps.filter(operation => operation !== 'new'),
+      operationsWithModifiedFile: opsWithModifiedFile, modifiedFileUnresolved: unresolved, nextPackagePassed, checksum: lcChecksum },
+    ...outcome, ranAt: '(stamped by caller)', notes };
 }
 
-/** Qualify FDA for eCTD v4.0 (HL7 RPS). */
+interface RpsNativeEvidence {
+  reports: ValidatorRunReport[];
+  failures: string[];
+  blockers: string[];
+}
+
+/** Standalone execution is retained, but cannot prove a complete, captured and
+ * package-confined RPS schema closure. That missing qualification stays explicit. */
+async function rpsNative(packageDir: string, sequence: string): Promise<RpsNativeEvidence> {
+  const prefix = sequence === '0000' ? '' : `${sequence}/`;
+  const message = path.join(packageDir, 'submissionUnit.xml');
+  const wf = await checkWellFormed(message, true);
+  const schema = path.join(packageDir, 'util', 'schema', RPS_MESSAGE_XSD);
+  const present = await fs.access(schema).then(() => true).catch(() => false);
+  const xsd = present ? await validateAgainstXsd(message, schema, true)
+    : { mode: 'xsd' as const, ran: false, valid: false, errors: ['RPS XSD validation skipped — rps-message.xsd is not bundled.'] };
+  const reports = [tally(`${prefix}xmllint well-formed (submissionUnit.xml)`, wf.ran,
+    wf.valid ? [] : wf.errors.map(message => ({ severity: 'error', message }))),
+  tally(`${prefix}xmllint XSD (submissionUnit.xml)`, xsd.ran,
+    xsd.valid ? [] : xsd.errors.map(message => ({ severity: 'error', message })))];
+  const failures = [wf, xsd].filter(result => result.ran && !result.valid)
+    .map(result => `${sequence}/submissionUnit.xml: ${result.mode}: ${result.errors.join('; ')}`);
+  const blockers = [`${sequence}: Captured, package-confined complete RPS schema qualification proof is not implemented by the current owner.`,
+    ...[wf, xsd].filter(result => !result.ran).map(result => `${sequence}/submissionUnit.xml: ${result.errors.join('; ')}`)];
+  return { reports, failures, blockers };
+}
+
+/** Qualify FDA v4 local controls, explicitly blocking unimplemented schema proof. */
 export async function qualifyV4(workDir: string): Promise<QualificationReport> {
-  const notes: string[] = [];
-  const app = '123456';
+  const notes = ['Automated technical qualification only; standalone RPS XSD execution does not establish complete captured/confined schema qualification or agency acceptance.'];
   const outDir = path.join(workDir, 'v4-fda-out');
-
-  // 1. Original submission unit (0000).
-  const golden = v4GoldenMessage({ applicationId: app, sequence: '0000' });
+  const golden = v4GoldenMessage({ applicationId: '123456', sequence: '0000' });
   const pkg = await packageRpsSubmission({ message: golden.message, sources: golden.sources, outputDir: outDir, emitUnzipped: true, creationTime: '20260730120000' });
-  const pkgDir = path.join(outDir, `${app}-0000-fda-v4`);
-
-  // 2. Validators: RPS model + xmllint well-formed on the message.
-  const validators: ValidatorRunReport[] = [];
-  validators.push(tally('rps-model-validator', true, pkg.validation.findings));
-  const msgPath = path.join(pkgDir, 'submissionUnit.xml');
-  if (await isXmllintAvailable()) {
-    const wf = await checkWellFormed(msgPath, true);
-    validators.push(tally('xmllint well-formed (submissionUnit.xml)', wf.ran, wf.valid ? [] : wf.errors.map((m) => ({ severity: 'error', message: m }))));
-  }
-  // RPS XSD validation: validate against the schema bundled into util/schema/
-  // (from assets/ectd-schema/) when the licensed ICH RPS schema is vendored.
-  const bundledSchema = path.join(pkgDir, 'util', 'schema', RPS_MESSAGE_XSD);
-  const hasRpsSchema = await fs.access(bundledSchema).then(() => true).catch(() => false);
-  if (hasRpsSchema) {
-    const xsd = await validateAgainstXsd(msgPath, bundledSchema, true);
-    validators.push(tally('xmllint XSD (submissionUnit.xml)', xsd.ran, xsd.valid ? [] : xsd.errors.map((m) => ({ severity: 'error', message: m }))));
-  } else {
-    notes.push('RPS XSD validation skipped — vendor the ICH RPS message schema into assets/ectd-schema/ (rps-message.xsd) to enable it.');
-  }
-  // Vendored-schema integrity (drop-point manifest). All THREE of the verifier's
-  // fault classes, for the same reason as `dtd-checksum-manifest` above: an XSD
-  // recorded in checksums.txt and absent from the drop point is a schema
-  // submissionUnit.xml cannot be validated against, and mapping only the first
-  // two reported it as a passed integrity check.
+  const pkgDir = path.join(outDir, '123456-0000-fda-v4');
+  const originalNative = await rpsNative(pkgDir, '0000');
+  const originalExternal = await qualificationExternal(pkgDir, 'fda', '0000', pkg.sha256);
+  const model = tally('rps-model-validator', true, pkg.validation.findings);
   const schemaManifest = await verifyChecksumManifest(resolveSchemaDir(), 'checksums.txt', ['.xsd']);
-  validators.push(tally('schema-checksum-manifest', true, [
-    ...schemaManifest.mismatched.map((m) => ({ severity: 'error', message: `Schema ${m.fileName} hash mismatch.` })),
-    ...schemaManifest.unlistedFiles.map((f) => ({ severity: 'error', message: `Vendored schema ${f} is not recorded in checksums.txt.` })),
-    ...schemaManifest.missingFiles.map((f) => ({ severity: 'error', message: `checksums.txt records schema ${f} but no such file is in the drop point.` })),
-  ]));
-
-  // External agency-grade validator (LORENZ) — runs for v4.0 too when configured.
-  const external = await resolveExternalValidator();
-  if (external.name !== 'noop') {
-    const rep = await runExternalValidation({ packageDir: pkgDir, region: 'fda' });
-    validators.push(tally(external.name, rep.ran, rep.findings));
-    notes.push(`External validator "${external.name}" ${rep.ran ? 'ran' : 'was configured but did not complete'}.`);
-  }
-
-  // 3. Reopen + verify: package checksums AND in-message SHA-256 integrity.
+  const manifest = tally('schema-checksum-manifest', true, [
+    ...schemaManifest.mismatched.map(mismatch => ({ severity: 'error', message: `Schema ${mismatch.fileName} hash mismatch.` })),
+    ...schemaManifest.unlistedFiles.map(file => ({ severity: 'error', message: `Vendored schema ${file} is not recorded in checksums.txt.` })),
+    ...schemaManifest.missingFiles.map(file => ({ severity: 'error', message: `checksums.txt records schema ${file} but no such file is in the drop point.` })),
+  ]);
   const checksum = await verifyZipChecksums(pkg.path);
   const integrityMismatches = await verifyRpsIntegrity(pkg.path);
-  if (integrityMismatches.length) {
-    notes.push(`In-message document integrity mismatches: ${integrityMismatches.join(', ')}`);
-  }
+  const originalRows = [model, ...originalNative.reports, manifest, ...(originalExternal.validator ? [originalExternal.validator] : [])];
 
-  // 4. Lifecycle: amendment 0001 (revise) referencing 0000 CoUs.
-  const golden1 = v4GoldenMessage({ applicationId: app, sequence: '0001', lifecycle: true, priorSequence: '0000' });
+  const golden1 = v4GoldenMessage({ applicationId: '123456', sequence: '0001', lifecycle: true, priorSequence: '0000' });
   const lcValidation = validateRpsMessage(golden1.message, '0001');
   const lcPkg = await packageRpsSubmission({ message: golden1.message, sources: golden1.sources, outputDir: outDir, emitUnzipped: true, creationTime: '20260730120000' });
+  const lcDir = path.join(outDir, '123456-0001-fda-v4');
+  const amendmentNative = await rpsNative(lcDir, '0001');
+  const amendmentExternal = await qualificationExternal(lcDir, 'fda', '0001', lcPkg.sha256);
   const lcChecksum = await verifyZipChecksums(lcPkg.path);
-  const lcPassed = lcValidation.valid && lcChecksum.ok;
-
-  // Operations are read from the emitted RPS message's contexts of use, not
-  // hardcoded. v4.0 has no modified-file: a revised document points at its
-  // predecessor via relatedContextOfUse, so that linkage is the v4 analogue
-  // recorded in operationsWithModifiedFile.
-  const v4Cous = golden1.message.contextsOfUse ?? [];
-  const v4Ops = Array.from(
-    new Set(v4Cous.map((c) => c.operation).filter((o): o is NonNullable<typeof o> => o != null)),
-  ).sort();
-  const v4Linked = Array.from(
-    new Set(
-      v4Cous
-        .filter((c) => c.relatedContextOfUseId)
-        .map((c) => c.operation)
-        .filter((o): o is NonNullable<typeof o> => o != null),
-    ),
-  ).sort();
-  notes.push(
-    `v4.0 lifecycle CoU operations emitted: ${v4Ops.join(', ') || '(none)'}; ` +
-      `operations linked to a predecessor via relatedContextOfUse: ${v4Linked.join(', ') || '(none)'}.`,
-  );
-
-  const passed = validators.every((v) => v.passed) && checksum.ok && integrityMismatches.length === 0;
-  return {
-    id: 'v4.0-fda',
-    version: 'v4.0',
-    region: 'fda',
-    specVersions: SPEC_VERSIONS['v4.0'],
-    package: { path: pkg.path, sha256: pkg.sha256, sizeBytes: pkg.sizeBytes },
-    validators,
-    checksum,
-    lifecycle: {
-      priorSequence: '0000',
-      nextSequence: '0001',
-      operations: v4Ops.filter((o) => o !== 'create'),
-      operationsWithModifiedFile: v4Linked,
-      modifiedFileUnresolved: [],
-      nextPackagePassed: lcPassed,
-      checksum: lcChecksum,
-    },
-    passed: passed && lcPassed,
-    ranAt: '(stamped by caller)',
-    notes,
-  };
+  const lcIntegrity = await verifyRpsIntegrity(lcPkg.path);
+  const amendmentModel = tally('0001/rps-model-validator', true, lcValidation.findings);
+  const amendmentRows = [amendmentModel, ...amendmentNative.reports,
+    ...(amendmentExternal.validator ? [{ ...amendmentExternal.validator, name: `0001/${amendmentExternal.validator.name}` }] : [])];
+  const amendmentFailures = [...amendmentNative.failures, ...amendmentExternal.failures, ...knownReportFailures([amendmentModel]),
+    ...(!lcChecksum.ok ? ['0001: Package checksum verification failed.'] : []),
+    ...lcIntegrity.map(reason => `0001: In-message document integrity mismatch: ${reason}`)];
+  const amendmentAvailable = executedChecksPassed(amendmentRows) && lcChecksum.ok && lcIntegrity.length === 0;
+  const amendmentBlockers = [...amendmentNative.blockers, ...amendmentExternal.blockers];
+  const { passed: nextPackagePassed, ...lifecycleOutcome } = qualificationOutcome(amendmentAvailable, amendmentFailures, amendmentBlockers);
+  const validators = [...originalRows, ...amendmentRows];
+  const failures = [...originalNative.failures, ...originalExternal.failures, ...knownReportFailures([model, manifest]),
+    ...(!checksum.ok ? ['0000: Package checksum verification failed.'] : []),
+    ...integrityMismatches.map(reason => `0000: In-message document integrity mismatch: ${reason}`), ...amendmentFailures];
+  const blockers = [...originalNative.blockers, ...originalExternal.blockers, ...amendmentBlockers];
+  const outcome = qualificationOutcome(executedChecksPassed(validators) && checksum.ok && integrityMismatches.length === 0 && amendmentAvailable, failures, blockers);
+  const contexts = golden1.message.contextsOfUse ?? [];
+  const operations = Array.from(new Set(contexts.map(context => context.operation).filter((operation): operation is NonNullable<typeof operation> => operation != null))).sort();
+  const linked = Array.from(new Set(contexts.filter(context => context.relatedContextOfUseId).map(context => context.operation)
+    .filter((operation): operation is NonNullable<typeof operation> => operation != null))).sort();
+  if (integrityMismatches.length) notes.push(`In-message document integrity mismatches: ${integrityMismatches.join(', ')}`);
+  notes.push(`v4.0 lifecycle CoU operations emitted: ${operations.join(', ') || '(none)'}; operations linked to a predecessor via relatedContextOfUse: ${linked.join(', ') || '(none)'}.`);
+  return { id: 'v4.0-fda', version: 'v4.0', region: 'fda', specVersions: SPEC_VERSIONS['v4.0'],
+    package: { path: pkg.path, sha256: pkg.sha256, sizeBytes: pkg.sizeBytes }, validators, checksum,
+    externalValidation: { original: originalExternal.evidence, amendment: amendmentExternal.evidence },
+    lifecycle: { ...lifecycleOutcome, package: { path: lcPkg.path, sha256: lcPkg.sha256, sizeBytes: lcPkg.sizeBytes },
+      priorSequence: '0000', nextSequence: '0001', operations: operations.filter(operation => operation !== 'create'),
+      operationsWithModifiedFile: linked, modifiedFileUnresolved: [], nextPackagePassed, checksum: lcChecksum },
+    ...outcome, ranAt: '(stamped by caller)', notes };
 }
 
 /** Verify each RPS document's in-message SHA-256 integrityCheck matches the
@@ -566,19 +482,20 @@ export interface RunQualificationOptions {
   workDir?: string;
 }
 
-export interface QualificationSummary {
+export interface QualificationSummary extends QualificationOutcome {
   ranAt: string;
   reportDir: string;
   reports: QualificationReport[];
-  passed: boolean;
 }
+
+export const DEFAULT_V3_REGIONS: readonly Region[] = ['fda', 'ema', 'pmda', 'ca'];
 
 /** Run the full qualification suite and preserve the reports. */
 export async function runQualification(opts: RunQualificationOptions = {}): Promise<QualificationSummary> {
   const ranAt = opts.ranAt ?? new Date().toISOString();
   const reportDir = opts.reportDir ?? path.resolve(process.cwd(), 'qualification-reports');
   const workDir = opts.workDir ?? (await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-qual-')));
-  const v3Regions = opts.v3Regions ?? (['fda', 'ema', 'pmda', 'ca'] as Region[]);
+  const v3Regions = opts.v3Regions ?? DEFAULT_V3_REGIONS;
 
   const reports: QualificationReport[] = [];
   for (const region of v3Regions) {
@@ -600,7 +517,10 @@ export async function runQualification(opts: RunQualificationOptions = {}): Prom
     ranAt,
     reportDir,
     reports,
-    passed: reports.every((r) => r.passed),
+    ...qualificationOutcome(reports.length > 0 && reports.every(report => report.availableChecksPassed),
+      reports.filter(report => report.status === 'failed').flatMap(report => report.blockers.map(reason => `${report.id}: ${reason}`)),
+      reports.length === 0 ? ['No qualification target was selected.'] : reports.filter(report => report.status === 'blocked')
+        .flatMap(report => report.blockers.map(reason => `${report.id}: ${reason}`))),
   };
   await fs.writeFile(path.join(reportDir, 'summary.json'), JSON.stringify(summary, null, 2));
   return summary;
