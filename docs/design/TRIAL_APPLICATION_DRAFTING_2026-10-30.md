@@ -136,12 +136,20 @@ None for drafting. Widening CMC composition is a separate, later decision (P-73,
 
 ## Slices (in order)
 
-1. **Resolve every trial program's filing from its record (S).** Add the trial-application pairs to
+1. **Resolve every trial program's filing from its record (S).** Done 2026-10-30
+   (`docs/evidence/D4/2026-10-30-p73-slice1-trial-filing-resolution/`). Add the trial-application pairs to
    `PROGRAM_TYPE_REGISTRY`: Health Canada, MHRA, PMDA, NMPA, MFDS and Swissmedic. Where the record cannot decide
    between applications (TGA CTN or CTA, Brazil DDCM or DEEC, India's CT forms), resolve to nothing and say why,
    rather than guess.
-2. **The editor's "Draft from sources" uses the resolver and the recorded program context (M).** This removes
-   `WRITING_REGIONS`' FDA default for a program on record. The panel offers only what the server maps.
+2. **The editor's "Draft from sources" uses the resolver and the recorded program context (M).** Done
+   2026-10-30 (`docs/evidence/D4/2026-10-30-p73-slice2-editor-recorded-filing/`). The prompt carries the
+   application on record and its requirements. Precedence settled during the slice:
+   - a region recorded on the section's template governs;
+   - otherwise the person's chosen region names the writing region, and a mismatch with the application on
+     record is stated, not silently resolved.
+   - **2b (S, open):** the panel opens on the recorded application's agency, and offers only what the server
+     maps.
+   - **2c (S, open):** assembly drafting and `/api/claude/draft` move onto the same context.
 3. **Project the recorded product facts into drafting (M).** These are the charter's therapeutic area and
    development stage, the program's product type → modality (`modalityOf`), and the indication. Each is labelled
    recorded, and a declared label still cannot override a recorded fact silently.

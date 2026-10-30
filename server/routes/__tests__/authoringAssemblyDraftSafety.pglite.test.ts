@@ -314,6 +314,9 @@ describe('the existing section draft uses its admitted saved template reference'
     expect(h.prompts[0]).toContain(source.id);
     expect(h.prompts[0]).not.toContain(parent.limitations[0]);
     expect(h.prompts[0]).not.toContain(parent.id);
+    // P-73 slice 2: the section's own recorded region governs; the program's US IND does not set its requirements.
+    expect(h.prompts[0]).not.toContain('RECEIVING APPLICATION ON RECORD');
+    expect(response.body.draft.metadata.submissionType).toBeNull();
   }, T);
 
   it.each([{ region: 'JP', writing: 'PMDA' }, { region: 'CA', writing: 'Health Canada' }, { region: 'EU', writing: 'EMA' }] as const)(

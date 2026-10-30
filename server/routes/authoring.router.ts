@@ -161,7 +161,7 @@ import {
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
 import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
 import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
-import { savedSectionDraftTemplate, buildSectionDraftPrompt } from '../services/authoring/authoring-draft-template';
+import { savedSectionDraftTemplate, buildSectionDraftPrompt, recordedFilingDraftContext } from '../services/authoring/authoring-draft-template';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
 import {
   fileAuthoringDocumentToVault,
@@ -3598,10 +3598,15 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       userId: Number(getActorId(req)),
       projectRef: section.client_program_id,
     });
-    const { region, referenceBlock } = await savedSectionDraftTemplate(pool, {
+    const { region: templateRegion, recordedRegion, referenceBlock } = await savedSectionDraftTemplate(pool, {
       tenantId, documentId: section.doc_id, programId: section.client_program_id,
       sectionId: String(sectionId), code: section.code,
     }, section, req.body.region);
+    // P-73 slice 2: the application the project records, and its requirements, as AnA's batch drafting reads them.
+    const filing = await recordedFilingDraftContext(pool,
+      { tenantId, programId: projectScope ? section.client_program_id : null, code: section.code },
+      String(templateRegion), recordedRegion ?? null);
+    const region = filing.region;
     const sourceIdentity = { organizationId: tenantId, userId: Number(getActorId(req)), programId: section.client_program_id };
     const selectedSources = Object.hasOwn(req.body ?? {}, 'sources')
       ? await readDraftAssemblySources(requestConnectable(req), sourceIdentity, req.body.sources) : null;
@@ -3712,7 +3717,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       });
     }
 
-    const prompt = buildSectionDraftPrompt({ section, tone, region, context, requirements, evidenceBlock, referenceBlock });
+    const prompt = buildSectionDraftPrompt({ section, tone, region, context, requirements, evidenceBlock, referenceBlock, filingBlock: filing.block });
 
     draftTurn = openDraftTurn(pool, {
       orgId: tenantId,
@@ -3897,6 +3902,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         metadata: {
           tone,
           region,
+          submissionType: filing.submissionType,
+          requirementsSource: filing.requirementsSource,
           generated_at: new Date().toISOString(),
           model: gwResponse.model,
           provider: gwResponse.provider,
