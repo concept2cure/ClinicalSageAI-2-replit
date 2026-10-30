@@ -72,3 +72,26 @@ describe('POST /api/ha-interactions/interactions', () => {
     expect(createInteractionTx).not.toHaveBeenCalled();
   });
 });
+
+describe("a meeting's questions and readiness", () => {
+  beforeEach(() => {
+    // The meeting names submission 41, whose project is 12.
+    query.mockImplementation(async (sql: string) => (/FROM ha_interactions/.test(sql) ? { rows: [{ submission_id: 41 }] } : { rows: [{ id: 12 }] }));
+    admit.mockRejectedValue(new ProjectAdmissionRefusal(403, 'PROJECT_PERMISSION_DENIED', 'You do not have edit permission on this project.'));
+  });
+
+  it("refuses a question on a meeting whose project the person may not change, with nothing recorded", async () => {
+    const r = await request(app()).post('/api/ha-interactions/interactions/3/questions')
+      .send({ questionNumber: 1, questionText: 'Is the proposed dose acceptable?', reason: 'Question recorded in the minutes' });
+    expect(r.status).toBe(403);
+    expect(admit).toHaveBeenCalledWith(expect.anything(), '12', true);
+    expect(client.query).not.toHaveBeenCalledWith('BEGIN');
+  });
+
+  it('answers a refused read of its readiness as not found, never confirming the meeting', async () => {
+    const r = await request(app()).get('/api/ha-interactions/interactions/3/readiness');
+    expect(r.status).toBe(404);
+    expect(admit).toHaveBeenCalledWith(expect.anything(), '12', false);
+  });
+});
+
