@@ -4,6 +4,9 @@
  *
  * HTTP surface for the persistent CSR job runner:
  *   POST   /api/csr/jobs                  — enqueue + kick off worker
+ *   GET    /api/csr/jobs?programId&runId  — the builds bound to one retained run,
+ *                                            newest first (the Submission Center
+ *                                            CSR card, 2026-10-30)
  *   GET    /api/csr/jobs/:jobId           — org-scoped status read
  *   GET    /api/csr/jobs/:jobId/sections  — org-scoped section listing
  *   POST   /api/csr/jobs/:jobId/cancel    — terminal cancel transition
@@ -37,7 +40,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { and, eq, notInArray } from 'drizzle-orm';
+import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
 
 import { db } from '../db';
 import { csrBuildJobs } from '@shared/schema';
@@ -260,6 +263,49 @@ router.post('/', async (req: Request, res: Response) => {
       organizationId,
     });
     return res.status(500).json({ error: 'Failed to enqueue CSR build job' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/csr/jobs?programId&runId — the builds bound to one retained run
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RUN_ID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+
+/**
+ * Submission Center's CSR card reaches a build through the saved run it was
+ * bound to (evidenceSource.runId in the job's snapshot). The csr-workflow
+ * board read only the latest job and is refused in production (D2/W1,
+ * 2026-10-30). Scoped by organization and the program's project, which the
+ * actor must be able to read; a refusal is stated, never an empty list.
+ */
+router.get('/', async (req: Request, res: Response) => {
+  const organizationId = resolveOrganizationId(req);
+  if (organizationId == null) return res.status(401).json({ error: 'Organization context required' });
+  const runId = typeof req.query.runId === 'string' ? req.query.runId : '';
+  if (!RUN_ID.test(runId)) return res.status(400).json({ code: 'CSR_RUN_REQUIRED', error: 'runId must identify a saved run.' });
+  if (typeof req.query.programId !== 'string') {
+    return res.status(400).json({ code: 'CSR_PROJECT_REQUIRED', error: 'Select a project to list its CSR builds.' });
+  }
+  try {
+    const database = requireDb();
+    const scope = await resolveCsrScope(database, organizationId, { programId: req.query.programId }, { forWrite: false, actorUserId: resolveUserId(req) });
+    if (scope.projectId === undefined) return res.status(400).json({ code: 'CSR_PROJECT_REQUIRED', error: 'Select a project to list its CSR builds.' });
+    const rows = await database.select({
+      id: csrBuildJobs.id, studyId: csrBuildJobs.studyId, status: csrBuildJobs.status,
+      progress: csrBuildJobs.progress, updatedAt: csrBuildJobs.updatedAt,
+    }).from(csrBuildJobs).where(and(
+      eq(csrBuildJobs.organizationId, organizationId), eq(csrBuildJobs.projectId, scope.projectId),
+      sql`${csrBuildJobs.studyInfoSnapshot} -> 'evidenceSource' ->> 'runId' = ${runId}`,
+    )).orderBy(desc(csrBuildJobs.updatedAt), desc(csrBuildJobs.id)).limit(25);
+    return res.json({ jobs: rows.map(row => ({
+      jobId: row.id, studyId: row.studyId, status: row.status, progress: row.progress,
+      updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+    })) });
+  } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
+    log.error('Failed to list CSR builds for a run', { err: err instanceof Error ? err.message : String(err), organizationId });
+    return res.status(500).json({ error: 'Failed to list CSR builds' });
   }
 });
 

@@ -1,0 +1,20 @@
+# Existing suites rerun on the slice-2 working tree over 54b2929c54 (2026-10-30T01:44:29Z).
+# 1) Unit (vitest.config.ts): the 21 files that mount mdx-qms.ts (and with it the training router), load the training/in-force services or the shared training schema.
+ × tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > the file is on the deploy path > is in C2C_MIGRATION_FILES after qms_documents and its same-org key, immediately before the tenant tail 12ms
+   → expected 'migrations/20261029j_no_session_rls_b…' to be 'db/migrations/20260801_uuid_tenant_is…' // Object.is equality
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history 6ms
+   → expected 404 to be 200 // Object.is equality
+ FAIL  tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > the file is on the deploy path > is in C2C_MIGRATION_FILES after qms_documents and its same-org key, immediately before the tenant tail
+ FAIL  server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history
+ Test Files  2 failed | 19 passed (21)
+      Tests  2 failed | 305 passed (307)
+# Both failures are red at trunk without this slice, from other sessions' commits:
+#  - qms-training-assignments-replay: 08619d5cc7 (P-70) put migrations/20261029j_no_session_rls_bypass.sql between 20261029g and the tenant tail; the slice-1 assertion is 'immediately before'.
+#  - qms-document-content-access: 4ba9c2b045 made /versions read the parent row first; the test's mock returns no parent, so 404.
+# 2) Database (vitest.db.config.ts, c2c_mr12_trn_dbtest): slice 1's job-role suite (its route and service were refactored here) and three neighbours.
+ × tests/db/qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > retirement cancels the open task 56ms
+   → {"error":"Retirement is an electronic signature and requires a password, the signature meaning 'retirement' and a reason for change; missing or invalid: meaning","details":{"code":"ESIGNATURE_COMPONENT_MISSING","fieldErrors":{"meaning":["Signature meaning must be 'retirement' (21 CFR Part 11 §11.50)"]}}}: expected 400 to be 200 // Object.is equality
+ FAIL  tests/db/qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > retirement cancels the open task
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 46 passed (47)
+# The one failure is red at trunk: the case retires with meaning 'APPROVED'; retirement is signed with its own meaning 'retirement' since P-51.

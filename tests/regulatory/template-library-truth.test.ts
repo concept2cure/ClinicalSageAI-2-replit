@@ -16,12 +16,18 @@ import {
   getDocumentTemplate,
   templateForCtdSection,
 } from '../../server/services/market-specs/document-template-library';
-import { e3TopLevel } from '../../server/services/ind/ctd/index.js';
+import { e3TopLevel, ICH_E3_GUIDANCE } from '../../server/services/ind/ctd/index.js';
 
 describe('template library — CSR outline is the ICH E3 tree', () => {
-  it('numbers and titles equal e3TopLevel() §1–§16', () => {
+  // The spine is the whole tree since 13bafc62ff (2026-10-26): §1–§16 and every sub-heading under
+  // them, in E3's order (docs/design/EDITOR_CSR_CRF_COMPLETION_2026-10-26.md).
+  it('numbers and titles equal every node of ICH_E3_GUIDANCE, §1–§16 among them', () => {
     const csr = getDocumentTemplate('clinical_study_report')!;
     expect(csr.sections.map((s) => `${s.number} ${s.heading}`)).toEqual(
+      ICH_E3_GUIDANCE.map((s) => `${s.number} ${s.title}`),
+    );
+    const top = new Set(e3TopLevel().map((s) => s.number));
+    expect(csr.sections.filter((s) => top.has(s.number)).map((s) => `${s.number} ${s.heading}`)).toEqual(
       e3TopLevel().map((s) => `${s.number} ${s.title}`),
     );
   });

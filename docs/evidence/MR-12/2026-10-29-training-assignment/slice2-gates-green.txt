@@ -1,0 +1,114 @@
+# Gates on the slice-2 working tree over 54b2929c54 (2026-10-30T01:42:56Z). Each: npm run --silent <gate>, its output and exit code.
+# ci:tenant-entry-points exits 1 at trunk on server/routes/mdx-admin.ts, which this slice does not change (not fixed or baselined, by instruction).
+=== npm run --silent ci:migration-set-order
+[ci:migration-set-order] OK — 454 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit=0
+=== npm run --silent ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 454 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 19 dynamic DROP(s) in 19 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+=== npm run --silent ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+exit=0
+=== npm run --silent ci:migration-guard-order
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+exit=0
+=== npm run --silent ci:install-fresh-overlay-deps
+[ci:install-fresh-overlay-deps] 381 overlay file(s) · 694 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s).
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+exit=0
+=== npm run --silent ci:column-reachability
+[ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+exit=0
+=== npm run --silent ci:sql-interpolation
+[ci:sql-interpolation] 29 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/routes/c2c/project-vault.ts:1714:21 vaultLifecycleStageSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1733:44 vaultUnfiledSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1734:44 vaultSuggestedSql('d') <- ../../services/vault/vault-document-filter.js
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:36:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:95:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:652:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1055 baselined interpolation(s) in 222 file(s); the baseline may only shrink.
+exit=0
+=== npm run --silent ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit=0
+=== npm run --silent ci:fabricated-identity
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+exit=0
+=== npm run --silent ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit=0
+=== npm run --silent ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 74 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+exit=0
+=== npm run --silent ci:tenant-resolvers
+Local tenant resolvers: 174 (baseline 180)
+
+6 baselined module(s) no longer define one — regenerate the baseline:
+  - server/api/cmc/module3BuildStateRoutes.ts
+  - server/api/cmc/module3ConvergenceRoutes.ts
+  - server/api/cmc/module3OperatingSystemRoutes.ts
+  - server/routes/k510-document-preview.ts
+  - server/routes/mdx-qms.ts
+  - server/routes/regulatory-precedent-intelligence.ts
+
+OK: no new local tenant resolvers.
+exit=0
+=== npm run --silent ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+exit=0
+=== npm run --silent ci:session-scoped-rls-bypass
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 0 baselined occurrence(s) remain in 0 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+[ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (784 migration file(s) and 4340 code file(s) read), and no script writes either (P-70).
+exit=0
+=== npm run --silent ci:tenant-entry-points
+[ci:tenant-entry-points] 15 entry point(s); 9 consider tenant entitlement, 6 do not (baseline 6)
+
+[ci:tenant-entry-points] FAIL — 1 baselined entry point(s) CHANGED since justification:
+    server/routes/mdx-admin.ts  (alternative-auth-router)
+
+  Re-read the justification against the new code. If it still holds, refresh
+  the digest: npm run ci:tenant-entry-points:write-baseline
+
+exit=1
+=== npm run --silent audit:repo-health:ceiling
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+- content-duplicate groups: 0 (0 files)   [gated]
+- duplicate basenames: 254   [reported, not gated]
+- files over byte threshold: 56
+- files over line threshold: 111
+
+✅ repo health strict gate passed.
+exit=0
+
+=== node scripts/ci/check-eslint-warning-ratchet.mjs --since origin/concept2cure-v2
+[ci:eslint-warning-ratchet] --since origin/concept2cure-v2 (54b2929c5) -- 6 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since origin/concept2cure-v2.
+exit=0
+
+=== npx eslint (this slice's files, linted directly: the ratchet does not compare a new file)
+shared/qms/training.ts server/services/qms/in-force-release.ts server/services/qms/training-assignment.ts server/routes/mdx-qms-training.ts tests/db/qms-training-assignments.dbtest.ts
+0 errors, 0 warnings (exit=0). The first run gave one warning, max-lines-per-function on the test file's first describe (118 lines); it was split in two describes, not baselined.
