@@ -1,0 +1,108 @@
+{
+  "kind": "accepted source publication; agency qualification still blocked",
+  "implementationCommit": "1e928c801e3cec785ee9abc3fe858cba7aa0c2d5",
+  "acceptedCanonicalCommit": "9e6ee17ba1de7d60f35b8ddbf68338385341f9b9",
+  "targetRef": "refs/heads/concept2cure-v2",
+  "recordedAtUtc": "2026-10-30T18:27:17.042313+00:00",
+  "normalPushExitCode": 0,
+  "allNormalHooksPassed": true,
+  "hookOrBaselineBypass": false,
+  "typecheck": {
+    "errors": 0,
+    "tscExitCode": 0,
+    "baseline": 0
+  },
+  "pushedLint": {
+    "files": 7,
+    "errors": 0,
+    "warningGrowth": 0
+  },
+  "tests": {
+    "passed": 406,
+    "failed": 0,
+    "skipped": 0,
+    "files": 28,
+    "qualifiedBase": "ed5c9105845e0f82f8a0579c41a06fcea63b7542"
+  },
+  "build": {
+    "qualifiedBase": "ed5c9105845e0f82f8a0579c41a06fcea63b7542",
+    "client": true,
+    "server": true,
+    "auditVerifier": true
+  },
+  "committedInputPins": {
+    "manifest": "final-source-freeze.json",
+    "count": 46,
+    "allMatch": true,
+    "results": {
+      "assets/ectd-dtd/README.md": true,
+      "assets/ectd-dtd/checksums.txt": true,
+      "client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx": true,
+      "docs/runbooks/ectd-dtd-vendoring.md": true,
+      "package-lock.json": true,
+      "package.json": true,
+      "server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts": true,
+      "server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts": true,
+      "server/services/ectd/__tests__/_dtd-validation-fixture.ts": true,
+      "server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts": true,
+      "server/services/ectd/__tests__/backbone-validation-confinement.test.ts": true,
+      "server/services/ectd/__tests__/backbone-validation.test.ts": true,
+      "server/services/ectd/__tests__/builder-study-tagging-route.pglite.test.ts": true,
+      "server/services/ectd/__tests__/checksum-buffers.test.ts": true,
+      "server/services/ectd/__tests__/dtd-bundler.test.ts": true,
+      "server/services/ectd/__tests__/dtd-validation-proof.test.ts": true,
+      "server/services/ectd/__tests__/lifecycle-parent-leaf-binding.test.ts": true,
+      "server/services/ectd/__tests__/regional-backbone-readiness.test.ts": true,
+      "server/services/ectd/__tests__/rendered-csr-assembly-not-released.pglite.test.ts": true,
+      "server/services/ectd/__tests__/stf-agency-source.test.ts": true,
+      "server/services/ectd/__tests__/stf-coverage-1789.test.ts": true,
+      "server/services/ectd/__tests__/stf-csr-source-values.test.ts": true,
+      "server/services/ectd/__tests__/stf-generator.test.ts": true,
+      "server/services/ectd/__tests__/xml-validator-capability.test.ts": true,
+      "server/services/ectd/__tests__/xml-validator.test.ts": true,
+      "server/services/ectd/backbone-validation.ts": true,
+      "server/services/ectd/checksum-manifest.ts": true,
+      "server/services/ectd/dtd-bundler.ts": true,
+      "server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts": true,
+      "server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts": true,
+      "server/services/ectd/external-validator/__tests__/lorenz-xml-report-fails-closed.test.ts": true,
+      "server/services/ectd/qualification/__tests__/qualification-stf.test.ts": true,
+      "server/services/ectd/qualification/__tests__/qualification.test.ts": true,
+      "server/services/ectd/qualification/golden-fixtures.ts": true,
+      "server/services/ectd/qualification/qualify.ts": true,
+      "server/services/ectd/regional-backbone-readiness.ts": true,
+      "server/services/ectd/stf-generator.ts": true,
+      "server/services/ectd/xml-validator.ts": true,
+      "server/services/submission-gateways/__tests__/pre-transmit-check.test.ts": true,
+      "server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts": true,
+      "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts": true,
+      "server/services/submission-gateways/__tests__/stf-packaging.test.ts": true,
+      "server/services/submission-gateways/regional-packager.ts": true,
+      "tests/setup.ts": true,
+      "tsconfig.json": true,
+      "vitest.config.ts": true
+    }
+  },
+  "concurrentIntegration": {
+    "deviceAttachmentSource": "c0325308d",
+    "deviceAttachmentReceipt": "c3f16c8a2",
+    "inputOverlap": false,
+    "review": "Only MDX attachment-selection handling, its tests and documentation; no STF runtime/input overlap. Normal merges preserve both changes."
+  },
+  "agencyQualification": {
+    "status": "blocked",
+    "counselSignoffVerified": false,
+    "officialDtdXslAcquired": false,
+    "licensedValidatorConfigured": false,
+    "externalEngineExecuted": false,
+    "humanWitnessed": false,
+    "agencySubmissionOrAck": false,
+    "decisionPacket": "ASSET_REVIEW.md"
+  },
+  "metadataAttribution": {
+    "pdfPairs": 9,
+    "allMatchAfterOnlyDatesAndDocumentIdNormalization": true,
+    "stfBytesIdentical": true,
+    "generalRepeatByteDeterminismClaimed": false
+  }
+}

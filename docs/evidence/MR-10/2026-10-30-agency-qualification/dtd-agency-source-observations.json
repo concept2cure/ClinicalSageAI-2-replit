@@ -1,0 +1,650 @@
+{
+  "scope": "Official source/notice research only for US eCTD3.2.2 qualification prerequisite; no artifact acquisition or qualification execution.",
+  "recordedAtUtc": "2026-10-30T17:58:20.743132+00:00",
+  "sources": [
+    {
+      "url": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd",
+      "effectiveUrl": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "bytes": 42558,
+      "sha256": "70977014f37985a756a503da967acb5b2193ce994cee1ea70c4b36cf8ca7792b",
+      "retrievedAtUtc": "2026-10-30T17:55:12.927012+00:00",
+      "links": [
+        {
+          "text": "Electronic Common Technical Document (eCTD)",
+          "url": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd"
+        },
+        {
+          "text": "Electronic Common Technical Document (eCTD)",
+          "url": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd"
+        },
+        {
+          "text": "Electronic Common Technical Document (eCTD)",
+          "url": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd"
+        },
+        {
+          "text": "eCTD v3.2.2 Technical Conformance Guide",
+          "url": "https://www.fda.gov/media/181847/download?attachment"
+        },
+        {
+          "text": "eCTD v4.0 Technical Conformance Guide",
+          "url": "https://www.fda.gov/media/179700/download?attachment"
+        },
+        {
+          "text": "eCTD 4.0 Implementation",
+          "url": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd-v40"
+        },
+        {
+          "text": "FDA FR Notice on supporting v4.0 Forward Compatibility submissions",
+          "url": "https://www.federalregister.gov/documents/2026/10/16/2026-21197/electronic-common-technical-document-ectd-data-standards-supporting-forward-compatibility-for-ectd"
+        },
+        {
+          "text": "FDA FR Notice on high severity eCTD validation for v3.2.2 and v4.0",
+          "url": "https://www.federalregister.gov/documents/2026/10/16/2026-21195/electronic-common-technical-document-data-standards-center-for-drug-evaluation-and-research-and"
+        },
+        {
+          "text": "FDA FR Notice on supporting v4.0 submissions",
+          "url": "https://www.federalregister.gov/documents/2024/09/16/2024-20897/electronic-common-technical-document-data-standards-center-for-drug-evaluation-and-research-and"
+        },
+        {
+          "text": "FR Notice",
+          "url": "https://www.federalregister.gov/documents/2026/10/16/2026-21197/electronic-common-technical-document-ectd-data-standards-supporting-forward-compatibility-for-ectd"
+        },
+        {
+          "text": "Vulnerability Disclosure Policy",
+          "url": "https://www.hhs.gov/vulnerability-disclosure-policy/index.html"
+        }
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/ectd-submission-standards-ectd-v322-and-regional-m1",
+      "effectiveUrl": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/ectd-submission-standards-ectd-v322-and-regional-m1",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "bytes": 54929,
+      "sha256": "886a123dba79b115b83ba3b652bdf8c1c39c4cbba653e325f5aa35d34e76890e",
+      "retrievedAtUtc": "2026-10-30T17:55:25.484489+00:00",
+      "links": [
+        {
+          "text": "FDA Guidance Documents",
+          "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents"
+        },
+        {
+          "text": "Regulatory Information",
+          "url": "https://www.fda.gov/regulatory-information"
+        },
+        {
+          "text": "Validation Tools and Electronic Submission Validation Criteria in Use",
+          "url": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/ectd-submission-standards-ectd-v322-and-regional-m1#Validation Tools"
+        },
+        {
+          "text": "eCTD Backbone File Specification for Modules 2 through 5",
+          "url": "https://www.fda.gov/media/159380/download?attachment"
+        },
+        {
+          "text": "The eCTD Backbone File Specification for Study Tagging Files",
+          "url": "https://www.fda.gov/media/159383/download?attachment"
+        },
+        {
+          "text": "Specifications for eCTD Validation Criteria (PDF)",
+          "url": "https://www.fda.gov/media/87056/download?attachment"
+        },
+        {
+          "text": "Portable Document Format Specifications",
+          "url": "https://www.fda.gov/media/76797/download?attachment"
+        },
+        {
+          "text": "Transmission Specifications",
+          "url": "https://www.fda.gov/media/76812/download?attachment"
+        },
+        {
+          "text": "Specifications for File Format Types Using eCTD Specifications",
+          "url": "https://www.fda.gov/media/85816/download?attachment"
+        },
+        {
+          "text": "Current eCTD v3.2.2 Q&A document",
+          "url": "https://www.ich.org/page/ich-electronic-common-technical-document-ectd-v322-specification-and-related-files"
+        },
+        {
+          "text": "ICH website containing links to Q&A and Change Request Form",
+          "url": "https://www.ich.org/page/ich-electronic-common-technical-document-ectd-v322-specification-and-related-files"
+        },
+        {
+          "text": "ICH eCTD DTD",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-ectd-3-2_dtd_0.zip"
+        },
+        {
+          "text": "ICH eCTD Stylesheet",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ectd-2-0_0.xsl"
+        },
+        {
+          "text": "ICH-STF DTD",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-v2-2_dtd_0.zip"
+        },
+        {
+          "text": "ICH STF Stylesheet",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-stylesheet-2-3.xsl"
+        },
+        {
+          "text": "Valid Values.xml",
+          "url": "https://www.ich.org/page/study-tagging-file-specification-and-related-files"
+        },
+        {
+          "text": "The eCTD Backbone Files Specification for Module 1",
+          "url": "https://www.fda.gov/media/159382/download?attachment"
+        },
+        {
+          "text": "Addendum to the eCTD Backbone Files Specification for Module 1",
+          "url": "https://www.fda.gov/media/159379/download?attachment"
+        },
+        {
+          "text": "Addendum 2 to the eCTD Backbone Files Specification for Module 1",
+          "url": "https://www.fda.gov/media/159378/download?attachment"
+        },
+        {
+          "text": "Example Submissions using the eCTD Backbone Files Specification for Module 1",
+          "url": "https://www.fda.gov/media/83809/download?attachment"
+        },
+        {
+          "text": "US Regional DTD",
+          "url": "https://www.accessdata.fda.gov/static/eCTD/us-regional-v3-3.zip"
+        },
+        {
+          "text": "Specifications for eCTD Validation Criteria",
+          "url": "https://www.fda.gov/media/87056/download?attachment"
+        },
+        {
+          "text": "FDA Business Rules and FDA Validator Rules",
+          "url": "https://www.fda.gov/industry/fda-data-standards-advisory-board/study-data-standards-resources"
+        },
+        {
+          "text": "Visitor Information",
+          "url": "https://www.fda.gov/about-fda/visitor-information"
+        },
+        {
+          "text": "Vulnerability Disclosure Policy",
+          "url": "https://www.hhs.gov/vulnerability-disclosure-policy/index.html"
+        },
+        {
+          "text": "FOIA",
+          "url": "https://www.fda.gov/regulatory-information/freedom-information"
+        }
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/ectd-submission-standards-ectd-v322-and-regional-m1",
+      "effectiveUrl": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/ectd-submission-standards-ectd-v322-and-regional-m1",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "bytes": 54929,
+      "sha256": "886a123dba79b115b83ba3b652bdf8c1c39c4cbba653e325f5aa35d34e76890e",
+      "retrievedAtUtc": "2026-10-30T17:55:58.660501+00:00",
+      "relevantRows": [
+        "eCTD Backbone File Specification for Modules 2 through 5 Documentation and Resources 3.2.2 M2 eCTD: Electronic Common Technical Document Specifications 7/16/2008 5/5/2017 (for NDA, ANDA, BLA) 5/5/2018 (IND Commercial, MF)",
+        "The eCTD Backbone File Specification for Study Tagging Files Documentation and Resources 2.6.1 6/03/2008 5/5/2017 (for NDA, ANDA, BLA) 5/5/2018 (IND Commercial, MF)",
+        "Specifications for eCTD Validation Criteria (PDF) Documentation and Resources 4.7 10/16/2026 5/5/2017 (for NDA, ANDA, BLA) 5/5/2018 (IND Commercial, MF)",
+        "ICH eCTD DTD Supportive Files 3.2 11/01/2003 5/5/2017 (for NDA, ANDA, BLA) 5/5/2018 (IND Commercial, MF)",
+        "ICH eCTD Stylesheet Supportive Files 2 11/01/2004 5/5/2017 (for NDA, ANDA, BLA) 5/5/2018 (IND Commercial, MF)",
+        "ICH-STF DTD Supportive Files 2.2 8/01/2003 5/5/2017 (for NDA, ANDA, BLA) 5/5/2018 (IND Commercial, MF)",
+        "ICH STF Stylesheet Supportive Files 2.3 6/01/2017 5/5/2017 (for NDA, ANDA, BLA) 5/5/2018 (IND Commercial, MF)",
+        "Valid Values.xml Supportive Files 6.0 02/18/2025",
+        "The eCTD Backbone Files Specification for Module 1 M1 and Supportive Files 2.6 03/31/2025 3/1/2022",
+        "Addendum to the eCTD Backbone Files Specification for Module 1 M1 and Supportive Files 2.3 6/15/2015 3/1/2022",
+        "Addendum 2 to the eCTD Backbone Files Specification for Module 1 M1 and Supportive Files 2.3 6/15/2015 3/1/2022",
+        "Example Submissions using the eCTD Backbone Files Specification for Module 1 M1 and Supportive Files 1.4 6/15/2015",
+        "US Regional DTD M1 and Supportive Files 3.3 6/15/2015 3/1/2022",
+        "US Regional Stylesheet M1 and Supportive Files 2.2 6/15/2015",
+        "Tool Name Standard Being Validated Tool Version in Use Tool in Use as of Date Validation Criteria",
+        "Lorenz eValidator eCTD 25.2 08/25/2026 Specifications for eCTD Validation Criteria"
+      ],
+      "links": [
+        {
+          "text": "ICH eCTD DTD",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-ectd-3-2_dtd_0.zip"
+        },
+        {
+          "text": "ICH eCTD Stylesheet",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ectd-2-0_0.xsl"
+        },
+        {
+          "text": "ICH-STF DTD",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-v2-2_dtd_0.zip"
+        },
+        {
+          "text": "ICH STF Stylesheet",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-stylesheet-2-3.xsl"
+        },
+        {
+          "text": "US Regional DTD",
+          "url": "https://www.accessdata.fda.gov/static/eCTD/us-regional-v3-3.zip"
+        },
+        {
+          "text": "US Regional Stylesheet",
+          "url": "https://www.accessdata.fda.gov/static/eCTD/us-regional.zip"
+        },
+        {
+          "text": "applicant-contact-type",
+          "url": "https://www.accessdata.fda.gov/static/eCTD/applicant-contact-type.xml"
+        },
+        {
+          "text": "telephone-number-type",
+          "url": "https://www.accessdata.fda.gov/static/eCTD/telephone-number-type.xml"
+        },
+        {
+          "text": "application-type",
+          "url": "https://www.accessdata.fda.gov/static/eCTD/application-type.xml"
+        },
+        {
+          "text": "submission-type",
+          "url": "https://www.accessdata.fda.gov/static/eCTD/submission-type.xml"
+        },
+        {
+          "text": "form-type",
+          "url": "https://www.accessdata.fda.gov/static/eCTD/form-type.xml"
+        },
+        {
+          "text": "Website Policies / Privacy",
+          "url": "https://www.fda.gov/about-fda/about-website/website-policies"
+        },
+        {
+          "text": "Vulnerability Disclosure Policy",
+          "url": "https://www.hhs.gov/vulnerability-disclosure-policy/index.html"
+        }
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/about-fda/website-policies",
+      "retrievedAtUtc": "2026-10-30T17:55:58.805164+00:00",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "url": "https://www.ich.org/page/ich-electronic-common-technical-document-ectd-v322-specification-and-related-files",
+      "effectiveUrl": "https://www.ich.org/page/ich-electronic-common-technical-document-ectd-v322-specification-and-related-files",
+      "httpStatus": 200,
+      "contentType": "text/html",
+      "bytes": 687,
+      "sha256": "c19774b8c67c6c22182e1aca7db08afb04861080c763ed9d7399c50fa5b7df7c",
+      "retrievedAtUtc": "2026-10-30T17:55:59.404507+00:00",
+      "relevantRows": [],
+      "links": []
+    },
+    {
+      "url": "https://www.ich.org/page/study-tagging-file-specification-and-related-files",
+      "effectiveUrl": "https://www.ich.org/page/study-tagging-file-specification-and-related-files",
+      "httpStatus": 200,
+      "contentType": "text/html",
+      "bytes": 687,
+      "sha256": "c19774b8c67c6c22182e1aca7db08afb04861080c763ed9d7399c50fa5b7df7c",
+      "retrievedAtUtc": "2026-10-30T17:55:59.405177+00:00",
+      "relevantRows": [],
+      "links": []
+    },
+    {
+      "url": "https://www.ich.org/page/legal-notice",
+      "effectiveUrl": "https://www.ich.org/page/legal-notice",
+      "httpStatus": 200,
+      "contentType": "text/html",
+      "bytes": 687,
+      "sha256": "c19774b8c67c6c22182e1aca7db08afb04861080c763ed9d7399c50fa5b7df7c",
+      "retrievedAtUtc": "2026-10-30T17:55:59.507585+00:00",
+      "relevantRows": [],
+      "links": []
+    },
+    {
+      "url": "https://www.fda.gov/media/159380/download?attachment",
+      "effectiveUrl": "https://www.fda.gov/media/159380/download?attachment",
+      "httpStatus": 200,
+      "contentType": "application/pdf",
+      "bytes": 4832232,
+      "sha256": "9874649962ec54f8674cbcc5d6d0a8dc5981cda5bed62540b19c2efff81b1339",
+      "retrievedAtUtc": "2026-10-30T17:55:59.424652+00:00",
+      "firstPageText": "ICH eCTD Specification V 3.2.2                                16-July-2008\n\n\n\n    INTERNATIONAL CONFERENCE ON HARMONISATION OF\n      TECHNICAL REQUIREMENTS FOR REGISTRATION OF\n            PHARMACEUTICALS FOR HUMAN USE\n\n\n\n\n                                 ICH M2 EWG\n\n\n           Electronic Common Technical Document Specification\n\n\n\n\n    This specification has been developed by the ICH M2 Expert Working\n   Group and maintained by the eCTD Implementation Working Group in\n   accordance with the ICH Process as pertains to the M2 EWG and eCTD\n                change control as it pertains to the eCTD IWG.\n"
+    },
+    {
+      "url": "https://www.fda.gov/media/159382/download?attachment",
+      "effectiveUrl": "https://www.fda.gov/media/159382/download?attachment",
+      "httpStatus": 200,
+      "contentType": "application/pdf",
+      "bytes": 538853,
+      "sha256": "1adcbc40ad55adc63b3ae0c6ab6428721ccf6c8f3f64a4a1be58b1ee276b87f2",
+      "retrievedAtUtc": "2026-10-30T17:55:59.580824+00:00",
+      "firstPageText": "               The eCTD Backbone Files Specification for Module 1\n\nThe eCTD BACKBONE FILES SPECIFICATION FOR MODULE 1\n\n\nRevision History\n   Date       Version                           Summary of Changes\n2003-08-13       1.0    Original version\n2004-03-01       1.1    Clarifications to the original version\n2006-04-13       1.2    Change to Related Sequence Example\n2006-12-13       1.3    Change to XML coding for a supplement to an original application\n                        related sequence example\n2012-06-01     2.0      Change to reflect major modifications to Module 1 (admin) and\n                        the use of attributes (Summary of Changes in Appendix 2)\n2012-11-01     2.1      Changes include updating the DTD version references and\n                        includes a copy of the updated DTD version 3.1 in Appendix I\n                        (Summary of Changes in Appendix 2)\n2013-08-23     2.2      Changes include two additional attributes for m1.15.2.1., updating\n                        the DTD version references and updating the copy of the DTD in\n                        Appendix I (Summary of Changes in Appendix 2)\n2014-02-07     2.3      Modified the heading for 1.15.1.5 (Summary of Changes in\n                        Appendix 2)\n2018-10-18     2.4      Changes include new eCTD submission type: REMS\n                        Supplement; updated hyperlinks which were no longer working\n2020-11-09     2.5      Changes include REMS Supplement in Table 7: Group\n                        Submissions; updated eCTD header example to use https for\n                        stylesheet and DTD references in Section II\n2025-03-31     2.6      Added EUA as a valid selection for Promotional Labeling\n                        Advertising in Table 2\n\n\n\n\nVersion 2.6\n"
+    },
+    {
+      "url": "https://admin.ich.org/api/v1/nodes?loadEntities%5B%5D=paragraph&alias=%2Fpage%2Fich-electronic-common-technical-document-ectd-v322-specification-and-related-files",
+      "effectiveUrl": "https://admin.ich.org/api/v1/nodes?loadEntities%5B%5D=paragraph&alias=%2Fpage%2Fich-electronic-common-technical-document-ectd-v322-specification-and-related-files",
+      "httpStatus": 200,
+      "contentType": "application/json",
+      "bytes": 67753,
+      "sha256": "abe238f6101951801e6a6f7b95e6e612b00c4900ff86843d4b4a6fd8b69e0084",
+      "retrievedAtUtc": "2026-10-30T17:56:56.787003+00:00",
+      "links": [
+        {
+          "text": "",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-ectd-3-2_dtd.zip"
+        },
+        {
+          "text": "DTD",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-ectd-3-2_dtd_0.zip"
+        },
+        {
+          "text": "common stylesheet",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ectd-2-0_0.xsl"
+        }
+      ],
+      "pageText": "ICH electronic Common Technical Document - eCTD v3.2.2 Specification and Related Files /page/ich-electronic-common-technical-document-ectd-v322-specification-and-related-files Electronic Common Technical Document Specification V3.2.2 (PDF) This specification has been developed by the ICH M2 EWG and is maintained by the M8 eCTD EWG/IWG in accordance with the ICH Process, as well as the eCTD change control. The Electronic Common Technical Document (eCTD) allows for the electronic submission of the Common Technical Document (CTD) from applicant to regulator. While the table of contents is consistent with the harmonised CTD, the eCTD also provides a harmonised technical solution to implementing the CTD electronically. This group has developed and begun to implement the eCTD across the ICH partner and observer regions. The group has developed a change control process to monitor implementation progress and provide solutions and added flexibility found necessary during implementation. Using the change control process, several topics including study report structure, lifecycle management, and consistency with the CTD are being addressed and resolved. This defined change control process ensures that the future of the eCTD is managed in a clear, harmonised manner within the ICH process. The eCTD Specification is based on XML technology. The specification for the XML structure is the DTD . To ensure that the DTD has remained unchanged, use a tool to generate and compare the MD5 checksum of your copy with this MD5 checksum . An example of such a tool is WinMD5 (executable for MS Windows). See Readme.txt for installation instructions. The checksum for the eCTD DTD is: 1d6f631cc6b6357f0f4fe378e5f79a27 The M2 (ESTRI) Expert Working Group has provided a common stylesheet (Updated in November 2004) as referenced in eCTD Specification, to utilize, save locally and contact your technical support for instruction. To ensure that the stylesheet has remained unchanged, use a tool to generate and compare the MD5 checksum of your copy with this MD5 checksum . The checksum for the eCTD stylesheet is: 3a07a202455e954a2eb203c5bb443f77 An empty folder structure can be created using this executable program (for Windows only). The zip file is password protected with the password \"template\". Regional / Module 1 Information (current as of February 2020) Region Link to Module 1 Information DTD/Schema Checksum if Available CA 2.2 Module 1 Information - CA (V2.2) MD5 checksum of ca-regional-2-2.xsd: ff564d6e69adebd9a9b4f274e65cf5f1 MD5 checksum of xlink.xsd: 52d1a3b8596e4fb61d3ec1cde24be16a MD5 checksum of xml.xsd: 382b0a4f7529d2c5f7b0af0aa713b0a5 CH Module 1 Information - CH (v.1.5) MD5 checksum of v.1.5 ch-regional.dtd: d70fd110a38d215bd1d650d0f9269865 MD5 checksum of v.1.5 ch-envelope.mod: 0d2ca0cb128326d016741b9ddea2bc56 MD5 checksum of v.1.5 ch-leaf.mod: 5ca56e7e7227509a6517d930a512698b MD5 checksum of v.1.5 ch-regional.xsl: aa7b70ee1977ac538b67585f34c2dc50 EU 3.0 Module 1 Information - EU (V3.0.3) *technical files remain at v3.0.1 M1 v3.0.1 checksum for eu-regional.dtd is: 290503bf171e7e2e80ef90f0bde5d91e M1 v3.0.1 checksum for eu-envelope.mod is: d0727ae0fb68b19edae49ab9e2e22a4a M1 v3.0.1 checksum for eu-leaf.mod is: 23b854174e61c68044b9f53c0009af95 M1 v3.0.1 checksum for eu-regional.xsl is: 0107179c3739ebbd6b00ce492fe6e1e7 JP Web page Direct link to M1 schema MD5 checksum of M1 schema: cb985b998065f878421548e9a84bbd41 Direct link to XLINK schema MD5 checksum of XLINK schema: affa55a3ba4dd67601a3318c437281e1 US Module 1 Information - US (V2.3) MD5 checksum of M1 DTD v3.3: bea39be6d3a1716262a30a87657bce2d Change Control The eCTD IWG has implemented a Change Control Process. (PDF document) A request for change may be submitted by use of this form. (zipped MS Word document) Results of change requests are published in the Q&A document (zipped MS Excel spreadsheet) [Q&A version 1.33: Updated in May 2024] Last updated: May 2024 /page/electronic-standards-estri ESTRI Home page"
+    },
+    {
+      "url": "https://admin.ich.org/api/v1/nodes?loadEntities%5B%5D=paragraph&alias=%2Fpage%2Fstudy-tagging-file-specification-and-related-files",
+      "effectiveUrl": "https://admin.ich.org/api/v1/nodes?loadEntities%5B%5D=paragraph&alias=%2Fpage%2Fstudy-tagging-file-specification-and-related-files",
+      "httpStatus": 200,
+      "contentType": "application/json",
+      "bytes": 7097,
+      "sha256": "e3f387d2833806f90158aa33aaa862a0efd72faf82f8543a1ad0696338423a51",
+      "retrievedAtUtc": "2026-10-30T17:56:56.570841+00:00",
+      "links": [
+        {
+          "text": "here",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/STFV2-6-1_0.pdf"
+        },
+        {
+          "text": "",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-v2-2_dtd.zip"
+        },
+        {
+          "text": "DTD.",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-v2-2_dtd_0.zip"
+        },
+        {
+          "text": "",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-v2-2_md5%20%281%29.zip"
+        },
+        {
+          "text": "MD5 checksum",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-v2-2_md5.zip"
+        },
+        {
+          "text": "stylesheet",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-stylesheet-2-3.xsl"
+        },
+        {
+          "text": "MD5 checksum",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-stylesheet-2-3-md5.zip"
+        },
+        {
+          "text": "valid-values.xml",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/eCTD_v.3.2_Valid_Values_v6.0.zip"
+        },
+        {
+          "text": "MD5 checksum",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/valid-values-md5_0.zip"
+        },
+        {
+          "text": "the Zip file",
+          "url": "https://admin.ich.org/sites/default/files/inline-files/STFV2-6-1.zip"
+        }
+      ],
+      "pageText": "Study Tagging File Specification and Related Files /page/study-tagging-file-specification-and-related-files Click here to download the Specification for Study Tagging Files (STF). In order to help identify all of the files associated with a study, information is needed on each document including the document title, subject matter (defined by the headings under which the documents are located in the table of contents), relationship to other documents (e.g., all documents for a specific study report are related to one another), revision information (i.e., new, replace, deleted, append), the location of the document and information on the submission that included the document. The eCTD backbone files (e.g., index.xml and us-regional.xml) include many of those information items. However, the eCTD backbone files do not contain enough information on the subject matter of several documents (e.g., study report documents) to support certain regulatory business rules. This additional information is provided in the STF. The STF is governed by an XML DTD. To ensure that the DTD has remained unchanged, use a tool to generate and compare the MD5 checksum of your copy with this MD5 checksum . The MD5 checksum of the STF DTD is: 0972c10a4dadf3df5d2f41b2026a4a5c A stylesheet is also provided. To ensure that the stylesheet has remained unchanged, use a tool to generate and compare the MD5 checksum of your copy with this MD5 checksum . The MD5 checksum of the STF stylesheet is: 92BFEB4CB358A4AF786317A0DA2309C5. For proper display of the STF stylesheet, the index.xml file must include the sequence number in the relative file path. See v3.2.2 Q&A document for additional information. The valid-values.xml version 6.0 file is available. Consult regional regulatory authorities for guidance on implementation. To ensure that the valid-values.xml file has remained unchanged, use a tool to generate and compare the MD5 checksum of your copy with this MD5 checksum . The MD5 checksum of version 6.0 of the valid-values.xml file is: 797b4110bddb6d3cb4ad3869ffccb53c Download and extract the Zip file to receive the specification, all related files and sample data. Last updated: July 2024 /page/electronic-standards-estri ESTRI Home page"
+    },
+    {
+      "url": "https://admin.ich.org/api/v1/nodes?loadEntities%5B%5D=paragraph&alias=%2Fpage%2Flegal-notice",
+      "retrievedAtUtc": "2026-10-30T17:56:56.673427+00:00",
+      "error": "HTTP Error 400: Bad Request"
+    },
+    {
+      "url": "https://www.fda.gov/about-fda/about-website/website-policies",
+      "effectiveUrl": "https://www.fda.gov/about-fda/about-website/website-policies",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "bytes": 45590,
+      "sha256": "2ae3136a996268979177bdf501dc2cf1d3ed5fc1b6f7713e0813665316b76f47",
+      "retrievedAtUtc": "2026-10-30T17:56:56.141974+00:00",
+      "links": [
+        {
+          "text": "Website Policies",
+          "url": "https://www.fda.gov/about-fda/about-website/website-policies"
+        },
+        {
+          "text": "Website Policies",
+          "url": "https://www.fda.gov/about-fda/about-website/website-policies"
+        },
+        {
+          "text": "FDA Social Media Policy",
+          "url": "https://www.fda.gov/about-fda/website-policies/fda-social-media-policy"
+        },
+        {
+          "text": "FDA Comment Policy",
+          "url": "https://www.fda.gov/about-fda/website-policies/fda-comment-policy"
+        },
+        {
+          "text": "FDA Name and Logo Policy",
+          "url": "https://www.fda.gov/about-fda/website-policies/fda-name-and-logo-policy"
+        },
+        {
+          "text": "Viewing Files",
+          "url": "https://www.fda.gov/about-fda/website-policies/viewing-files"
+        },
+        {
+          "text": "Website Disclaimer",
+          "url": "https://www.fda.gov/about-fda/website-policies/website-disclaimer"
+        },
+        {
+          "text": "Website Policies",
+          "url": "https://www.fda.gov/about-fda/about-website/website-policies"
+        },
+        {
+          "text": "FDA Social Media Policy",
+          "url": "https://www.fda.gov/about-fda/website-policies/fda-social-media-policy"
+        },
+        {
+          "text": "FDA Comment Policy",
+          "url": "https://www.fda.gov/about-fda/website-policies/fda-comment-policy"
+        },
+        {
+          "text": "FDA Name and Logo Policy",
+          "url": "https://www.fda.gov/about-fda/website-policies/fda-name-and-logo-policy"
+        },
+        {
+          "text": "Viewing Files",
+          "url": "https://www.fda.gov/about-fda/website-policies/viewing-files"
+        },
+        {
+          "text": "Website Disclaimer",
+          "url": "https://www.fda.gov/about-fda/website-policies/website-disclaimer"
+        },
+        {
+          "text": "Privacy Policy",
+          "url": "https://www.fda.gov/about-fda/about-website/website-policies#privacy"
+        },
+        {
+          "text": "HHS Policy For The Transition To Internet Protocol Version 6 (Ipv6) | HHS.gov",
+          "url": "https://www.hhs.gov/web/governance/digital-strategy/it-policy-archive/hhs-policy-transition-internet-protocol-version-6-ipv6.html"
+        },
+        {
+          "text": "Website Policies / Privacy",
+          "url": "https://www.fda.gov/about-fda/about-website/website-policies"
+        },
+        {
+          "text": "Vulnerability Disclosure Policy",
+          "url": "https://www.hhs.gov/vulnerability-disclosure-policy/index.html"
+        }
+      ],
+      "verbatimCopyingNotice": "Unless otherwise noted, the contents of the FDA website (www.fda.gov) \u2014 both text and graphics \u2014 are not copyrighted. They are in the public domain and may be republished, reprinted and otherwise used freely by anyone without the need to obtain permission from FDA. Credit to the U.S. Food and Drug Administration as the source is appreciated but not required. People are also free to link to any URL on FDA's site. FDA's preference is that people link to the material on the FDA site (rather than copying it to their personal websites) because the agency continuously updates the information on the website as better information becomes available. A person copying documents to another website, instead of linking to them, would then have to monitor the original documents to know when these documents were updated by FDA or else risk giving bad or incorrect advice to visitors to their website. Providing consumers or health professionals with advice that is not fully up to date can lead to serious public health consequences. Providing industry advice that is not fully up to date can lead to companies being out of compliance with regulatory requirements. If a person, nonetheless, decides to copy content or images, FDA strongly recommends that the copied item lists the date that the material was copied and provides a link back to its source on the FDA website. Users can then see for themselves if the copied material has been updated or changed. "
+    },
+    {
+      "url": "https://admin.ich.org/api/v1/menus/footer-legal",
+      "effectiveUrl": "https://admin.ich.org/api/v1/menus/footer-legal",
+      "httpStatus": 200,
+      "bytes": 605,
+      "sha256": "5a7f8d23173e88a84a6a367832bf0ce685b757547c8f382e4b005eef4ebf3ee0",
+      "retrievedAtUtc": "2026-10-30T17:57:24.537831+00:00",
+      "publicMenu": {
+        "items": [
+          {
+            "id": "menu_link_content:297a3bde-0ab3-4f77-b5bd-85cfc8f1f8af",
+            "isExpanded": false,
+            "isCollapsed": false,
+            "inActiveTrail": false,
+            "title": "ICH Legal Mentions",
+            "uri": "/page/legal-mentions",
+            "below": []
+          },
+          {
+            "id": "menu_link_content:69bd338a-ad46-4b44-9180-ae7ab10d9301",
+            "isExpanded": false,
+            "isCollapsed": false,
+            "inActiveTrail": false,
+            "title": "ICH Privacy Statement",
+            "uri": "/page/ich-privacy-statement",
+            "below": []
+          },
+          {
+            "id": "menu_link_content:d01ed812-eb6e-48ff-aad3-68972df8d352",
+            "isExpanded": false,
+            "isCollapsed": false,
+            "inActiveTrail": false,
+            "title": "_",
+            "uri": "/_",
+            "below": []
+          }
+        ],
+        "_meta": {
+          "limit": 10,
+          "offset": 0
+        }
+      }
+    },
+    {
+      "url": "https://admin.ich.org/api/v1/nodes?loadEntities%5B%5D=paragraph&alias=%2Fpage%2Flegal-mentions",
+      "pageUrl": "https://www.ich.org/page/legal-mentions",
+      "effectiveUrl": "https://admin.ich.org/api/v1/nodes?loadEntities%5B%5D=paragraph&alias=%2Fpage%2Flegal-mentions",
+      "httpStatus": 200,
+      "contentType": "application/json",
+      "bytes": 3894,
+      "sha256": "3e2e626869723a2cde01a0c75f9394501fceaab59eb8b5300b97097d5d283bec",
+      "retrievedAtUtc": "2026-10-30T17:57:33.173539+00:00",
+      "links": [
+        {
+          "text": "ICH Privacy Statement.",
+          "url": "https://www.ich.org/page/ich-privacy-statement"
+        }
+      ],
+      "verbatimNotice": "Legal Mentions The information, material and photographic content provided on this website are protected by copyright and may, with the exception of the ICH logo, be used, reproduced, incorporated into other works, adapted, modified, translated or distributed under a public license provided that ICH's copyright in the information and material is acknowledged at all times. In case of any adaption, modification or translation of the information, material or photographic content, reasonable steps must be taken to clearly label, demarcate or otherwise identify that changes were made to or based on the original information or material. Any impression that the adaption, modification or translation of the original information or material is endorsed or sponsored by the ICH must be avoided. Apart from the official use of the ICH logo by the ICH Association and its bodies, the use of the ICH logo is restricted and requires the express permission of ICH, request for which may be addressed to the ICH Secretariat. ICH Members may without written permission use the ICH Member logo (available from the ICH Secretariat) to denote ICH membership within their own publications, presentations or on their website, provided, however, that the disclaimer provided by the ICH Secretariat has been signed by the respective ICH Member. The information, material and photographic content are provided \"as is\" without warranty of any kind. Likewise, and notwithstanding the provision of ICH permission to use the ICH logo, users of the logo shall acknowledge that access to the logo is provided \"as is\" without warranty of any kind. In no event shall the ICH or the authors of the original information and material be liable for any claim, damages or other liability arising from or in connection with the use of the information, material, photographic content or ICH logo. The above-mentioned permissions do not apply to content supplied by third parties. Therefore, for documents where the copyright vests in a third party, permission for reproduction must be obtained from this copyright holder. By providing personal data to us and by using our website, you consent to the collection and use of your personal data in accordance with the ICH Privacy Statement."
+    }
+  ],
+  "confirmedCurrentFdaTable": {
+    "page": "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/ectd-submission-standards-ectd-v322-and-regional-m1",
+    "pageCurrentAsOf": "2026-10-29",
+    "ichSpecification": {
+      "version": "3.2.2",
+      "referenceDate": "2008-07-16"
+    },
+    "stfSpecification": {
+      "version": "2.6.1",
+      "referenceDate": "2008-06-03"
+    },
+    "module1Specification": {
+      "version": "2.6",
+      "referenceDate": "2025-03-31"
+    },
+    "validationCriteria": {
+      "version": "4.7",
+      "referenceDate": "2026-10-16",
+      "url": "https://www.fda.gov/media/87056/download?attachment",
+      "limitation": "Current source finding only; no claim existing code implements4.7."
+    },
+    "externalToolInUse": {
+      "name": "Lorenz eValidator",
+      "version": "25.2",
+      "inUseAsOf": "2026-08-25",
+      "limitation": "Agency table listing is not a configured/licensed/qualified local engine."
+    }
+  },
+  "assetReviewInventory": [
+    {
+      "displayName": "ICH eCTD DTD",
+      "version": "3.2",
+      "referenceDate": "2003-11-01",
+      "url": "https://admin.ich.org/sites/default/files/inline-files/ich-ectd-3-2_dtd_0.zip",
+      "publishedMd5": "1d6f631cc6b6357f0f4fe378e5f79a27",
+      "md5Source": "ICH eCTD v3.2.2 specification and related-files page"
+    },
+    {
+      "displayName": "ICH eCTD Stylesheet",
+      "version": "2",
+      "referenceDate": "2004-11-01",
+      "url": "https://admin.ich.org/sites/default/files/inline-files/ectd-2-0_0.xsl",
+      "publishedMd5": "3a07a202455e954a2eb203c5bb443f77",
+      "md5Source": "ICH eCTD v3.2.2 specification and related-files page"
+    },
+    {
+      "displayName": "ICH-STF DTD",
+      "version": "2.2",
+      "referenceDate": "2003-08-01",
+      "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-v2-2_dtd_0.zip",
+      "publishedMd5": "0972c10a4dadf3df5d2f41b2026a4a5c",
+      "md5Source": "ICH STF specification and related-files page"
+    },
+    {
+      "displayName": "ICH STF Stylesheet",
+      "version": "2.3",
+      "referenceDate": "2017-06-01",
+      "url": "https://admin.ich.org/sites/default/files/inline-files/ich-stf-stylesheet-2-3.xsl",
+      "sourceLinkBasename": "ich-stf-stylesheet-2-3.xsl",
+      "publishedMd5": "92bfeb4cb358a4af786317a0da2309c5",
+      "md5Source": "ICH STF specification and related-files page",
+      "limitation": "2008 STF PDF sample uses generic ich-stf-stylesheet.xsl; current FDA supportive-file table and ICH page directly link versioned2-3 basename. Artifact contents/dependencies not inspected."
+    },
+    {
+      "displayName": "Valid Values.xml",
+      "version": "6.0",
+      "referenceDate": "2025-02-18",
+      "url": "https://admin.ich.org/sites/default/files/inline-files/eCTD_v.3.2_Valid_Values_v6.0.zip",
+      "publishedMd5": "797b4110bddb6d3cb4ad3869ffccb53c",
+      "md5Source": "ICH STF specification and related-files page"
+    },
+    {
+      "displayName": "US Regional DTD",
+      "version": "3.3",
+      "referenceDate": "2015-06-15",
+      "requirementBegins": "2022-03-01",
+      "url": "https://www.accessdata.fda.gov/static/eCTD/us-regional-v3-3.zip",
+      "publishedMd5": "bea39be6d3a1716262a30a87657bce2d",
+      "md5Source": "ICH backbone page regional table, explicitly current as of2020-02; current FDA table independently still listsDTD3.3"
+    },
+    {
+      "displayName": "US Regional Stylesheet",
+      "version": "2.2",
+      "referenceDate": "2015-06-15",
+      "url": "https://www.accessdata.fda.gov/static/eCTD/us-regional.zip"
+    }
+  ],
+  "fdaModule1AttributeLinks": {
+    "applicant-contact-type": "https://www.accessdata.fda.gov/static/eCTD/applicant-contact-type.xml",
+    "telephone-number-type": "https://www.accessdata.fda.gov/static/eCTD/telephone-number-type.xml",
+    "application-type": "https://www.accessdata.fda.gov/static/eCTD/application-type.xml",
+    "submission-type": "https://www.accessdata.fda.gov/static/eCTD/submission-type.xml",
+    "submission-sub-type": "https://www.accessdata.fda.gov/static/eCTD/submission-sub-type.xml",
+    "supplement-effective-date-type": "https://www.accessdata.fda.gov/static/eCTD/supplement-effective-date-type.xml",
+    "form-type": "https://www.accessdata.fda.gov/static/eCTD/form-type.xml",
+    "promotional-material-audience-type": "https://www.accessdata.fda.gov/static/eCTD/promotional-material-audience-type.xml",
+    "promotional-material-doc-type": "https://www.accessdata.fda.gov/static/eCTD/promotional-material-doc-type.xml",
+    "promotional-material-type": "https://www.accessdata.fda.gov/static/eCTD/promotional-material-type.xml"
+  },
+  "sourceResearchNotes": [
+    "ICH frontend HTML is a687-byte application shell. Its ordinary public frontend content API /api/v1/nodes was queried after discovering that public endpoint and the actual legal alias from frontend/footer menu. Same proxy/TLS throughout; no access-control bypass.",
+    "FDA/ICH published checksum text is an agency-provided MD5 observation, not a locally computed artifact SHA-256 or artifact-validation result. Actual downloaded bytes remain unobserved.",
+    "No DTD/XSL/ZIP/XML supportive artifact was downloaded. Published normative specification PDFs were read in memory to verify document identity; no normative artifact was copied into assets.",
+    "No approval found in the repository prerequisite descriptions examined. This does not assert an external legal archive is empty. Counsel signoff, artifact-specific notices, license scope, native grammar qualification, external engine/profile qualification and agency acceptance are not established.",
+    "Module1 attribute URLs are literal parsed link targets from the FDA table, not constructed guesses."
+  ],
+  "approvalAndQualification": {
+    "counselSignoffVerified": false,
+    "artifactContentsInspected": false,
+    "artifactSha256Measured": false,
+    "dtdOrXslOrArchiveAcquired": false,
+    "externalEngineExecuted": false,
+    "agencyAcceptanceClaimed": false
+  }
+}
