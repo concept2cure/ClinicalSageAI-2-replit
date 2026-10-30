@@ -1,0 +1,78 @@
+  green  program-recorded — regulatory_programs holds the project, owned by org A
+  green  creation-audited-with-its-keys — the chained c2c.project.create row names the project and the submission spine it created
+  green  submission-anchored-to-project — the submission spine intake created carries the project as a column (submissions.program_id), not only in the audit JSON
+  green  filing-scaffolded-in-project — the project’s governed filing (c2c_documents) is keyed to the project
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A,
+  green  source-recorded — cre_evidence_sources holds X under checksum = sha256(X), in org A
+  green  source-in-project — the source carries the project’s key
+  green  data-room-lists-source — the project’s Data Room (GET /api/c2c/projects/:id/sources) lists it by id and checksum
+  RED    bytes-durable — baselined DR-ANA-11 → LX-02; observed null
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  green  document-in-project — the authoring document carries the project’s key
+  green  genesis-revision-per-section — every section has a genesis doc_revisions row hashing its content
+  green  model-recorded — provenance names the model the gateway served
+  green  turn-recorded — provenance names the conversation and turn that drafted it
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the pr
+  green  save-accepted — the save is accepted
+  green  revision-chained — doc_revisions grows by the edit, chained to the genesis row and hashing the saved text
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the ca
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits th
+  green  seal-hash-verifies — frozen_documents holds the freeze and the approval seal, each hashing its own content
+  green  signature-binds-seal — the APPROVER signature names the snapshot its approval sealed, by version and content hash
+  RED    seal-binds-revision-and-lineage — baselined AC-04, AC-10 → LX-08 then LX-09; observed {"heads":2,"bound":0,"lineageDigests":0}
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen
+  green  approval-carry-decided — approved in Authoring with no independent review, so the approval does not carry, and the filing says why (FD5 (c))
+  green  vault-row-in-project — vault.documents holds the filed bytes in the same project, under their content hash
+  green  filing-names-document — the chained file_to_vault audit row links the vault row to the authoring document
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed do
+  green  vault-copy-approved-for-its-bytes — the Vault copy's lifecycle record is approved, for the bytes the Vault holds
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault c
+  green  filing-copy-names-seal — the filing copy is aliased to the authoring document and names the seal it was taken under
+  green  coauthor-leaf-pins-copy — the coauthor leaf pins the filing copy and the sha256 of its text
+  green  vault-leaf-pins-bytes — the vault leaf pins the Vault document and its content hash
+  green  placement-audit-names-document-and-pin — each LEAF_CREATED ledger row names the document it placed and the pin it took
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and t
+  green  transmitted — the transmittal records the sha256 of exactly the bytes that left, and the ledger names it
+  green  reachable-from-the-product — a Submission Center control calls the sequence transmit route
+  RED    bytes-retained — baselined SUB-2 → LX-12; observed false
+  green  transmittal-names-project — the transmittal row names its project, taken from its submission
+  RED    transmittal-names-sequence — baselined SUB-2 → LX-12; observed false
+  green  transmit-record-names-bundle — the ECTD_TRANSMITTED ledger row carries the bundle sha256
+  green  audit-ledger-verifies — the tenant’s chained audit ledger — which several steps below read keys from — verifies
+  green  transmittal-to-sequence — the transmittal resolves to exactly one sequence
+  green  sequence-to-pinned-leaves — the sequence’s leaves each name a document and pin its digest
+  green  leaves-to-project — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+  green  sequence-to-project — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+  green  filing-copy-leaf-to-seal — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+  RED    vault-leaf-to-seal — baselined SUB-7 → LX-10; observed 0
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is fr
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre
+  green  project-to-its-records — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+  green  project-read-lists-its-records — one read from the project (GET /api/c2c/projects/:id/records) lists its submission, source, authoring document, Vault copy and filing document, by their project keys
+  green  project-activity-shows-its-records — the project activity feed shows the governed actions on its own records, not only rows keyed to the project id
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  green  document-to-transmittal — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and fro
+  green  unscoped-upload-is-a-conversation-file — an upload with no project open records no Data Room source
+  green  project-offers-the-conversation-file — the project lists the caller's conversation file for adoption, and only the caller's
+  green  adopt-makes-it-the-projects-source — one audited adopt makes the file a source of the project, keyed to it
+  green  adopt-is-once — adopting the same file again is not a second source and writes no second audit row
+  green  adopted-file-is-no-longer-offered — once in a project's Data Room, the file is not offered as a conversation file
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a p
+  green  filed-project-not-deleted — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+  green  anchor-row-not-hard-deleted — the legacy project delete cannot remove the program's anchor row: refused 409, and the row and every document under it survive
+  green  legacy-delete-needs-writing-role — the legacy project delete answers 403 to a viewer, and deletes nothing
+  green  legacy-draft-project-deleted — a legacy project holding only drafts is still deleted by the same route
+  green  filed-project-archived — the same project can be archived, and its records still read from it
+  green  draft-project-deleted — a project that holds only drafts can be deleted, and the deletion is audited
+  green  source-changes-of-a-deleted-or-malformed-project — a deleted project's source changes, and a malformed id's, are not found
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed rec
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every 
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, eac
+      Tests  15 passed (15)

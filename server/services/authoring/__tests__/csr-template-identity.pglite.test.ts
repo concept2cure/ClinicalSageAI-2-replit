@@ -57,7 +57,10 @@ beforeAll(async () => {
     INSERT INTO organization_users VALUES(8,77,'reviewer'),(9,77,'author');`);
   await pg.exec(AUDIT_LOGS_PGLITE_DDL);
   for (const file of ['db/migrations/20260725_authoring_document_loop_tables.sql',
-    'db/migrations/20260725_authoring_audit_trail.sql', 'migrations/20260728_authoring_reviews.sql']) await pg.exec(migration(file));
+    'db/migrations/20260725_authoring_audit_trail.sql', 'migrations/20260728_authoring_reviews.sql',
+    // Every file that alters a table the loop builds (authoring-migration-list-closure contract).
+    'db/migrations/20260730_authoring_comments_router_columns.sql', 'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+  ]) await pg.exec(migration(file));
 }, 90_000);
 afterAll(async () => { await pg.close(); });
 

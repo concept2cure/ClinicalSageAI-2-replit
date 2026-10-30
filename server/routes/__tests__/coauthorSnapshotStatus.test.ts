@@ -79,9 +79,24 @@ vi.mock('../../db', async () => {
     }
     return undefined;
   };
+  const sourceDocumentAnswer = (text: string, params: unknown[]): { rows: Record<string, unknown>[]; rowCount: number } | undefined => {
+    /* Whether the source is a CSR, from its retained identity (csr-scientific-review.ts): a Clinical Overview
+       never imported or reviewed as one, and on no CSR template. Asked before the row read, whose FROM clause
+       this query also carries. */
+    if (/\bAS required\b/i.test(text)) return result([{ required: false }]);
+    if (/FROM authoring_documents\b/i.test(text)) {
+      return result(exactSource(params) ? state.sourceRows.map(row => ({ ...row,
+        id: state.documentId, doc_id: state.documentId, tenant_id: 1, created_by: '5',
+        client_program_id: null, provenance: null, title: 'M2.5 Clinical Overview', module: null,
+      })) : []);
+    }
+    return undefined;
+  };
   const answer = (text: string, params: unknown[] = []): { rows: Record<string, unknown>[]; rowCount: number } => {
     const actorAnswer = currentActorAnswer(text, params);
     if (actorAnswer) return actorAnswer;
+    const sourceAnswer = sourceDocumentAnswer(text, params);
+    if (sourceAnswer) return sourceAnswer;
     if (/FROM doc_permissions\b/i.test(text)) {
       return result(exactSource(params) && params.includes('5') && /p\.section_id IS NULL/i.test(text)
         ? [{ role: 'VIEWER' }] : []);
@@ -91,12 +106,6 @@ vi.mock('../../db', async () => {
         content_hash: createHash('sha256').update(frozenContent).digest('hex') }] : []);
     }
     if (/FROM authoring_sections\b/i.test(text)) return result(exactSource(params) ? SECTIONS : []);
-    if (/FROM authoring_documents\b/i.test(text)) {
-      return result(exactSource(params) ? state.sourceRows.map(row => ({ ...row,
-        id: state.documentId, doc_id: state.documentId, tenant_id: 1, created_by: '5',
-        client_program_id: null, provenance: null, title: 'M2.5 Clinical Overview', module: null,
-      })) : []);
-    }
     const insert = text.match(/insert into "coauthor_documents"\s*\(([^)]+)\)\s*values\s*\(([^)]+)\)/i);
     if (insert) {
       // Mechanical pg/Drizzle INSERT fixture: bound values, then selected RETURNING order.

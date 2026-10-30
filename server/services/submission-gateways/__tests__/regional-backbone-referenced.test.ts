@@ -23,10 +23,17 @@ import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
+import { PDFDocument } from 'pdf-lib';
 import { packageEctdSubmission, type EctdLeaf } from '../regional-packager';
 import { validateDtdConformance } from '../../ectd/ectd-validator-hardening';
 
-const pdf = (label: string) => Buffer.from(`%PDF-1.4\n% ${label}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+/* A real one-page PDF: the packager's original-PDF integrity check refuses one with no catalog or page tree. */
+async function pdf(label: string): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  doc.setTitle(label);
+  doc.addPage();
+  return Buffer.from(await doc.save({ useObjectStreams: false }));
+}
 const md5 = (b: Buffer | string) => createHash('md5').update(b).digest('hex');
 
 const REGIONS: Array<{ region: 'fda' | 'ema' | 'pmda' | 'ca'; backbone: string }> = [
@@ -37,7 +44,7 @@ const REGIONS: Array<{ region: 'fda' | 'ema' | 'pmda' | 'ca'; backbone: string }
 ];
 
 async function packageOne(region: (typeof REGIONS)[number]['region'], work: string) {
-  const bytes = pdf('control');
+  const bytes = await pdf('control');
   const src = path.join(work, 'control.pdf');
   await fs.writeFile(src, bytes);
   const leaves: EctdLeaf[] = [

@@ -19,6 +19,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
+import { PDFDocument } from 'pdf-lib';
 import { packageEctdSubmission, buildMd5Index, type EctdLeaf } from '../regional-packager';
 import { validateEctdPackage } from '../ectd-structural-validator';
 
@@ -26,16 +27,26 @@ const md5 = (b: Buffer | string) => createHash('md5').update(b).digest('hex');
 const pdf = (version: string, label: string) =>
   Buffer.from(`%PDF-${version}\n% ${label}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
 
+/* What the packager is given must be a real PDF: its original-PDF integrity check refuses one with no
+   catalog or page tree before anything is packaged. The header-only stub above is enough for the validator,
+   which reads a PDF's version from its header. */
+async function realPdf(label: string): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  doc.setTitle(label);
+  doc.addPage();
+  return Buffer.from(await doc.save({ useObjectStreams: false }));
+}
+
 type Files = Map<string, Buffer>;
 
 /** The real packager's FDA bundle, as a map of entry → bytes. */
 async function realBundle(): Promise<Files> {
   const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-integrity-'));
   try {
-    const bytes = pdf('1.7', 'control');
+    const bytes = await realPdf('control');
     const src = path.join(work, 'control.pdf');
     await fs.writeFile(src, bytes);
-    const coverBytes = pdf('1.7', 'cover');
+    const coverBytes = await realPdf('cover');
     const cover = path.join(work, 'cover.pdf');
     await fs.writeFile(cover, coverBytes);
     const leaves: EctdLeaf[] = [

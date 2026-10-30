@@ -233,11 +233,30 @@ async function extractXptText(buffer: Buffer): Promise<ExtractedDocumentText> {
   return read.ok ? { text: xptStructureText(read), method: 'xpt-structure' } : { text: '', method: 'none' };
 }
 
+/**
+ * PostgreSQL refuses U+0000 in a text column, so one NUL in a PDF text layer or a
+ * DOCX run made File to Vault fail and record nothing (2026-10-30, LX-00 hop 6).
+ * Each NUL becomes U+FFFD: one UTF-16 unit for one, so every page span still
+ * addresses the same characters.
+ */
+function withoutNul(extracted: ExtractedDocumentText): ExtractedDocumentText {
+  return extracted.text.includes('\u0000') ? { ...extracted, text: extracted.text.replaceAll('\u0000', '\uFFFD') } : extracted;
+}
+
 export async function extractDocumentText(
   buffer: Buffer,
   mime: string | undefined,
   filename = '',
   options: ExtractDocumentTextOptions = {},
+): Promise<ExtractedDocumentText> {
+  return withoutNul(await extractByFormat(buffer, mime, filename, options));
+}
+
+async function extractByFormat(
+  buffer: Buffer,
+  mime: string | undefined,
+  filename: string,
+  options: ExtractDocumentTextOptions,
 ): Promise<ExtractedDocumentText> {
   switch (classifyDocumentFormat(mime, filename)) {
     case 'xlsx':

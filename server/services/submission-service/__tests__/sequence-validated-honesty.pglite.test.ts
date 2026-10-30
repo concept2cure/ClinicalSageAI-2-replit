@@ -150,6 +150,8 @@ beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true, shadowReview: true });
   holder.db = harness.db;
   holder.pool = { query: (text: string, params?: unknown[]) => harness.pglite.query(text, params as unknown[]) };
+  // Validation reads the tenant's saved company legal requirements, and refuses a tenant it cannot find.
+  await harness.pglite.query(`INSERT INTO organizations (id, name) VALUES ($1, 'Sponsor organization')`, [CTX.organizationId]);
 }, 60_000);
 
 afterAll(async () => {

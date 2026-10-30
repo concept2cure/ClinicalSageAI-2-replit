@@ -50,13 +50,14 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { and, asc, eq, inArray, isNull, type SQL } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, sql, type SQL } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger';
 import { requestDb } from '../db/requestDb';
 import { ok, clientError, orgRequired, serverError, notFoundInTenant } from '../lib/api-response';
 import { admitProject } from '../lib/admit-project';
 import { respondVerificationUnavailable } from '../lib/verification-outcome';
+import { readProgramAnchorRow } from '../services/c2c/program-project-anchor';
 import { projects, unifiedTasks } from '../../shared/schema';
 import {
   CLIENT_REVIEW_STATES,
@@ -120,11 +121,17 @@ async function admitRoom(
   if (!(await admitProject(res, log, programId, orgId))) return null;
   if (projectId === undefined) {
     if (programId === undefined) return undefined;
-    // The program's integer projects, of this organization.
-    return inArray(unifiedTasks.projectId, db
-      .select({ id: projects.id })
-      .from(projects)
-      .where(and(eq(projects.organizationId, orgId), eq(projects.regulatoryProgramId, programId))));
+    // The program's project, read through the one anchor reader (program-project-anchor.ts): a
+    // program has one projects row, and a second reader here could disagree with it about which.
+    // No anchor is an empty room, never the organization's.
+    let anchor: { id: number } | null;
+    try {
+      anchor = await readProgramAnchorRow(db, { programId, orgId, context: 'mdx-client-review' });
+    } catch (err) {
+      respondVerificationUnavailable(res, log, 'The project anchor check', err);
+      return null;
+    }
+    return anchor ? eq(unifiedTasks.projectId, anchor.id) : sql`false`;
   }
   let owned: Array<{ programId: string | null }>;
   try {
