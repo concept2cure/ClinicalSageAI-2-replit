@@ -1,0 +1,83 @@
+{
+  "base": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+  "sourceCommit": "6589285f100ee1a321d937c38418944b66a98e8b",
+  "method": "ESLint lintText using existing original file paths; historical text in memory, no temporary TypeScript source",
+  "beforeWarnings": 0,
+  "afterWarnings": 0,
+  "warningDelta": 0,
+  "afterErrors": 0,
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx",
+      "sha256": "9ece2df6acaab75190ee5a2e6e44c8f2839fc4d62a6f1a332cc8c66e1bc43b99",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceDraft.tsx",
+      "sha256": "5ef1536bfaf1d17f1b5a78d411a9e039019de96d4faa86e881e318c000a5e4e2",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceVariants.tsx",
+      "sha256": "4e568dc04ee58fc981155c5d5c8a50ba100d552897f1a88f7132b1a9cda6d1b9",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CompanyFilingIdentityReview.tsx",
+      "sha256": "9bbdfd8c5a99184e5a6ca578e2bc70f081031d5892fe65de2974eb32dc0bf815",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx",
+      "sha256": "252bb40f04ebf2f01e62185c6322b8b1baef3177bd0814584c64864d746a49e3",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx",
+      "sha256": "420baf6139a2282f32cb992d4bbfe3090a37a8dcc08a80457702cf38a5174715",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx",
+      "sha256": "50bbd9c81143ad5a209f6f469104519f7cf1bca0691d001f78c025e3943d7da9",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx",
+      "sha256": "63aa99355a56c769003f52e68a2a599e1fb127c2aca665938351b8ce72cde1f2",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+PASS 1 Desktop actual Rail places RBM after CMC and invokes its existing rbm navigation callback
+PASS 2 Actual RBM rail button is keyboard-operable with visible focus
+PASS 3 Phone-width collapsed actual Rail keeps RBM accessible and invokes the same callback
+PASS 4 Actual phone rail expands with the same RBM label and peers
+PASS 5 Actual lock panel explains Professional subscription without navigating into RBM

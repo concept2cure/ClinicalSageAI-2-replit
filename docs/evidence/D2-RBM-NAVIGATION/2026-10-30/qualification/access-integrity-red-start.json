@@ -1,0 +1,8 @@
+{
+  "files": {
+    "server/services/rbm/rbm-access.ts": "81e71ea345c517cce55a1c2d96969304aa120c877b156176ecf270c29e6a1802",
+    "server/routes/mdx-rbm.ts": "70fa854e6f6caa482ed87f2c12e5b54d9076df455d266bd36b9fe8aec0b5ecf4",
+    "server/services/rbm/rbm-actuator.ts": "814c18a5f1547bcd672d617bc269e24b6b886e2fb292187acb7e98a0fab258e1",
+    "server/routes/__tests__/rbm-assessment-integrity.test.ts": "365e58c3e395d48f4d2c5494e92cb1af0061f862f2bf47c4efc38a86f426edf4"
+  }
+}

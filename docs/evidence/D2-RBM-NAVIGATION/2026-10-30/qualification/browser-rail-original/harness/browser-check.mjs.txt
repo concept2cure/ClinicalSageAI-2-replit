@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {launchChromium} from '/workspace/ClinicalSageAI-2-replit/scripts/visual-qa/playwright.mjs';
+const repo='/workspace/ClinicalSageAI-2-replit',here='/workspace/.cloud-setup/rbm-navigation';
+const paths=['client/src/concept2cure/v2/registryModel.ts','client/src/concept2cure/v2/Shell.tsx',
+'client/src/concept2cure/v2/navEntitlements.tsx','client/src/concept2cure/v2/NavUnlockPanel.tsx',
+'client/src/concept2cure/v2/dataConnect.tsx','client/src/concept2cure/v2/clinicalRegulatoryGraphFlag.ts',
+'client/src/contexts/TenantContext.tsx','client/src/services/portal/authService.tsx','client/src/utils/authToken.ts',
+'client/src/lib/queryClient.ts','shared/constants/launch-scope.ts','shared/constants/ui-surface-registry.ui-v2.ts',
+'design-system/colors_and_type.css','client/src/index.css',
+...['app-v2.css','surfaces-v2.css','misc-surfaces-v2.css','coverage-v2.css','surface-text-ramp.css'].map(f=>'client/src/concept2cure/v2/styles/'+f)];
+const privatePaths=['browser-server.mjs','browser-index.html','browser-rail.tsx','browser-check.mjs'];
+const pins=()=>Object.fromEntries([...paths.map(f=>[f,createHash('sha256').update(readFileSync(repo+'/'+f)).digest('hex')]),...privatePaths.map(f=>['private:'+f,createHash('sha256').update(readFileSync(here+'/'+f)).digest('hex')])]);
+const before=pins(),checks=[],requests=[],unexpected=[],errors=[],consoleErrors=[];let locked=false;
+const browser=await launchChromium({executablePath:'/usr/bin/chromium'});
+const page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(20000);
+page.on('pageerror',e=>errors.push(e.message));page.on('console',e=>{if(e.type()==='error')consoleErrors.push(e.text());});
+const actor={id:'42',organizationId:'7',organizationName:'Synthetic RBM organization',email:'rbm-browser@example.test',firstName:'Synthetic',lastName:'Reviewer',displayName:'Synthetic Reviewer',roles:['owner'],permissions:['governed:write','billing:admin'],mfaEnabled:false,mfaMethods:[],mustChangePassword:false};
+const send=(route,body,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+await page.route('**/api/**',async route=>{
+const req=route.request(),url=new URL(req.url()),path=url.pathname;requests.push({method:req.method(),path,query:url.search});
+if(req.method()!=='GET'){unexpected.push({method:req.method(),path});return send(route,{error:'Synthetic harness refuses all writes'},405);}
+if(path==='/api/v1/auth/session')return send(route,{authenticated:true,user:actor});
+if(path==='/api/tenants')return send(route,[{id:'7',name:'Synthetic RBM organization'}]);
+if(path==='/api/clients')return send(route,{success:true,clients:[{id:'21',name:'Synthetic sponsor workspace',organizationId:'7'}]});
+if(path==='/api/module-subscriptions/navigation')return send(route,{organizationId:7,tier:'professional',industryMode:'biotech',masterAdmin:false,resolved:true,launchScope:{enforced:true},surfaces:[{id:'rbm',label:'Risk-based monitoring',entitled:!locked,source:locked?'tier':'included',requiredTier:'professional'}]});
+unexpected.push({method:req.method(),path});return send(route,{error:'Unqualified synthetic request'},501);
+});
+const observed=async()=>JSON.parse(await page.getByLabel('Observed navigation').innerText());
+const pass=(name,detail={})=>{checks.push({name,passed:true,...detail});console.log('PASS',checks.length,name);};
+const output=here+'/browser-result';mkdirSync(output,{recursive:true});
+async function start(name,width,height,collapsed=false){await page.setViewportSize({width,height});await page.goto('http://127.0.0.1:5217/@fs'+here+'/browser-index.html'+(collapsed?'?collapsed=true':''),{waitUntil:'networkidle'});await page.getByRole('navigation',{name:'Primary'}).waitFor();await page.getByRole('button',{name:locked?'Risk-based monitoring — not included in your subscription':'Risk-based monitoring',exact:true}).waitFor();}
+async function capture(name){await page.screenshot({path:output+'/'+name+'.png',fullPage:false,animations:'disabled'});}
+try{
+ await start('desktop',1440,1000);
+ const rail=page.getByRole('navigation',{name:'Primary'}),areas=rail.getByRole('group',{name:'Work areas'});
+ const labels=await areas.locator('.lbl').allTextContents();assert.deepEqual(labels,['CMC / Module 3','Risk-based monitoring','Quality','Reporting & analytics']);
+ for(const name of ['Projects','Tasks','Communication','Vault'])await rail.getByRole('button',{name,exact:true}).waitFor();
+ const rbm=rail.getByRole('button',{name:'Risk-based monitoring',exact:true});await rbm.click();assert.deepEqual(await observed(),['rbm']);assert.equal(await rbm.getAttribute('aria-current'),'page');
+ const position=await rbm.boundingBox(),cmc=await areas.getByRole('button',{name:'CMC / Module 3',exact:true}).boundingBox();assert.ok(position.y>cmc.y);
+ await capture('desktop-expanded-rbm');pass('Desktop actual Rail places RBM after CMC and invokes its existing rbm navigation callback',{labels});
+ await page.keyboard.press('Tab');await rbm.focus();const focus=await rbm.evaluate(node=>({outline:getComputedStyle(node).outlineStyle,width:getComputedStyle(node).outlineWidth}));assert.notEqual(focus.outline,'none');await page.keyboard.press('Enter');assert.deepEqual(await observed(),['rbm','rbm']);pass('Actual RBM rail button is keyboard-operable with visible focus',focus);
+ await start('mobile',390,844,true);const mobile=page.getByRole('navigation',{name:'Primary'});const mobileRbm=mobile.getByRole('button',{name:'Risk-based monitoring',exact:true});await mobileRbm.click();assert.deepEqual(await observed(),['rbm']);const box=await mobile.boundingBox();assert.ok(box.width<=57);assert.ok((await page.evaluate(()=>document.documentElement.scrollWidth))<=391);await capture('mobile-collapsed-rbm');pass('Phone-width collapsed actual Rail keeps RBM accessible and invokes the same callback',{railWidth:box.width});
+ await mobile.getByRole('button',{name:'Expand',exact:true}).click();await mobile.getByRole('group',{name:'Work areas'}).getByRole('button',{name:'Risk-based monitoring',exact:true}).waitFor();assert.equal(await mobileRbm.locator('.lbl').isVisible(),true);await capture('mobile-expanded-rbm');pass('Actual phone rail expands with the same RBM label and peers');
+ locked=true;await start('locked',1440,1000);await page.getByRole('button',{name:'Risk-based monitoring — not included in your subscription',exact:true}).click();const dialog=page.getByRole('dialog',{name:'Risk-based monitoring'});await dialog.getByText('Included from Professional',{exact:true}).waitFor();assert.deepEqual(await observed(),[]);await capture('desktop-professional-lock');pass('Actual lock panel explains Professional subscription without navigating into RBM');
+ assert.deepEqual(unexpected,[]);assert.deepEqual(errors,[]);assert.deepEqual(consoleErrors,[]);
+ const after=pins();assert.deepEqual(after,before);
+ const result={result:'passed',scope:'Actual shipped Rail/providers rendered in Chromium with intercepted synthetic HTTP/auth records. No application backend, authenticated hosted acceptance, production writes or agency validation.',checks,requests,unexpected,errors,consoleErrors,selectedInputsUnchanged:true,files:before,finishedAt:new Date().toISOString()};writeFileSync(here+'/browser-result.json',JSON.stringify(result,null,2)+'\n');
+}catch(error){writeFileSync(here+'/browser-failure.json',JSON.stringify({message:String(error),stack:error.stack,checks,requests,unexpected,errors,consoleErrors,files:before},null,2)+'\n');await page.screenshot({path:here+'/browser-failure.png',fullPage:false}).catch(()=>{});throw error;}finally{await browser.close();}

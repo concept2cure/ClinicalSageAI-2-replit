@@ -1,0 +1,99 @@
+{
+  "kind": "read-only trace of existing qualification prerequisite and external assessment paths",
+  "recordedAtUtc": "2026-10-30T18:46:05.236500+00:00",
+  "sourceBase": "1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10",
+  "jobsRun": false,
+  "repoFilesChanged": false,
+  "agencyArtifactsAcquired": false,
+  "externalCallsMade": false,
+  "findings": [
+    {
+      "id": "V3-OMITTED-DTD",
+      "owner": "server/services/ectd/qualification/qualify.ts:273",
+      "fact": "Missing original/amendment DTDs yield notes and no DTD validator row. Aggregate rows.every(passed) can remain true. The current normal packager already supplies stricter captured-byte proof; qualifyV3 does not consume it."
+    },
+    {
+      "id": "V3-AMENDMENT-INDEX",
+      "owner": "server/services/ectd/qualification/qualify.ts:362",
+      "fact": "Amendment validates regional XML and STF XML, omits index.xml, and only STF report rows are appended to the top-level validator list. Regional failures affect lcPassed but their diagnostics are absent from that list."
+    },
+    {
+      "id": "V3-AMENDMENT-EXTERNAL",
+      "owner": "server/services/ectd/qualification/qualify.ts:362",
+      "fact": "External validation only executes on original package; lifecycle.nextPackagePassed can be true without any amendment external assessment."
+    },
+    {
+      "id": "EXTERNAL-TALLY-BYPASS",
+      "owner": "server/services/ectd/backbone-validation.ts:9",
+      "fact": "tallyValidationReport derives pass only from ran and error-severity findings. qualifyV3/V4 pass raw external reports through it, discarding declared passed/count coherence, validator identity, profile and ranAt validation. A mismatched adapter report, unknown severity or ran:true/passed:false report with empty findings can be displayed as a clean pass. Null malformed findings can instead throw before JSON is preserved."
+    },
+    {
+      "id": "SUBSET-DUPLICATION",
+      "owner": "server/services/ectd/qualification/qualify.ts:305",
+      "fact": "With fallback opted in and no licensed engine, qualifyV3 directly runs validateFdaCriteria and then resolver selects FdaCriteriaValidatorAdapter, so same internal subset runs twice and second is described as external. With licensed engine selected and fallback opted in, retaining a separately labelled subset plus real external report is meaningful; avoid removing that intended distinct coverage accidentally."
+    },
+    {
+      "id": "EXTERNAL-NOOP",
+      "owner": "server/services/ectd/qualification/qualify.ts:310",
+      "fact": "Noop is skipped and adds no blocking/failing assessment. Original external absence cannot affect current passed aggregate."
+    },
+    {
+      "id": "V4-OMITTED-WF",
+      "owner": "server/services/ectd/qualification/qualify.ts:442",
+      "fact": "When xmllint is unavailable, qualifyV4 emits no well-formedness row at all; available rows may all pass."
+    },
+    {
+      "id": "V4-OMITTED-XSD",
+      "owner": "server/services/ectd/qualification/qualify.ts:449",
+      "fact": "Missing RPS XSD emits a note only. Its absence does not affect current passed aggregate."
+    },
+    {
+      "id": "V4-AMENDMENT-COVERAGE",
+      "owner": "server/services/ectd/qualification/qualify.ts:491",
+      "fact": "Amendment gets only in-memory RPS model validation and ZIP manifest checks; no native WF/XSD, in-message document-integrity recheck, or external assessment."
+    },
+    {
+      "id": "V4-CAPTURED-SCHEMA-LIMIT",
+      "owner": "server/services/ectd/ectd4/rps-packager.ts:45",
+      "fact": "RpsPackageResult does not contain a captured schema proof analogous to v3 dtdStatus.validation. Current qualifyV4 verifies live drop-point schema manifest, not ZIP-captured XSD bytes. schema-bundler lacks DTD-style dependency confinement. Do not infer full schema corpus qualification from a simple synthetic XSD pass."
+    },
+    {
+      "id": "CA-UNSUPPORTED",
+      "owner": "server/services/ectd/external-validator/types.ts:19",
+      "fact": "EctdRegion includes only fda/ema/pmda; default qualification regions also include ca. Current code skips external validation for ca. Keep unsupported external coverage explicit/blocked; do not cast ca or silently widen region support."
+    },
+    {
+      "id": "PROFILE-LIMIT",
+      "owner": "server/services/ectd/external-validator/gate.ts:75",
+      "fact": "Canonical external assessment requires nonempty profile but does not match it to evalidatorProfile(region). Lorenz adapter resolves args.profile ?? configured profile ?? region and constructs validator/profile metadata locally after parsing findings. A coherent report proves execution by the selected adapter contract, not actual vendor identity, profile coverage, engine version or licensing."
+    }
+  ],
+  "canonicalReuse": {
+    "v3CapturedProof": "hasPassedPackageDtdValidation(bundle.dtdStatus, bundle.stf?.studies ?? 0), independently for original and amendment; retains exact required support inventories, per-file coverage and captured byte integrity.",
+    "xmlExecution": "Reach validateBackboneFile for index, regional and each STF on BOTH original and amendment; prefix sequence labels consistently and preserve all diagnostics. Keep real native capability/skipped results visible.",
+    "externalAssessment": "Use evaluateExternalValidationGate with server-selected adapter name/kind, isConfigured discovery and actual runExternalValidation report for EACH sequence. Qualification prerequisite may require factual assessmentStatus=passed and qualifyingRun=true regardless of advisory dispatch env flags. Do not use cleared alone under advisory mode.",
+    "externalErrors": "Reuse runExternalValidation operational-error preservation; derive displayed assessment from canonical gate rather than raw tally. Preserve the raw report/operational diagnostics alongside computed facts. Never count an unrun operational failure as a known content error.",
+    "v4Schema": "Reach existing native WF/XSD for both messages and existing checksum/in-message integrity readers. If adding captured schema integrity, reuse verifyChecksumBuffers over actual bundled XSD bytes with the existing manifest rather than creating another verifier. Keep unsupported dependency/corpus and profile qualifications outside a fabricated full agency result.",
+    "subset": "If resolver selected the subset, execute it once and retain internal_subset classification. If actual external selected and optional subset desired, run each once with distinct identities."
+  },
+  "minimalOutcomeSemantics": {
+    "passed": "Automated technical prerequisites and executed checks complete/clean for both sequences; still not counsel/license/profile/human/agency acceptance.",
+    "blocked": "Available local checks can be clean while required schema/tool/region/external assessment is missing or unverifiable. Preserve that separate positive local result, return nonzero overall qualification exit.",
+    "failed": "Known executed XML/content/checksum/lifecycle failure. Preserve simultaneous blockers rather than allowing a missing prerequisite to hide an observed defect.",
+    "emptySelections": "An empty set of selected reports must not pass through every([]). Expose blocked/no selected qualification work."
+  },
+  "testRecommendations": [
+    "Actual unconfigured FDA v3 run: native WF/checksum/lifecycle positives stay true while missing official supportive proof and noop external assessment make automated qualification blocked.",
+    "Original complete and amendment missing/invalid index or schema: lifecycle/overall cannot pass; amendment diagnostics remain sequence-labelled.",
+    "Clean internal subset with forged external name cannot satisfy external assessment and is executed once when selected by resolver.",
+    "Selected external with mismatched identity, unknown severity, contradictory declared counts/result, invalid date/profile or ran:false result cannot pass; qualification integration needs representative wiring cases, while existing canonical classifier suite already covers exhaustive matrix.",
+    "Complete synthetic XML/schema support plus configured coherent matching mocked external adapter yields technical positive control, explicitly labelled synthetic and not licensed/agency acceptance; verify separate original/amendment calls and argument package paths.",
+    "Clean original external report but failed/unrun amendment report makes amendment/overall fail or block appropriately.",
+    "V4 xmllint absent and XSD absent remain explicit blocked prerequisites; no omitted-row vacuous pass.",
+    "ca cannot be treated as supported external validation; raw local checks may succeed but external prerequisite stays blocked."
+  ],
+  "limits": [
+    "Read-only source trace; no test execution or actual validator/tool qualification performed.",
+    "Current FDA4.7 criteria coverage, official asset approval and external engine/profile licensing remain separate prerequisites."
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "files": [
+    {
+      "path": "scripts/ectd/qualify-ectd.ts",
+      "errors": 0,
+      "warnings": 1,
+      "baselineErrors": 0,
+      "baselineWarnings": 1,
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ectd/external-validator/__tests__/external-validator.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/external-validator/index.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/qualification/__tests__/qualification.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/qualification/outcome.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/qualification/qualify.ts",
+      "errors": 0,
+      "warnings": 2,
+      "baselineErrors": 0,
+      "baselineWarnings": 2,
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'qualifyV3' has a complexity of 17. Maximum allowed is 15.",
+          "line": 301,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 301,
+          "endColumn": 32
+        },
+        {
+          "ruleId": "security/detect-possible-timing-attacks",
+          "severity": 1,
+          "message": "Potential timing attack, right side: true",
+          "line": 467,
+          "column": 5,
+          "endLine": 467,
+          "endColumn": 60
+        }
+      ]
+    },
+    {
+      "path": "tests/regulatory/ectd-qualification-cli.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "messages": []
+    }
+  ],
+  "errorCount": 0,
+  "warningDelta": 0
+}

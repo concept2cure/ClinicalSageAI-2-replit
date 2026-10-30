@@ -1,0 +1,7 @@
+{
+  "files": {
+    "server/routes/mdx-rbm-board.ts": "d59e360f5e6cbd3b091d2fc97a3347edc28c8320b3b9b16e833dfef66cfbeb8f",
+    "server/routes/__tests__/rbm-board-current-project.test.ts": "8da78c857c6c8c429a2eb6d63ae6c959a640072b5edff0e556d22a514a6bed38",
+    "migrations/20260629_rbm_surfaces.sql": "2125d652a5ceb596ded19224a55e0d9cb0e47e1b39bb5ebd0d53ddffe187ec24"
+  }
+}

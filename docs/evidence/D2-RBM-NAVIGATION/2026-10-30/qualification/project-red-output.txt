@@ -1,0 +1,1369 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > reviews and persists the explicitly selected monitoring service without seeding a record 977ms
+   → Unable to find an accessible element with the role "checkbox" and name `/risk-based monitoring/i`
+
+Here are the accessible roles:
+
+  region:
+
+  Name "New project":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"new-project-title"[39m
+    [33mclass[39m=[32m"npw"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  Name "Saved onboarding discovery":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Saved onboarding discovery"[39m
+    [33mclass[39m=[32m"npw-field npw-field-wide"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Projects":
+  [36m<button[39m
+    [33mclass[39m=[32m"pd-crumb-back"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Step 1Choose filing type":
+  [36m<button[39m
+    [33mclass[39m=[32m"npw-step-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Step 2Configure project":
+  [36m<button[39m
+    [33mclass[39m=[32m"npw-step-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Step 3Review & create":
+  [36m<button[39m
+    [33mclass[39m=[32m"npw-step-btn"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Retry: platform support for 510K in FDA":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Retry: platform support for 510K in FDA"[39m
+    [33mclass[39m=[32m"btn ghost sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Review saved discovery":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Cancel":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Back":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Continue":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"npw-head"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "New project":
+  [36m<h1[39m
+    [33mclass[39m=[32m"ph-title"[39m
+    [33mid[39m=[32m"new-project-title"[39m
+  [36m/>[39m
+
+  Name "Configure your Traditional 510(k) project":
+  [36m<h2[39m
+    [33mclass[39m=[32m"npw-h2"[39m
+  [36m/>[39m
+
+  Name "Start from your saved discovery":
+  [36m<h3[39m
+    [33mclass[39m=[32m"npw-seg-t"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"ph-sub"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"npw-seg-s"[39m
+    [33mdata-testid[39m=[32m"npw-market-support"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"npw-field-help"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  navigation:
+
+  Name "New project steps":
+  [36m<nav[39m
+    [33maria-label[39m=[32m"New project steps"[39m
+    [33mclass[39m=[32m"npw-steps"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ol />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"npw-step"[39m
+    [33mdata-state[39m=[32m"done"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33maria-current[39m=[32m"step"[39m
+    [33mclass[39m=[32m"npw-step"[39m
+    [33mdata-state[39m=[32m"current"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"npw-step"[39m
+    [33mdata-state[39m=[32m"todo"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<span[39m
+    [33mdata-state[39m=[32m"error"[39m
+    [33mdata-testid[39m=[32m"market-support"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"sr-only"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Client workspace":
+  [36m<select[39m
+    [33maria-describedby[39m=[32m"npw-workspace-help"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mid[39m=[32m"npw-client-workspace"[39m
+    [33mrequired[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Device class":
+  [36m<select[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+  [36m/>[39m
+
+  Name "Product typeThe filing default is selected. Choose the product type this project will record.":
+  [36m<select[39m
+    [33maria-describedby[39m=[32m"npw-class-help"[39m
+    [33maria-required[39m=[32m"false"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+  [36m/>[39m
+
+  Name "Review panel":
+  [36m<select[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Choose a client workspace":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Sponsor A":
+  [36m<option[39m
+    [33mvalue[39m=[32m"21"[39m
+  [36m/>[39m
+
+  Name "Not yet determined":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Class I":
+  [36m<option[39m
+    [33mvalue[39m=[32m"I"[39m
+  [36m/>[39m
+
+  Name "Class II":
+  [36m<option[39m
+    [33mvalue[39m=[32m"II"[39m
+  [36m/>[39m
+
+  Name "Class III":
+  [36m<option[39m
+    [33mvalue[39m=[32m"III"[39m
+  [36m/>[39m
+
+  Name "Medical device":
+  [36m<option[39m
+    [33mvalue[39m=[32m"device"[39m
+  [36m/>[39m
+
+  Name "In-vitro diagnostic":
+  [36m<option[39m
+    [33mvalue[39m=[32m"ivd"[39m
+  [36m/>[39m
+
+  Name "Companion diagnostic":
+  [36m<option[39m
+    [33mvalue[39m=[32m"cdx"[39m
+  [36m/>[39m
+
+  Name "Software as a medical device":
+  [36m<option[39m
+    [33mvalue[39m=[32m"samd"[39m
+  [36m/>[39m
+
+  Name "Not yet determined":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Anesthesiology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Anesthesiology"[39m
+  [36m/>[39m
+
+  Name "Cardiovascular":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Cardiovascular"[39m
+  [36m/>[39m
+
+  Name "Chemistry":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Chemistry"[39m
+  [36m/>[39m
+
+  Name "Dental":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Dental"[39m
+  [36m/>[39m
+
+  Name "Ear, Nose & Throat":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Ear, Nose & Throat"[39m
+  [36m/>[39m
+
+  Name "Gastroenterology & Urology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Gastroenterology & Urology"[39m
+  [36m/>[39m
+
+  Name "General & Plastic Surgery":
+  [36m<option[39m
+    [33mvalue[39m=[32m"General & Plastic Surgery"[39m
+  [36m/>[39m
+
+  Name "General Hospital":
+  [36m<option[39m
+    [33mvalue[39m=[32m"General Hospital"[39m
+  [36m/>[39m
+
+  Name "Hematology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Hematology"[39m
+  [36m/>[39m
+
+  Name "Immunology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Immunology"[39m
+  [36m/>[39m
+
+  Name "Microbiology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Microbiology"[39m
+  [36m/>[39m
+
+  Name "Neurology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Neurology"[39m
+  [36m/>[39m
+
+  Name "Obstetrics & Gynecology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Obstetrics & Gynecology"[39m
+  [36m/>[39m
+
+  Name "Ophthalmic":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Ophthalmic"[39m
+  [36m/>[39m
+
+  Name "Orthopedic":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Orthopedic"[39m
+  [36m/>[39m
+
+  Name "Pathology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Pathology"[39m
+  [36m/>[39m
+
+  Name "Physical Medicine":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Physical Medicine"[39m
+  [36m/>[39m
+
+  Name "Radiology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Radiology"[39m
+  [36m/>[39m
+
+  Name "Clinical Toxicology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Clinical Toxicology"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Project name Required. The project is listed under this name.":
+  [36m<input[39m
+    [33maria-describedby[39m=[32m"npw-name-help"[39m
+    [33maria-required[39m=[32m"true"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mplaceholder[39m=[32m"e.g. BX-204 — Traditional 510(k)"[39m
+    [33mrequired[39m=[32m""[39m
+    [33mvalue[39m=[32m"A monitoring project"[39m
+  [36m/>[39m
+
+  Name "Product name":
+  [36m<input[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mplaceholder[39m=[32m"e.g. BX-204"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Product code Three letters. It decides the regulation number, the review panel and which predicates you can compare against.":
+  [36m<input[39m
+    [33maria-describedby[39m=[32m"npw-pc-help"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mmaxlength[39m=[32m"3"[39m
+    [33mplaceholder[39m=[32m"e.g. BZH"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Regulation number 21 CFR — the part is the panel.":
+  [36m<input[39m
+    [33maria-describedby[39m=[32m"npw-rn-help"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mplaceholder[39m=[32m"e.g. 868.1860"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Predicate 510(k) number The cleared device this one is substantially equivalent to.":
+  [36m<input[39m
+    [33maria-describedby[39m=[32m"npw-pk-help"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mplaceholder[39m=[32m"e.g. K181234"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Predicate device name The eSTAR prints this beside the number, so give both or neither — the record does not hold half a claim of substantial equivalence.":
+  [36m<input[39m
+    [33maria-describedby[39m=[32m"npw-pn-help"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mplaceholder[39m=[32m"the predicate’s trade name, as it is marketed"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Indications for use":
+  [36m<textarea[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mid[39m=[32m"npw-intended-use"[39m
+    [33mplaceholder[39m=[32m"The statement that will appear on FDA Form 3881."[39m
+    [33mrows[39m=[32m"3"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Product characteristics":
+  [36m<fieldset[39m
+    [33mclass[39m=[32m"npw-field npw-field-wide npw-flags"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Combination product21 CFR 3.2(e) — adds a lead-centre determination and the other centre’s content":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Software / AI-MLJune 2023 device software guidance — Documentation Level, architecture, SRS/SDS, V&V, SBOM":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Cyber deviceFD&C Act §524B — cybersecurity documentation; an RTA ground when absent":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "SterileSterilisation validation, packaging and shelf-life data":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "ImplantableLong-term biocompatibility and, for some codes, clinical data":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "CLIA-waived (IVD)CLIA categorisation and a waiver application under 42 CFR 493":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Clinical data submittedFDA 3454/3455 financial certification or disclosure":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mclass[39m=[32m"sr-only"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"new-project-title"[39m
+      [33mclass[39m=[32m"npw"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pd-topbar"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pd-crumb-back"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Projects[0m
+        [36m</button>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"pd-crumb-sep"[39m
+        [36m>[39m
+          [0m/[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pd-crumb-here"[39m
+        [36m>[39m
+          [0mNew project[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"npw-head"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-head-inner"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+            [33mid[39m=[32m"new-project-title"[39m
+          [36m>[39m
+            [0mNew project[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mWhat are you filing? Choose the filing, describe the product, then review what will be recorded. The filing decides the dossier outline the project is built against.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<nav[39m
+        [33maria-label[39m=[32m"New project steps"[39m
+        [33mclass[39m=[32m"npw-steps"[39m
+      [36m>[39m
+        [36m<ol>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"done"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m1[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mChoose filing type[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33maria-current[39m=[32m"step"[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"current"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m2[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mConfigure project[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"todo"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m3[0m
+                [36m</span>[39m
+                [36m<span[39m
+               ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > reviews and persists the explicitly selected monitoring service without seeding a record
+TestingLibraryElementError: Unable to find an accessible element with the role "checkbox" and name `/risk-based monitoring/i`
+
+Here are the accessible roles:
+
+  region:
+
+  Name "New project":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"new-project-title"[39m
+    [33mclass[39m=[32m"npw"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  Name "Saved onboarding discovery":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Saved onboarding discovery"[39m
+    [33mclass[39m=[32m"npw-field npw-field-wide"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Projects":
+  [36m<button[39m
+    [33mclass[39m=[32m"pd-crumb-back"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Step 1Choose filing type":
+  [36m<button[39m
+    [33mclass[39m=[32m"npw-step-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Step 2Configure project":
+  [36m<button[39m
+    [33mclass[39m=[32m"npw-step-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Step 3Review & create":
+  [36m<button[39m
+    [33mclass[39m=[32m"npw-step-btn"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Retry: platform support for 510K in FDA":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Retry: platform support for 510K in FDA"[39m
+    [33mclass[39m=[32m"btn ghost sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Review saved discovery":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-ask"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Cancel":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Back":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Continue":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"npw-head"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "New project":
+  [36m<h1[39m
+    [33mclass[39m=[32m"ph-title"[39m
+    [33mid[39m=[32m"new-project-title"[39m
+  [36m/>[39m
+
+  Name "Configure your Traditional 510(k) project":
+  [36m<h2[39m
+    [33mclass[39m=[32m"npw-h2"[39m
+  [36m/>[39m
+
+  Name "Start from your saved discovery":
+  [36m<h3[39m
+    [33mclass[39m=[32m"npw-seg-t"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"ph-sub"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"npw-seg-s"[39m
+    [33mdata-testid[39m=[32m"npw-market-support"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"npw-field-help"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  navigation:
+
+  Name "New project steps":
+  [36m<nav[39m
+    [33maria-label[39m=[32m"New project steps"[39m
+    [33mclass[39m=[32m"npw-steps"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ol />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"npw-step"[39m
+    [33mdata-state[39m=[32m"done"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33maria-current[39m=[32m"step"[39m
+    [33mclass[39m=[32m"npw-step"[39m
+    [33mdata-state[39m=[32m"current"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"npw-step"[39m
+    [33mdata-state[39m=[32m"todo"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<span[39m
+    [33mdata-state[39m=[32m"error"[39m
+    [33mdata-testid[39m=[32m"market-support"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"sr-only"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Client workspace":
+  [36m<select[39m
+    [33maria-describedby[39m=[32m"npw-workspace-help"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mid[39m=[32m"npw-client-workspace"[39m
+    [33mrequired[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Device class":
+  [36m<select[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+  [36m/>[39m
+
+  Name "Product typeThe filing default is selected. Choose the product type this project will record.":
+  [36m<select[39m
+    [33maria-describedby[39m=[32m"npw-class-help"[39m
+    [33maria-required[39m=[32m"false"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+  [36m/>[39m
+
+  Name "Review panel":
+  [36m<select[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Choose a client workspace":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Sponsor A":
+  [36m<option[39m
+    [33mvalue[39m=[32m"21"[39m
+  [36m/>[39m
+
+  Name "Not yet determined":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Class I":
+  [36m<option[39m
+    [33mvalue[39m=[32m"I"[39m
+  [36m/>[39m
+
+  Name "Class II":
+  [36m<option[39m
+    [33mvalue[39m=[32m"II"[39m
+  [36m/>[39m
+
+  Name "Class III":
+  [36m<option[39m
+    [33mvalue[39m=[32m"III"[39m
+  [36m/>[39m
+
+  Name "Medical device":
+  [36m<option[39m
+    [33mvalue[39m=[32m"device"[39m
+  [36m/>[39m
+
+  Name "In-vitro diagnostic":
+  [36m<option[39m
+    [33mvalue[39m=[32m"ivd"[39m
+  [36m/>[39m
+
+  Name "Companion diagnostic":
+  [36m<option[39m
+    [33mvalue[39m=[32m"cdx"[39m
+  [36m/>[39m
+
+  Name "Software as a medical device":
+  [36m<option[39m
+    [33mvalue[39m=[32m"samd"[39m
+  [36m/>[39m
+
+  Name "Not yet determined":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Anesthesiology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Anesthesiology"[39m
+  [36m/>[39m
+
+  Name "Cardiovascular":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Cardiovascular"[39m
+  [36m/>[39m
+
+  Name "Chemistry":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Chemistry"[39m
+  [36m/>[39m
+
+  Name "Dental":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Dental"[39m
+  [36m/>[39m
+
+  Name "Ear, Nose & Throat":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Ear, Nose & Throat"[39m
+  [36m/>[39m
+
+  Name "Gastroenterology & Urology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Gastroenterology & Urology"[39m
+  [36m/>[39m
+
+  Name "General & Plastic Surgery":
+  [36m<option[39m
+    [33mvalue[39m=[32m"General & Plastic Surgery"[39m
+  [36m/>[39m
+
+  Name "General Hospital":
+  [36m<option[39m
+    [33mvalue[39m=[32m"General Hospital"[39m
+  [36m/>[39m
+
+  Name "Hematology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Hematology"[39m
+  [36m/>[39m
+
+  Name "Immunology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Immunology"[39m
+  [36m/>[39m
+
+  Name "Microbiology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Microbiology"[39m
+  [36m/>[39m
+
+  Name "Neurology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Neurology"[39m
+  [36m/>[39m
+
+  Name "Obstetrics & Gynecology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Obstetrics & Gynecology"[39m
+  [36m/>[39m
+
+  Name "Ophthalmic":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Ophthalmic"[39m
+  [36m/>[39m
+
+  Name "Orthopedic":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Orthopedic"[39m
+  [36m/>[39m
+
+  Name "Pathology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Pathology"[39m
+  [36m/>[39m
+
+  Name "Physical Medicine":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Physical Medicine"[39m
+  [36m/>[39m
+
+  Name "Radiology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Radiology"[39m
+  [36m/>[39m
+
+  Name "Clinical Toxicology":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Clinical Toxicology"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Project name Required. The project is listed under this name.":
+  [36m<input[39m
+    [33maria-describedby[39m=[32m"npw-name-help"[39m
+    [33maria-required[39m=[32m"true"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mplaceholder[39m=[32m"e.g. BX-204 — Traditional 510(k)"[39m
+    [33mrequired[39m=[32m""[39m
+    [33mvalue[39m=[32m"A monitoring project"[39m
+  [36m/>[39m
+
+  Name "Product name":
+  [36m<input[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mplaceholder[39m=[32m"e.g. BX-204"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Product code Three letters. It decides the regulation number, the review panel and which predicates you can compare against.":
+  [36m<input[39m
+    [33maria-describedby[39m=[32m"npw-pc-help"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mmaxlength[39m=[32m"3"[39m
+    [33mplaceholder[39m=[32m"e.g. BZH"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Regulation number 21 CFR — the part is the panel.":
+  [36m<input[39m
+    [33maria-describedby[39m=[32m"npw-rn-help"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mplaceholder[39m=[32m"e.g. 868.1860"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Predicate 510(k) number The cleared device this one is substantially equivalent to.":
+  [36m<input[39m
+    [33maria-describedby[39m=[32m"npw-pk-help"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mplaceholder[39m=[32m"e.g. K181234"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Predicate device name The eSTAR prints this beside the number, so give both or neither — the record does not hold half a claim of substantial equivalence.":
+  [36m<input[39m
+    [33maria-describedby[39m=[32m"npw-pn-help"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mplaceholder[39m=[32m"the predicate’s trade name, as it is marketed"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Indications for use":
+  [36m<textarea[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mid[39m=[32m"npw-intended-use"[39m
+    [33mplaceholder[39m=[32m"The statement that will appear on FDA Form 3881."[39m
+    [33mrows[39m=[32m"3"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Product characteristics":
+  [36m<fieldset[39m
+    [33mclass[39m=[32m"npw-field npw-field-wide npw-flags"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Combination product21 CFR 3.2(e) — adds a lead-centre determination and the other centre’s content":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Software / AI-MLJune 2023 device software guidance — Documentation Level, architecture, SRS/SDS, V&V, SBOM":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Cyber deviceFD&C Act §524B — cybersecurity documentation; an RTA ground when absent":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "SterileSterilisation validation, packaging and shelf-life data":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "ImplantableLong-term biocompatibility and, for some codes, clinical data":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "CLIA-waived (IVD)CLIA categorisation and a waiver application under 42 CFR 493":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "Clinical data submittedFDA 3454/3455 financial certification or disclosure":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mclass[39m=[32m"sr-only"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"new-project-title"[39m
+      [33mclass[39m=[32m"npw"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pd-topbar"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pd-crumb-back"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Projects[0m
+        [36m</button>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"pd-crumb-sep"[39m
+        [36m>[39m
+          [0m/[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pd-crumb-here"[39m
+        [36m>[39m
+          [0mNew project[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"npw-head"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"npw-head-inner"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mWorkspace[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+            [33mid[39m=[32m"new-project-title"[39m
+          [36m>[39m
+            [0mNew project[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mWhat are you filing? Choose the filing, describe the product, then review what will be recorded. The filing decides the dossier outline the project is built against.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<nav[39m
+        [33maria-label[39m=[32m"New project steps"[39m
+        [33mclass[39m=[32m"npw-steps"[39m
+      [36m>[39m
+        [36m<ol>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"done"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m1[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mChoose filing type[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33maria-current[39m=[32m"step"[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"current"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m2[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-t"[39m
+                [36m>[39m
+                  [0mConfigure project[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"npw-step"[39m
+            [33mdata-state[39m=[32m"todo"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"npw-step-btn"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"npw-step-n"[39m
+              [36m>[39m
+                [0m3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"npw-step-l"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"npw-step-k"[39m
+                [36m>[39m
+                  [0mStep [0m
+                  [0m3[0m
+                [36m</span>[39m
+                [36m<span[39m
+               ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx:43:27
+     41|     render(<NewProjectWizard onClose={vi.fn()} onNav={onNav} />);
+     42|     await configure();
+     43|     const choice = screen.getByRole('checkbox', { name: /risk-based mo…
+       |                           ^
+     44|     expect(choice).toHaveProperty('checked', false);
+     45|     fireEvent.click(choice);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  16:45:06
+   Duration  2.62s (transform 659ms, setup 146ms, import 840ms, tests 981ms, environment 507ms)
+
+JSON report written to /workspace/.cloud-setup/rbm-navigation/project-red-results.json

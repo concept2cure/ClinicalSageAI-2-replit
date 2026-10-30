@@ -1,0 +1,30 @@
+{
+  "finishedAt": "2026-10-30T17:52:04.777343+00:00",
+  "commands": [
+    {
+      "command": "npm run --silent ci:launch-scope",
+      "exitCode": 0,
+      "transcript": "final-current-launch-scope.txt",
+      "sha256": "6e5e2d3a8d6808c665b201601d9bedf156de7f2d1a76b52a6e20b9f8422ce904"
+    },
+    {
+      "command": "npm run --silent ci:launch-scope-api",
+      "exitCode": 0,
+      "transcript": "final-current-launch-scope-api.txt",
+      "sha256": "e6f9355ae5b0fcc8bfc1601f32b57572192f88a48986e88c096e622e401f9b3c"
+    },
+    {
+      "command": "npm run --silent ci:sign-ceremony",
+      "exitCode": 0,
+      "transcript": "final-current-sign-ceremony.txt",
+      "sha256": "2d6ee1ca864ebe41d9e62611e00a00ca6906ee819bbbd564d4f60bbc1fb5ec6c"
+    },
+    {
+      "command": "npm run --silent ci:sql-interpolation",
+      "exitCode": 0,
+      "transcript": "final-current-sql-interpolation.txt",
+      "sha256": "95f4e9d522d6cabb89fcc3370e60ba9694c24dcb74dac323979e405dea31dff4"
+    }
+  ],
+  "unchangedInputs": true
+}

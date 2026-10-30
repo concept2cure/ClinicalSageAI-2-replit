@@ -344,11 +344,13 @@ describe('amendAssessment — versioned revision of a signed RACT', () => {
     expect(insert.sql).toContain("'draft'");
     expect(insert.args).toContain(3);
     expect(insert.sql).not.toContain('approved_by');
-    expect(String(insert.args[insert.args.length - 1])).toContain('New safety signal');
+    expect(insert.args.some(arg => typeof arg === 'string' && arg.includes('New safety signal'))).toBe(true);
+    expect(insert.args).toContain(4); // The new version records the current amendment author.
 
     // The register is copied to the NEW assessment id, read from the old one.
     const copy = calls[4];
-    expect(copy.args).toEqual([9, ORG, 7]);
+    expect(copy.args).toEqual([9, ORG, 7, 'p']);
+    expect(copy.sql).toContain('program_id = $4');
     expect(copy.sql).toContain('INSERT INTO rbm_risk_items');
     for (const c of calls) expect(c.args).toContain(ORG);
   });

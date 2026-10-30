@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/rbm/__tests__/rbm-assessment-seed.test.ts client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/access-type-seed-green-results.json",
+  "exitCode": 0,
+  "passed": 19,
+  "failed": 0,
+  "skipped": 0,
+  "files": 2,
+  "unchangedInputs": true,
+  "failures": []
+}

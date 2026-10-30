@@ -606,10 +606,10 @@ export const ADVISE_RISK_MANAGEMENT: AnaTool = {
 export const RUN_RBM_ASSESSMENT: AnaTool = {
   name: 'run_rbm_assessment',
   description:
-    'Risk-Based Monitoring (ICH E6(R3)/E8(R1)) advisor: seeds or summarizes a study Risk Assessment ' +
+    'Risk-Based Monitoring (ICH E6(R3)/E8(R1)) advisor: seeds a DRAFT or summarizes a study Risk Assessment ' +
     '(RACT) for a program — Critical-to-Quality (CtQ) factors with likelihood × impact scores, the ' +
     'critical factors, and the rolled-up overall risk level. Use when scoping risk-based quality ' +
-    'management for a study. Reads/writes the program\'s RBM risk assessment.',
+    'management for a study. A seeded draft needs review and signed approval on the assessment before activation. Reads/writes the program\'s RBM risk assessment.',
   input_schema: {
     type: 'object',
     properties: {

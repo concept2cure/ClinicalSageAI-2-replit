@@ -1,0 +1,17 @@
+PASS 1 desktop Actual configuration starts with RBM unchecked
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.fill: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('textbox', { name: 'Project name', exact: true })[22m
+
+    at /workspace/.cloud-setup/rbm-navigation/browser-wizard-check.mjs:55:67 {
+  log: [
+    "  - waiting for getByRole('textbox', { name: 'Project name', exact: true })"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.3

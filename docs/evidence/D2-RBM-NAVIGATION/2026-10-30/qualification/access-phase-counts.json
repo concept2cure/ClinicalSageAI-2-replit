@@ -1,0 +1,152 @@
+[
+  {
+    "prefix": "access-red-harness-01",
+    "passed": 0,
+    "failed": 3,
+    "skipped": 0,
+    "actualFiles": 2,
+    "success": false,
+    "pinnedInputCount": 6,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-red",
+    "passed": 0,
+    "failed": 3,
+    "skipped": 0,
+    "actualFiles": 2,
+    "success": false,
+    "pinnedInputCount": 6,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-green-01",
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0,
+    "actualFiles": 3,
+    "success": true,
+    "pinnedInputCount": null,
+    "unchangedInputs": null
+  },
+  {
+    "prefix": "access-boundary-red",
+    "passed": 25,
+    "failed": 10,
+    "skipped": 0,
+    "actualFiles": 1,
+    "success": false,
+    "pinnedInputCount": 2,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-green-02",
+    "passed": 104,
+    "failed": 0,
+    "skipped": 0,
+    "actualFiles": 9,
+    "success": false,
+    "pinnedInputCount": 17,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-green-03",
+    "passed": 110,
+    "failed": 0,
+    "skipped": 0,
+    "actualFiles": 9,
+    "success": true,
+    "pinnedInputCount": 18,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-review-red-01",
+    "passed": 37,
+    "failed": 4,
+    "skipped": 0,
+    "actualFiles": 2,
+    "success": false,
+    "pinnedInputCount": 5,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-integrity-red",
+    "passed": 3,
+    "failed": 12,
+    "skipped": 0,
+    "actualFiles": 1,
+    "success": false,
+    "pinnedInputCount": 4,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-green-04",
+    "passed": 176,
+    "failed": 1,
+    "skipped": 0,
+    "actualFiles": 11,
+    "success": false,
+    "pinnedInputCount": 21,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-green-05",
+    "passed": 177,
+    "failed": 0,
+    "skipped": 0,
+    "actualFiles": 11,
+    "success": true,
+    "pinnedInputCount": 21,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-seed-ownership-red",
+    "passed": 3,
+    "failed": 2,
+    "skipped": 0,
+    "actualFiles": 1,
+    "success": false,
+    "pinnedInputCount": 2,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-roster-ddl-red",
+    "passed": 4,
+    "failed": 3,
+    "skipped": 0,
+    "actualFiles": 1,
+    "success": false,
+    "pinnedInputCount": 3,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-green-06",
+    "passed": 182,
+    "failed": 0,
+    "skipped": 0,
+    "actualFiles": 11,
+    "success": true,
+    "pinnedInputCount": 22,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-seed-dispatch-red",
+    "passed": 3,
+    "failed": 1,
+    "skipped": 0,
+    "actualFiles": 1,
+    "success": false,
+    "pinnedInputCount": 7,
+    "unchangedInputs": true
+  },
+  {
+    "prefix": "access-green-07",
+    "passed": 184,
+    "failed": 0,
+    "skipped": 0,
+    "actualFiles": 11,
+    "success": true,
+    "pinnedInputCount": 26,
+    "unchangedInputs": true
+  }
+]
