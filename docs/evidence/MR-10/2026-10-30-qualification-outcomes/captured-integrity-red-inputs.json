@@ -1,0 +1,10 @@
+{
+  "base": "1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10",
+  "kind": "known captured integrity fault classification before correction",
+  "files": {
+    "server/services/ectd/qualification/qualify.ts": "19e429337222f9f532b6c507bb30e8164eddf9ef1fd692f816fd46dadc63e13f",
+    "server/services/ectd/qualification/outcome.ts": "48da1afc458d507eca53ce7cf4700d6ee4451c9320a0516d9e2647e298ad1ac0",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts": "1638eb1001be2a3167d6ca94e31ecef67c24d555026cc04fbb8347ae1ae41fa1",
+    "server/services/ectd/dtd-bundler.ts": "87849d63455d8eb05291a327586382747531223a4284a7ca7bbe8ef850b0901f"
+  }
+}
