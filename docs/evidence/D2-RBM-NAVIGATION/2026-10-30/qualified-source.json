@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-30T18:30:04.303412+00:00",
-  "sourceCommit": "0af600d7e411797907ef1b334644178b9d694185",
-  "scope": "180 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
+  "observedAt": "2026-10-30T18:39:04.680338+00:00",
+  "sourceCommit": "837b34a038be6c515aed37af262bcf96eec24bb4",
+  "scope": "187 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
   "qualification": [
     {
       "receipt": "qualification/final-03-summary.json",
@@ -88,21 +88,37 @@
       "result": "build0 at0af600d7e;180inputs unchanged"
     },
     {
-      "receipt": "qualification/final-ci-summary.json",
+      "receipt": "qualification/final-packaging-ci-summary.json",
       "result": "launch-scope/API591/signature/SQL all0;180inputs unchanged"
     },
     {
-      "receipt": "qualification/lint-final.json.gz",
+      "receipt": "qualification/final-packaging-lint.json.gz",
       "result": "54changedTypeScriptfiles,0errors,190before/190afterwarnings against9e6ee17ba"
+    },
+    {
+      "receipt": "qualification/final-protocol-summary.json",
+      "result": "28/28 across3files at837b34a03;187inputs unchanged. Fresh protocol guide/navigation/selection, including registered guard cleanup; no RBM/server/shared policy source change."
+    },
+    {
+      "receipt": "qualification/build-protocol-exit.json",
+      "result": "build0 at837b34a03;187inputs unchanged"
+    },
+    {
+      "receipt": "qualification/final-ci-summary.json",
+      "result": "launch-scope/API591/signature/SQL all0;187inputs unchanged"
+    },
+    {
+      "receipt": "qualification/lint-final.json.gz",
+      "result": "54changedTypeScriptfiles,0errors,190before/190afterwarnings against1ba873279"
     }
   ],
   "priorWholeTypeScript": {
-    "commit": "59d0bd6eb17d409605a37e1d0b11c0f9548d5097",
+    "commit": "dd53c5a5fcd360d8c0b1b9a3cf72cc56fa19f039",
     "errors": 0,
     "baseline": 0,
     "allNormalGatesPassed": true,
     "remoteUpdate": false,
-    "refusal": "Remote advancement after compiler0/all gates; push-refusal-04. Latest merged source still requires its normal push."
+    "refusal": "Concurrent remote advance; push-refusal-05. Latest merged source still requires normal push."
   },
   "files": {
     "client/src/concept2cure/mdx/MdxSurfaceHost.tsx": "3e0506be983f5407732db2b365a9e8565f30abe491d15872be83d87f8ad24c54",
@@ -132,6 +148,9 @@
     "client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx": "dd47953a20b2d7827eb85b59afb840105b1e01fedfa2111bac02293a372befe4",
     "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx": "1231c041cde83252e2a670e4ca373039f76762a3fc8690ab0b53682eb71e1da1",
     "client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx": "b492611e278cce14e34de035191791f4a39f655dc67d89574e79447e0ef94943",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx": "3e0c7ca8531e0635d275ec93b56f9eb0d94942fcd1dfda61c94d8e5123208a9a",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx": "c2203e80661694f4cdae55c4af8e8bdfa8c362df1affbf6b48a1e617b1211596",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx": "e16143e52dfe4cb0c745202201b196172d6966e435c601e02d125284209c237c",
     "client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts": "be52cd0e44d7cb0488cdb553a024c94f337d834fdec69bedb01ae1cf5ad1426d",
     "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx": "376cbb6f3e65be35982ada60aeb78226419d35871ab118f2f63ff9810ac7fd69",
     "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "c4e9a2d65ec014d40a0c7055d0f7d931dedd23d1266531ba6f42b44f87829279",
@@ -152,7 +171,7 @@
     "client/src/concept2cure/v2/registryModel.ts": "192340d35184bd95307631524d900db4e75bd1f97953efc64dd30ec6723a075a",
     "client/src/concept2cure/v2/shellProject.ts": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
     "client/src/concept2cure/v2/styles/project-home-v2.css": "da717168f6787e3afba4fb8078bc1c4a634e33607c8b51199aea1784ac2e6940",
-    "client/src/concept2cure/v2/styles/protocol-dev-editing.css": "6263d5f95d841436d2433585d2b3c65074e41e8d6692d0015936682b9a3202f8",
+    "client/src/concept2cure/v2/styles/protocol-dev-editing.css": "7fd38926c09f86499ad6f629638426926b00cc0e5e880d133c803b6b0ac5bcc9",
     "client/src/concept2cure/v2/surfaceViews.ts": "3026a4c2bece76334497b1f7d4694d056545ffa18876da209509d739fff42376",
     "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceDraft.tsx": "5ef1536bfaf1d17f1b5a78d411a9e039019de96d4faa86e881e318c000a5e4e2",
     "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceVariants.tsx": "dc4a33e973e58da0f9d524c42ec3c559fc502eb898da3984c3a8dfb53d246848",
@@ -163,7 +182,11 @@
     "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx": "1f49ca6b760a6f2cc5f13b810e0bb7d642fcd828cc86b4f8cab78895edda4adc",
     "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx": "1409441c6b96fc965903e1e96840653d70ccd0beeeb921b7a0049285d8d60427",
     "client/src/concept2cure/v2/surfaces/Projects.tsx": "e09aa607759335a987aa75e269c3c75aa00dab1607c8858c21f66dba88da5fc0",
-    "client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx": "50775554c68109543953f1abf21727c7e4b8cc53da1921ebb998fc8d703458e2",
+    "client/src/concept2cure/v2/surfaces/ProtocolDev.tsx": "22448338d2553688a4fe761035a2702c42a70ff6ebbfc7c6984be268783adeb1",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx": "e8de2294e6b960c45660bf5a09d079b1a660521be2755b8c073b4e484e24a936",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx": "9fcd277dddce321f77acde6a8b3abee3a151c3c72cbd8c5c2b696b194de1aef0",
+    "client/src/concept2cure/v2/surfaces/ProtocolWorkNavigation.ts": "a01c32ac3690c9cb54e9701607645e19df1717ede7885c64489f23cb19bacd11",
+    "client/src/concept2cure/v2/surfaces/ProtocolWorkflowGuide.tsx": "f97b849ddde5313dc55cdb0c4ea88caf8fcd2f1109907ecbd32ffc3c0c427b8f",
     "client/src/concept2cure/v2/surfaces/Rbm.tsx": "865c285d912d306d0aa4bc57376e91e15bb89886ecb897ad041fb01931e591dc",
     "client/src/concept2cure/v2/surfaces/RiskRegister.tsx": "48a66bb26b8d2426781d42df9eb2f11b51f6684484fd23ee83b570f56f283a2e",
     "client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx": "a211037fea3140527a5501b0defe6469add550754302a117fa8f70203afd42ad",
@@ -286,5 +309,5 @@
     "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
     "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
   },
-  "publication": "Pending actual normal push/freshremoteproof for latest180inputs. Two gate refusals and two remote-advancement refusals retained; no force/bypass/baselinegrowth."
+  "publication": "Pending actual normal push/freshremoteproof for latest187inputs. Two gate refusals and three remote-advancement refusals retained; no force/bypass/baselinegrowth."
 }

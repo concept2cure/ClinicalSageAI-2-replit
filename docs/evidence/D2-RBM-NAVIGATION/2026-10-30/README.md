@@ -66,7 +66,7 @@ Deleted history finds 3 historical retirements/rewrites, not an absent module.
 The full signature successor at `09c83267b` passed the root combined cohort,
 build and zero-regression lint below. Canonical integration, the later SQL gate
 successor and the latest unrelated CSR/STF merge have their own named checks and
-source-preservation links. The current packet selects 180 source/test/configuration
+source-preservation links. The current packet selects 187 source/test/configuration
 inputs; it does not relabel earlier executions as a full rerun of current source.
 Whole TypeScript, normal push gates and fresh remote proof remain pending.
 
@@ -270,6 +270,25 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   190→190 with zero errors. This is a new affected cohort, not a rerun or sum of
   the preceding attachment, RBM or upstream suites. Upstream totals are not
   borrowed.
+- Fifth normal push (`push-refusal-05-*`) at `dd53c5a5f` passed **whole
+  TypeScript with 0 errors against baseline 0** and all normal gates, with the
+  180 selected inputs unchanged. Git refused the update after the remote
+  advanced to `1ba873279`. No remote work was overwritten and this attempt
+  published nothing; no force push or bypass was used. This is the third actual
+  zero-error whole-compiler source epoch, alongside `498403dc3` and `59d0bd6eb`.
+- Protocol workflow integration: the net incoming nine-file change is protocol
+  workflow UI only. It merged normally into `837b34a03` without conflicts.
+  Read-only compatibility review found no RBM, actor, server or shared-contract
+  change. The protocol selection and protocol CSS are the prior selected-input
+  overlaps; the workflow hook uses the existing navigation guard and unregisters
+  on cleanup, so it does not leave a stale RBM navigation block. Added
+  `.pde-flow` CSS selectors stay scoped to the protocol UI. Root's affected
+  cohort (`final-protocol-*`) at `837b34a03` passed **28/28 across 3 actual files**,
+  exit 0, zero skipped and all **187 selected inputs unchanged**. Its production
+  build passed **exit 0** with those 187 inputs stable; all four selected CI
+  checks passed, and lint remained 190→190 with zero errors. Previous source
+  epochs remain intact; neither earlier local nor upstream totals are borrowed
+  or summed into this affected cohort.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
   changed-file selection. The initial lint harness exceeded its historical text
@@ -301,7 +320,7 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   passed 590 named paths before the latest integration; the current API check
   passes **591 named paths** with none refused. Current launch scope, launch API
   scope, signature ceremony and SQL-interpolation CI checks all pass **exit 0**,
-  with **180 selected inputs unchanged** through those checks
+  with **187 selected inputs unchanged** through those checks
   (`final-ci-summary.json`).
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
@@ -321,6 +340,6 @@ Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and
 explicitly synthetic browser behavior only at the named sources. It does not
 establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
 validation or agency acceptance. Whole TypeScript and all normal gates passed at
-`498403dc3` and `59d0bd6eb`; remote advancement then refused both updates. The
-current 180-input integration still requires its own compiler/gated-push retry
+`498403dc3`, `59d0bd6eb` and `dd53c5a5f`; remote advancement then refused those
+updates. The current 187-input integration still requires its own compiler/gated-push retry
 and fresh remote/source verification before publication can be claimed.

@@ -79,7 +79,10 @@
     "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx",
     "server/services/ectd/__tests__/dtd-bundler.test.ts",
     "server/services/ectd/__tests__/stf-agency-source.test.ts",
-    "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts"
+    "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx"
   ],
   "inputs": [
     "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
@@ -109,6 +112,9 @@
     "client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx",
     "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx",
     "client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx",
     "client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts",
     "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx",
     "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
@@ -140,7 +146,11 @@
     "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx",
     "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx",
     "client/src/concept2cure/v2/surfaces/Projects.tsx",
+    "client/src/concept2cure/v2/surfaces/ProtocolDev.tsx",
     "client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx",
+    "client/src/concept2cure/v2/surfaces/ProtocolWorkNavigation.ts",
+    "client/src/concept2cure/v2/surfaces/ProtocolWorkflowGuide.tsx",
     "client/src/concept2cure/v2/surfaces/Rbm.tsx",
     "client/src/concept2cure/v2/surfaces/RiskRegister.tsx",
     "client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx",
