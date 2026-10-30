@@ -1,0 +1,70 @@
+🔒 Pre-push: Running eCTD contract enforcement gates...
+   Validating eCTD stubs bundle against schema (AJV)...
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+   ✅ eCTD bundle validation passed.
+   Validating risk code contracts...
+OK: Generated risk code types are up to date.
+   ✅ Risk code validation passed.
+   Validating migration apply-order invariants...
+[ci:migration-set-order] OK — 459 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+   Validating that guarded tables are created before they are guarded...
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+   ✅ Migration apply-order passed.
+   Validating the fresh-install overlay can reach what it depends on...
+[ci:install-fresh-overlay-deps] 386 overlay file(s) · 694 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s).
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+   ✅ Fresh-install overlay dependencies reachable.
+   Validating DROPs are replay-safe...
+[ci:migration-drop-safety] OK — 459 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+   ✅ Replay-safe DROPs passed.
+   Validating no class vocabulary is restated...
+[ci:class-vocabulary] OK — 5875 file(s) scanned, no restated class vocabulary.
+   ✅ One class vocabulary passed.
+   Validating new migrations are on a deploy path...
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+   ✅ Deploy-path check passed.
+   Validating queried columns are reachable...
+[ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+   ✅ Column reachability passed.
+   Validating server code runs no DDL on the runtime connection...
+[ci:runtime-ddl] 75 DDL statement(s) in 11 runtime server file(s); 13 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+   ✅ No runtime DDL.
+   Validating jsonb operators are not applied to json columns...
+[ci:json-operator-types] 960 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3540 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+   ✅ No jsonb operator on a json column.
+   Validating the migration manifest tracks db/migrations...
+Manifest is in sync.
+   ✅ Migration manifest in sync.
+   Validating no new unscoped Drizzle query on tenant data...
+[ci:drizzle-tenant-scope] OK — 90 site(s), all baselined.
+   ✅ Drizzle tenant scope passed.
+   Validating every v2 className is defined in a stylesheet...
+[ci:undefined-css-classes] FAIL — class names no stylesheet defines:
+  pj-card-sub
+    client/src/concept2cure/v2/surfaces/ProjectRecordedContext.tsx
+
+  These style NOTHING. The element renders unstyled and no test will say so.
+  Either use the existing vocabulary (grep the v2 styles/ folder for the
+  shape you want) or, if the class is a deliberate semantic hook with no
+  rule, add it to scripts/ci/undefined-css-classes-baseline.json WITH A REASON.
+
+🚫 ERROR: undefined CSS class check FAILED.
+   The element renders unstyled and no test will tell you. Use the existing
+   vocabulary, or baseline the name WITH A REASON if it is a deliberate hook.
+
+husky - pre-push script failed (code 1)

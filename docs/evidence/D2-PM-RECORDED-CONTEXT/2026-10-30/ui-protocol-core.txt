@@ -1,0 +1,89 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > starts study and protocol design from the verified project before its filing requirements 540ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a new project opens on it, phases in order, with the target date 122ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a started deliverable opens this project’s working copy; the rest start from their template 114ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a failed catalogue read is a failure with a retry, never an empty plan 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > writes one task to the task store, scoped and linked, and reads the assignment back 241ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered to a viewer, whose task writes the server refuses 81ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered while the project’s id is unverified, so no task is written unscoped 122ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > an unreadable assignment list is said, and Assign still works 108ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a small-molecule US IND: Module 3 in CMC, Module 1 in the IND forms, QA on Submit 156ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a biologic IND is not sent to CMC, which composes small-molecule Module 3 only 88ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > an NDA is told the list is not available here and where its documents are, with no invented list
+An update to ProjectRecords inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > a device project’s Plan is its workstreams, each assignable 308ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > an NDA is told the list is not available here and where its documents are, with no invented list 152ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the assignment model > keys tasks by this project’s deliverable; the newest wins; another project’s and cancelled tasks are ignored 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the assignment model > never Number()s the program UUID: the project id is the verified numeric one 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > while the project record is read, Plan says so, and never that the filing has no list 84ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > does not offer project initiation for a returned record belonging to another project 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a filing with no list is not told to "see every document" by the step band 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > the target date is the recorded day, never shifted by the viewer’s zone 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a working copy titled as its template counts as started 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > an unconfirmed Assign reads the lists again, so they say what is there 131ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a deliverable someone already has offers "Assign another person", and a finished task is the task’s, not the deliverable’s 84ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, unbound > says no design is bound and offers the bind action, claiming nothing 631ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, unbound > lists this tenant's persisted designs in the bind drawer 291ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, bound > shows the design identity and the design gates' findings 408ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, bound > reports an unresolved link as unresolved, not as a clean design 206ms
+stderr | client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > offers all five, each labelled with what it is a projection OF
+An update to PlanningInputsPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > offers all five, each labelled with what it is a projection OF 555ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > views the ICH M11 protocol projection with each section's status 378ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a projection the design cannot fill as its gap, not as an empty success 357ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a failed projection read as a failure, not as an empty projection 363ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an empty object is a failed read, not an organisation with no design 202ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an error carried on a 200 is a failed read, not an organisation with no design 190ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > the list inside an envelope is a failed read, not an organisation with no design 230ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > designs present but null is a failed read, not an organisation with no design 207ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > a design with no id is a failed read, not an organisation with no design 196ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an HTML page on a 200 is a failed read, not an organisation with no design 185ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an organisation with genuinely no design is still told so 215ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > core work selected inside a project > offers one combined study/protocol choice alongside the existing peer destinations 253ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > core work selected inside a project > opens the existing protocol-dev destination only after the person starts the selected work 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > core work selected inside a project > opens the existing cmc destination only after the person starts the selected work 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > core work selected inside a project > opens the existing rbm destination only after the person starts the selected work 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > core work selected inside a project > opens the existing biostatistics destination only after the person starts the selected work 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > core work selected inside a project > offers only destinations this person can open and offers no control when none are available 16ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > core work selected inside a project > does not offer CMC outside its composition boundary even when the surface is available 21ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > core work selected inside a project > refuses to launch a selected destination after its availability changes 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > core work selected inside a project > refuses to launch previously selected CMC after the project facts cease to support composition 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > core work selected inside a project > requires a new selection when the open project changes 32ms
+
+ Test Files  3 passed (3)
+      Tests  46 passed (46)
+   Start at  18:35:21
+   Duration  17.31s (transform 4.91s, setup 419ms, import 6.60s, tests 7.81s, environment 1.88s)
+

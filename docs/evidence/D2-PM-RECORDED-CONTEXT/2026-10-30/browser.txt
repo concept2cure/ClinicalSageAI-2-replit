@@ -1,0 +1,31 @@
+{
+  "results": [
+    {
+      "width": 1280,
+      "recordedSourceAndInstructions": true,
+      "boundedLists": true,
+      "unknownConfidenceHonest": true,
+      "noWriteControls": true,
+      "tokenRefreshRetained": true,
+      "failedAndForeignReadsHidden": true,
+      "explicitRetry": true,
+      "lateActorReplyRetired": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "recordedSourceAndInstructions": true,
+      "boundedLists": true,
+      "unknownConfidenceHonest": true,
+      "noWriteControls": true,
+      "tokenRefreshRetained": true,
+      "failedAndForeignReadsHidden": true,
+      "explicitRetry": true,
+      "lateActorReplyRetired": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    }
+  ],
+  "readCount": 18
+}
