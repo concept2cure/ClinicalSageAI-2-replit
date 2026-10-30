@@ -1,0 +1,1 @@
+{"checks":8,"expectedChecks":8,"failure":null,"output":"/workspace/Concept2Cure/docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-result"}

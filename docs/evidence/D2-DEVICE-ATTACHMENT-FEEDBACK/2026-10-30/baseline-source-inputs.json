@@ -1,0 +1,10 @@
+{
+  "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx": "46a8025705065400161b27eed4c243b1bb51c197d9d212544ecf821c3b247e87",
+  "client/src/concept2cure/mdx/pathway-tabs.css": "657e6ab14dac9e651f6dc0f3b72b8845a83ba4df27b2a43940b3b8eac173c8be",
+  "client/src/concept2cure/v2/useVaultUpload.ts": "bd24e2c28da897010dac7247de47d73c991cfe3befc57b915eaef1480e68890e",
+  "client/src/concept2cure/v2/vaultIngestReceipt.ts": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a",
+  "client/src/concept2cure/v2/vaultIngestTransport.ts": "420be6b1ca6c22ff5367a70aa484356ee62b1733b21de0675cebeaaaec030e8f",
+  "client/src/concept2cure/mdx/store/dossierStore.ts": "da488d82c39784ef5b2f415871ef079e45513d8b8aba973148d366a010bad415",
+  "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7",
+  "client/src/concept2cure/v2/shellProject.ts": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7"
+}
