@@ -112,7 +112,8 @@ vi.mock('../../../db', () => {
       // The FDA gateway's transmittal row (only the SFTP case reaches it).
       if (/INSERT INTO submission_transmittals/.test(text)) return { rowCount: 1, rows: [{ id: 99 }] };
       // What the package names, from the record (package-identity.ts, QA j6).
-      if (/LEFT JOIN ind_sponsors/.test(text)) return { rows: [{ organization_name: 'Concept2Cure Therapeutics', application_number: '123456',
+      // The project's home market is FDA's (P-44): a package names the number only for a market it resolves.
+      if (/LEFT JOIN ind_sponsors/.test(text)) return { rows: [{ organization_name: 'Concept2Cure Therapeutics', application_number: '123456', primary_agency: 'FDA',
         applicant_sponsor_id: '22222222-2222-4222-8222-222222222222', sponsor_id: '22222222-2222-4222-8222-222222222222',
         sponsor_name: 'Concept2Cure Therapeutics', duns: '123456789', contact_name: 'Regulatory Contact', contact_phone: '+1 617 555 0100', contact_email: 'regulatory@example.test' }] };
       if (/FROM organizations/.test(text)) return { rowCount: 1, rows: [{ name: 'Concept2Cure Therapeutics' }] };
@@ -125,6 +126,22 @@ vi.mock('../../../db', () => {
     }),
   };
   return { db: { select, execute }, pool };
+});
+// The guarded transmit keeps the sent package before the wire (sent-package-archive.ts), in memory here.
+// A >1 GiB descriptor over a small real bundle (integrity.ignoreSize) is kept at the size it declares, so the
+// archive's own size check passes and the SFTP branch is what refuses.
+vi.mock('../../storage', async () => {
+  const { storageModule } = await import('../../submission-gateways/__tests__/sent-package-storage-stub');
+  const provider = storageModule.getStorageProvider();
+  return {
+    getStorageProvider: () => ({
+      ...provider,
+      put: async (o: { bytes: Buffer }) => {
+        const stored = await provider.put(o);
+        return integrity.ignoreSize ? { ...stored, sizeBytes: bundle.sizeBytes } : stored;
+      },
+    }),
+  };
 });
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) }, writeChainedAuditRow: vi.fn() }));
 vi.mock('../../part11/signature-persistence', async (orig) => ({

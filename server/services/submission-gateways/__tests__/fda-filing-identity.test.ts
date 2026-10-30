@@ -34,6 +34,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
+import { PDFDocument } from 'pdf-lib';
 import { packageEctdSubmission, type EctdLeaf } from '../regional-packager';
 import { ValidationError as PackagerValidationError } from '../types';
 import { resolveSubmissionTypeCode, submissionTypeTerms } from '../../ectd/controlled-vocab';
@@ -42,7 +43,11 @@ const md5 = (b: Buffer) => createHash('md5').update(b).digest('hex');
 
 async function pack(over: { submissionType: string; sequence?: string }) {
   const work = await fs.mkdtemp(path.join(os.tmpdir(), 'fda-identity-'));
-  const bytes = Buffer.from('%PDF-1.7\n% cover letter\n');
+  // A real one-page PDF: the packager's original-PDF integrity check refuses one with no catalog or page tree.
+  const cover = await PDFDocument.create();
+  cover.setTitle('Cover letter');
+  cover.addPage();
+  const bytes = Buffer.from(await cover.save({ useObjectStreams: false }));
   const src = path.join(work, 'cover.pdf');
   await fs.writeFile(src, bytes);
   const leaves: EctdLeaf[] = [
