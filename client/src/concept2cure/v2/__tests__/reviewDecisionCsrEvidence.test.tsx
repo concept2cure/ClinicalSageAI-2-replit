@@ -121,6 +121,23 @@ describe('the review decision for a CSR', () => {
     expect((screen.getByRole('button', { name: /Record approval/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('a CSR the server names (made from a CSR template, or renamed) opens the scientific review before any approval is sent', async () => {
+    // 2026-10-30: the server's rule reaches the screen in the review context.
+    const fromTemplate = { ...csrContext, csrScientificReviewRequired: true,
+      snapshot: { ...csrContext.snapshot, title: 'RePreve Part B results', module: 'M5', productCode: null } };
+    mocks.apiRequest.mockImplementation(async (method: string, url: string) => {
+      const json = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
+      if (url.endsWith('/reviews')) return json(peerRead(fromTemplate));
+      if (url.startsWith('/api/submission-orchestrator/runs')) return json({ runs: [] });
+      return json({ success: true });
+    });
+    render(<ReviewDecisionDialog documentId={PEER_DOC} programId={PROGRAM} onClose={vi.fn()} onRecorded={vi.fn()} />);
+    fireEvent.change(await screen.findByLabelText('Decision'), { target: { value: 'approved' } });
+    expect(await screen.findByRole('region', { name: 'CSR scientific review' })).toBeTruthy();
+    expect((screen.getByRole('button', { name: /Record approval/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(reviewPosts()).toHaveLength(0);
+  });
+
   it('a document that is not a CSR approves as before, with no map', async () => {
     mocks.apiRequest.mockImplementation(async (method: string, url: string) => ({ ok: true, status: 200,
       json: async () => url.endsWith('/reviews') ? peerRead() : method === 'POST' ? peerReceipt('approved') : { success: true } }));

@@ -9,7 +9,7 @@ import {
   prepareScientificReviewReceipt, scientificTablesSha256,
   type RetainedScientificRun, type ScientificReviewReceipt,
 } from './csr-scientific-review-core.js';
-import { labelledCsr } from '../../../shared/authoring/csr-scientific-review.js';
+import { CSR_TEMPLATE_IDS, isCsrTemplateId, labelledCsr } from '../../../shared/authoring/csr-scientific-review.js';
 
 export interface CsrScientificReviewContext {
   tenantId: number; actorId: string; document: Record<string, unknown>;
@@ -79,19 +79,26 @@ type CsrScientificIdentity = Pick<CsrScientificReviewContext, 'tenantId' | 'docu
   snapshot: Pick<AuthoringSavedSnapshot, 'id'>;
 };
 
-/** Stored identity wins over a caller's document-type selection. A retained
- * CSR origin or earlier scientific receipt keeps the requirement after rename.
- * Unknown native templates still require separate inventory qualification. */
+/** Stored identity wins over a caller's document-type selection. A built-in
+ * CSR template (CSR_TEMPLATE_IDS), a retained CSR origin or an earlier
+ * scientific receipt keeps the requirement after rename. The template is read
+ * from the stored row, never only from the caller's copy, which may not carry it
+ * (2026-10-30). Unknown native templates still require separate inventory
+ * qualification. */
 export async function requiresCsrScientificReview(q: Queryable, input: CsrScientificIdentity): Promise<boolean> {
   const doc = input.document;
-  if ([doc.module, doc.product_code, doc.title, doc.template_id].some(labelledCsr)) return true;
+  if ([doc.module, doc.product_code, doc.title].some(labelledCsr)) return true;
+  if (isCsrTemplateId(doc.template_id)) return true;
   const p = object(doc.provenance) ? doc.provenance : {};
   if (object(p.importSource) && p.importSource.kind === 'csr') return true;
   const retained = await q.query(`SELECT EXISTS (
     SELECT 1 FROM authoring_audit_trail t WHERE t.doc_id=$1 AND t.tenant_id=$2
       AND ((t.operation_type='CREATE' AND t.metadata->'provenance'->'importSource'->>'kind'='csr')
         OR (t.operation_type='document_reviewed' AND t.metadata->'csrScientificEvidence'->>'format'='c2c.csr-scientific-review.v1'))
-    ) AS required`, [input.snapshot.id, input.tenantId]);
+    ) OR EXISTS (
+    SELECT 1 FROM authoring_documents d WHERE d.id=$1 AND d.tenant_id=$2
+      AND lower(to_jsonb(d)->>'template_id') = ANY($3::text[])
+    ) AS required`, [input.snapshot.id, input.tenantId, [...CSR_TEMPLATE_IDS]]);
   if (retained.rows.length !== 1 || typeof retained.rows[0].required !== 'boolean') {
     return refusal('CSR_EVIDENCE_IDENTITY_UNAVAILABLE', 'The retained scientific-review requirement could not be checked.');
   }
