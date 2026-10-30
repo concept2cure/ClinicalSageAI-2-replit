@@ -66,7 +66,7 @@ Deleted history finds 3 historical retirements/rewrites, not an absent module.
 The full signature successor at `09c83267b` passed the root combined cohort,
 build and zero-regression lint below. Canonical integration, the later SQL gate
 successor and later canonical integrations have their own named checks and
-source-preservation links. The current packet selects 245 source/test/configuration
+source-preservation links. The current packet selects 310 source/test/configuration
 inputs; it does not relabel earlier executions as a full rerun of current source.
 Whole TypeScript, normal push gates and fresh remote proof remain pending.
 
@@ -337,7 +337,27 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   [D5 archive-access packet](../../D5/2026-10-30-vault-final-access/README.md)
   retains its native archive executions at its own named source; those are
   upstream evidence, not a root native-PostgreSQL rerun at this merge. Cohorts
-  remain separate and overlap. Current-source whole TypeScript, all normal push
+  remain separate and overlap. Its lint is retained as `final-vault-lint.json`.
+- Seventh and eighth normal pushes (`push-refusal-07-*` and
+  `push-refusal-08-*`) at `3e8840459` and `5d7568304` each passed **whole
+  TypeScript with 0 errors against baseline 0** and all normal gates, with all
+  245 selected inputs unchanged. Git refused the first update after remote
+  advancement to `af226ae6a` and the second after advancement to `8f0b6df37`.
+  Neither attempt published or overwrote remote work; no force or bypass was
+  used. These actual compiler source epochs remain distinct from the following
+  IND/AnA integration.
+- IND/AnA shared-path integration: incoming `3ab7b7220` merged normally into
+  `30bacbc37` without conflicts. The net incoming 66 source/test inputs overlap
+  the prior 245-input selection only at `AnaToolExecutor.ts`: one batch-drafting
+  line passes the existing canonical `ctx?.sqlClient`. Independent review found
+  no RBM handler, assessment-seed dispatch, admission, launch or signing-refusal
+  change. Root's affected cohort (`final-ana-*`) at `30bacbc37` passed **223/223
+  across 9 actual files**, exit 0, zero skipped and all **310 selected inputs
+  unchanged**. Its production build passed **exit 0** on those stable inputs;
+  changed-file lint across 55 TypeScript files remained 190→190 with zero errors.
+  The [incoming IND packet](../../D4/2026-10-30-ind-development/README.md) retains
+  its separately qualified source and tests; its whole-suite results are not
+  borrowed as a root rerun here. Current-source whole TypeScript, all normal push
   gates and fresh remote proof remain pending.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
@@ -374,7 +394,7 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   launch scope, launch API scope, signature ceremony and SQL-interpolation CI
   checks all pass **exit 0**, with **210 selected inputs unchanged** through
   those checks (`final-settings-ci-summary.json`). These are prior-epoch focused
-  receipts; the current Vault integration still requires all normal push gates.
+  receipts; the current IND/AnA integration still requires all normal push gates.
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
   Review found the missing-signature gap and checked its final closure; review
@@ -393,7 +413,8 @@ Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and
 explicitly synthetic browser behavior only at the named sources. It does not
 establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
 validation or agency acceptance. Whole TypeScript and all normal gates passed at
-`498403dc3`, `59d0bd6eb`, `dd53c5a5f` and `624cd9285`; remote advancement then
-refused those updates. The current 245-input integration still requires its own
+`498403dc3`, `59d0bd6eb`, `dd53c5a5f`, `624cd9285`, `3e8840459` and
+`5d7568304`; remote advancement then refused those updates. The current 310-input
+integration still requires its own
 compiler/gated-push retry
 and fresh remote/source verification before publication can be claimed.
