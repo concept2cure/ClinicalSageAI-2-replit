@@ -995,6 +995,8 @@ MR-12 Stage 5 step 3. Stage 7's review step is RR4's.
 
 ### P-53 — Parked, with no sessions
 
+*2026-10-30: superseded for eTMF, registrations, NDA/BLA, QC/LIMS and study start-up by P-74, which admits them in order.*
+
 - eTMF;
 - CTMS;
 - safety case processing and E2B;
@@ -1336,6 +1338,19 @@ Decided by the founder on 2026-10-30, answering the six catalog questions of the
 - **Unchanged.** RULE 3 holds for every slice: each is named "complete", "reach" or "converge" against the existing
   code listed in the parity design, never "build". Safety/PV, EDC and a content LMS stay "partner or integrate" as the
   parity design recommends; this decision does not admit them.
+
+### P-75 — eTMF files against the protocol-design study, lives inside Vault, and is a professional-tier module
+
+Decided by the founder on 2026-10-30, the three questions the eTMF slice of P-74 raised
+(`docs/design/ETMF_CONVERGENCE_2026-10-30.md`):
+
+- **Study record.** eTMF files against `cdisc_prm_studies`, the study created in Protocol Development (project-scoped,
+  same-organisation keyed), picked from the open project. It is reached, not rebuilt. Device and CRO trials get no
+  TMF until CTMS converges the study stores.
+- **Placement.** eTMF is a feature of the **Vault** app: `LAUNCH_APPS` vault gains the `etmf` surface, and the app
+  count stays seven.
+- **Tier.** eTMF is a **professional**-tier module. Its catalog row is kept and healed with that tier; it is not
+  listed in the launch `modules`, which would grant it to every organisation.
 
 ## How sessions run under this file
 
