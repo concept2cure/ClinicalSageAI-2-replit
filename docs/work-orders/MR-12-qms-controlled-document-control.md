@@ -35,7 +35,7 @@ Every QMS controlled document has an immutable history of approved versions. Eac
 |---|---|---|---|---|
 | CAT2-18 | STILL_OPEN | P0 | Degrades | Revise UPDATEs the same row at `mdx-qms.ts:669-683` and `AnaToolExecutor.ts:14322-14332`; no `qms_document_versions` anywhere; `superseded_by_id` never written |
 | CAT2-19 | STILL_OPEN | P1 | Degrades | `document-approval-signature.ts:272` `COALESCE($4::date, effective_date, $6::date)`; date excluded from digest at `:128-146`; `approveBody` accepts optional past dates at `mdx-qms.ts:526` |
-| CAT2-20 | STILL_OPEN | P1 | Not observable | Digest at `document-approval-signature.ts:128-146` covers `artifactId` only; artifact content rewritten in place at `artifactVersionStore.ts:350-355` |
+| CAT2-20 | FIXED (2026-10-29) | P1 | Not observable | The signed text is authored sections or `metadata.sections`, never the artifact; no writer sets `artifact_id`; artifact versions refuse UPDATE/TRUNCATE (`20261029k`). `docs/evidence/MR-12/2026-10-29-artifact-versions-no-rewrite/` |
 | CAT2-21 | PARTIALLY_FIXED | P1 | Blocks | acks CTE at `mdx-qms.ts:838-845` has no version filter; training-ack `:757-792` accepts non-effective docs and client `method`/`quizScore`; no client caller |
 | CAT2-22 | STILL_OPEN | P2 | Degrades | `quality/data.ts:103` `TODAY='2026-06-04'`; `SopRegister.tsx:378` flags overdue client-side; no review-complete action |
 | CAT2-23 | PARTIALLY_FIXED | P2 | Not observable | `document-approval-signature.ts:120` `APPROVABLE_STATES={'in_review'}`; still one signer, no routing |
