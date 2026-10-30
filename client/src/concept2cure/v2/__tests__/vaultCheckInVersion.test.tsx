@@ -26,7 +26,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { ApiRequestError } from '@/lib/queryClient';
 import { Vault } from '../surfaces/Vault';
-import { stubIngestXhr } from './_ingest-xhr-fake';
+import { ingestReceipt, stubIngestXhr } from './_ingest-xhr-fake';
 import { PID, DOC_ID, ok, uploadDoc, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
 
 const V1 = '33333333-3333-4333-8333-333333333333';
@@ -63,7 +63,7 @@ function stubIngest(answers: Array<{ status: number; body: unknown }>) {
   stubIngestXhr(vi.fn(async (_url: string, init: { body?: unknown }) => {
     sent.push(init.body as FormData);
     const a = answers.shift() ?? { status: 201, body: {} };
-    return { ok: a.status < 300, status: a.status, json: async () => a.body } as Response;
+    return { ok: a.status < 300, status: a.status, json: async () => typeof a.body === 'function' ? a.body(init.body as FormData) : a.body } as Response;
   }));
   return sent;
 }
@@ -133,10 +133,7 @@ describe('a document with versions in the Vault (VR-09)', () => {
 describe('adding and finding a version in the Vault (VR-09)', () => {
   it("'Upload new version' names the document and sends no document code", async () => {
     mockApi();
-    const sent = stubIngest([{ status: 201, body: { success: true,
-      document: { id: '44444444-4444-4444-8444-444444444444', programId: PID, version: '3.0', documentTitle: 'Stability summary' },
-      filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed', needsReview: false },
-    } }]);
+    const sent = stubIngest([{ status: 201, body: (form: FormData) => ingestReceipt(form, { document: { version: '3.0', documentTitle: 'Stability summary', documentCode: 'stability-summary-24m.pdf' } }) }]);
     render(<Vault {...props()} />);
     await screen.findByTestId('vault-versions');
     fireEvent.change(screen.getByLabelText('File to add as a new version of stability-summary-24m'), {
@@ -153,10 +150,7 @@ describe('adding and finding a version in the Vault (VR-09)', () => {
     mockApi();
     const sent = stubIngest([
       { status: 409, body: { error: { code: 'VERSION_CONTENT_CONFLICT', message: 'A different document is already recorded at code "stability-summary-24m.pdf".' } } },
-      { status: 201, body: { success: true,
-        document: { id: '44444444-4444-4444-8444-444444444444', programId: PID, version: '3.0', documentTitle: 'Stability summary' },
-        filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed', needsReview: false },
-      } },
+      { status: 201, body: (form: FormData) => ingestReceipt(form, { document: { version: '3.0', documentCode: 'stability-summary-24m.pdf' } }) },
     ]);
     render(<Vault {...props()} />);
     await screen.findByTestId('vault-versions');

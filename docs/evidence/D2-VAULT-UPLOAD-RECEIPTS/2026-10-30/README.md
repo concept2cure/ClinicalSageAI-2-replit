@@ -1,5 +1,7 @@
 # Confirm Vault upload receipts before reporting success
 
+> Canonical convergence supersedes the earlier unpushed candidate below. The final owner is the already published `vaultIngestReceipt.ts`; its parser and repaired/unchanged semantics are preserved. The final production correction is bounded to the stored-title mapping/copy in `useVaultUpload.ts`. Earlier candidate contracts and qualification totals are historical evidence, not final merged-state claims.
+
 D2 / W2. Canonical baseline: `be078603b00397bb86c8244b634aeff3338c5ae0`. Work stays directly on `concept2cure-v2`, without a PR, extra branch, force push or relaxed gate.
 
 ## What already exists
@@ -43,3 +45,17 @@ This closes unverified2xx confirmations in the shared hook and its tested unique
 ## Canonical convergence
 
 The branch advanced to `6747c44709702ed016afa446ef52d2c99710614d` while this bounded correction was qualified. A normal fast-forward preserved the newer CSR source-bound drafting/admission safeguards and text-ramp CSS, with no conflicting paths or dropped work. All26original qualification hashes and all10changed source/test hashes remain unchanged. The merged state passes59checks/4suites (the five real Vault caller cases plus newer CSR source-revalidation, active-write scope and scientific-reasoning controls) and a complete fresh production build. Five Vault cases overlap the225-case cohort: **279distinct tests in27suites**. Normal publication still requires the whole-project compiler and every unchanged hook gate.
+
+## What already exists — canonical receipt convergence
+
+The first candidate passed all normal push hooks but was rejected because the canonical ref advanced. Origin `1ce6adc681c984f1669715d37fda774f11203059` includes the independently published receipt implementation (`28e98ddfb`) and its qualification. The preceding candidate contract and counts above are historical; they are not final merged-state claims.
+
+- `client/src/concept2cure/v2/vaultIngestReceipt.ts` now owns the sole retained ingest receipt parser. It validates HTTP200/201 coherence, project/document UUIDs, filename-derived code for original uploads, distinct replacement identity, used filing/extraction fields, unique unequal typed reupload rows and repaired-record coherence. Extend this owner only if evidence requires it; remove our parallel private parser during conflict resolution.
+- The canonical `useVaultUpload.ts` already uses that parser, keeps explicit server OUTCOME_UNKNOWN uncertain, normalizes legacy Unfiled presentation and distinguishes repaired from unchanged reuploads through updated/recordUpdated flags and copy. Preserve all of these. Its check-in outcome still copies the earlier requested title instead of the actual stored receipt title.
+- `v2/__tests__/vaultUploadReceipts.test.tsx` is now the retained hook receipt suite. Consolidate our overlapping singular receipt suite onto this existing owner, retaining unique raw empty/HTML/truncated-JSON transport and actual saved-title controls. `_ingest-xhr-fake.ts` provides an explicit producer-shaped `ingestReceipt` helper without repairing invalid replies. Prefer those canonical fixture updates over parallel positive-fixture rewrites.
+- `docs/evidence/D2/2026-10-30-vault-upload-receipts/README.md` documents broader canonical qualification and actual API proof in `tests/db/vault-reupload.dbtest.ts`. Native execution proves created, unchanged-reupload and check-in receipts. A native legacy setup was refused by the real guard; nullable-title, retained-Unfiled-folder and repaired-record compatibility is constructor-reviewed and unit-tested, not native legacy execution. Preserve that boundary.
+- Our new actual Vault caller suite `vaultUploadReceiptFlow.test.tsx` and actual device drawer suite `mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx` add consumer proof beyond the hook. Complete their positive fixtures with the real request code so they exercise the strengthened canonical request binding. Keep malformed replies deliberately malformed.
+
+The inventory re-read the canonical parser, hook, caller references, packet and native test. `rg newVersions` finds no production consumer beyond the shared hook's own outcome/copy; broadening its stored title to string|null preserves a real legacy null without inventing a title. Repeated deleted-history search over vault receipt/upload/ingest names found no deleted alternative parser to restore.
+
+Revised candidate for independent review: converge onto the canonical parser and reupload semantics; keep only a bounded hook mapping correction so new-version outcomes and copy use the validated stored title (including truthful unnamed-record copy for nullable/blank legacy titles). Add unique raw-JSON and actual caller regressions to the existing test owners. No new engine, capability, transport, dependency, permission, server or schema change. Review the revised producer compatibility before production edits or expanded worker assignments.

@@ -23,22 +23,15 @@ vi.mock('../download', async (importOriginal) => ({
 
 import { Vault } from '../surfaces/Vault';
 import { PID, ok, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
-import { stubIngestXhr } from './_ingest-xhr-fake';
+import { ingestReceipt, stubIngestXhr } from './_ingest-xhr-fake';
 
 const HEADER = 'File,Title,Document type,Classification,Folder,Evidence kind,CTD section';
 
 function stubIngest() {
   const sent: FormData[] = [];
   stubIngestXhr(vi.fn(async (_url: string, init: { body?: unknown }) => {
-    const form = init.body as FormData;
-    sent.push(form);
-    const folderId = form.get('folderId');
-    return { ok: true, status: 201, json: async () => ({ success: true,
-      document: { id: sent.length === 1 ? '44444444-4444-4444-8444-444444444444' : '55555555-5555-4555-8555-555555555555',
-        programId: PID, version: '1.0', documentTitle: form.get('documentTitle') },
-      filing: { folderId, folderLabel: folderId === 'module-3' ? 'Module 3 · Quality' : null,
-        placementStatus: folderId ? 'confirmed' : 'unfiled', needsReview: !folderId },
-    }) };
+    sent.push(init.body as FormData);
+    return { ok: true, status: 201, json: async () => ingestReceipt(init.body as FormData) };
   }));
   return sent;
 }

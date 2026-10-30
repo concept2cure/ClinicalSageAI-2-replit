@@ -37,11 +37,15 @@ The decisive reconciled selection is reconciled-regression-tests.json; reconcile
 | Scoped lint |29 files,0 errors,8 existing warnings,0 warning growth; reconciled-lint.json |
 | Existing editor/UI/repository gates |7/7 passed; reconciled-editor-gates.json |
 | Reconciled production build |Passed; reconciled-build.json |
-| Final compiler gate |Normal source push must pass the unchanged zero-error baseline |
+| Final compiler gate |Passed through normal source push:0 errors, unchanged zero baseline; source-push.json |
 
 The full reconciled run passed853/854 checks:70 suites passed, and one case failed in a20-case suite because an unbound discussion-results section cannot reach the model under the stricter source policy. Its late-permission control now uses non-result section9.1, preserves the bound-results branch and explicitly proves both call the model. The whole20-case suite re-passed. All production inputs and all other test inputs are byte-identical between runs:834 passing checks from the other70 suites plus20 from the corrected suite qualify854 distinct checks. reconciled-qualification-bridge.json records exact before/after test pins; no production guard was weakened, no skipped test is counted and overlapping tests are not added twice.
 
 Genuine RED outputs are retained for access, missing evidence, job/source revalidation, cancellation and inherited fallback claims. The new progress-race control was additionally proved against a deliberately weakened initial-progress writer, then the guard restored; see progress-race-negative-note.json. Fixture calibration is explicit in expertise/README.md, generation/README.md, resumed-codex/README.md and named correction JSON. Initial compiler/UI failures were corrected without baseline growth. Original inline historical receipt pins stay authoritative where a snapshot filename was reused; freeze-reconciliation.json retains the original lint pins separately. Earlier final/release bridges and receipts remain historical; the reconciled qualification supersedes them.
+
+## Later editor-source convergence
+
+Normal merge6747c4470 preserves the next accepted editor source/session safeguards throughbe078603b. The backend inputs qualified above are byte-identical. All12 affected editor suites pass87 checks on this merged source; eight repeat CSR suites and four exercise new editor ownership controls, so87 is not added to854 as a distinct count. publication-editor-bridge.json records all changed input hashes and the unchanged backend comparison. The final committed scope is publication-qualified-inputs.json (3,015 inputs), with the refreshed publication-build.json and publication-editor-gates.json. The normal source push passed all hooks, including0 TypeScript errors and no lint-warning growth; source-push.json retains compiler and accepted transport output.
 
 ## Limits
 
@@ -49,4 +53,4 @@ Models are mocked; these checks do not qualify live-provider behavior, native Po
 
 ## Status
 
-Reconciled source checks and normal canonical publication are in progress. Root owns normal hooks and accepted-Git-blob verification. Human clinical/statistical review and worksheet cases164–169 remain unrun. Publication and qualification JSON will identify the exact accepted source and evidence.
+Source accepted directly on concept2cure-v2 at6747c4470 through normal hooks. All3,015 qualified inputs are checked against actual accepted Git blobs; source-publication.json and accepted-source-git-proof.json identify the exact revision. The final evidence commit adds this qualification and complete artifact manifest without changing production source. Human clinical/statistical review and worksheet cases164–169 remain unrun. Publication and qualification JSON will identify the exact accepted source and evidence.

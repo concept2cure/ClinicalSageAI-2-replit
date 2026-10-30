@@ -1,0 +1,5 @@
+Meaningful regression controls before the corresponding production fixes.
+Initial canonical source 13be18d3d: 44 failed / 2 passed across 46 receipt checks. Missing, malformed or contradictory successful replies, incorrect project/file/version identities and two legacy semantics failed correctly.
+Additional actual OUTCOME_UNKNOWN service response: 1 failed / 47 skipped, proving the client incorrectly claimed known refusal.
+Independent-review coherence/title controls: 5 failed / 47 skipped, proving equal/duplicate metadata and an invented legacy title were accepted before correction.
+Raw logs are compressed alongside this file. No production credentials or real customer files were used.

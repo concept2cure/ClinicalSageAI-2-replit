@@ -195,7 +195,10 @@ it('retains the same check-in offer and File after a malformed version receipt, 
 it('opens only the confirmed saved ID in a mixed batch and keeps its second file unknown', async () => {
   const known = receipt(SAVED_ID, SAVED_TITLE);
   const unconfirmed = receipt(UNVERIFIED_ID, UNKNOWN_TITLE);
+  unconfirmed.document.documentCode = 'protocol.pdf';
+  unconfirmed.document.fileName = 'protocol.pdf';
   unconfirmed.filing.placementStatus = 'suggested'; // A suggested placement cannot have no folder.
+  unconfirmed.filing.needsReview = false;
   const reads = serveVault(cabinetTree([head], [projected(SAVED_ID, SAVED_TITLE), projected(UNVERIFIED_ID, UNKNOWN_TITLE)]));
   const sent = replyInOrder([{ status: 201, body: known }, { status: 201, body: unconfirmed }]);
   const first = new File(['%PDF-1.7 analytical'], 'analytical-procedures.pdf');

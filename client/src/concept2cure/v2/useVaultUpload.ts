@@ -21,8 +21,8 @@
  * rejected file: a partial batch is the normal case (one file over the size
  * limit, one refused by the virus scan) and the caller has to be able to tell
  * the user which ones landed. What it must NOT do is report success it did not
- * observe — `succeeded` counts only verified ingest receipts, so a surface
- * refreshes or attaches only when the reply identifies a recorded document.
+ * observe — `succeeded` counts only validated document receipts, so a surface
+ * that refreshes on `succeeded > 0` refreshes on confirmed rows.
  *
  * The server owns every decision that matters: the SHA-256, the storage key,
  * the audit entry, the tenant check. This function's whole job is to hand it
@@ -30,20 +30,21 @@
  */
 
 import * as React from 'react';
-import { z } from 'zod';
 import { redactInternals } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { VaultClassification, VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
 import { vaultDocumentCodeForFile } from '@shared/constants/domain/vault-document-code';
 import { IngestUnconfirmedError, sendIngest, type IngestProgress, type IngestReply } from './vaultIngestTransport';
+import { readVaultIngestReceipt } from './vaultIngestReceipt';
 export { VAULT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 
 export interface VaultUploadOutcome {
   /** Files the server accepted and recorded. */
   succeeded: string[];
   /** The documents those files were recorded as, by the id the server returned
-   *  (`document.id`), in the order sent. An unconfirmed receipt adds neither
-   *  an identity nor a success, so a caller never opens a guessed document. */
+   *  (`document.id`), in the order sent. A response that names none adds none,
+   *  so a surface that opens the document just uploaded opens one the server
+   *  named, never one it guessed. */
   recorded: string[];
   /** Files without a confirmed receipt: a refusal, or an unknown result after a complete send. */
   failed: Array<{ name: string; reason: string; unknown?: true }>;
@@ -51,17 +52,17 @@ export interface VaultUploadOutcome {
    *  suggested dossier folder, or unfiled (visible review queue). */
   filings: Array<{ name: string; folderLabel: string | null; needsReview: boolean; placement: VaultPlacement }>;
   /** Files whose exact bytes the Vault already recorded at that code and
-   *  version: `differs` says the upload asked for a
+   *  version: `updated` identifies a repaired record, and `differs` says the upload asked for a
    *  title, type or classification other than the recorded one (VR-05);
    *  `filingDiffers`, present only when true, a folder, kind or CTD section
    *  (Part 11 review F3). */
-  alreadyRecorded: Array<{ name: string; title: string; differs: boolean; filingDiffers?: true }>;
+  alreadyRecorded: Array<{ name: string; title: string | null; differs: boolean; filingDiffers?: true; updated?: true }>;
   /** Files refused because a different file is already recorded at that name
    *  (409 VERSION_CONTENT_CONFLICT). The surface can offer to add each as the
    *  next version of the recorded document (VR-09), so the File is kept. */
   conflicts: Array<{ name: string; file: File }>;
   /** Versions added to an existing document, with the version the server assigned. */
-  newVersions: Array<{ name: string; version: string; title: string; folderLabel: string | null }>;
+  newVersions: Array<{ name: string; version: string; title: string | null; folderLabel: string | null }>;
 }
 
 /**
@@ -97,7 +98,7 @@ export type VaultUploadFileStatus =
   | { state: 'uploading'; sent?: number; total?: number }
   | { state: 'stored'; version: string | null; folderLabel: string | null; placement: VaultPlacement; already: boolean;
       /** Its text is still being read by the server (a scanned PDF's OCR is off the upload, MR-08 Stage 3). */
-      readingText?: true }
+      readingText?: true; recordUpdated?: true }
   | { state: 'refused'; reason: string; unknown?: true };
 
 export interface VaultUploadOptions {
@@ -136,52 +137,28 @@ const DEFAULT_DOCUMENT_TYPE: VaultIngestDocumentType = 'OTHER';
 /** The ingest's filing fields; any other field a re-upload reports is a detail. */
 const FILING_FIELDS = new Set(['folder_id', 'evidence_kind', 'ctd_section']);
 
-// Validate only the producer fields the caller interprets. Extra fields remain compatible.
-const receiptText = z.string().refine(value => value.trim().length > 0);
-const ingestReceipt = z.object({
-  success: z.literal(true),
-  document: z.object({ id: z.string().uuid(), programId: z.string().uuid(),
-    documentTitle: receiptText, version: receiptText,
-    extraction: z.enum(['extracted', 'pending', 'failed']).optional() }),
-  filing: z.object({ folderId: receiptText.nullable(), folderLabel: z.string().nullable(),
-    placementStatus: z.enum(['confirmed', 'suggested', 'unfiled']), needsReview: z.boolean() })
-    .refine(filing => filing.placementStatus === 'unfiled'
-      ? filing.folderId === null && filing.needsReview
-      : filing.folderId !== null && !filing.needsReview),
-  reupload: z.object({ unchanged: z.boolean(),
-    changes: z.array(z.object({ field: receiptText, from: z.string().nullable(), to: z.string().nullable() })),
-    differs: z.array(z.object({ field: z.enum(['document_title', 'document_type', 'classification', 'folder_id', 'evidence_kind', 'ctd_section']),
-      recorded: z.string().nullable(), requested: z.string() })) })
-    .refine(reupload => reupload.unchanged === (reupload.changes.length === 0)).optional(),
-});
-
-/** A successful transport can still leave the governed write unconfirmed. */
-async function readIngestReceipt(response: IngestReply, programId: string) {
-  if (response.status !== 200 && response.status !== 201) return null;
-  const parsed = ingestReceipt.safeParse(await response.json().catch(() => null));
-  if (!parsed.success || parsed.data.document.programId !== programId) return null;
-  const receipt = parsed.data;
-  if (response.status === 200 ? !receipt.reupload : receipt.reupload !== undefined) return null;
-  return receipt;
-}
-
 /** A re-upload the Vault already held: which of its asks were not applied, details or filing. */
-function alreadyRecordedOf(differs: Array<{ field?: unknown }>, title: string): { title: string; differs: boolean; filingDiffers?: true } {
+function alreadyRecordedOf(differs: Array<{ field?: unknown }>, title: string | null, unchanged: boolean): Omit<VaultUploadOutcome['alreadyRecorded'][number], 'name'> {
   const filing = differs.some((d) => FILING_FIELDS.has(String(d.field)));
-  return { title, differs: differs.some((d) => !FILING_FIELDS.has(String(d.field))), ...(filing ? { filingDiffers: true as const } : {}) };
+  return { title, differs: differs.some((d) => !FILING_FIELDS.has(String(d.field))), ...(filing ? { filingDiffers: true as const } : {}),
+    ...(!unchanged ? { updated: true as const } : {}) };
 }
 
-/** What the Vault already held, and how to change details or filing the retry did not apply. */
+/** What the user is told about held files: whether the record changed, and how to change its filing/details. */
 function alreadyRecordedText(list: VaultUploadOutcome['alreadyRecorded']): string {
   if (list.length === 0) return '';
-  const named = list.map((a) => `${a.name} (as "${a.title}")`).join('; ');
+  const named = (entries: typeof list) => entries.map((a) => a.title ? `${a.name} (as "${a.title}")` : a.name).join('; ');
+  const unchanged = list.filter((a) => !a.updated);
+  const updated = list.filter((a) => a.updated);
+  const held = unchanged.length ? `Already in the Vault, nothing changed: ${named(unchanged)}.` : '';
+  const repaired = updated.length ? ` Already in the Vault: ${named(updated)}. Its record was updated; review its history for details.` : '';
   const details = list.some((a) => a.differs)
     ? ' Its title, type or classification is changed with Edit details, not by uploading it again.'
     : '';
   const filing = list.some((a) => a.filingDiffers)
     ? ' Its folder, kind or CTD section is changed with Move in its filing, not by uploading it again.'
     : '';
-  return `Already in the Vault with these bytes: ${named}.${details}${filing}`;
+  return `${held}${repaired}${details}${filing}`.trim();
 }
 
 /** The person's fields, as form entries: only what was given, and the filing details only with a folder. */
@@ -208,10 +185,10 @@ async function uploadOne(
       folderLabel: string | null;
       needsReview: boolean;
       placement: VaultPlacement;
-      already: { title: string; differs: boolean; filingDiffers?: true } | null;
-      version: string;
+      already: Omit<VaultUploadOutcome['alreadyRecorded'][number], 'name'> | null;
+      version: string | null;
       documentId: string;
-      documentTitle: string;
+      documentTitle: string | null;
       readingText: boolean;
     }
   | { ok: false; reason: string; code: string | null; unknown?: true }
@@ -265,19 +242,24 @@ async function uploadOne(
   }
 
   if (res.ok) {
-    const body = await readIngestReceipt(res, programId);
-    if (!body) return { ok: false, reason: 'the reply did not confirm a verifiable Vault record', code: null, unknown: true };
-    const filing = body.filing;
+    const body = readVaultIngestReceipt(await res.json().catch(() => null), res.status, {
+      programId, fileName: file.name, supersedesDocumentId: newVersionOf?.documentId,
+    });
+    if (!body) return { ok: false, reason: 'the server reply did not confirm this file in this project', code: null, unknown: true };
+    const { document, filing, reupload } = body;
+    // Unfiled may retain an old folder in persisted legacy records. Honor the
+    // explicit placement just as the tree does, never infer filing from it.
+    const folder = filing.placementStatus === 'unfiled' ? null : filing.folderId;
     return {
       ok: true,
-      folderLabel: filing.folderId ? filing.folderLabel || filing.folderId : null,
+      folderLabel: folder ? filing.folderLabel || folder : null,
       needsReview: filing.needsReview,
       placement: filing.placementStatus,
-      already: body.reupload ? alreadyRecordedOf(body.reupload.differs, body.document.documentTitle) : null,
-      version: body.document.version,
-      documentId: body.document.id,
-      documentTitle: body.document.documentTitle,
-      readingText: body.document.extraction === 'pending',
+      already: reupload ? alreadyRecordedOf(reupload.differs, document.documentTitle, reupload.unchanged) : null,
+      version: document.version,
+      documentId: document.id,
+      documentTitle: document.documentTitle,
+      readingText: document.extraction === 'pending',
     };
   }
 
@@ -289,6 +271,7 @@ async function uploadOne(
     (typeof err === 'object' && err ? err.message : undefined) ??
     body?.message ??
     (typeof err === 'string' ? err : undefined);
+  const code = typeof err === 'object' && err && typeof err.code === 'string' ? err.code : null;
   /* Through the internals filter before it can reach a screen. The ingest route
      answers a refused upload with a real sentence, but a proxy, a body-size
      limit or an unhandled throw can put something else on this path, and this
@@ -296,7 +279,8 @@ async function uploadOne(
   return {
     ok: false,
     reason: redactInternals(raw, `the server refused it (HTTP ${res.status})`),
-    code: typeof err === 'object' && err && typeof err.code === 'string' ? err.code : null,
+    code,
+    ...(code === 'OUTCOME_UNKNOWN' ? { unknown: true as const } : {}),
   };
 }
 
@@ -333,7 +317,7 @@ function outcomeNote(outcome: VaultUploadOutcome): NonNullable<VaultUploadState[
     const versionText = outcome.newVersions
       .map(
         (v) =>
-          `Added ${v.name} to "${v.title}" as ${v.version ? `v${v.version}` : 'a new version (number not reported)'}. ` +
+          `Added ${v.name} to ${v.title?.trim() ? `"${v.title}"` : 'the recorded document'} as ${v.version ? `v${v.version}` : 'a new version (number not reported)'}. ` +
           `It keeps the document's filing${v.folderLabel ? ` (${v.folderLabel})` : ''}, and the earlier versions stay in the Vault.`,
       )
       .join(' ');
@@ -404,9 +388,9 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
           });
           opts?.onFileStatus?.(index, r.ok
             ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, placement: r.placement, already: Boolean(r.already),
-              ...(r.readingText ? { readingText: true as const } : {}) }
+              ...(r.readingText ? { readingText: true as const } : {}), ...(r.already?.updated ? { recordUpdated: true as const } : {}) }
             : { state: 'refused', reason: r.reason, ...(r.unknown ? { unknown: true as const } : {}) });
-          if (r.ok && r.documentId) outcome.recorded.push(r.documentId);
+          if (r.ok) outcome.recorded.push(r.documentId);
           if (r.ok && r.already) {
             outcome.succeeded.push(file.name);
             outcome.alreadyRecorded.push({ name: file.name, ...r.already });
@@ -414,7 +398,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
             outcome.succeeded.push(file.name);
             outcome.newVersions.push({
               name: file.name,
-              version: r.version,
+              version: r.version ?? '',
               title: r.documentTitle,
               folderLabel: r.folderLabel,
             });

@@ -143,7 +143,8 @@ export function statusText(s: VaultUploadFileStatus | null): string | null {
     ? `Not known whether it was recorded: ${s.reason}. Reload the Vault and check before trying again.`
     : `Not recorded: ${s.reason}`;
   if (s.already) {
-    return 'Already in the Vault with these bytes. Change its details with Edit details, or its filing with Move.';
+    if (s.recordUpdated) return 'Already in the Vault with these bytes. Its record was updated; review its history for details.';
+    return 'Already in the Vault with these bytes. Nothing was changed, including the details above; change them with Edit details or Move.';
   }
   const where = s.placement === 'unfiled' || !s.folderLabel
     ? 'Unfiled, needs a folder'
