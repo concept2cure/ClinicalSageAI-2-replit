@@ -54,3 +54,16 @@ The CSR cortex tests had never run, and once run they were failing.
     does not. Restoring the old rule turns 4 of its tests red.
   - **Result.** The gate passes, with 33 absent tables, all baselined. `ci:migration-reachability` and
     `ci:column-reachability` still pass.
+
+## Batch 3: the rest of CI's checks
+
+- **ESLint, errors only:** `npx eslint . --quiet` reports 0 errors across the tree.
+- **Typecheck:** the whole-program `ci:typecheck:no-regression` ran on every push today and reported 0 errors
+  (baseline 0).
+- **jest:** the first half of `npm test` passes 30 of 30.
+- **`test:ci-scripts`:** 1 of 478 failed, a regression I introduced in batch 1.
+  - **Cause.** `csr-scientific-review-core.ts` began importing `shared/canonical-json`. The guard's own build
+    (`scripts/ci/csr-scientific-review/build.mjs`) did not transpile that module, and the import lacked the `.js`
+    specifier the plain-Node build needs.
+  - **Fix.** The module is now in the build, and the specifier matches the file's other runtime import.
+  - **Result.** 517 of 517 pass, and `ci:canonicalizers` still passes.
