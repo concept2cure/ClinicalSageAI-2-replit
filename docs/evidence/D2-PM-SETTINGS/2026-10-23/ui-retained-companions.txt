@@ -1,0 +1,64 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > waits for the project record before offering Add a market, then reaches the medicinal action 534ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > offers no market action after a failed project read 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > keeps the recorded 510k pathway out of eCTD markets even when its product class is inconsistent 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > keeps the recorded pma pathway out of eCTD markets even when its product class is inconsistent 112ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > keeps the recorded mdr pathway out of eCTD markets even when its product class is inconsistent 104ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > keeps the recorded ivdr pathway out of eCTD markets even when its product class is inconsistent 200ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > does not offer an eCTD market for a device 510k project, while retaining its submissions 122ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > does not offer an eCTD market for a device pma project, while retaining its submissions 102ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > does not offer an eCTD market for a ivd 510k project, while retaining its submissions 119ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > does not offer an eCTD market for a cdx pma project, while retaining its submissions 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > does not offer an eCTD market for a samd 510k project, while retaining its submissions 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the hde preparation limit before offering submission actions, even with inconsistent product data 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the mdl preparation limit before offering submission actions, even with inconsistent product data 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the ivd_licence preparation limit before offering submission actions, even with inconsistent product data 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the shonin preparation limit before offering submission actions, even with inconsistent product data 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the ninsho preparation limit before offering submission actions, even with inconsistent product data 88ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the todokede preparation limit before offering submission actions, even with inconsistent product data 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the ivd_approval preparation limit before offering submission actions, even with inconsistent product data 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the jp_cdx preparation limit before offering submission actions, even with inconsistent product data 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > lists the project’s submission from the project-scoped read 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again 150ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > keeps "Open Submission Center", which opens on this project 103ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint 130ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > an IND project whose only submission is an MAA shows the MAA as its market, with its own state 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a CER project (no application type is CER) lists its submissions as its markets 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a submission with no project recorded is not gated by name: no verdict, and the panels agree 33ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess 31ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx > reached canonical sharing membership operations > grants the chosen Use role to an exact account and rereads the saved state 313ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx > reached canonical sharing membership operations > prevents overlapping role saves and protects normalized owner/creator rows 107ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx > reached canonical sharing membership operations > confirms explicit revocation and states remaining policy access without removing identity history 95ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx > honest sharing outcomes > preserves the audit persistence warning while team refresh hides private account choices 44ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx > honest sharing outcomes > requires a read after an unconfirmed transport outcome and never automatically repeats the save 68ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx > honest sharing outcomes > refuses invalid sharing scope without exposing candidate controls 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx > sharing session ownership > does not call a save after the token account changes before React receives the new user 45ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx > sharing session ownership > discards a late old-program grant receipt without refreshing its parent or showing its notice 59ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx > sharing session ownership > retains no old sharing controls across account, organization or workspace changes 14ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > named task handoff controls > loads lazily, disambiguates accounts, prevents no-op/invalid reasons and records exact saved facts 462ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > named task handoff controls > keeps an unresolved assignee account reference distinct from Unassigned 34ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > named task handoff controls > distinguishes a verified empty directory and denied reassignment 84ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > named task handoff controls > renders unread or wrong-task metadata as unavailable instead of empty candidates 32ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > blocks overlapping named/automatic saves and requires a read after an unknown outcome 169ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > does not send an old handler after the token changes 62ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > discards a late old-task save without changing the newly selected task 54ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > does not carry an automatic assignment intent into a different selected workspace 28ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > offers no assignment operation for {"status":"completed"} 4ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > offers no assignment operation for {"status":"cancelled"} 3ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > offers no assignment operation for {"readOnly":true} 2ms
+ ✓ client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx > assignment outcome and scope protection > offers no assignment operation for {"actorScope":null} 3ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > the block is found 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines 23ms
+
+ Test Files  4 passed (4)
+      Tests  56 passed (56)
+   Start at  20:28:54
+   Duration  12.31s (transform 2.76s, setup 501ms, import 3.74s, tests 4.71s, environment 2.44s)

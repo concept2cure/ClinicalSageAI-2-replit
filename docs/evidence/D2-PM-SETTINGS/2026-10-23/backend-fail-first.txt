@@ -1,0 +1,331 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/project-settings.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/c2c/__tests__/project-settings.pglite.test.ts
+{
+  "timestamp": "2026-10-23T20:04:39.754Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-23T20:04:39.757Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-settings.pglite.test.ts
+{
+  "timestamp": "2026-10-23T20:04:39.757Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > reads saved scope and a bound revision, deriving current mutation authority 37ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > saves the three normalized fields and actual chained reason/before/after receipt atomically 7ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > clears optional values and writes only actual differences 5ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {} 17ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"description":3} 8ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"priority":"urgent"} 13ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"2030-02-29"} 12ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"0000-01-01"} 8ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"2030-3-04"} 10ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"name":"Changed"} 16ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"leadUserId":13} 9ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"status":"archived"} 9ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"metadata":{}} 32ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"clientWorkspaceId":2} 10ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses unknown envelope fields, short reason and malformed revision 7ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses an unchanged-only patch and a retired revision without audit 4ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > retires revisions when the canonical workspace changes 4ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 2 3ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 3 10ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 0 5ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 2147483648 4ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 1.0 3ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 01 3ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim null 3ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > uses current lead/role/active membership and rejects a share edit as program management 3ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > rechecks actor admission inside the owned transaction 4ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > keeps archived programs read-only without adding an inactive-workspace policy 5ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > conceals a foreign program and refuses an unresolved foreign workspace relationship 6ms
+   → expected 404 to be 409 // Object.is equality
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > rolls the actual profile update back when the canonical audit insert fails 3ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > reports uncertainty after actual COMMIT with a lost reply and discards once without subsequent SQL 4ms
+   → Cannot read properties of undefined (reading 'revision')
+ × server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > reports uncertainty when rollback acknowledgement is lost, and never reuses that connection 3ms
+   → Cannot read properties of undefined (reading 'revision')
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 31 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > reads saved scope and a bound revision, deriving current mutation authority
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:125:50
+    123|   it('reads saved scope and a bound revision, deriving current mutatio…
+    124|     const res = await settings();
+    125|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    126|     expect(res.body.data).toEqual({ programId: PROGRAM, projectId: 21,…
+    127|       clientWorkspaceId: 1, canChange: true, revision: expect.stringMa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > saves the three normalized fields and actual chained reason/before/after receipt atomically
+TypeError: Cannot read properties of undefined (reading 'revision')
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:139:44
+    137|   it('saves the three normalized fields and actual chained reason/befo…
+    138|     const initial = (await settings()).body.data;
+    139|     const res = await update(write(initial.revision, { description: ' …
+       |                                            ^
+    140|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    141|     expect(res.body.data).toMatchObject({ ...initial, description: 'Re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > clears optional values and writes only actual differences
+TypeError: Cannot read properties of undefined (reading 'revision')
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:160:44
+    158|   it('clears optional values and writes only actual differences', asyn…
+    159|     const initial = (await settings()).body.data;
+    160|     const res = await update(write(initial.revision, { description: ' …
+       |                                            ^
+    161|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    162|     expect(res.body.data.description).toBeNull(); expect(res.body.data…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {}
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"description":3}
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"priority":"urgent"}
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"2030-02-29"}
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"0000-01-01"}
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"targetSubmissionDate":"2030-3-04"}
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"name":"Changed"}
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"leadUserId":13}
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"status":"archived"}
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"metadata":{}}
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses strict, forbidden or invalid patches: {"clientWorkspaceId":2}
+AssertionError: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:174:24
+    172|     const revision = (await settings()).body.data?.revision ?? 'v1:' +…
+    173|     const res = await update(write(revision, patch));
+    174|     expect(res.status).toBe(400); expect(await saved()).toEqual({ desc…
+       |                        ^
+    175|     expect(await auditCount()).toBe(0);
+    176|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses unknown envelope fields, short reason and malformed revision
+AssertionError: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:181:43
+    179|     const revision = (await settings()).body.data?.revision ?? 'v1:' +…
+    180|     for (const body of [{ ...write(revision), ownerId: 13 }, { ...writ…
+    181|       expect((await update(body)).status).toBe(400);
+       |                                           ^
+    182|     }
+    183|     expect(await auditCount()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses an unchanged-only patch and a retired revision without audit
+TypeError: Cannot read properties of undefined (reading 'revision')
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:187:51
+    185|
+    186|   it('refuses an unchanged-only patch and a retired revision without a…
+    187|     const revision = (await settings()).body.data.revision;
+       |                                                   ^
+    188|     expect((await update(write(revision, { description: ' Original ', …
+    189|     await jdb.pool.query('UPDATE regulatory_programs SET description=$…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > retires revisions when the canonical workspace changes
+TypeError: Cannot read properties of undefined (reading 'revision')
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:196:51
+    194|
+    195|   it('retires revisions when the canonical workspace changes', async (…
+    196|     const revision = (await settings()).body.data.revision;
+       |                                                   ^
+    197|     await jdb.pool.query('UPDATE projects SET client_workspace_id=2 WH…
+    198|     const res = await update(write(revision), 11, '2');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 2
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 3
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 0
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 2147483648
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 1.0
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim 01
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > refuses malformed or mismatched client claim null
+TypeError: Cannot read properties of undefined (reading 'revision')
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:204:51
+    202|
+    203|   it.each(['2', '3', '0', '2147483648', '1.0', '01', 'null'])('refuses…
+    204|     const revision = (await settings()).body.data.revision;
+       |                                                   ^
+    205|     expect([400, 409]).toContain((await update(write(revision), 11, cl…
+    206|     expect(await auditCount()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > uses current lead/role/active membership and rejects a share edit as program management
+TypeError: Cannot read properties of undefined (reading 'revision')
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:210:51
+    208|
+    209|   it('uses current lead/role/active membership and rejects a share edi…
+    210|     const revision = (await settings()).body.data.revision;
+       |                                                   ^
+    211|     expect((await update(write(revision), 13)).status).toBe(403);
+    212|     await jdb.pool.query("UPDATE organization_users SET role='viewer' …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > rechecks actor admission inside the owned transaction
+TypeError: Cannot read properties of undefined (reading 'revision')
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:224:51
+    222|
+    223|   it('rechecks actor admission inside the owned transaction', async ()…
+    224|     const revision = (await settings()).body.data.revision;
+       |                                                   ^
+    225|     mode = 'revoke';
+    226|     const res = await update(write(revision));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > keeps archived programs read-only without adding an inactive-workspace policy
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:233:39
+    231|   it('keeps archived programs read-only without adding an inactive-wor…
+    232|     await jdb.pool.query("UPDATE client_workspaces SET status='inactiv…
+    233|     expect((await settings()).status).toBe(200);
+       |                                       ^
+    234|     await jdb.pool.query("UPDATE regulatory_programs SET status='archi…
+    235|     const res = await settings(); expect(res.status).toBe(200); expect…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > conceals a foreign program and refuses an unresolved foreign workspace relationship
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:243:39
+    241|     expect((await request(app).get(`/api/c2c/projects/${FOREIGN}/setti…
+    242|     await jdb.pool.query('UPDATE projects SET client_workspace_id=3 WH…
+    243|     expect((await settings()).status).toBe(409);
+       |                                       ^
+    244|     expect(await auditCount()).toBe(0);
+    245|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > rolls the actual profile update back when the canonical audit insert fails
+TypeError: Cannot read properties of undefined (reading 'revision')
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:248:51
+    246|
+    247|   it('rolls the actual profile update back when the canonical audit in…
+    248|     const revision = (await settings()).body.data.revision;
+       |                                                   ^
+    249|     const res = await update({ ...write(revision), reason: 'Force audi…
+    250|     expect(res.status).toBe(503); expect((await saved()).priority).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > reports uncertainty after actual COMMIT with a lost reply and discards once without subsequent SQL
+TypeError: Cannot read properties of undefined (reading 'revision')
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:255:51
+    253|
+    254|   it('reports uncertainty after actual COMMIT with a lost reply and di…
+    255|     const revision = (await settings()).body.data.revision; mode = 'co…
+       |                                                   ^
+    256|     const res = await update(write(revision));
+    257|     expect(res.status).toBe(503); expect(res.body.error).toBe('PROJECT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/31]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-settings.pglite.test.ts > governed programme settings over HTTP and actual SQL > reports uncertainty when rollback acknowledgement is lost, and never reuses that connection
+TypeError: Cannot read properties of undefined (reading 'revision')
+ ❯ server/routes/c2c/__tests__/project-settings.pglite.test.ts:263:51
+    261|
+    262|   it('reports uncertainty when rollback acknowledgement is lost, and n…
+    263|     const revision = (await settings()).body.data.revision; mode = 'ro…
+       |                                                   ^
+    264|     const res = await update({ ...write(revision), reason: 'Force audi…
+    265|     expect(res.status).toBe(503); expect(res.body.error).toBe('PROJECT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/31]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  31 failed (31)
+   Start at  20:04:34
+   Duration  10.89s (transform 4.84s, setup 100ms, import 662ms, tests 9.77s, environment 0ms)
