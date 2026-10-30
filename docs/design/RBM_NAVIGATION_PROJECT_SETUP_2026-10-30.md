@@ -13,6 +13,12 @@ Evidence: `docs/evidence/D2-RBM-NAVIGATION/2026-10-30/`.
 - `server/routes/mdx-rbm-board.ts`, `mdx-rbm.ts`, `mdx-rbm-data.ts` and
   `server/services/rbm/` already own tenant-scoped reads, persisted writes,
   deterministic scores and governed approvals. No second monitoring engine/store.
+- Release review found that existing RBM approval routes re-verify credentials
+  and enforce signing authority/two-person checks, but their actuator only saves
+  approval stamps. `server/services/part11/signature-persistence.ts` and
+  `governed-signature-ceremony.ts` already provide canonical persisted signatures
+  and their audit linkage. The old `sign-ceremony-baseline.json` deferral relied
+  on RBM being outside the launch catalog; that reason no longer applies.
 - `shared/constants/ui-surface-registry.ui-v2.ts` already registers `rbm` and
   its granular API claims; the actual aggregated `/api/mdx-rbm` reads need review.
   `surfaceViews.ts` already routes `rbm` to the existing Rbm component.
@@ -89,6 +95,12 @@ clinical-study record, regulatory filing type or clinical-ops convergence.
    and persists the amendment creator in `rbm-actuator.ts`, so the existing
    two-person signing check also covers that new version. No second seed or
    authorization policy engine and no unsigned active assessment.
+   Release completion must also reuse the existing canonical signature writer
+   for assessment/plan approval, binding the signed record/version, meaning,
+   reason and verified signer to the same transaction as the approval. A failed
+   signature write must roll back approval; AnA still cannot sign. Preserve a
+   failing-first mounted-route check and verify both approval kinds and refusal
+   paths. Update the obsolete baseline reason only after that proof exists.
 6. Workers first preserve meaningful failing checks on unchanged production,
    then implement within their files. Tests cover actual rail navigation and
    existing peers, API/AnA admission with unchanged grants, real wizard review/
