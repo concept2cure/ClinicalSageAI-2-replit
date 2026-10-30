@@ -23,7 +23,7 @@ Two disjoint audits inspect existing qualification/CLI/test interfaces and canon
 
 ## Status
 
-Implementation, 348/22 affected regression checks, scoped lint and complete client/server/audit-verifier build passed. Normal publication/compiler gates pending. Agency prerequisites remain blocked as recorded in the preceding packet.
+Software correction published on `concept2cure-v2`: implementation `dcdd4cb97`, accepted merged source `61fe4fd81`. All normal source-push gates passed, including full TypeScript0; 348/22 affected checks, scoped lint and complete build passed. Actual agency qualification remains open. Agency prerequisites remain blocked as recorded in the preceding packet.
 
 ## Approved bounded interfaces and ownership
 
@@ -81,4 +81,10 @@ The real command selected only FDA v3.2.2, generated original0000 and amendment0
 
 Official acquisition/qualification remains open under [the existing vendoring runbook](../../../runbooks/ectd-dtd-vendoring.md), Step1: “Do not proceed to step 2 until every DTD has a sign-off.” The exact unsigned review/input packet is [ASSET_REVIEW.md](../2026-10-30-agency-qualification/ASSET_REVIEW.md). No per-DTD counsel signoff or licensed validator/profile configuration was supplied. Current-criteria coverage, human witnessing and actual agency acceptance are separate open acceptance items. The bounded title-filter Drive search returned no matching approval/licence records; it is not proof that none exist elsewhere. No DTD/XSL/archive was acquired and no source version was relabelled.
 
-Complete production build passed on the pinned final inputs. Existing bundler chunk-size guidance remains; no dependency or build configuration was changed. Normal publication/compiler receipt will be added after accepted source.
+Complete production build passed on the pinned final inputs. Existing bundler chunk-size guidance remains; no dependency or build configuration was changed. Normal publication/compiler receipt is now [publication.json](publication.json).
+
+## Accepted source and handoff
+
+[publication.json](publication.json) binds implementation `dcdd4cb97f7c1547806919caff3ece9c2d2d1522` to accepted canonical source `61fe4fd81d7283c6e47a221ef44bc20bd7af1b62`. Normal pre-commit/pre-push gates passed without bypass; full TypeScript exit0/errors0, tracked imports and pushed lint/warning ratchets passed. Every one of the334 pinned files matches the accepted Git blob, not just working-tree contents. The final merged application was rebuilt successfully after preserving the concurrent protocol change.
+
+Two earlier pushes passed every gate including compiler0 but were rejected because the remote advanced during gating. Their full logs and subsequent canonical merge logs are retained. They are publication races, not accepted pushes or compiler failures. The third normal source push was accepted. This receipt does not claim remote CI/deployment completion or close Stage3 agency acceptance. Existing paused A3/biotech work is not declared completed or canceled.
