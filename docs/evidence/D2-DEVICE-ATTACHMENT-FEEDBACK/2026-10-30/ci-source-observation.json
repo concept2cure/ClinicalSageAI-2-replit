@@ -1,0 +1,76 @@
+{
+  "observed_at": "2026-10-30T19:59:15.902038+00:00",
+  "source_commit": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+  "api_query": "repos/concept2cure/ClinicalSageAI-2-replit/actions/runs?head_sha=f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c&per_page=50",
+  "total_count": 6,
+  "returned": 6,
+  "runs": [
+    {
+      "id": 41119585808,
+      "name": "Semgrep",
+      "event": "push",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41119585808",
+      "created_at": "2026-10-30T19:58:40Z",
+      "updated_at": "2026-10-30T19:58:40Z"
+    },
+    {
+      "id": 41119585596,
+      "name": "Repo Health Baseline Refresh",
+      "event": "push",
+      "status": "pending",
+      "conclusion": null,
+      "head_sha": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41119585596",
+      "created_at": "2026-10-30T19:58:39Z",
+      "updated_at": "2026-10-30T19:58:40Z"
+    },
+    {
+      "id": 41119585656,
+      "name": "CodeQL",
+      "event": "push",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41119585656",
+      "created_at": "2026-10-30T19:58:39Z",
+      "updated_at": "2026-10-30T19:58:39Z"
+    },
+    {
+      "id": 41119585533,
+      "name": "Tier 5 Browser Smoke",
+      "event": "push",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41119585533",
+      "created_at": "2026-10-30T19:58:39Z",
+      "updated_at": "2026-10-30T19:58:39Z"
+    },
+    {
+      "id": 41119585680,
+      "name": "CI",
+      "event": "push",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41119585680",
+      "created_at": "2026-10-30T19:58:39Z",
+      "updated_at": "2026-10-30T19:58:39Z"
+    },
+    {
+      "id": 41119585632,
+      "name": "C2C Agent \u2014 Validate & Audit",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "skipped",
+      "head_sha": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41119585632",
+      "created_at": "2026-10-30T19:58:39Z",
+      "updated_at": "2026-10-30T19:58:41Z"
+    }
+  ],
+  "ci_completion_or_deployment_claimed": false
+}

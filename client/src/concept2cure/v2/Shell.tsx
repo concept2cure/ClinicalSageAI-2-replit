@@ -48,6 +48,9 @@ import { NavUnlockPanel } from './NavUnlockPanel';
 import { AccountPanel } from './AccountPanel';
 import { OrganizationAccess } from './OrganizationAccess';
 import { applySurfaceAction } from './surfaceActions';
+import { surfaceLeaveRefusal } from './navParams';
+import { ceremonyOpen } from './ceremony';
+import { C2CToast, useToast } from './toast';
 import { useSurfaceAvailable } from './surfaceAvailable';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
@@ -63,6 +66,29 @@ export interface ShellSurfaceRef {
 /** Where "Get help" goes, from the account menu and the header alike: AnA, which answers
  *  questions about the product in the governed conversation. */
 const HELP_SURFACE = 'conversation-thread';
+
+/** Preflight chrome requests before dispatch; surface-owned saved handoffs keep their own controls. */
+function useShellLeaveGuard(onNav?: (id: string) => void) {
+  const [notice, notify] = useToast();
+  const canLeave = React.useCallback((navigationDialog?: Element | null) => {
+    let reason = ceremonyOpen()
+      ? 'Finish or cancel the open governed form before navigating.'
+      : surfaceLeaveRefusal(navigationDialog);
+    if (!reason) {
+      const leave = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(leave);
+      if (leave.defaultPrevented) reason = 'Save or discard your unsaved document changes before navigating.';
+    }
+    if (reason) {
+      notify(reason, 'error');
+      return false;
+    }
+    notify('', 'error');
+    return true;
+  }, [notify]);
+  const go = (id: string) => { if (canLeave()) onNav?.(id); };
+  return { canLeave, go, leaveNotice: <C2CToast msg={notice} /> };
+}
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
 
@@ -92,6 +118,7 @@ export function Rail({
   setSegment: (id: string) => void;
 }) {
   const { user, logout } = useAuth();
+  const { canLeave, leaveNotice } = useShellLeaveGuard();
   const [acct, setAcct] = React.useState(false);
   const acctBtnRef = React.useRef<HTMLButtonElement>(null);
   const acctMenuId = React.useId();
@@ -137,6 +164,7 @@ export function Rail({
      bus stashes the action, opens the screen, and the screen performs it once
      its read has landed. */
   const open = (s: RailEntry, target: string) => {
+    if (!canLeave()) return;
     const res = s.applies ? resolveSurfaceAction(s.applies.actionId, s.applies.params) : null;
     /* It opens the entry's own screen, so the address is the same as any
        other way there (/tasks, not the action's nav-target alias). */
@@ -206,7 +234,7 @@ export function Rail({
           type="button"
           className="rail-logo"
           /* Home, where the one conversation starts (ONE_ANA_ONE_CANVAS.md §5). */
-          onClick={() => onNav('home')}
+          onClick={() => { if (canLeave()) onNav('home'); }}
           title="Home"
           aria-label="Home"
           data-on={activeId === 'home' || undefined}
@@ -263,6 +291,7 @@ export function Rail({
             segment={segment}
             onClose={dismissAcct}
             onGo={(id) => {
+              if (!canLeave()) return;
               setAcct(false);
               onNav(id);
             }}
@@ -271,6 +300,7 @@ export function Rail({
               setAccountOpen(true);
             }}
             onSegment={(id) => {
+              if (!canLeave()) return;
               setAcct(false);
               setSegment(id);
             }}
@@ -298,6 +328,7 @@ export function Rail({
           onNav={onNav}
         />
       )}
+      {leaveNotice}
     </nav>
   );
 }
@@ -572,6 +603,7 @@ export function TopBar({
   onAsk?: (text: string) => void;
 }) {
   const tenant = useTenant();
+  const { go, leaveNotice } = useShellLeaveGuard(onNav);
   // The organisation's name, or none: an unknown organisation is not labelled
   // "Organization" (P-25, 2026-10-08).
   const orgName: string | null = tenant?.currentOrganization?.name?.trim() || null;
@@ -619,7 +651,7 @@ export function TopBar({
         <span className="here">{here}</span>
       </div>
       <div className="tb-spacer" />
-      <ProjectChip here={surface.id} onNav={onNav} />
+      <ProjectChip here={surface.id} onNav={go} />
       {/* Current session label. Membership selection and recipient consent
           use the guarded organization-access control alongside it. */}
       {orgName && (
@@ -662,10 +694,11 @@ export function TopBar({
         className="tb-btn"
         title="Get help"
         aria-label="Get help"
-        onClick={() => onNav?.(HELP_SURFACE)}
+        onClick={() => go(HELP_SURFACE)}
       >
         {I.help}
       </button>
+      {leaveNotice}
     </header>
   );
 }
@@ -731,6 +764,8 @@ export function CmdK({
   const [q, setQ] = React.useState('');
   const [sel, setSel] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  const { canLeave, leaveNotice } = useShellLeaveGuard();
   const { user } = useAuth();
   /* The SAME verdict set the rail reads. The provider is mounted once above the
      whole shell (V2App), so this is a context read, not a second fetch: two
@@ -916,6 +951,7 @@ export function CmdK({
         onClose();
         return;
       }
+      if (!canLeave(dialogRef.current)) return;
       if (it.kind === 'nav' && it.applies) {
         const res = resolveSurfaceAction(it.applies.actionId, it.applies.params);
         const target = it.id.startsWith('step:') ? 'project-home' : it.id;
@@ -926,7 +962,7 @@ export function CmdK({
       else onAsk(q.trim());
       onClose();
     },
-    [onNav, onAct, onAsk, q, onClose]
+    [onNav, onAct, onAsk, q, onClose, canLeave]
   );
 
   React.useEffect(() => {
@@ -971,7 +1007,7 @@ export function CmdK({
   return (
     <>
     <div className="cmdk-bd" onClick={onClose}>
-      <div className="cmdk" role="dialog" aria-modal="true" aria-label="Command palette" onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} className="cmdk" role="dialog" aria-modal="true" aria-label="Command palette" onClick={(e) => e.stopPropagation()}>
         <div className="cmdk-in">
           <span className="ico">{I.search}</span>
           <input
@@ -1050,6 +1086,7 @@ export function CmdK({
           <span>esc close</span>
           <span className="cmdk-foot-hint">/ jump · &gt; action</span>
         </div>
+        {leaveNotice}
       </div>
     </div>
     {unlock}
