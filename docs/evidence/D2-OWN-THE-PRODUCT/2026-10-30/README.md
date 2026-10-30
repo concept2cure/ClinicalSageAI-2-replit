@@ -170,3 +170,27 @@ Each was run alone at trunk. In every case, a correct change elsewhere had moved
 | `ana-ri-health`, `engineChoices` | Whole-module mocks lacked new exports | keep the real module, and override only what they stand in for |
 
 **Result.** 325 of 325 across the 10 files, and 25 of 25 across the two harness users.
+
+## Still open at this push
+
+- **`ci:dependency-risk` is red, with six unreviewed findings.**
+  - **Safe upgrades:**
+    - dompurify 3.4.17 (critical, DOM XSS);
+    - multer 2.5.0 or later;
+    - undici 7.30.1 or later;
+    - body-parser 2.4 or later, through Express.
+  - **`@figma/code-connect`.** A devDependency that was never configured (placeholder team and file keys, no
+    `*.figma.tsx`), and whose only "fix" is a downgrade. Remove it with `client/figma.config.json`.
+  - **zod (GHSA-mrhx-c7xc-m3w5): measured, not mitigated.** One 2 MB body, inside the `/api` limit, makes
+    zod 3.25.76 build 1,000,001 issues and grow the heap by about 268 MB. zod 4.6.7 builds one issue, with no
+    growth. Its `zod/v3` compatibility path is still vulnerable (`zod-memory-probe.txt`, `zod-memory-probe.cjs`).
+    - **What fixes it.** A real v4 migration, with drizzle-zod 0.8.3, which accepts zod 4. About 40 files read
+      `ZodError.errors`, which becomes `.issues` (already valid in v3), plus a handful of `required_error`,
+      `errorMap`, `ZodTypeAny` and `ZodEffects`.
+    - **Why it isn't recorded as "mitigated".** That would be false.
+  - **Not done yet.** None of these upgrades was run here: they change `node_modules`, and the vitest shards
+    were still running.
+- **Vitest shards 5–8 at `86b0fa6f70`.** Shard 5 was stopped partway, at this push, with one failure seen:
+  `server/services/ana/__tests__/submission-center-tools.test.ts`. Shards 6–8 have not run at this head.
+- **`test:db`** has not been run against the lane database.
+- **HawkScan** was not run, because there is no `HAWK_API_KEY`.
