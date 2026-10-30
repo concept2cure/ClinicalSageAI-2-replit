@@ -42,7 +42,7 @@ describe('reading a manifest', () => {
   it('refuses a column it does not know, naming it, so a misspelt Folder cannot leave every file Unfiled', () => {
     const parsed = parseManifest('File,Folderr\nspec-dp.pdf,Module 3 · Quality\n');
     expect(parsed.ok).toBe(false);
-    expect(!parsed.ok && parsed.reason).toContain('Its column "Folderr" is not one the Vault records.');
+    expect(!parsed.ok && parsed.reason).toContain('Its column "Folderr" is not a column the Vault takes.');
   });
 
   it('refuses a manifest with no File column, and one with a column twice', () => {
@@ -93,7 +93,7 @@ describe('applying a manifest to the list', () => {
 
   it('refuses an evidence kind or CTD section with no folder, as the row itself offers them only with one', () => {
     const out = applyManifest(ROWS(), lines('File,CTD section\nspec-dp.pdf,3.2.P.5.1\n'), FOLDERS);
-    expect(out.refused[0].reason).toBe('an evidence kind or CTD section is recorded only with a folder, and this line gives none');
+    expect(out.refused[0].reason).toBe('an evidence kind or CTD section is recorded only with a folder, and neither this line nor the row gives one');
   });
 
   it('refuses a file the list does not have, a name two files share, a file named twice, and one already recorded', () => {
@@ -105,7 +105,7 @@ describe('applying a manifest to the list', () => {
       'File,Title', 'missing.pdf,X', 'consent.pdf,Y', 'site-2/consent.pdf,Consent site 2', 'ib.pdf,IB', 'ib.pdf,IB again', 'stored.pdf,Z',
     ].join('\n')), FOLDERS);
     expect(out.refused.map((r) => [r.line, r.reason])).toEqual([
-      [2, 'no file in the list is missing.pdf'],
+      [2, 'missing.pdf is not in the list'],
       [3, 'more than one file in the list is named consent.pdf; give its path as the list shows it'],
       [6, 'line 5 already names this file'],
       [7, 'it is already recorded; its fields are changed with Edit details or Move'],
@@ -114,11 +114,23 @@ describe('applying a manifest to the list', () => {
     expect(out.unnamed).toEqual(['site-1/consent.pdf']);
   });
 
-  it('says what it did in one paragraph, and that nothing was uploaded', () => {
+  it('says what it did in one paragraph, naming the CSV, and that nothing was uploaded', () => {
     const out = applyManifest(ROWS(), lines('File,Document type\nspec-dp.pdf,Report\ncsr-101.pdf,Synopsis\n'), FOLDERS);
-    expect(manifestNote(out)).toBe('Manifest applied to 1 file. Nothing has been uploaded; check the rows, then upload. '
+    expect(manifestNote(out, 'library.csv')).toBe('library.csv: 1 of 2 lines applied. Nothing has been uploaded; check the rows, then upload. '
       + '1 line not applied: line 3 (csr-101.pdf): "Synopsis" is not a Vault document type. '
-      + '1 file in the list is not in the manifest and keeps its fields: library/clinical/protocol-101.pdf.');
+      + '1 file in the list is not in the CSV and keeps its fields: library/clinical/protocol-101.pdf.');
+  });
+
+  it('does not call a CSV applied when no line of it was, and refuses a line that sets nothing', () => {
+    const out = applyManifest(ROWS(), lines('File,Document type\nspec-dp.pdf,Synopsis\ncsr-101.pdf,\n'), FOLDERS);
+    expect(out.refused.map((r) => r.reason)).toEqual(['"Synopsis" is not a Vault document type', 'it gives no field to set']);
+    expect(manifestNote(out, 'library.csv')).toMatch(/^library\.csv was not applied: no line could be applied\. Nothing in the list changed\. 2 lines not applied: /);
+  });
+
+  it('names at most five, and how many more, in a CSV of many files', () => {
+    const rows = Array.from({ length: 8 }, (_, i) => row(`r${i}`, `f${i}.pdf`));
+    const out = applyManifest(rows, lines('File,Title\nf0.pdf,First\n'), FOLDERS);
+    expect(manifestNote(out, 'x.csv')).toContain('7 files in the list are not in the CSV and keep their fields: f1.pdf, f2.pdf, f3.pdf, f4.pdf, f5.pdf, and 2 more files.');
   });
 });
 
@@ -129,7 +141,8 @@ describe('downloading the list as a manifest', () => {
       row('b', 'library/clinical/csr-101.pdf'),
     ];
     const csv = manifestOf(rows, FOLDERS);
-    expect(csv.split('\r\n')[0]).toBe('File,Title,Document type,Classification,Folder,Evidence kind,CTD section');
+    // The byte-order mark makes a spreadsheet read "·" as written.
+    expect(csv.split('\r\n')[0]).toBe('\uFEFFFile,Title,Document type,Classification,Folder,Evidence kind,CTD section');
     expect(csv).toContain('"Spec, drug product"');
     const back = applyManifest(rows.map((r) => ({ ...r, title: '', documentType: 'OTHER' as const, classification: '' as const, folderId: '', evidenceKind: '', ctdSection: '' })), lines(csv), FOLDERS);
     expect(back.refused).toEqual([]);

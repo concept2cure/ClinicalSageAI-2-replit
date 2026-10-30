@@ -56,9 +56,9 @@ async function choose(files: File[]) {
 const applyCsv = (panel: HTMLElement, csv: string, name = 'manifest.csv') =>
   fireEvent.change(within(panel).getByTestId('vault-stage-manifest-file'), { target: { files: [new File([csv], name, { type: 'text/csv' })] } });
 const manifestNote = async (panel: HTMLElement, role: 'status' | 'alert') => {
-  const block = within(panel).getByTestId('vault-stage-manifest');
-  await waitFor(() => expect(block.querySelector(`[role="${role}"]`)).not.toBeNull());
-  return block.querySelector(`[role="${role}"]`)!.textContent;
+  const region = within(panel).getByTestId('vault-stage-manifest').querySelector(`[role="${role}"]`)!;
+  await waitFor(() => expect(region.textContent).not.toBe(''));
+  return region.textContent;
 };
 const blobText = (blob: Blob) => new Promise<string>((resolve) => {
   const reader = new FileReader();
@@ -72,8 +72,8 @@ describe('a manifest describes the files in the upload list (Veeva gap 7)', () =
     const sent = stubIngest();
     const panel = await choose([new File(['a'], 'spec-dp.pdf'), new File(['b'], 'letter.pdf')]);
     applyCsv(panel, `${HEADER}\nspec-dp.pdf,Drug product specification,Module 3 · quality,Controlled,Module 3 · Quality,Specification,3.2.P.5.1\n`);
-    expect(await manifestNote(panel, 'status')).toBe('Manifest applied to 1 file. Nothing has been uploaded; check the rows, then upload. '
-      + '1 file in the list is not in the manifest and keeps its fields: letter.pdf.');
+    expect(await manifestNote(panel, 'status')).toBe('manifest.csv: 1 of 1 line applied. Nothing has been uploaded; check the rows, then upload. '
+      + '1 file in the list is not in the CSV and keeps its fields: letter.pdf.');
     const [row] = within(panel).getAllByTestId('vault-stage-row');
     expect([value(row, 'Title'), value(row, 'Document type'), value(row, 'Classification'), value(row, 'Folder'),
       value(row, 'Evidence kind (optional)'), value(row, 'CTD section (optional)')])
@@ -86,6 +86,8 @@ describe('a manifest describes the files in the upload list (Veeva gap 7)', () =
       classification: 'CONTROLLED', folderId: 'module-3', evidenceKind: 'spec', ctdSection: '3.2.P.5.1',
     });
     expect(fields(sent[1])).toEqual({ documentCode: 'letter.pdf', documentTitle: 'letter', documentType: 'OTHER' });
+    // What the note said ("nothing has been uploaded") stopped being true when the upload began.
+    expect(within(panel).getByTestId('vault-stage-manifest').querySelector('[role="status"]')!.textContent).toBe('');
   });
 
   it('applies no part of a line the Vault cannot take, and names it', async () => {
@@ -101,16 +103,52 @@ describe('a manifest describes the files in the upload list (Veeva gap 7)', () =
     stubIngest();
     const panel = await choose([new File(['a'], 'spec-dp.pdf')]);
     applyCsv(panel, 'File,Folderr\nspec-dp.pdf,Module 3 · Quality\n', 'library.csv');
-    expect(await manifestNote(panel, 'alert')).toBe('library.csv was not applied. Its column "Folderr" is not one the Vault records. '
+    expect(await manifestNote(panel, 'alert')).toBe('library.csv was not applied. Its column "Folderr" is not a column the Vault takes. '
       + 'The columns are File, Title, Document type, Classification, Folder, Evidence kind, CTD section. Nothing in the list changed.');
     expect(value(within(panel).getAllByTestId('vault-stage-row')[0], 'Folder')).toBe('');
   });
 
-  it('downloads the list as a manifest to fill in', async () => {
+  it("downloads the files' details as a CSV to fill in", async () => {
     const panel = await choose([new File(['a'], 'spec-dp.pdf'), new File(['b'], 'letter.pdf')]);
-    fireEvent.click(within(panel).getByRole('button', { name: /Download this list as a manifest/ }));
-    expect(H.saved.map((s) => s.name)).toEqual(['vault-upload-manifest.csv']);
-    expect((await blobText(H.saved[0].blob)).split('\r\n')).toEqual([HEADER, 'spec-dp.pdf,spec-dp,Other,,,,', 'letter.pdf,letter,Other,,,,', '']);
-    expect(await manifestNote(panel, 'status')).toBe('Manifest downloaded, one line per file in this list. Fill it in, then apply it here.');
+    fireEvent.click(within(panel).getByRole('button', { name: /Download these files’ details as CSV/ }));
+    expect(H.saved.map((s) => s.name)).toEqual(['vault-upload-details.csv']);
+    expect((await blobText(H.saved[0].blob)).replace(/^\uFEFF/, '').split('\r\n'))
+      .toEqual([HEADER, 'spec-dp.pdf,spec-dp,Other,,,,', 'letter.pdf,letter,Other,,,,', '']);
+    expect(await manifestNote(panel, 'status')).toBe('Your browser is saving vault-upload-details.csv: one line for each of the 2 files not yet recorded. Fill it in, then apply it here.');
+  });
+
+  it('does not apply a CSV that finished reading after an upload began', async () => {
+    let releaseRead!: () => void;
+    const readHeld = new Promise<void>((r) => { releaseRead = r; });
+    const RealReader = globalThis.FileReader;
+    // Reads with the real reader, and answers only once the test lets it.
+    class HeldReader {
+      result: string | null = null; error: Error | null = null;
+      onload: (() => void) | null = null; onerror: (() => void) | null = null;
+      readAsText(blob: Blob) {
+        const real = new RealReader();
+        real.onload = async () => { await readHeld; this.result = String(real.result); this.onload?.(); };
+        real.readAsText(blob);
+      }
+    }
+    let releaseIngest!: () => void;
+    const ingestHeld = new Promise<void>((r) => { releaseIngest = r; });
+    const sent: FormData[] = [];
+    stubIngestXhr(vi.fn(async (_url: string, init: { body?: unknown }) => {
+      sent.push(init.body as FormData);
+      await ingestHeld;
+      return { ok: true, status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+    }));
+    const panel = await choose([new File(['a'], 'spec-dp.pdf')]);
+    vi.stubGlobal('FileReader', HeldReader);
+    applyCsv(panel, `${HEADER}\nspec-dp.pdf,Late title,,,,,\n`, 'late.csv');
+    vi.stubGlobal('FileReader', RealReader);
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    await waitFor(() => expect(sent).toHaveLength(1));
+    releaseRead();
+    expect(await manifestNote(panel, 'alert')).toBe('An upload started while late.csv was being read, so it was not applied. Nothing in the list changed.');
+    releaseIngest();
+    expect(fields(sent[0]).documentTitle).toBe('spec-dp');
+    expect(value(within(panel).getAllByTestId('vault-stage-row')[0], 'Title')).toBe('spec-dp');
   });
 });

@@ -62,7 +62,7 @@ export function parseManifest(text: string): ParsedManifest {
   const fields: Field[] = [];
   for (const h of header) {
     const col = COLUMNS.find((c) => c.accepts.includes(squash(String(h))));
-    if (!col) return { ok: false, reason: `Its column "${String(h).trim()}" is not one the Vault records. The columns are ${COLUMNS.map((c) => c.heading).join(', ')}.` };
+    if (!col) return { ok: false, reason: `Its column "${String(h).trim()}" is not a column the Vault takes. The columns are ${COLUMNS.map((c) => c.heading).join(', ')}.` };
     if (fields.includes(col.field)) return { ok: false, reason: `It has two ${col.heading} columns.` };
     fields.push(col.field);
   }
@@ -85,6 +85,8 @@ const CLASSES = VAULT_CLASSIFICATIONS.map((code) => ({ code, names: [VAULT_CLASS
 const KINDS = VAULT_DOC_KINDS.map((k) => ({ code: k.value, names: [k.one, k.label] }));
 
 export interface ManifestOutcome {
+  /** How many lines the CSV holds. */
+  lines: number;
   /** The fields each matched row takes, by row key. */
   patches: Map<string, Partial<StagedFile>>;
   /** Lines not applied, and why. */
@@ -101,7 +103,15 @@ function rowFor(rows: StagedFile[], file: string): StagedFile | string {
   if (named.length === 1) return named[0];
   return named.length > 1
     ? `more than one file in the list is named ${file}; give its path as the list shows it`
-    : `no file in the list is ${file}`;
+    : `${file} is not in the list`;
+}
+
+/** Why a line's fields, taken together with its row, cannot be applied, or null. */
+function wholeLineRefusal(patch: Partial<StagedFile>, row: StagedFile): string | null {
+  if ((patch.evidenceKind || patch.ctdSection) && !(patch.folderId ?? row.folderId)) {
+    return 'an evidence kind or CTD section is recorded only with a folder, and neither this line nor the row gives one';
+  }
+  return Object.keys(patch).length === 0 ? 'it gives no field to set' : null;
 }
 
 /** One line's fields, or why it cannot be applied. */
@@ -131,10 +141,7 @@ function patchOf(
     patch.evidenceKind = k;
   }
   if (v.ctdSection) patch.ctdSection = v.ctdSection;
-  if ((patch.evidenceKind || patch.ctdSection) && !(patch.folderId ?? row.folderId)) {
-    return 'an evidence kind or CTD section is recorded only with a folder, and this line gives none';
-  }
-  return patch;
+  return wholeLineRefusal(patch, row) ?? patch;
 }
 
 /** What a manifest does to the list: the fields each named row takes, and every line it does not apply. */
@@ -158,7 +165,7 @@ export function applyManifest(
     patches.set(row.key, patch);
   }
   const unnamed = rows.filter((r) => !namedBy.has(r.key) && r.status?.state !== 'stored').map((r) => r.path);
-  return { patches, refused, unnamed };
+  return { lines: lines.length, patches, refused, unnamed };
 }
 
 /** A CSV cell: quoted when it must be, and a leading formula character guarded so a spreadsheet shows it as text. */
@@ -179,20 +186,28 @@ export function manifestOf(rows: StagedFile[], folders: ReadonlyArray<{ id: stri
     r.evidenceKind ? kindName(r.evidenceKind) : '',
     r.ctdSection,
   ]);
-  return [COLUMNS.map((c) => c.heading), ...lines].map((l) => l.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  // The byte-order mark makes a spreadsheet read the file as UTF-8, so "Module 3 · Quality" comes back as written.
+  return '\uFEFF' + [COLUMNS.map((c) => c.heading), ...lines].map((l) => l.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
 
-/** What applying a manifest did, in one paragraph. */
-export function manifestNote(outcome: ManifestOutcome): string {
+/** The first few of a list, and how many more: a CSV of 300 files is not read out whole. */
+function some(items: string[], separator: string, noun: string): string {
+  const shown = items.slice(0, NAMED_AT_MOST);
+  const more = items.length - shown.length;
+  return shown.join(separator) + (more > 0 ? `${separator}and ${more} more ${noun}${more === 1 ? '' : 's'}` : '');
+}
+const NAMED_AT_MOST = 5;
+
+/** What applying a CSV did, in one paragraph, naming the file it came from. */
+export function manifestNote(outcome: ManifestOutcome, fileName: string): string {
   const n = (k: number, one: string) => `${k} ${one}${k === 1 ? '' : 's'}`;
-  const parts = [`Manifest applied to ${n(outcome.patches.size, 'file')}. Nothing has been uploaded; check the rows, then upload.`];
-  if (outcome.refused.length) {
-    parts.push(`${n(outcome.refused.length, 'line')} not applied: ${outcome.refused
-      .map((r) => `line ${r.line}${r.file ? ` (${r.file})` : ''}: ${r.reason}`).join('; ')}.`);
-  }
+  const refusals = outcome.refused.map((r) => `line ${r.line}${r.file ? ` (${r.file})` : ''}: ${r.reason}`);
+  const notApplied = refusals.length ? ` ${n(refusals.length, 'line')} not applied: ${some(refusals, '; ', 'line')}.` : '';
+  if (outcome.patches.size === 0) return `${fileName} was not applied: no line could be applied. Nothing in the list changed.${notApplied}`;
+  const parts = [`${fileName}: ${outcome.patches.size} of ${n(outcome.lines, 'line')} applied. Nothing has been uploaded; check the rows, then upload.${notApplied}`];
   if (outcome.unnamed.length) {
     const one = outcome.unnamed.length === 1;
-    parts.push(`${n(outcome.unnamed.length, 'file')} in the list ${one ? 'is' : 'are'} not in the manifest and ${one ? 'keeps its' : 'keep their'} fields: ${outcome.unnamed.join(', ')}.`);
+    parts.push(`${n(outcome.unnamed.length, 'file')} in the list ${one ? 'is' : 'are'} not in the CSV and ${one ? 'keeps its' : 'keep their'} fields: ${some(outcome.unnamed, ', ', 'file')}.`);
   }
   return parts.join(' ');
 }

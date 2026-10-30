@@ -1,0 +1,20 @@
+# 02-green: after the fixes
+
+## The upload, CSV, staging and hook suites
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > opens with focus on the list and says what was added; a removed row hands focu
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > names each row by its file, offers only this view’s folders, and moves focus
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > refused files tried again (Part 11 / copy review, 2026-10-30) > the one behind waits its turn, and its earlier refusal is not shown as this attempt's
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > does not apply a CSV that finished reading after an upload began
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — a re-upload whose filing was not applied (Part 11 review F3) > a file the Vault already holds, sent to another folder, says where its filing is changed (
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > no reply after the whole file was sent says whether it was recorded is not known, and that sending again 
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > does not call a CSV applied when no line of it was, and refuses a line that sets nothing
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > names at most five, and how many more, in a CSV of many files
+ Test Files  6 passed (6)
+      Tests  58 passed (58)
+
+## Client, route and Vault service suites (one run with the archive fixes)
+ Test Files  300 passed (300)
+      Tests  3850 passed (3850)
+
+## Type check: tsc exit 0 (see the D5 review-fixes folder's 02-green.txt); lint ratchet unchanged; ci:unauthenticated-fetch and ci:undefined-css-classes pass

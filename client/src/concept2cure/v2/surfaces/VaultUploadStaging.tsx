@@ -131,7 +131,7 @@ const PLACED: Record<'confirmed' | 'suggested', string> = {
 function uploadingText(s: { sent?: number; total?: number }): string {
   if (!s.total) return 'Uploading…';
   const sent = s.sent ?? 0;
-  if (sent >= s.total) return 'Sent. The server is scanning it and storing it…';
+  if (sent >= s.total) return 'Sent. The Vault is scanning it and storing it…';
   return `Uploading… ${Math.floor((sent * 100) / s.total)}% of ${formatBytes(s.total, 1)} sent`;
 }
 
@@ -139,7 +139,7 @@ function uploadingText(s: { sent?: number; total?: number }): string {
 export function statusText(s: VaultUploadFileStatus | null): string | null {
   if (!s) return null;
   if (s.state === 'uploading') return uploadingText(s);
-  if (s.state === 'refused') return `Not recorded: ${s.reason}`;
+  if (s.state === 'refused') return s.unknown ? `Not known whether it was recorded: ${s.reason}` : `Not recorded: ${s.reason}`;
   if (s.already) {
     return 'Already in the Vault with these bytes. Nothing was changed, including the details above; change them with Edit details or Move.';
   }
@@ -154,26 +154,36 @@ export function statusText(s: VaultUploadFileStatus | null): string | null {
 function announcement(staging: Staging, uploading: boolean): string {
   const { rows, notStaged, added } = staging;
   const n = (k: number, one: string) => `${k} ${one}${k === 1 ? '' : 's'}`;
-  if (uploading) return `Uploading ${n(rows.filter((r) => r.status?.state === 'uploading' || !r.status).length, 'file')}.`;
+  if (uploading) return `Uploading ${n(rows.filter((r) => r.status?.state !== 'stored').length, 'file')}.`;
   const settled = rows.filter((r) => r.status && r.status.state !== 'uploading');
   if (settled.length) {
-    const refused = rows.filter((r) => r.status?.state === 'refused');
-    const recorded = settled.length - refused.length;
-    return `${n(recorded, 'file')} recorded.` + (refused.length ? ` ${refused.length} not recorded: ${refused.map((r) => r.path).join(', ')}.` : '');
+    const refused = rows.filter((r) => r.status?.state === 'refused' && !r.status.unknown);
+    const unknown = rows.filter((r) => r.status?.state === 'refused' && r.status.unknown);
+    const recorded = settled.length - refused.length - unknown.length;
+    return `${n(recorded, 'file')} recorded.`
+      + (refused.length ? ` ${refused.length} not recorded: ${refused.map((r) => r.path).join(', ')}.` : '')
+      + (unknown.length ? ` Not known whether ${unknown.map((r) => r.path).join(', ')} ${unknown.length === 1 ? 'was' : 'were'} recorded.` : '');
   }
   return `${n(added, 'file')} added to the upload list.` + (notStaged.length ? ` ${n(notStaged.length, 'file')} not uploaded.` : '');
 }
 
-/** A row's words: its file's outcome, or, while the batch runs, that it waits for the files before it. */
+const WAITING = 'Waiting its turn: files are sent one at a time.';
+
+/**
+ * A row's words: its file's outcome, or, while the batch runs, that it waits
+ * for the files before it. A refused row being tried again waits too; its
+ * earlier refusal is not shown as if it were this attempt's.
+ */
 function rowStatusText(row: StagedFile, busy: boolean): string | null {
-  return statusText(row.status) ?? (busy ? 'Waiting: files are sent one at a time.' : null);
+  if (busy && (!row.status || row.status.state === 'refused')) return WAITING;
+  return statusText(row.status);
 }
 
 /** The share of a row's file sent so far, while its bytes are going out. */
 function SendingBar({ row }: { row: StagedFile }) {
   const s = row.status;
   if (s?.state !== 'uploading' || !s.total) return null;
-  return <progress className="vd-stage-progress" max={s.total} value={s.sent ?? 0} aria-label={`Sending ${row.path}`} />;
+  return <progress className="vd-stage-progress" max={s.total} value={s.sent ?? 0} aria-label={`Upload progress, ${row.path}`} />;
 }
 
 function StagedRow({ row, folders, repeated, busy, onChange, onRemove }: {
@@ -188,7 +198,8 @@ function StagedRow({ row, folders, repeated, busy, onChange, onRemove }: {
   const status = rowStatusText(row, busy);
   const stored = row.status?.state === 'stored';
   const locked = busy || stored;
-  const refused = row.status?.state === 'refused';
+  // Shown as an error only while it is the outcome; a row being tried again is waiting.
+  const refused = row.status?.state === 'refused' && !busy;
   return (
     <li className="vd-stage-row" data-testid="vault-stage-row" data-row-key={row.key}>
       <div role="group" aria-labelledby={`${id}-path`} aria-describedby={status ? `${id}-status` : undefined}>

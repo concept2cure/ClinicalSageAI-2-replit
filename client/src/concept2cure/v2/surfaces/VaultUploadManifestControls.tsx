@@ -2,17 +2,25 @@
  * Describe many files at once from a spreadsheet (gap 7, "manifest/CSV mapping
  * into Vault"; the rules are in `vaultUploadManifest.ts`).
  *
- * "Download this list as a manifest" writes one line per file in the upload
- * list with the fields its row has now. The person fills it in, in a
- * spreadsheet, and "Apply a manifest…" sets each named row's fields. Nothing
- * is sent: the rows show what will be recorded, and Upload sends them as
- * before. What a manifest could not apply is said line by line.
+ * "Download these files' details as CSV" writes one line per file not yet
+ * recorded, with the fields its row has now. The person fills it in, in a
+ * spreadsheet, and "Apply details from a CSV…" sets each named row's fields.
+ * Nothing is sent: the rows show what will be recorded, and Upload sends them
+ * as before. What a CSV could not apply is said line by line.
+ *
+ * The person-facing word is "CSV" and "details", not "manifest": in a
+ * regulatory team a manifest is the eCTD's. Two live regions are always
+ * present, one polite and one assertive, so a note is announced when it
+ * appears; and the note goes when an upload starts, since what it said
+ * ("nothing has been uploaded") stops being true.
  */
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import { downloadBlob } from '../download';
 import { applyManifest, manifestNote, manifestOf, parseManifest } from './vaultUploadManifest';
 import type { StagedFile } from './VaultUploadStaging';
+
+const DETAILS_FILE = 'vault-upload-details.csv';
 
 /** A chosen file's text, read the way every browser can. */
 function readText(file: File): Promise<string> {
@@ -32,13 +40,18 @@ export function VaultUploadManifestControls({ rows, folders, busy, onChange }: {
 }) {
   const [note, setNote] = useState<{ text: string; ok: boolean } | null>(null);
   const picker = useRef<HTMLInputElement>(null);
+  // Read after the file has been read: an upload started meanwhile has already taken the rows' fields.
+  const busyNow = useRef(busy);
+  busyNow.current = busy;
+  useEffect(() => { if (busy) setNote(null); }, [busy]);
 
   const download = () => {
     if (busy) return;
-    const saved = downloadBlob('vault-upload-manifest.csv', new Blob([manifestOf(rows, folders)], { type: 'text/csv' }));
+    const open = rows.filter((r) => r.status?.state !== 'stored').length;
+    const saved = downloadBlob(DETAILS_FILE, new Blob([manifestOf(rows, folders)], { type: 'text/csv' }));
     setNote(saved
-      ? { text: 'Manifest downloaded, one line per file in this list. Fill it in, then apply it here.', ok: true }
-      : { text: 'The browser refused to save the manifest.', ok: false });
+      ? { text: `Your browser is saving ${DETAILS_FILE}: one line for each of the ${open} file${open === 1 ? '' : 's'} not yet recorded. Fill it in, then apply it here.`, ok: true }
+      : { text: 'The browser did not save the file. Allow downloads for this site, then try again.', ok: false });
   };
 
   const apply = async (file: File | undefined) => {
@@ -50,6 +63,10 @@ export function VaultUploadManifestControls({ rows, folders, busy, onChange }: {
       setNote({ text: `${file.name} could not be read. Nothing in the list changed.`, ok: false });
       return;
     }
+    if (busyNow.current) {
+      setNote({ text: `An upload started while ${file.name} was being read, so it was not applied. Nothing in the list changed.`, ok: false });
+      return;
+    }
     const parsed = parseManifest(text);
     if (!parsed.ok) {
       setNote({ text: `${file.name} was not applied. ${parsed.reason} Nothing in the list changed.`, ok: false });
@@ -57,20 +74,21 @@ export function VaultUploadManifestControls({ rows, folders, busy, onChange }: {
     }
     const outcome = applyManifest(rows, parsed.lines, folders);
     for (const [key, patch] of outcome.patches) onChange(key, patch);
-    setNote({ text: manifestNote(outcome), ok: outcome.refused.length === 0 });
+    setNote({ text: manifestNote(outcome, file.name), ok: outcome.refused.length === 0 });
   };
 
   return (
     <div className="vd-stage-actions" data-testid="vault-stage-manifest">
       <button type="button" className="sp-ask" onClick={download} aria-disabled={busy || undefined}>
-        {I.download} Download this list as a manifest
+        {I.download} Download these files&rsquo; details as CSV
       </button>
       <button type="button" className="sp-ask" onClick={() => { if (!busy) picker.current?.click(); }} aria-disabled={busy || undefined}>
-        Apply a manifest…
+        Apply details from a CSV…
       </button>
-      <input ref={picker} type="file" accept=".csv,text/csv" hidden aria-label="Manifest to apply" data-testid="vault-stage-manifest-file"
+      <input ref={picker} type="file" accept=".csv,text/csv" hidden aria-label="CSV of file details to apply" data-testid="vault-stage-manifest-file"
         onChange={(e) => { void apply(e.target.files?.[0]); e.target.value = ''; }} />
-      {note ? <p className={note.ok ? 'vd-d-idx' : 'vd-dr-err'} role={note.ok ? 'status' : 'alert'}>{note.text}</p> : null}
+      <p className="vd-d-idx" role="status">{note?.ok ? note.text : ''}</p>
+      <p className="vd-dr-err" role="alert">{note && !note.ok ? note.text : ''}</p>
     </div>
   );
 }
