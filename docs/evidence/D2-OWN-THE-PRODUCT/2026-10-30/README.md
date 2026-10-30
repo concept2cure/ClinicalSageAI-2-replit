@@ -113,3 +113,41 @@ The full vitest suite (about 6,100 files) runs as 8 serial shards. Shard 1 had 1
   project was open. The assembler scopes to the project, by design. It is now two tests, one per scope. Both fail
   when a confidence suffix is put back.
 - **Passes alone:** `processing-timestamp`. Watched for flakiness, not changed.
+
+## Batch 5: shards 2–5, each failing file re-run alone at trunk
+
+Shards 2–5 listed 39 failing files. Re-run together at trunk, 20 still failed. The rest had failed only under load,
+while a pre-push typecheck ran beside the shard. Each of the 20 was then run alone and fixed at its cause. None
+of these fixes changes product code: each harness had fallen behind a product rule that is correct.
+
+- **The harness was smaller than what the product now reads (6 files).**
+  - **Company legal requirements.** Validation, assembly and the dispatch verdict read the tenant's saved legal
+    requirements, and refuse a tenant they cannot find (`stored-legal-readiness.ts`). Two harnesses lacked the
+    tenant's `organizations` row: `sequence-validated-honesty`, and the program spine plus the row in the two
+    ind-lifecycle suites (`dispatch-verdict-parity`, `routes.contract.integration`).
+  - **The legal registry.** `leaf-study-tagging` lacked the registry `20261018` creates. It now applies the
+    file, as `leaf-cross-project` already did.
+- **Fixture PDFs with no catalog or page tree (3 files).** The packager's original-PDF integrity check refuses
+  them before anything is packaged, as it should. `ectd-package-integrity`, `fda-filing-identity` and
+  `regional-backbone-referenced` now give it real one-page PDFs, built with `pdf-lib`. The validator-only inputs
+  keep their header stubs.
+- **`transmit-guard-refusal-releases-claim`.**
+  - **The project had no primary agency.** The fixture records none, so the market could not resolve (P-44) and
+    every transmit refused before the wire. It now records `FDA`.
+  - **The sent package.** It is kept in memory, through the same stub as the gateway suites. Its >1 GiB
+    descriptor case keeps the package at the size it declares, so the archive's size check passes and the SFTP
+    refusal under test is what refuses.
+  - **Result.** 13 of 13 pass.
+- **`coauthorSnapshotStatus`.** Placement asks whether the source is a CSR, from its retained identity. The
+  suite's mock answered that query with a document row, and the product failed closed (503). The mock now
+  answers the way the database would for a Clinical Overview. 11 of 11 pass.
+- **Roles come from the membership row, not the token (IAM-10; the authoring router since P-72 slice 1a,
+  `ae12195a56`).**
+  - **`authoringSourceImport`.** Its "viewer" was the author with a viewer claim, so the claim decided nothing.
+    The 403 assertion is kept. Its viewer is now a second person whose membership row says `viewer`.
+    Seeding that person as `member` turns the assertion red: 201, against an expected 403.
+  - **`authoring-auth-parity`.** Its member held the row role `member` and a `QA` claim. The template gate
+    admits only ADMIN, RA_CMC or QA, and among the assignable roles only `admin` reaches it. The fixture
+    now seeds `admin`, so a revoked membership, not the gate, is what refuses (AUTH_009). 7 of 7 pass.
+- **Environment.** `run-pdf` (15 tests) needs `fonts-noto-core`, which CI and the production image install.
+  Installed here, it passes.
