@@ -47,7 +47,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import path from 'node:path';
-import { createReadStream, promises as fs } from 'node:fs';
+import { promises as fs } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 
 import { pool } from '../../db.js';
@@ -65,10 +65,13 @@ import {
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 import {
+  cabinetFolderOf,
   resolveOrgVaultView,
   resolveVaultView,
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
+import { ARCHIVE_BUSY, beginArchiveBuild, sendStagedArchive } from '../../services/vault/vault-archive-delivery.js';
+import { canReadAuditTrail } from '../../services/audit/audit-api-authority.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { sourceReadView } from '../../../shared/data-room-processing-status.js';
 import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
@@ -469,7 +472,9 @@ export async function recordVaultDownload(
 export async function recordVaultArchive(
   req: Request,
   d: { orgId: number; userId: number | undefined; action: 'vault.data_room.archive' | 'vault.folder.export';
-    resourceType: string; resourceId: string; details: Record<string, unknown> },
+    resourceType: string; resourceId: string; details: Record<string, unknown>;
+    /** Each document the archive holds, and what to call the archive in its history. */
+    documents: { ids: string[]; leftIn: string } },
 ): Promise<boolean> {
   let client: PoolClient | undefined;
   try {
@@ -482,6 +487,18 @@ export async function recordVaultArchive(
       ipAddress: req.ip, userAgent: req.headers['user-agent'],
       details: d.details,
     });
+    /* Each document's own history says it left in this archive, as a single
+       download writes vault.document.download (21 CFR 11.10(e)): "who has had
+       this document" is read from the document, not from the folder's row. */
+    for (const documentId of d.documents.ids) {
+      await writeChainedAuditRow(client, {
+        tenantId: d.orgId, userId: d.userId, action: 'vault.document.exported',
+        resourceType: 'vault_document', resourceId: documentId,
+        ipAddress: req.ip, userAgent: req.headers['user-agent'],
+        details: { description: `Left the Vault in ${d.documents.leftIn}`, via: d.action, [d.resourceType]: d.resourceId,
+          archiveSha256: d.details.archiveSha256 },
+      });
+    }
     await client.query('COMMIT');
     return true;
   } catch (auditErr) {
@@ -497,27 +514,6 @@ export async function recordVaultArchive(
 
 /** Why a sealed document's file is not in its closing archive: the single download refuses it too. */
 const WITHHELD_BY_DISPOSITION = 'Its original file was removed under a data disposition; the record and its data are kept.';
-
-/** Stream a finished archive with its recorded SHA-256, then remove its staging directory. */
-function sendStagedArchive(
-  res: Response,
-  built: { path: string; size: number; sha256: string },
-  stage: { cleanup(): Promise<void> },
-  fileName: string,
-): void {
-  res.setHeader('Content-Type', 'application/zip');
-  res.setHeader('Content-Length', String(built.size));
-  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-  res.setHeader('X-Content-SHA256', built.sha256);
-  res.setHeader('Cache-Control', 'no-store');
-  const stream = createReadStream(built.path);
-  res.on('close', () => { stream.destroy(); void stage.cleanup(); });
-  stream.on('error', (err) => {
-    logger.error('vault closing archive stream failed', { fileName, err: err.message });
-    res.destroy(err);
-  });
-  stream.pipe(res);
-}
 
 /** The four shapes a `folderId` can arrive in, mapped to what the service reads. */
 function normalizeFolderId(raw: unknown): string | null | undefined {
@@ -779,7 +775,7 @@ function whereFiled(folderId: string): string {
  * Exported for the tree-merge regression test.
  */
 export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFolder {
-  const unfiled = uploads.filter(u => !u.folder_id || (u.placement_status || 'unfiled') === 'unfiled');
+  const unfiled = uploads.filter(u => !cabinetFolderOf(u));
   const inView = new Set(foldersForView(view).map(f => f.id));
   const byFolder = new Map<string, UploadRow[]>();
   /* Filed to a folder this view does not have. The view is resolved per read
@@ -789,14 +785,15 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
      while still counted; it is shown, with where it was filed. */
   const otherView: UploadRow[] = [];
   for (const u of uploads) {
-    if (!u.folder_id || (u.placement_status || 'unfiled') === 'unfiled') continue;
-    if (!inView.has(u.folder_id)) {
+    const folder = cabinetFolderOf(u);
+    if (!folder) continue;
+    if (!inView.has(folder)) {
       otherView.push(u);
       continue;
     }
-    const list = byFolder.get(u.folder_id) ?? [];
+    const list = byFolder.get(folder) ?? [];
     list.push(u);
-    byFolder.set(u.folder_id, list);
+    byFolder.set(folder, list);
   }
   const children: Array<VaultFolder | VaultDoc> = [];
   children.push({
@@ -2939,6 +2936,9 @@ export default function createProjectVaultRoutes(): Router {
     // A sealed document whose original file a data disposition removed is
     // listed as withheld; its file is not read, as the download refuses it.
     const withheld: Array<{ id: string; title: string | null; sha256: string | null; why: string }> = [];
+    const actorId = governedActorId(req) ?? undefined;
+    const endBuild = beginArchiveBuild(orgId, actorId);
+    if (!endBuild) return res.status(429).json({ success: false, ...ARCHIVE_BUSY });
     try {
       stage = await openVaultArchive();
       const staging = stage;
@@ -2959,13 +2959,14 @@ export default function createProjectVaultRoutes(): Router {
         return res.status(409).json({ success: false, error: 'SEAL_NOT_INTACT', verification,
           message: 'This seal does not verify intact, so no closing archive was built. Nothing was sent.' });
       }
-      const actorId = governedActorId(req) ?? undefined;
-      const contents = await buildSealArchiveContents(pool, { organizationId: orgId, userId: actorId, seal, manifest, withheld });
+      const contents = await buildSealArchiveContents(pool, {
+        organizationId: orgId, userId: actorId, seal, manifest, withheld, namedActors: canReadAuditTrail(req) });
       const built = await stage.finish(contents);
       const recorded = await recordVaultArchive(req, {
         orgId, userId: actorId, action: 'vault.data_room.archive', resourceType: 'vault_data_room_seal', resourceId: seal.id,
         details: { programId: id, manifestSha256: seal.manifestSha256, archiveSha256: built.sha256, archiveSize: built.size,
           documentCount: built.files.length, withheldCount: withheld.length },
+        documents: { ids: built.files.map((f) => f.id), leftIn: `the closing archive of seal ${seal.id}` },
       });
       if (!recorded) {
         return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
@@ -2982,6 +2983,7 @@ export default function createProjectVaultRoutes(): Router {
       return res.status(500).json({ success: false, error: 'ARCHIVE_UNAVAILABLE',
         message: 'The closing archive could not be built. Nothing was sent.' });
     } finally {
+      endBuild();
       if (!sending) await stage?.cleanup().catch(() => undefined);
     }
   });
@@ -3005,20 +3007,24 @@ export default function createProjectVaultRoutes(): Router {
     const { SealArchiveError } = await import('../../services/vault/vault-seal-archive.js');
     let stage: Awaited<ReturnType<typeof openVaultArchive>> | undefined;
     let sending = false;
+    const actorId = governedActorId(req) ?? undefined;
+    const endBuild = beginArchiveBuild(orgId, actorId);
+    if (!endBuild) return res.status(429).json({ success: false, ...ARCHIVE_BUSY });
     try {
       const plan = await planFolderExport(pool, { organizationId: orgId, programId: id, folderId: String(req.params.folderId ?? '') });
       if (!plan.ok) return res.status(plan.status).json({ success: false, error: plan.code, message: plan.message });
       stage = await openVaultArchive();
       const staged = await stageFolderFiles(orgId, plan, cabinetNumbers(plan.view, plan.programRows), stage, folderExportDocument);
       if (!staged.ok) return res.status(409).json({ success: false, error: 'EXPORT_FILE_UNVERIFIED', message: staged.message });
-      const actorId = governedActorId(req) ?? undefined;
       const contents = await buildFolderExportContents(pool, { organizationId: orgId, userId: actorId, programId: id,
-        programName: plan.programName, folder: plan.folder, documents: staged.documents, withheld: staged.withheld });
+        programName: plan.programName, folder: plan.folder, documents: staged.documents, withheld: staged.withheld,
+        namedActors: canReadAuditTrail(req) });
       const built = await stage.finish(contents);
       const recorded = await recordVaultArchive(req, {
         orgId, userId: actorId, action: 'vault.folder.export', resourceType: 'vault_folder', resourceId: `${id}:${plan.folder.id}`,
         details: { programId: id, folderId: plan.folder.id, folderLabel: plan.folder.label, archiveSha256: built.sha256, archiveSize: built.size,
           documentCount: built.files.length, withheldCount: staged.withheld.length, documentIds: built.files.map((f) => f.id) },
+        documents: { ids: built.files.map((f) => f.id), leftIn: `the export of ${plan.folder.label}` },
       });
       if (!recorded) {
         return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
@@ -3029,13 +3035,19 @@ export default function createProjectVaultRoutes(): Router {
       sendStagedArchive(res, built, stage, `vault-${plan.folder.id}-export-${built.sha256.slice(0, 8)}.zip`);
       return undefined;
     } catch (err) {
-      if (err instanceof SealArchiveError) return res.status(err.status).json({ success: false, error: err.code, message: err.message });
-      logger.error('vault folder export failed', { programId: id, err: err instanceof Error ? err.message : String(err) });
-      return res.status(500).json({ success: false, error: 'EXPORT_UNAVAILABLE', message: 'The folder could not be exported. Nothing was sent.' });
+      return folderExportFailure(res, err, err instanceof SealArchiveError ? err : null, id);
     } finally {
+      endBuild();
       if (!sending) await stage?.cleanup().catch(() => undefined);
     }
   });
+
+  /** A folder export that threw: the archive's own refusal in its words, anything else as unavailable. */
+  function folderExportFailure(res: Response, err: unknown, refusal: { status: number; code: string; message: string } | null, programId: string) {
+    if (refusal) return res.status(refusal.status).json({ success: false, error: refusal.code, message: refusal.message });
+    logger.error('vault folder export failed', { programId, err: err instanceof Error ? err.message : String(err) });
+    return res.status(500).json({ success: false, error: 'EXPORT_UNAVAILABLE', message: 'The folder could not be exported. Nothing was sent.' });
+  }
 
   /** Read and stage each file the plan names; the first that fails its hash refuses them all. */
   async function stageFolderFiles(

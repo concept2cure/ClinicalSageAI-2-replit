@@ -1,0 +1,52 @@
+# 03-mutation: each fix removed in turn; each is caught. Script: archfix-mutate.py (each file restored after its run)
+# Suites: the folder-export and seal dbtests on real PostgreSQL (SM3: the delivery unit test)
+
+## SM1 the archive names people and their IP addresses for everyone
+ × tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > names people in a viewer's copy only by account reference, with no IP address; an audit reader's copy names them
+   → expected 'Ezra Exporter' to match /^(user:\d+|System|not named in this c…/
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > a viewer the project admits may download it, with people named by account reference and no IP address
+   → expected 'Sol Sealer' to match /^(user:\d+|System|not named in this c…/
+      Tests  2 failed | 24 passed (26)
+
+## SM2 the folder export treats every reader as an audit reader
+ × tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > names people in a viewer's copy only by account reference, with no IP address; an audit reader's copy names them
+   → expected 'named' to be 'by reference' // Object.is equality
+      Tests  1 failed | 25 passed (26)
+
+## SM3 a request closed before the archive was ready is sent to anyway
+ × server/services/vault/__tests__/vault-archive-delivery.test.ts > sending a staged archive > sends nothing to a request already closed, and removes the staging directory
+   → dest.once is not a function
+      Tests  1 failed | 2 passed (3)
+
+## SM4 a second build by the same person is not refused
+ × tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > builds one archive at a time for each person
+   → expected 500 to be 429 // Object.is equality
+      Tests  1 failed | 25 passed (26)
+
+## SM5 no row in each document's own history
+ × tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > records in each exported document's own history that it left in this export, and nothing for one withheld
+   → expected [] to deeply equal [ Array(1) ]
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > a viewer the project admits may download it, with people named by account reference and no IP address
+   → expected [] to deeply equal [ …(3) ]
+      Tests  2 failed | 24 passed (26)
+
+## SM6 the export takes the folder column alone, not the tree's placement
+ × tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > holds what the tree shows in the folder: a suggested filing, named as unconfirmed, and not a row the tree lists as 
+   → expected [ …(3) ] to deeply equal [ …(2) ]
+      Tests  1 failed | 25 passed (26)
+
+## SM7 a document the file read no longer finds is left out quietly
+ × tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > refuses, rather than leave out, a document the folder showed and the file read no longer finds
+   → expected { ok: true, view: 'pharma', …(4) } to match object { ok: false, status: 409, …(1) }
+      Tests  1 failed | 25 passed (26)
+
+## SM8 the index does not name unconfirmed filings
+ × tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > holds what the tree shows in the folder: a suggested filing, named as unconfirmed, and not a row the tree lists as 
+   → expected 'Export of a Vault folder: Module 2 · …' to match /not yet confirmed by a person \(1\):\…/
+      Tests  1 failed | 25 passed (26)
+
+## SM9 the shared folder rule ignores the placement (tree and export alike)
+ × tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > holds what the tree shows in the folder: a suggested filing, named as unconfirmed, and not a row the tree lists as 
+   → expected [ …(3) ] to deeply equal [ …(2) ]
+      Tests  1 failed | 25 passed (26)
+

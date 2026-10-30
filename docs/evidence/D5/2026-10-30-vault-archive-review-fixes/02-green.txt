@@ -1,0 +1,26 @@
+# 02-green: after the fixes
+
+## Real PostgreSQL 16, as app_service, RLS_ENFORCE=on: folder export, seal (VR-19/VR-20), hold notice, version restore
+ Test Files  4 passed (4)
+      Tests  38 passed (38)
+
+## The new folder-export and seal cases (from the run with the export and seal dbtests)
+ ✓ tests/db/vault-folder-export.dbtest.ts > a Vault folder's export > a viewer the project admits may export it, as they may download each file
+ ✓ tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > names people in a viewer's copy only by account reference, with no IP address; an audit reader's copy names them
+ ✓ tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > records in each exported document's own history that it left in this export, and nothing for one withheld
+ ✓ tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > holds what the tree shows in the folder: a suggested filing, named as unconfirmed, and not a row the tree lists as Unfiled
+ ✓ tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > refuses, rather than leave out, a document the folder showed and the file read no longer finds
+ ✓ tests/db/vault-folder-export.dbtest.ts > what an export holds, says and records (security review, 2026-10-30) > builds one archive at a time for each person
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > refuses a wrong password, and a viewer
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal's closing archive (VR-20) > a viewer the project admits may download it
+      Tests  26 passed (26)
+
+## Client, route (server/routes/c2c/__tests__) and Vault service (server/services/vault, the delivery unit tests included) suites
+ Test Files  300 passed (300)
+      Tests  3850 passed (3850)
+
+## Type check (run alone): NODE_OPTIONS=--max-old-space-size=13312 npx tsc --noEmit -p tsconfig.json
+tsc exit 0
+
+## Lint ratchet --since HEAD: no file changed its warning count
+## Gates: ci:sql-interpolation, ci:tenant-isolation:no-regression, ci:discarded-audit-write, ci:dead-audit-catch, ci:insert-columns-declared, ci:vault-document-writers, ci:server-error-leaks: pass
