@@ -66,7 +66,7 @@ Deleted history finds 3 historical retirements/rewrites, not an absent module.
 The full signature successor at `09c83267b` passed the root combined cohort,
 build and zero-regression lint below. Canonical integration, the later SQL gate
 successor and the latest unrelated CSR/STF merge have their own named checks and
-source-preservation links. The current packet selects 153 source/test/configuration
+source-preservation links. The current packet selects 174 source/test/configuration
 inputs; it does not relabel earlier executions as a full rerun of current source.
 Whole TypeScript, normal push gates and fresh remote proof remain pending.
 
@@ -214,8 +214,28 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   production build at that same commit passed **exit 0**, with 153 inputs stable;
   all four selected CI checks passed and changed-file lint remained flat at
   190→190 warnings with zero errors. Upstream historical totals are not borrowed.
-  These affected tests and build do not replace the pending whole-TypeScript
-  retry through the normal push gate.
+  These affected tests and build remain a distinct source epoch from the whole
+  TypeScript execution and later integration checks below.
+- Third normal push (`push-refusal-03-*`) at `498403dc3` passed **whole
+  TypeScript with 0 errors against baseline 0** and all normal pre-push gates,
+  with all 153 selected inputs unchanged. Git then refused the remote
+  compare-and-swap because the canonical branch had advanced from `819029e2c`
+  to `ed5c91058`. The attempt published nothing and overwrote no remote changes.
+  The exact successful compiler/gate result is retained at that prior source;
+  it is not relabeled as a current-source retry. No force push or gate bypass
+  was used.
+- Product-risk/Engineering integration: the normal merge into `5df5084dd`
+  completed without conflicts; all 153 prior selected inputs remained
+  byte-identical. Independent server and UI reviews found product-risk guards
+  on literal risk/Engineering routes that do not match RBM, optional owner and
+  navigation parameters limited to device Engineering with unchanged defaults,
+  and narrowly scoped mobile risk CSS. Actor, project, sharing and signature
+  services did not change. Root's affected integration cohort
+  (`final-integration-*`) at `5df5084dd` passed **237/237 across 12 actual files**,
+  exit 0, zero skipped and all **174 selected inputs unchanged**. The production
+  build at that commit passed **exit 0**, with those same 174 inputs
+  unchanged; all four selected CI checks passed and lint remained at 190→190
+  warnings with zero errors. Upstream historical totals are not borrowed.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
   changed-file selection. The initial lint harness exceeded its historical text
@@ -235,6 +255,8 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   `surface-text-ramp.css` selector lists, then new `.pj-core-work-controls` and
   `.pde-work-heading` selectors in the incoming project/protocol styles. Existing
   declarations and RBM/rail selectors did not change in those reviewed diffs.
+  Later mobile product-risk CSS is scoped to the MDX risk surfaces and does not
+  match RBM in the bounded incoming review.
   These reviews do **not** establish an exact-current whole-CSS browser rerun.
   Screenshots retain their original source scope and are not relabeled as later
   browser execution.
@@ -242,8 +264,10 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   bodies and receipt metadata and refuse unrelated namespace paths. The static
   API gate first exposed the old shared base literal; explicit addresses fixed
   it without broadening claims or weakening the gate. The recorded API gate
-  passes 590 named paths. Current launch scope, launch API scope, signature
-  ceremony and SQL-interpolation CI checks all pass **exit 0**, with **153 selected
+  passed 590 named paths before the latest integration; the current API check
+  passes **591 named paths** with none refused. Current launch scope, launch API
+  scope, signature ceremony and SQL-interpolation CI checks all pass **exit 0**,
+  with **174 selected
   inputs unchanged** through those checks (`final-ci-summary.json`).
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
@@ -262,6 +286,7 @@ do not add their counts. Selected source pins are not a complete dependency clos
 Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and
 explicitly synthetic browser behavior only at the named sources. It does not
 establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
-validation or agency acceptance. A successful current-source whole TypeScript
-check, normal gated push and fresh remote/source verification need their own
-receipts before publication can be claimed.
+validation or agency acceptance. Whole TypeScript and all normal gates passed at
+`498403dc3`, followed by a Git compare-and-swap refusal. The current 174-input
+integration still requires its own compiler/gated-push retry and fresh
+remote/source verification before publication can be claimed.

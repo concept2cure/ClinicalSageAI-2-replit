@@ -172,36 +172,16 @@ Repo health scan written: /tmp/repo-health-ceiling-probe.json
 [ci:pushed-lint-errors] OK — no ESLint errors in 55 changed file(s) against origin/concept2cure-v2.
    ✅ No ESLint errors in the pushed files.
    Checking that the pushed files gained no ESLint warnings...
-[ci:eslint-warning-ratchet] --since a97f503b521930b838f310c9087c80644a1e4717 (a97f503b5) -- 55 lintable file(s) changed; linting both versions of each...
-[ci:eslint-warning-ratchet] no file changed its warning count since a97f503b521930b838f310c9087c80644a1e4717.
+[ci:eslint-warning-ratchet] --since 819029e2c187f2a8d5f092fd3bce836b200977e3 (819029e2c) -- 55 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since 819029e2c187f2a8d5f092fd3bce836b200977e3.
    ✅ The pushed files gained no ESLint warnings.
    Typechecking (only if this push can change a type)...
 [ci:pushed-typecheck] 55 type-relevant file(s) changed against origin/concept2cure-v2: client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx, client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx, +50 more
 [ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
-[ci:typecheck-no-regression] errors found: 27 (tsc exit 2)
-[ci:typecheck-no-regression] FAIL — error count 27 exceeds baseline 0 (+27).
-  Either fix the new errors, or — if intentional — update the baseline:
-    npm run ci:typecheck:write-baseline
-
-  Tail of tsc output (most recent first):
-    server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts(51,60): error TS2322: Type 'Mock<() => Promise<{ rows: never[]; rowCount: number; }>>' is not assignable to type '{ <T extends Submittable>(queryStream: T): T; <R extends any[] = any[], I extends any[] = any[]>(queryConfig: QueryArrayConfig<I>, values?: I | undefined): Promise<QueryArrayResult<R>>; <R extends QueryResultRow = any, I extends any[] = any[]>(queryConfig: QueryConfig<...>): Promise<...>; <R extends QueryResultRow =...'.
-    server/routes/__tests__/mdx-rbm-signed-records.test.ts(56,60): error TS2322: Type 'Mock<(sql: string, args?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number; }>>' is not assignable to type '{ <T extends Submittable>(queryStream: T): T; <R extends any[] = any[], I extends any[] = any[]>(queryConfig: QueryArrayConfig<I>, values?: I | undefined): Promise<QueryArrayResult<R>>; <R extends QueryResultRow = any, I extends any[] = any[]>(queryConfig: QueryConfig<...>): Promise<...>; <R extends QueryResultRow =...'.
-    server/routes/__tests__/rbm-approval-signature.pglite.test.ts(69,3): error TS2322: Type '(sql: string, args: unknown[] | undefined) => Promise<Results<unknown>>' is not assignable to type '(sql: string, args?: unknown[] | undefined) => Promise<{ rows: Record<string, unknown>[]; }>'.
-    server/routes/__tests__/rbm-board-current-project.test.ts(41,34): error TS18046: 'row' is of type 'unknown'.
-    server/routes/mdx-rbm.ts(1101,11): error TS2322: Type '{} | null' is not assignable to type 'number | null'.
-    server/routes/mdx-rbm.ts(1228,11): error TS2322: Type '{} | null' is not assignable to type 'number | null'.
-    server/services/rbm/__tests__/rbm-assessment-seed.test.ts(16,39): error TS2345: Argument of type '{ query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'.
-    server/services/rbm/__tests__/rbm-assessment-seed.test.ts(24,34): error TS2345: Argument of type '{ query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'.
-    server/services/rbm/__tests__/rbm-assessment-seed.test.ts(31,34): error TS2345: Argument of type '{ query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'.
-    server/services/rbm/__tests__/rbm-assessment-seed.test.ts(37,28): error TS2345: Argument of type '{ query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'.
-    server/services/rbm/__tests__/rbm-assessment-seed.test.ts(45,39): error TS2345: Argument of type '{ connect: Mock<() => Promise<never>>; query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'.
-    server/services/rbm/__tests__/rbm-assessment-seed.test.ts(46,14): error TS2339: Property 'status' does not exist on type '{ items: Record<string, unknown>[]; }'.
-    server/services/rbm/__tests__/rbm-assessment-seed.test.ts(51,47): error TS2345: Argument of type '{ connect: Mock<() => Promise<{ release: Mock<Procedure>; query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }>>; }' is not assignable to parameter of type 'RbmSeedPool'.
-    server/services/rbm/__tests__/rbm-assessment-seed.test.ts(52,14): error TS2339: Property 'status' does not exist on type '{ items: Record<string, unknown>[]; }'.
-    server/services/rbm/__tests__/rbm-assessment-seed.test.ts(61,35): error TS2345: Argument of type '{ query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'.
-
-🚫 ERROR: The typecheck gate failed.
-   This is the check CI would fail on — after the push had already landed.
-   Fix the errors above and re-push.
-
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+   ✅ Typecheck passed (or nothing type-relevant was pushed).
+✅ Pre-push checks complete — all gates passed.
+To https://github.com/concept2cure/ClinicalSageAI-2-replit.git
+ ! [remote rejected]     concept2cure-v2 -> concept2cure-v2 (cannot lock ref 'refs/heads/concept2cure-v2': is at ed5c9105845e0f82f8a0579c41a06fcea63b7542 but expected 819029e2c187f2a8d5f092fd3bce836b200977e3)
 error: failed to push some refs to 'https://github.com/concept2cure/ClinicalSageAI-2-replit.git'
