@@ -9,6 +9,10 @@
   "input_mismatches": [],
   "prior_qualification_inputs_unchanged": 20,
   "new_lint_warnings": 0,
-  "publication": "pending normal hook/compiler/push gates",
-  "new_native_or_browser_qualification_claimed": false
+  "publication": "accepted directly on concept2cure-v2",
+  "new_native_or_browser_qualification_claimed": false,
+  "source_commit": "c0325308d2a8a220ede8a6cae8cfe7d9289419c8",
+  "normal_gates_passed": true,
+  "typescript_errors": 0,
+  "publication_receipt": "source-publication.json"
 }
