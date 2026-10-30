@@ -994,6 +994,8 @@ for `assess_inspection_readiness`, which answers from stated inputs, labelled (2
 - **The old IND briefing-book assembler goes.** Its replacement is `IndBriefingBookStart.tsx`, starting the US
   meeting-package templates (5894e1aaa). The server routes and service it called are deleted once a search shows
   they have no caller.
+  *2026-10-30:* deleted. Agency Meetings, the last caller, opens the editor's meeting package instead
+  (`docs/evidence/D2-BRIEFING-BOOK/2026-10-30-assembler-retired/`).
 
 ### P-55 — The Authoring questions of 2026-10-26 are decided as recommended
 
@@ -1253,6 +1255,32 @@ Its five questions are decided:
 One defence-in-depth point is in scope for slice 1: the request path passes the token's role claim to the database
 verbatim. No assignable role is `app_super_admin`, and no route mints such a token, but the database must not take
 the platform scope from a request's string.
+
+### P-73 — Trial-application drafting covers every region, therapeutic area and modality; CMC composition does not widen with it
+
+Decided by the founder on 2026-10-30. Asked to "build out all IND build and drafting capabilities across all
+therapeutic areas and all geographical regions", the founder chose drafting first over widening everything at once.
+
+- **Widened.** Section drafting and its requirements (AnA's drafting tools, the editor's "Draft from sources", and the
+  canonical requirements resolver behind both) cover the trial application of each region, not only the US IND:
+  - the EU CTA under CTR, filed in CTIS (Part I, Part II and the IMPD);
+  - the UK MHRA CTA;
+  - the Health Canada CTA, with the QOS-CE;
+  - Japan's clinical trial notification;
+  - Australia's CTN/CTA;
+  - China's NMPA IND;
+  - the remaining regions as the region profiles record them.
+  They also cover every therapeutic area and modality the existing vocabularies hold.
+- **What this changes for drafting.** A region, therapeutic area or modality that drafting reports as "unassessed"
+  today becomes work to do. It does not become a reason to stop. The rules of `ANA_IND_COVERAGE_PLAN.md` still hold:
+  - Requirements come from recorded sources, with dates.
+  - An unknown fact stays a visible gap.
+  - A declared label is never treated as qualified evidence.
+- **Unchanged.** CMC / Module 3 composition stays small-molecule Module 3 for a US IND
+  (`services/cmc/composition-scope.ts`, P-28). It widens only by a later decision, slice by slice, as biologic
+  content (Q5A(R2), Q6B, Q5C), the EU IMPD quality part, the QOS-CE and regional 3.2.R are built and verified.
+- **Unchanged.** Submission Center's packaging and transmission bounds, and the agency gateways, are not widened by
+  this decision.
 
 ## How sessions run under this file
 

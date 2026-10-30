@@ -117,6 +117,63 @@ export async function resolveInForceRelease(client: InForceSqlClient, live: QmsD
   return (await readInForceReleases(client, live.organization_id, [live])).get(live.id) ?? null;
 }
 
+/** Where a signed version stands today: what the version history says of it (CAT2-18). */
+export type QmsVersionStanding =
+  | { state: 'in-force'; effectiveFrom: string | null }
+  | { state: 'pending-effective'; effectiveFrom: string | null }
+  | { state: 'superseded'; by: string; from: string | null }
+  | { state: 'retired'; at: string | null }
+  | { state: 'not-in-force' };
+
+/** Dotted versions in numeric order ('1.10' after '1.9'); a part that is not a number compares as text. */
+export function compareQmsVersions(a: string, b: string): number {
+  const pa = a.split('.'); const pb = b.split('.');
+  for (let i = 0; i < Math.max(pa.length, pb.length); i += 1) {
+    const x = pa[i] ?? '0'; const y = pb[i] ?? '0';
+    const diff = /^\d+$/.test(x) && /^\d+$/.test(y) ? Number(x) - Number(y) : x.localeCompare(y);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+const dayOrNull = (v: unknown) => (v == null ? null : utcDay(v, '') || null);
+
+/**
+ * The standing of each recorded version of `live`, by version. In force is
+ * the resolver's (`inForce`, from readInForceReleases), never re-derived. A
+ * version is superseded by the next signed version, from that version's
+ * effective date: there is no row to rewrite (the store is immutable), so this
+ * is read, not recorded. Once the document is retired, its newest signed
+ * version is the one retired.
+ */
+export function qmsVersionStandings(
+  live: QmsDocumentRow,
+  versions: ReadonlyArray<{ version: string; controlled_document?: unknown }>,
+  inForce: InForceRelease | null,
+): Map<string, QmsVersionStanding> {
+  const effectiveOn = new Map<string, unknown>();
+  for (const v of versions) effectiveOn.set(v.version, (v.controlled_document as QmsDocumentRow | null)?.effective_date ?? null);
+  const retired = (live.metadata as { retired?: { at?: unknown; fromStatus?: unknown } } | null | undefined)?.retired;
+  // The row's own version is signed once approved, listed or not; a draft retired with it never was.
+  if (live.status === 'effective' || (live.status === 'retired' && retired?.fromStatus === 'effective')) {
+    effectiveOn.set(live.version, live.effective_date ?? null);
+  }
+  const signed = [...effectiveOn.keys()].sort(compareQmsVersions);
+  const ctx = { live, inForce, signed, effectiveOn, retiredAt: live.status === 'retired' ? dayOrNull(retired?.at) : undefined };
+  return new Map(versions.map(({ version }) => [version, standingOf(version, ctx)]));
+}
+
+function standingOf(version: string, ctx: {
+  live: QmsDocumentRow; inForce: InForceRelease | null; signed: string[]; effectiveOn: Map<string, unknown>; retiredAt: string | null | undefined;
+}): QmsVersionStanding {
+  const { live, inForce, signed } = ctx;
+  if (ctx.retiredAt !== undefined && version === signed[signed.length - 1]) return { state: 'retired', at: ctx.retiredAt };
+  if (inForce && version === inForce.release.version) return { state: 'in-force', effectiveFrom: dayOrNull(inForce.release.effective_date) };
+  if (inForce?.pendingEffective && version === live.version) return { state: 'pending-effective', effectiveFrom: dayOrNull(live.effective_date) };
+  const successor = signed.find((s) => compareQmsVersions(s, version) > 0);
+  return successor ? { state: 'superseded', by: successor, from: dayOrNull(ctx.effectiveOn.get(successor)) } : { state: 'not-in-force' };
+}
+
 /** What the register shows of a predecessor still in force while its successor is drafted. */
 export function inForceSummary(entry: InForceRelease | undefined): Record<string, unknown> | null {
   // A successor in draft or review, or one approved and effective from a later day (CAT2-19).

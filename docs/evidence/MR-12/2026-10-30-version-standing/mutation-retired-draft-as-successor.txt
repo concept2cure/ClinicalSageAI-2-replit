@@ -1,0 +1,7 @@
+ ✓ server/services/qms/__tests__/version-standings.test.ts > qmsVersionStandings > names the version in force, and the one it superseded with the date it took over 3ms
+ ✓ server/services/qms/__tests__/version-standings.test.ts > qmsVersionStandings > keeps the approved version in force while its successor is drafted 1ms
+ ✓ server/services/qms/__tests__/version-standings.test.ts > qmsVersionStandings > says a version approved for a later day is pending, and its predecessor still in force 0ms
+ × server/services/qms/__tests__/version-standings.test.ts > qmsVersionStandings > marks the newest signed version retired; a draft retired with it is not a successor 11ms
+ ✓ server/services/qms/__tests__/version-standings.test.ts > qmsVersionStandings > orders versions as numbers 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)

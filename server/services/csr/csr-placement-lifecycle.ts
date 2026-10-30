@@ -115,6 +115,7 @@ function partOf(p: PriorCsrStudyLeaf): string | null {
 export function partLabel(part: string): string {
   if (part === 'body') return 'the report body';
   if (part === '14') return 'the Section 14 tables';
+  if (part === '14.3.3') return 'the Section 14.3.3 narratives';
   return part.startsWith('16') ? `appendix ${part}` : part;
 }
 

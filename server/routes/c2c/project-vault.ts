@@ -315,6 +315,10 @@ interface VaultDisplayShape {
    *  Counted over the whole program, like `unfiledCount`. Absent when the
    *  uploads store could not be read. */
   awaitingConfirmationCount?: number;
+  /** The active legal holds covering this program or a version in it
+   *  (MR-08 Stage 5): reference and date, never the reason. Absent, with an
+   *  `unavailable` entry, when the holds could not be read. */
+  legalHolds?: import('../../services/vault/vault-hold-notice.js').VaultHoldNotice[];
   /**
    * How much of the filing cabinet the tree above actually carries. The vault
    * is unbounded and the tree read is capped (VAULT_TREE_MAX_DOCS), so a
@@ -529,6 +533,20 @@ const UUID_RE =
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Org id from tenant/user context (integer — c2c tables key on numeric org). */
+/** The program's active hold notices, or an `unavailable` entry saying they could not be read. */
+async function readHoldNoticesOrUnavailable(
+  programId: string, organizationId: number, unavailable: Array<{ branch: string; reason: string }>,
+) {
+  try {
+    const { readActiveHoldNotices } = await import('../../services/vault/vault-hold-notice.js');
+    return await readActiveHoldNotices(pool, { organizationId, programId });
+  } catch (err) {
+    logger.error('vault read: legal holds could not be read', { programId, err: err instanceof Error ? err.message : String(err) });
+    unavailable.push({ branch: 'legalHolds', reason: 'The legal holds could not be read, so whether a document is held is not known.' });
+    return undefined;
+  }
+}
+
 function resolveOrgId(req: Request): number | null {
   const r = req as any;
   const raw = r.tenantId ?? r.organizationId ?? r.user?.organizationId;
@@ -1849,6 +1867,8 @@ export default function createProjectVaultRoutes(): Router {
         programId: id,
         organizationId: orgId,
       });
+      // 9) Legal holds (MR-08 Stage 5): an unread hold is reported, never shown as none.
+      const legalHolds = await readHoldNoticesOrUnavailable(id, orgId, unavailable);
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
         spine: vaultSpineLabel(view, project.program_type),
@@ -1861,6 +1881,7 @@ export default function createProjectVaultRoutes(): Router {
         coverage,
         unfiledCount,
         ...(awaitingConfirmationCount !== undefined ? { awaitingConfirmationCount } : {}),
+        ...(legalHolds ? { legalHolds } : {}),
         ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),
         ...(unavailable.length ? { unavailable } : {}),

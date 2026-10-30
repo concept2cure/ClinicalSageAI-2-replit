@@ -1,0 +1,7 @@
+ ✓ client/src/concept2cure/v2/__tests__/agencyMeetingsNoFixtures.test.tsx > AgencyMeetings — real rows render (no fixture) > renders the REAL meeting, its nested briefing book, and its minutes 102ms
+ × client/src/concept2cure/v2/__tests__/agencyMeetingsNoFixtures.test.tsx > AgencyMeetings — real rows render (no fixture) > opens an FDA meeting's briefing book in the editor, never the retired assembler (P-54, G14) 5014ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyMeetingsNoFixtures.test.tsx > AgencyMeetings — real rows render (no fixture) > derives every KPI from the real rows (not hardcoded) 26ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyMeetingsNoFixtures.test.tsx > AgencyMeetings — honest empty state > shows an EmptyState — never a fixture — when the org has no meetings 15ms
+ ✓ client/src/concept2cure/v2/__tests__/agencyMeetingsNoFixtures.test.tsx > AgencyMeetings — honest error state > shows an error EmptyState — never a fixture — when the read fails 15ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)

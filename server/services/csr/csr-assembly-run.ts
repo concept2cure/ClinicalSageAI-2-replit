@@ -26,7 +26,7 @@ import path from 'node:path';
 import type { Queryable } from '../authoring/authoring-evidence.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { CSR_LISTING_APPENDICES, CSR_SUPPLIED_APPENDICES, e3Title, type CsrAppendixNumber } from './csr-assembly-plan.js';
+import { CSR_LISTING_APPENDICES, CSR_NARRATIVES_SECTION, CSR_SUPPLIED_APPENDICES, e3Title, type CsrDeclarable } from './csr-assembly-plan.js';
 import { CsrAssemblyError } from './csr-assembly.js';
 import type { AssembledCsrJob, AssembleCsrJobInput } from './csr-assembly-source.js';
 import { materializeSupplied, parseSuppliedChoices, type SuppliedChoices } from './csr-assembly-supply.js';
@@ -58,6 +58,8 @@ export interface AssemblySummary {
   unresolvedReferences: AssembledCsrJob['unresolvedReferences'];
   structure: AssembledCsrJob['structure'];
   listings: Array<{ number: string; rows: number; pages: number; verified: boolean; findings: string[] }>;
+  /** §14.3.3 checked against the stored narratives (D18); absent when not landed or declared not applicable, and on assemblies made before. */
+  narratives?: { subjects: number; pages: number | null; verified: boolean; sectionSha256: string; findings: string[] };
   stfWarnings: string[];
   pdfa: string;
 }
@@ -72,8 +74,9 @@ const MIN_REASON = 8;
 const MAX_REASON = 2000;
 /** An assembly with no progress for this long is recorded as stalled (each listing and each retained leaf writes progress). */
 export const STALL_MINUTES = 15;
-const isAppendix = (n: string): n is CsrAppendixNumber =>
-  Object.prototype.hasOwnProperty.call(CSR_SUPPLIED_APPENDICES, n) || Object.prototype.hasOwnProperty.call(CSR_LISTING_APPENDICES, n);
+/** A §16 appendix, or §14.3.3 (D18): what an assembly may declare not applicable. */
+const isDeclarable = (n: string): n is CsrDeclarable => n === CSR_NARRATIVES_SECTION
+  || Object.prototype.hasOwnProperty.call(CSR_SUPPLIED_APPENDICES, n) || Object.prototype.hasOwnProperty.call(CSR_LISTING_APPENDICES, n);
 
 /** The user's not-applicable declarations, each with its reason, recorded with who declared it and when. */
 export function parseDeclarations(raw: unknown, userId: number, at: Date): Record<string, Declaration> {
@@ -81,10 +84,10 @@ export function parseDeclarations(raw: unknown, userId: number, at: Date): Recor
   if (typeof raw !== 'object' || Array.isArray(raw)) throw new CsrAssemblyRunError('CSR_ASSEMBLY_DECLARATION_INVALID', 400, 'Declarations are named as { "16.1.9": "why it does not apply" }.');
   const out: Record<string, Declaration> = {};
   for (const [number, reason] of Object.entries(raw as Record<string, unknown>)) {
-    if (!isAppendix(number)) throw new CsrAssemblyRunError('CSR_ASSEMBLY_DECLARATION_INVALID', 400, `${number} is not a §16 appendix of ICH E3.`);
+    if (!isDeclarable(number)) throw new CsrAssemblyRunError('CSR_ASSEMBLY_DECLARATION_INVALID', 400, `${number} is not a §16 appendix of ICH E3, nor Section 14.3.3.`);
     const text = typeof reason === 'string' ? reason.trim() : '';
     if (text.length < MIN_REASON || text.length > MAX_REASON) {
-      throw new CsrAssemblyRunError('CSR_ASSEMBLY_REASON_REQUIRED', 400, `Say why appendix ${number} (${e3Title(number)}) does not apply to this study, in ${MIN_REASON} to ${MAX_REASON} characters.`);
+      throw new CsrAssemblyRunError('CSR_ASSEMBLY_REASON_REQUIRED', 400, `Say why ${number === CSR_NARRATIVES_SECTION ? 'Section' : 'appendix'} ${number} (${e3Title(number)}) does not apply to this study, in ${MIN_REASON} to ${MAX_REASON} characters.`);
     }
     out[number] = { reason: text, declaredBy: userId, declaredAt: at.toISOString() };
   }
@@ -242,6 +245,8 @@ function summarise(result: AssembledCsrJob, leaves: AssemblyLeafSummary[], study
     missing: result.missing, notApplicable: result.notApplicable, bodyGaps: result.bodyGaps, placeholderSections: result.placeholderSections, unresolvedReferences: result.unresolvedReferences,
     structure: result.structure, stfWarnings: result.stfWarnings, pdfa: result.pdfa,
     listings: result.listings.map(l => ({ number: l.number, rows: l.rows, pages: l.pages, verified: l.verification.ok, findings: l.verification.findings.slice(0, 20) })),
+    ...(result.narratives ? { narratives: { subjects: result.narratives.subjects, pages: result.narratives.pages, verified: result.narratives.verified,
+      sectionSha256: result.narratives.sectionSha256, findings: result.narratives.findings.slice(0, 20) } } : {}),
   };
 }
 

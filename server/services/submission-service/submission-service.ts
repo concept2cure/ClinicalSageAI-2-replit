@@ -106,6 +106,7 @@ import { sequenceCreationRefusal } from './filed-sequence-baseline';
 import { readCurrentFiledBaseline } from './filed-sequence-baseline-content';
 import { canonicalRegionOf, toAgency } from '../../../shared/regulatory/region-identity';
 import { regionalDeviceApplicationClassForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog';
+import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes';
 import { companyLegalVaultTargetRefusal } from '../vault/vault-lifecycle';
 import { stfFileName } from '../ectd/stf-generator';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
@@ -134,6 +135,7 @@ export type SubmissionErrorCode =
   | 'APPLICATION_NUMBER_MISMATCH'
   | 'APPLICATION_TYPE_MISMATCH'
   | 'DEVICE_PREPARATION_ONLY'
+  | 'NOT_AN_APPLICATION'
   | 'PACKAGE_IDENTITY_MISSING'
   | 'SHADOW_WAIVER_NOT_ELIGIBLE'
   | 'SHADOW_FINDING_NOT_DISPOSABLE';
@@ -169,6 +171,10 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   STALE_LEAF: 409,
   VALIDATION_FAILED: 422,
   DEVICE_PREPARATION_ONLY: 422,
+  // A filing document class (a CSR, a supplement, a meeting package) is not an
+  // application, and a project of one holds none (2026-10-29), as
+  // add-project-market.ts refuses a market for it.
+  NOT_AN_APPLICATION: 422,
   UNANCHORED_SUBMISSION: 409,
   // The status the eCTD export answers for the same contradiction (ectd-export.ts).
   APPLICATION_NUMBER_MISMATCH: 409,
@@ -258,6 +264,11 @@ async function insertSubmissionRow(
     throw new SubmissionError('DEVICE_PREPARATION_ONLY',
       'Start this filing as an authoring project. Its preparation outline does not support canonical submission creation yet. Nothing was created.');
   }
+  const requestedClass = filingDocumentClassOf(input.applicationType);
+  if (requestedClass) {
+    throw new SubmissionError('NOT_AN_APPLICATION',
+      `${filingTypeInSentence(requestedClass.docType)} is not an application, so no submission is created for it. ${classNotSequencedReason(requestedClass)} Nothing was created.`);
+  }
   const [row] = await executor
     .insert(submissions)
     .values({
@@ -295,6 +306,30 @@ async function refuseForeignProgram(
 }
 
 /**
+ * A project created for a filing document class (a CSR, a supplement, a
+ * meeting package) holds no submission spine, by design: its creation writes
+ * none, and add-project-market.ts refuses to add one. POST /api/submissions
+ * anchored an IND submission to such a project all the same (2026-10-29, CSR
+ * path review): a second IND spine beside the sponsor's real one. Refused here
+ * with the add-market sentence.
+ */
+async function refuseDocumentClassProject(
+  q: { query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }> },
+  programId: string,
+  organizationId: number,
+): Promise<void> {
+  const row = (await q.query(
+    'SELECT program_type FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL',
+    [programId, organizationId],
+  )).rows[0] as { program_type?: unknown } | undefined;
+  const own = typeof row?.program_type === 'string' ? filingDocumentClassOf(row.program_type) : null;
+  if (own) {
+    throw new SubmissionError('NOT_AN_APPLICATION',
+      `No submission is created in this project: it is ${filingTypeInSentence(own.docType, true)}. ${classNotSequencedReason(own)} Nothing was created.`);
+  }
+}
+
+/**
  * A created submission, with what happened to the 21 CFR Part 11 §11.10(e)
  * record of its creation carried on it.
  *
@@ -320,6 +355,7 @@ export async function createSubmission(
   ctx: { organizationId: number; userId: number }
 ): Promise<CreatedSubmission> {
   if (input.programId != null) await refuseForeignProgram(pool, input.programId, ctx.organizationId);
+  if (input.programId != null) await refuseDocumentClassProject(pool, input.programId, ctx.organizationId);
   const row = await insertSubmissionRow(db, input, ctx);
   // Part 11 §11.10(e). `recordAuditRow` neither throws nor rejects, and the
   // INSERT above is already committed when it runs, so the submission stands

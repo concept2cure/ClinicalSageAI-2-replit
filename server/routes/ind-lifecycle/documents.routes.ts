@@ -14,7 +14,6 @@ import { buildIcsrTransmission, type IcsrGateway } from '../../services/ind-life
 import { assembleIndAnnualReport, parseAnnualReportInput } from '../../services/ind-lifecycle/ind-annual-report-service';
 import { buildSaeLineListing, saeLineListingToCsv } from '../../services/ind-lifecycle/ind-sae-line-listing';
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
-import { assembleBriefingBook } from '../../services/ind-lifecycle/ind-briefing-book-service';
 import { assembleCoverLetter, type CoverLetterInput } from '../../services/ind-lifecycle/ind-cover-letter-service';
 import { assembleLetterOfAuthorization, buildLoaLeafIntent } from '../../services/ind-lifecycle/ind-loa-service';
 import {
@@ -29,7 +28,6 @@ import { buildUsRegionalEnvelope } from '../../services/ind-lifecycle/ind-ectd-e
 import {
   renderIndSafetyReportPdf,
   renderIndAnnualReportPdf,
-  renderBriefingBookPdf,
   renderCoverLetterPdf,
   renderLetterOfAuthorizationPdf,
   renderRightOfReferenceStatementPdf,
@@ -60,10 +58,6 @@ async function withRecordedSubmissionType(b: any, ctx: Ctx | null): Promise<Cove
   if (!ctx) throw Object.assign(new Error('Authentication required to read the submission record.'), { code: 'FORBIDDEN' });
   const submission = await getSubmission(submissionId, ctx);
   return { ...b, submissionType: lifecycleStageToSubmissionType(submission.lifecycleStage) ?? undefined };
-}
-
-function briefingValid(b: any): boolean {
-  return Boolean(b?.productName && b?.indication && b?.meetingType && Array.isArray(b?.questions));
 }
 
 function loaValid(b: any): boolean {
@@ -404,32 +398,6 @@ router.post('/cross-reference-register', limiter, requireRole(AUTHOR), (req, res
   }
   try {
     res.json(buildCrossReferenceRegister(b.references));
-  } catch (err) {
-    fail(res, err);
-  }
-});
-
-/** Assemble an FDA meeting briefing-book model (Pre-IND / Type A/B/C). */
-router.post('/briefing-book', limiter, requireRole(AUTHOR), (req, res) => {
-  const b = body(req);
-  if (!briefingValid(b)) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'productName, indication, meetingType and questions[] are required.' } });
-  }
-  try {
-    res.json(assembleBriefingBook(b));
-  } catch (err) {
-    fail(res, err);
-  }
-});
-
-/** Render an FDA meeting briefing book to a navigable PDF. */
-router.post('/briefing-book/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
-  const b = body(req);
-  if (!briefingValid(b)) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'productName, indication, meetingType and questions[] are required.' } });
-  }
-  try {
-    await sendPdf(req, res, 'fda-briefing-book.pdf', await renderBriefingBookPdf(assembleBriefingBook(b)));
   } catch (err) {
     fail(res, err);
   }

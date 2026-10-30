@@ -3,7 +3,19 @@ import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
 import { DialogPanel } from './ControlledDocumentDialogs';
 import { formatDate, type QmsDoc } from './data';
-import { readQmsSignedVersions, type QmsSignedVersion } from './qmsDocuments';
+import { readQmsSignedVersions, type QmsSignedVersion, type QmsVersionStanding } from './qmsDocuments';
+
+/** The version's standing in words; nothing when the server did not say. */
+export function standingLine(standing: QmsVersionStanding | undefined): string | null {
+  switch (standing?.state) {
+    case 'in-force': return standing.effectiveFrom ? `In force since ${formatDate(standing.effectiveFrom)}` : 'In force';
+    case 'pending-effective': return `Approved, effective from ${formatDate(standing.effectiveFrom)}`;
+    case 'superseded': return `Superseded by version ${standing.by}${standing.from ? ` from ${formatDate(standing.from)}` : ''}`;
+    case 'retired': return standing.at ? `Retired ${formatDate(standing.at)}` : 'Retired';
+    case 'not-in-force': return 'Not in force';
+    default: return null;
+  }
+}
 const AuthoredHtml = React.lazy(async () => {
   const module = await import('../v2/editor/AuthoredHtml');
   return { default: module.AuthoredHtml };
@@ -27,7 +39,10 @@ export function ControlledDocumentHistory({ document, onClose }: { document: Qms
       versions === null ? <p role="status">Loading document versions…</p> :
       versions.length === 0 ? <p>No document versions recorded yet.</p> : versions.map((version, index) => (
         <details key={`${version.version}:${version.approved_at}`} open={index === 0} className="qms-signed-version">
-          <summary>Version {version.version} · {version.record_kind === 'legacy-registry' ? 'earlier registry record' : `approved ${formatDate(version.approved_at)}`}</summary>
+          <summary>
+            Version {version.version} · {version.record_kind === 'legacy-registry' ? 'earlier registry record' : `approved ${formatDate(version.approved_at)}`}
+            {standingLine(version.standing) && <> · <span data-testid="qms-version-standing">{standingLine(version.standing)}</span></>}
+          </summary>
           {version.record_kind === 'legacy-registry' && <p>No authored content was recorded for this earlier registry version. Its former register record is retained.</p>}
           <React.Suspense fallback={<p role="status">Loading the saved content…</p>}>
             {version.sections.map(section => <section key={section.id}>

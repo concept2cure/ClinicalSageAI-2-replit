@@ -6,43 +6,12 @@
  * SYNTHETIC (support/adam-narrative-synthetic.ts).
  */
 import { describe, expect, it } from 'vitest';
-import { createHash } from 'node:crypto';
-import { runNarrativeJob, type NarrativePageCursor, type NarrativeSectionRow, type NarrativeStore, type SavedNarrative, type StreamedNarrativeSection } from '../csr-narrative-job';
+import { runNarrativeJob, type NarrativeStore } from '../csr-narrative-job';
 import { reconcileNarrative } from '../narrative-reconciliation';
 import { buildNarrativeIndex, subjectNarrativeFacts } from '../narrative-subject-facts';
 import { selectNarrativeSubjects } from '../narrative-subject-selection';
+import { MemoryStore } from './support/narrative-memory-store';
 import { adaeRows, narrativeBundle, narrativeDatasets, qualifies, subjectId } from './support/adam-narrative-synthetic';
-
-const hash = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
-class MemoryStore implements NarrativeStore {
-  rows = new Map<string, SavedNarrative>();
-  sections = new Map<string, NarrativeSectionRow>();
-  saves = 0;
-  stopAfter = Infinity;
-  largestChunk = 0;
-  async heads() {
-    return [...this.rows.values()].map(r => ({ subjectId: r.subjectId, sequence: r.sequence, status: r.status, factsDigest: r.factsDigest, prose: r.qc.prose,
-      verified: r.status === 'composed' ? !!r.content?.trim() && r.contentHash === hash(r.content) : r.content === null && r.contentHash === null }));
-  }
-  async page(after: NarrativePageCursor | null, limit: number) {
-    const sorted = [...this.rows.values()].sort((a, b) => a.sequence - b.sequence || (a.subjectId < b.subjectId ? -1 : 1));
-    return sorted.filter(r => !after || r.sequence > after.sequence || (r.sequence === after.sequence && r.subjectId > after.subjectId))
-      .slice(0, limit).map(r => ({ ...r }));
-  }
-  async save(row: SavedNarrative) {
-    if (this.saves >= this.stopAfter) return false;
-    this.saves++;
-    this.rows.set(row.subjectId, { ...row });
-    return true;
-  }
-  async writeSections({ narratives, crossReference }: { narratives: StreamedNarrativeSection; crossReference: NarrativeSectionRow }) {
-    let content = '';
-    for await (const chunk of narratives.chunks) { this.largestChunk = Math.max(this.largestChunk, chunk.length); content += chunk; }
-    this.sections.set('14.3.3', { sectionNumber: '14.3.3', content, contentHash: hash(content), lineage: narratives.lineage });
-    this.sections.set('12.3.2', crossReference);
-    return { written: ['14.3.3', '12.3.2'], kept: [] };
-  }
-}
 
 const run = (store: NarrativeStore, n: number, adae?: ReturnType<typeof adaeRows>) =>
   runNarrativeJob({ bundle: narrativeBundle(), datasets: narrativeDatasets(n, adae ? { adae } : {}), store, protocolNumber: 'SYN-LMN201-PROTOCOL' });

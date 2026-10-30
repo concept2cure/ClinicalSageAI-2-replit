@@ -119,6 +119,15 @@ describe('AgencyMeetings — real rows render (no fixture)', () => {
     for (const s of RETIRED) expect(document.body.textContent).not.toContain(s);
   });
 
+  it("opens an FDA meeting's briefing book in the editor, never the retired assembler (P-54, G14)", async () => {
+    const p = props();
+    render(<AgencyMeetings {...p} />);
+    (await screen.findByTestId('mtg-bb-editor')).click();
+    expect(p.onNav).toHaveBeenCalledWith('ind-checklist');
+    expect(screen.queryByTestId('mtg-bb-pdf')).toBeNull();
+    expect(apiRequest.mock.calls.some((c) => String(c[1]).startsWith('/api/ind-lifecycle/briefing-book'))).toBe(false);
+  });
+
   it('derives every KPI from the real rows (not hardcoded)', async () => {
     render(<AgencyMeetings {...props()} />);
     await screen.findByText('Align on the potency assay strategy before the BLA.');
