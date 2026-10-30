@@ -1,0 +1,10 @@
+{
+  "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx": "3b18bc511c1401b51a50d95e41cb78265ee7cf701184d18f08fb1b9b177d09d2",
+  "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx": "8d5545cd11b2b74ccf1c6e712b5485fc7f6ccc6dd632842ed516e5f007641aa6",
+  "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx": "7aaa36a2843af27ccedd317b1aca3eae12f32718b9ff1ff4c9514f1c8f964a87",
+  "client/src/concept2cure/v2/useVaultUpload.ts": "bd24e2c28da897010dac7247de47d73c991cfe3befc57b915eaef1480e68890e",
+  "client/src/concept2cure/v2/vaultIngestReceipt.ts": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a",
+  "client/src/concept2cure/v2/vaultIngestTransport.ts": "420be6b1ca6c22ff5367a70aa484356ee62b1733b21de0675cebeaaaec030e8f",
+  "client/src/concept2cure/mdx/store/dossierStore.ts": "da488d82c39784ef5b2f415871ef079e45513d8b8aba973148d366a010bad415",
+  "client/src/concept2cure/v2/__tests__/_ingest-xhr-fake.ts": "d7c582159a4a99871d4ca8f823fa2410341dfcc24576ee084e8b15f41700d7ff"
+}
