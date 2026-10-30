@@ -1,0 +1,28 @@
+{
+  "canonical_base": "4f92b436430c7881df67b5b72cf3d0db96d39c71",
+  "merge_commit": "1316a41192c49d18d4116f580faf4683edbb2a4c",
+  "incoming_files": 9,
+  "incoming_commits": 6,
+  "qualification_inputs_unchanged": 56,
+  "browser_inputs_unchanged": 36,
+  "source_delta_paths": [
+    "client/src/concept2cure/mdx/pathway-tabs.css",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/pathway/DossierAttachments.tsx",
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx"
+  ],
+  "shell_tests": {
+    "passed": 8,
+    "suites": 1,
+    "exit_code": 0,
+    "log": "final-shell-integration-tests.txt"
+  },
+  "fresh_full_build": {
+    "exit_code": 0,
+    "log": "final-shell-integration-build.txt"
+  },
+  "publication_inputs": 62,
+  "normal_push_gates": "pending",
+  "prior_integration_review": "final-integration-review.md"
+}
