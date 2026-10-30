@@ -124,13 +124,16 @@ vi.mock('../../server/services/storage/index', async (importOriginal) => {
   };
   return { ...actual, getStorageProvider: () => provider, getStorageProviderFor: () => provider };
 });
-/* Text extraction stays real for text; a PDF this test renders is read as its HTML. */
+/* Text extraction stays real; a PDF this test's own engine rendered is read as its HTML. Filing renders
+   through the canonical Word converter since 34942873db, so a real PDF reaches the real extractor: reading
+   its compressed streams as text put NUL bytes into vault.documents and failed hop 6 (2026-10-30). */
+const TEST_ENGINE_PDF = '%PDF-1.7\n% rendered by the lineage test engine\n';
 vi.mock('../../server/services/ocr/index', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../server/services/ocr/index')>();
   return {
     ...actual,
     extractDocumentText: async (buffer: Buffer, mime: string | undefined, filename?: string) =>
-      String(mime ?? '').includes('pdf')
+      String(mime ?? '').includes('pdf') && buffer.subarray(0, TEST_ENGINE_PDF.length).toString('utf8') === TEST_ENGINE_PDF
         ? { text: buffer.toString('utf8').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(), method: 'test-pdf', confidence: 1 }
         : actual.extractDocumentText(buffer, mime, filename),
   };
@@ -146,10 +149,10 @@ vi.mock('../../server/services/vault/document-chunking.service', () => ({
   chunkDocumentForIngest: vi.fn(),
 }));
 vi.mock('../../server/export/renderers', () => ({
-  renderHtmlToPdf: async (html: string) => Buffer.from(`%PDF-1.7\n% rendered by the lineage test engine\n${html}`),
+  renderHtmlToPdf: async (html: string) => Buffer.from(`${TEST_ENGINE_PDF}${html}`),
   // Filing renders through the tracked form since a056eb9ea (QA 2026-10-08, j4); same stub.
   renderHtmlToPdfTracked: async (html: string) => ({
-    buffer: Buffer.from(`%PDF-1.7\n% rendered by the lineage test engine\n${html}`),
+    buffer: Buffer.from(`${TEST_ENGINE_PDF}${html}`),
     usedFallback: false,
   }),
 }));
@@ -295,6 +298,14 @@ const MIGRATIONS = [
   // is reported as unreadable and blocks, so a journey without the table
   // proves the refusal of a database gap, not of a missing dependency.
   'migrations/20260614_ind_cross_references.sql',
+  // The US sequences a submission filed outside the platform (D7, 88229a87d): placement reads
+  // the declared baseline before it numbers a sequence.
+  'migrations/20261029g_submission_filed_baselines.sql',
+  // The company legal registry: placement asks whether a Vault document is a registered legal record.
+  'migrations/20261018_company_legal_registry.sql',
+  // The in-app notification a review task sends (tasking/task-side-effects.ts). A fresh install lays it down
+  // (install-fresh; scripts/ci/migration-deploy-path-baseline.json records that no deploy applies it).
+  'migrations/20260510_notifications_and_clinical.sql',
   // Last: the same-organization project keys (PF-04) over every store above
   // that names a project. After 20260727_prm_program_link, whose unchecked
   // backfill must never run with the key present.
@@ -303,6 +314,9 @@ const MIGRATIONS = [
   'migrations/20261001_integer_project_same_org_keys.sql',
   // One anchor row per program (PF-08).
   'migrations/20261001b_projects_one_anchor_per_program.sql',
+  // The task row's MDx metadata and soft-delete columns, which the task insert names, before the route columns.
+  'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
+  'db/migrations/20260807_unified_tasks_soft_delete.sql',
   // The review route header (RR1a): every lifecycle sign-off reads the record's route standing.
   'migrations/20261023_review_routes.sql',
 ] as const;

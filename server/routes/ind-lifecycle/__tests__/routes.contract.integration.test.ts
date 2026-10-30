@@ -113,8 +113,10 @@ function makeApp() {
 let app: express.Express;
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ submissionCore: true, shadowReview: true });
+  harness = await createIndPgliteDb({ submissionCore: true, shadowReview: true, programSpine: true });
   holder.db = harness.db;
+  // The verdict reads the tenant's saved company legal requirements, and refuses a tenant it cannot find.
+  await harness.pglite.query(`INSERT INTO organizations (id, name) VALUES (1, 'Sponsor organization')`);
   // P-33: the dispatch-gate, snapshot, cockpit and drift routes answer from
   // assessSequenceDispatchReadiness, which reads Shadow Review state (as in
   // assess-dispatch-readiness.original-ind-module3.pglite.test.ts). The release

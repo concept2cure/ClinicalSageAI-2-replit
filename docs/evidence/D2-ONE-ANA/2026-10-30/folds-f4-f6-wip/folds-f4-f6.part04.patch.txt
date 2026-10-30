@@ -1,0 +1,118 @@
++    id: 'device-validation', name: 'Submission blockers', category: 'Submit & file', tier: 'standard',
++    target: 'submission-center', targetLabel: 'Submission Center', targetTier: 'standard',
++    orgId: 291037, fk: 'f5_validation_subscription_retirement_fk',
++  });
+ });
+ 
+ /* Fold F5 item 1 (D2, 2026-10-30; decision P-61 item 1;
+    docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/). The device
+    submission-packages screen (device-submission) folded into Submission
+-   Center's device filings, over the one device-filing store, estar_submissions.
+-   Its writers were amended in place (CLAUDE.md Rule 1): 20260810's keep-list and
+-   upsert, and 20260823's packaging row. A fresh database never holds the row; a
+-   deployed one keeps it, deprecated, with its tier and its subscriptions, which
+-   carry to Submission Center (decision P-61 item 4). */
++   Center's device filings, over the one device-filing store, estar_submissions. */
+ describe('Retired device submission packages', () => {
+-  const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
+-  const WRITERS = [
+-    'db/migrations/20260810_reconcile_module_catalog.sql',
+-    'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+-  ];
+-  const meta = async (db: PGlite, id: string) =>
+-    (await db.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [id])).rows;
++  retiredByFoldCases({
++    id: 'device-submission', name: 'Device submission packages', category: 'Submit & file', tier: 'standard',
++    target: 'submission-center', targetLabel: 'Submission Center', targetTier: 'standard',
++    orgId: 291038, fk: 'f5_submission_subscription_retirement_fk',
++  });
++});
+ 
+-  it('a fresh database replaying the whole catalogue set twice never holds device-submission, and Submission Center stays offered at standard', async () => {
+-    expect(WRITERS.every((f) => CATALOG_MIGRATIONS.includes(f))).toBe(true);
+-    const fresh = new PGlite();
+-    try {
+-      for (const ddl of baseDdl()) await fresh.exec(ddl);
+-      for (let replay = 0; replay < 2; replay += 1) {
+-        for (const file of CATALOG_MIGRATIONS) await fresh.exec(read(file));
+-        expect(await meta(fresh, 'device-submission'), `replay ${replay}`).toEqual([]);
+-        const [row] = await meta(fresh, 'submission-center');
+-        expect(row?.metadata.deprecated ?? false).toBe(false);
+-        expect(row?.metadata.tiers).toEqual(['standard']);
+-      }
+-    } finally {
+-      await fresh.close();
+-    }
+-  }, 120_000);
++/* Fold F4 (D2, 2026-10-30; decision P-61 item 3;
++   docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/). Device pathway
++   analytics (device-analytics) joined Reporting & analytics at its tier, over
++   the projects the reader can open. A deployed row keeps its tier,
++   'professional'; insights is offered at standard. */
++describe('Retired device analytics', () => {
++  retiredByFoldCases({
++    id: 'device-analytics', name: 'Device pathway analytics', category: 'Intelligence & risk', tier: 'professional',
++    target: 'insights', targetLabel: 'Reporting & analytics', targetTier: 'standard',
++    orgId: 291039, fk: 'f4_analytics_subscription_retirement_fk',
++  });
++});
+ 
+-  it('keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer', async () => {
+-    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291038, 'Historical subscriber device-submission', 'historical-device-submission');`);
+-    // As a deployed database holds it today: live, packaged at standard.
+-    await pg.query(
+-      `INSERT INTO available_modules (module_id, name, description, category, metadata)
+-       VALUES ('device-submission', 'Device submission packages', '', 'Submit & file', '{"legacyMarker":"kept","tiers":["standard"],"industries":[]}'::json)
+-       ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+-    );
+-    await pg.query(
+-      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES (291038, 'device-submission', true, '{"historicalSubscription":"kept"}')`,
+-    );
+-    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT f5_submission_subscription_retirement_fk
+-      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
+-    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291038');
+-    const before = await subs();
+-    expect(before.rows).toHaveLength(1);
+-    for (let replay = 0; replay < 2; replay += 1) {
+-      for (const file of WRITERS) await pg.exec(read(file));
+-      expect(await meta(pg, 'device-submission'), `replay ${replay}`).toEqual([
+-        { metadata: { deprecated: true, legacyMarker: 'kept', tiers: ['standard'], industries: [] } },
+-      ]);
+-    }
+-    expect((await subs()).rows).toEqual(before.rows);
++/* Fold F6 (D2, 2026-10-30; decision P-61 item 5;
++   docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/). The kit
++   portfolio (device-workstream) folded into Projects with its MDX filter. A
++   deployed row keeps its tier, 'standard'; projects is offered at free. */
++describe('Retired device workstream', () => {
++  retiredByFoldCases({
++    id: 'device-workstream', name: 'Medical Device & IVD', category: 'Author & assemble', tier: 'standard',
++    target: 'projects', targetLabel: 'Projects', targetTier: 'free',
++    orgId: 291040, fk: 'f6_workstream_subscription_retirement_fk',
+   });
+ });
+diff --git a/tests/ui/one-shell.test.ts b/tests/ui/one-shell.test.ts
+index 2970bf15c..467df8ef9 100644
+--- a/tests/ui/one-shell.test.ts
++++ b/tests/ui/one-shell.test.ts
+@@ -128,7 +128,8 @@ describe('one shell', () => {
+     // dragging the kit into the entry chunk; the cases live in the host.
+     const ids = read('client/src/concept2cure/mdx/surfaceIds.ts');
+     const declared = [...ids.matchAll(/^\s*'(device-[a-z0-9-]+)',$/gm)].map((m) => m[1]);
+-    expect(declared.length, 'MDX_SURFACE_IDS did not parse').toBeGreaterThan(10);
++    // Ten remain since device-workstream folded into Projects (D2, fold F6, 2026-10-30); fewer means the parse broke.
++    expect(declared.length, 'MDX_SURFACE_IDS did not parse').toBeGreaterThanOrEqual(10);
+     const host = read('client/src/concept2cure/mdx/MdxSurfaceHost.tsx');
+ 
+     const views = read('client/src/concept2cure/v2/surfaceViews.ts');
+@@ -139,7 +140,9 @@ describe('one shell', () => {
+       'the kit renders these but SURFACE_VIEWS cannot route to them — unreachable UI').toEqual([]);
+ 
+     const cases = new Set([...host.matchAll(/case '(device-[a-z0-9-]+)':/g)].map((m) => m[1]));
+-    expect([...registered].filter((id) => !cases.has(id) && id !== 'device-workstream'),
++    // No exception: device-workstream, the one id drawn from the host's default branch, folded into Projects
++    // (D2, fold F6, 2026-10-30), so every routed id is a named case.
++    expect([...registered].filter((id) => !cases.has(id)),
+       'the registry routes to these but the kit has no case — they render the not-found card').toEqual([]);
+   });
+ 
