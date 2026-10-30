@@ -89,13 +89,16 @@ beforeAll(async () => {
 afterAll(async () => { await db?.close(); });
 
 describe('the file is on the deploy path', () => {
-  it('is in C2C_MIGRATION_FILES after qms_documents and its same-org key, immediately before the tenant tail', () => {
+  // Before the tenant tail, so the sweep gives the three tables their policy (CLAUDE.md Rule 1). Not "immediately
+  // before": later files are appended above the tail too (08619d5cc7 put one between), and that changes nothing here.
+  it('is in C2C_MIGRATION_FILES after qms_documents and its same-org key, and before the tenant tail', () => {
     const set = C2C_MIGRATION_FILES as unknown[];
     const at = set.indexOf(FILE);
     expect(at, 'listed').toBeGreaterThan(-1);
     expect(at).toBeGreaterThan(set.indexOf(QMS));
     expect(at).toBeGreaterThan(set.indexOf(SAME_ORG_KEYS));
-    expect(set[at + 1]).toBe(UUID_TENANT_ISOLATION_NONPUBLIC);
+    expect(set.indexOf(UUID_TENANT_ISOLATION_NONPUBLIC), 'the tenant tail is listed').toBeGreaterThan(-1);
+    expect(at).toBeLessThan(set.indexOf(UUID_TENANT_ISOLATION_NONPUBLIC));
   });
 });
 
