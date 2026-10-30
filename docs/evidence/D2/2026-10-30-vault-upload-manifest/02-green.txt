@@ -1,0 +1,30 @@
+# 02-green: after this change
+
+## The manifest rules and the panel against the real Vault surface
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > gives each named file its fields, sends nothing until Upload, and the upload sends them
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > applies no part of a line the Vault cannot take, and names it
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > changes nothing when the manifest has a column the Vault does not record
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > downloads the list as a manifest to fill in
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > reading a manifest > takes its columns by heading, in any order and case, and skips blank lines
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > reading a manifest > refuses a column it does not know, naming it, so a misspelt Folder cannot leave every file Unfiled
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > reading a manifest > refuses a manifest with no File column, and one with a column twice
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > reading a manifest > says when the text is not CSV
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > gives each named file its fields, by the reader's names or the Vault's codes
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > applies no part of a line with any value the Vault does not have, and says which
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > leaves a field as it is when its cell is blank
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > refuses an evidence kind or CTD section with no folder, as the row itself offers them only with one
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > refuses a file the list does not have, a name two files share, a file named twice, and one already recorded
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > says what it did in one paragraph, and that nothing was uploaded
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > downloading the list as a manifest > writes every file not yet recorded with its fields, and reads back to the same fields
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > downloading the list as a manifest > guards a cell a spreadsheet would run as a formula, and reads it back as written
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
+
+## The Vault client suites, the upload hook, the drop zone, intake formats, eTMF, filing path, AnA's screen drives
+ Test Files  63 passed (63)
+      Tests  547 passed (547)
+
+## Type check: NODE_OPTIONS=--max-old-space-size=13312 npx tsc --noEmit -p tsconfig.json
+tsc exit 0
+
+## Lint ratchet (--since HEAD): no file changed its warning count

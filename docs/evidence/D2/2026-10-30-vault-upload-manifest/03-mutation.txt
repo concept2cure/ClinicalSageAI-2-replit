@@ -1,0 +1,56 @@
+# 03-mutation: each rule removed in turn; each is caught
+# Script: manifest-mutate.py (each file restored after its run). Suites: vaultUploadManifest.test.ts, vaultUploadManifestPanel.test.tsx
+
+## MU1 an unknown column is ignored, not refused
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > changes nothing when the manifest has a column the Vault does not record
+   → expected null not to be null
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > reading a manifest > refuses a column it does not know, naming it, so a misspelt Folder cannot leave every file Unfiled
+   → expected true to be false // Object.is equality
+      Tests  2 failed | 14 passed (16)
+
+## MU2 a value the Vault does not have is skipped and the rest of the line applied
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > applies no part of a line the Vault cannot take, and names it
+   → expected null not to be null
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > applies no part of a line with any value the Vault does not have, and says which
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > says what it did in one paragraph, and that nothing was uploaded
+   → expected 'Manifest applied to 2 files. Nothing …' to be 'Manifest applied to 1 file. Nothing h…' // Object.is equality
+      Tests  3 failed | 13 passed (16)
+
+## MU3 a blank cell clears its field
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > leaves a field as it is when its cell is blank
+   → expected { title: '', ctdSection: '3.2.P.5.1' } to deeply equal { ctdSection: '3.2.P.5.1' }
+      Tests  1 failed | 15 passed (16)
+
+## MU4 a formula cell is written unguarded
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > downloading the list as a manifest > guards a cell a spreadsheet would run as a formula, and reads it back as written
+   → expected false to be true // Object.is equality
+      Tests  1 failed | 15 passed (16)
+
+## MU5 a name two files share goes to the first of them
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > refuses a file the list does not have, a name two files share, a file named twice, and one already recorded
+   → expected [ [ 2, …(1) ], [ 6, …(1) ], …(1) ] to deeply equal [ [ 2, …(1) ], [ 3, …(1) ], …(2) ]
+      Tests  1 failed | 15 passed (16)
+
+## MU6 a second line for the same file is applied
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > refuses a file the list does not have, a name two files share, a file named twice, and one already recorded
+   → expected [ [ 2, …(1) ], [ 3, …(1) ], …(1) ] to deeply equal [ [ 2, …(1) ], [ 3, …(1) ], …(2) ]
+      Tests  1 failed | 15 passed (16)
+
+## MU7 a file already recorded is changed by the manifest
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > refuses a file the list does not have, a name two files share, a file named twice, and one already recorded
+   → expected [ [ 2, …(1) ], [ 3, …(1) ], …(1) ] to deeply equal [ [ 2, …(1) ], [ 3, …(1) ], …(2) ]
+      Tests  1 failed | 15 passed (16)
+
+## MU8 a CTD section or evidence kind is taken without a folder
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts > applying a manifest to the list > refuses an evidence kind or CTD section with no folder, as the row itself offers them only with one
+   → Cannot read properties of undefined (reading 'reason')
+      Tests  1 failed | 15 passed (16)
+
+## MU9 a manifest that was not applied is said as a plain status, not an alert
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > applies no part of a line the Vault cannot take, and names it
+   → expected null not to be null
+ × client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx > a manifest describes the files in the upload list (Veeva gap 7) > changes nothing when the manifest has a column the Vault does not record
+   → expected null not to be null
+      Tests  2 failed | 14 passed (16)
+
