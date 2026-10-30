@@ -1,0 +1,101 @@
+[
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": null,
+        "fatal": false,
+        "severity": 1,
+        "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+      }
+    ]
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "no-undef",
+        "severity": 1,
+        "message": "'queueMicrotask' is not defined.",
+        "line": 102,
+        "column": 39,
+        "messageId": "undef",
+        "endLine": 102,
+        "endColumn": 53
+      }
+    ]
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2Cure/client/src/concept2cure/v2/useVaultUpload.ts",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async function 'uploadOne' has a complexity of 24. Maximum allowed is 15.",
+        "line": 200,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 200,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 31. Maximum allowed is 15.",
+        "line": 374,
+        "column": 101,
+        "messageId": "complex",
+        "endLine": 374,
+        "endColumn": 103
+      }
+    ]
+  }
+]
