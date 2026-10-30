@@ -1,0 +1,26 @@
+{
+  "kind": "immutable pre-publication verification artifacts",
+  "sha256": {
+    "actual-cli.log.gz": "c2f2427fd49776a6f3116eba07b8301977b69e528fe54f2f1ff404ba49b63f6b",
+    "actual-unconfigured-run/amendment.zip": "1443eebee7678498540dd4c4c687add4522bee17da7cb5e56dbb7299e301171e",
+    "actual-unconfigured-run/execution.json": "7fc94e795d14e54289062b2db0d788d3d2e05333fa535c7715cdd848d720743b",
+    "actual-unconfigured-run/original.zip": "b383befccfa086371fd6feb53422409a957c7a0a3b560116e04964281b1ed41a",
+    "actual-unconfigured-run/summary.json": "48092255c52b59e0661d01f22d0fc32cb4e23d115ecc79f4823dca2b4ddd2294",
+    "actual-unconfigured-run/v3.2.2-fda.json": "a5b01880cb3e05c7540cc6024e590f5314ea2bc897c8c7340022e4115903b0e1",
+    "build.json": "532499d07ed44432eff285768d415dbfb0cf571cca7e1e90a94ccc8987ac4914",
+    "build.log.gz": "7e4ced497b715df0bc81660265f98c338715914effbf636ca1380e174559d12a",
+    "ectd-integrity-existing-zip-probe.json": "8eaa9272253a724b29292d3827e339a43e78c5c299c95f4758879c2c7a384fcf",
+    "ectd-integrity-existing-zip-probe.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ectd-integrity-initial-sync.log": "fc789c9561936e377609baedbb924a3928ba5f22dd1b63d81b8f0a90f6696e6f",
+    "existing-zip-probe.ts.txt": "f62db26e55dc1b86b1e3696e31fa5b7104a481295eaf8245704ae5c61b988c8f",
+    "final-inputs.json": "9562b27a9a88090fe7e779655c15904d7405f9d784b42041cbc9eaeb260b09f6",
+    "green.json.gz": "c7c149cf292dbbaff942f680504b014066c15415a84c62d132c9d0a361a31857",
+    "green.log.gz": "4865a6862669a26c213467db3b0fa504cd8cb6c18897c2af94cdf1357f64a6b7",
+    "lint-final.json": "135d1f40d5787e3d66b2262609bbbe5acb52ce2179b5ea2b8396f1899d8dad7e",
+    "red-inputs.json": "4dd3420a62e97da204a68d322f7d8d3cddae1a6e51e828b0242f79cde957dc99",
+    "red-inputs.tar.gz": "eff52a7934fa583c3056d0fbb8a5facbad2b983bc59f66b02c48e9fde21b23f1",
+    "red.json.gz": "98915a76cbf15878dc0b16fea3b98facf8c3ee30008c817978e3a86329a00400",
+    "red.log.gz": "3a64b81cfc3ee5a8c5a78cabd7f13b517c799290ae5b2373aaea9750430b24c5",
+    "scoped-lint-check.mjs.txt": "b424fc108f644bf1394a32f00e3d02a1e762f62920f66ad7708a6337f151d890"
+  }
+}
