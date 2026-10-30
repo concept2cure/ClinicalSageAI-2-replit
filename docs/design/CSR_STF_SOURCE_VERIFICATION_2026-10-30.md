@@ -31,3 +31,8 @@ The official FDA-hosted PDF is now accessible (HTTP 200, 114803 bytes, SHA-256 6
 4. Root serializes all test/lint/build/compiler/publication jobs. Tests are authored and frozen before genuine RED runs, then source changes; include positive/negative controls and historical-byte preservation. Sources and final dependency inputs are pinned. Provider, native agency acceptance, deployment, broad DTD vendoring/qualification and unrelated regional `info-type` correction remain outside this bounded CSR continuation.
 
 A separate finding remains: the 2008 table lists regional roles with info-type `us`, while the current generator always emits `ich`. Do not promote or silently extend this slice to every regional/dataset tag. DTD assets also have their own existing approval/qualification rules.
+
+
+## Accepted implementation and qualification
+
+Published source `3833305474c67b9f44bce13bbf362aa9ec788c21` corrects the existing role owner, generation, placement refusal and historical predecessor reads within this contract. The combined qualification passes 276 checks in 27 suites; 19-file lint has zero errors and no warning growth; client/server/audit-verifier builds pass. The normal canonical push gates passed, including full TypeScript with zero errors against baseline zero. The evidence README and `publication-receipt.json` preserve earlier failed runs, exact source bases, actual synthetic package XML and all 77 committed input pins. No complete DTD/agency or high-risk model acceptance is claimed.
