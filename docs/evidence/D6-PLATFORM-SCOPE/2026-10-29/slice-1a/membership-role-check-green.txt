@@ -1,0 +1,60 @@
+######## g4_green as app_service
+     who     |          role_check           
+-------------+-------------------------------
+ app_service | organization_users_role_known
+
+== 1. the system scope (tenant 0, app_super_admin, the platform arm) writes app_super_admin onto A's membership
+BEGIN
+psql:probes/21-membership-role-check.sql:11: ERROR:  new row for relation "organization_users" violates check constraint "organization_users_role_known"
+ROLLBACK
+== 2. the system scope writes an unknown role string (no assignable role, no staff role)
+BEGIN
+psql:probes/21-membership-role-check.sql:16: ERROR:  new row for relation "organization_users" violates check constraint "organization_users_role_known"
+ROLLBACK
+== 3. A's own scope (role admin) writes an unknown role string onto its own member
+BEGIN
+psql:probes/21-membership-role-check.sql:21: ERROR:  new row for relation "organization_users" violates check constraint "organization_users_role_known"
+ROLLBACK
+== 4. control: A's own scope assigns each assignable role (ASSIGNABLE_ORG_ROLES), and changes a persona
+BEGIN
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+ROLLBACK
+== 5. control: the system scope mints a staff role the platform still recognises (super_admin)
+BEGIN
+UPDATE 1
+ROLLBACK
+######## g4_green as the RDS master (table owner)
+      who       | superuser 
+----------------+-----------
+ c2c_rds_master | f
+
+BEGIN
+psql:probes/22-membership-role-owner.sql:8: ERROR:  new row for relation "organization_users" violates check constraint "organization_users_role_known"
+ROLLBACK
+== distinct roles held today, every organization
+      role       | count 
+-----------------+-------
+ admin           |     2
+ legacy_reviewer |     1
+
+######## g4_green as the superuser
+   who    | superuser 
+----------+-----------
+ postgres | t
+
+BEGIN
+psql:probes/22-membership-role-owner.sql:8: ERROR:  new row for relation "organization_users" violates check constraint "organization_users_role_known"
+DETAIL:  Failing row contains (1, 7, 1, app_super_admin, null, null, null, null, 2026-10-29 23:41:14.75155, 2026-10-29 23:41:14.75155).
+ROLLBACK
+== distinct roles held today, every organization
+      role       | count 
+-----------------+-------
+ admin           |     2
+ legacy_reviewer |     1
+

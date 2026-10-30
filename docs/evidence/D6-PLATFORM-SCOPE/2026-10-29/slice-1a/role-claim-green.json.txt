@@ -1,0 +1,46 @@
+{
+  "A": 7,
+  "B": 8,
+  "adminA": 1,
+  "membershipRoleBefore": "admin",
+  "results": {
+    "runWithTenantScope tenant A, role app_super_admin": "REFUSED before any statement: runWithTenantScope: the platform role 'app_super_admin' is refused on a tenant, per-user or request scope; only the system scope (runWithSystemTenantScope) carries it (P-72)",
+    "establishRequestTenantScope tenant A, role app_super_admin": {
+      "nextRan": false,
+      "status": 403,
+      "body": {
+        "error": {
+          "code": "PLATFORM_SCOPE_ROLE_REFUSED",
+          "message": "This account's role in the organization cannot open a session. An administrator must correct the role."
+        }
+      }
+    },
+    "runWithTenantScope tenant A, role admin": {
+      "B unified_tasks": 0,
+      "B audit_logs": 0,
+      "B users": 0,
+      "B vault.legal_holds": 0,
+      "UPDATE B unified_tasks": "rowCount 0",
+      "A membership := app_super_admin": "ERR a platform-staff role is granted by the platform scope only (organization 7, role app_super_admin)"
+    },
+    "establishRequestTenantScope tenant A, role admin": {
+      "viaPool": {
+        "B unified_tasks": 0,
+        "B audit_logs": 0,
+        "B users": 0,
+        "B vault.legal_holds": 0,
+        "UPDATE B unified_tasks": "rowCount 0",
+        "A membership := app_super_admin": "ERR a platform-staff role is granted by the platform scope only (organization 7, role app_super_admin)"
+      },
+      "viaRequestClient": {
+        "B unified_tasks": 0,
+        "B audit_logs": 0,
+        "B users": 0,
+        "B vault.legal_holds": 0,
+        "UPDATE B unified_tasks": "rowCount 0",
+        "A membership := app_super_admin": "ERR a platform-staff role is granted by the platform scope only (organization 7, role app_super_admin)"
+      }
+    }
+  }
+}
+probe exit 0

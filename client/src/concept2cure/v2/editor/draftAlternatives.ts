@@ -178,20 +178,70 @@ export function proposalTargetOf(current: () => EditorBridge | null): DraftPropo
   };
 }
 
+/* ── Names: what the platform asked for, never the model's description ─── */
+
+const short = (instruction: string) => (instruction.length > 48 ? `${instruction.slice(0, 48).trimEnd()}…` : instruction);
+const quoted = (instruction: string) => `“${short(instruction)}”`;
+
+/** The radio label of an entry: its approach, or "Revised:" and the person's instruction. */
+export function alternativeLabel(alt: AiDraftAlternative): string {
+  return alt.revision ? `Revised: ${short(alt.revision.instruction)}` : approachOf(alt.approach).label;
+}
+
+/** An entry as a noun phrase, for legends and descriptions. */
+export function alternativeName(list: readonly AiDraftAlternative[], index: number): string {
+  const alt = list[index];
+  if (!alt) return 'the draft';
+  if (alt.revision) return `the revision ${quoted(alt.revision.instruction)}`;
+  return alt.single ? 'the draft' : `the ${approachOf(alt.approach).label.toLowerCase()} alternative`;
+}
+
+/** What an entry asked for and its shape, counted here. */
+export function alternativeDescription(list: readonly AiDraftAlternative[], index: number): string {
+  const alt = list[index];
+  const asked = alt.revision ? `Revises ${alternativeName(list, alt.revision.from)}` : approachOf(alt.approach).asked;
+  return `${asked} · ${shapeLine(alt.draft.generated)}`;
+}
+
+/** The index of the entry the shown one revises, or null when it is not a revision. */
+export function revisedIndex(state: AiDraftReviewState): number | null {
+  const list = state.alternatives ?? [];
+  const from = list[state.shownAlternative ?? 0]?.revision?.from;
+  return from !== undefined && list[from] ? from : null;
+}
+
+/**
+ * The text the shown entry is compared with: the saved section, the text it revised as AnA drafted
+ * it (rendered), or another entry as it stands in the panel. Null when nothing is compared.
+ */
+export function comparedText(state: AiDraftReviewState, against: string, savedContent: string,
+  render: (markdown: string) => string): string | null {
+  if (against === 'saved') return savedContent;
+  const from = revisedIndex(state);
+  if (against === 'revised') return from === null ? null : render(state.alternatives![from].draft.generated);
+  if (!against.startsWith('alternative:')) return null;
+  return state.alternatives?.[Number(against.slice(12))]?.body ?? null;
+}
+
 /* ── Review state ───────────────────────────────────────────────────────── */
 
 /** What the panel's existing controls say once a set of alternatives is shown. */
 export function alternativeWording(state: AiDraftReviewState, edited: boolean) {
   const list = state.alternatives ?? [];
   const shown = list.length ? list[state.shownAlternative ?? 0] ?? null : null;
+  /* Three alternatives were asked for; a lone draft listed beside its revisions is still one draft. */
+  const set = list.length > 0 && !list[0].single;
   const replaces = edited ? ' — replaces your edits' : '';
   return {
     shown,
-    paragraphLabel: shown ? approachOf(shown.approach).label : 'drafted',
-    accept: shown ? 'Accept the whole alternative and record citations' : 'Accept and record citations',
-    again: shown ? `Draft the alternatives again${replaces}` : `Draft again${replaces}`,
-    againTitle: shown ? 'Drafts three new alternatives, replacing these and any edits you made to them.'
-      : edited ? 'Generates a new draft, replacing the text you have edited here.' : 'Generates a new draft, replacing the one shown.',
+    set,
+    paragraphLabel: alternativeName(list, state.shownAlternative ?? 0),
+    accept: shown?.revision ? 'Accept the whole revision and record citations'
+      : set ? 'Accept the whole alternative and record citations' : 'Accept and record citations',
+    again: set ? `Draft the alternatives again${replaces}` : `Draft again${replaces}`,
+    againTitle: set ? 'Drafts three new alternatives, replacing these, their revisions and any edits you made to them.'
+      : shown ? 'Generates a new draft, replacing the one shown, its revisions and any edits you made to them.'
+        : edited ? 'Generates a new draft, replacing the text you have edited here.' : 'Generates a new draft, replacing the one shown.',
   };
 }
 
@@ -213,4 +263,44 @@ export function arrivedAlternative(state: AiDraftReviewState, approach: AiDraftA
       acceptUnknown: false, baseChanged: false, checkedContent: undefined };
   }
   return { alternatives: [...(state.alternatives ?? []), alternative], pendingApproaches: pending };
+}
+
+/* ── Revise by instruction (slice 3) ────────────────────────────────────── */
+
+/** Quick instructions, sent exactly as shown; the person may write their own. */
+export const QUICK_INSTRUCTIONS: readonly string[] = ['Shorter', 'Follow the SAP wording', 'Use the E3 structure for this heading'];
+export const MAX_INSTRUCTION_CHARS = 1000;
+
+/** Why the text shown cannot be revised now, or null when it can. */
+export function revisionRefusal(state: AiDraftReviewState, docSealed: boolean): string | null {
+  if (docSealed) return 'This document is frozen — its content cannot be edited, so nothing can be revised.';
+  if (!state.draft) return null;
+  if (!state.draft.draftId) return 'This draft was not retained on the server, so it cannot be revised. Draft the section again.';
+  if (state.baseChanged) return 'The saved section changed after this draft was generated. Draft again to revise the current text.';
+  return null;
+}
+
+/** What a revision is asked for, captured when the person asks: the entry shown, its candidate and its approach. */
+export interface RevisionTarget { from: number; fromDraftId: string; approach: AiDraftApproach }
+export function revisionTarget(state: AiDraftReviewState, tone: string): RevisionTarget | null {
+  if (!state.draft?.draftId || state.acceptUnknown || state.baseChanged) return null;
+  const list = state.alternatives;
+  const from = list?.length ? state.shownAlternative ?? 0 : 0;
+  const approach = list?.length ? list[from]?.approach : approachOf((state.draft.metadata.tone ?? tone) as AiDraftApproach).approach;
+  return approach ? { from, fromDraftId: state.draft.draftId, approach } : null;
+}
+
+/**
+ * A revision that arrived joins the list as a new entry derived from the one it names, and is
+ * shown. Nothing it revises is replaced; the entry shown until now keeps its edits. A lone draft
+ * is listed first, so the person can go back to it.
+ */
+export function revisedAlternative(state: AiDraftReviewState, target: RevisionTarget, draft: PendingAiDraft,
+  instruction: string): Partial<AiDraftReviewState> {
+  const seeded: AiDraftAlternative[] = state.alternatives?.length ? state.alternatives
+    : state.draft ? [{ approach: target.approach, draft: state.draft, body: state.body, single: true }] : [];
+  const shown = state.shownAlternative ?? 0;
+  const kept = seeded.map((a, i) => (i === shown && state.draft ? { ...a, body: state.body } : a));
+  const list = [...kept, { approach: target.approach, draft, body: draft.generated, revision: { from: target.from, instruction } }];
+  return { alternatives: list, shownAlternative: list.length - 1, draft, body: draft.generated, refusal: null };
 }

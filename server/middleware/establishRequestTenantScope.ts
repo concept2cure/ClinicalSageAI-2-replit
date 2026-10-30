@@ -50,6 +50,9 @@ import type { PoolClient } from 'pg';
 import { getPool } from '../db';
 import {
   getTenantScope,
+  isPlatformScopeRole,
+  PLATFORM_SCOPE_ROLE,
+  PlatformScopeRoleRefusedError,
   runWithTenantScope,
   runWithSystemTenantScope,
   type TenantScope,
@@ -111,7 +114,7 @@ export function isSystemScopedPath(req: Request): boolean {
  * `runWithSystemTenantScope` / `establishRequestSystemScope` produce this shape.
  */
 function isSystemScope(scope: TenantScope | undefined): boolean {
-  return !!scope && scope.tenantId === '0' && scope.role === 'app_super_admin';
+  return !!scope && scope.tenantId === '0' && scope.role === PLATFORM_SCOPE_ROLE;
 }
 
 /**
@@ -168,19 +171,24 @@ function attachLazyClient(
   bindRequestDbClient(req, res, new LazyRequestDbClient(getPool(), applySessionVars));
 }
 
-/** Session-var applier for a per-user tenant scope. */
+/**
+ * Session-var applier for a per-user tenant scope. A per-user scope never
+ * carries the platform role (P-72 slice 1a): the applier refuses it before any
+ * statement, whatever its caller checked.
+ */
 function tenantSessionVars(
   tenantId: string,
   role: string | null,
   orgUuid: string | null,
 ): (client: PoolClient) => Promise<void> {
+  if (isPlatformScopeRole(role)) throw new PlatformScopeRoleRefusedError('tenantSessionVars');
   // With the isolation switches pinned in the same statement (sessionScope.ts).
   return (client: PoolClient) => applySessionScope(client, { tenantId, role, orgUuid });
 }
 
 /** Session-var applier for the cross-tenant system scope (super-admin). */
 function systemSessionVars(): (client: PoolClient) => Promise<void> {
-  return (client: PoolClient) => applySessionScope(client, { tenantId: '0', role: 'app_super_admin', orgUuid: '' });
+  return (client: PoolClient) => applySessionScope(client, { tenantId: '0', role: PLATFORM_SCOPE_ROLE, orgUuid: '' });
 }
 
 /**
@@ -234,6 +242,8 @@ export function establishRequestTenantScope(
   const orgUuid = resolveOrgUuid(req);
   const role = req.user?.role != null ? String(req.user.role) : null;
 
+  if (refusedPlatformScopeRole(req, res, tenantId, role)) return;
+
   // Publish the verified tenant identity on the request, UNCONDITIONALLY.
   //
   // Historically the only writer of req.tenantContext on the global path was
@@ -267,6 +277,29 @@ export function establishRequestTenantScope(
     { tenantId, orgUuid, role, source: 'request', caller: fullPath(req) },
     () => next(),
   );
+}
+
+/**
+ * Answer 403, and return true, when a request's role is the platform role
+ * string. The role a request carries is its membership row's (server/auth.ts,
+ * middleware/auth.ts applyOrganizationRole). No assignable role is the platform
+ * role, and organization_users refuses it (organization_users_role_known), but
+ * the database must not take the platform scope from a request's string: at the
+ * database that string read and wrote every tenant (P-72 slice 1a;
+ * docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1a/). Refused before any
+ * scope is opened or client attached.
+ */
+function refusedPlatformScopeRole(req: Request, res: Response, tenantId: string, role: string | null): boolean {
+  if (!isPlatformScopeRole(role)) return false;
+  const user = req.user as { userId?: unknown; id?: unknown } | undefined;
+  logger.warn('Refused a request scope carrying the platform role', { path: fullPath(req), tenantId, userId: user?.userId ?? user?.id });
+  res.status(403).json({
+    error: {
+      code: 'PLATFORM_SCOPE_ROLE_REFUSED',
+      message: 'This account\'s role in the organization cannot open a session. An administrator must correct the role.',
+    },
+  });
+  return true;
 }
 
 /**

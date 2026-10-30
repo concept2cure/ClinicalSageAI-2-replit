@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Apply one mutation (exact, unique replacement), run its test, restore by reverse replacement, verify sha256."""
+import hashlib, json, subprocess, sys, os, re
+REPO = '/home/user/ClinicalSageAI-2-replit'
+OUT = os.path.dirname(os.path.abspath(__file__))
+MIG = 'server/__tests__/migrations/platform-scope-role.pglite.test.ts'
+DBT = 'server/db/__tests__/platform-scope-role-refused.test.ts'
+MWT = 'server/middleware/__tests__/request-scope-refuses-platform-role.test.ts'
+RTT = 'server/routes/__tests__/authoring-router-membership-role.test.ts'
+M = [
+ ('M01-set-clause-back', 'migrations/20260928_users_membership_rls.sql',
+  "    SET search_path = pg_catalog, public\n    AS $body$\n      SELECT id FROM public.users WHERE email = p_email",
+  "    SET search_path = pg_catalog, public\n    SET app.current_user_role = 'app_super_admin'\n    AS $body$\n      SELECT id FROM public.users WHERE email = p_email", MIG),
+ ('M02-users-policy-without-owner-arm', 'migrations/20260928_users_membership_rls.sql',
+  "may_reach := format('(%s OR %s OR %s OR %s OR %s)', off, super, platform, member, account);",
+  "may_reach := format('(%s OR %s OR %s OR %s)', off, super, member, account);", MIG),
+ ('M03-invitations-without-owner-policy', 'migrations/20260928_invitations_for_member.sql',
+  "    CREATE POLICY organization_invitations_platform_scope_read ON public.organization_invitations\n      FOR SELECT USING (CURRENT_USER = 'c2c_platform_scope'::name);",
+  "    NULL;", MIG),
+ ('M04-no-hand-off', 'migrations/20261030b_platform_scope_role.sql',
+  "      EXECUTE format('ALTER FUNCTION %s OWNER TO c2c_platform_scope', v_fn);",
+  "      NULL;", MIG),
+ ('M05-custom-set-assertion-blind', 'migrations/20261030b_platform_scope_role.sql',
+  "   WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')\n     AND split_part(c.setting, '=', 1) LIKE '%.%'",
+  "   WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')\n     AND split_part(c.setting, '=', 1) LIKE '%.%.%'", MIG),
+ ('M06-runtime-membership-unchecked', 'migrations/20261030b_platform_scope_role.sql',
+  "     AND pg_has_role('app_service', 'c2c_platform_scope', 'MEMBER') THEN",
+  "     AND false THEN", MIG),
+ ('M07-stored-clause-not-stripped', 'migrations/20261030b_platform_scope_role.sql',
+  "    EXECUTE v_new;\n", "    NULL;\n", MIG),
+ ('M08-check-admits-platform-role', 'migrations/20260926_organization_users_own_writes.sql',
+  "    'super_admin', 'superadmin', 'platform_admin'                     -- the staff spellings the trigger guards",
+  "    'super_admin', 'superadmin', 'platform_admin', 'app_super_admin'  -- the staff spellings the trigger guards", MIG),
+ ('M09-check-validated-unconditionally', 'migrations/20260926_organization_users_own_writes.sql',
+  "    IF v_refused = 0 THEN", "    IF true THEN", MIG),
+ ('M10-scope-entry-unchecked', 'server/db/tenantStore.ts',
+  "  assertScopeRoleAdmissible(scope, 'runWithTenantScope');\n  return tenantStorage.run(scope, fn);",
+  "  return tenantStorage.run(scope, fn);", DBT),
+ ('M11-role-not-normalised', 'server/db/tenantStore.ts',
+  "  return typeof role === 'string' && role.trim().toLowerCase() === PLATFORM_SCOPE_ROLE;",
+  "  return typeof role === 'string' && role === PLATFORM_SCOPE_ROLE;", DBT),
+ ('M12-system-shape-any-tenant-0', 'server/db/tenantStore.ts',
+  "scope.role === PLATFORM_SCOPE_ROLE && !scope.orgUuid && scope.accountId == null;",
+  "scope.role === PLATFORM_SCOPE_ROLE;", DBT),
+ ('M13-pool-entry-unchecked', 'server/db/poolInstrumentation.ts',
+  "  if (!scope) return null;\n  try {\n    assertScopeRoleAdmissible(scope, 'pool');",
+  "  if (!scope || scope) return null;\n  try {\n    assertScopeRoleAdmissible(scope, 'pool');", DBT),
+ ('M14-pool-begin-unchecked', 'server/db/poolInstrumentation.ts',
+  "  assertScopeRoleAdmissible(scope, 'pool');\n  return [scope.tenantId,",
+  "  return [scope.tenantId,", DBT),
+ ('M15-request-scope-unchecked', 'server/middleware/establishRequestTenantScope.ts',
+  "  if (refusedPlatformScopeRole(req, res, tenantId, role)) return;\n",
+  "", MWT),
+ ('M16-router-keeps-token-claim', 'server/routes/authoring.router.ts',
+  "    applyOrganizationRole(req);\n    const live: unknown",
+  "    const live: unknown", RTT),
+]
+def sha(p): return hashlib.sha256(open(p,'rb').read()).hexdigest()
+only = sys.argv[1:]
+results = []
+for mid, rel, old, new, test in M:
+    if only and mid not in only: continue
+    p = os.path.join(REPO, rel)
+    s = open(p).read()
+    assert s.count(old) == 1, (mid, s.count(old))
+    before = sha(p)
+    mutated = s.replace(old, new)
+    open(p, 'w').write(mutated)
+    try:
+        log = os.path.join(OUT, f'{mid}.txt')
+        with open(log, 'w') as fh:
+            rc = subprocess.run(['timeout', '600', 'npx', 'vitest', 'run', test], cwd=REPO, stdout=fh, stderr=subprocess.STDOUT).returncode
+    finally:
+        cur = open(p).read()
+        if cur == mutated:
+            open(p, 'w').write(s)  # nobody else wrote the file meanwhile: the original bytes
+        else:  # another lane edited it meanwhile: undo only this mutation
+            assert cur.count(new) == 1, (mid, 'file changed meanwhile and the mutated text is not unique; restore by hand')
+            open(p, 'w').write(cur.replace(new, old))
+    after = sha(p)
+    txt = open(log).read()
+    m = re.search(r'Tests\s+(.*)', txt)
+    results.append({'mutation': mid, 'file': rel, 'test': test, 'vitest_exit': rc, 'tests': m.group(1).strip() if m else 'n/a',
+                     'sha_before': before, 'sha_after': after, 'restored': before == after})
+    print(json.dumps(results[-1]), flush=True)
+json.dump(results, open(os.path.join(OUT, 'results.json' if not only else f'results-{"-".join(only)}.json'), 'w'), indent=1)
