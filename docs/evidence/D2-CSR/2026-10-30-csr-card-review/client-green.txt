@@ -1,0 +1,33 @@
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > carries the narrative build and the assembly for a build of the saved run, on the card 361ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > a newly queued build is selected on the card; nothing navigates to the board 193ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states that no build exists for the run, and a refused build list as an alert, never an empty list 79ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > follows a drafting build until it ends, then stops re-reading the list 69ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > reviews the selected build section by section, with the ICH E3 labels, and approves against the content hash 131ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > imports exactly the approved sections into Authoring and opens the saved copy there 136ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states a refused headings read as an alert, never an empty review 33ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > previews the exact version/hash and requires explicit inclusion before publishing the source selection 292ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > names the study’s ClinicalTrials.gov number from its source, or says the source states none (D5, 2026-10-29) 129ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > shows the project’s pivotal declarations on the CSR card, which a launch screen shows (D5, 2026-10-29) 17ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > keeps unapproved source previews read-only 69ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > separates failed and malformed source lists from a confirmed empty list and supports retry 36ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > refuses a preview with another source hash instead of including incomplete or changed inputs 53ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > refuses a preview with missing required table instead of including incomplete or changed inputs 50ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > refuses a preview with unrecorded source approval instead of including incomplete or changed inputs 51ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > discards a late former-program preview and clears busy state on the program change 49ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > does not adopt a pending package build after switching away from its program and back 96ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > reads frozen tables for the exact saved run and excludes late previous-run data 19ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > offers an exact saved-read retry after a wrong run receipt without manufacturing empty history 67ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > paginates large aggregate tables and fetches the authenticated source contract without changing source selection 104ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > includes only an explicitly approved source in the real package-start request 78ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > retains saved run history while fencing source choices during an existing governed ceremony 40ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowEditorEntryPoints.test.tsx > stored workflow entry points reuse the canonical intake > CSR selects the actual saved job and requested E3 parent before exact returned-ID navigation 284ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowEditorEntryPoints.test.tsx > stored workflow entry points reuse the canonical intake > protocol selects its numeric stored document and current explicit target 435ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowEditorEntryPoints.test.tsx > stored workflow entry points reuse the canonical intake > protocol dirty content blocks saved-copy navigation and preserves the source editor 264ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > offers "Build CSR draft" only for a saved run that holds retained tables, and binds that run 395ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > renders no build control for a run with no retained tables 26ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > shows the server refusal as stated, never a silent empty or a queued build 92ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > records a review decision on the exact text, and shows a refused decision 149ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > requires a stated reason to send a section back 33ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision 106ms
+ Test Files  4 passed (4)
+      Tests  31 passed (31)

@@ -1,0 +1,49 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > serves an organization-visible project's headings to an ordinary member 58ms
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > refuses a same-organization member without access to a private project, with no headings 13ms
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > serves the private project to its member, so the refusal is the project policy and not the job 15ms
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > refuses a user who is not in the organization at all 5ms
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > gives 404 when the access check finds no job in this organization 7ms
+stderr | server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol
+{
+  "timestamp": "2026-10-30T08:33:33.344Z",
+  "level": "error",
+  "message": "[csr-jobs] CSR evidence source check failed",
+  "context": {
+    "err": "pool exhausted",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > queues a build bound to the run once its tables read for this protocol 41ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol 21ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses a run retained under another program than the build, before reading it 7ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > records each decision as the signed-in reviewer, never a body-supplied one 58ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > refuses a send-back without a reason and a malformed section number 8ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > lists only this organization's builds bound to the run, newest first 5ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > refuses a missing or malformed run and a missing program, never an empty list 6ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — the build's ICH E3 tree for review on the CSR card (D2/W1, 2026-10-30) > returns every heading of the canonical tree with each output's state and content hash 12ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — the build's ICH E3 tree for review on the CSR card (D2/W1, 2026-10-30) > refuses another organization's build as not found, never its headings 8ms
+ ✓ server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts > CSR board follows its actual program in PostgreSQL > reads the selected program, even when a sibling and foreign tenant have newer builds 50ms
+ ✓ server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts > CSR board follows its actual program in PostgreSQL > refuses a foreign/unanchored program and conflicting or malformed scope instead of falling back to a sibling 31ms
+ ✓ server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts > CSR board follows its actual program in PostgreSQL > returns honest empty retained history for an archived project and preserves explicitly unscoped organization boards 21ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > refuses an explicitly malformed project instead of enqueueing an organization-wide build 47ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 202 with { jobId, status: "queued" } when authenticated 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 401 when organizationId is missing from req 3ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns the status object when found in the same org 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 404 when getCSRBuildJobStatus returns null 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 400 when :jobId is non-numeric 2ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId/sections > returns the section array 3ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > transitions status to "cancelled" via the org-scoped Drizzle update 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > returns 409 when status is already "complete" 2ms
+ ✓ server/routes/__tests__/csr-workflow-headings.test.ts > csr-workflow board headings > lists every heading of the canonical tree as not drafted when no build exists 36ms
+ ✓ server/routes/__tests__/csr-workflow-headings.test.ts > csr-workflow board headings > shows each saved heading with its review state, and a redrafted approval as a draft 12ms
+
+ Test Files  5 passed (5)
+      Tests  28 passed (28)
+   Start at  08:33:19
+   Duration  20.39s (transform 2.25s, setup 159ms, import 9.85s, tests 9.28s, environment 1ms)
+
+exit 0
