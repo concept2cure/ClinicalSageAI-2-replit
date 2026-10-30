@@ -1,0 +1,29 @@
+{
+  "inputCommit": "9322275bddc0f0f18e227279508727de09232bfb",
+  "incomingCanonical": "819029e2c187f2a8d5f092fd3bce836b200977e3",
+  "tests": [
+    {
+      "passed": 112,
+      "suites": 6,
+      "failed": 0,
+      "scope": "Own catalog/tasking41 plus STF source values/generator/lifecycle binding"
+    },
+    {
+      "passed": 8,
+      "suites": 2,
+      "failed": 0,
+      "scope": "Vault receipt and MDX drawer convergence"
+    }
+  ],
+  "twoGroupsDisjoint": true,
+  "priorGroupsOverlap": true,
+  "build": {
+    "passed": true,
+    "clientAssets": [
+      "index-DYRR5U7B.js"
+    ],
+    "serverCommitMatches": true
+  },
+  "stagedContent": "105 immutable Git blobs from the preceding fully-qualified tree were uploaded and SHA-verified; no commit/ref was published. Reusable blob IDs survive context refresh.",
+  "finalGate": "Full normal gate script on current exact tree remains required before tree/commit/ref publication."
+}
