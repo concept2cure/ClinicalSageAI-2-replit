@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-30T18:35:12.757596+00:00",
+  "kind": "Concurrent remote advance after zero-error compiler and all normal gates",
+  "sourceCommit": "dd53c5a5fcd360d8c0b1b9a3cf72cc56fa19f039",
+  "selected180InputsUnchanged": true,
+  "wholeTypeScriptErrors": 0,
+  "baseline": 0,
+  "allNormalGatesPassed": true,
+  "remoteAdvancedTo": "1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10",
+  "publication": false,
+  "next": "Normal merge and retry; no force or bypass."
+}

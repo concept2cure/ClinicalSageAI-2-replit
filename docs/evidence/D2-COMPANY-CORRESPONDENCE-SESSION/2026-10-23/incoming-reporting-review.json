@@ -1,0 +1,50 @@
+{
+  "incoming": "62613253e",
+  "merged": "1ff8adb4d",
+  "reviewer": "/root/incoming_mdx_review",
+  "result": "No integration blocker for4correspondenceforms, existing apiCall overload orReportinglegalchooser. Nochangesmade to incomingReportingproduction.",
+  "changedSourceTestPaths": [
+    "client/src/concept2cure/v2/__tests__/_insights-library-fixture.tsx",
+    "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx",
+    "client/src/concept2cure/v2/surfaces/Insights.tsx",
+    "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx",
+    "client/src/concept2cure/v2/surfaces/InsightsSchedulesPanel.tsx",
+    "client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx",
+    "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts",
+    "server/routes/__tests__/report-os-bundle-recording.test.ts",
+    "server/routes/__tests__/report-os-report-pack-export.test.ts",
+    "server/routes/report-os.ts"
+  ],
+  "sourcePinChecks": [
+    {
+      "receipt": "client/post-legal-chooser/after-source-pins.json",
+      "sha256": "431c3041249621e4b617cd9e4efb9b81aefbbb70fdb302804518e6ac930fc33c",
+      "matchingPins": 55
+    },
+    {
+      "receipt": "client/post-mdx-project/after-source-pins.json",
+      "sha256": "0b7109f4658c1cbd27c81894eacf44fa519798465c6a70e435e6ce07a9733776",
+      "matchingPins": 87
+    },
+    {
+      "receipt": "backend/compiler-successor/source-after.json.gz",
+      "sha256": "f346f3206931398685d3d9114648a26531d97b95d3c5295affda17b0a78f87e1",
+      "matchingPins": 15
+    },
+    {
+      "receipt": "backend/post-mdx-project/source-after.json.gz",
+      "sha256": "3e1b381a448d78ce31888c8ea1a90f30b1b25fbeaafc6d63ec7a2e6983d5dbd2",
+      "matchingPins": 23
+    }
+  ],
+  "receiptsUnder": "docs/evidence/D2-REPORTING-LIBRARY-RECOVERY/2026-10-23/",
+  "upstreamCohortsAreHistoricalOverlapping": true,
+  "knownSeparateHandoff": {
+    "file": "client/src/concept2cure/v2/surfaces/insightsLibraryActions.tsx",
+    "function": "useLibraryMutation",
+    "finding": "Pre-dispatch checks only current(); mounted.current is checked afterawait. A retained callback afterpanelunmount may start anotherwrite while account/contextcurrent stilltrue.",
+    "status": "Source-reviewed; not functionally reproduced or fixed here. Already-published separate Reporting panel ownership, outside4formcontract.",
+    "nextRegression": "Retain mutationcallback, unmount panel while current() remains true, invoke oldcallback: expect no actions.start/request. Repeat contextAtoBtoA. Preserve settlement ofalreadysent operations."
+  }
+}

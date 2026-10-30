@@ -1,0 +1,17 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/ana/__tests__/rbm-launch-admission.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/access-seed-dispatch-red-results.json",
+  "exitCode": 1,
+  "passed": 3,
+  "failed": 1,
+  "skipped": 0,
+  "files": 1,
+  "unchangedInputs": true,
+  "failures": [
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/server/services/ana/__tests__/rbm-launch-admission.test.ts",
+      "cases": [
+        "registered RBM tool admission and draft seed leases the canonical pool supplied as sqlClient instead of transacting through pool.query"
+      ]
+    }
+  ]
+}

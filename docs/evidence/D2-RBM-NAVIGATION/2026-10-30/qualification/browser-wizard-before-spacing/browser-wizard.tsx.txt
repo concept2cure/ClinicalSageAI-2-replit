@@ -1,0 +1,36 @@
+/** The real shipped NewProjectWizard and providers; synthetic identity/callback observation only. */
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
+import {AuthProvider,authService} from '/client/src/services/portal/authService';
+import {TenantProvider} from '/client/src/contexts/TenantContext';
+import {NewProjectWizard} from '/client/src/concept2cure/v2/surfaces/Projects';
+import {clearShellProject} from '/client/src/concept2cure/v2/shellProject';
+import '/design-system/colors_and_type.css';
+import '/client/src/index.css';
+import '/client/src/concept2cure/v2/styles/app-v2.css';
+import '/client/src/concept2cure/v2/styles/surfaces-v2.css';
+import '/client/src/concept2cure/v2/styles/misc-surfaces-v2.css';
+import '/client/src/concept2cure/v2/styles/coverage-v2.css';
+import '/client/src/concept2cure/v2/styles/surface-text-ramp.css';
+const actor={id:'42',organizationId:'7',organizationName:'Synthetic RBM organization',email:'rbm-browser@example.test',
+firstName:'Synthetic',lastName:'Reviewer',displayName:'Synthetic Reviewer',roles:['owner'],permissions:['governed:write','billing:admin'],
+mfaEnabled:false,mfaMethods:[],mustChangePassword:false};
+const bearer='fixture.'+btoa(JSON.stringify({userId:42,organizationId:7,session:'rbm-browser'}))+'.synthetic';
+authService.setToken(bearer,actor,'synthetic-browser-refresh',3600);
+localStorage.setItem('currentOrganizationId','7');
+const client=new QueryClient({defaultOptions:{queries:{retry:false}}});
+clearShellProject();
+function Probe(){
+ const[closed,setClosed]=React.useState(false);
+ const[observed,setObserved]=React.useState<string[]>([]);
+ return <QueryClientProvider client={client}><AuthProvider><TenantProvider>
+ <div className="c2c-v2" data-theme="light" style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+ <aside style={{padding:'10px 20px',fontSize:12,lineHeight:1.5,borderBottom:'1px solid var(--border)'}}>Synthetic actual-component browser qualification · filing offers, identity and project-create response are intercepted fixtures · no backend project, grant or assessment is created</aside>
+ <main className="page-full" style={{flex:1,minHeight:0,overflow:'auto'}}>{!closed
+ ?<NewProjectWizard onClose={()=>setClosed(true)} onNav={id=>setObserved(old=>[...old,id])} segment="biotech"/>
+ :<section style={{padding:24}}><h1>Synthetic project receipt observed</h1><p>The actual wizard closed after the mocked create response.</p></section>}</main>
+ <output aria-label="Observed wizard navigation" style={{display:closed?'block':'none',padding:16}}>{JSON.stringify(observed)}</output>
+ </div></TenantProvider></AuthProvider></QueryClientProvider>;
+}
+createRoot(document.getElementById('root')!).render(<Probe/>);

@@ -1,0 +1,15 @@
+{
+  "exitCode": 1,
+  "passed": 168,
+  "failed": 1,
+  "files": 8,
+  "all13InputsUnchanged": true,
+  "failures": [
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+      "cases": [
+        "RBM project context blocks retained navigation after raw browser bearer drift or unmount"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+Auto-merging server/services/ana/AnaToolExecutor.ts
+Merge made by the 'ort' strategy.
+ .../v2/__tests__/authoringAiDraft.test.tsx         |   1 +
+ .../v2/__tests__/authoringAiDraftAssembly.test.tsx |   2 +-
+ .../__tests__/authoringDraftAlternatives.test.tsx  |   4 +-
+ .../v2/__tests__/authoringDraftInputs.test.tsx     |  13 +-
+ .../v2/__tests__/authoringDraftRevise.test.tsx     |   2 +-
+ .../__tests__/authoringDraftTermination.test.tsx   |   2 +-
+ .../v2/__tests__/authoringWritingAgency.test.tsx   | 119 +++++
+ .../concept2cure/v2/editor/DocumentWorkbench.tsx   |  11 +-
+ client/src/concept2cure/v2/editor/DraftPassage.tsx |  27 +-
+ .../editor/__tests__/assemblyDraftRegion.test.ts   |  56 +++
+ .../editor/__tests__/assemblyWritingRegion.test.ts |  28 ++
+ .../__tests__/sourceFirstAssemblyFlow.test.tsx     |   4 +-
+ .../__tests__/workbenchDraftPassage.test.tsx       |  91 +++-
+ .../v2/editor/assemblyBuildTransport.ts            |   3 +-
+ .../concept2cure/v2/editor/assemblyDraftQueue.ts   |  14 +-
+ .../v2/editor/writingAgencyPresentation.ts         |  71 +++
+ .../concept2cure/v2/surfaces/AuthoringAiDraft.tsx  |  34 +-
+ .../TRIAL_APPLICATION_DRAFTING_2026-10-30.md       |  38 +-
+ .../D4/2026-10-30-ind-development/HANDOFF.md       |  64 +++
+ .../D4/2026-10-30-ind-development/README.md        | 265 ++++++++++
+ .../blank-submission-selection.md                  |  36 ++
+ .../excerpts-green-initial.txt                     | 146 ++++++
+ .../2026-10-30-ind-development/excerpts-green.txt  |  41 ++
+ .../2026-10-30-ind-development/excerpts-lint.txt   |   0
+ .../D4/2026-10-30-ind-development/excerpts-red.txt | 334 +++++++++++++
+ .../D4/2026-10-30-ind-development/excerpts.md      |  58 +++
+ .../final-build-before-vault-receipt-merge.txt.gz  | Bin 0 -> 4742 bytes
+ .../final-merged-client-server-build.txt.gz        | Bin 0 -> 4749 bytes
+ .../ind-dev-ana-regression.txt.gz                  | Bin 0 -> 43602 bytes
+ .../ind-dev-assembly-static-sql.txt.gz             | Bin 0 -> 511 bytes
+ .../ind-dev-build.txt.gz                           | Bin 0 -> 4732 bytes
+ .../ind-dev-context-final.txt.gz                   | Bin 0 -> 1198 bytes
+ .../ind-dev-editor-final.txt.gz                    | Bin 0 -> 4544 bytes
+ .../ind-dev-excerpt-current-green.txt.gz           | Bin 0 -> 1132 bytes
+ .../ind-dev-final-lint.json.gz                     | Bin 0 -> 517011 bytes
+ .../ind-dev-merged-owner-tests.txt.gz              | Bin 0 -> 236 bytes
+ .../ind-dev-product-current-red.txt.gz             | Bin 0 -> 899 bytes
+ .../ind-dev-product-receipt-red.txt.gz             | Bin 0 -> 832 bytes
+ .../ind-dev-push-warning-rejection.txt.gz          | Bin 0 -> 4946 bytes
+ .../2026-10-30-ind-development/ind-dev-push.txt.gz | Bin 0 -> 2918 bytes
+ .../ind-dev-recorded-editor-red.txt.gz             | Bin 0 -> 4210 bytes
+ .../ind-dev-refactor-green.txt.gz                  | Bin 0 -> 1137 bytes
+ .../ind-dev-refactor-lint.json.gz                  | Bin 0 -> 22942 bytes
+ .../ind-dev-sql-gate.txt.gz                        | Bin 0 -> 776 bytes
+ .../ind-dev-template-region-red.txt.gz             | Bin 0 -> 2113 bytes
+ .../ind-dev-typecheck-final.txt.gz                 | Bin 0 -> 174 bytes
+ .../ind-dev-typecheck.txt.gz                       | Bin 0 -> 464 bytes
+ .../ind-dev-vault-current-red.txt.gz               | Bin 0 -> 1362 bytes
+ .../ind-editor-context-fixture-first.txt.gz        | Bin 0 -> 7274 bytes
+ .../ind-editor-context-fixture-green.txt.gz        | Bin 0 -> 4089 bytes
+ .../ind-editor-context-fixture-lint.json.gz        | Bin 0 -> 274 bytes
+ .../ind-legacy-context-confirmed-red.txt.gz        | Bin 0 -> 4712 bytes
+ .../ind-quote-spans-refactor-green.txt.gz          | Bin 0 -> 692 bytes
+ .../ind-quote-spans-refactor-lint.json.gz          | Bin 0 -> 6108 bytes
+ .../ind-region-assembly-final-green.txt.gz         | Bin 0 -> 4140 bytes
+ .../ind-region-assembly-freeze.txt.gz              | Bin 0 -> 3117 bytes
+ .../ind-region-assembly-http-final.txt.gz          | Bin 0 -> 5911 bytes
+ .../ind-region-assembly-lint-freeze.txt.gz         | Bin 0 -> 56 bytes
+ .../last-merged-owner-tests.txt.gz                 | Bin 0 -> 233 bytes
+ .../latest-merged-client-server-build.txt.gz       | Bin 0 -> 4744 bytes
+ .../merged-build-before-final-blank-fix.txt.gz     | Bin 0 -> 4750 bytes
+ .../merged-stf-missing-native-tool.txt.gz          | Bin 0 -> 1648 bytes
+ .../merged-stf-native-tool-green.txt.gz            | Bin 0 -> 524 bytes
+ .../merged-stf-server-build.txt.gz                 | Bin 0 -> 130 bytes
+ .../merged-study-protocol-stf-tests.txt.gz         | Bin 0 -> 701 bytes
+ .../normal-gates-pass-remote-race-status.json.gz   | Bin 0 -> 173 bytes
+ .../normal-gates-pass-remote-race.txt.gz           | Bin 0 -> 4784 bytes
+ ...al-gates-pass-second-remote-race-status.json.gz | Bin 0 -> 181 bytes
+ .../normal-gates-pass-second-remote-race.txt.gz    | Bin 0 -> 4892 bytes
+ .../passage-complexity-eslint-green.txt            |   0
+ .../passage-complexity-refactor-green.txt          |  27 +
+ .../passage-region-hold-green.txt                  |  25 +
+ .../passage-region-hold-red.txt                    | 283 +++++++++++
+ .../passage-region-hold.md                         |  98 ++++
+ .../passage-related-fixtures-green.txt             |  89 ++++
+ .../passage-writing-scope-integration-green.txt    |  27 +
+ .../product-advisory-review.md                     |  91 ++++
+ .../publication-accepted-status.json.gz            | Bin 0 -> 131 bytes
+ .../publication-accepted.txt.gz                    | Bin 0 -> 4656 bytes
+ .../publication-blocked-status.json.gz             | Bin 0 -> 164 bytes
+ .../publication-blocked.txt.gz                     | Bin 0 -> 4879 bytes
+ .../publication-receipt.json                       |  18 +
+ .../push-interrupted-before-compiler-result.txt.gz | Bin 0 -> 4582 bytes
+ .../quote-spans-green.txt                          |  48 ++
+ .../2026-10-30-ind-development/quote-spans-red.txt | 143 ++++++
+ .../D4/2026-10-30-ind-development/quote-spans.md   |  37 ++
+ .../region-client-refactor-green.txt               |  62 +++
+ .../region-client-refactor-lint.txt                |   7 +
+ .../region-ui-green-initial.txt                    |  50 ++
+ .../2026-10-30-ind-development/region-ui-green.txt |  50 ++
+ .../2026-10-30-ind-development/region-ui-lint.txt  |  25 +
+ .../2026-10-30-ind-development/region-ui-red.txt   | 555 +++++++++++++++++++++
+ .../region-ui-retained-green.txt                   |  44 ++
+ .../D4/2026-10-30-ind-development/region-ui.md     |  84 ++++
+ .../resumed-build.txt.gz                           | Bin 0 -> 4747 bytes
+ .../resumed-gates-ref-race-status.json.gz          | Bin 0 -> 131 bytes
+ .../resumed-gates-ref-race.txt.gz                  | Bin 0 -> 4752 bytes
+ .../resumed-gates-second-ref-race-status.json.gz   | Bin 0 -> 130 bytes
+ .../resumed-gates-second-ref-race.txt.gz           | Bin 0 -> 4750 bytes
+ .../resumed-integration-tests.txt.gz               | Bin 0 -> 11871 bytes
+ .../resumed-integration.json                       |  40 ++
+ .../resumed-recovery-build.txt.gz                  | Bin 0 -> 4745 bytes
+ .../resumed-recovery-tests.txt.gz                  | Bin 0 -> 9001 bytes
+ .../resumed-retained-tests.txt.gz                  | Bin 0 -> 2059 bytes
+ .../2026-10-30-ind-development/source-sha256.json  |  68 +++
+ .../source-test-scaffolding.md                     |  48 ++
+ .../therapeutic-selection.md                       | 107 ++++
+ .../writing-alias-green.txt                        |  30 ++
+ .../writing-alias-lint.txt                         |   6 +
+ .../writing-alias-red.txt                          |  93 ++++
+ .../writing-all-regions-green.txt                  |  44 ++
+ .../writing-all-regions-lint.txt                   |   0
+ .../writing-all-regions-red.txt                    | 258 ++++++++++
+ .../routes/__tests__/_authoring-canvas-fixture.ts  |   4 +
+ .../ana-intelligence-recorded-project.test.ts      | 148 ++++++
+ .../authoring-ai-draft-record.pglite.test.ts       |   8 +-
+ .../authoring-draft-accept-record.pglite.test.ts   |  16 +
+ .../authoring-draft-program-sources.test.ts        |  45 +-
+ .../authoring-draft-recorded-filing.test.ts        |  61 +++
+ .../__tests__/authoringAiDraftStructured.test.ts   |  10 +-
+ .../authoringAssemblyDraftSafety.pglite.test.ts    |  26 +-
+ server/routes/ana-intelligence-draft-context.ts    |  44 ++
+ server/routes/ana-intelligence.ts                  |  37 +-
+ server/routes/authoring.router.ts                  |  71 ++-
+ server/services/ana/AnaDocumentDraftingService.ts  | 156 +++---
+ server/services/ana/AnaToolExecutor.ts             |   1 +
+ .../ana/__tests__/batch-draft-sections.test.ts     |   1 +
+ .../__tests__/batch-draft-settles-per-item.test.ts |  11 +
+ .../batch-draft-submission-context.pglite.test.ts  |  92 +++-
+ .../__tests__/blueprint-grounded-drafting.test.ts  |   4 +
+ .../draft-context-checkpoint.integration.test.ts   |   7 +-
+ .../draft-product-advisory-selection.test.ts       |  97 ++++
+ .../__tests__/draft-product-context.pglite.test.ts | 106 ++++
+ .../draft-source-cancellation-checkpoint.test.ts   |   6 +-
+ .../draft-source-service-checkpoint.test.ts        |   7 +-
+ .../ana/__tests__/ind-cmc-leaf-drafting.test.ts    |   4 +
+ .../ind-pharmacology-leaf-drafting.test.ts         |   4 +
+ ...ecorded-product-drafting-service.pglite.test.ts | 222 +++++++++
+ .../support/unassessed-product-context-fixture.ts  |  14 +
+ server/services/ana/batch-draft-result.ts          |   5 +-
+ server/services/ana/draft-product-advisory.ts      | 220 ++++++++
+ server/services/ana/draft-product-context.ts       |  82 +++
+ .../__tests__/therapeutic-selection.test.ts        | 149 ++++++
+ .../ana/therapeutic-area-profiles/index.ts         | 252 +++++++---
+ .../ana/therapeutic-area-profiles/types.ts         |  19 +
+ .../__tests__/assembly-filing-scope.test.ts        |  29 +-
+ .../__tests__/authoring-document-regions.test.ts   |  79 +++
+ .../__tests__/authoring-draft-excerpts.test.ts     | 209 ++++++++
+ .../authoring-draft-region-projection.test.ts      |  77 +++
+ .../__tests__/authoring-draft-template.test.ts     |  20 +-
+ .../authoring/authoring-assembly-source.ts         |  37 +-
+ .../services/authoring/authoring-document-read.ts  |  16 +-
+ .../services/authoring/authoring-draft-excerpts.ts | 200 ++++++++
+ .../authoring/authoring-draft-region-projection.ts |  37 ++
+ .../services/authoring/authoring-draft-sources.ts  |  16 +-
+ .../services/authoring/authoring-draft-template.ts |  17 +-
+ ...raft-candidate-store.pglite.integration.test.ts |  15 +
+ .../__tests__/source-attribution.test.ts           |  47 ++
+ .../draft-candidate-store.ts                       |  38 ++
+ .../source-attribution.ts                          |  41 +-
+ shared/authoring/__tests__/writing-regions.test.ts |  28 ++
+ shared/authoring/writing-regions.ts                |  31 ++
+ 162 files changed, 6493 insertions(+), 294 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/assemblyDraftRegion.test.ts
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/assemblyWritingRegion.test.ts
+ create mode 100644 client/src/concept2cure/v2/editor/writingAgencyPresentation.ts
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/HANDOFF.md
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/README.md
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/blank-submission-selection.md
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/excerpts-green-initial.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/excerpts-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/excerpts-lint.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/excerpts-red.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/excerpts.md
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/final-build-before-vault-receipt-merge.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/final-merged-client-server-build.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-ana-regression.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-assembly-static-sql.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-build.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-context-final.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-editor-final.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-excerpt-current-green.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-final-lint.json.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-merged-owner-tests.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-product-current-red.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-product-receipt-red.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-push-warning-rejection.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-push.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-recorded-editor-red.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-refactor-green.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-refactor-lint.json.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-sql-gate.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-template-region-red.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-typecheck-final.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-typecheck.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-dev-vault-current-red.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-editor-context-fixture-first.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-editor-context-fixture-green.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-editor-context-fixture-lint.json.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-legacy-context-confirmed-red.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-quote-spans-refactor-green.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-quote-spans-refactor-lint.json.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-region-assembly-final-green.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-region-assembly-freeze.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-region-assembly-http-final.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/ind-region-assembly-lint-freeze.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/last-merged-owner-tests.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/latest-merged-client-server-build.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/merged-build-before-final-blank-fix.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/merged-stf-missing-native-tool.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/merged-stf-native-tool-green.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/merged-stf-server-build.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/merged-study-protocol-stf-tests.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/normal-gates-pass-remote-race-status.json.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/normal-gates-pass-remote-race.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/normal-gates-pass-second-remote-race-status.json.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/normal-gates-pass-second-remote-race.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/passage-complexity-eslint-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/passage-complexity-refactor-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/passage-region-hold-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/passage-region-hold-red.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/passage-region-hold.md
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/passage-related-fixtures-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/passage-writing-scope-integration-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/product-advisory-review.md
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/publication-accepted-status.json.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/publication-accepted.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/publication-blocked-status.json.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/publication-blocked.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/publication-receipt.json
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/push-interrupted-before-compiler-result.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/quote-spans-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/quote-spans-red.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/quote-spans.md
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/region-client-refactor-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/region-client-refactor-lint.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/region-ui-green-initial.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/region-ui-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/region-ui-lint.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/region-ui-red.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/region-ui-retained-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/region-ui.md
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/resumed-build.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/resumed-gates-ref-race-status.json.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/resumed-gates-ref-race.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/resumed-gates-second-ref-race-status.json.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/resumed-gates-second-ref-race.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/resumed-integration-tests.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/resumed-integration.json
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/resumed-recovery-build.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/resumed-recovery-tests.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/resumed-retained-tests.txt.gz
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/source-sha256.json
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/source-test-scaffolding.md
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/therapeutic-selection.md
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/writing-alias-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/writing-alias-lint.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/writing-alias-red.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/writing-all-regions-green.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/writing-all-regions-lint.txt
+ create mode 100644 docs/evidence/D4/2026-10-30-ind-development/writing-all-regions-red.txt
+ create mode 100644 server/routes/__tests__/ana-intelligence-recorded-project.test.ts
+ create mode 100644 server/routes/ana-intelligence-draft-context.ts
+ create mode 100644 server/services/ana/__tests__/draft-product-advisory-selection.test.ts
+ create mode 100644 server/services/ana/__tests__/draft-product-context.pglite.test.ts
+ create mode 100644 server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+ create mode 100644 server/services/ana/__tests__/support/unassessed-product-context-fixture.ts
+ create mode 100644 server/services/ana/draft-product-advisory.ts
+ create mode 100644 server/services/ana/draft-product-context.ts
+ create mode 100644 server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts
+ create mode 100644 server/services/authoring/__tests__/authoring-document-regions.test.ts
+ create mode 100644 server/services/authoring/__tests__/authoring-draft-excerpts.test.ts
+ create mode 100644 server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+ create mode 100644 server/services/authoring/authoring-draft-excerpts.ts
+ create mode 100644 server/services/authoring/authoring-draft-region-projection.ts
+ create mode 100644 shared/authoring/__tests__/writing-regions.test.ts
+ create mode 100644 shared/authoring/writing-regions.ts

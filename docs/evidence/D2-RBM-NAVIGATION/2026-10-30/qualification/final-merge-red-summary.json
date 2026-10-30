@@ -1,0 +1,17 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/final-merge-red-results.json",
+  "exitCode": 1,
+  "passed": 20,
+  "failed": 1,
+  "skipped": 0,
+  "files": 1,
+  "unchangedInputs": true,
+  "failures": [
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx",
+      "cases": [
+        "a US IND\u2019s Plan is what the filing needs, by phase starts study and protocol design from the verified project before its filing requirements"
+      ]
+    }
+  ]
+}

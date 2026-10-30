@@ -512,6 +512,7 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
     registry_id: meta.submissionTypeId != null && typeof meta.submissionTypeId !== 'string' ? null : registryContextForProgram({ submissionTypeId: str(meta.submissionTypeId),
       programType: str(rest.program_type), primaryAgency: str(rest.primary_agency) })?.registryId ?? null,
     submission_type_id: exactRecordedFiling(meta.submissionTypeId),
+    riskBasedMonitoring: meta.riskBasedMonitoring === true,
     product_type: str(rest.product_type),
     device_class: str(rest.device_class),
     regulatory_path: str(rest.regulatory_path),
@@ -691,6 +692,10 @@ router.post('/', async (req: Request, res: Response) => {
   }
   const body = (req.body ?? {}) as Record<string, unknown>;
   const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
+  if (body.riskBasedMonitoring !== undefined && typeof body.riskBasedMonitoring !== 'boolean') {
+    return send400(res, 'Risk-based monitoring must be selected with a boolean value.');
+  }
+  const riskBasedMonitoring = body.riskBasedMonitoring === true;
 
   const name = str(body.name);
   const productName = str(body.productName) || name;
@@ -858,6 +863,7 @@ router.post('/', async (req: Request, res: Response) => {
   const targetAgencies = JSON.stringify([primaryAgency]);
   const metadata = JSON.stringify({
     createdVia: 'v2-new-project-wizard',
+    riskBasedMonitoring,
     ...(submissionTypeId ? { submissionTypeId } : {}),
     /* `teamMemberNames` was mirrored here and read by nothing — one capability,
        one home: the `team_members` column below. */
@@ -1025,6 +1031,7 @@ router.post('/', async (req: Request, res: Response) => {
         primary_agency: primaryAgency,
         eu_mdr_class: euMdrClass,
         eu_ivdr_class: euIvdrClass,
+        riskBasedMonitoring,
         created_via: 'v2-new-project-wizard',
         // The audit row covers EVERY creation this transaction performed: the
         // linked canonical submission is part of the record, whether newly

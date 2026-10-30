@@ -1,0 +1,15 @@
+from pathlib import Path
+import hashlib, json, subprocess
+
+r = Path('/workspace/ClinicalSageAI-2-replit')
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=r, text=True).strip()
+
+assert git('branch', '--show-current') == 'concept2cure-v2'
+assert not (r / '.git/MERGE_HEAD').exists(), 'Finish the merge before pushing'
+assert not git('diff', '--name-only', '--diff-filter=U'), 'Resolve all conflicts before pushing'
+assert not git('status', '--porcelain'), 'Commit the complete reviewed result before pushing'
+subprocess.run(['git', 'merge-base', '--is-ancestor', 'origin/concept2cure-v2', 'HEAD'], cwd=r, check=True)
+q = json.loads((r / 'docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualified-source.json').read_text())
+assert all(hashlib.sha256((r / name).read_bytes()).hexdigest() == digest for name, digest in q['files'].items())
+print('Push preflight: canonical branch, complete merge, clean tree, exact source pins')

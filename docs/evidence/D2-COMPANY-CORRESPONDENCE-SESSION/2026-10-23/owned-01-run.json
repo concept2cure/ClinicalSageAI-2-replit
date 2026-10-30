@@ -1,0 +1,42 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx --reporter=verbose --reporter=json --outputFile=/workspace/.cloud-setup/correspondence-session/owned-01-results.json",
+  "exitCode": 1,
+  "start": "/workspace/.cloud-setup/correspondence-session/owned-01-start.json",
+  "finish": "/workspace/.cloud-setup/correspondence-session/owned-01-finish.json",
+  "numTotalTests": 47,
+  "numPassedTests": 46,
+  "numFailedTests": 1,
+  "numTotalTestSuites": 18,
+  "numFailedTestSuites": 2,
+  "perFile": [
+    {
+      "name": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx",
+      "passed": 1,
+      "failed": 1
+    },
+    {
+      "name": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx",
+      "passed": 26,
+      "failed": 0
+    },
+    {
+      "name": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx",
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "name": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx",
+      "passed": 7,
+      "failed": 0
+    }
+  ],
+  "failures": [
+    {
+      "name": "real filing parent and correspondence children keeps the same filing draft and sent result while an unrelated inventory search withholds parent admission",
+      "messages": [
+        "AssertionError: expected <textarea \u2026(2)></textarea> to be null\n    at /workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx:91:79\n    at runNextTicks (node:internal/process/task_queues:64:5)\n    at listOnTimeout (node:internal/timers:547:9)\n    at processTimers (node:internal/timers:521:7)\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+      ]
+    }
+  ],
+  "all8InputsUnchanged": true
+}

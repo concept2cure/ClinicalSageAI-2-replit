@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-10-30T18:24:47.646080+00:00",
+  "kind": "Git fetch-first refusal after all normal gates passed",
+  "sourceCommit": "59d0bd6eb17d409605a37e1d0b11c0f9548d5097",
+  "selected174InputsUnchanged": true,
+  "wholeTypeScriptErrors": 0,
+  "baseline": 0,
+  "allNormalGatesPassed": true,
+  "publication": false,
+  "next": "Normal fetch/merge, preserve other work, qualify changed source only and normal push retry; no force or bypass."
+}

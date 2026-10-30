@@ -1,0 +1,15 @@
+import {createRequire} from 'node:module';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+const root='/workspace/ClinicalSageAI-2-replit', dir='/workspace/.cloud-setup/rbm-navigation';
+const require=createRequire(root+'/package.json'); const {ESLint}=require('eslint');
+const eslint=new ESLint({cwd:root});
+const files=Object.keys(JSON.parse(readFileSync(dir+'/access-type-seed-before.json','utf8')).files),results=[];
+for(const path of files){
+ const before=readFileSync(dir+'/access-type-seed-source-before/'+path,'utf8'),after=readFileSync(root+'/'+path,'utf8');
+ const [a]=await eslint.lintText(before,{filePath:root+'/'+path}),[b]=await eslint.lintText(after,{filePath:root+'/'+path});
+ results.push({path,sha256:createHash('sha256').update(after).digest('hex'),beforeErrors:a.errorCount,beforeWarnings:a.warningCount,afterErrors:b.errorCount,afterWarnings:b.warningCount,messages:b.messages});
+}
+const result={method:'ESLint lintText in memory on original file paths; no temporary TypeScript',files:results,beforeWarnings:results.reduce((s,r)=>s+r.beforeWarnings,0),afterWarnings:results.reduce((s,r)=>s+r.afterWarnings,0),afterErrors:results.reduce((s,r)=>s+r.afterErrors,0)};
+writeFileSync(dir+'/access-type-seed-lint.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
+process.exitCode=result.afterErrors||result.afterWarnings>result.beforeWarnings?1:0;
