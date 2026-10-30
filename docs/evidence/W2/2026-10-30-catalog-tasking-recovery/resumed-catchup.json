@@ -1,0 +1,48 @@
+{
+  "qualifiedSourceCommit": "5b16dc2c146022e4560e383ff4ffc79c82fa517c",
+  "incomingCanonical": "9e6ee17ba1de7d60f35b8ddbf68338385341f9b9",
+  "deviceIntegration": {
+    "sourceCommit": "a968f53e3a1fca6aecac3af9f78e883658e6ac3b",
+    "passed": 190,
+    "suites": 10,
+    "failed": 0,
+    "includesOwnRecoveryCases": 41,
+    "build": {
+      "sourceCommit": "a968f53e3a1fca6aecac3af9f78e883658e6ac3b",
+      "clientAssets": [
+        "index-B18o9xaQ.js"
+      ],
+      "serverMatches": true,
+      "buildExitCode": 0
+    }
+  },
+  "agencyIntegration": {
+    "initial": {
+      "passed": 141,
+      "failed": 4,
+      "suites": 6,
+      "failureCause": "xmllint missing in resumed environment; four cases in regional-packager-dtd-validation"
+    },
+    "tool": "libxml2-utils_2.9.14+dfsg-1.3~deb12u6_amd64.deb",
+    "toolPackageSha256": "84a26b289dd6075b8334f252bc445023dc64102e557645284fdbc1bebed21a1a",
+    "toolRestoration": "Same recorded Debian package checksum verified, unprivileged scratch extraction; no repository dependency change",
+    "affectedFileRetest": {
+      "passed": 9,
+      "failed": 0,
+      "suites": 1
+    },
+    "distinctFinalCases": 145,
+    "priorCohortsOverlap": true
+  },
+  "finalBuild": {
+    "passed": true,
+    "sourceCommit": "5b16dc2c146022e4560e383ff4ffc79c82fa517c",
+    "clientAssets": [
+      "index-qJztNtTW.js"
+    ],
+    "serverCommitMatches": true
+  },
+  "compatibilityReview": "Incoming device/risk/attachment and agency packaging changes reviewed independently. Own six source/test/CSS paths and catalog/tasking server routes unchanged. New project read owner remains optional; phone CSS remains MDX-scoped. No corrective source change required.",
+  "interruptedGate": "Prior final gate was interrupted with environment resumption before compiler completion; not reported as passed. Normal gates required on this exact candidate.",
+  "deploymentAcceptance": "Not claimed. Hosted incident URL still unavailable. Official agency assets remain a separate package-readiness prerequisite."
+}

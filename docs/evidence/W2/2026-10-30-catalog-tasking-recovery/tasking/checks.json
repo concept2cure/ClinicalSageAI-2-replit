@@ -1,0 +1,70 @@
+{
+  "initialRed": {
+    "exitCode": 1,
+    "failed": 13,
+    "passed": 9,
+    "suites": 1,
+    "testCases": 22,
+    "productionChanged": false
+  },
+  "truthfulnessGreen": {
+    "exitCode": 0,
+    "passed": 22,
+    "suites": 1
+  },
+  "recoveryRed": {
+    "exitCode": 1,
+    "failed": 7,
+    "passed": 22,
+    "suites": 1,
+    "testCases": 29,
+    "explicitRetryControlsChanged": false
+  },
+  "recoveryGreen": {
+    "exitCode": 0,
+    "passed": 29,
+    "suites": 1
+  },
+  "noticeCompatibilityBeforeCorrection": {
+    "exitCode": 1,
+    "failed": 1,
+    "passed": 94,
+    "suites": 7,
+    "reason": "Changing the existing partial status notice into an alert conflicted with an existing notification-target refusal alert."
+  },
+  "noticeCompatibilityCorrection": {
+    "exitCode": 0,
+    "passed": 70,
+    "suites": 2,
+    "note": "Partial role=status retained; existing retry-button styling used. No existing tests modified."
+  },
+  "finalQualifiedCohort": {
+    "exitCode": 0,
+    "passed": 124,
+    "suites": 8,
+    "testFiles": [
+      "taskBoardReadTruth.test.tsx",
+      "anaDrivesWave2.test.tsx",
+      "taskBoardRecovery.test.tsx",
+      "taskBoardTarget.test.tsx",
+      "taskBoardResponseShape.test.tsx",
+      "taskBoardEveryStore.test.tsx",
+      "taskBoardSignature.test.tsx",
+      "taskBoardRefusalHonesty.test.tsx"
+    ]
+  },
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "currentWarnings": 9,
+    "baselineWarnings": 9,
+    "newTestWarnings": 0
+  },
+  "countsOverlap": true,
+  "limits": [
+    "No hosted deployment or real user incident claim.",
+    "Existing shared null/204 semantics are unchanged.",
+    "Board payload guard remains shared first-row/key validation; this change strengthens only the board project-options read to validate every row.",
+    "No server, task-write, signature, global hook or modal project-reader change."
+  ]
+}

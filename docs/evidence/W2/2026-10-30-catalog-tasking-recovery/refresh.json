@@ -1,0 +1,18 @@
+{
+  "baseline": "47ce1d3d95eff4a6b3614146cc79b670d7b20645",
+  "contractPublication": "4c4a27daf",
+  "priorSourceAlreadyCanonical": "bf47a6964",
+  "priorPublicationAlreadyCanonical": "8c89c43b0",
+  "interveningCommitsSincePriorSource": 1172,
+  "environment": "Fresh managed workspace; clean canonical clone; HTTP enforced/unrestricted; no configured provider credentials or outbound identities",
+  "node": "22.23.3; official archive checksum verified",
+  "sharedInputs": {
+    "client/src/lib/queryClient.ts": "169dd465b658b06756d3dda372bed53ef587052cd9b86702486d3852e4b6da3a",
+    "client/src/utils/authToken.ts": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c",
+    "client/src/concept2cure/v2/dataConnect.tsx": "51b03e8cf336df448663742c5b31bb4dc9c93f6879b437cc490420fcc6809815",
+    "server/routes/taskBoard.routes.ts": "c3076d5618b0f48ff77429eee6ef0bfa873c3bbdb8f901543d48752eee461daa",
+    "server/services/unified-work/unified-work-view.ts": "bf851a65bf2ed82456611592dc01d9d925d39a8810b8bb5c4036db2d3d9744dd",
+    "server/routes/module-subscriptions.ts": "b82fdb7607416e9583a68ebb912fb6534e77c2348ab234172cbc8d2c30f1539a"
+  },
+  "limits": "Affected hosted URL/logs not supplied. Source review and synthetic local checks cannot establish hosted incident cause."
+}
