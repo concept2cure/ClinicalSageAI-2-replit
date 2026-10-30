@@ -1,0 +1,18 @@
+# MR-08 Stage 5 step 4, red: on HEAD (5ed0f9b67), real PostgreSQL 16, as app_service under RLS, in the probe tenant's own scope
+# Every change to a hold was applied: a rewrite, a delete, an un-lift, a lift with a rewrite. TRUNCATE ran. No guard was on the boot list.
+
+ × a legal hold is a record > refuses a rewrite of what a hold says, as the runtime role
+   → reason rewritten: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × a legal hold is a record > refuses a delete, as the runtime role
+   → hold deleted: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × a legal hold is a record > admits the lift once, with its author and reason, and nothing after it
+   → lift undone: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × a legal hold is a record > refuses a lift that also changes the hold
+   → lift with a rewrite: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × a legal hold is a record > refuses a TRUNCATE, even as the owner
+   → truncated: expected 'applied (0 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × a legal hold is a record > the guards are on the boot list, so production refuses to start without them
+   → expected [] to deeply equal [ …(2) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
