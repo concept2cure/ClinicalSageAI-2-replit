@@ -115,6 +115,17 @@ function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
   return <span className={`rd-chip tone-${tone}`}>{children}</span>;
 }
 
+/**
+ * The open program as the switch names it. A program opened from a link
+ * (`?program=`) is known to the shell by its id alone; the board's own rows
+ * name it, else it is "this project". Never its id.
+ */
+function namedProgram(program: { id: string; title: string | null } | null, queue: ReviewItem[]): { id: string; title: string } | null {
+  if (!program) return null;
+  const title = program.title ?? queue.find((r) => r.programId === program.id && r.prog)?.prog ?? 'this project';
+  return { id: program.id, title };
+}
+
 /** Scope + program switch, rendered above the queue and in the empty state. */
 function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
   scope: Scope;
@@ -222,7 +233,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
   const program = useMemo(() => {
     const p = readShellProject();
     if (!p || !UUID_RE.test(String(p.id))) return null;
-    return { id: String(p.id), title: p.title || p.code || p.product || String(p.id) };
+    return { id: String(p.id), title: p.title || p.code || p.product || null };
   }, []);
   /* With a program open, the board starts on THAT program. It started
      org-wide, so the screen reached from BX-256's project home listed BX-204's
@@ -399,7 +410,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
 
   const scopeBar = (
     <>
-      <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={(value) => { if (!ceremonyOpen()) setOnlyProgram(value); }} />
+      <ScopeBar scope={scope} onScope={changeScope} program={namedProgram(program, queue)} onlyProgram={onlyProgram} onOnlyProgram={(value) => { if (!ceremonyOpen()) setOnlyProgram(value); }} />
       {/* Send for review on a Vault version assigns nobody, so it was in no
           queue (QA 2026-10-08, walk 2, j3). Listed here with who has it. */}
       <ReviewVaultQueue items={board?.vaultReviews} meId={meId} onOpenVault={(item) => openVaultVersion(item, onNav, fireToast)} />
@@ -469,7 +480,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
           />
         )}
         {/* Threads can exist even when no document is on the approval board. */}
-        <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
+        <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? namedProgram(program, queue) : null} />
         <C2CToast msg={toast} />
       </div>
     );
@@ -797,7 +808,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
 
       {/* Real, persisted review threads (Phase-13 backend) — assigned to the
           signed-in reviewer, with reply / request-changes / resolve in place. */}
-      <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
+      <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? namedProgram(program, queue) : null} />
 
       <C2CToast msg={toast} />
     </div>

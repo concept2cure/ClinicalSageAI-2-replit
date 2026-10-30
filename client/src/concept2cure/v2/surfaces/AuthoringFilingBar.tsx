@@ -73,7 +73,7 @@ export interface AuthoringFilingBarProps {
   docRevision?: string;
 }
 
-type Dialog = 'freeze' | 'freeze-unsettled' | 'esign' | null;
+type Dialog = 'freeze' | 'freeze-unsettled' | 'esign' | 'esign-unsettled' | null;
 
 const FROZEN_STATES = new Set(['FROZEN', 'APPROVED']);
 
@@ -125,6 +125,38 @@ const UNSETTLED_FORM = (title: string, unresolved: Unresolved): C2CFormConfig =>
   ],
 });
 
+/* The same question for an approval (2026-10-30): an Approval signature
+ * approves and freezes, so the server asks what Freeze asks and refuses while
+ * comments are open or tracked changes are undecided. Approving it as it
+ * stands is a deliberate choice, re-signed, and recorded by the server. */
+const APPROVAL_UNSETTLED_FORM = (title: string, unresolved: Unresolved): C2CFormConfig => ({
+  eyebrow: 'Part 11 · approval',
+  title: 'This document is not settled',
+  sub:
+    `“${title}” still has ${describeUnresolved(unresolved)}. An approval seals the ` +
+    'content for filing, so the questions would go unanswered and the proposed edits ' +
+    'would stay undecided in the approved text.',
+  governed: true,
+  submitLabel: 'Continue',
+  fields: [
+    {
+      key: 'acknowledge',
+      label: 'How do you want to proceed?',
+      type: 'seg' as const,
+      required: true,
+      options: [
+        { value: 'resolve', label: 'Go back and resolve them' },
+        { value: 'approve', label: 'Approve it as it stands' },
+      ],
+    },
+  ],
+});
+
+/** The line under the approval dialog's target once the approver chose to approve it as it stands. */
+function approveAsItStandsMeta(unresolved: Unresolved): string {
+  return `Approving it as it stands, with ${describeUnresolved(unresolved)}. Your signature records that you approved it.`;
+}
+
 /** The meanings a freeze carries (FREEZE_SIGNATURE_MEANINGS in authoring.router.ts).
  *  Approval is not one: it is E-sign, which approves and freezes in one act. */
 const FREEZE_MEANING: Partial<Record<EsigMeaning, 'AUTHOR' | 'REVIEWER'>> = {
@@ -173,16 +205,17 @@ export async function postAuthoringSignature(
   docId: string,
   input: SignInput,
   adoptWorkflowSource = false,
+  acknowledgeUnresolved = false,
 ): Promise<{ meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER'; hash?: string; signedAt?: string; notApproved: string[] }> {
   const meaning = AUTHORING_MEANING[input.meaning];
   if (!meaning) throw new Error('This document cannot carry that meaning. Nothing was signed.');
-  const res = await apiRequest('POST', `/api/authoring/docs/${docId}/e-sign`, {
-    password: input.password,
-    ...(input.totp ? { mfaToken: input.totp } : {}),
-    meaning,
-    intent: input.reason,
-    ...(meaning === 'REVIEWER' && adoptWorkflowSource ? { adoptWorkflowSource: true } : {}),
-  });
+  let res: Response;
+  try {
+    res = await apiRequest('POST', `/api/authoring/docs/${docId}/e-sign`, signatureBody(input, meaning, adoptWorkflowSource, acknowledgeUnresolved));
+  } catch (e) {
+    // An approval of an unsettled document is a question for the approver, not a failure (2026-10-30).
+    throw approvalQuestionOr(e);
+  }
   /* `filingApproval` is read, not dropped (P-29, D-29-C). An APPROVER signature
      moves a bound filing section to `approved` only when its filed text is
      exactly the text signed, and the server reports every key it could not move
@@ -246,6 +279,32 @@ export function notApprovedNote(keys: readonly string[]): string {
     `${one ? 'its' : 'their'} filed text is not the text you signed, so ${one ? 'it was' : 'they were'} ` +
     'left unapproved in the filing. Open ' + (one ? 'it' : 'them') + ' in the editor and save to re-file, then approve again.'
   );
+}
+
+/** What /e-sign is sent. Adoption goes only with a review; the acknowledgement only with an approval. */
+function signatureBody(input: SignInput, meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER', adopt: boolean, acknowledge: boolean) {
+  return {
+    password: input.password,
+    ...(input.totp ? { mfaToken: input.totp } : {}),
+    meaning,
+    intent: input.reason,
+    ...(meaning === 'REVIEWER' && adopt ? { adoptWorkflowSource: true } : {}),
+    ...(meaning === 'APPROVER' && acknowledge ? { acknowledgeUnresolved: true } : {}),
+  };
+}
+
+/** A "not settled" refusal as the approver's question; anything else unchanged. */
+function approvalQuestionOr(e: unknown): unknown {
+  const unresolved = notSettledCounts(e);
+  return unresolved ? new ApprovalNotSettled(unresolved) : e;
+}
+
+/** The server refused an approval because the document is not settled; what it named. */
+class ApprovalNotSettled extends Error {
+  constructor(readonly unresolved: Unresolved) {
+    super('Not approved — the document is not settled. Nothing was signed.');
+    this.name = 'ApprovalNotSettled';
+  }
 }
 
 /** What the freeze endpoint answered: sealed, or refused as not settled. */
@@ -373,11 +432,30 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
     return signedManifest(input, out.frozenAt, out.hash);
   };
 
+  /** The approval's not-settled answer: go back, or reopen the signature to approve it as it stands. */
+  const onApprovalUnsettledChoice = (v: Record<string, string>) => {
+    if (v.acknowledge !== 'approve') setUnresolved(null);
+    setDialog(v.acknowledge === 'approve' ? 'esign' : null);
+  };
+  const closeEsign = () => { setUnresolved(null); setDialog(null); };
+
   /* Runs after the dialog has checked the password (and code) with the server.
-     A throw is shown in the dialog, which stays open; nothing is signed. */
+     A throw is shown in the dialog, which stays open; nothing is signed. The
+     acknowledgement goes only with an approval, and only after the server
+     refused and the approver chose to approve it as it stands. */
   const doSign = async (input: SignInput): Promise<EsigSignedManifest> => {
     if (refusalRef.current.esign) throw new Error(refusalRef.current.esign);
-    const signed = await postAuthoringSignature(docId, input, input.meaning === 'review' && adoptRef.current);
+    let signed;
+    try {
+      signed = await postAuthoringSignature(docId, input, input.meaning === 'review' && adoptRef.current,
+        input.meaning === 'approval' && unresolved !== null);
+    } catch (e) {
+      if (!(e instanceof ApprovalNotSettled)) throw e;
+      setUnresolved(e.unresolved);
+      setDialog('esign-unsettled');
+      throw e;
+    }
+    setUnresolved(null);
     setNotApprovedKeys(signed.notApproved);
     fireToast(signedToast(signed));
     onChanged();
@@ -423,22 +501,38 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
           onSubmit={onUnsettledChoice}
         />
       )}
-      {dialog === 'esign' && (
-        <EsignModal
-          open
-          action="Sign document"
-          target={docTitle}
-          targetMeta={esignOffer(reviewOnly).targetMeta}
-          defaultMeaning="review"
-          meanings={esignOffer(reviewOnly).meanings}
-          onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
-          signer={signer}
-          onClose={() => setDialog(null)}
-          onSign={doSign}
-          commitRefusal={esignRefusal}
-        />
-      )}
+      <EsignDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} reviewOnly={reviewOnly} signer={signer}
+        esignRefusal={esignRefusal} onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
+        onSign={doSign} onClose={closeEsign} onChoice={onApprovalUnsettledChoice} />
     </>
+  );
+}
+
+/** The E-sign dialog, and the approval's not-settled question when the server asked it (2026-10-30). */
+function EsignDialogs({ dialog, docTitle, unresolved, reviewOnly, signer, esignRefusal, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice }: {
+  dialog: Dialog; docTitle: string; unresolved: Unresolved | null; reviewOnly?: boolean;
+  signer: AuthoringFilingBarProps['signer']; esignRefusal?: string | null;
+  onMeaningChange: (m: EsigMeaning) => void; renderMeaningDetails: (m: EsigMeaning, disabled: boolean) => React.ReactNode;
+  onSign: (input: SignInput) => Promise<EsigSignedManifest>; onClose: () => void; onChoice: (v: Record<string, string>) => void;
+}) {
+  if (dialog === 'esign-unsettled' && unresolved) {
+    return <C2CForm config={APPROVAL_UNSETTLED_FORM(docTitle, unresolved)} onCancel={onClose} onSubmit={onChoice} />;
+  }
+  if (dialog !== 'esign') return null;
+  return (
+    <EsignModal
+      open
+      action="Sign document"
+      target={docTitle}
+      targetMeta={unresolved ? approveAsItStandsMeta(unresolved) : esignOffer(reviewOnly).targetMeta}
+      defaultMeaning={unresolved ? 'approval' : 'review'}
+      meanings={esignOffer(reviewOnly).meanings}
+      onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
+      signer={signer}
+      onClose={onClose}
+      onSign={onSign}
+      commitRefusal={esignRefusal}
+    />
   );
 }
 
