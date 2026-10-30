@@ -351,7 +351,92 @@ revision of v0.4 for RR5, not a new protocol. The records are in `oq/`.
   signature takes the path kept for a document with no route (§2.13). The author then
   signed REVIEWER on their own document and was answered 200
   (`oq/observation-author-review-after-route-complete.txt`). v0.4's OQ-AUTH-14 asserted the
-  same signature as a pass. Whether it must be refused is a question for the design.
+  same signature as a pass. Fixed since: see the next section.
+
+## An author signed REVIEWER on their own document outside a live route (fixed)
+
+This was Open item 2. With no live route on the document, before one or after it completed,
+the author's REVIEWER e-sign was answered 200 (the OQ observation above). A REVIEWER freeze by
+the author was answered 200 as well.
+
+**What already exists (Rule 3).**
+- **The rule.** `assertSignerIsNotAuthor` in `server/services/governance/separation-of-duties.ts`,
+  with `requiresIndependence`: every meaning but authorship must be independent of the record's
+  authors. For Authoring, the authors are the creator, the revision ledger and the
+  visible-mutation audit.
+- **The router's wrapper.** `signingRefused` in `server/routes/authoring.router.ts` runs the
+  filing seal check, then the rule, for every meaning but AUTHOR. The APPROVER e-sign and the
+  workflow `/sign` already called it. REVIEWER e-sign and Freeze did not.
+- **The RR5 route precheck.** `authoringReviewerPrecheck` refuses anyone a live route does not
+  name, and the member validator never names an author. With no live route it returns null, so
+  nothing refused the author.
+- **Workflow adoption.** It already requires a non-author reviewer (`hasCurrentAdoption`).
+- **The client.** `SendForReviewDialog` already withholds the creator from the reviewers it
+  offers (`authorId`, from `created_by`). `EsignModal`'s `meanings` prop exists so that a
+  dialog never offers a meaning the server would refuse.
+
+Nothing new was built. The rule is now asked in the two places that skipped it.
+
+**Fix.**
+- **The helper.** The second half of `signingRefused` is now `separationOfDutiesRefused`, one
+  helper that every caller uses. `signingRefused` behaves as before.
+- **`POST /docs/:id/e-sign` with REVIEWER.** The helper runs after the route precheck and
+  before re-authentication.
+  - On a live route, the author still reads 403 `ROUTE_NOT_NAMED`, as OQ-AUTH-13b asserts.
+  - Otherwise the author reads 403 `SEPARATION_OF_DUTIES`, 409 if authorship is unresolved, or
+    503 if it cannot be verified.
+  - Nothing is signed, and no code is spent.
+  - A REVIEWER e-sign still takes no seal check, because it seals nothing.
+- **`POST /docs/:id/freeze`.** The helper is the first refusal after the already-frozen
+  check. The rule exempts AUTHOR. Freeze keeps its own seal check (`filingBlocksSeal`), so the
+  seal is not asked twice.
+- **The client.** The workbench tells the signing bar when the signed-in user created the
+  document (`signedInUserCreated` in `DocumentWorkbench.tsx`).
+  - For the creator, E-sign and Freeze offer Authorship alone, and the dialog says why.
+  - A creator whose grant permits only the review signature has no signature that can pass,
+    so E-sign is disabled, with the reason.
+  - Anyone else is offered every meaning, and the server decides. That covers an author the
+    client cannot see, such as a revision contributor.
+- **A consequence.** A named route reviewer who later edits the document becomes one of its
+  authors, so their REVIEWER signature is refused too. APPROVER already met the same rule.
+
+**Red, then green** (`author-review-sod/`):
+- `red.txt`: the RR5 PostgreSQL suite on HEAD's router, with RLS on, as `app_service`, on a
+  fresh database. 3 failed, 20 passed. Two of the three are the author's REVIEWER e-sign, with
+  no route and after a route completes. The third is the author's REVIEWER freeze. Each was
+  answered 200 and signed or froze. The controls passed: AUTHOR e-sign and freeze, a
+  non-author's REVIEWER with no route, and the author on a live route refused
+  `ROUTE_NOT_NAMED`.
+- `red-client.txt`: 5 failed, 53 passed. The creator was offered Review and Approval, and the
+  workbench did not say who created the document.
+- `green-db.txt`: the RR5 suite passes 23 of 23. Four other Authoring suites ran with it. Their
+  6 failures (5 in `workflow-import-governance`, 1 in `authoring-stability-table`) fail with
+  identical messages on HEAD, in a `git archive` export.
+- `green-unit.txt`, `gates.txt`: see the file headers.
+
+**Tests changed.**
+- **`server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts`.** The REVIEWER
+  e-sign in "a signature that does not mean approval approves nothing" was the author's. It is
+  now signed by the member who drafted nothing; AUTHOR is still the author's.
+  - The test had been red since RR5. Its harness (`_filing-write-harness.ts`) lacked
+    `review_routes`, which the precheck reads, so the e-sign answered 500.
+  - The harness now loads `migrations/20261023_review_routes.sql`, as the other Authoring
+    PGlite suites do.
+  - With the table and the author still signing, the test failed 403 `SEPARATION_OF_DUTIES`
+    (`node-status-author-red.txt`). It passes with the non-author.
+- **`tests/db/review-route-authoring-rr5.dbtest.ts`.** Five new tests. Three existing pairs of
+  status and code assertions now go through one helper, `answered`, so the file stays inside
+  the 500-line limit. Their assertions are unchanged.
+- No other test relied on an author signing REVIEWER. Every test file with a REVIEWER meaning
+  was run.
+
+**OQ-003 v0.5.** No step has the author sign REVIEWER as a pass:
+- the freezes are AUTHOR;
+- the review signatures are the named reviewer's;
+- OQ-AUTH-13b's `ROUTE_NOT_NAMED` is answered before the new check.
+
+The protocol's §6 still records the 200 as "Seen and not asserted". A later revision can assert
+the refusal. The OQ was not re-run.
 
 ## Open
 
@@ -360,8 +445,5 @@ revision of v0.4 for RR5, not a new protocol. The records are in `oq/`.
    trigger, which this run taps. The run records this and does not assert it. Fitting 44 px
    targets there needs a decision on what the bar holds at a phone's width. That is shell
    design, not RR5.
-2. **A REVIEWER signature outside a live route.** With no route on the document, or after
-   its route completes, the author can sign REVIEWER on their own document (see "Authoring
-   OQ" above, and the red run's OQ-AUTH-14). Design question (§2.13).
-3. **RR6:** Authoring approvers on the route, and deleting `POST /docs/:docId/submit` and
+2. **RR6:** Authoring approvers on the route, and deleting `POST /docs/:docId/submit` and
    `/docs/:docId/sign`, with `/e-sign` named as the replacement.

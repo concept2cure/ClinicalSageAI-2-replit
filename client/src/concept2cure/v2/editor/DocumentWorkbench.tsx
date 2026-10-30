@@ -945,6 +945,15 @@ export function machineTextNote(machineText: unknown): string {
   );
 }
 
+/** True when the signed-in user created the document (`created_by`). The creator is always one of
+ *  its authors (authoringDocumentAuthors, separation-of-duties.ts), so the server refuses them every
+ *  signature meaning but authorship; the signing bar does not offer one. Unknown on either side is
+ *  false, and the server decides. */
+export function signedInUserCreated(createdBy: unknown, userId: unknown): boolean {
+  const creator = String(createdBy ?? '').trim();
+  return creator !== '' && creator === String(userId ?? '').trim();
+}
+
 /** True when the server refuses every signature but the review signature. */
 export function esignReviewOnly(access: DocumentAccess): boolean {
   return !!actRefusal(access.esign) && access.esignReview?.allowed === true;
@@ -4526,6 +4535,7 @@ export function DocumentWorkbench({
                    control stays open for that one meaning (QA 2026-10-08, j4). */
                 esignRefusal={esignReviewOnly(docAccess) ? null : actRefusal(docAccess.esign)}
                 reviewOnly={esignReviewOnly(docAccess)}
+                signerIsAuthor={signedInUserCreated(activeDoc.created_by, user?.id)}
                 workflowOrigin={docProvenance?.importSource && isWorkflowImportOrigin(docProvenance.importSource) ? docProvenance.importSource : undefined}
                 docRevision={`${activeDoc.updated_at ?? ''}:${contentEpoch}:${sections.map(s => s.updated_at ?? '').join('|')}`}
               />

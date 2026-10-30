@@ -111,6 +111,9 @@ const ask = (docId: string, who: Who[], route: Record<string, unknown> | null = 
   });
 const reviewSign = (who: Who, docId: string, password = PASSWORD) =>
   call(who, 'post', `/docs/${docId}/e-sign`, { meaning: 'REVIEWER', intent: 'I reviewed the saved document as it stands.', password });
+/** A reply's status, and its refusal code when one is named; the body is the failure's message. */
+const answered = (res: { status: number; body: { code?: string } }, status: number, code?: string) =>
+  expect({ status: res.status, code: code && res.body.code }, JSON.stringify(res.body)).toEqual({ status, code });
 async function verdict(who: Who, docId: string, review_status: string, review_comments?: string) {
   const read = await call(who, 'get', `/documents/${docId}/reviews`);
   expect(read.status, JSON.stringify(read.body)).toBe(200);
@@ -312,9 +315,7 @@ describe('a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8)', (
     // r3 holds the Reviewer role on the document (an earlier grant), so the object gate admits the review act; the route does not name them.
     await owner.query(`INSERT INTO doc_permissions (doc_id, tenant_id, principal_id, email, role, granted_by)
       VALUES ($1, $2, $3, $4, 'REVIEWER', $5)`, [docId, orgA, String(users.r3), emails.r3, String(users.author)]);
-    const res = await reviewSign('r3', docId, 'not-the-password');
-    expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.code).toBe('ROUTE_NOT_NAMED');
+    answered(await reviewSign('r3', docId, 'not-the-password'), 403, 'ROUTE_NOT_NAMED');
     expect((await owner.query(`SELECT count(*)::int AS n FROM authoring_signatures WHERE doc_id = $1`, [docId])).rows[0].n).toBe(0);
   });
 
@@ -322,9 +323,7 @@ describe('a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8)', (
     const docId = await draft('step');
     expect((await ask(docId, ['r1', 'r2'], { order: 'sequential', reviewStepDueDates: [day(2), day(4)] })).status).toBe(200);
     expect(await memberOf(docId, 'r2')).toMatchObject({ status: 'blocked', review_step: 2 });
-    const early = await reviewSign('r2', docId);
-    expect(early.status, JSON.stringify(early.body)).toBe(409);
-    expect(early.body.code).toBe('ROUTE_STEP_NOT_OPEN');
+    answered(await reviewSign('r2', docId), 409, 'ROUTE_STEP_NOT_OPEN');
     expect((await reviewSign('r1', docId)).status).toBe(200);
     expect(await memberOf(docId, 'r2')).toMatchObject({ status: 'pending' });
     expect(await noticeFor('r2', `It is your turn: review ${titleOf('step')}`)).toMatchObject({ category: 'task_update' });
@@ -334,10 +333,67 @@ describe('a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8)', (
     const docId = await draft('changed');
     expect((await ask(docId, ['r1'])).status).toBe(200);
     await owner.query(`UPDATE authoring_sections SET content = '<p>Edited after the request.</p>' WHERE doc_id = $1 AND code = '2.5.2'`, [docId]);
-    const res = await reviewSign('r1', docId);
-    expect(res.status, JSON.stringify(res.body)).toBe(409);
-    expect(res.body.code).toBe('ROUTE_CONTENT_CHANGED');
+    answered(await reviewSign('r1', docId), 409, 'ROUTE_CONTENT_CHANGED');
     expect(await memberOf(docId, 'r1')).toMatchObject({ status: 'pending', route_authoring_signature_id: null });
+  });
+});
+
+describe('an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g))', () => {
+  /* OQ-003 v0.5 saw it (docs/evidence/D2-REVIEW-ROUTING/2026-10-30-RR5/oq/
+     observation-author-review-after-route-complete.txt): with no live route the
+     route precheck has nothing to refuse, and nothing else asked who wrote it. */
+  /** The document's state, its snapshots, and who signed it with what meaning, in order. */
+  const recordOf = async (docId: string) => {
+    const { rows: [d] } = await owner.query(`SELECT d.status, d.frozen_at, (SELECT count(*)::int FROM frozen_documents f WHERE f.document_id = d.id) AS snapshots,
+        ARRAY(SELECT s.signer_email || ' ' || s.meaning FROM authoring_signatures s WHERE s.doc_id = d.id ORDER BY s.signed_at, s.id) AS signed
+      FROM authoring_documents d WHERE d.id = $1`, [docId]);
+    return { ...d, signed: (d.signed as string[]).map((x) => { const [email, meaning] = x.split(' '); return `${WHO.find((w) => emails[w] === email) ?? email}:${meaning}`; }) };
+  };
+  /** The author's e-sign or freeze with a stated meaning; WHY is the e-sign's `intent` and the freeze's `reason`. */
+  const authorAct = (act: 'e-sign' | 'freeze', docId: string, meaning: string, password = PASSWORD) =>
+    call('author', 'post', `/docs/${docId}/${act}`, { meaning, intent: WHY, reason: WHY, password });
+
+  it('with no route: the author’s REVIEWER e-sign is refused 403, before the credential, and no signature is written', async () => {
+    const docId = await draft('own-review');
+    answered(await reviewSign('author', docId), 403, 'SEPARATION_OF_DUTIES');
+    // Before the credential: a wrong password is never checked, so it is the same refusal, not a 401.
+    answered(await reviewSign('author', docId, 'not-the-password'), 403, 'SEPARATION_OF_DUTIES');
+    expect((await recordOf(docId)).signed).toEqual([]);
+  });
+
+  it('after the route completes: the named reviewer’s signature closes it, and the author’s is refused the same way', async () => {
+    const docId = await draft('own-review-after');
+    answered(await ask(docId, ['r1']), 200);
+    // While the route is live its precheck answers first, as OQ-003 v0.5's OQ-AUTH-13b asserts.
+    answered(await reviewSign('author', docId, 'not-the-password'), 403, 'ROUTE_NOT_NAMED');
+    answered(await reviewSign('r1', docId), 200);
+    expect((await routes(docId))[0].status).toBe('complete');
+    answered(await reviewSign('author', docId), 403, 'SEPARATION_OF_DUTIES');
+    expect((await recordOf(docId)).signed).toEqual(['r1:REVIEWER']);
+  });
+
+  it('a REVIEWER freeze by the author is refused 403 before the credential: not frozen, no snapshot, no signature', async () => {
+    const docId = await draft('own-review-freeze');
+    answered(await authorAct('freeze', docId, 'REVIEWER'), 403, 'SEPARATION_OF_DUTIES');
+    answered(await authorAct('freeze', docId, 'REVIEWER', 'not-the-password'), 403, 'SEPARATION_OF_DUTIES');
+    expect(await recordOf(docId)).toEqual({ status: 'draft', frozen_at: null, snapshots: 0, signed: [] });
+  });
+
+  it('the author still signs AUTHOR, by e-sign and by freeze', async () => {
+    const docId = await draft('own-author');
+    answered(await authorAct('e-sign', docId, 'AUTHOR'), 200);
+    answered(await authorAct('freeze', docId, 'AUTHOR'), 200);
+    expect(await recordOf(docId)).toMatchObject({ status: 'FROZEN', snapshots: 1, signed: ['author:AUTHOR', 'author:AUTHOR'] });
+  });
+
+  it('someone who did not write it still signs REVIEWER with no route', async () => {
+    const docId = await draft('other-review');
+    // r3 holds the Reviewer grant (an earlier grant, as before RR5); no route names anyone.
+    await owner.query(`INSERT INTO doc_permissions (doc_id, tenant_id, principal_id, email, role, granted_by)
+      VALUES ($1, $2, $3, $4, 'REVIEWER', $5)`, [docId, orgA, String(users.r3), emails.r3, String(users.author)]);
+    answered(await reviewSign('r3', docId), 200);
+    expect(await routes(docId)).toEqual([]);
+    expect((await recordOf(docId)).signed).toEqual(['r3:REVIEWER']);
   });
 });
 

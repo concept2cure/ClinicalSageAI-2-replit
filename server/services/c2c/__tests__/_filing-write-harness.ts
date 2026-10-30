@@ -90,6 +90,10 @@ const MIGRATIONS = [
   'migrations/20260728_c2c_document_sections_timestamps.sql',
   'migrations/20260728_c2c_section_version_author_kind.sql',
   'migrations/20260728_authoring_document_governed_binding.sql',
+  // A REVIEWER e-sign asks the document's review route first (RR5,
+  // authoringReviewerPrecheck), so the route table must exist, as it does on
+  // every deployed database. Without it that e-sign answered 500.
+  'migrations/20261023_review_routes.sql',
 ];
 
 export async function signToken(claims: Record<string, unknown> = {}): Promise<string> {

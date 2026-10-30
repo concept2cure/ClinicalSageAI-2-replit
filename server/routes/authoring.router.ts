@@ -5001,6 +5001,12 @@ async function sealRefusedForFiling(
   return refusal !== null;
 }
 
+/** A signature whose meaning its signer did not state: refused, nothing signed. */
+function signatureReasonRefusal() {
+  return { error: `State what this signature means, in at least ${GOVERNED_REASON_MIN} characters. Nothing was signed.`,
+    code: 'SIGNATURE_REASON_REQUIRED' };
+}
+
 /**
  * The seal refusal, then separation of duties (21 CFR 11.10(g)) for every
  * meaning but AUTHOR: an author of this document may not approve it, or sign
@@ -5012,17 +5018,32 @@ async function sealRefusedForFiling(
  * spends no second factor and nothing is signed. A failed lookup refuses (503)
  * in the canonical sentence; its cause stays in the log.
  */
-/** A signature whose meaning its signer did not state: refused, nothing signed. */
-function signatureReasonRefusal() {
-  return { error: `State what this signature means, in at least ${GOVERNED_REASON_MIN} characters. Nothing was signed.`,
-    code: 'SIGNATURE_REASON_REQUIRED' };
+async function signingRefused(
+  client: Queryable, req: Request, res: Response,
+  ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
+): Promise<boolean> {
+  if (await sealRefusedForFiling(client, res, ids.docId, ids.tenantId)) return true;
+  return separationOfDutiesRefused(client, req, res, ids);
 }
 
-async function signingRefused(
+/**
+ * Separation of duties alone, the second half of `signingRefused`, for a
+ * signature that does not take the seal check there: a REVIEWER e-signature
+ * seals nothing, and Freeze asks `filingBlocksSeal` on its own. Every meaning
+ * but AUTHOR must be independent of the document's authors.
+ *
+ * 2026-10-30 (RR5 follow-up; OQ-003 v0.5's observation, the RR5 README's Open
+ * item 2): a REVIEWER signature asked this nowhere. On a live review route the
+ * route precheck refuses anyone it does not name, and the member validator
+ * never names an author; with no live route, before one or after it completes,
+ * nothing refused, so an author signed REVIEWER on their own document by
+ * E-sign or by Freeze. Same answers as above: 403, 409 unresolved, 503
+ * unverified.
+ */
+async function separationOfDutiesRefused(
   client: Queryable, req: Request, res: Response,
   { docId, tenantId, meaning }: { docId: string | string[] | undefined; tenantId: number; meaning: string },
 ): Promise<boolean> {
-  if (await sealRefusedForFiling(client, res, docId, tenantId)) return true;
   if (meaning === 'AUTHOR') return false;
   try {
     await assertSignerIsNotAuthor(`authoring-document:${String(docId)}`, tenantId, Number(getActorId(req)),
@@ -5133,6 +5154,11 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       if (['FROZEN', 'APPROVED'].includes(String(doc.status ?? '').toUpperCase())) {
         return res.status(400).json({ error: 'Document is already frozen' });
       }
+      /* A REVIEWER freeze is a review: never by an author of this document. The
+         rule exempts AUTHOR. First of the refusals, because settling comments or
+         re-filing cannot cure it; the seal is asked below (filingBlocksSeal), so
+         this is the rule alone, not signingRefused, which would ask it twice. */
+      if (await separationOfDutiesRefused(client, req, res, { docId, tenantId, meaning })) return;
       await assertWorkflowImportRelease(client, current);
       const sectionsResult = { rows: current.sections };
       const { openCommentCount, pendingEdits } = await freezeCensus(docId, tenantId, sectionsResult.rows, client);
@@ -5431,6 +5457,8 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       if (meaning === 'APPROVER' && await approvalRefused(client, req, res, current, { docId, tenantId, meaning })) return;
       // RR5: on a live review route only a named reviewer whose turn it is signs REVIEWER, over the route's content; refused before the credential.
       const routed = meaning === 'REVIEWER' ? await authoringReviewerPrecheck(client, { tenantId, docId: String(current.doc.id), title: String(current.doc.title ?? ''), signerId: Number(getActorId(req)), digest: sectionsDigest(current.sections) }) : null;
+      // Then, route or none, never an author of this document (separationOfDutiesRefused). After the precheck, so a signer the live route does not name still reads ROUTE_NOT_NAMED.
+      if (meaning === 'REVIEWER' && await separationOfDutiesRefused(client, req, res, { docId, tenantId, meaning })) return;
 
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;
