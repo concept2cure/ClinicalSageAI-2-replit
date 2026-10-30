@@ -389,6 +389,18 @@ describe('the version in force and the version approved for a later day', () => 
     expect(screen.queryByText(/Keep the release record/)).toBeNull();
   });
 
+  it('opened from a training notice, starts on the version approved for a later day, and on the version in force when none waits', async () => {
+    H.apiRequest.mockResolvedValue(pending());
+    const view = render(<PersonalTrainingReader documentId={6} startOnSuccessor onAcknowledged={vi.fn()} onClose={vi.fn()} />);
+    expect(await screen.findByText('Qualify every new supplier by audit.')).toBeTruthy();
+    expect((screen.getByRole('radio', { name: `Takes effect ${EFFECTIVE_ON}: v2.0` }) as HTMLInputElement).checked).toBe(true);
+    view.unmount();
+    H.apiRequest.mockResolvedValue(read());
+    render(<PersonalTrainingReader documentId={6} startOnSuccessor onAcknowledged={vi.fn()} onClose={vi.fn()} />);
+    expect(await screen.findByText(/Keep the release record/)).toBeTruthy();
+    expect(screen.queryByRole('radio')).toBeNull();
+  });
+
   it('opens a document whose next version is being drafted on the version in force', async () => {
     H.apiRequest.mockResolvedValue(read(context({ inForce: true, effectiveDate: '2026-09-01' }), 12, { version: '2.0', status: 'draft' }));
     mount();

@@ -9,6 +9,8 @@ import { resolveAuthoringDocumentScope, resolveAuthoringSectionScope, decideAuth
 import { loadTaskHomePrograms } from '../tasking/task-home-programs';
 import { canAccessReportScope } from '../report-os/project-access';
 import { threadOwnerMatches } from '../chat-thread-helpers';
+import { isQmsTrainingAssignee } from '../qms/training-assignment';
+import { QMS_TRAINING_TASK_SOURCE } from '../../../shared/qms/training';
 
 export class NotificationTargetRefusal extends Error {
   constructor(readonly status: 404 | 422 | 503) {
@@ -95,6 +97,9 @@ async function reportTarget(ctx: TargetContext, ref: RecordReference): Promise<N
 }
 async function qualityTarget(ctx: TargetContext, ref: RecordReference): Promise<NotificationRecordTarget> {
   const row = await rowFor(ctx,'SELECT authoring_document_id::text AS authoring_document_id FROM qms_documents WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL',[ref.id,ctx.organizationId]);
+  return qualityTargetOf(ctx, ref, row);
+}
+async function qualityTargetOf(ctx: TargetContext, ref: RecordReference, row: Record<string, unknown>): Promise<NotificationRecordTarget> {
   const authored = row.authoring_document_id;
   let programId: string | null = null;
   if (authored !== null) {
@@ -129,9 +134,29 @@ async function canonicalDocumentTarget(ctx: TargetContext, canonicalId: string):
   if (!programId) throw new NotificationTargetRefusal(422);
   return {surface:'vault',label:'Open the version in the Vault',params:{documentId:vaultId.toLowerCase()},programId};
 }
-/** A task opens on the Tasks board; a review route member's opens its subject, where the route is acted on (RR1b). */
+/** Ends the key training-task.ts writes: `qms-document:<id>:user:<userId>`. */
+const TRAINING_TASK_KEY = /^qms-document:([1-9]\d{0,9}):user:[1-9]\d{0,9}$/;
+/**
+ * A training task's notice opens the training reader on its document
+ * (MR-12 Stage 4 slice 4b; QMS_TRAINING_ASSIGNMENT §3.9). For the person
+ * assigned it asks nothing of the editing copy: being assigned is the reason
+ * to read the released version (P-50 Q2, authorizeQmsTrainingRead). Anyone
+ * else is asked what any notice on the document asks.
+ */
+async function trainingTarget(ctx: TargetContext, sourceEntityId: unknown): Promise<NotificationRecordTarget> {
+  const key = typeof sourceEntityId === 'string' ? TRAINING_TASK_KEY.exec(sourceEntityId) : null;
+  if (!key) throw new NotificationTargetRefusal(422);
+  const ref: RecordReference = { kind: 'qms_document', id: key[1] };
+  const row = await rowFor(ctx,'SELECT authoring_document_id::text AS authoring_document_id FROM qms_documents WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL',[ref.id,ctx.organizationId]);
+  if (await isQmsTrainingAssignee(ctx.client, ctx.organizationId, Number(ref.id), ctx.userId)) {
+    return {surface:'quality',label:'Read and acknowledge',params:{qmsDocumentId:ref.id,qmsIntent:'read'},programId:null};
+  }
+  return qualityTargetOf(ctx, ref, row);
+}
+/** A task opens on the Tasks board; a review route member's opens its subject, where the route is acted on (RR1b); a training task's opens its reader. */
 async function taskTarget(ctx: TargetContext, taskId: string): Promise<NotificationRecordTarget> {
   const task = await rowFor(ctx,'SELECT project_id, review_route_id, source_entity_type, source_entity_id FROM unified_tasks WHERE task_id=$1 AND organization_id=$2 AND deleted_at IS NULL',[taskId,ctx.organizationId]);
+  if (task.source_entity_type === QMS_TRAINING_TASK_SOURCE) return trainingTarget(ctx, task.source_entity_id);
   if (task.review_route_id != null) {
     if (task.source_entity_type === 'canonical_document' && typeof task.source_entity_id === 'string') return canonicalDocumentTarget(ctx,task.source_entity_id);
     throw new NotificationTargetRefusal(422);
