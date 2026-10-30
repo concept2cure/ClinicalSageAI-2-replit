@@ -52,7 +52,7 @@ export interface VaultUploadOutcome {
    *  suggested dossier folder, or unfiled (visible review queue). */
   filings: Array<{ name: string; folderLabel: string | null; needsReview: boolean; placement: VaultPlacement }>;
   /** Files whose exact bytes the Vault already recorded at that code and
-   *  version: nothing was changed, and `differs` says the upload asked for a
+   *  version: `updated` identifies a repaired record, and `differs` says the upload asked for a
    *  title, type or classification other than the recorded one (VR-05);
    *  `filingDiffers`, present only when true, a folder, kind or CTD section
    *  (Part 11 review F3). */
@@ -62,7 +62,7 @@ export interface VaultUploadOutcome {
    *  next version of the recorded document (VR-09), so the File is kept. */
   conflicts: Array<{ name: string; file: File }>;
   /** Versions added to an existing document, with the version the server assigned. */
-  newVersions: Array<{ name: string; version: string; title: string; folderLabel: string | null }>;
+  newVersions: Array<{ name: string; version: string; title: string | null; folderLabel: string | null }>;
 }
 
 /**
@@ -188,6 +188,7 @@ async function uploadOne(
       already: Omit<VaultUploadOutcome['alreadyRecorded'][number], 'name'> | null;
       version: string | null;
       documentId: string;
+      documentTitle: string | null;
       readingText: boolean;
     }
   | { ok: false; reason: string; code: string | null; unknown?: true }
@@ -257,6 +258,7 @@ async function uploadOne(
       already: reupload ? alreadyRecordedOf(reupload.differs, document.documentTitle, reupload.unchanged) : null,
       version: document.version,
       documentId: document.id,
+      documentTitle: document.documentTitle,
       readingText: document.extraction === 'pending',
     };
   }
@@ -315,7 +317,7 @@ function outcomeNote(outcome: VaultUploadOutcome): NonNullable<VaultUploadState[
     const versionText = outcome.newVersions
       .map(
         (v) =>
-          `Added ${v.name} to "${v.title}" as ${v.version ? `v${v.version}` : 'a new version (number not reported)'}. ` +
+          `Added ${v.name} to ${v.title?.trim() ? `"${v.title}"` : 'the recorded document'} as ${v.version ? `v${v.version}` : 'a new version (number not reported)'}. ` +
           `It keeps the document's filing${v.folderLabel ? ` (${v.folderLabel})` : ''}, and the earlier versions stay in the Vault.`,
       )
       .join(' ');
@@ -397,7 +399,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
             outcome.newVersions.push({
               name: file.name,
               version: r.version ?? '',
-              title: opts.newVersionOf.title,
+              title: r.documentTitle,
               folderLabel: r.folderLabel,
             });
           } else if (r.ok) {
