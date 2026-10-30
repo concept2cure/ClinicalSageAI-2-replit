@@ -705,6 +705,10 @@ Sizes:
 
 **G14. Converge the briefing-book assemblers, and complete the briefing book as an editor document.**
 
+- **Done 2026-10-30, except the AnA assembler** (screen half `docs/evidence/D2-BRIEFING-BOOK/2026-10-29/`; server
+  half `docs/evidence/D2-BRIEFING-BOOK/2026-10-30-assembler-retired/`). `briefing-book-core.ts` stays behind an
+  out-of-catalog AnA tool; its fate is the founder's under RULE 2.
+
 - **Exists:** three implementations (§2.3):
   1. `ind-briefing-book-service.ts`: the engine of the launch route (`documents.routes.ts:17`, `:413`, `:426`; `IndLifecycle.tsx:1018`, `canFile: false`).
   2. `server/services/ana/briefing-book-core.ts`: behind hidden AnA `assemble_briefing_book` (`AnaToolExecutor.ts:1536`).
