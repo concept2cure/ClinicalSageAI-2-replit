@@ -7,6 +7,7 @@ import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
 import { VaultCatalogRecord } from './VaultCatalogRecord';
+import { VaultHoldNotice, type VaultHoldNoticeShape } from './VaultHoldNotice';
 import { VaultVersions } from './VaultVersions';
 import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
@@ -190,6 +191,8 @@ interface VaultDisplayShape {
   unfiledCount?: number;
   /** Suggested filings no person has confirmed, program-wide (VR-11b). Absent on an older server. */
   awaitingConfirmationCount?: number;
+  /** The active legal holds covering the project or a version in it (MR-08 Stage 5): reference and date. */
+  legalHolds?: VaultHoldNoticeShape[];
   /** How much of the filing cabinet the tree actually carries. The server caps
    *  that read (the vault is unbounded), so rendering the page without saying
    *  so would state a partial cabinet as the whole one. */
@@ -2210,6 +2213,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                   <div className="tl-warn-row">
                     {I.alertTriangle} {sel.flag}
                   </div>
+                )}
+                {sel.src === 'upload' && sel.docId && (
+                  <VaultHoldNotice holds={vault?.legalHolds} documentId={sel.docId}
+                    unreadable={vault?.unavailable?.some((u) => u.branch === 'legalHolds')} />
                 )}
 
                 {sel.src === 'upload' && sel.docId && projectId && (!sel.disposition || sel.disposition === 'keep_data') && <DocumentDisposition

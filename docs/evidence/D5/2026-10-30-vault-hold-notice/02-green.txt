@@ -1,0 +1,21 @@
+# MR-08 Stage 5 step 5, green
+
+## tests/db/vault-hold-notice.dbtest.ts
+ ✓ the Vault read says what is on legal hold > lists a project hold and a document hold to a viewer, with reference and date, and no reason
+ ✓ the Vault read says what is on legal hold > says nothing is held where nothing is
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+
+## Vault-read and hold dbtests run together: program-ownership, project-vault-parent-access, version-restore, legal-hold-append-only, hold-notice, ingest
+ Test Files  6 passed (6)
+      Tests  87 passed (87)
+
+## Client: vaultHoldNotice.test.tsx
+ 4 passed (4): coverage rule, notice on the covered document only, a project hold on every document, an unread hold set said as unread
+
+## Unit and client: server/routes/c2c/__tests__, server/services/vault, client Vault suites
+      Tests  2770 passed (2770)
+ Test Files  191 passed (191)
+
+## Type check
+tsc exit 0
