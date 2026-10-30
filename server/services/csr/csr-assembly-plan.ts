@@ -71,6 +71,26 @@ const FILE_SUFFIX: Readonly<Record<CsrAppendixNumber, string>> = Object.freeze({
 export const CSR_BODY_FILE = 'csr-body.pdf';
 export const CSR_TABLES_FILE = 'csr-14-tables.pdf';
 
+/**
+ * §14.3.3, the patient narratives the narrative job lands (csr-narrative-job.ts),
+ * filed as their own leaf (D18, 2026-10-30): they can run to hundreds of pages,
+ * so they are neither drawn into the body nor appended to the §14 tables leaf.
+ */
+export const CSR_NARRATIVES_SECTION = '14.3.3';
+export const CSR_NARRATIVES_FILE = 'csr-14-3-3-narratives.pdf';
+/**
+ * The reviewed STF list (STF_DOCUMENT_FILE_TAGS, recall) has no role for E3
+ * narratives; 'subject-profiles' is patient profiles, a different document.
+ * §14.3.3 is part of the report, so it is filed as the §14 tables leaf is,
+ * 'study-report'. A narratives-specific role, if the ICH STF specification
+ * has one, is unverified until that list is checked against it.
+ */
+export const CSR_NARRATIVES_FILE_TAG = CSR_BODY_FILE_TAG;
+/** The named destination of one subject's narrative in the §14.3.3 leaf. */
+export const narrativeDestination = (subjectId: string) => `N-${subjectId}`;
+/** What an assembly may declare not applicable, with a reason: a §16 appendix, or §14.3.3. */
+export type CsrDeclarable = CsrAppendixNumber | typeof CSR_NARRATIVES_SECTION;
+
 /** The leaf file name of an appendix: the study's folder holds them, so no study id is repeated. */
 export function appendixFileName(number: CsrAppendixNumber): string {
   const name = `csr-${number.replace(/\./g, '-')}-${FILE_SUFFIX[number]}.pdf`;
@@ -153,7 +173,7 @@ export function supportingOutputs(sectionNumber: string, tfls: readonly PlannedT
 
 /** Assert the plan's tags are the reviewed STF list's own (a typo here would file a wrong role). */
 export function assertKnownFileTags(): void {
-  const tags = [CSR_BODY_FILE_TAG, ...Object.values(CSR_SUPPLIED_APPENDICES), ...Object.values(CSR_LISTING_APPENDICES)];
+  const tags = [CSR_BODY_FILE_TAG, CSR_NARRATIVES_FILE_TAG, ...Object.values(CSR_SUPPLIED_APPENDICES), ...Object.values(CSR_LISTING_APPENDICES)];
   const unknown = tags.filter(tag => !STF_DOCUMENT_FILE_TAGS.tags.includes(tag));
   if (unknown.length) throw new Error(`CSR assembly file-tags outside the reviewed STF list: ${unknown.join(', ')}`);
 }

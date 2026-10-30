@@ -6,6 +6,9 @@
  *   csr-body.pdf           the body: E3 order, generated contents to four
  *                          levels, abbreviations, cross-references linked
  *   csr-14-tables.pdf      §14: the engine tables, numbered 14.1.x/14.2.x/14.3.x
+ *   csr-14-3-3-narratives.pdf  §14.3.3: the landed patient narratives, one at a
+ *                          time, each held to its stored text (D18,
+ *                          csr-assembly-narratives.ts)
  *   csr-16-2-*.pdf         §16.2 listings, generated from the source, streamed
  *   csr-16-1-*.pdf, 16.3   documents the sponsor supplied, by exact digest
  *
@@ -39,10 +42,11 @@ import { generateStfFiles } from '../ectd/stf-generator.js';
 import { stableStringify } from '../../../shared/canonical-json.js';
 import type { CsrTableKey } from './cortex-authoring-context.js';
 import {
-  CSR_BODY_FILE, CSR_BODY_FILE_TAG, CSR_CTD_SECTIONS, CSR_LISTING_APPENDICES, CSR_SUPPLIED_APPENDICES, CSR_TABLES_FILE,
-  appendixApplies, appendixFileName, appendixFileTag, assertKnownFileTags, compareDotted, e3Title, headingDestination,
-  listingDestination, planTfls, tflHeadings, type CsrAppendixNumber, type CsrCtdSection, type CsrTable, type PlannedTfl,
+  CSR_BODY_FILE, CSR_BODY_FILE_TAG, CSR_CTD_SECTIONS, CSR_LISTING_APPENDICES, CSR_NARRATIVES_FILE_TAG, CSR_NARRATIVES_SECTION, CSR_SUPPLIED_APPENDICES,
+  CSR_TABLES_FILE, appendixApplies, appendixFileName, appendixFileTag, assertKnownFileTags, compareDotted, e3Title, headingDestination,
+  listingDestination, planTfls, tflHeadings, type CsrAppendixNumber, type CsrCtdSection, type CsrDeclarable, type CsrTable, type PlannedTfl,
 } from './csr-assembly-plan.js';
+import { renderNarrativesLeaf, type CsrNarrativesSource, type NarrativesVerification } from './csr-assembly-narratives.js';
 import { CsrPdfWriter } from './csr-pdf-writer.js';
 import { toWinAnsiSafe } from '../ectd/leaf-pdf-renderer.js';
 import { planListings, type CsrListingSource, type ListingDefinition } from './csr-listings.js';
@@ -71,8 +75,14 @@ export interface CsrAssemblyInput {
   tables: Partial<Record<CsrTableKey, CsrTable>>;
   listingSource: CsrListingSource;
   supplied?: Partial<Record<CsrAppendixNumber, SuppliedAppendixDocument>>;
-  /** An appendix declared not applicable to this study, with the reason (at least 8 characters). */
-  notApplicable?: Partial<Record<CsrAppendixNumber, string>>;
+  /** An appendix, or §14.3.3, declared not applicable to this study, with the reason (at least 8 characters). */
+  notApplicable?: Partial<Record<CsrDeclarable, string>>;
+  /**
+   * The build's stored narratives (csr-narrative-store.ts), which a landed
+   * §14.3.3 in `sections` is checked against and drawn from, one at a time.
+   * Without it a landed §14.3.3 cannot be checked, and is not filed.
+   */
+  narratives?: CsrNarrativesSource;
   outDir: string;
   /** Content-derived timestamp for the PDFs, never the wall clock. */
   contentModifiedAt: Date;
@@ -112,6 +122,8 @@ export interface CsrAssemblyResult {
   unresolvedReferences: UnresolvedReference[];
   structure: StructureReport;
   listings: AssembledListing[];
+  /** §14.3.3 checked against the stored narratives; absent when it was not landed or was declared not applicable. */
+  narratives?: NarrativesVerification;
   abbreviations: { total: number; undefinedAtFirstUse: string[] };
   stfWarnings: string[];
   pdfa: string;
@@ -127,7 +139,7 @@ function validate(input: CsrAssemblyInput): CsrCtdSection {
   if (!input.sections.length) throw new CsrAssemblyError('CSR_ASSEMBLY_NO_SECTIONS', 'The CSR has no saved section to assemble.');
   for (const [number, reason] of Object.entries(input.notApplicable ?? {})) {
     if (typeof reason !== 'string' || reason.trim().length < 8) throw new CsrAssemblyError('CSR_ASSEMBLY_REASON_REQUIRED', `Say why appendix ${number} does not apply (at least 8 characters).`);
-    if (input.supplied?.[number as CsrAppendixNumber]) throw new CsrAssemblyError('CSR_ASSEMBLY_APPENDIX_AMBIGUOUS', `Appendix ${number} is both supplied and declared not applicable.`);
+    if (number !== CSR_NARRATIVES_SECTION && input.supplied?.[number as CsrAppendixNumber]) throw new CsrAssemblyError('CSR_ASSEMBLY_APPENDIX_AMBIGUOUS', `Appendix ${number} is both supplied and declared not applicable.`);
   }
   assertKnownFileTags();
   return ctd;
@@ -226,6 +238,37 @@ async function renderTables(input: CsrAssemblyInput, built: Built, tfls: readonl
   built.leaves.push(leaf(input, built.ctd, { appendix: '14', fileName: CSR_TABLES_FILE, title, fileTag: CSR_BODY_FILE_TAG, origin: 'generated', sourcePath: file, sha256: written.sha256, bytes: written.bytes, pages: written.pages }));
 }
 
+/**
+ * §14.3.3: filed as its own leaf when the build landed it and it matches the
+ * stored narratives; otherwise a blocking gap, or declared not applicable.
+ */
+async function settleNarratives(input: CsrAssemblyInput, built: Built): Promise<{ verification?: NarrativesVerification; subjects: string[] }> {
+  const number = CSR_NARRATIVES_SECTION;
+  const section = input.sections.find(s => s.code === number);
+  const declared = input.notApplicable?.[number];
+  if (declared) {
+    if (section) throw new CsrAssemblyError('CSR_ASSEMBLY_APPENDIX_AMBIGUOUS', 'Section 14.3.3 has been landed by the narrative job, so it cannot be declared not applicable.');
+    const saved = input.narratives?.savedNarratives ?? 0;
+    if (saved > 0) {
+      throw new CsrAssemblyError('CSR_ASSEMBLY_APPENDIX_AMBIGUOUS', `The narrative job has saved ${saved} narrative(s) for this build, so subjects were selected and Section 14.3.3 applies; it cannot be declared not applicable. Run the narratives to completion.`);
+    }
+    built.notApplicable.push({ number, reason: declared.trim() });
+    built.appendices.set(number, { state: 'not-applicable', reason: declared.trim() });
+    return { subjects: [] };
+  }
+  const outcome = await renderNarrativesLeaf({ section, source: input.narratives, outDir: input.outDir, studyId: input.studyId, stamp: input.contentModifiedAt });
+  if (outcome.state === 'missing') {
+    built.missing.unshift({ number, title: e3Title(number), fileTag: CSR_NARRATIVES_FILE_TAG, blocking: true, reason: outcome.reason });
+    built.appendices.set(number, { state: 'missing', reason: `${outcome.reason} It must be landed and verified, or declared not applicable with a reason, before filing.` });
+    return { verification: outcome.verification, subjects: [] };
+  }
+  built.leaves.push(leaf(input, built.ctd, { appendix: number, fileName: outcome.fileName, title: outcome.title, fileTag: CSR_NARRATIVES_FILE_TAG, origin: 'generated',
+    sourcePath: outcome.path, sha256: outcome.sha256, bytes: outcome.bytes, pages: outcome.pages }));
+  built.appendices.set(number, { state: 'filed', fileName: outcome.fileName,
+    detail: `${outcome.subjects.length} narrative(s), ${outcome.pages} page(s); each checked against its stored text (SHA-256).` });
+  return { verification: outcome.verification, subjects: outcome.subjects };
+}
+
 function nearestHeading(number: string, heads: ReadonlyArray<{ number: string }>): string {
   const parts = number.split('.');
   for (let n = parts.length - 1; n >= 1; n--) {
@@ -252,7 +295,8 @@ function leafTargets(tfls: readonly PlannedTfl[], built: Built, names: ReadonlyM
   for (const t of tfls) targets.set(t.number, { fileName: tables, destination: t.destination });
   for (const l of built.leaves) {
     if (l.appendix === '14') continue;
-    targets.set(l.appendix, { fileName: names.get(l.fileName) ?? l.fileName, destination: l.origin === 'generated' ? listingDestination(l.appendix) : null });
+    const destination = l.appendix === CSR_NARRATIVES_SECTION ? headingDestination(l.appendix) : l.origin === 'generated' ? listingDestination(l.appendix) : null;
+    targets.set(l.appendix, { fileName: names.get(l.fileName) ?? l.fileName, destination });
   }
   return targets;
 }
@@ -284,14 +328,19 @@ export async function assembleCsr(input: CsrAssemblyInput): Promise<CsrAssemblyR
     listings.push(await renderListing(input, built, def));
   }
   const tfls = planTfls(input.tables);
-  await stage(input, 'Section 14 tables', (plan.generated.length + 1) / (plan.generated.length + 3));
+  const steps = plan.generated.length + 4;
+  await stage(input, 'Section 14 tables', (plan.generated.length + 1) / steps);
   if (tfls.length) await renderTables(input, built, tfls);
-  await stage(input, 'Report body', (plan.generated.length + 2) / (plan.generated.length + 3));
+  await stage(input, 'Section 14.3.3 narratives', (plan.generated.length + 2) / steps);
+  const narratives = await settleNarratives(input, built);
+  await stage(input, 'Report body', (plan.generated.length + 3) / steps);
   const names = await shippedNames(input, built);
   const targets = leafTargets(tfls, built, names);
   const bodyPath = path.join(input.outDir, CSR_BODY_FILE);
-  const sections = new Map(input.sections.map(s => [s.code, { title: s.title, content: s.content }]));
-  const body = await renderBody({ studyId: input.studyId, title: input.title, nctNumber: input.nctNumber ?? null, sections, tfls, appendices: built.appendices, leafTargets: targets, stamp: input.contentModifiedAt }, bodyPath);
+  // §14.3.3 is its own leaf: the body lists and links it, and never draws its text.
+  const sections = new Map(input.sections.filter(s => s.code !== CSR_NARRATIVES_SECTION).map(s => [s.code, { title: s.title, content: s.content }]));
+  const body = await renderBody({ studyId: input.studyId, title: input.title, nctNumber: input.nctNumber ?? null, sections, tfls, appendices: built.appendices, leafTargets: targets,
+    narrativeSubjects: narratives.subjects, stamp: input.contentModifiedAt }, bodyPath);
   const bodyLeaf = leaf(input, built.ctd, { appendix: 'body', fileName: CSR_BODY_FILE, title: `${input.title} — Clinical Study Report`, fileTag: CSR_BODY_FILE_TAG, origin: 'generated', sourcePath: bodyPath, sha256: body.written.sha256, bytes: body.written.bytes, pages: body.written.pages });
   const leaves = [bodyLeaf, ...built.leaves].sort((a, b) => (a.appendix === 'body' ? -1 : b.appendix === 'body' ? 1 : compareDotted(a.appendix, b.appendix)));
   const structure = await checkCsrAssemblyStructure({ body: { fileName: CSR_BODY_FILE, path: bodyPath, headings: body.headings }, leaves: built.leaves.map(l => ({ fileName: names.get(l.fileName) ?? l.fileName, path: l.sourcePath })) });
@@ -299,5 +348,5 @@ export async function assembleCsr(input: CsrAssemblyInput): Promise<CsrAssemblyR
   const bodyGaps = [...(input.gaps ?? []), ...(tfls.length ? [] : ['Section 14: the retained run holds no engine table; no Section 14 document is filed.'])];
   const status = built.missing.some(m => m.blocking) || bodyGaps.length || !structure.ok || body.unresolved.length || listings.some(l => !l.verification.ok) ? 'incomplete' : 'complete';
   return { status, leaves, crossReferences: crossReferencesOf(bodyLeaf, targets, usedTargets), missing: built.missing, notApplicable: built.notApplicable, bodyGaps,
-    unresolvedReferences: body.unresolved, structure, listings, abbreviations: body.abbreviations, stfWarnings: stfWarnings(input, leaves), pdfa: PDFA_STATEMENT };
+    unresolvedReferences: body.unresolved, structure, listings, ...(narratives.verification ? { narratives: narratives.verification } : {}), abbreviations: body.abbreviations, stfWarnings: stfWarnings(input, leaves), pdfa: PDFA_STATEMENT };
 }

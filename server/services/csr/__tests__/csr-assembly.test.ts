@@ -21,6 +21,13 @@ import { CsrPdfWriter } from '../csr-pdf-writer';
 import { CSR_TABLES_FILE } from '../csr-assembly-plan';
 import { packageEctdSubmission } from '../../submission-gateways/regional-packager';
 import { assemblyInput, minimalPdf, SECTIONS } from './support/csr-assembly-fixture';
+import { landLmn201Narratives } from './support/csr-narratives-fixture';
+
+/** The fixture with the study's own narratives landed by the narrative job (§12.3.2 and §14.3.3), as a complete build has them. */
+async function withNarratives(dir: string) {
+  const landed = await landLmn201Narratives();
+  return assemblyInput(dir, { sections: [...SECTIONS, ...landed.sections], narratives: landed.store });
+}
 
 let work: string;
 let out: string;
@@ -32,8 +39,8 @@ beforeEach(async () => {
 afterEach(async () => { await fs.rm(work, { recursive: true, force: true }); });
 
 describe('an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles', () => {
-  it('builds the body, §14 and §16 leaves; bookmarks reach four levels and every link resolves', async () => {
-    const result = await assembleCsr(await assemblyInput(out));
+  it('builds the body, §14, §14.3.3 and §16 leaves; bookmarks reach four levels and every link resolves', async () => {
+    const result = await assembleCsr(await withNarratives(out));
     expect(result.status).toBe('complete');
     expect(result.structure).toMatchObject({ ok: true, bodyOutlineDepth: 4 });
     expect(result.structure.linksChecked).toBeGreaterThan(40);
@@ -41,6 +48,7 @@ describe('an imported CSR assembles into separate 5.3.5.1 leaves with their STF 
     const byAppendix = new Map(result.leaves.map(l => [l.appendix, l]));
     expect(byAppendix.get('body')).toMatchObject({ fileName: 'csr-body.pdf', stfFileTag: 'study-report', ctdSection: '5.3.5.1', studyId: 'SYN-LMN201-B', operation: 'new' });
     expect(byAppendix.get('14')).toMatchObject({ fileName: CSR_TABLES_FILE, stfFileTag: 'study-report' });
+    expect(byAppendix.get('14.3.3')).toMatchObject({ fileName: 'csr-14-3-3-narratives.pdf', stfFileTag: 'study-report', origin: 'generated' });
     expect(byAppendix.get('16.1.1')).toMatchObject({ stfFileTag: 'protocol-or-amendment', origin: 'supplied' });
     expect(byAppendix.get('16.1.5')).toMatchObject({ stfFileTag: 'signatures-investigators', origin: 'supplied' });
     expect(byAppendix.get('16.2.7')).toMatchObject({ stfFileTag: 'adverse-event-listings', origin: 'generated' });
@@ -203,7 +211,7 @@ describe('red first: a listing that disagrees with its source subject fails', ()
 
 describe('hand-off to Submission Center’s packager', () => {
   it('packages the leaves into the study folder with its stf-<study-id>.xml and every cross-reference resolved', async () => {
-    const result = await assembleCsr(await assemblyInput(out));
+    const result = await assembleCsr(await withNarratives(out));
     const bundle = await packageEctdSubmission({
       region: 'fda', applicationId: '123456', sequence: '0000', submissionType: 'original', fda: { applicationType: 'ind' },
       sponsorId: 'D', sponsorName: 'SYNTHETIC sponsor', productName: 'SYNTHETIC product', outputDir: path.join(work, 'pkg'),
@@ -218,5 +226,6 @@ describe('hand-off to Submission Center’s packager', () => {
     }
     expect(Object.keys(zip.files)).toContain('m5/5-3-5-1/syn-lmn201-b/csr-body.pdf');
     expect(Object.keys(zip.files)).toContain('m5/5-3-5-1/syn-lmn201-b/csr-16-2-7-adverse-events.pdf');
+    expect(Object.keys(zip.files)).toContain('m5/5-3-5-1/syn-lmn201-b/csr-14-3-3-narratives.pdf');
   }, 120_000);
 });

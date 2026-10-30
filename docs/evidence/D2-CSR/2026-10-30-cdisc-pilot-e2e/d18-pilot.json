@@ -1,0 +1,184 @@
+{
+ "attribution": "CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01, Clinical Data Interchange Standards Consortium (CDISC), https://github.com/cdisc-org/sdtm-adam-pilot-project. Counts, times and memory only; no pilot value.",
+ "pilotFileSha256": {
+  "adsl": "c5139f873a93ef6add77bc4297beb6460a398bbdd036874382a9f39dfc92091d",
+  "adae": "b8678e70946473a753bb01d002917f478bf51b59bdd0dc19587b97128059b6a0",
+  "adlbc": "b9f6b5106965b5e2e3b33062a18710b58ceecc0c8cf1e54271849653037998ea",
+  "adlbh": "de568850f5585266844abe6eb7ef0290ea130d90c3f023efcb9f13c2a586455b",
+  "advs": "28233c8ed038d0f315a9538d910beb43cf1bb4b69f8f1c39b32463c7b018dff1",
+  "adtte": "68513fc4126744b6b2c7328eb70eb7b9683865d12c58b36539325f3c0c0ab93d",
+  "adqsadas": "ac3fa1217651810b0f15fe489fdda7d99eff10553ded025156ad7c1b89f84608",
+  "adqscibc": "16e7118f606d907e817f0a5885d662c2e7177c430d2b3ec6c0ba9096cb3d7bc1",
+  "adqsnpix": "90cf438913cfb976a34e9cf6c44291eab7a65c5c0146f8df092cd9ce2bd8c44a"
+ },
+ "narrativeJob": {
+  "status": "complete",
+  "selected": 95,
+  "composed": 95,
+  "refused": 0,
+  "sections": {
+   "written": [
+    "14.3.3",
+    "12.3.2"
+   ],
+   "kept": []
+  }
+ },
+ "factGate": {
+  "ok": 95,
+  "failed": 0,
+  "facts": 5043
+ },
+ "landedSections": {
+  "14.3.3": {
+   "chars": 143303,
+   "bytes": 143493
+  },
+  "12.3.2": {
+   "chars": 1822,
+   "bytes": 1822
+  }
+ },
+ "assembly": {
+  "ms": 20397,
+  "heapAfterMiB": 243.6,
+  "maxRssMiB": 421,
+  "status": "incomplete",
+  "unresolvedReferences": [],
+  "structure": {
+   "ok": false,
+   "findings": [
+    {
+     "file": "csr-body.pdf",
+     "code": "BOOKMARK_DEPTH",
+     "message": "The body's bookmarks reach 3 level(s); 4 are required."
+    }
+   ],
+   "bodyOutlineDepth": 3,
+   "linksChecked": 150
+  },
+  "missing": [
+   "16.1.1 (blocking)",
+   "16.1.2 (blocking)",
+   "16.1.3 (blocking)",
+   "16.1.4 (blocking)",
+   "16.1.5 (blocking)",
+   "16.1.6",
+   "16.1.7 (blocking)",
+   "16.1.8",
+   "16.1.9 (blocking)",
+   "16.1.10",
+   "16.1.11",
+   "16.1.12",
+   "16.2.5",
+   "16.2.6 (blocking)",
+   "16.3 (blocking)"
+  ],
+  "leaves": [
+   {
+    "appendix": "body",
+    "fileName": "csr-body.pdf",
+    "pages": 5,
+    "bytes": 62907
+   },
+   {
+    "appendix": "14",
+    "fileName": "csr-14-tables.pdf",
+    "pages": 22,
+    "bytes": 47217
+   },
+   {
+    "appendix": "14.3.3",
+    "fileName": "csr-14-3-3-narratives.pdf",
+    "pages": 42,
+    "bytes": 112308
+   },
+   {
+    "appendix": "16.2.1",
+    "fileName": "csr-16-2-1-discontinued.pdf",
+    "pages": 5,
+    "bytes": 32130
+   },
+   {
+    "appendix": "16.2.2",
+    "fileName": "csr-16-2-2-deviations.pdf",
+    "pages": 1,
+    "bytes": 3590
+   },
+   {
+    "appendix": "16.2.3",
+    "fileName": "csr-16-2-3-efficacy-exclusions.pdf",
+    "pages": 1,
+    "bytes": 3711
+   },
+   {
+    "appendix": "16.2.4",
+    "fileName": "csr-16-2-4-demographics.pdf",
+    "pages": 10,
+    "bytes": 62276
+   },
+   {
+    "appendix": "16.2.7",
+    "fileName": "csr-16-2-7-adverse-events.pdf",
+    "pages": 74,
+    "bytes": 196698
+   },
+   {
+    "appendix": "16.2.8",
+    "fileName": "csr-16-2-8-laboratory.pdf",
+    "pages": 3516,
+    "bytes": 7830379
+   }
+  ],
+  "totalPages": 3676,
+  "narratives": {
+   "verified": true,
+   "subjects": 95,
+   "pages": 42,
+   "findings": [],
+   "receiptMatchesStore": true,
+   "receiptSubjects": 95
+  },
+  "crossReferences": 8
+ },
+ "narrativePageReads": {
+  "calls": 3,
+  "maxLimit": 50
+ },
+ "harnessWallSeconds": 31.0,
+ "independentLeafCheck": {
+  "tool": "poppler pdftotext -raw and pdftohtml -xml over the leaf bytes; python -I; no product code",
+  "storedNarratives": 95,
+  "storedHashOk": 95,
+  "foundInLeafTextInOrder": 95,
+  "outlineSubjectItems": 95,
+  "outlineSubjectsEqualStoredOrder": true,
+  "leafPages": 42,
+  "bodyMentions14_3_3": 4,
+  "notFound": 0,
+  "shownFailing": "one word changed in one stored narrative: 94 of 95 found, 1 not found (and its stored hash no longer matched: 94 of 95)"
+ },
+ "redAtHead": {
+  "revision": "84505775ad",
+  "status": "incomplete",
+  "unresolvedReferences": [
+   {
+    "reference": "Section 14.3.3",
+    "number": "14.3.3",
+    "section": "12.3.2"
+   }
+  ],
+  "leaves": [
+   "body",
+   "14",
+   "16.2.1",
+   "16.2.2",
+   "16.2.3",
+   "16.2.4",
+   "16.2.7",
+   "16.2.8"
+  ],
+  "narrativeLeaf": null,
+  "leavesHoldingNarrativeText": "0 of the 7 leaves checked (16.2.8, laboratory values only, not read)"
+ }
+}
