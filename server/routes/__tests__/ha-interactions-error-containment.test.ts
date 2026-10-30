@@ -29,6 +29,11 @@ vi.mock('../../services/ha-interactions/ha-service', async (importOriginal) => (
   listInteractions: (...a: unknown[]) => svc(...a),
 }));
 vi.mock('../../db', () => ({ pool: { connect: vi.fn(), query: vi.fn() } }));
+// The list reads the reader's program scope first (P-39 step 4); this suite is about the list's failure.
+vi.mock('../../db/requestDb', () => ({ requestPgClient: () => ({ query: vi.fn(async () => ({ rows: [] })) }) }));
+vi.mock('../../services/c2c/current-program-access', () => ({
+  getCurrentAccessibleProgramScope: vi.fn(async () => ({ scope: 'verified-accessible-programs', programIds: [], reconciliationRequired: false })),
+}));
 vi.mock('../c2c/actions', () => ({ recordGovernedAction: vi.fn(), verifyReauth: vi.fn() }));
 vi.mock('../../services/tenant/governed-tenant-context', () => ({ setTenantContextTx: vi.fn() }));
 
