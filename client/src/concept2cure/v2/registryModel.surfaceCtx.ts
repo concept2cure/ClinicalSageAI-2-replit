@@ -310,32 +310,6 @@ export const ANA_SURFACE_CTX = {
       'Anchor a response on the locked CSR',
     ],
   },
-  'agency-meetings': {
-    here: 'agency interactions — briefing books, questions and minutes',
-    focus: 'Meetings · briefing books',
-    actions: [
-      {
-        label: 'Draft a briefing book',
-        icon: 'penLine',
-        prompt: 'Draft the briefing book for the next scheduled agency meeting from the current dossier.',
-      },
-      {
-        label: 'Frame the questions',
-        icon: 'sparkles',
-        prompt: 'Frame the meeting questions with our position and the supporting data for each.',
-      },
-      {
-        label: 'Track commitments',
-        icon: 'checkSquare',
-        prompt: 'Pull the commitments from the last meeting minutes and their current status.',
-      },
-    ],
-    suggestions: [
-      'Prep the next Type B/C briefing',
-      'Cross-reference prior minutes',
-      'What questions should we ask?',
-    ],
-  },
   'csr-workflow': {
     here: 'the clinical study report — ICH E3 structure and analyses',
     focus: 'CSR · ICH E3',

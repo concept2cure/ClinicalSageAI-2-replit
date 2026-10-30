@@ -3700,6 +3700,10 @@ export const C2C_MIGRATION_FILES = [
   // DELETE SET NULL. After 20260610 (ha_interactions) and 20260331 (the inbox).
   // Additive; the constraint only when absent. No table, no DROP.
   'migrations/20261030_ha_interaction_minutes_letter.sql',
+  // c2c_agency_meetings is read-only (P-39 step 4, 2026-10-30): its routes and
+  // surface are deleted; INSERT, UPDATE and TRUNCATE refused, DELETE open for a
+  // purge, rows kept. After 20260717_agency_meetings_store.sql. No table, no DROP.
+  'migrations/20261030b_c2c_agency_meetings_read_only.sql',
   // QMS job roles and training assignments (D2, P-49, 2026-10-29;
   // docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.1): qms_job_roles,
   // qms_job_role_members and qms_training_assignments, created only here. After
