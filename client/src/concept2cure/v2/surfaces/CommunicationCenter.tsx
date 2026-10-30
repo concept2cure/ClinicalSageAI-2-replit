@@ -41,6 +41,7 @@ import { C2CForm } from '../C2CForm';
 import { CC_SOURCE_TYPES, CC_INTERACTION_TYPES } from '../fixtures/commcenter';
 import { AgencyInboxList, daysTo, dueInWords, draftResponseWithAna, letterSourceOptions, letterSourceRef, submissionLabel, useAgencyInbox, type LetterOpening } from './AgencyInbox';
 import { programSubmissionsPath, type MarketSubmission } from './programSequence';
+import { MoveMeetingForm, RecordMeetingForm, meetingMoves } from './HaMeetings';
 import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 import { isSourcesPage, sourcesUrl, type SourcesPage } from './projectSources';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -260,7 +261,11 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())[0];
 
   // ── Meetings & commitments — REAL ──
-  const interState = useLiveRows<InteractionRow>('/api/ha-interactions/interactions');
+  const [meetingVersion, setMeetingVersion] = React.useState(0);
+  const interState = useLiveRows<InteractionRow>('/api/ha-interactions/interactions', [meetingVersion]);
+  /* Recording and moving a meeting (P-39 step 4): the governed ha-interactions routes, by HaMeetings.tsx. */
+  const [recordingMeeting, setRecordingMeeting] = React.useState(false);
+  const [movingMeeting, setMovingMeeting] = React.useState<InteractionRow | null>(null);
   const [commitVersion, setCommitVersion] = React.useState(0);
   /* Two doors onto the one register (2026-10-18). The organisation's own
      commitments (no project) come from /api/ha-interactions; a commitment made
@@ -702,9 +707,14 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       {/* ════ TAB: Meetings & commitments — REAL ════ */}
       {tab === 'meetings' && (
         <>
-          <div className="pj-seclbl">
-            Health-authority interactions{' '}
-            <span className="s">· org-scoped</span>
+          <div className="cc-inbox-head">
+            <div className="pj-seclbl" style={{ margin: 0 }}>
+              Health-authority meetings{' '}
+              <span className="s">· those on programs you may open</span>
+            </div>
+            <button className="cc-btn sm" onClick={() => setRecordingMeeting(true)} data-testid="cc-record-meeting">
+              {I.plus} Record a meeting
+            </button>
           </div>
           <StateGuard
             loading={interState.loading}
@@ -740,6 +750,11 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                   >
                     {m.status ? m.status.replace(/_/g, ' ') : 'unknown'}
                   </span>
+                  {meetingMoves(m.status).length > 0 && (
+                    <button className="cc-btn sm" onClick={() => setMovingMeeting(m)} aria-label={`Move ${m.title}`} data-testid="cc-move-meeting">
+                      Move
+                    </button>
+                  )}
                   <button
                     className="cc-btn sm"
                     aria-label="Ask AnA about this interaction"
@@ -862,6 +877,23 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             setFulfilling(null);
             setCommitVersion((n) => n + 1);
           }}
+        />
+      )}
+
+      {recordingMeeting && (
+        <RecordMeetingForm
+          projectId={projectId}
+          fire={fire}
+          onCancel={() => setRecordingMeeting(false)}
+          onRecorded={() => { setRecordingMeeting(false); setMeetingVersion((n) => n + 1); }}
+        />
+      )}
+      {movingMeeting && (
+        <MoveMeetingForm
+          meeting={movingMeeting}
+          fire={fire}
+          onCancel={() => setMovingMeeting(null)}
+          onMoved={() => { setMovingMeeting(null); setMeetingVersion((n) => n + 1); }}
         />
       )}
 
