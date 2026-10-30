@@ -1,27 +1,35 @@
 {
-  "observedAt": "2026-10-30T17:46:32.880372+00:00",
-  "sourceCommit": "007c5f0b68e12a059c678369980f7d3785237ad1",
-  "scope": "137 selected source, test, SQL, schema and configuration inputs. Not a complete dependency closure.",
+  "observedAt": "2026-10-30T17:52:42.635162+00:00",
+  "sourceCommit": "ee4ce3da10892369e90bc2ac3cf0cde81578f27b",
+  "scope": "147 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
   "qualification": [
     {
       "receipt": "qualification/final-03-summary.json",
-      "result": "1082/1082 across54files at09c83267b;119inputs unchanged and still identical after merge"
+      "result": "1082/1082 across54files at09c83267b;119inputs unchanged then. Three later SQL-successor source/test inputs separately executed below."
     },
     {
       "receipt": "qualification/final-merge-green-summary.json",
-      "result": "169/169 across12files at007c5f0b6;137inputs unchanged; cohorts overlap, do not sum"
+      "result": "169/169 across12files at007c5f0b6;137inputs unchanged through project/upload merge qualification."
     },
     {
-      "receipt": "qualification/build-merged-exit.json",
-      "result": "build0 at007c5f0b6;137inputs unchanged"
+      "receipt": "qualification/final-sql-summary.json",
+      "result": "220/220 across12files atb0caa86b4;139inputs unchanged, qualifying bound/static SQL and36signature cases. All139remain identical after383330547merge."
+    },
+    {
+      "receipt": "qualification/final-current-summary.json",
+      "result": "70/70 across3freshCSR/STFfiles at ee4ce3da1;147inputs unchanged. Cohorts overlap; do not sum."
+    },
+    {
+      "receipt": "qualification/build-current-exit.json",
+      "result": "build0 at ee4ce3da1;147inputs unchanged"
     },
     {
       "receipt": "qualification/final-ci-summary.json",
-      "result": "launch-scope/API/signature checks all0;137inputs unchanged"
+      "result": "launch-scope/API/signature/SQL checks all0;147inputs unchanged"
     },
     {
       "receipt": "qualification/lint-final.json",
-      "result": "54changedfiles,0errors,190before/190afterwarnings against0ad3a15ce"
+      "result": "54changedfiles,0errors,190before/190afterwarnings against383330547"
     }
   ],
   "files": {
@@ -81,8 +89,10 @@
     "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
     "package.json": "d5237fb405d77f3fb5aba77245c8ba832be7c88d65114822e5b2bfe221757fc6",
     "scripts/ci/check-launch-scope.mjs": "516085865d7fabbc16d395aa9f7146780409f07e66b04328ae7130c5cd9e1555",
+    "scripts/ci/check-sql-interpolation.mjs": "833e19e093ff0cd08040769c45dc1db7b258eac36f66dcfbb55bba020694d3ba",
     "scripts/ci/launch-scope-fixture-allowlist.json": "a805bd6cf090ed93d6869b678444a32d1040b2e8c074a29e14677695d6016a2c",
     "scripts/ci/sign-ceremony-baseline.json": "fc61fb2a80e62d9c6f1f608aeb0048df1640421a3e54526e3528641963d357e8",
+    "scripts/ci/sql-interpolation-baseline.json": "341c17baddc1ca3025d51a52041f95c10f4bd102a14e4f887dd6a04ddf1f95a2",
     "server/bootstrap/register-clinical-intel-routes.ts": "f747d24e89f7a9474815e537e2718d65515a92f711d7b9d1be96d3fc19eb29fc",
     "server/bootstrap/register-inline-routes.ts": "dcfa17e0bc0617575d7b66ff8b034bdb2092e8dad8efff9fb4a6c84a3a0c85be",
     "server/db.ts": "e053da9718ede0e02d6b530e9fb45abfa606d85102b942186e312fb4a8b45859",
@@ -92,7 +102,7 @@
     "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts": "a0463c214c877a5975012558ff64e30ec3a5eee9e5fc0cda4691d1780b2e1adc",
     "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts": "982b5c95eecfa845fba5677db7a891a1040fc4486cc1bead6d2c96647c99d9e7",
     "server/routes/__tests__/mdx-rbm-signed-records.test.ts": "105764ab039ba6747a0f2c5289118972d22a76b522b530d77e987c5f97271f5c",
-    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts": "fa702c7e63faafbf3b0fb2cb6a5726865eaf127f5a49affb94c9d47c9e353434",
+    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts": "568d1e4a95111bef1b06c1a7b25527dba269184bc3bdcb7b7dec82ee9ff6edf1",
     "server/routes/__tests__/rbm-assessment-integrity.test.ts": "365e58c3e395d48f4d2c5494e92cb1af0061f862f2bf47c4efc38a86f426edf4",
     "server/routes/__tests__/rbm-board-current-project.test.ts": "8da78c857c6c8c429a2eb6d63ae6c959a640072b5edff0e556d22a514a6bed38",
     "server/routes/__tests__/rbm-current-project-admission.test.ts": "b75c299cd6020fd747510521de11b50a15fc06c7fe87ecca83bffcb6fdb20be2",
@@ -105,7 +115,7 @@
     "server/routes/c2c/projects.ts": "08c8e25d518e2f2918ce0ab55ada6143ce2049c97c359c4d84487096bfd4ae6e",
     "server/routes/mdx-rbm-board.ts": "1c2cdb68ba1712f8bd904b2f31485bc8d6c6750bae525c6d3d0d1a22ff433bdb",
     "server/routes/mdx-rbm-data.ts": "b32a9139bb5ac334f75c32c9e091bc9364da65ad7c39e58cb5a94be218d40e60",
-    "server/routes/mdx-rbm.ts": "493a20f9b5e554a00562b5aae47fefb0dd532c09b7ee058ee6553fda6c011886",
+    "server/routes/mdx-rbm.ts": "f4846168482a55cd3b64c426aed415c1196da8c2dc532d7d149d2a80e803aa76",
     "server/services/ana/AnaToolExecutor.ts": "aa3e435a7241c45a3daf25591fb5d1e180293c52e0edb109b1b4bed5cba06f26",
     "server/services/ana/__tests__/ana-cannot-sign.test.ts": "ced14d27af58ab6b115e4aaca20f505ddfb17dae46e6e205b45c06eb68dccc4d",
     "server/services/ana/__tests__/ana-launch-scope-execution.test.ts": "a532379bd73e37e3255a080c0b3a672e95f12332efd85e23f0e8a5e6282aba4f",
@@ -122,9 +132,17 @@
     "server/services/c2c/governed-program-write.ts": "abba32cc5105c77d1b869b80674353688b4fa05448fd979058e6e1054d76e18a",
     "server/services/csr/__tests__/csr-current-scope.pglite.test.ts": "3ec455447f6ebc034bf4b922ecd2ebeaf827b166259ae643a1f62ed23ec3bde6",
     "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts": "dd63d48878efea6ca3bea5b1f268eb14ae7950b1bb5b2f5c5b5ffc2e36864b35",
+    "server/services/csr/__tests__/csr-stf-source-values.test.ts": "efafe8d0c1025190e863919ef8df405cdc5fc45311e0ddb7eff79ff93b26d970",
+    "server/services/csr/csr-assembly-placement.ts": "ad25772804a556d3e6ace30df5d2ff8b476666432862636468cd9dc5da691876",
+    "server/services/csr/csr-assembly-plan.ts": "99aec61ee1f97de84617ce3be64e3188be3c6ec16539f5b265721397c9c4effb",
+    "server/services/csr/csr-placement-lifecycle.ts": "8bf39d329654ff43035b845a7d88ecb6f1addcee5eef3e1fb9beff8d31130404",
     "server/services/csr/project-scope.ts": "6f70d1b969ea1abc92809f22ac9e8061506366ce250e583f325e969520b74108",
+    "server/services/ectd/__tests__/stf-csr-source-values.test.ts": "3d236aac59c5b29b531f7cfbd614e7540c24e49b6ee8bd3ee009df6bf1d8d4f8",
+    "server/services/ectd/__tests__/stf-generator.test.ts": "cfc9d77bda19a11cd446816e771d67665d24efa95a0eae349523952589457c70",
+    "server/services/ectd/stf-generator.ts": "df4760b1daabf82f02f56ad0dcf4128d4f3124bdbb56987b6dfecdaee492dff9",
     "server/services/entitlements/__tests__/launch-scope.test.ts": "c4e57837544428966da947deed7b2fc834aa590c9475c2edf0a4936c0360de7d",
     "server/services/entitlements/__tests__/rbm-launch-claim.test.ts": "681c5b8c6f9a9d7d3af901102c3fb2865237340bc568f204811c061c189102e9",
+    "server/services/ind/ctd/regulatory-basis.ts": "7aa40c3e87edda6854834421d1c54379cdd1acdb8f156300e69078418130ba8e",
     "server/services/part11/__tests__/governed-sign-meaning.test.ts": "87f3f8a87d620099cb5934e46a1482bc6a9fd03470fdee071e2d793a012ba414",
     "server/services/part11/__tests__/labeling-risk-content-binders.test.ts": "ef0822d90775d94dd36366d6809b63a4805da607325418e29abc5b5033cb492f",
     "server/services/part11/__tests__/signed-content-lock.test.ts": "be6eb3ee6aa63d7baee64464310f934fe3a7b9af11ab65c701d92109678c0312",
@@ -149,7 +167,7 @@
     "server/services/rbm/central-statistical-monitoring.ts": "b51fbdea1d5b74378fa9b983ec91bda876be6a5ace0c04162fac862ee5519ecf",
     "server/services/rbm/metric-ingestion.ts": "502a41905eec331e9a3946d371e4f20942eb401dfd84711ba86bef2cb54a5af5",
     "server/services/rbm/rbm-access.ts": "09726bf718a82198dafbb697bd1c830e94b5df8d357a36225c1e20ce18c97441",
-    "server/services/rbm/rbm-actuator.ts": "806c7d4ffc544b801f4029848ce5d1782186958f8ed11ecf4661339191cfd5d0",
+    "server/services/rbm/rbm-actuator.ts": "d9bfeeef9a49f7513b257bf1eaec65198b6e2345b09579448ed256b165085143",
     "server/services/rbm/rbm-assessment-seed.ts": "73010d8d30540420fd3aa83df1377f90b5844c66cc99e999e1c5cc808a262a2a",
     "server/services/rbm/rbm-engine.ts": "496026a5b551ec548636d03585c5784536f67cf3df167535adc04b2420982770",
     "server/services/rbm/rbm-signature-content.ts": "24b96c9b4709f50d7ac4df34633622e01a533497305026d7daa304615b04bf99",
@@ -163,5 +181,5 @@
     "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
     "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
   },
-  "publication": "pending normal push, whole TypeScript and fresh remote proof; source pins can be compared to any accepted successor commit"
+  "publication": "Pending normal push, whole TypeScript and fresh remote proof. First normal attempt was refused by SQL gate before TypeScript; preserved under push-refusal-01 receipts. No baseline or scanner weakened."
 }

@@ -64,11 +64,11 @@ Deleted history finds 3 historical retirements/rewrites, not an absent module.
 ## Qualification
 
 The full signature successor at `09c83267b` passed the root combined cohort,
-build and zero-regression lint below. Later canonical changes were merged normally
-and reviewed by their actual source diff; all 119 predecessor selected inputs
-remained unchanged. Their affected integration checks are recorded separately.
-Earlier cohorts retain their own exact pins and are not borrowed as successor
-execution. Whole TypeScript, push gates and fresh remote proof remain pending.
+build and zero-regression lint below. Canonical integration, the later SQL gate
+successor and the latest unrelated CSR/STF merge have their own named checks and
+source-preservation links. The current packet selects 147 source/test/configuration
+inputs; it does not relabel earlier executions as a full rerun of current source.
+Whole TypeScript, normal push gates and fresh remote proof remain pending.
 
 - Navigation: initial RED **37 passed / 31 failed** on unchanged inputs. Raw
   receipts distinguish the omitted rail/scope failures from overbroad test-array
@@ -147,6 +147,39 @@ execution. Whole TypeScript, push gates and fresh remote proof remain pending.
   the later test-only expectation correction lies outside that prior selection.
   This is a source-preservation chain plus affected integration execution, not
   a claim that all 54 earlier files were rerun after the merge.
+- First normal push refusal (`push-refusal-01-*`): the gated push of
+  `4c678fa5d` exited 1 before TypeScript and published nothing. All 137 selected
+  inputs stayed unchanged through that attempt. The unchanged SQL-interpolation
+  gate refused two new static-fragment sites: the plan retirement predicate and
+  the assessment lock mode. This was a real gate failure, not a successful push
+  or whole-TypeScript result.
+- SQL gate successor: the plan retirement choice is now a bound boolean at `$1`;
+  the existing patch builder defensively copies optional initial arguments and
+  leaves every other caller's default bindings unchanged. Assessment lock mode
+  chooses between two complete literal SELECT statements with `FOR UPDATE` or
+  `FOR SHARE`. No scanner, SQL baseline or allowance changed. A new actual
+  PGlite case verifies a successful draft title/strategy/status edit with the
+  shifted values and final record/tenant parameters, alongside stale-editor
+  refusal and status-only retirement. The producer cohort passed **121/121
+  across 5 files**, with 26 selected inputs stable; the signature file now has
+  **36 cases**, including that added binding check. At `b0caa86b4`, the root
+  SQL-successor cohort (`final-sql-*`) passed **220/220 across 12 actual files**,
+  exit 0, zero skipped and all **139 selected inputs unchanged**. The production
+  build at that commit passed **exit 0** with those 139 inputs stable; all four
+  selected CI checks passed. The earlier 119-input preservation claim applies
+  through the first canonical merge, not across the intentional SQL changes to
+  two production files and one test file. These later bytes have the 220-case
+  affected qualification rather than a claim that the full 1082-case cohort ran
+  again.
+- Latest canonical merge: `383330547` merged normally into `ee4ce3da1` without
+  conflicts. Read-only incoming review found CSR/STF source-role changes only,
+  with no overlap in the prior 139 selected inputs or RBM actor/project/signature
+  services. All 139 prior inputs remained unchanged. Fresh local checks of the
+  three affected CSR/STF suites (`final-current-*`) passed **70/70 across 3 actual
+  files**, exit 0, zero skipped and all **147 selected inputs unchanged**.
+  Upstream historical totals are not borrowed. The fresh current production
+  build at `ee4ce3da1` passed **exit 0**, with the same 147 selected inputs stable.
+  All four current CI checks have passed on those stable inputs.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
   changed-file selection. The initial lint harness exceeded its historical text
@@ -173,9 +206,9 @@ execution. Whole TypeScript, push gates and fresh remote proof remain pending.
   bodies and receipt metadata and refuse unrelated namespace paths. The static
   API gate first exposed the old shared base literal; explicit addresses fixed
   it without broadening claims or weakening the gate. The recorded API gate
-  passes 590 named paths. Current merged-source launch scope, launch API scope
-  and signature-ceremony CI checks all pass **exit 0**, with 137 selected inputs
-  unchanged through those checks (`final-ci-summary.json`).
+  passes 590 named paths. Current launch scope, launch API scope, signature
+  ceremony and SQL-interpolation CI checks all pass **exit 0**, with **147 selected
+  inputs unchanged** through those checks (`final-ci-summary.json`).
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
   Review found the missing-signature gap and checked its final closure; review
