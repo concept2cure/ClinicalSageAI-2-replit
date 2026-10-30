@@ -1,0 +1,616 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > refuses an explicitly malformed project instead of enqueueing an organization-wide build 43ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 202 with { jobId, status: "queued" } when authenticated 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 401 when organizationId is missing from req 2ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns the status object when found in the same org 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 404 when getCSRBuildJobStatus returns null 5ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 400 when :jobId is non-numeric 4ms
+ × tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId/sections > returns the section array 10ms
+   → expected { sections: [ { id: 1, …(5) }, …(1) ] } to deeply equal { sections: [ { id: 1, …(4) }, …(1) ] }
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > transitions status to "cancelled" via the org-scoped Drizzle update 4ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > returns 409 when status is already "complete" 3ms
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-30T01:47:12.924Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T01:47:12.925Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-30T01:47:12.926Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+[database] Database connection successful
+
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > carries exactly the headings E3 numbers, in report order 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading sits under a heading that exists 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.1 has its 12 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.3 has its 2 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §14.3 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §11.4.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.2 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.3.1 has its 3 numbered headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.4 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.5 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading cites its own E3 number; every checked source names its URL and date 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > a heading that names data sources says they are practice, not a requirement 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > E3 §16.2.7 and §12.2.4 name both the preferred and the investigator’s term; §16.3.1 names 314.50(f)(2) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > resolves a number however it is written, and answers nothing for one E3 does not have 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > csr-builder's outline is the overlay's tree, every heading and title 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR scaffold behind get_csr_template carries every E3 heading 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt covers §1–§16 with E3's headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the medical-writing base outlines the CSR with E3's sixteen headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the stream's 5.3.5 playbook lists E3's sixteen headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt says, under each heading, what the E3 tree says (one summary helper) 0ms
+ × tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the market-specs CSR spine (get_document_template) is E3’s sixteen headings, each with the tree’s summary 11ms
+   → expected [ Array(119) ] to deeply equal [ '1 Title Page', '2 Synopsis', …(14) ]
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the DOCX blueprint csr-ich-e3 numbers and titles every heading as E3 does, to E3’s depth 9ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > a section supplied by title only lands once, even where E3 repeats a title 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > clinical-intelligence-service keeps no hand copy of the E3 outline 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > e3SectionSummary — the one statement of what a heading carries > is the purpose, else what it carries, else the headings under it, else its title — never empty 6ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the market-specs Investigator's Brochure cites ICH E6(R3) Appendix A, not E6(R2) §7 > names E6(R3) Appendix A, carries a structured basis, and shows recall as recall 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > every heading says what it is for or what it carries 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > every heading AnA drafts carries its writing rules, and its brief renders them 4ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > every §14–§16 heading says how its outputs are displayed or compiled 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > writing rules hold slots, never figures (Rule 2: the engine supplies every number) 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > no brief is clipped, so its basis always reaches the reader 6ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > §9.7.1, §11.4 and §11.4.1 carry the ICH E9(R1) estimand attributes and cite E9(R1) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > E3 Annexes I–IVb are display models, each tied to the heading it serves 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > every basis is well formed; a regulator-text basis carries a quoted span; a quote is never shown as checked unless it is 3ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 2ms
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 10ms
+   → expected [ Array(119) ] to deeply equal [ '1 Title Page', '2 Synopsis', …(14) ]
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 8ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > separates existing platform blueprints from agency records and verifies each projection against its source 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 0ms
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 1ms
+   → fits under the 1024-character trim: expected 2070 to be less than or equal to 1024
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > advertises preparation as questions and regional route, with no evidence or readiness claim 2ms
+ × server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > preserves all 392 prior builtin objects and their recorded snapshots 8ms
+   → expected [ { …(12) }, { …(12) }, …(444) ] to have a length of 392 but got 446
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_STRATEGY with its exact source, no filing placement and no authored facts 52ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_GAP_ANALYSIS with its exact source, no filing placement and no authored facts 37ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_COMPETITIVE with its exact source, no filing placement and no authored facts 36ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_HA_MEETING with its exact source, no filing placement and no authored facts 32ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > includes the same exact internal outlines in existing AnA coverage discovery 3ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_STRATEGY entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_GAP_ANALYSIS entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_COMPETITIVE entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_HA_MEETING entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with inactive 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with different region 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with different segment 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with different category 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with submission format 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with dossier format 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with unknown identifier 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit QMS_GMP_INSPECTION through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit QMS_GCP_COMPLIANCE through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit QMS_GLP_COMPLIANCE through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit ICH_CTD_M1 through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit ICH_ICSR through the planning selector 2ms
+ × tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16 11ms
+   → expected [ Array(119) ] to deeply equal [ '1 Title Page', '2 Synopsis', …(14) ]
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > every section says what it is for, and §14 is the displays NOT in the text 3ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§20 > carries every numbered section in order, after the title page and executive summary 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§20 > §12–§19 carry the E2C(R2) headings 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > is not served for CTD 1.1 (FDA Forms) 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > carries no single CTD code, and its basis names FDA 1.2 and EU 1.0 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — unaffected lookups (guard) > Clinical Overview stays at 2.5 and the QOS still resolves by 2.3 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the market-specs CSR spine (get_document_template) is E3’s sixteen headings, each with the tree’s summary
+AssertionError: expected [ Array(119) ] to deeply equal [ '1 Title Page', '2 Synopsis', …(14) ]
+
+- Expected
++ Received
+
+@@ -2,17 +2,120 @@
+    "1 Title Page",
+    "2 Synopsis",
+    "3 Table of Contents for the Individual Clinical Study Report",
+    "4 List of Abbreviations and Definitions of Terms",
+    "5 Ethics",
++   "5.1 Independent Ethics Committee (IEC) or Institutional Review Board (IRB)",
++   "5.2 Ethical Conduct of the Study",
++   "5.3 Patient Information and Consent",
+    "6 Investigators and Study Administrative Structure",
+    "7 Introduction",
+    "8 Study Objectives",
+    "9 Investigational Plan",
++   "9.1 Overall Study Design and Plan — Description",
++   "9.2 Discussion of Study Design, Including the Choice of Control Groups",
++   "9.3 Selection of Study Population",
++   "9.3.1 Inclusion Criteria",
++   "9.3.2 Exclusion Criteria",
++   "9.3.3 Removal of Patients from Therapy or Assessment",
++   "9.4 Treatments",
++   "9.4.1 Treatments Administered",
++   "9.4.2 Identity of Investigational Product(s)",
++   "9.4.3 Method of Assigning Patients to Treatment Groups",
++   "9.4.4 Selection of Doses in the Study",
++   "9.4.5 Selection and Timing of Dose for Each Patient",
++   "9.4.6 Blinding",
++   "9.4.7 Prior and Concomitant Therapy",
++   "9.4.8 Treatment Compliance",
++   "9.5 Efficacy and Safety Variables",
++   "9.5.1 Efficacy and Safety Measurements Assessed and Flow Chart",
++   "9.5.2 Appropriateness of Measurements",
++   "9.5.3 Primary Efficacy Variable(s)",
++   "9.5.4 Drug Concentration Measurements",
++   "9.6 Data Quality Assurance",
++   "9.7 Statistical Methods Planned in the Protocol and Determination of Sample Size",
++   "9.7.1 Statistical and Analytical Plans",
++   "9.7.2 Determination of Sample Size",
++   "9.8 Changes in the Conduct of the Study or Planned Analyses",
+    "10 Study Patients",
++   "10.1 Disposition of Patients",
++   "10.2 Protocol Deviations",
+    "11 Efficacy Evaluation",
++   "11.1 Data Sets Analysed",
++   "11.2 Demographic and Other Baseline Characteristics",
++   "11.3 Measurements of Treatment Compliance",
++   "11.4 Efficacy Results and Tabulations of Individual Patient Data",
++   "11.4.1 Analysis of Efficacy",
++   "11.4.2 Statistical/Analytical Issues",
++   "11.4.2.1 Adjustments for Covariates",
++   "11.4.2.2 Handling of Dropouts or Missing Data",
++   "11.4.2.3 Interim Analyses and Data Monitoring",
++   "11.4.2.4 Multicentre Studies",
++   "11.4.2.5 Multiple Comparison/Multiplicity",
++   "11.4.2.6 Use of an \"Efficacy Subset\" of Patients",
++   "11.4.2.7 Active-Control Studies Intended to Show Equivalence",
++   "11.4.2.8 Examination of Subgroups",
++   "11.4.3 Tabulation of Individual Response Data",
++   "11.4.4 Drug Dose, Drug Concentration, and Relationships to Response",
++   "11.4.5 Drug-Drug and Drug-Disease Interactions",
++   "11.4.6 By-Patient Displays",
++   "11.4.7 Efficacy Conclusions",
+    "12 Safety Evaluation",
++   "12.1 Extent of Exposure",
++   "12.2 Adverse Events (AEs)",
++   "12.2.1 Brief Summary of Adverse Events",
++   "12.2.2 Display of Adverse Events",
++   "12.2.3 Analysis of Adverse Events",
++   "12.2.4 Listing of Adverse Events by Patient",
++   "12.3 Deaths, Other Serious Adverse Events, and Other Significant Adverse Events",
++   "12.3.1 Listing of Deaths, Other Serious Adverse Events and Other Significant Adverse Events",
++   "12.3.1.1 Deaths",
++   "12.3.1.2 Other Serious Adverse Events",
++   "12.3.1.3 Other Significant Adverse Events",
++   "12.3.2 Narratives of Deaths, Other Serious Adverse Events and Certain Other Significant Adverse Events",
++   "12.3.3 Analysis and Discussion of Deaths, Other Serious Adverse Events and Other Significant Adverse Events",
++   "12.4 Clinical Laboratory Evaluation",
++   "12.4.1 Listing of Individual Laboratory Measurements by Patient (16.2.8) and Each Abnormal Laboratory Value (14.3.4)",
++   "12.4.2 Evaluation of Each Laboratory Parameter",
++   "12.4.2.1 Laboratory Values Over Time",
++   "12.4.2.2 Individual Patient Changes",
++   "12.4.2.3 Individual Clinically Significant Abnormalities",
++   "12.5 Vital Signs, Physical Findings and Other Observations Related to Safety",
++   "12.6 Safety Conclusions",
+    "13 Discussion and Overall Conclusions",
+    "14 Tables, Figures and Graphs Referred to But Not Included in the Text",
++   "14.1 Demographic Data",
++   "14.2 Efficacy Data",
++   "14.3 Safety Data",
++   "14.3.1 Displays of Adverse Events",
++   "14.3.2 Listings of Deaths, Other Serious and Significant Adverse Events",
++   "14.3.3 Narratives of Deaths, Other Serious and Certain Other Significant Adverse Events",
++   "14.3.4 Abnormal Laboratory Value Listing (Each Patient)",
+    "15 Reference List",
+    "16 Appendices",
++   "16.1 Study Information",
++   "16.1.1 Protocol and protocol amendments",
++   "16.1.2 Sample case report form (unique pages only)",
++   "16.1.3 List of IECs or IRBs (plus the name of the committee chair if required by the regulatory authority) — Representative written information for patient and sample consent forms",
++   "16.1.4 List and description of investigators and other important participants in the study, including brief (1 page) CVs or equivalent summaries of training and experience relevant to the performance of the clinical study",
++   "16.1.5 Signatures of principal or coordinating investigator(s) or sponsor’s responsible medical officer, depending on the regulatory authority’s requirement",
++   "16.1.6 Listing of patients receiving test drug(s)/investigational product(s) from specific batches, where more than one batch was used",
++   "16.1.7 Randomisation scheme and codes (patient identification and treatment assigned)",
++   "16.1.8 Audit certificates (if available)",
++   "16.1.9 Documentation of statistical methods",
++   "16.1.10 Documentation of inter-laboratory standardisation methods and quality assurance procedures if used",
++   "16.1.11 Publications based on the study",
++   "16.1.12 Important publications referenced in the report",
++   "16.2 Patient Data Listings",
++   "16.2.1 Discontinued patients",
++   "16.2.2 Protocol deviations",
++   "16.2.3 Patients excluded from the efficacy analysis",
++   "16.2.4 Demographic data",
++   "16.2.5 Compliance and/or drug concentration data (if available)",
++   "16.2.6 Individual efficacy response data",
++   "16.2.7 Adverse event listings (each patient)",
++   "16.2.8 Listing of individual laboratory measurements by patient, when required by regulatory authorities",
++   "16.3 Case Report Forms",
++   "16.3.1 CRFs for deaths, other serious adverse events and withdrawals for AE",
++   "16.3.2 Other CRFs submitted",
++   "16.4 Individual Patient Data Listings (US Archival Listings)",
+  ]
+
+ ❯ tests/regulatory/csr-e3-overlay.test.ts:146:63
+    144|   it('the market-specs CSR spine (get_document_template) is E3’s sixte…
+    145|     const t = getDocumentTemplate('clinical_study_report')!;
+    146|     expect(t.sections.map((s) => `${s.number} ${s.heading}`)).toEqual(…
+       |                                                               ^
+    147|     e3TopLevel().forEach((s, i) => {
+    148|       expect(t.sections[i].purpose, s.number).toBe(e3SectionSummary(s)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16
+AssertionError: expected [ Array(119) ] to deeply equal [ '1 Title Page', '2 Synopsis', …(14) ]
+
+- Expected
++ Received
+
+@@ -2,17 +2,120 @@
+    "1 Title Page",
+    "2 Synopsis",
+    "3 Table of Contents for the Individual Clinical Study Report",
+    "4 List of Abbreviations and Definitions of Terms",
+    "5 Ethics",
++   "5.1 Independent Ethics Committee (IEC) or Institutional Review Board (IRB)",
++   "5.2 Ethical Conduct of the Study",
++   "5.3 Patient Information and Consent",
+    "6 Investigators and Study Administrative Structure",
+    "7 Introduction",
+    "8 Study Objectives",
+    "9 Investigational Plan",
++   "9.1 Overall Study Design and Plan — Description",
++   "9.2 Discussion of Study Design, Including the Choice of Control Groups",
++   "9.3 Selection of Study Population",
++   "9.3.1 Inclusion Criteria",
++   "9.3.2 Exclusion Criteria",
++   "9.3.3 Removal of Patients from Therapy or Assessment",
++   "9.4 Treatments",
++   "9.4.1 Treatments Administered",
++   "9.4.2 Identity of Investigational Product(s)",
++   "9.4.3 Method of Assigning Patients to Treatment Groups",
++   "9.4.4 Selection of Doses in the Study",
++   "9.4.5 Selection and Timing of Dose for Each Patient",
++   "9.4.6 Blinding",
++   "9.4.7 Prior and Concomitant Therapy",
++   "9.4.8 Treatment Compliance",
++   "9.5 Efficacy and Safety Variables",
++   "9.5.1 Efficacy and Safety Measurements Assessed and Flow Chart",
++   "9.5.2 Appropriateness of Measurements",
++   "9.5.3 Primary Efficacy Variable(s)",
++   "9.5.4 Drug Concentration Measurements",
++   "9.6 Data Quality Assurance",
++   "9.7 Statistical Methods Planned in the Protocol and Determination of Sample Size",
++   "9.7.1 Statistical and Analytical Plans",
++   "9.7.2 Determination of Sample Size",
++   "9.8 Changes in the Conduct of the Study or Planned Analyses",
+    "10 Study Patients",
++   "10.1 Disposition of Patients",
++   "10.2 Protocol Deviations",
+    "11 Efficacy Evaluation",
++   "11.1 Data Sets Analysed",
++   "11.2 Demographic and Other Baseline Characteristics",
++   "11.3 Measurements of Treatment Compliance",
++   "11.4 Efficacy Results and Tabulations of Individual Patient Data",
++   "11.4.1 Analysis of Efficacy",
++   "11.4.2 Statistical/Analytical Issues",
++   "11.4.2.1 Adjustments for Covariates",
++   "11.4.2.2 Handling of Dropouts or Missing Data",
++   "11.4.2.3 Interim Analyses and Data Monitoring",
++   "11.4.2.4 Multicentre Studies",
++   "11.4.2.5 Multiple Comparison/Multiplicity",
++   "11.4.2.6 Use of an \"Efficacy Subset\" of Patients",
++   "11.4.2.7 Active-Control Studies Intended to Show Equivalence",
++   "11.4.2.8 Examination of Subgroups",
++   "11.4.3 Tabulation of Individual Response Data",
++   "11.4.4 Drug Dose, Drug Concentration, and Relationships to Response",
++   "11.4.5 Drug-Drug and Drug-Disease Interactions",
++   "11.4.6 By-Patient Displays",
++   "11.4.7 Efficacy Conclusions",
+    "12 Safety Evaluation",
++   "12.1 Extent of Exposure",
++   "12.2 Adverse Events (AEs)",
++   "12.2.1 Brief Summary of Adverse Events",
++   "12.2.2 Display of Adverse Events",
++   "12.2.3 Analysis of Adverse Events",
++   "12.2.4 Listing of Adverse Events by Patient",
++   "12.3 Deaths, Other Serious Adverse Events, and Other Significant Adverse Events",
++   "12.3.1 Listing of Deaths, Other Serious Adverse Events and Other Significant Adverse Events",
++   "12.3.1.1 Deaths",
++   "12.3.1.2 Other Serious Adverse Events",
++   "12.3.1.3 Other Significant Adverse Events",
++   "12.3.2 Narratives of Deaths, Other Serious Adverse Events and Certain Other Significant Adverse Events",
++   "12.3.3 Analysis and Discussion of Deaths, Other Serious Adverse Events and Other Significant Adverse Events",
++   "12.4 Clinical Laboratory Evaluation",
++   "12.4.1 Listing of Individual Laboratory Measurements by Patient (16.2.8) and Each Abnormal Laboratory Value (14.3.4)",
++   "12.4.2 Evaluation of Each Laboratory Parameter",
++   "12.4.2.1 Laboratory Values Over Time",
++   "12.4.2.2 Individual Patient Changes",
++   "12.4.2.3 Individual Clinically Significant Abnormalities",
++   "12.5 Vital Signs, Physical Findings and Other Observations Related to Safety",
++   "12.6 Safety Conclusions",
+    "13 Discussion and Overall Conclusions",
+    "14 Tables, Figures and Graphs Referred to But Not Included in the Text",
++   "14.1 Demographic Data",
++   "14.2 Efficacy Data",
++   "14.3 Safety Data",
++   "14.3.1 Displays of Adverse Events",
++   "14.3.2 Listings of Deaths, Other Serious and Significant Adverse Events",
++   "14.3.3 Narratives of Deaths, Other Serious and Certain Other Significant Adverse Events",
++   "14.3.4 Abnormal Laboratory Value Listing (Each Patient)",
+    "15 Reference List",
+    "16 Appendices",
++   "16.1 Study Information",
++   "16.1.1 Protocol and protocol amendments",
++   "16.1.2 Sample case report form (unique pages only)",
++   "16.1.3 List of IECs or IRBs (plus the name of the committee chair if required by the regulatory authority) — Representative written information for patient and sample consent forms",
++   "16.1.4 List and description of investigators and other important participants in the study, including brief (1 page) CVs or equivalent summaries of training and experience relevant to the performance of the clinical study",
++   "16.1.5 Signatures of principal or coordinating investigator(s) or sponsor’s responsible medical officer, depending on the regulatory authority’s requirement",
++   "16.1.6 Listing of patients receiving test drug(s)/investigational product(s) from specific batches, where more than one batch was used",
++   "16.1.7 Randomisation scheme and codes (patient identification and treatment assigned)",
++   "16.1.8 Audit certificates (if available)",
++   "16.1.9 Documentation of statistical methods",
++   "16.1.10 Documentation of inter-laboratory standardisation methods and quality assurance procedures if used",
++   "16.1.11 Publications based on the study",
++   "16.1.12 Important publications referenced in the report",
++   "16.2 Patient Data Listings",
++   "16.2.1 Discontinued patients",
++   "16.2.2 Protocol deviations",
++   "16.2.3 Patients excluded from the efficacy analysis",
++   "16.2.4 Demographic data",
++   "16.2.5 Compliance and/or drug concentration data (if available)",
++   "16.2.6 Individual efficacy response data",
++   "16.2.7 Adverse event listings (each patient)",
++   "16.2.8 Listing of individual laboratory measurements by patient, when required by regulatory authorities",
++   "16.3 Case Report Forms",
++   "16.3.1 CRFs for deaths, other serious adverse events and withdrawals for AE",
++   "16.3.2 Other CRFs submitted",
++   "16.4 Individual Patient Data Listings (US Archival Listings)",
+  ]
+
+ ❯ tests/regulatory/template-library-truth.test.ts:24:65
+     22|   it('numbers and titles equal e3TopLevel() §1–§16', () => {
+     23|     const csr = getDocumentTemplate('clinical_study_report')!;
+     24|     expect(csr.sections.map((s) => `${s.number} ${s.heading}`)).toEqua…
+       |                                                                 ^
+     25|       e3TopLevel().map((s) => `${s.number} ${s.title}`),
+     26|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId/sections > returns the section array
+AssertionError: expected { sections: [ { id: 1, …(5) }, …(1) ] } to deeply equal { sections: [ { id: 1, …(4) }, …(1) ] }
+
+- Expected
++ Received
+
+@@ -3,16 +3,24 @@
+      {
+        "content": "Section 1",
+        "id": 1,
+        "jobId": 42,
+        "organizationId": 100,
++       "review": {
++         "staleApproval": false,
++         "state": "draft",
++       },
+        "sectionNumber": "1",
+      },
+      {
+        "content": "Section 2",
+        "id": 2,
+        "jobId": 42,
+        "organizationId": 100,
++       "review": {
++         "staleApproval": false,
++         "state": "draft",
++       },
+        "sectionNumber": "2",
+      },
+    ],
+  }
+
+ ❯ tests/unit/csr-jobs-routes.test.ts:304:22
+    302|
+    303|     expect(res.status).toBe(200);
+    304|     expect(res.body).toEqual({ sections });
+       |                      ^
+    305|     expect(hoisted.getCSRSectionOutputs).toHaveBeenCalledWith(42, 100);
+    306|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record
+AssertionError: expected [ Array(119) ] to deeply equal [ '1 Title Page', '2 Synopsis', …(14) ]
+
+- Expected
++ Received
+
+@@ -2,17 +2,120 @@
+    "1 Title Page",
+    "2 Synopsis",
+    "3 Table of Contents for the Individual Clinical Study Report",
+    "4 List of Abbreviations and Definitions of Terms",
+    "5 Ethics",
++   "5.1 Independent Ethics Committee (IEC) or Institutional Review Board (IRB)",
++   "5.2 Ethical Conduct of the Study",
++   "5.3 Patient Information and Consent",
+    "6 Investigators and Study Administrative Structure",
+    "7 Introduction",
+    "8 Study Objectives",
+    "9 Investigational Plan",
++   "9.1 Overall Study Design and Plan — Description",
++   "9.2 Discussion of Study Design, Including the Choice of Control Groups",
++   "9.3 Selection of Study Population",
++   "9.3.1 Inclusion Criteria",
++   "9.3.2 Exclusion Criteria",
++   "9.3.3 Removal of Patients from Therapy or Assessment",
++   "9.4 Treatments",
++   "9.4.1 Treatments Administered",
++   "9.4.2 Identity of Investigational Product(s)",
++   "9.4.3 Method of Assigning Patients to Treatment Groups",
++   "9.4.4 Selection of Doses in the Study",
++   "9.4.5 Selection and Timing of Dose for Each Patient",
++   "9.4.6 Blinding",
++   "9.4.7 Prior and Concomitant Therapy",
++   "9.4.8 Treatment Compliance",
++   "9.5 Efficacy and Safety Variables",
++   "9.5.1 Efficacy and Safety Measurements Assessed and Flow Chart",
++   "9.5.2 Appropriateness of Measurements",
++   "9.5.3 Primary Efficacy Variable(s)",
++   "9.5.4 Drug Concentration Measurements",
++   "9.6 Data Quality Assurance",
++   "9.7 Statistical Methods Planned in the Protocol and Determination of Sample Size",
++   "9.7.1 Statistical and Analytical Plans",
++   "9.7.2 Determination of Sample Size",
++   "9.8 Changes in the Conduct of the Study or Planned Analyses",
+    "10 Study Patients",
++   "10.1 Disposition of Patients",
++   "10.2 Protocol Deviations",
+    "11 Efficacy Evaluation",
++   "11.1 Data Sets Analysed",
++   "11.2 Demographic and Other Baseline Characteristics",
++   "11.3 Measurements of Treatment Compliance",
++   "11.4 Efficacy Results and Tabulations of Individual Patient Data",
++   "11.4.1 Analysis of Efficacy",
++   "11.4.2 Statistical/Analytical Issues",
++   "11.4.2.1 Adjustments for Covariates",
++   "11.4.2.2 Handling of Dropouts or Missing Data",
++   "11.4.2.3 Interim Analyses and Data Monitoring",
++   "11.4.2.4 Multicentre Studies",
++   "11.4.2.5 Multiple Comparison/Multiplicity",
++   "11.4.2.6 Use of an \"Efficacy Subset\" of Patients",
++   "11.4.2.7 Active-Control Studies Intended to Show Equivalence",
++   "11.4.2.8 Examination of Subgroups",
++   "11.4.3 Tabulation of Individual Response Data",
++   "11.4.4 Drug Dose, Drug Concentration, and Relationships to Response",
++   "11.4.5 Drug-Drug and Drug-Disease Interactions",
++   "11.4.6 By-Patient Displays",
++   "11.4.7 Efficacy Conclusions",
+    "12 Safety Evaluation",
++   "12.1 Extent of Exposure",
++   "12.2 Adverse Events (AEs)",
++   "12.2.1 Brief Summary of Adverse Events",
++   "12.2.2 Display of Adverse Events",
++   "12.2.3 Analysis of Adverse Events",
++   "12.2.4 Listing of Adverse Events by Patient",
++   "12.3 Deaths, Other Serious Adverse Events, and Other Significant Adverse Events",
++   "12.3.1 Listing of Deaths, Other Serious Adverse Events and Other Significant Adverse Events",
++   "12.3.1.1 Deaths",
++   "12.3.1.2 Other Serious Adverse Events",
++   "12.3.1.3 Other Significant Adverse Events",
++   "12.3.2 Narratives of Deaths, Other Serious Adverse Events and Certain Other Significant Adverse Events",
++   "12.3.3 Analysis and Discussion of Deaths, Other Serious Adverse Events and Other Significant Adverse Events",
++   "12.4 Clinical Laboratory Evaluation",
++   "12.4.1 Listing of Individual Laboratory Measurements by Patient (16.2.8) and Each Abnormal Laboratory Value (14.3.4)",
++   "12.4.2 Evaluation of Each Laboratory Parameter",
++   "12.4.2.1 Laboratory Values Over Time",
++   "12.4.2.2 Individual Patient Changes",
++   "12.4.2.3 Individual Clinically Significant Abnormalities",
++   "12.5 Vital Signs, Physical Findings and Other Observations Related to Safety",
++   "12.6 Safety Conclusions",
+    "13 Discussion and Overall Conclusions",
+    "14 Tables, Figures and Graphs Referred to But Not Included in the Text",
++   "14.1 Demographic Data",
++   "14.2 Efficacy Data",
++   "14.3 Safety Data",
++   "14.3.1 Displays of Adverse Events",
++   "14.3.2 Listings of Deaths, Other Serious and Significant Adverse Events",
++   "14.3.3 Narratives of Deaths, Other Serious and Certain Other Significant Adverse Events",
++   "14.3.4 Abnormal Laboratory Value Listing (Each Patient)",
+    "15 Reference List",
+    "16 Appendices",
++   "16.1 Study Information",
++   "16.1.1 Protocol and protocol amendments",
++   "16.1.2 Sample case report form (unique pages only)",
++   "16.1.3 List of IECs or IRBs (plus the name of the committee chair if required by the regulatory authority) — Representative written information for patient and sample consent forms",
++   "16.1.4 List and description of investigators and other important participants in the study, including brief (1 page) CVs or equivalent summaries of training and experience relevant to the performance of the clinical study",
++   "16.1.5 Signatures of principal or coordinating investigator(s) or sponsor’s responsible medical officer, depending on the regulatory authority’s requirement",
++   "16.1.6 Listing of patients receiving test drug(s)/investigational product(s) from specific batches, where more than one batch was used",
++   "16.1.7 Randomisation scheme and codes (patient identification and treatment assigned)",
++   "16.1.8 Audit certificates (if available)",
++   "16.1.9 Documentation of statistical methods",
++   "16.1.10 Documentation of inter-laboratory standardisation methods and quality assurance procedures if used",
++   "16.1.11 Publications based on the study",
++   "16.1.12 Important publications referenced in the report",
++   "16.2 Patient Data Listings",
++   "16.2.1 Discontinued patients",
++   "16.2.2 Protocol deviations",
++   "16.2.3 Patients excluded from the efficacy analysis",
++   "16.2.4 Demographic data",
++   "16.2.5 Compliance and/or drug concentration data (if available)",
++   "16.2.6 Individual efficacy response data",
++   "16.2.7 Adverse event listings (each patient)",
++   "16.2.8 Listing of individual laboratory measurements by patient, when required by regulatory authorities",
++   "16.3 Case Report Forms",
++   "16.3.1 CRFs for deaths, other serious adverse events and withdrawals for AE",
++   "16.3.2 Other CRFs submitted",
++   "16.4 Individual Patient Data Listings (US Archival Listings)",
+  ]
+
+ ❯ Object.clinical_study_report server/services/ana/__tests__/document-template-description.test.ts:71:107
+     69| const RECORD_PROOFS: Record<string, () => void> = {
+     70|   clinical_study_report: () => {
+     71|     expect(getDocumentTemplate('clinical_study_report')!.sections.map(…
+       |                                                                                                           ^
+     72|       e3TopLevel().map((s) => `${s.number} ${s.title}`),
+     73|     );
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:108:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last
+AssertionError: fits under the 1024-character trim: expected 2070 to be less than or equal to 1024
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:152:70
+    150|
+    151|   it('keeps the rule, the input usage and the record list ahead of the…
+    152|     expect(description.length, 'fits under the 1024-character trim').t…
+       |                                                                      ^
+    153|     // Should the library outgrow the cap, the trim must still cut onl…
+    154|     expect(head).toContain(INSTRUCTION);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > preserves all 392 prior builtin objects and their recorded snapshots
+AssertionError: expected [ { …(12) }, { …(12) }, …(444) ] to have a length of 392 but got 446
+
+- Expected
++ Received
+
+- 392
++ 446
+
+ ❯ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts:20:19
+     18|   it('preserves all 392 prior builtin objects and their recorded snaps…
+     19|     const prior = all.filter(template => !IDS.some(id => template.entr…
+     20|     expect(prior).toHaveLength(392);
+       |                   ^
+     21|     // Captured from the unchanged projection in the retained meaningf…
+     22|     // Re-recorded 2026-10-25 (D2 increment 3, the 3a review): ten sna…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  6 failed | 77 passed (83)
+   Start at  01:47:07
+   Duration  7.47s (transform 2.81s, setup 137ms, import 6.01s, tests 457ms, environment 0ms)
+

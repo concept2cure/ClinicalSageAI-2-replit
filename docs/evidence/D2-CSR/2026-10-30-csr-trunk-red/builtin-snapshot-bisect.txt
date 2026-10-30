@@ -1,0 +1,54 @@
+Bisection of the last 7 snapshot changes (42bbb941e2..HEAD), measured 2026-10-30.
+Each row: git archive <commit> (server shared services package.json tsconfig.json), node_modules symlinked,
+then the same projection as the test (builtinTemplateSnapshot over getBuiltinAuthoringTemplates(), RI_* planning rows excluded).
+Commits chosen: every commit in 42bbb941e2..HEAD that touches server/services/authoring or shared/regulatory
+and is on the CSR lane, plus each one's first parent. a2a91a87db's first parent is 8cf9bd399c.
+
+commit            count  sha256(head12) | per-object hash (first 6) for: component:clinical_study_report, module:M5, registry:ICH_CSR, section:m5.3.5, section:m5.3.5.1, section:m5.3.5.2, section:m5.3.5.3
+42bbb941e2                   446 9ee3f36bf25c | ec001a 4446cf dc7abe 84ff1b f55e65 ed689d cfc1c3
+8cf9bd399c~1                 446 9ee3f36bf25c | ec001a 4446cf dc7abe 84ff1b f55e65 ed689d cfc1c3
+8cf9bd399c (= a2a91a87db~1)  446 9ee3f36bf25c | ec001a 4446cf dc7abe 84ff1b f55e65 ed689d cfc1c3
+a2a91a87db                   446 0ddcbd2fd6cd | 777f65 8f0082 12f406 3c10f0 b26dfb d6c800 8d61e4
+dc5c1c59b6~1                 446 0ddcbd2fd6cd | 777f65 8f0082 12f406 3c10f0 b26dfb d6c800 8d61e4
+dc5c1c59b6                   446 0ddcbd2fd6cd | 777f65 8f0082 12f406 3c10f0 b26dfb d6c800 8d61e4
+0a2ee31fe1~1                 446 0ddcbd2fd6cd | 777f65 8f0082 12f406 3c10f0 b26dfb d6c800 8d61e4
+0a2ee31fe1                   446 0ddcbd2fd6cd | 777f65 8f0082 12f406 3c10f0 b26dfb d6c800 8d61e4
+58b27d0227                   446 0ddcbd2fd6cd | 777f65 8f0082 12f406 3c10f0 b26dfb d6c800 8d61e4
+5ab138ed3e                   446 0ddcbd2fd6cd | 777f65 8f0082 12f406 3c10f0 b26dfb d6c800 8d61e4
+d6aedbecc0~1                 446 0ddcbd2fd6cd | 777f65 8f0082 12f406 3c10f0 b26dfb d6c800 8d61e4
+d6aedbecc0                   446 0ddcbd2fd6cd | 777f65 8f0082 12f406 3c10f0 b26dfb d6c800 8d61e4
+HEAD                         446 0ddcbd2fd6cd | 777f65 8f0082 12f406 3c10f0 b26dfb d6c800 8d61e4
+
+Result: the 7 objects change at a2a91a87db (CSR slice 4) and at no other measured commit.
+8cf9bd399c (CSR slice 2) = a2a91a87db~1 still has the 42bbb941e2 hash; dc5c1c59b6 (slice 8), 0a2ee31fe1,
+58b27d0227, 5ab138ed3e and d6aedbecc0 (and their parents) all have the HEAD hash.
+a2a91a87db changes server/services/ind/ctd/csr-e3-sections-{plan,results,appendices}.ts, the E3 heading
+summaries the CSR outline, the M5 module and the m5.3.5* sections read.
+
+Script (snap.sh):
+#!/bin/bash
+# usage: snap.sh <commit> -> $S/<name>.json
+S=/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/18f73405-4fbd-5074-ba66-7d0cbd687728/scratchpad/bisect
+R=/home/user/ClinicalSageAI-2-replit
+c=$1; n=$(echo "$c" | tr '~^' '__')
+d=$S/tree-$n; rm -rf $d; mkdir -p $d
+git -C $R archive "$c" server shared services package.json tsconfig.json 2>/dev/null | tar -x -C $d
+ln -s $R/node_modules $d/node_modules
+(cd $S && $R/node_modules/.bin/tsx $S/../snapdump/dump.mts $d > $S/$n.json 2> $S/$n.err)
+echo "$c $(git -C $R rev-parse --short $c) $(head -c 120 $S/$n.json)"
+rm -rf $d
+
+Projection (dump.mts):
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+const root = process.argv[2];
+const b = await import(pathToFileURL(`${root}/server/services/authoring/builtin-authoring-templates.ts`).href);
+const cj = await import(pathToFileURL(`${root}/shared/canonical-json.ts`).href);
+const IDS = ['RI_STRATEGY', 'RI_GAP_ANALYSIS', 'RI_COMPETITIVE', 'RI_HA_MEETING'];
+const all = await b.getBuiltinAuthoringTemplates();
+const prior = all.filter((t: any) => !IDS.some(id => t.entryId === `registry:${id}`));
+const rows = prior.map((t: any) => ({ id: t.id, snapshot: b.builtinTemplateSnapshot(t) }));
+const h = createHash('sha256').update(cj.stableStringify(rows)).digest('hex');
+const per = Object.fromEntries(prior.map((t: any) => [t.entryId, createHash('sha256').update(cj.stableStringify(b.builtinTemplateSnapshot(t))).digest('hex').slice(0, 16)]));
+console.log(JSON.stringify({ count: prior.length, hash: h, per }));
+process.exit(0);

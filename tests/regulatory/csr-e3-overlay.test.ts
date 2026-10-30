@@ -141,10 +141,14 @@ describe('every CSR outline on the platform is read from the overlay', () => {
     e3TopLevel().forEach((s, i) => expect(sections[i].guidance, s.number).toBe(e3SectionSummary(s)));
   });
 
-  it('the market-specs CSR spine (get_document_template) is E3’s sixteen headings, each with the tree’s summary', () => {
+  // Since 13bafc62ff (2026-10-26, "Complete full CSR and saved-study CRF authoring") the spine is
+  // every heading of the tree, in report order, not only §1–§16: the editor template built from it
+  // carries E3's full depth (docs/design/EDITOR_CSR_CRF_COMPLETION_2026-10-26.md).
+  it('the market-specs CSR spine (get_document_template) is every E3 heading, in order, each with the tree’s summary', () => {
     const t = getDocumentTemplate('clinical_study_report')!;
-    expect(t.sections.map((s) => `${s.number} ${s.heading}`)).toEqual(e3TopLevel().map((s) => `${s.number} ${s.title}`));
-    e3TopLevel().forEach((s, i) => {
+    expect(t.sections).toHaveLength(ICH_E3_GUIDANCE.length);
+    expect(t.sections.map((s) => `${s.number} ${s.heading}`)).toEqual(ICH_E3_GUIDANCE.map((s) => `${s.number} ${s.title}`));
+    ICH_E3_GUIDANCE.forEach((s, i) => {
       expect(t.sections[i].purpose, s.number).toBe(e3SectionSummary(s));
       expect(t.sections[i].required, s.number).toBe(s.applies === 'always');
     });

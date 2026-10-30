@@ -15,9 +15,9 @@ let all: BuiltinAuthoringTemplate[];
 beforeAll(async () => { all = await getBuiltinAuthoringTemplates(); });
 
 describe('existing internal planning outlines reach the same builtin catalog', () => {
-  it('preserves all 392 prior builtin objects and their recorded snapshots', () => {
+  it('preserves all 446 prior builtin objects and their recorded snapshots', () => {
     const prior = all.filter(template => !IDS.some(id => template.entryId === `registry:${id}`));
-    expect(prior).toHaveLength(392);
+    expect(prior).toHaveLength(446);
     // Captured from the unchanged projection in the retained meaningful RED.
     // Re-recorded 2026-10-25 (D2 increment 3, the 3a review): ten snapshots changed and no
     // other, each a reader of the one ICH M2–M5 record whose purposes and flags were
@@ -35,9 +35,16 @@ describe('existing internal planning outlines reach the same builtin catalog', (
     // and no other: phase1.{product_profile,ind_strategy,pre_ind_plan,nonclinical_gap,clinical_outline,
     // timeline}:deliverable:{0,1}. Was 705cbf73adf5025152e7d85343c9bee4267daeb6ed0b58bc06189a86c9193e74.
     // docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice1/catalogue/builtin-snapshot-delta.txt.
+    // Re-recorded 2026-10-30 (D2-CSR trunk red): four later commits added 54 objects and removed none,
+    // and changed only the outlines they name: 13bafc62ff (+2 CRF components; the CSR at E3's full
+    // depth, 8 changed), 14b27100d9 (+19: 12 US lifecycle components, nonclinical_study_report,
+    // us_prescribing_information, 5 CTD module registry rows; 56 changed with its drafting_mode
+    // policy), 42bbb941e2 (+33 US biotech identities; 4 changed) and a2a91a87db (CSR slice 4's E3
+    // summaries, 7 changed; bisected, its parent 8cf9bd399c still has the 42bbb941e2 hash). 392 -> 446. Was dcebcbec4173a7f89df51626cb22a7613c118bb4216543f9f8fb6b9965aacf3c.
+    // Per-object delta: docs/evidence/D2-CSR/2026-10-30-csr-trunk-red/builtin-snapshot-delta.txt.
     expect(createHash('sha256').update(stableStringify(
       prior.map(template => ({ id: template.id, snapshot: builtinTemplateSnapshot(template) })),
-    )).digest('hex')).toBe('dcebcbec4173a7f89df51626cb22a7613c118bb4216543f9f8fb6b9965aacf3c');
+    )).digest('hex')).toBe('0ddcbd2fd6cd3aee7faddacede59654e4108bf58ddea535f927541c69ed7971a');
   });
 
   it.each(IDS)('reaches %s with its exact source, no filing placement and no authored facts', async id => {
