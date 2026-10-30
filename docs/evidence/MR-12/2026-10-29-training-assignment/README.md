@@ -502,3 +502,20 @@ Design §3.6 and P-50 Q3. The rest of slice 3 (both versions acknowledgeable dur
 
 **Gates:** `ci:sql-interpolation`, `ci:server-error-leaks`, `ci:fabricated-identity`, `ci:tenant-resolvers`, `ci:undefined-css-classes`, `ci:unauthenticated-fetch` pass; ESLint gives the changed server and test files no warning (`training.pglite.integration.test.ts` was brought back under 500 lines by moving the helper into the shared fixture).
 
+## Slice 3b, server: training opens at approval; a pending version cannot be revised (2026-10-30)
+
+Design §1.2, §3.4, §3.5, D6; P-49, P-50 Q2. The client half (the reader's successor toggle, the approve dialog's "N people are assigned") follows.
+
+**What already existed** (re-read at `42aa4a849b`): another session had built the pending version's standing (`in-force-release.ts` `isPendingEffective`; a version approved for a later day keeps its signed predecessor in force) and the backdate refusal with the date on the signature (`e0498e0b3f`), and controlled copies of the version in force only (`31877bd792`). What was missing: training read only the version in force, refused to open one approved for a later day, and refused its acknowledgement as stale; assignment granted no reading (D3); and **revising a version approved for a later day was accepted**, replacing it with the next draft so the approved version would never take effect (`slice3b-red.txt`: 200, a v3.0 draft).
+
+**What changed:**
+- `training-content.ts` `describeQmsTrainingDocument` and `current-release-approval.ts` `readQmsTrainingReleaseContext` take `ahead`: only the training paths open a version approved for a later day. Every other reader keeps today's refusal, so the controlled copy (which also refuses anything `resolveInForceRelease` does not put in force) can never issue one of a version not yet in force. Each context gains `inForce` and `effectiveDate`. A receipt of a version acknowledged ahead of its day verifies; whether it counts is still the in-force match in compliance, so it counts from that day.
+- `training.ts`: the training read opens on the version in force and, while a successor waits, offers it as `successor` with its own signed text, digest and the reader's receipt; refused, with its reason and none of its text, to someone who may not read it. A first version approved for a later day is the read itself. The acknowledgement takes the version the body names, in force or pending, and anything else is `QMS_TRAINING_STALE`; the receipt and its audit row record `effectiveDate` and `inForceAtAcknowledgement`.
+- `training-assignment.ts` `authorizeQmsTrainingRead` (D3, P-50 Q2): the people assigned to a document read its authored released version in the training reader without a share onto its authored copy; anyone else needs one, as before. It grants only that read, not the editor or the version history.
+- `controlled-document-service.ts` (D6): revision refuses a version approved for a later day, `409 QMS_REVISION_PENDING_EFFECT`, before any work and again under the row lock; the route and AnA's `revise_qms_document` share the service.
+- `shared/qms/training.ts`: the context schema gains `inForce`, `effectiveDate` and `successor`, with the same rules on each version.
+
+**Tests:** `tests/db/qms-training-pending-version.dbtest.ts` (new), v2.0 approved for ten days out through the real routes, trainees named by assignment, one not shared onto v2.0's authored copy: red 5 of 6 at trunk (`slice3b-red.txt`), green 6/6. Regression (`slice3b-green.txt`): 70/72 across eight QMS database suites, 481/482 across the server QMS suites, the QMS route tests and every Quality client test; the three failures are red at trunk with or without this change, each confirmed on trunk's code (`slice3b-mutations.txt`), and the periodic-review one is fixed here (retire signs `retirement`, P-51). Five mutants, all killed.
+
+**Not done:** the training read's successor in the client (`PersonalTrainingReader.tsx`), the approve dialog's count of people assigned, and a periodic-review refusal on a pending version (design `QMS_REVIEW_PENDING_EFFECT`).
+
