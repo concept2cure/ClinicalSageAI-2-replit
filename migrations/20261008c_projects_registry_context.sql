@@ -1,4 +1,13 @@
 -- =============================================================================
+-- AMENDED 2026-10-30 (P-73, docs/design/TRIAL_APPLICATION_DRAFTING_2026-10-30.md
+-- slice 1). Rule 2 gains the trial applications of agencies outside the US and
+-- the EU that have exactly one: an IND or a CTA filed with HEALTH_CANADA, MHRA,
+-- PMDA, NMPA, MFDS or SWISSMEDIC records CA_CTA, UK_CTA, JP_CTN, CN_CTA, KR_IND
+-- or CH_CTA (TRIAL_APPLICATION_REGISTRY in program-registry-context.ts). The
+-- agency is compared with spaces and hyphens as underscores ('Health Canada'),
+-- in both places. Still adds keys only where none is recorded; drops nothing.
+-- A record this amendment completes registers as journal drift, by design.
+-- =============================================================================
 -- eCTD REGULATORY AUDIT CONTEXT
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
@@ -83,7 +92,7 @@ BEGIN
     SELECT p.id AS project_id,
            NULLIF(btrim(g.metadata::jsonb ->> 'submissionTypeId'), '') AS chosen,
            CASE lower(regexp_replace(btrim(g.program_type), '[[:space:]-]+', '_', 'g'))
-                || '|' || upper(btrim(g.primary_agency))
+                || '|' || upper(regexp_replace(btrim(g.primary_agency), '[[:space:]-]+', '_', 'g'))
              WHEN 'ind|FDA'     THEN 'US_IND'
              WHEN 'nda|FDA'     THEN 'US_NDA'
              WHEN 'bla|FDA'     THEN 'US_BLA'
@@ -97,6 +106,18 @@ BEGIN
              WHEN 'maa|EMA'     THEN 'EU_MAA'
              WHEN 'cta|EMA'     THEN 'EU_CTA'
              WHEN 'jnda|PMDA'   THEN 'JP_MKT_APPROVAL'
+             WHEN 'ind|HEALTH_CANADA' THEN 'CA_CTA'
+             WHEN 'cta|HEALTH_CANADA' THEN 'CA_CTA'
+             WHEN 'ind|MHRA'       THEN 'UK_CTA'
+             WHEN 'cta|MHRA'       THEN 'UK_CTA'
+             WHEN 'ind|PMDA'       THEN 'JP_CTN'
+             WHEN 'cta|PMDA'       THEN 'JP_CTN'
+             WHEN 'ind|NMPA'       THEN 'CN_CTA'
+             WHEN 'cta|NMPA'       THEN 'CN_CTA'
+             WHEN 'ind|MFDS'       THEN 'KR_IND'
+             WHEN 'cta|MFDS'       THEN 'KR_IND'
+             WHEN 'ind|SWISSMEDIC' THEN 'CH_CTA'
+             WHEN 'cta|SWISSMEDIC' THEN 'CH_CTA'
            END AS fixed
       FROM public.projects p
       JOIN public.regulatory_programs g
