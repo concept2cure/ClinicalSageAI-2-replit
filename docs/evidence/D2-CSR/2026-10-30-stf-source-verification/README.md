@@ -23,7 +23,7 @@ Root owns global test/build/compiler/publication jobs. Worker scopes will be dis
 
 ## Status
 
-Source verification and the scoped correction are implemented. The original 201 checks in 22 files passed at canonical base `be078603b00397bb86c8244b634aeff3338c5ae0`; scoped lint has zero errors and no warning growth; client/server/audit-verifier builds passed. Disjoint incoming CSR/Vault changes have been synchronized to `1ce6adc681c984f1669715d37fda774f11203059`. The combined source passes **276 checks in 27 files**, with zero failed/skipped, and scoped lint again has zero errors and no warning growth. The combined client/server/audit-verifier builds also passed. The normal canonical compiler/publication gates are pending below. No complete-filing or agency acceptance is claimed.
+Source verification and the scoped correction are implemented. The original 201 checks in 22 files passed at canonical base `be078603b00397bb86c8244b634aeff3338c5ae0`; scoped lint has zero errors and no warning growth; client/server/audit-verifier builds passed. Disjoint incoming CSR/Vault changes have been synchronized to `1ce6adc681c984f1669715d37fda774f11203059`. The combined source passes **276 checks in 27 files**, with zero failed/skipped, and scoped lint again has zero errors and no warning growth. The combined client/server/audit-verifier builds also passed. The source is accepted on canonical as `3833305474c67b9f44bce13bbf362aa9ec788c21`; all normal push gates passed, including the full compiler with zero errors (baseline zero). `publication-receipt.json` and `csr-stf-push.log.gz` record acceptance and exact committed input verification. No complete-filing or agency acceptance is claimed.
 
 ## Confirmed source and implementation contract
 
@@ -79,3 +79,9 @@ The combined build at `1ce6adc681c984f1669715d37fda774f11203059` passed (`csr-st
 
 
 The independent final evidence review found no material source/count/history/base-attribution issue. The discovery inventory is explicitly labelled as the pre-correction baseline. The final build's existing chunk-size advisories are retained in the raw log; it exited successfully. The normal compiler/push gates and accepted source SHA will be recorded in the publication receipt after Git confirms acceptance.
+
+## Accepted publication
+
+Source **`3833305474c67b9f44bce13bbf362aa9ec788c21`** was accepted directly on `concept2cure-v2` through the normal hooks. The full compiler reported **0 errors, tsc exit 0, baseline 0**. Pushed lint reported **19 files, zero errors, no warning growth**; all remaining normal pre-push gates passed. `csr-stf-push.log.gz` preserves the complete gate and Git transport output. No baseline, hook, branch or acceptance bypass was used.
+
+After acceptance, all **77** SHA-256 input pins from `synchronized-source-freeze.json` were compared with the **committed Git blob bytes at that source SHA**, and all match (`publication-receipt.json`). This receipt is a documentation-only follow-up. The source correction and the explicit STF open item are complete within the qualification limits above; remaining PQ, human, DTD and agency work is not marked complete.
