@@ -17,8 +17,8 @@ const REQUEST: CSRBuildRequest = { organizationId: 7, userId: 5, studyInfo: STUD
 const target = (number: string) => resolveCSRDraftTargets([number])[0];
 type Message = { role: string; content: string };
 const paths = [
-  ['provenance', async (number: string) => draftCSRSectionWithProvenance(target(number), REQUEST), chat],
-  ['on demand', async (number: string) => draftCSRSection(number, STUDY), complete],
+  ['provenance', async (number: string, studyInfo = STUDY) => draftCSRSectionWithProvenance(target(number), { ...REQUEST, studyInfo }), chat],
+  ['on demand', async (number: string, studyInfo = STUDY) => draftCSRSection(number, studyInfo), complete],
 ] as const;
 const reply = 'SOURCE REQUIREMENTS\n[DATA TO BE INSERTED] from the governed records.';
 
@@ -29,15 +29,21 @@ beforeEach(() => {
 
 describe.each(paths)('%s reaches the existing writing owner', (_name, draft, model) => {
   it('includes the full trusted writing brief while sponsor values stay quoted user data', async () => {
-    await draft('11.4.1');
+    const metadataWithExtension = { ...STUDY, arbitrarySource: 'UNTRUSTED_REQUEST_EXTENSION' };
+    await draft('9.7.1', metadataWithExtension);
+    expect(model).toHaveBeenCalledOnce();
     const messages = model.mock.calls[0][0] as Message[];
     const system = messages.filter(m => m.role === 'system').map(m => m.content).join('\n');
-    expect(system).toContain(csrWritingBrief(csrWritingGuidance('11.4.1'), null));
+    expect(system).toContain(csrWritingBrief(csrWritingGuidance('9.7.1'), null));
     expect(system).not.toContain(INJECTION);
-    expect(system).toMatch(/study information.*data.*not.*instructions/i);
+    expect(system).toMatch(/study metadata.*data.*not.*instructions/i);
     const user = messages.filter(m => m.role === 'user').map(m => m.content).join('\n');
-    expect(user).toContain(JSON.stringify({ type: 'csr_study_information', studyInfo: STUDY }));
-    expect(user).toMatch(/reviewable.*source-supported/i);
+    const metadataLine = user.split('\n').find(line => line.startsWith('{"type":"study_metadata"'));
+    expect(metadataLine).toBeDefined();
+    expect(JSON.parse(metadataLine!)).toEqual({ type: 'study_metadata', studyInfo: STUDY });
+    expect(user).not.toContain('UNTRUSTED_REQUEST_EXTENSION');
+    expect(user).toMatch(/reviewable/i);
+    expect(user).toMatch(/source-supported/i);
     expect(user).not.toMatch(/submission-ready/i);
   });
 
@@ -70,7 +76,7 @@ describe.each(paths)('%s reaches the existing writing owner', (_name, draft, mod
 
   it.each([
     'No evidence that the study was conducted in accordance with GCP was supplied. [DATA TO BE INSERTED]',
-    'The study was not approved by an IRB according to the available metadata; approval records are awaited. [DATA TO BE INSERTED]',
+    'The available metadata does not establish whether IRB approval occurred; approval records are awaited. [DATA TO BE INSERTED]',
     'Consent waivers and late SAP finalization require source review; their status is not established. [DATA TO BE INSERTED]',
   ])('preserves qualified missing-record wording: %s', async content => {
     complete.mockResolvedValue(content);
@@ -95,11 +101,12 @@ describe('explicit retained evidence cannot silently become metadata-only drafti
     const result = await draftCSRSectionWithProvenance(target(number), REQUEST, undefined, evidence);
     expect(result).toMatchObject({ source: 'template', model: null, tokenCost: 0 });
     expect(result.content).not.toContain('no safety concerns');
-    expect(result.content).toMatch(/retained.*evidence.*unavailable/i);
+    expect(result.content).toMatch(/DATA TO BE INSERTED FROM.*(?:SOURCE|SAP)/i);
     expect(hasUnresolvedPlaceholders(result.content)).toBe(true);
     expect(result.lineage).toMatchObject({
-      evidence: { evidenceDigest: evidence.evidenceDigest, sourceSha256: 'a'.repeat(64), status: 'unavailable', tables: [], missingTables: evidence.missingTables },
-      rejectedModelDraft: { reason: 'retained_evidence_unavailable' },
+      evidence: { evidenceDigest: evidence.evidenceDigest, sourceSha256: 'a'.repeat(64), status: 'unavailable', tables: [],
+        missingTables: evidence.missingTables, omittedTables: evidence.omittedTables, limitations: evidence.limitations },
+      rejectedModelDraft: { reason: 'csr_evidence_unavailable' },
     });
     expect(chat).not.toHaveBeenCalled();
   });

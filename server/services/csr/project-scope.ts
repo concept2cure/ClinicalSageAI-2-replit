@@ -5,6 +5,7 @@ import { queryableFromDrizzle } from '../../db/drizzle-queryable';
 import { looksLikeProgramUuid } from '../../lib/project-id';
 import { readProgramAnchorRow } from '../c2c/program-project-anchor';
 import { canAccessReportProject, type ReportProjectActor } from '../report-os/project-access';
+import { parseCsrEvidenceSelection } from './cortex-authoring-context';
 
 export class CsrScopeError extends Error {
   constructor(readonly code: string, readonly status: 400 | 403 | 404 | 409, message: string) {
@@ -93,20 +94,34 @@ export async function resolveCsrScope(database: Pick<RequestDb, 'select' | 'exec
   return { projectId, ...(programId ? { programId } : {}), ...(clientWorkspaceId ? { clientWorkspaceId } : {}) };
 }
 
+function sourceProgramId(evidenceSource: unknown, contextProgramId: string | undefined): string | undefined {
+  if (evidenceSource === undefined) return contextProgramId;
+  const raw = evidenceSource && typeof evidenceSource === 'object' && !Array.isArray(evidenceSource)
+    ? evidenceSource : {};
+  const source = parseCsrEvidenceSelection({ ...raw, sectionNumber: '1' });
+  if (contextProgramId !== undefined && (typeof contextProgramId !== 'string' || contextProgramId.trim().toLowerCase() !== source.programId)) {
+    throw new CsrScopeError('CSR_SCOPE_MISMATCH', 400, 'The CSR evidence source and execution context identify different projects.');
+  }
+  return source.programId;
+}
+
 export async function resolveCsrBuildContext(
   database: Pick<RequestDb, 'select' | 'execute'>,
-  request: { organizationId: number; projectId?: number; userId: number },
+  request: { organizationId: number; projectId?: number; userId: number; evidenceSource?: unknown },
   context: { organizationId: number; projectId?: number; programId?: string; clientWorkspaceId?: number; requestedBy?: number },
 ) {
   if (request.organizationId !== context.organizationId || (context.requestedBy !== undefined && context.requestedBy !== request.userId)) throw new CsrScopeError('CSR_SCOPE_MISMATCH', 400, 'The CSR request and execution context must identify the same organization and actor.');
   const requestProject = parseCsrScopeId(request.projectId, 'projectId');
   const contextProject = parseCsrScopeId(context.projectId, 'projectId');
   if (requestProject !== undefined && contextProject !== undefined && requestProject !== contextProject) throw new CsrScopeError('CSR_SCOPE_MISMATCH', 400, 'The CSR request and execution context identify different projects.');
-  const scope = await resolveCsrScope(database, context.organizationId, { ...context, projectId: contextProject ?? requestProject }, { actorUserId: request.userId });
+  const programId = sourceProgramId(request.evidenceSource, context.programId);
+  const scope = await resolveCsrScope(database, context.organizationId,
+    { ...context, ...(programId !== undefined ? { programId } : {}), projectId: contextProject ?? requestProject },
+    { actorUserId: request.userId });
   return { ...context, ...scope, requestedBy: context.requestedBy ?? request.userId };
 }
 
-/** Saved reads use current read access; a job mutation must explicitly require editing. */
+/** Saved reads and explicit write admission share the current project policy. */
 export async function requireCsrJobAccess(database: Pick<RequestDb, 'select' | 'execute'> | CsrScopeExecutor, organizationId: number, jobId: number, userId: number | undefined, options: { forWrite?: boolean } = {}): Promise<boolean> {
   const actor = await readCsrProjectActor(database, organizationId, userId, { allowReadOnlyTenant: options.forWrite !== true });
   if (!('select' in database)) {

@@ -26,7 +26,7 @@
   "source_lint_errors": 0,
   "source_lint_warning_growth": 0,
   "source_existing_workbench_warnings": 12,
-  "normal_publication_gates": "pending; push log is final authority",
+  "normal_publication_gates": "all passed; see complete source push logs",
   "qualification_limit": "Local engineering evidence with synthetic UI/API fixtures. No deployed acceptance, formal OQ, live signatures, model qualification or agency transmission is claimed.",
   "csr_convergence": {
     "canonical_incoming": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
@@ -42,5 +42,9 @@
     "whole_project_typescript_errors": 0,
     "all_normal_gates": "passed",
     "git_result": "rejected because remote moved during compilation; no acceptance claimed"
-  }
+  },
+  "accepted_source_commit": "162f2845e487e310657ea75d15120fe3e95beefc",
+  "accepted_tree": "baf2b0b79f5033ee479b3dd61c5b6c462ff3c4c1",
+  "whole_project_typescript_errors": 0,
+  "publication_receipt": "publication.json"
 }

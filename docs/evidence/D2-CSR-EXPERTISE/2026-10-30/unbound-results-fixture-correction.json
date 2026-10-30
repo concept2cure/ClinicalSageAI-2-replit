@@ -1,0 +1,6 @@
+{
+  "initialReceipt": "unbound-results-red.json",
+  "classification": "Fixture calibration, not a missing-evidence regression proof: 12.2 is a non-draftable container.",
+  "correction": "Both actual-gateway cases target the narrative leaf12.2.1. No requirement or production policy changed.",
+  "correctedReceipt": "unbound-results-red-leaf.json"
+}

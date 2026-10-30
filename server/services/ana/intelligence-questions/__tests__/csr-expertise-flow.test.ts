@@ -32,7 +32,10 @@ describe('the registered CSR interview always asks about robustness', () => {
 
   it('does not require a reason for failure after success, or a summary of analyses not performed', () => {
     const answers = { primary_results: primary(true) };
-    const step = advanceFlow(state('sensitivity_analyses', answers), 'sensitivity_analyses', { sensitivity_analyses_performed: false }, CTX);
+    const step = advanceFlow(state('sensitivity_analyses', answers), 'sensitivity_analyses', {
+      sensitivity_analyses_performed: false,
+      sensitivity_analysis_rationale: 'The retained SAP and sensitivity-analysis outputs are awaited; no result is available.',
+    }, CTX);
     expect(step.event?.node.id).toBe('secondary_results');
     expect((step.event?.newIssues ?? []).filter(i => i.checkId.startsWith('validation_'))).toEqual([]);
   });

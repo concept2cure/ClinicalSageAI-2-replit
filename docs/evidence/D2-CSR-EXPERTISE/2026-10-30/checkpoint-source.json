@@ -1,0 +1,9 @@
+{
+  "base": "90e5c3a1a9530d4def1caf9a2d1299a36c4d7d8c",
+  "controlCommit": "47ce1d3d9",
+  "originalAuditBase": "438287ed102ff9857938276bbe835f0ec1c11a88",
+  "reason": "Final qualification after normal fast-forward to newer accepted canonical code; lint compares only this increment against that accepted base.",
+  "previousFinalBase": "f0e0ff86352efde626a149a256c42303bc04dfd7",
+  "preOverlapBase": "13be18d3de41170072498f460ab92073638ec838",
+  "mergeLocalSource": "256c794eb"
+}

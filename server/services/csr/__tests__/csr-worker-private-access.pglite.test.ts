@@ -72,13 +72,13 @@ beforeAll(async () => {
   database = new PGlite();
   state.database = drizzle(database, { logger: { logQuery(sql) { state.queries.push(sql); } } });
   await database.exec(`
+    CREATE TABLE users (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    CREATE TABLE organizations (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    INSERT INTO users (id) VALUES (5),(6),(7),(8),(9);
+    INSERT INTO organizations (id) VALUES (7),(8);
     CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, client_workspace_id integer,
       status text, regulatory_program_id uuid, owner_id integer, created_by_id integer, settings jsonb);
     CREATE TABLE client_workspaces (id integer PRIMARY KEY, organization_id integer);
-    CREATE TABLE users (id integer PRIMARY KEY, status text DEFAULT 'active');
-    INSERT INTO users (id) VALUES (5),(6),(7),(8),(9);
-    CREATE TABLE organizations (id integer PRIMARY KEY, status text DEFAULT 'active');
-    INSERT INTO organizations (id) VALUES (7);
     CREATE TABLE organization_users (id serial PRIMARY KEY, organization_id integer, user_id integer, role text,
       persona text, permissions jsonb, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now());
     CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);
@@ -307,4 +307,27 @@ describe('CSR worker rechecks current private-project permission', () => {
       await database.exec('ALTER TABLE inaccessible_organization_users RENAME TO organization_users');
     }
   });
+});
+
+
+it('a retained-read member can read a job but cannot cancel its authoring work', async () => {
+  const { jobId } = await enqueue(5);
+  await database.exec("INSERT INTO project_members VALUES (11,7,8,'use','active')");
+  const app = appForActor(8);
+  expect((await httpRequest(app).get(`/api/csr/jobs/${jobId}`)).status).toBe(200);
+  const refused = await httpRequest(app).post(`/api/csr/jobs/${jobId}/cancel`);
+  expect(refused.status).toBe(403);
+  expect(refused.body.code).toBe('CSR_PROJECT_ACCESS_DENIED');
+  expect((await readJob(jobId)).status).toBe('queued');
+});
+
+it('retained job reads survive read-only tenant posture; cancellation remains refused', async () => {
+  const { jobId } = await enqueue(5);
+  await database.exec("UPDATE organizations SET status='pending_deletion' WHERE id=7");
+  try {
+    const app = appForActor(5);
+    expect((await httpRequest(app).get(`/api/csr/jobs/${jobId}`)).status).toBe(200);
+    expect((await httpRequest(app).post(`/api/csr/jobs/${jobId}/cancel`)).status).toBe(403);
+    expect((await readJob(jobId)).status).toBe('queued');
+  } finally { await database.exec("UPDATE organizations SET status='active' WHERE id=7"); }
 });

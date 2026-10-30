@@ -17,7 +17,7 @@ import { W } from './csr-e3-writing.js';
 
 export const E3_PLAN_SECTIONS: E3Section[] = [
   {
-    number: '1', title: 'Title Page', applies: 'always', writing: ["Write it as a record, not prose: each element on its own line, in the order E3 lists them, with dates as the protocol and the clinical database record them.", "A GCP statement is a source-supported account, not boilerplate: state compliance only when the conduct records support it; describe documented deviations and qualifications. If records are missing, mark the statement unavailable rather than asserting compliance.", "E3 Annex II is the signature page that §16.1.5 carries; the title page names the signatories, it does not reproduce their signatures."],
+    number: '1', title: 'Title Page', applies: 'always', writing: ["Write it as a record, not prose: each element on its own line, in the order E3 lists them, with dates as the protocol and the clinical database record them.", W.fromConductRecords, "State the actual source-supported GCP position, including archiving, and its qualifications; if the evidence is unavailable, mark the statement as awaiting records rather than declare compliance.", "E3 Annex II is the signature page that §16.1.5 carries; the title page names the signatories, it does not reproduce their signatures."],
     purpose: 'Identifies the study and the report so a reviewer can place it in the application and match it to the protocol, the synopsis and the datasets.',
     contains: ['Study title', 'Name of the test drug / investigational product', 'Indication studied', 'If not apparent from the title, one or two sentences on design (parallel, crossover, blinding, randomisation), comparison, duration, dose and population', 'Name of the sponsor', 'Protocol identification (code or number)', 'Development phase', 'Study initiation date (first patient enrolled, or another verifiable definition)', 'Date of early termination, if any', 'Study completion date (last patient completed)', 'Name and affiliation of the principal or coordinating investigator(s) or the sponsor’s responsible medical officer', 'Name of the company / sponsor signatory', 'Statement that the study was performed in compliance with GCP, including the archiving of essential documents', 'Date of the report, and the title and date of any earlier report from the same study'],
     sources: ['Final protocol and amendments', 'Clinical trial management system milestones (first patient enrolled, last patient completed)', 'ADSL / DM reference dates'],
@@ -47,21 +47,21 @@ export const E3_PLAN_SECTIONS: E3Section[] = [
     pitfalls: ['Abbreviations and terms that differ between the CSR, the 2.7 summaries and the 2.5 overview'],
   },
   {
-    number: '5', title: 'Ethics', applies: 'always', writing: [W.noFigures],
+    number: '5', title: 'Ethics', applies: 'always', writing: [W.noFigures, W.fromConductRecords],
     purpose: 'Shows the study was reviewed, conducted and consented as GCP and the regulations require.',
     sources: ['Trial master file: IEC/IRB approvals, consent form versions', 'Protocol and amendments'],
   },
   {
-    number: '5.1', title: 'Independent Ethics Committee (IEC) or Institutional Review Board (IRB)', applies: 'always', writing: [W.pastConduct, "Report each committee decision, its scope, version and date from the review records, relative to enrolment or implementation; cite the source and Appendix 16.1.3. State prior approval only when those records establish it. Missing, pending or late approvals remain explicit; do not claim every site or amendment was approved from study metadata."],
+    number: '5.1', title: 'Independent Ethics Committee (IEC) or Institutional Review Board (IRB)', applies: 'always', writing: [W.pastConduct, W.fromConductRecords, "For each site and protocol/amendment/consent version, report the retained committee decision and date relative to enrolment or implementation. State that approval preceded an activity only if those records establish it; describe late or absent decisions and any documented exceptions. Point to the actual committee list in Appendix 16.1.3."],
     contains: ['Confirmation that the study and every amendment were reviewed by an IEC or IRB', 'The list of all IECs / IRBs consulted, in Appendix 16.1.3 (with the chair’s name where the authority requires it)'],
     see: ['16.1.3'],
   },
   {
-    number: '5.2', title: 'Ethical Conduct of the Study', applies: 'always', writing: ["Name the ethical standards and E6 revision documented for the study. Assert conduct in accordance with them only when the source records support it; describe documented deviations and their handling. Missing conduct records do not establish compliance, and an expected ethics statement is not evidence that the study complied."],
+    number: '5.2', title: 'Ethical Conduct of the Study', applies: 'always', writing: [W.fromConductRecords, "Describe the ethical standards and actual E6 revision recorded for the study, with source-supported conduct and any qualifications or noncompliance. Do not insert a standard Helsinki/GCP compliance sentence when the conduct records are missing or do not support it."],
     contains: ['Confirmation that the study was conducted in accordance with the ethical principles that have their origin in the Declaration of Helsinki'],
   },
   {
-    number: '5.3', title: 'Patient Information and Consent', applies: 'always', writing: [W.pastConduct, "Use the consent records to say how and when consent was obtained relative to the first study-specific procedure, and how re-consent was handled. Missing records, late consent, documented waivers and exceptions must remain explicit; a waiver is named with its documented authority and scope, never assumed. Do not infer that every participant consented from study metadata."],
+    number: '5.3', title: 'Patient Information and Consent', applies: 'always', writing: [W.pastConduct, W.fromConductRecords, "Report the source-supported consent process and timing relative to the first study-specific procedure, the approved versions and actual re-consent after relevant amendments. Identify recorded waivers with their documented authority and scope, exceptions or deviations; if timing or documentation is missing, state that it is unknown rather than assert that every participant gave prior written consent."],
     contains: ['How and when informed consent was obtained in relation to enrolment (for example at allocation or at pre-screening)', 'Representative written information for patients and a sample consent form, in Appendix 16.1.3'],
     pitfalls: ['Re-consent after an amendment not described'],
     see: ['16.1.3'],
@@ -145,7 +145,7 @@ export const E3_PLAN_SECTIONS: E3Section[] = [
     see: ['16.1.8'],
   },
   {
-    number: '9.7', title: 'Statistical Methods Planned in the Protocol and Determination of Sample Size', applies: 'always', writing: [W.noFigures, "Identify the SAP version and dated source records, and compare documented finalization with database lock and unblinding. Say it was final before unblinding only if those records support that timing. Report late finalization or changes after unblinding honestly; missing dates remain unavailable and cannot establish prespecification."],
+    number: '9.7', title: 'Statistical Methods Planned in the Protocol and Determination of Sample Size', applies: 'always', writing: [W.noFigures, W.fromConductRecords, "Report the actual SAP version/date and its recorded timing relative to database lock and unblinding. If these facts are missing, state that the timing is unknown. Describe finalization or changes after unblinding, including reasons, decision-makers and available data, and cross-reference §9.8; never rewrite late finalization as prespecification."],
     purpose: 'What was planned before the results were known — the reviewer’s reference for judging every analysis in §11 and §12.',
     see: ['16.1.9', '11.4.2'],
   },

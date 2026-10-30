@@ -16,6 +16,7 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { createCsrRobustnessNode } from './csr-report-robustness.js';
 
 export function createCsrReportFlow(): FlowDefinition {
   return {
@@ -54,7 +55,7 @@ export function createCsrReportFlow(): FlowDefinition {
       {
         id: 'efficacy_results',
         label: 'Efficacy Results',
-        nodeIds: ['primary_results', 'secondary_results', 'oncology_efficacy', 'vaccine_efficacy', 'sensitivity_analyses'],
+        nodeIds: ['primary_results', 'oncology_efficacy', 'vaccine_efficacy', 'sensitivity_analyses', 'secondary_results'],
       },
       {
         id: 'safety_results',
@@ -808,7 +809,7 @@ export function createCsrReportFlow(): FlowDefinition {
         question:
           'What were the primary efficacy results?',
         guidance:
-          'ICH E3 Section 11.4 requires a detailed presentation of primary endpoint results, including whether the endpoint was met, the point estimate, confidence interval, and p-value. A clear statement of whether the primary objective was achieved is essential. Per ICH E9 Section 5.1 (Prespecification of the Analysis), the primary analysis should be fully pre-specified in the protocol and statistical analysis plan (SAP).',
+          'Present the primary endpoint and actual prespecified analysis from the retained protocol, SAP and source outputs. Name the estimand, analysis set, effect estimate and appropriate uncertainty: a confidence interval for a frequentist analysis or a credible interval and named posterior hypothesis for a Bayesian analysis. Report p-values only when applicable to the recorded method; use the actual prespecified margins and decision criteria for noninferiority or equivalence, or the recorded Bayesian decision criterion. State whether the primary objective met its source-defined criterion; do not substitute a superiority p-value or invent a margin, threshold or conclusion.',
         provideExpertFeedback: true,
         fields: [
           {
@@ -880,7 +881,7 @@ export function createCsrReportFlow(): FlowDefinition {
             severity: 'info',
             title: 'Primary Endpoint Not Met',
             message:
-              'The primary endpoint was not met. Provide the complete prespecified analysis and source-supported reasons and limitations. Assess robustness using sensitivity analyses for the same estimand; distinguish supplementary analyses and exploratory post hoc work, without using them to reverse the primary conclusion.',
+              'The supplied answer records that the primary endpoint was not met. Report the complete prespecified analysis and its uncertainty, with source-supported limitations and robustness analyses. Distinguish sensitivity analyses of the same estimand from supplementary analyses of another estimand; label post-hoc findings exploratory rather than use them to rescue an efficacy claim.',
             reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 11.4.1',
           },
           {
@@ -1019,65 +1020,9 @@ export function createCsrReportFlow(): FlowDefinition {
         defaultNext: 'sensitivity_analyses',
       },
 
-      /* — Robustness is assessed whether the primary criterion was met or not. — */
+      /* — Robustness, irrespective of whether the primary objective was met — */
 
-      {
-        id: 'sensitivity_analyses',
-        section: 'efficacy_results',
-        question:
-          'Describe the planned robustness assessments, supplementary analyses and any post hoc work, whether or not the primary criterion was met.',
-        guidance:
-          'Assess robustness after either a successful or unsuccessful primary result. Under ICH E9(R1), sensitivity analyses address assumptions for the same estimand; supplementary analyses target a different estimand and must be labelled separately. Classify analyses by the protocol and SAP, not by whether their result is favourable. Post hoc work is identified as exploratory, not a replacement for the prespecified primary conclusion. Missing analyses or source outputs remain explicit.',
-        provideExpertFeedback: true,
-        fields: [
-          {
-            id: 'sensitivity_analyses_performed',
-            label: 'Were Pre-Specified Sensitivity Analyses Performed?',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'sensitivity_analysis_summary',
-            label: 'Sensitivity Analysis Results',
-            type: 'textarea',
-            placeholder: 'For each same-estimand sensitivity analysis, identify the assumption assessed, method, source output and whether it supports the robustness of the primary interpretation. Do not assume a per-protocol analysis targets the same estimand.',
-            required: true,
-            validation: { minLength: 50, maxLength: 5000 },
-            visibleWhen: { field: 'sensitivity_analyses_performed', operator: 'eq', value: true },
-          },
-          {
-            id: 'supplementary_analysis_summary',
-            label: 'Supplementary Analyses (Different Estimand)',
-            type: 'textarea',
-            placeholder: 'Identify each different estimand, its rationale, prespecified or post hoc status, and source output; state when none was performed or the record is unavailable.',
-          },
-          {
-            id: 'post_hoc_analyses_performed',
-            label: 'Were Post-Hoc Analyses Performed?',
-            type: 'yes_no',
-          },
-          {
-            id: 'post_hoc_analysis_summary',
-            label: 'Post-Hoc Analysis Summary',
-            type: 'textarea',
-            placeholder: 'Describe any post-hoc analyses, subgroup analyses, or responder analyses performed.',
-            visibleWhen: {
-              field: 'post_hoc_analyses_performed',
-              operator: 'eq',
-              value: true,
-            },
-          },
-          {
-            id: 'potential_reasons_for_failure',
-            label: 'Potential Reasons for Study Failure',
-            type: 'textarea',
-            placeholder: 'e.g., High placebo response rate, insufficient dose, study population not enriched, regional differences, etc.',
-            required: true,
-            visibleWhen: { field: 'primary_endpoint_met', operator: 'eq', value: false },
-          },
-        ],
-        defaultNext: 'secondary_results',
-      },
+      createCsrRobustnessNode(),
 
       {
         id: 'secondary_results',
@@ -1226,29 +1171,29 @@ export function createCsrReportFlow(): FlowDefinition {
         defaultNext: 'serious_events',
         issueChecks: [
           {
-            id: 'discontinuations_require_review',
+            id: 'high_discontinuation_due_to_aes',
             condition: {
               field: 'discontinuations_due_to_aes',
               operator: 'gt',
               value: 0,
             },
             severity: 'info',
-            title: 'Review AE-Related Discontinuations',
+            title: 'Adverse-event discontinuations reported',
             message:
-              'Discontinuations due to adverse events were reported. This absolute count does not establish an incidence rate or tolerability conclusion. Review the safety population denominator, treatment-group counts, exposure and source outputs, then describe the events by PT and SOC with an appropriate comparison.',
+              'The supplied answers report discontinuations attributed to adverse events. Review the retained listings, protocol definitions and treatment-arm denominators; distinguish subjects from events and compare the actual source analyses. A nonzero count alone does not determine a rate, causality or a labeling conclusion.',
             reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 12.2',
           },
           {
-            id: 'grade3_events_require_review',
+            id: 'high_grade3_ae_rate',
             condition: {
               field: 'grade_3_or_higher_aes',
               operator: 'gt',
               value: 0,
             },
             severity: 'info',
-            title: 'Review Grade ≥3 Adverse Events',
+            title: 'Grade 3 or higher adverse events reported',
             message:
-              'Grade 3 or higher adverse events were reported. A nonzero count alone does not establish a high incidence or product risk. Review the grading scale, safety population denominator, treatment-group counts, exposure and source outputs before interpreting the finding; distinguish severity from seriousness.',
+              'The supplied answers report Grade 3 or higher adverse events. Reconcile the protocol grading scale, coded terms, subject/event counts and denominators by treatment arm with the source outputs. Severity is not seriousness, and this count alone does not establish relatedness or relative incidence; retain the actual clinical review.',
             reference: 'ICH E3: Structure and Content of Clinical Study Reports, Section 12.2',
           },
         ],
@@ -1970,7 +1915,7 @@ export function createCsrReportFlow(): FlowDefinition {
             label: 'Efficacy Conclusions',
             type: 'textarea',
             required: false,
-            placeholder: 'State whether the primary objective was met, citing the pre-specified primary analysis: the treatment effect estimate, its confidence interval and p-value, and whether sensitivity and key secondary analyses support it.',
+            placeholder: 'State the source-supported conclusion under the prespecified SAP method: the effect estimate and confidence or credible interval as appropriate, p-values only when applicable, and the actual noninferiority/equivalence margins or Bayesian criteria where relevant. Distinguish sensitivity, supplementary and key secondary analyses; do not invent a criterion or result.',
             helpText: 'ICH E3 asks for efficacy conclusions at the end of the efficacy evaluation, separate from the safety conclusions and the overall discussion. They should rest on the pre-specified primary analysis (ICH E9), not on secondary or post-hoc results.',
           },
           {
