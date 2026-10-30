@@ -661,8 +661,10 @@ deletion record the working agreement requires:
      - `c2c_agency_meetings` and the Agency Meetings surface retire in that change.
      - *2026-10-30:* Communication records and moves meetings, admitted by the meeting's project
        (`docs/evidence/D2-MEETINGS-IN-COMMUNICATION/2026-10-30/`). A meeting names its minutes letter
-       (`ha_interactions.minutes_event_id`; `docs/evidence/D2-MEETING-MINUTES-IN-INBOX/2026-10-30/`). The retirement of
-       `c2c_agency_meetings` and its surface is next.
+       (`ha_interactions.minutes_event_id`; `docs/evidence/D2-MEETING-MINUTES-IN-INBOX/2026-10-30/`).
+       `c2c_agency_meetings` is read-only with its rows kept, and its routes and surface are deleted; `agency-meetings`
+       is an alias to Communication (`docs/evidence/D2-AGENCY-MEETINGS-RETIRED/2026-10-30/`). Step 4 is done but for
+       `lifecycle_obligations`, deferred above.
 
 ### P-40 — A sealed editing copy is revisable, and the refusal says so
 

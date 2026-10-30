@@ -274,7 +274,6 @@ const AuditTrail = lazySurface(() => import('./surfaces/AdminSurfaces').then((m)
 const AdminAccess = lazySurface(() => import('./surfaces/AdminAccess').then((m) => ({ default: m.AdminAccess })));
 const MasterLicensing = lazySurface(() => import('./surfaces/MasterLicensing').then((m) => ({ default: m.MasterLicensing })));
 const AccessRequests = lazySurface(() => import('./surfaces/AccessRequests').then((m) => ({ default: m.AccessRequests })));
-const AgencyMeetings = lazySurface(() => import('./surfaces/AgencyMeetings').then((m) => ({ default: m.AgencyMeetings })));
 const AnaCommand = lazySurface(() => import('./surfaces/AnaCommand').then((m) => ({ default: m.AnaCommand })));
 const AuthoringEngine = lazySurface(() => import('./surfaces/AuthoringEngine').then((m) => ({ default: m.AuthoringEngine })));
 const BatchDraft = lazySurface(() => import('./surfaces/BatchDraft').then((m) => ({ default: m.BatchDraft })));
@@ -378,7 +377,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // place the tier can be un-set.
   'master-licensing': { component: MasterLicensing, full: true },
   'access-requests': { component: AccessRequests },
-  'agency-meetings': { component: AgencyMeetings },
   'ana-command': { component: AnaCommand },
   // ana-memory folded into conversation-thread (D2, 2026-10-29): DEEP_LINK_ALIASES takes it there.
   apps: { component: Apps },
