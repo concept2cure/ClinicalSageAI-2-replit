@@ -1,5 +1,11 @@
 # Complete device attachment feedback in the existing drawer
 
+## What already exists — final recorded-context integration
+
+Before publication, origin advanced from `d79abdf9f4dd1a30091247bce2fdab2081a1e188` to `3ab7b72200a1a7b9d32ecc693136a91f38d8144c` through 28 commits. The existing AuthoringAiDraft, DocumentWorkbench, DraftPassage and assembly writing-region owners now use recorded filing context and bounded source evidence; their server counterparts and qualification packet are retained. This is existing canonical work, not a new attachment capability. No incoming path overlaps any of the 56 attachment qualification inputs, 36 browser inputs, this design, the feedback packet or its work-order row. Deleted-history searches over Dossier/upload/attachment feedback names found no additional deleted owner in this interval. The ordinary canonical merge is clean and changes no qualified attachment bytes. Retain the existing 484-test / 34-suite and eight-flow qualification with exact hash verification, independently review integration, and run every normal publication/compiler gate against the merged tree. Do not reattribute the incoming authoring tests as this workstream's execution.
+
+The merged tree completed a fresh full client/server/audit-verifier build (`final-integration-build.txt`). `final-integration.json` records the clean integration and unchanged qualified inputs. The test-preservation review independently confirmed the retained controls without rerunning or editing them. The owned browser qualification server was stopped after execution; its intentional SIGTERM exit143 is cleanup, not a failed browser check. Normal compiler and push acceptance remain pending until a publication receipt records the actual result.
+
 > Canonical convergence supersedes the initial candidate below. The final owners are the already canonical upload-visit helper and shared MDX ErrorState; current qualification is 484 tests / 34 suites and eight converged Chromium flows. Earlier candidate contracts, 385-test results and 32-input browser runs are historical.
 
 D2 / W2, 2026-10-30. Refreshed canonical baseline `89b67685e` (full SHA to be pinned in qualification). The sole branch is `concept2cure-v2`; publish directly with all normal hooks, no PR, force update, alternate branch, dependency or baseline change.
