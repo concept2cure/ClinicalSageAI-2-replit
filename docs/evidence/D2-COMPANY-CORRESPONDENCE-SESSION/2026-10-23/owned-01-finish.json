@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-10-23T21:30:45.224283+00:00",
+  "files": {
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx": "63aa99355a56c769003f52e68a2a599e1fb127c2aca665938351b8ce72cde1f2",
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx": "781600b12e17f1bcb669b471c97f0933a2bfceec190f152e5de45e7b8c255674",
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx": "420baf6139a2282f32cb992d4bbfe3090a37a8dcc08a80457702cf38a5174715",
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx": "9ece2df6acaab75190ee5a2e6e44c8f2839fc4d62a6f1a332cc8c66e1bc43b99",
+    "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceDraft.tsx": "e2bc9376fd6963e8596d3c3f12cb40afac38ff5df38fa00de5518e9defa9ea2e",
+    "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceVariants.tsx": "4e568dc04ee58fc981155c5d5c8a50ba100d552897f1a88f7132b1a9cda6d1b9",
+    "client/src/concept2cure/v2/surfaces/CompanyFilingIdentityReview.tsx": "9bbdfd8c5a99184e5a6ca578e2bc70f081031d5892fe65de2974eb32dc0bf815",
+    "client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx": "daf8d3f8b52f416f4c84f2aeca611e6abdf344678b3cd38cf241dd96387a32ae"
+  }
+}

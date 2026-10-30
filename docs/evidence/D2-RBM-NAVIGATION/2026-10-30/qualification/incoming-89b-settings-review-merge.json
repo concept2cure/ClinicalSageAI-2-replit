@@ -1,0 +1,49 @@
+{
+  "observedAt": "2026-10-30T18:53:10.671472+00:00",
+  "incoming": "89b67685e",
+  "mergeCommit": "ae4ec443dc92c688307340c26ba9bfe1d9b99264",
+  "conflicts": [],
+  "reviewers": [
+    "/root/rbm_signature_review",
+    "/root/rbm_seed_and_context_types"
+  ],
+  "readOnlyReviewsNoExecution": true,
+  "verdict": "No RBM compatibility blocker: only3editableprofilefields; metadatarejected/preserved; projectHome rereadsfullprogramme underretainedowner aftersave, no replacingProgrammeRowwithsettingsreceipt; RBMliteralbool/currentpid/currentguarddoor remains; no wizard/rail/Plan/Rbm/signature/sharedauth change. Newpj-settingsCSS scoped; priorwholeCSSbrowserpinsretained.",
+  "productionPins": {
+    "client/src/concept2cure/v2/styles/project-settings.css": "8a54240d4d37050fb17900fa554efcde6f30a779ae3659e3187fde2b96cffe85",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "b826ec5b420ea9b05711b4de15e213a082fcf9cf957a38b4f62245131c009b6d",
+    "client/src/concept2cure/v2/surfaces/ProjectRecordedContext.tsx": "ad60db2ee9e87d567658ac955ec1c4762763d661abce6df6ac05605ef22d83e9",
+    "client/src/concept2cure/v2/surfaces/ProjectSettings.tsx": "8aaf1f697e1abf201b81e5293de6aefbb2f2e09d4c45825cb00ee37683505fee",
+    "client/src/concept2cure/v2/surfaces/ProjectSide.tsx": "d395744168cc9fad70c58c529d0d647db9972fe564839f8de6aa2c432b253573",
+    "client/src/concept2cure/v2/surfaces/projectSettingsRequest.ts": "1f32d1cefebb549f846a968e9b8586da25081c512644857f1e148ec3ba1292c2",
+    "server/routes/c2c/project-recorded-context.ts": "b1e8f25e6625c5b7ba5ec54a0e5a49e7eaccba38aab3f74a5fb57f814c6cb217",
+    "server/routes/c2c/project-settings.ts": "b3ca730cb3608c58cb78bf10fc10ae717a781287a15790851dc5a1ec9e922b1c",
+    "server/routes/c2c/projects.ts": "f2ab065c2a981909f195139562ee84f3260bc1c8ccc65c4354f049a0da12b91a",
+    "server/services/ana-ri/context-enrichment.ts": "ece180dd3114e303c09a7f7c1b30f82ff77ddf3737a74d654c54e4727d7c2c27",
+    "server/services/c2c/programme-profile-write.ts": "ec6febcd49bfdb542d2428fe1a008c830003481e52c1560d762bd2f28d87ab8a",
+    "server/services/intelligence/project-intelligence-service.ts": "7e87e66af710d19070c4529e7ce7b7e94e4321dfd5a62f9ff6e4b36d7fba50a5",
+    "server/services/unified-work/unified-work-view.ts": "c95cefe5670d0bd8c38d50356a3ce47d93854e2d0d8b5fe0c44993efc43a52d9",
+    "shared/calendar-day.ts": "d0b2688533f3336541aa884449bcbe8fb856cb6173afaa6c7b17d2ec5131a6c7",
+    "shared/project-recorded-context.ts": "784809d73bfb7a2d4a2cc5213952fd60faa525c29b520c9d75069e8899a0ff89",
+    "shared/project-settings.ts": "71a10d819b3458fd7d4188ebdfe5e6e4aa85cc2915733f9190fd94ec5fb37757"
+  },
+  "freshRegression": [
+    "client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx",
+    "client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx",
+    "server/routes/c2c/__tests__/project-settings.pglite.test.ts",
+    "server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts",
+    "server/routes/c2c/__tests__/projects-rbm-choice.test.ts",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts",
+    "shared/__tests__/project-settings.test.ts",
+    "shared/__tests__/project-recorded-context.test.ts",
+    "server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts",
+    "server/services/unified-work/__tests__/unified-work-view.test.ts",
+    "server/services/ana/__tests__/rbm-launch-admission.test.ts"
+  ],
+  "newCrossFeatureTest": "access-settings-compat-final-freeze.json provesmetadataRiskBasedMonitoringtrue+unknownkeysurvivesactualsettingsPATCH; no failing-beforeclaim because incomingwriteralreadycorrect.",
+  "upstreamTotalsNotBorrowed": true
+}

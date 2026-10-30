@@ -1,0 +1,90 @@
+{
+  "final": {
+    "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/rbm/__tests__/rbm-access.test.ts server/services/rbm/__tests__/rbm-assessment-seed.test.ts server/routes/__tests__/rbm-current-project-admission.test.ts server/routes/__tests__/rbm-board-current-project.test.ts server/services/ana/__tests__/rbm-launch-admission.test.ts server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts server/routes/__tests__/mdx-rbm-signed-records.test.ts server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts server/services/ana/__tests__/ana-cannot-sign.test.ts server/routes/__tests__/rbm-assessment-integrity.test.ts server/services/rbm/__tests__/rbm-actuator.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/access-green-07-results.json",
+    "exitCode": 0,
+    "passed": 184,
+    "failed": 0,
+    "skipped": 0,
+    "files": 11,
+    "unchangedInputs": true,
+    "failures": []
+  },
+  "manifest": "/workspace/.cloud-setup/rbm-navigation/access-final-freeze.json",
+  "phaseCounts": "/workspace/.cloud-setup/rbm-navigation/access-phase-counts.json",
+  "diffCheck": "/workspace/.cloud-setup/rbm-navigation/access-final-diff-check.json",
+  "countsAreOverlappingCohortsDoNotSum": true,
+  "testSelection": {
+    "files": [
+      "server/services/rbm/__tests__/rbm-access.test.ts",
+      "server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+      "server/routes/__tests__/rbm-current-project-admission.test.ts",
+      "server/routes/__tests__/rbm-board-current-project.test.ts",
+      "server/services/ana/__tests__/rbm-launch-admission.test.ts",
+      "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts",
+      "server/routes/__tests__/mdx-rbm-signed-records.test.ts",
+      "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts",
+      "server/services/ana/__tests__/ana-cannot-sign.test.ts",
+      "server/routes/__tests__/rbm-assessment-integrity.test.ts",
+      "server/services/rbm/__tests__/rbm-actuator.test.ts"
+    ],
+    "inputs": [
+      "server/services/rbm/rbm-access.ts",
+      "server/services/rbm/rbm-assessment-seed.ts",
+      "server/routes/mdx-rbm.ts",
+      "server/routes/mdx-rbm-data.ts",
+      "server/routes/mdx-rbm-board.ts",
+      "server/services/ana/AnaToolExecutor.ts",
+      "server/services/ana/evidence-literature-tool-defs.ts",
+      "server/bootstrap/register-inline-routes.ts",
+      "server/bootstrap/register-clinical-intel-routes.ts",
+      "server/services/rbm/rbm-actuator.ts",
+      "migrations/20260629_rbm_surfaces.sql",
+      "server/db/runtime.ts",
+      "server/db.ts",
+      "server/services/ana/ana-realtime.ts",
+      "server/services/ana/deep-investigation.ts"
+    ]
+  },
+  "phaseNotes": {
+    "access-red-harness-01": "Retained harness attempt: missing editorRoleRefusalText mock export prevented clean seed proof; the two other admission cases failed functionally.",
+    "access-red": "Clean unchanged-production RED: private HTTP create201, private registered tool read and unsigned active seed.",
+    "access-green-01": "Exploratory run only; source continuity not pinned.",
+    "access-boundary-red": "Functional alias/path/collection target-coherence failures; exact adapter/test sources retained.",
+    "access-green-02": "Exit1/successfalse although104 assertions passed; board transform failure from edit matching inner catch. Exact failed board source reconstructed and SHA-verified against run pin.",
+    "access-review-red-01": "Consumed creation-project anchors and verified DB-master commercial exception.",
+    "access-integrity-red": "Signed assessment/item immutability, retained mismatched child disclosure/copy, new amendment creator attribution/self-approval.",
+    "access-green-04": "Sole old actuator test expected obsolete metadata-last/copy arguments; intentional creator/program constraints updated.",
+    "access-seed-ownership-red": "Native caller rollback prematurely committed data; connected client reconnect failed.",
+    "access-roster-ddl-red": "Native SQL using actual creating migration site-score DDL failed on nonexistent deleted_at. Fixed predicate and retained actual-DDL test.",
+    "access-seed-dispatch-red": "Actual canonical pool in sqlClient attempted BEGIN through pool.query. Exact singleton identity now chooses leased wrapper; pinned no-reconnect control preserved.",
+    "access-green-07": "Final184/184,11files,26unchangedpins,exit0success true."
+  },
+  "boundedLimitations": [
+    "Synthetic unit/Express/native-PGlite proofs; no live clinical study, deployment or qualification claim.",
+    "ToolContext supplies verified userId, not full HTTP email/provider provenance. Existing DB-granted master standing is recognized; email/provider-only HTTP master exceptions are not fabricated from missing context.",
+    "Seed dispatch ownership is explicit and tested for all current construction contracts: exact canonical pool leases; pinned current idle clients own seed boundary; explicit caller-owned helper never commits caller transaction. Future dispatcher changing these contracts must choose transaction ownership deliberately."
+  ],
+  "interfaces": {
+    "roster": "GET /api/mdx-rbm/rbm-programs -> {success:true,data:[{id,label,code?,productType?,programType?}],total,meta:{reconciliationRequired?,message?}}; actual accessible canonical UUID/name, strict metadata boolean OR live legacy RBM records; no grants or automatic seed.",
+    "currentProgram": "requireRbmProgram(query,actor,{programId?,records?:[{kind,id}]},write?) -> canonical program UUID; current actor/project admission and row coherence; same-tx writers recheckRbmWrite(req,tx).",
+    "seed": "seedRbmAssessment(pinnedClient,actor,input,ownership:owned|caller-owned); seedRbmAssessmentFromPool(pool,actor,input); one private DRAFT seed body.",
+    "immutability": "requireDraftAssessment(exec,org,id,programId?,lock:share|update); signed assessment and linked factors freeze; existing /amend produces new attributed draft."
+  },
+  "noGitMutations": true,
+  "finalFocusedRunSource": "green07 exact pins; then two production files received four behavior-preserving lint extractions; no tests changed",
+  "postGreen07Extractions": [
+    {
+      "path": "server/routes/mdx-rbm.ts",
+      "green07Sha256": "6587472f7f692419b3a9f73d7a4befa0e8fe0db3fe54fe760fc07c021e62b53f",
+      "currentSha256": "5a3de2666cff3b64358b15182d61f39b817a5724264d781d203894660f58de8f"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "green07Sha256": "6340c0eafc0bde783b9b032da205ee5325145898e566983a5d57f9280fa65f46",
+      "currentSha256": "aa3e435a7241c45a3daf25591fb5d1e180293c52e0edb109b1b4bed5cba06f26"
+    }
+  ],
+  "rootPostExtractionChecks": "pending",
+  "independentExtractionReadReview": "/workspace/.cloud-setup/rbm-navigation/access-lint-refactor-review.json",
+  "noGlobalTestLintTypecheckBuildCommandsRun": true
+}

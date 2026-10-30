@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-30T16:53:46.559580+00:00",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx": "a97ddb9b2f71773670acff8aad329b4b8d20c354377ebccf4467860c852e5620",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "fc480bcd1f210c77c9068daeff4576f7930d7d1dc0968cb8a82a8806c8f57b22",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "b047240c5cca9cbc51e0de7b6472531a7d2f5d5cb8b8ec814afaea9ac51a7f64",
+    "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx": "276d5cba77df08eeace315a2f645e1529fc04ae4535b3a29f9a538675cc7ff72"
+  }
+}

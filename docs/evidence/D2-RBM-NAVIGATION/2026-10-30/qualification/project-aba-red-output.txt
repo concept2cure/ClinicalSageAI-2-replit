@@ -1,0 +1,153 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > opens the selected empty project instead of the first roster row and does not seed data
+ ↓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > requires a choice without a shell project and carries an admitted choice to Vault and Tasks
+ ↓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > does not replace an unavailable explicit project with another project
+ ↓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > withdraws the old project while the next board is pending
+ ↓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > retires retained project selection after account replacement and project A to B to A
+ × client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > retires the old selector and admits a fresh visit after a batched project A to B to A 5196ms
+   → Unable to find an element with the text: No RBM data for Actual project A yet. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33maria-live[39m=[32m"polite"[39m
+      [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-empty-t"[39m
+      [36m>[39m
+        [0mRisk-based monitoring is unavailable for this session[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-empty-h"[39m
+      [36m>[39m
+        [0mReopen monitoring after selecting your account and project.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33maria-live[39m=[32m"polite"[39m
+      [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-empty-t"[39m
+      [36m>[39m
+        [0mRisk-based monitoring is unavailable for this session[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-empty-h"[39m
+      [36m>[39m
+        [0mReopen monitoring after selecting your account and project.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ↓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > blocks retained navigation after raw browser bearer drift or unmount
+ ↓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > preserves the selected project across canonical bearer refresh without extra reads
+ ↓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > reports a malformed roster read as failure, with no wrong-project board
+ ↓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > reports a unavailable roster read as failure, with no wrong-project board
+ ↓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > keeps relationship reconciliation distinct from a successful empty roster
+ ↓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > opens the existing module for the same confirmed opted-in project
+ ↓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true (false)
+ ↓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true (undefined)
+ ↓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true ("true")
+ ↓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > preserves the existing availability verdict
+ ↓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires a retained entry after project A to B to A
+ × client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an old entry and admits the fresh entry after a batched project A to B to A 537ms
+   → expected "vi.fn()" to be called once with arguments: [ 'rbm' ]
+
+Number of calls: 0
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an old entry and admits the fresh entry after a batched project A to B to A
+AssertionError: expected "vi.fn()" to be called once with arguments: [ 'rbm' ]
+
+Number of calls: 0
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx:73:43
+     71|     const fresh = await screen.findByRole('button', { name: /Open risk…
+     72|     oldOpen(); expect(onNav).not.toHaveBeenCalled();
+     73|     fireEvent.click(fresh); expect(onNav).toHaveBeenCalledExactlyOnceW…
+       |                                           ^
+     74|   });
+     75| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project context > retires the old selector and admits a fresh visit after a batched project A to B to A
+TestingLibraryElementError: Unable to find an element with the text: No RBM data for Actual project A yet. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33maria-live[39m=[32m"polite"[39m
+      [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-empty-t"[39m
+      [36m>[39m
+        [0mRisk-based monitoring is unavailable for this session[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-empty-h"[39m
+      [36m>[39m
+        [0mReopen monitoring after selecting your account and project.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33maria-live[39m=[32m"polite"[39m
+      [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-empty-t"[39m
+      [36m>[39m
+        [0mRisk-based monitoring is unavailable for this session[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"c2c-empty-h"[39m
+      [36m>[39m
+        [0mReopen monitoring after selecting your account and project.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx:105:18
+    103|     const oldSelection = retained(picker(), 'onChange');
+    104|     await act(async () => { publishShellProject({ id: B }); publishShe…
+    105|     await screen.findByText('No RBM data for Actual project A yet');
+       |                  ^
+    106|     oldSelection({ target: { value: B } }); expect(readShellProject()?…
+    107|     fireEvent.change(picker(), { target: { value: B } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 16 skipped (18)
+   Start at  16:53:14
+   Duration  10.67s (transform 2.51s, setup 218ms, import 3.30s, tests 5.74s, environment 1.11s)
+
+JSON report written to /workspace/.cloud-setup/rbm-navigation/project-aba-red-results.json

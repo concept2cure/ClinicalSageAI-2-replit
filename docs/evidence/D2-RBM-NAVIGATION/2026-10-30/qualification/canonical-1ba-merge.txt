@@ -1,0 +1,42 @@
+Auto-merging .design/client-journey/INFORMATION_ARCHITECTURE.md
+Merge made by the 'ort' strategy.
+ .design/client-journey/INFORMATION_ARCHITECTURE.md |   5 +
+ .../v2/__tests__/protocolWorkflowGuide.test.tsx    |  63 ++++++
+ .../__tests__/protocolWorkflowNavigation.test.tsx  | 219 +++++++++++++++++++++
+ .../__tests__/protocolWorkflowSelection.test.tsx   | 141 +++++++++++++
+ .../v2/styles/protocol-dev-editing.css             |   7 +
+ .../src/concept2cure/v2/surfaces/ProtocolDev.tsx   |  13 +-
+ .../v2/surfaces/ProtocolDevSelection.tsx           |  14 +-
+ .../v2/surfaces/ProtocolDevWorkspace.tsx           |  38 ++--
+ .../v2/surfaces/ProtocolWorkNavigation.ts          |  43 ++++
+ .../v2/surfaces/ProtocolWorkflowGuide.tsx          |  32 +++
+ docs/design/STUDY_PROTOCOL_PROJECT_INITIATION.md   |  38 ++++
+ .../2026-10-30/README.md                           |  41 ++++
+ .../2026-10-30/enhanced-build.log.gz               | Bin 0 -> 4727 bytes
+ .../2026-10-30/enhanced-lint.log.gz                | Bin 0 -> 20 bytes
+ .../2026-10-30/enhanced-regression.log.gz          | Bin 0 -> 3353 bytes
+ .../2026-10-30/green-guide.log.gz                  | Bin 0 -> 3882 bytes
+ .../2026-10-30/guide-desktop.png                   | Bin 0 -> 33845 bytes
+ .../2026-10-30/guide-mobile.png                    | Bin 0 -> 33166 bytes
+ .../2026-10-30/initiation-push.log.gz              | Bin 0 -> 4616 bytes
+ .../2026-10-30/navigation-final.log.gz             | Bin 0 -> 724 bytes
+ .../2026-10-30/navigation-state.log.gz             | Bin 0 -> 584 bytes
+ .../2026-10-30/red-dialog-guard.log.gz             | Bin 0 -> 2338 bytes
+ .../2026-10-30/red-guide.log.gz                    | Bin 0 -> 8557 bytes
+ 23 files changed, 634 insertions(+), 20 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx
+ create mode 100644 client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx
+ create mode 100644 client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx
+ create mode 100644 client/src/concept2cure/v2/surfaces/ProtocolWorkNavigation.ts
+ create mode 100644 client/src/concept2cure/v2/surfaces/ProtocolWorkflowGuide.tsx
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/enhanced-build.log.gz
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/enhanced-lint.log.gz
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/enhanced-regression.log.gz
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/green-guide.log.gz
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/guide-desktop.png
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/guide-mobile.png
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/initiation-push.log.gz
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/navigation-final.log.gz
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/navigation-state.log.gz
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/red-dialog-guard.log.gz
+ create mode 100644 docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/red-guide.log.gz

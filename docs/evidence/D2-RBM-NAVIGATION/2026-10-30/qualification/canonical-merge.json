@@ -1,0 +1,11 @@
+{
+  "incoming": "6747c44709702ed016afa446ef52d2c99710614d",
+  "implementation": "b602ecad9",
+  "merged": "50bf225d3212c995f580a5375c7749f51028483b",
+  "normalMerge": true,
+  "productionConflicts": [],
+  "resolved": [
+    "docs/work-orders/README.md: retained unique current Vault handoff row and both own RBM/prior company rows."
+  ],
+  "dependencyDeclarationsAndLockUnchanged": true
+}

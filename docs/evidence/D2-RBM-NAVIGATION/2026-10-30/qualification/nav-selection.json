@@ -1,0 +1,21 @@
+{
+  "files": [
+    "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+    "server/services/entitlements/__tests__/rbm-launch-claim.test.ts"
+  ],
+  "inputs": [
+    "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+    "server/services/entitlements/__tests__/rbm-launch-claim.test.ts",
+    "client/src/concept2cure/v2/registryModel.ts",
+    "client/src/concept2cure/v2/Shell.tsx",
+    "client/src/concept2cure/v2/navEntitlements.tsx",
+    "client/src/concept2cure/v2/NavUnlockPanel.tsx",
+    "shared/constants/launch-scope.ts",
+    "shared/constants/ui-surface-registry.ui-v2.ts",
+    "server/services/entitlements/api-prefix-map.ts",
+    "server/services/entitlements/launch-scope-api.ts",
+    "server/services/entitlements/navigation-entitlements.ts"
+  ]
+}

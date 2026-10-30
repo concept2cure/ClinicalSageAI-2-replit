@@ -1,0 +1,35 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 7f5af0e27] Qualify RBM admission with the current assistant drafting context
+ 43 files changed, 4354 insertions(+), 88 deletions(-)
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-ana-exit.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-ana-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-ana-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-ana-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-ana.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-ana-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-ana-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-ana-results.json.gz
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-ana-selection.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-ana-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-ana-summary.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-ana-tests.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-vault-commit.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-vault-lint.json.gz
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-3ab7-ana-review.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-3ab7-merge.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-af226-merge.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-af226-source-unchanged.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/lint-ana-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-07-exit.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-07-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-07-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-07-summary.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-07-transcript.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-08-exit.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-08-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-08-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-08-summary.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-08-transcript.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/run-build-ana.sh.txt

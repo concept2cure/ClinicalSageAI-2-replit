@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-30T16:46:35.682402+00:00",
+  "commit": "6328a385bb54c2126d9c1f4b9f1835a0723a93bb",
+  "files": {
+    "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx": "6529590a0e180f1a1179c1c93599c308db7e410d024e4bd875b0870669b05cbc",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx": "e0b6f1678d3a2b60429b7bb484187e03077b4281a425c716622d2a0c23804531",
+    "server/services/entitlements/__tests__/rbm-launch-claim.test.ts": "5142abab8bbcce27b8f9ca3b0c173cc835574ee791a3295a0a42e73f5867e4a7",
+    "client/src/concept2cure/v2/registryModel.ts": "ba89a28135a8ad92e18468ce5cf6358fb821df06540b92913ce801e045e07112",
+    "client/src/concept2cure/v2/Shell.tsx": "1c5777170c14e5f0e1d5d8c5f1a2991019b2aca7ec37fa58fe8107b5f178ff66",
+    "client/src/concept2cure/v2/navEntitlements.tsx": "ab1071c9978943440ecd49c3cca3d95885ef0ca59d5c96a5d4d2aaabb6e914cf",
+    "client/src/concept2cure/v2/NavUnlockPanel.tsx": "4107a7abf4f0e7637293c9501f22d8b6163e7b0a83e8526304bcb1c85ba5492c",
+    "shared/constants/launch-scope.ts": "64f7ba4e86a892bb814df986f82b6e87d9107b1e2d2586d59463e62ff4932e5c",
+    "shared/constants/ui-surface-registry.ui-v2.ts": "151c266145d333539ccfd884aea70edf4814f03609aeab61c444f0c99b60a8b9",
+    "server/services/entitlements/api-prefix-map.ts": "818c7a40550af005b6d6fd99e9742b0b4acc38ce9ebebe5c39bfdb9ae45f8fc7",
+    "server/services/entitlements/launch-scope-api.ts": "56e43806061513fb555c4b840fd9a8da81356164345980942363b82a690dee35",
+    "server/services/entitlements/navigation-entitlements.ts": "77dc6456cb1a07c462a52cdc5da077ccb4b400bb6a08d607c25c68576b8145c1"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "files": [
+    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts"
+  ],
+  "inputs": [
+    "server/routes/mdx-rbm.ts",
+    "server/services/rbm/rbm-actuator.ts",
+    "server/services/part11/signature-persistence.ts",
+    "server/services/part11/governed-target-binders.ts",
+    "server/services/part11/resolve-signer-identity.ts",
+    "server/services/rbm/rbm-access.ts",
+    "server/db/requestDb.ts",
+    "migrations/20260629_rbm_surfaces.sql",
+    "migrations/20260918_rbm_author_attribution.sql",
+    "migrations/20260930_rbm_plan_versioning.sql",
+    "vitest.config.ts",
+    "server/services/rbm/rbm-signature-content.ts",
+    "scripts/ci/sign-ceremony-baseline.json",
+    "shared/schema.ts"
+  ]
+}

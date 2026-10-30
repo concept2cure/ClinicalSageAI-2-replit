@@ -1,0 +1,1699 @@
+{
+  "result": "passed",
+  "scope": "Actual NewProjectWizard, filing picker and providers in installed Chromium. Explicit synthetic filing-offer/identity/workspace HTTP GETs and an intercepted project-create POST response. No real application backend or project write, module grant, RBM seed, hosted acceptance, clinical or agency validation.",
+  "checks": [
+    {
+      "phase": "desktop",
+      "name": "Actual configuration starts with RBM unchecked",
+      "passed": true
+    },
+    {
+      "phase": "desktop",
+      "name": "Actual checkbox selects RBM and keeps the verified workspace",
+      "passed": true
+    },
+    {
+      "phase": "desktop",
+      "name": "Actual Review summary repeats the RBM selection",
+      "passed": true
+    },
+    {
+      "phase": "desktop",
+      "name": "Actual create handler sends the selected boolean and opens the exact mocked project receipt",
+      "passed": true,
+      "postPath": "/api/c2c/projects",
+      "riskBasedMonitoring": true,
+      "clientWorkspaceId": 21
+    },
+    {
+      "phase": "desktop",
+      "name": "Browser sends no RBM seed or commercial-grant request",
+      "passed": true
+    },
+    {
+      "phase": "desktop",
+      "name": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "viewport": 1440,
+      "scroll": 1440
+    },
+    {
+      "phase": "phone",
+      "name": "Actual configuration starts with RBM unchecked",
+      "passed": true
+    },
+    {
+      "phase": "phone",
+      "name": "Actual checkbox selects RBM and keeps the verified workspace",
+      "passed": true
+    },
+    {
+      "phase": "phone",
+      "name": "Actual Review summary repeats the RBM selection",
+      "passed": true
+    },
+    {
+      "phase": "phone",
+      "name": "Actual create handler sends the selected boolean and opens the exact mocked project receipt",
+      "passed": true,
+      "postPath": "/api/c2c/projects",
+      "riskBasedMonitoring": true,
+      "clientWorkspaceId": 21
+    },
+    {
+      "phase": "phone",
+      "name": "Browser sends no RBM seed or commercial-grant request",
+      "passed": true
+    },
+    {
+      "phase": "phone",
+      "name": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "viewport": 390,
+      "scroll": 390
+    }
+  ],
+  "requests": [
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/tenants",
+      "query": ""
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/clients",
+      "query": "?organizationId=7"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=510k"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=anda"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=annual_report"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_annual_report"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_cbe0"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_cbe30"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_distribution_report"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_pae_report"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_pas"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_pediatric_report"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_pmr_status_report"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bpdr"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=briefing"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cbe"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cber_lot_release"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cber_master_file"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cer"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=csr"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=de_novo"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=designation"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=dmf"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=dsur"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=eua_request"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=expanded_access_individual"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=expanded_access_intermediate"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=expanded_access_treatment"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=fast_track"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=hde"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ib"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=icf"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ide"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ind_amendment"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ind_annual_report"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ind_safety_report"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ind"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=interact_meeting"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd_approval"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd_licence"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivdr"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=jnda"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=jp_cdx"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=maa"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=mdl"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=mdr"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ninsho"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=orphan"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=pader"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=pas"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=pma"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=protocol"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=psp"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=psur"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=rems"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=rmat"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=sap"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=shonin"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=todokede"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=type_d_meeting"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cer&market=EU+%2F+Notified+Body"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=csr&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta&market=EMA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta&market=Health+Canada"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta&market=NMPA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta&market=PMDA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta&market=TGA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=ANVISA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=EU+%2F+Notified+Body"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=IEC"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=ISO"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=MHRA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=National+competent+authority"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=NMPA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=Swissmedic"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=TGA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=dmf&market=EMA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=dsur&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ib&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=icf&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd_approval&market=PMDA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd_licence&market=Health+Canada"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd&market=EU+%2F+Notified+Body"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd&market=EU+reference+laboratory"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd&market=National+competent+authority"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd&market=NMPA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd&market=TGA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivdr&market=EMA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivdr&market=EU+%2F+Notified+Body"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivdr&market=National+competent+authority"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=jnda&market=PMDA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=jp_cdx&market=PMDA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=maa&market=EMA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=maa&market=NMPA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=mdl&market=Health+Canada"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=mdr&market=EU+%2F+Notified+Body"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=mdr&market=National+competent+authority"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=ANVISA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=CDSCO"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=EDQM"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=EMA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=Health+Canada"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=HSA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=IMDRF"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=ISO"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=MFDS"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=MHRA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=National+competent+authority"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=NMPA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=PMDA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=Swissmedic"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=TGA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ninsho&market=Registered+certification+body"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=protocol&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=psur&market=EMA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=sap&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=shonin&market=PMDA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=todokede&market=PMDA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ind&market=FDA"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/clients",
+      "query": "?purpose=project-intake"
+    },
+    {
+      "phase": "desktop",
+      "method": "GET",
+      "path": "/api/clients",
+      "query": "?purpose=project-intake"
+    },
+    {
+      "phase": "desktop",
+      "method": "POST",
+      "path": "/api/c2c/projects",
+      "query": ""
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/tenants",
+      "query": ""
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/clients",
+      "query": "?organizationId=7"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=510k"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=anda"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=annual_report"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_annual_report"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_cbe0"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_cbe30"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_distribution_report"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_pae_report"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_pas"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_pediatric_report"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla_pmr_status_report"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bla"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=bpdr"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=briefing"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cbe"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cber_lot_release"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cber_master_file"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cer"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=csr"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=de_novo"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=designation"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=dmf"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=dsur"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=eua_request"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=expanded_access_individual"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=expanded_access_intermediate"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=expanded_access_treatment"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=fast_track"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=hde"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ib"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=icf"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ide"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ind_amendment"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ind_annual_report"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ind_safety_report"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ind"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=interact_meeting"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd_approval"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd_licence"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivdr"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=jnda"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=jp_cdx"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=maa"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=mdl"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=mdr"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ninsho"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=orphan"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=pader"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=pas"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=pma"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=protocol"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=psp"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=psur"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=rems"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=rmat"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=sap"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=shonin"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=todokede"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=type_d_meeting"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cer&market=EU+%2F+Notified+Body"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=csr&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta&market=EMA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta&market=Health+Canada"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta&market=NMPA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta&market=PMDA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=cta&market=TGA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=ANVISA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=EU+%2F+Notified+Body"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=IEC"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=ISO"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=MHRA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=National+competent+authority"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=NMPA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=Swissmedic"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=device&market=TGA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=dmf&market=EMA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=dsur&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ib&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=icf&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd_approval&market=PMDA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd_licence&market=Health+Canada"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd&market=EU+%2F+Notified+Body"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd&market=EU+reference+laboratory"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd&market=National+competent+authority"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd&market=NMPA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivd&market=TGA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivdr&market=EMA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivdr&market=EU+%2F+Notified+Body"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ivdr&market=National+competent+authority"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=jnda&market=PMDA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=jp_cdx&market=PMDA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=maa&market=EMA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=maa&market=NMPA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=mdl&market=Health+Canada"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=mdr&market=EU+%2F+Notified+Body"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=mdr&market=National+competent+authority"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=ANVISA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=CDSCO"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=EDQM"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=EMA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=Health+Canada"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=HSA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=IMDRF"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=ISO"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=MFDS"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=MHRA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=National+competent+authority"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=NMPA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=PMDA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=Swissmedic"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=nda&market=TGA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ninsho&market=Registered+certification+body"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=protocol&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=psur&market=EMA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=sap&market=ICH+%2F+Global"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=shonin&market=PMDA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=todokede&market=PMDA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/submissions/market-support",
+      "query": "?applicationType=ind&market=FDA"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/clients",
+      "query": "?purpose=project-intake"
+    },
+    {
+      "phase": "phone",
+      "method": "GET",
+      "path": "/api/clients",
+      "query": "?purpose=project-intake"
+    },
+    {
+      "phase": "phone",
+      "method": "POST",
+      "path": "/api/c2c/projects",
+      "query": ""
+    }
+  ],
+  "payloads": [
+    {
+      "phase": "desktop",
+      "body": {
+        "name": "Synthetic RBM desktop project",
+        "productName": "Synthetic clinical product",
+        "programType": "ind",
+        "productType": "drug",
+        "primaryAgency": "FDA",
+        "submissionTypeId": "us_ind",
+        "targetSubmissionDate": null,
+        "teamMembers": [],
+        "riskBasedMonitoring": true,
+        "clientWorkspaceId": 21
+      },
+      "clientWorkspaceHeader": "21",
+      "organizationHeader": "7",
+      "hasBearer": true
+    },
+    {
+      "phase": "phone",
+      "body": {
+        "name": "Synthetic RBM phone project",
+        "productName": "Synthetic clinical product",
+        "programType": "ind",
+        "productType": "drug",
+        "primaryAgency": "FDA",
+        "submissionTypeId": "us_ind",
+        "targetSubmissionDate": null,
+        "teamMembers": [],
+        "riskBasedMonitoring": true,
+        "clientWorkspaceId": 21
+      },
+      "clientWorkspaceHeader": "21",
+      "organizationHeader": "7",
+      "hasBearer": true
+    }
+  ],
+  "unexpected": [],
+  "errors": [],
+  "consoleErrors": [],
+  "selectedInputsUnchanged": true,
+  "files": {
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "e09aa607759335a987aa75e269c3c75aa00dab1607c8858c21f66dba88da5fc0",
+    "client/src/concept2cure/v2/surfaces/AnaVerbs.tsx": "be11c29c64b321af918a4106a89d79a600c680cd4cf28db313cdad75b7dd67e4",
+    "client/src/concept2cure/v2/surfaces/RegistryBridge.tsx": "c315f79fdef9346e7b73ddc7646fc7fe09254172544fc1f3c09f14e7db06228d",
+    "client/src/concept2cure/v2/surfaces/projectIntakeRequest.ts": "950f135639e15dafa2c2f1b4d9b8231e8000206a8b54fcad1fbf10a7deea693f",
+    "client/src/concept2cure/v2/surfaces/ProjectDiscoveryHandoff.tsx": "c1fb67de2f8e19d60db750a1e3564c307b0d12face186f3fac59bc9e297aa7eb",
+    "client/src/concept2cure/v2/MarketSupportLine.tsx": "1ee2f1ae5661e85a247c069ce029e28ffc04f2008865101e730fd7914169ca14",
+    "client/src/concept2cure/v2/dataConnect.tsx": "51b03e8cf336df448663742c5b31bb4dc9c93f6879b437cc490420fcc6809815",
+    "client/src/concept2cure/v2/shellProject.ts": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
+    "client/src/contexts/TenantContext.tsx": "716e80a1c3912f4953d5efa655cd3b52946696258c4f19a462d4096cc2d73387",
+    "client/src/services/portal/authService.tsx": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54",
+    "client/src/utils/authToken.ts": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c",
+    "client/src/lib/queryClient.ts": "169dd465b658b06756d3dda372bed53ef587052cd9b86702486d3852e4b6da3a",
+    "shared/project-intake-workspace.ts": "5dd5aa19a6174f5f9ab81fa52b47b711e69e60667203ddc7a5a25f1dae222244",
+    "shared/regulatory/filing-catalog.ts": "9e5aa1f6ec3a4c45a591a61d99d3bd5ebbcedaeb7f9b48918ebc5f9ffe68e5fc",
+    "shared/regulatory/filing-document-classes.ts": "6f32afc04c3a02344906a67d3c5deaa6245df464547f029caa58b7dc2f271511",
+    "shared/constants/domain/product-types.ts": "faf8d10d34710b8c1bf93b7c96c2dc1dbf90fe00c35d31f91b61a86b71c58d02",
+    "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
+    "client/src/index.css": "c6f279c1a9c09a86c7087eaf44e4b42ba377011f91ff9859131d145a83d6594b",
+    "client/src/concept2cure/v2/styles/app-v2.css": "83409a950412bf267f232e6ad333c7cf6f9c63ba7ece242f154b4c3554dd1270",
+    "client/src/concept2cure/v2/styles/surfaces-v2.css": "b45f5b5123e4402f274cd2c3e908e83ff6d9070221dead41ec16e23142809246",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css": "8e5341cb1be8062c3c696d4645d1b2df5a01b93e9c5d89aff0c73f9da2f467ce",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "a9c012ae4b2cc88dd0292a4971288bc4d989e666d9667b5995c1ccd882c55b20",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "e7e63f77b32041d0981edc522f8194e7d279ed9caa4032dcedf7ccf562189551",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "d3e22b96944d449e53c43812322754168c9fc822e9c0737876fe92e3cb226bb7",
+    "private:browser-server.mjs": "769e4b841b95002755ef654c9c98bf71e7c9469d43a65f782a4ec3b1cdce6ffb",
+    "private:browser-wizard-index.html": "70a4b89c3a0cd4cd99c2df25631c171e31d8c7d048214e261eabb2e1783fff4b",
+    "private:browser-wizard.tsx": "850a7778c2adcbca61bf1003f2e4af007e43afd15be45aca968b3a03d3749202",
+    "private:browser-wizard-final-check.mjs": "7ce6c0ab6ed78c8969d19026ab7c6bddb32535c8647da2f7749b19167e99c8e1"
+  },
+  "finishedAt": "2026-10-30T17:03:25.323Z"
+}

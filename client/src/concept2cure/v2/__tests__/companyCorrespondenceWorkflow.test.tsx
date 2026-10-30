@@ -7,12 +7,13 @@ vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof impo
 import { CompanyCorrespondenceDraft } from '../surfaces/CompanyCorrespondenceDraft';
 import { CompanyFilingIdentityReview } from '../surfaces/CompanyFilingIdentityReview';
 import { CompanyLegalCommunicationLinks } from '../surfaces/CompanyLegalCommunicationLinks';
+import { endCompanySession, seedCompanySession } from './_company-session-fixture';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111', DOC = '22222222-2222-4222-8222-222222222222';
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const onNav = vi.fn();
-beforeEach(() => { apiRequest.mockReset(); onNav.mockReset(); sessionStorage.clear(); localStorage.clear(); delete window.C2C_EDITOR_TARGET; });
-afterEach(cleanup);
+beforeEach(() => { apiRequest.mockReset(); onNav.mockReset(); sessionStorage.clear(); localStorage.clear(); delete window.C2C_EDITOR_TARGET; seedCompanySession({ organizationId: '7' }); });
+afterEach(() => { cleanup(); endCompanySession(); vi.unstubAllGlobals(); });
 const fillDraft = () => {
   fireEvent.click(screen.getByRole('button', { name: 'Prepare correspondence in Authoring' }));
   fireEvent.change(screen.getByLabelText('Draft correspondence text'), { target: { value: 'Reviewed response draft.' } });

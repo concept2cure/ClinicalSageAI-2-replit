@@ -1,0 +1,584 @@
+import { QueryClient, MutationCache, type QueryFunction } from '@tanstack/react-query';
+import { getAuthToken, getOrgId } from '@/utils/authToken';
+import { announceSessionEnded, sessionEndReasonOfResponse } from '../utils/sessionEnd';
+import { errorCodeOf, isErrorCode } from './apiErrorCode';
+
+export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
+/** Preserves HTTP semantics for consumers that must distinguish forbidden,
+ * unavailable, validation, and empty states without parsing error strings. */
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly payload?: unknown,
+    /** The server's machine-readable error code, when it sent one. Consumers
+     *  that need to branch on the failure read THIS, never `message`. */
+    public readonly code?: string,
+    /** The request id the server echoed in `X-Request-Id`, so a user can quote
+     *  something support can find the log line by. */
+    public readonly correlationId?: string,
+  ) {
+    super(message);
+    this.name = 'ApiRequestError';
+  }
+}
+
+/* `isErrorCode` (an enum-shaped token such as PENDING_STORE, never shown to a
+   user) and `errorCodeOf` live in ./apiErrorCode, so useFetchJson reads codes
+   with the same rule without importing this module. Re-exported below. */
+
+/**
+ * Markers of a message that came from the infrastructure rather than from a
+ * person, and must never be rendered.
+ *
+ * Guardrail: no SQL, table name, file path, env var or API route may appear in
+ * client-facing UI of a regulated product. That is an information-disclosure
+ * finding, not a cosmetic one.
+ *
+ * The server should not be sending these at all — and where it does, that is
+ * its own defect to fix. This is the last line before a screen, and every
+ * pattern below was observed reaching one during UAT: the device-workstream
+ * surface rendered a full Drizzle `Failed query: select "id", …` as its page
+ * body, and the software-lifecycle panel rendered `relation
+ * "software_lifecycle_items" does not exist`.
+ *
+ * The distinction that makes this safe to apply broadly: a driver message and a
+ * validation message are not hard to tell apart. "name is required" contains
+ * none of these; `select "id"` contains one by construction.
+ */
+const INTERNAL_MARKERS: RegExp[] = [
+  /\brelation\s+"/i, // relation "x" does not exist
+  /\b(?:column|table|schema|constraint)\s+"[^"]+"\s+(?:of|does not|already)/i,
+  /failed query/i,
+  /\b(?:select|insert\s+into|update|delete\s+from)\s+["'`]/i, // SQL with a quoted identifier
+  /\bsyntax error at or near\b/i,
+  /\bduplicate key value violates\b/i,
+  /\b(?:pg_[a-z_]{3,}|information_schema)\b/,
+  /\/api\//, // an API route
+  // Env var. Multi-segment names matter: ESTAR_TEMPLATE_DIR is three
+  // segments, and a single-segment pattern misses it — which is the exact
+  // string the remediation's verify step names.
+  /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_(?:URL|KEY|SECRET|TOKEN|DIR|PATH|PASSWORD|DSN|HOST|PORT)\b/,
+  /(?:^|\s)\/(?:home|usr|var|opt|app|etc)\//, // absolute file path
+  /\.(?:ts|tsx|js|mjs|cjs):\d+/, // source location
+  /\bnode_modules\b/,
+  /^\s*at\s+\S+\s+\(/m, // a stack frame
+  /\b(?:ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ECONNRESET)\b/,
+  /* A message that BEGINS with a raw transport status.
+     `useFetchJson` builds `HTTP ${status}: ${body.slice(0, 200)}` — so up to
+     two hundred characters of unparsed response body ride along behind it, and
+     that body is whatever the failing layer emitted: a proxy's HTML error page,
+     a stack trace, a database error. The markers above only catch it when the
+     body happens to contain a phrase one of them knows, which makes the
+     guarantee depend on luck. The prefix itself is the reliable signal, and
+     "HTTP 500" carries nothing a user can act on anyway.
+     ANCHORED, deliberately. Several hooks write deliberate copy of the form
+     "the server gave no reason (HTTP 500)" — a real sentence a person wrote,
+     with the status in parentheses at the end. Matching that would delete the
+     message instead of the jargon. */
+  /^\s*HTTP\s+\d{3}\b/,
+];
+
+function looksInternal(value: string): boolean {
+  return INTERNAL_MARKERS.some((re) => re.test(value));
+}
+
+/**
+ * The last gate before a string reaches a screen.
+ *
+ * `serverMessage` already refuses to lift infrastructure text out of an error
+ * envelope, so in the normal path nothing reaching a surface needs this. It
+ * exists because "the normal path" is not a guarantee anyone can check at
+ * review time: a string can arrive at a component from a caught exception, a
+ * websocket frame, a field the envelope reader never saw, or a caller written
+ * next year.
+ *
+ * `<ErrorState>` runs every message through this, which is what turns "no
+ * client-rendered string contains SQL, a table name, a file path, an env var or
+ * an API route" from a convention into a property of the component. A surface
+ * that renders through it cannot leak, whatever it is handed.
+ */
+export function redactInternals(value: unknown, fallback: string): string {
+  if (typeof value !== 'string' || !value.trim()) return fallback;
+  if (isErrorCode(value)) return fallback;
+  return looksInternal(value) ? fallback : value;
+}
+
+/**
+ * What to show a user when the server sent no usable copy of its own.
+ *
+ * Deliberately says nothing about routes, stores or exceptions — guardrail: no
+ * API route, table name, file path or env var may reach client-facing UI. The
+ * status is included because "try again" is the wrong advice for a 403 and the
+ * right advice for a 503, and the number is the only thing that separates them
+ * once the internals are stripped.
+ */
+function fallbackMessage(status: number): string {
+  // Each names the cause AND the next step. A 403 is the one case where "your
+  // administrator" is the right actor — org admins really can grant access
+  // (services/c2c/program-access.ts) — so it is said here and nowhere else.
+  if (status === 401) return 'Sign in again to continue.';
+  if (status === 403) {
+    return 'You do not have permission for this action. Contact your administrator if you need access.';
+  }
+  if (status === 404) return "Couldn't find that item. It may have been moved or removed.";
+  if (status === 409) return 'That change conflicts with the current state. Reload and try again.';
+  if (status === 413) return 'That file is too large to upload. Reduce the file size and try again.';
+  if (status === 429) return 'Too many requests. Wait a moment and try again.';
+  if (status === 503) return 'That service is temporarily unavailable. Try again shortly.';
+  if (status >= 500) return 'The server could not complete this request. Try again.';
+  return "Couldn't complete that request. Try again.";
+}
+
+/**
+ * Lift the most useful HUMAN sentence out of an error envelope, plus the
+ * machine code beside it.
+ *
+ * ── The defect this replaces ─────────────────────────────────────────────────
+ * This was one expression:
+ *
+ *   errorPayload?.error?.message || errorPayload?.error || errorPayload?.message
+ *
+ * Against `{ error: 'PENDING_STORE', message: 'The … store is not provisioned…' }`
+ * the second term wins — `error` is a non-empty string — so the third is never
+ * reached and the caller is handed the literal token `PENDING_STORE`. Because
+ * `apiRequest` THROWS, every surface downstream of it inherited that string:
+ * the New Project wizard rendered it in its error banner, and dataConnect's
+ * `failureFrom` put it in the `error` field every `useLiveData` consumer shows.
+ * A regulated product was displaying an internal enum as its user-facing copy.
+ *
+ * Order is now: nested message, top-level message, a non-code `error` string,
+ * then a generic sentence keyed to the status. The code is returned separately
+ * so consumers that legitimately branch on `PENDING_STORE` still can.
+ */
+export function extractApiError(
+  payload: unknown,
+  status: number,
+): { message: string; code?: string } {
+  return { message: serverMessage(payload) ?? fallbackMessage(status), code: errorCodeOf(payload) };
+}
+
+/** The server's machine-readable error code, when it sent one (./apiErrorCode). */
+export { errorCodeOf };
+
+/**
+ * The human sentence the SERVER actually sent, or null if it sent none worth
+ * showing.
+ *
+ * Split out from `extractApiError` because the two callers need opposite
+ * things at the end of the chain. A surface with no domain context wants a
+ * generic sentence keyed to the status (`extractApiError`); a surface that has
+ * one — "Could not create the task." — wants ITS OWN fallback rather than
+ * "Couldn't complete that request." Returning null lets each choose, and keeps
+ * one implementation of the part that is easy to get wrong: deciding whether a
+ * given string is copy at all.
+ */
+export function serverMessage(payload: unknown): string | null {
+  const p = (payload ?? {}) as Record<string, any>;
+  const err = p.error;
+
+  /** A candidate is usable only if it is a real string that is neither an enum
+   *  token nor infrastructure text. */
+  const usable = (v: unknown): string | null =>
+    typeof v === 'string' && v.trim() && !isErrorCode(v) && !looksInternal(v) ? v : null;
+
+  const message =
+    usable(err?.message) ??
+    usable(p.message) ??
+    // `{ error: CODE, detail: '<sentence>' }` is the c2c actions envelope — the
+    // governed-action refusals (separation of duties, a stale precondition, a
+    // blocked dispatch gate) put their reason in `detail`. Without this the
+    // refusal degrades to a generic "you do not have permission", which is the
+    // one thing a reviewer must NOT be told when the real answer is "you may
+    // not sign your own work".
+    usable(p.detail) ??
+    // `{ error: CODE, details: { message: '<sentence>' } }` is the
+    // api-response `clientError(res, status, code, details)` envelope. The
+    // biostatistics bridge refuses with `{ error: 'CANNOT_SIZE', details: {
+    // message: "<the engine's own sentence>" } }`; because CANNOT_SIZE IS
+    // enum-shaped, `usable(err)` below rejects it and the refusal degraded to
+    // "Couldn't complete that request. Try again." — generic copy, and
+    // "try again" is the wrong advice for a design the engine will refuse
+    // every time until an input changes.
+    usable((p.details as Record<string, unknown> | undefined)?.message) ??
+    // A bare `error` string is copy only when it passes the same two filters.
+    usable(err);
+  return message === null ? null : withQuotedReference(message, p.correlationId ?? err?.correlationId);
+}
+
+/** A correlation id as the server issues one (X-Request-Id): letters, digits, dashes. */
+const REFERENCE_ID = /^[A-Za-z0-9][A-Za-z0-9-]{5,79}$/;
+
+/**
+ * The server's 500 sentence ends "Quote the reference below if you contact
+ * support" and sends the reference as `correlationId` beside the message
+ * (server/lib/api-response.ts). Every surface rendered the sentence and no
+ * reference (QA 2026-10-08, j4), so the reference is printed where the sentence
+ * says it is. Only for a message that points at it, and only an id-shaped value.
+ */
+function withQuotedReference(message: string, correlationId: unknown): string {
+  if (!/reference below/i.test(message)) return message;
+  if (typeof correlationId !== 'string' || !REFERENCE_ID.test(correlationId)) return message;
+  return `${message} Reference: ${correlationId}.`;
+}
+
+interface GetQueryFnOptions {
+  on401?: 'throw' | 'returnNull';
+}
+
+function getCachedAuthToken(): string | null {
+  return getAuthToken();
+}
+
+function getCachedOrgId(): string {
+  return getOrgId();
+}
+
+/** Force-refresh the cached org/auth values (call after login or org switch). */
+export function invalidateApiCache() {
+  // No-op — auth state is now managed by authToken module.
+  // Kept for backward compatibility with callers.
+}
+
+/**
+ * A write that committed while its 21 CFR Part 11 §11.10(e) audit row did not.
+ *
+ * `auditService.logAction` never rejects on a persistence failure; it resolves
+ * an outcome, and the routes WO-16C converted carry that outcome to the browser
+ * in one of two wire forms:
+ *
+ *   - a body object `{ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', … }`,
+ *     conventionally at `auditTrail`, `meta.auditTrail` or `details.auditTrail`
+ *     (server/services/audit/audit-write-outcome.ts, `AuditRowOutcome`);
+ *   - the headers `X-Audit-Row-Persisted: false` / `X-Audit-Row-Code`, where a
+ *     204 or a verbatim proxy leaves no body to put it in (exposed to the
+ *     browser by server/middleware/enterprise-security.ts).
+ *
+ * Until 2026-09-24 nothing under client/src read either, so the server told the
+ * truth and every surface still said "Saved". This is the one reader. It
+ * matches on the CODE, not on `persisted` alone: a draft that is "not persisted
+ * yet" is not a lost audit row, and a notice that fires on a healthy save
+ * teaches people to ignore it.
+ *
+ * Bounded (depth and node count) and cycle-safe, because it runs over every
+ * successful write's response and must never be what breaks one.
+ */
+export const AUDIT_ROW_NOT_PERSISTED_EVENT = 'c2c:audit-row-not-persisted';
+export const AUDIT_ROW_NOT_PERSISTED_CODE = 'AUDIT_ROW_NOT_PERSISTED';
+export const AUDIT_ROW_NOT_RETRIEVABLE_CODE = 'AUDIT_ROW_NOT_RETRIEVABLE';
+
+export interface AuditRowNotPersistedDetail {
+  method: ApiRequestMethod;
+  /** The request path without its query string. Diagnostic, not user copy. */
+  path: string;
+  code: string;
+  /** `X-Request-Id`, so the user can quote something the server log is keyed by. */
+  correlationId?: string;
+}
+
+const AUDIT_SCAN_MAX_DEPTH = 6;
+const AUDIT_SCAN_MAX_NODES = 2000;
+
+export function findUnpersistedAuditRow(headers: Headers, body: unknown): { code: string } | null {
+  if (headers.get('X-Audit-Row-Persisted') === 'false') {
+    return { code: headers.get('X-Audit-Row-Code') || AUDIT_ROW_NOT_PERSISTED_CODE };
+  }
+  if (headers.get('X-Audit-Row-Persisted') === 'true' && headers.get('X-Audit-Row-Chained') === 'false') {
+    return { code: AUDIT_ROW_NOT_RETRIEVABLE_CODE };
+  }
+  const seen = new Set<object>();
+  let visited = 0;
+  const scan = (node: unknown, depth: number, auditEnvelope = false): string | null => {
+    if (node === null || typeof node !== 'object' || depth > AUDIT_SCAN_MAX_DEPTH) return null;
+    if (seen.has(node) || ++visited > AUDIT_SCAN_MAX_NODES) return null;
+    seen.add(node);
+    const rec = node as Record<string, unknown>;
+    if (rec.persisted === false && rec.code === AUDIT_ROW_NOT_PERSISTED_CODE) return AUDIT_ROW_NOT_PERSISTED_CODE;
+    if (auditEnvelope && rec.persisted === true && rec.chained === false) return AUDIT_ROW_NOT_RETRIEVABLE_CODE;
+    // Canonical request metadata must not sit behind thousands of table rows
+    // in the bounded fallback scan. Inspect these envelopes first at each level;
+    // the same depth, node and cycle limits still apply.
+    for (const key of ['auditTrail', 'meta', 'details']) {
+      if (Object.hasOwn(rec, key)) {
+        const code = scan(rec[key], depth + 1, key === 'auditTrail');
+        if (code) return code;
+      }
+    }
+    const children = Array.isArray(node) ? node : Object.values(rec);
+    for (const child of children) {
+      const code = scan(child, depth + 1);
+      if (code) return code;
+    }
+    return null;
+  };
+  const code = scan(body, 0);
+  return code ? { code } : null;
+}
+
+function announceUnpersistedAuditRow(detail: AuditRowNotPersistedDetail): void {
+  try {
+    window.dispatchEvent(new CustomEvent<AuditRowNotPersistedDetail>(AUDIT_ROW_NOT_PERSISTED_EVENT, { detail }));
+  } catch {
+    /* No window (SSR, a test without jsdom). The response itself still carries
+       the outcome; this channel only makes it visible. */
+  }
+}
+
+/**
+ * Inspect a successful request's explicit audit headers and a write's JSON
+ * response for a lost audit row, without touching
+ * the body the caller is about to read (`clone()`), and without delaying the
+ * caller (not awaited). Only JSON bodies are parsed: a streamed or binary
+ * response is never buffered for this.
+ *
+ * `apiRequest` and `apiUpload` call this on every response. It is exported for
+ * the few writes that still call `fetch` directly (onboarding sends its own
+ * headers): call it with the Response, as they are, before reading the body.
+ */
+export function probeAuditRowOutcome(method: ApiRequestMethod, url: string, response: Response): void {
+  try {
+    inspectWriteResponse(method, url, response);
+  } catch {
+    /* A response object without the full Response surface (a hand-rolled test
+       double, a polyfill). The write itself succeeded and is returned as-is. */
+  }
+}
+
+function inspectWriteResponse(method: ApiRequestMethod, url: string, response: Response): void {
+  if (!response.ok) return;
+  const detailFor = (code: string): AuditRowNotPersistedDetail => ({
+    method,
+    path: url.split('?')[0],
+    code,
+    correlationId: response.headers.get('X-Request-Id') ?? undefined,
+  });
+  const fromHeaders = findUnpersistedAuditRow(response.headers, null);
+  if (fromHeaders) {
+    announceUnpersistedAuditRow(detailFor(fromHeaders.code));
+    return;
+  }
+  // Downloads can be audited GETs. Their explicit header reports this request's
+  // outcome; JSON history rows on an ordinary GET describe earlier actions.
+  if (method === 'GET') return;
+  if (response.status === 204 || !(response.headers.get('Content-Type') || '').includes('application/json')) return;
+  let probe: Response;
+  try {
+    probe = response.clone();
+  } catch {
+    return; // body already used by a wrapper; nothing to read
+  }
+  probe
+    .json()
+    .then((body: unknown) => {
+      const found = findUnpersistedAuditRow(new Headers(), body);
+      if (found) announceUnpersistedAuditRow(detailFor(found.code));
+    })
+    .catch(() => {
+      /* Not JSON after all. The caller's own parse reports that, not this. */
+    });
+}
+
+/**
+ * Refuse a non-success response with the canonical sanitized server message.
+ * `apiRequest` intentionally returns 401 so session-aware callers can handle
+ * it. A mutation must still check that response before confirming a write.
+ * Successful bodies are left untouched for the caller's receipt reader.
+ */
+export async function assertApiResponseOk(response: Response): Promise<void> {
+  if (response.ok) return;
+  const correlationId = response.headers.get('X-Request-Id') ?? undefined;
+  const contentType = response.headers.get('Content-Type') || '';
+  if (contentType.includes('application/json')) {
+    const errorPayload = await response.json().catch(() => ({}));
+    const { message, code } = extractApiError(errorPayload, response.status);
+    throw new ApiRequestError(message, response.status, errorPayload, code, correlationId);
+  }
+  // A non-JSON body belongs to a failing upstream layer, never to user copy.
+  const errorText = await response.text();
+  throw new ApiRequestError(fallbackMessage(response.status), response.status, errorText, undefined, correlationId);
+}
+
+export const apiRequest = async (
+  method: ApiRequestMethod,
+  url: string,
+  body?: any,
+  customHeaders?: Record<string, string>
+): Promise<Response> => {
+  const organizationId = getCachedOrgId();
+  const authToken = getCachedAuthToken();
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    'x-organization-id': organizationId,
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    ...customHeaders,
+  };
+
+  const options: RequestInit = {
+    method,
+    headers,
+    credentials: 'include',
+  };
+
+  if (body && method !== 'GET') {
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url, options);
+
+  // P1-1: a 401 that names SESSION_IDLE or SESSION_LIFETIME is a session the
+  // server ended on its own account. The auth provider ends the client's; this
+  // module cannot import it, so it announces. The response is the caller's.
+  if (response.status === 401) {
+    const ended = await sessionEndReasonOfResponse(response);
+    if (ended) announceSessionEnded(ended);
+  }
+
+  if (!response.ok && response.status !== 401) {
+    await assertApiResponseOk(response);
+  }
+
+  probeAuditRowOutcome(method, url, response);
+  return response;
+};
+
+/**
+ * Send a multipart body (a file the user attached) with the SAME auth and
+ * tenant headers `apiRequest` sends.
+ *
+ * Separate from `apiRequest` for one reason: `Content-Type` must be left unset
+ * so the browser writes the multipart boundary itself. Setting it by hand — or
+ * reusing apiRequest, which always sets `application/json` — produces a body the
+ * server cannot parse, which is how an upload path ends up "failing for no
+ * reason". The auth/org header logic is NOT duplicated here; both callers read
+ * the same cached values.
+ *
+ * Unlike `apiRequest` this RESOLVES on a non-2xx rather than throwing: an upload
+ * refusal (wrong file type, a blank template, no sequence to file into) is
+ * information the user needs in the server's own words, not an exception.
+ */
+export const apiUpload = async (
+  method: 'POST' | 'PUT' | 'PATCH',
+  url: string,
+  form: FormData,
+  customHeaders?: Record<string, string>,
+): Promise<Response> => {
+  const authToken = getCachedAuthToken();
+  const response = await fetch(url, {
+    method,
+    credentials: 'include',
+    headers: {
+      'x-organization-id': getCachedOrgId(),
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      ...customHeaders,
+    },
+    body: form,
+  });
+  probeAuditRowOutcome(method, url, response);
+  return response;
+};
+
+/**
+ * Parse a fetch Response body as JSON. Returns null for empty/204 responses.
+ * Used by service-layer wrappers (api-connector) that work with raw Responses.
+ */
+export const extractData = async (response: Response): Promise<any> => {
+  if (response.status === 204 || response.headers.get('Content-Length') === '0') {
+    return null;
+  }
+  return await response.json();
+};
+
+export const getQueryFn = (options: GetQueryFnOptions = {}): QueryFunction => {
+  return async ({ queryKey }) => {
+    const url = String(queryKey[0]);
+    const response = await apiRequest('GET', url, undefined, {
+      'x-organization-id': getCachedOrgId(),
+    });
+
+    if (response.status === 401) {
+      if (options.on401 === 'returnNull') {
+        return null;
+      }
+      throw new Error('Unauthorized');
+    }
+
+    // For empty responses or 204 No Content
+    if (response.status === 204 || response.headers.get('Content-Length') === '0') {
+      return null;
+    }
+
+    return response.json();
+  };
+};
+
+/**
+ * The last-resort announcement for a failed write.
+ *
+ * A mutation that fails silently is the defect this exists for: the MDX UAT
+ * found Word export returning 500 with no toast, no console message and no
+ * visible change, and a document-creation failure that showed only the modal
+ * closing. In both cases the user's next action was taken on the belief that
+ * the write had landed.
+ *
+ * `MutationCache.onError` fires for EVERY `useMutation` in the app, including
+ * one whose call site forgot `onError`, so "every failed write surfaces" stops
+ * depending on each author remembering. A call site that DOES handle its own
+ * error is respected — `mutation.options.onError` being set means the surface
+ * has its own, better-placed report, and a second global toast on top of it
+ * would be noise.
+ *
+ * Dispatched as a DOM event rather than rendered here: this module is the
+ * transport layer and must not own a React tree. `<GlobalMutationErrors>`
+ * (client/src/concept2cure/v2/GlobalMutationErrors.tsx) listens and renders the
+ * shared <ErrorState>. The message has already been through `extractApiError`,
+ * so it is display copy, never an enum or a driver string.
+ */
+export const MUTATION_ERROR_EVENT = 'c2c:mutation-error';
+
+export interface MutationErrorDetail {
+  message: string;
+  code?: string;
+  correlationId?: string;
+  status?: number;
+}
+
+const mutationCache = new MutationCache({
+  onError: (error, _vars, _ctx, mutation) => {
+    // The call site reports its own failure — do not double-announce.
+    if (mutation.options.onError) return;
+    const e = error as Partial<ApiRequestError> & { message?: string };
+    const detail: MutationErrorDetail = {
+      message: redactInternals(e?.message, fallbackMessage(e?.status ?? 0)),
+      code: e?.code,
+      correlationId: e?.correlationId,
+      status: e?.status,
+    };
+    try {
+      window.dispatchEvent(new CustomEvent<MutationErrorDetail>(MUTATION_ERROR_EVENT, { detail }));
+    } catch {
+      /* No window (SSR, tests without jsdom) — the mutation's own rejection
+         still propagates to its caller; this channel is additive. */
+    }
+  },
+});
+
+export const queryClient = new QueryClient({
+  mutationCache,
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // Keep unused data for 10 minutes before GC
+      refetchOnWindowFocus: false, // Avoid unnecessary refetches on tab switch
+      refetchOnReconnect: true, // Refetch after network recovery
+      queryFn: getQueryFn() as any,
+    },
+    mutations: {
+      retry: 0, // Don't auto-retry mutations
+    },
+  },
+});
+
+export default queryClient;

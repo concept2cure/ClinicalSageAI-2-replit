@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-10-30T16:45:05.764070+00:00",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "ee950d346c04d6eb95e52a4aa9935db27ddd135d9dc1ffce2d45660948cf9853",
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx": "e1cef29da504cf80cb10e73cb13f28e54a020b10536e3d695b6299121b8dcf1c",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "8c25ac8a223318f0f28c67222d7e11c208caa31260665d6e2835b77dbf5e8bd3",
+    "client/src/concept2cure/v2/surfaces/rbmBoard.ts": "c0753192714891602a07c5182886b1e72a1f2c658316e6810fa3e2aef46d69ab",
+    "server/routes/c2c/projects.ts": "a93bb159a64ace35c4f8c2dd60bb6ca6864e1f4165a76a05ae691caa93eb348b",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx": "d3304ca05f86f438d96637d0a46ce6341c2c0990a7aac6d58b56e55e607df040"
+  }
+}

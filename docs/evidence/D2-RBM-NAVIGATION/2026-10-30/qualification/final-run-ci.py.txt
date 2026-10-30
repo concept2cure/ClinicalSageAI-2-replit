@@ -1,0 +1,13 @@
+from pathlib import Path
+import datetime,hashlib,json,subprocess,sys
+p=Path('/workspace/.cloud-setup/rbm-navigation');r=Path('/workspace/ClinicalSageAI-2-replit')
+subprocess.run(['python3',str(p/'capture.py'),'final-ci-start.json'],check=True)
+results=[]
+for name in ['ci:launch-scope','ci:launch-scope-api','ci:sign-ceremony']:
+ f=p/('final-merged-'+name.removeprefix('ci:')+'.txt')
+ with f.open('wb') as out: code=subprocess.run(['npm','run','--silent',name],cwd=r,stdout=out,stderr=subprocess.STDOUT).returncode
+ results.append({'command':'npm run --silent '+name,'exitCode':code,'transcript':f.name,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()})
+subprocess.run(['python3',str(p/'capture.py'),'final-ci-finish.json'],check=True)
+a=json.loads((p/'final-ci-start.json').read_text());b=json.loads((p/'final-ci-finish.json').read_text())
+x={'finishedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'commands':results,'unchangedInputs':a['files']==b['files']}
+(p/'final-ci-summary.json').write_text(json.dumps(x,indent=2)+'\n');print(json.dumps(x,indent=2));sys.exit(any(t['exitCode'] for t in results) or (a['files']!=b['files']))

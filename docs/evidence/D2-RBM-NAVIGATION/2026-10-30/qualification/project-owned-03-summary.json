@@ -1,0 +1,42 @@
+{
+  "exitCode": 0,
+  "passed": 174,
+  "failed": 0,
+  "skipped": 0,
+  "files": 8,
+  "all13InputsUnchanged": true,
+  "perFile": [
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/server/routes/c2c/__tests__/projects-create.test.ts",
+      "passed": 42
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts",
+      "passed": 41
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx",
+      "passed": 9
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx",
+      "passed": 2
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx",
+      "passed": 26
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx",
+      "passed": 9
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+      "passed": 12
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx",
+      "passed": 33
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+from pathlib import Path
+import datetime,gzip,hashlib,json,shutil
+p=Path('/workspace/.cloud-setup/rbm-navigation');e=Path('/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-RBM-NAVIGATION/2026-10-30')
+allowed_prefixes=('nav-','project-','access-','api-scope-','endpoint-','launch-scope-','browser-rail-original','browser-wizard-before-spacing','browser-wizard-cached-server-intermediate','browser-wizard-final','final-','build-','lint-','push-','code-push','cas-refusal-','canonical-','incoming-','publication-')
+allowed_names={'pack-evidence.py','run-tests.py','capture.py','run-build-qualification.sh','run-build-live.sh','run-build-ana.sh','run-build-vault.sh','run-build-recovery.sh','run-build-settings.sh','run-build-protocol.sh','run-build-packaging.sh','run-build-attachments.sh','run-build-integration.sh','run-build-types.sh','run-build-current.sh','run-build-sql.sh','run-build-successor.sh','run-build-merged.sh','run-build.sh','run-code-push.sh','run-docs-push.sh','verify-publication.py','base.json','cohort-selection.json','final-selection.json'}
+entries=[]
+for f in sorted(p.rglob('*')):
+ if not f.is_file():continue
+ rel=f.relative_to(p);top=rel.parts[0]
+ if any(part in {'browser-vite-cache','node_modules','.vite','vite-cache','__pycache__'} for part in rel.parts):continue
+ if not (top.startswith(allowed_prefixes) or str(rel) in allowed_names):continue
+ if f.suffix not in {'.json','.txt','.log','.ts','.tsx','.js','.mjs','.html','.css','.png','.jpg','.gz','.sh','.py','.cjs','.diff','.patch','.md','.sql'}:continue
+ raw=f.read_bytes();stored=raw
+ dest=Path('qualification')/rel
+ if f.suffix in {'.ts','.tsx','.js','.mjs','.html','.css','.sh','.py','.cjs','.diff','.patch','.md','.sql'}:dest=Path(str(dest)+'.txt')
+ if len(raw)>65536 and f.suffix not in {'.png','.jpg','.gz'}:
+  stored=gzip.compress(raw,mtime=0);dest=Path(str(dest)+'.gz')
+ target=e/dest;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(stored)
+ entries.append({'original':str(rel),'stored':str(dest),'rawBytes':len(raw),'rawSha256':hashlib.sha256(raw).hexdigest(),'storedBytes':len(stored),'storedSha256':hashlib.sha256(stored).hexdigest(),'gzip':stored is not raw})
+for x in entries:
+ b=(e/x['stored']).read_bytes();assert len(b)==x['storedBytes'] and hashlib.sha256(b).hexdigest()==x['storedSha256']
+ raw=gzip.decompress(b) if x['gzip'] else b
+ assert len(raw)==x['rawBytes'] and hashlib.sha256(raw).hexdigest()==x['rawSha256']
+manifest={'observedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'note':'Exact local raw evidence; large text deterministically gzip-compressed, executable source archived as text. Intermediate failures and unqualified cached-browser attempt retained. No node_modules/dependency cache. Counts overlap; do not sum cohorts.','artifacts':entries}
+(e/'artifact-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+print(json.dumps({'artifacts':len(entries),'rawBytes':sum(x['rawBytes'] for x in entries),'storedBytes':sum(x['storedBytes'] for x in entries),'allRawAndStoredPinsVerified':True}))

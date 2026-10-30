@@ -1,0 +1,106 @@
+--- server/routes/mdx-rbm.ts (green07)
++++ server/routes/mdx-rbm.ts (lint extraction)
+@@ -212,7 +212,6 @@
+   if (orgId === null) return orgRequired(res);
+   const parsed = seedAssessBody.safeParse(req.body ?? {});
+   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+-  const { programId } = parsed.data;
+   try {
+     const assessment = await seedRbmAssessment(requestPgClient(req), { organizationId: orgId, userId: getUserId(req)! }, parsed.data, 'owned');
+     return created(res, assessment);
+@@ -336,6 +335,12 @@
+   assignedTo: z.number().int().positive().optional().nullable(),
+ });
+ 
++function createItemValues(orgId: number, p: z.infer<typeof createItemBody>, score: number): unknown[] {
++  return [orgId, p.assessmentId ?? null, p.programId ?? null, p.refCode ?? null, p.category ?? 'operational',
++    p.ctqFactor, p.riskDescription ?? null, p.likelihood, p.impact, p.detectability ?? null, score,
++    p.isCritical ?? false, p.mitigation ?? null, p.status ?? 'open', p.assignedTo ?? null];
++}
++
+ router.post('/rbm-risk-items', async (req, res) => {
+   const orgId = getOrgId(req);
+   if (orgId === null) return orgRequired(res);
+@@ -354,9 +359,7 @@
+          risk_description, likelihood, impact, detectability, risk_score, is_critical,
+          mitigation, status, assigned_to
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+-      [orgId, p.assessmentId ?? null, p.programId ?? null, p.refCode ?? null, p.category ?? 'operational',
+-        p.ctqFactor, p.riskDescription ?? null, p.likelihood, p.impact, p.detectability ?? null, score,
+-        p.isCritical ?? false, p.mitigation ?? null, p.status ?? 'open', p.assignedTo ?? null],
++      createItemValues(orgId, p, score),
+     );
+     await client.query('COMMIT');
+     return created(res, rows[0]);
+--- server/services/ana/AnaToolExecutor.ts (green07)
++++ server/services/ana/AnaToolExecutor.ts (lint extraction)
+@@ -1,5 +1,5 @@
+ import { rbmToolAdmissionRefusal } from '../rbm/rbm-access';
+-import { seedRbmAssessment, seedRbmAssessmentFromPool } from '../rbm/rbm-assessment-seed';
++import { seedRbmAssessment, seedRbmAssessmentFromPool, type RbmSeedPool } from '../rbm/rbm-assessment-seed';
+ import { statedInputEnvelope, statedInputResult, STATED_DOSE_NOTE } from './stated-input-result.js';
+ import { splitLetterQuestions } from '../../../shared/agency/letter-questions.js';
+ import { readOnlyToolRefusal } from './read-only-turn.js';
+@@ -589,16 +589,19 @@
+   return refusal ? { code: 'WRITE_ROLE_REQUIRED', result: refusal } : null;
+ }
+ 
++async function handlerAdmissionRefusal(name: string, input: Record<string, any>, ctx?: ToolContext) {
++  return preHandlerRefusal(name, input, ctx) ??
++    (await writeRoleRefusal(name, input, ctx)) ??
++    (await rbmToolAdmissionRefusal(name, input, ctx)) ??
++    // A program or record the model names must be the caller's (tool-record-scope.ts).
++    (await foreignProgramRefusal(input, ctx?.organizationId)) ??
++    (await foreignRecordRefusal(name, input, ctx?.organizationId));
++}
++
+ export function registerToolHandler(name: string, handler: ToolHandler): void {
+   const instrumented: ToolHandler = async (input, ctx) => {
+     const orgId = ctx?.organizationId ?? undefined;
+-    const refusal =
+-      preHandlerRefusal(name, input, ctx) ??
+-      (await writeRoleRefusal(name, input, ctx)) ??
+-      (await rbmToolAdmissionRefusal(name, input, ctx)) ??
+-      // A program or record the model names must be the caller's (tool-record-scope.ts).
+-      (await foreignProgramRefusal(input, ctx?.organizationId)) ??
+-      (await foreignRecordRefusal(name, input, ctx?.organizationId));
++    const refusal = await handlerAdmissionRefusal(name, input, ctx);
+     if (refusal) {
+       recordToolOutcome(name, 'failure', 0, refusal.code, orgId);
+       return refusal.result;
+@@ -3266,6 +3269,21 @@
+ // ── Risk-Based Monitoring (RBM / RBQM) — ICH E6(R3)/E8(R1) ──────────────────
+ const RBM_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+ 
++async function seedRbmWithDispatchClient(
++  client: RequestSqlClient,
++  canonicalPool: RequestSqlClient & RbmSeedPool,
++  programId: string,
++  organizationId: number,
++  ctx?: ToolContext,
++) {
++  const actor = { organizationId, userId: Number(ctx?.userId) };
++  // Realtime/deep-investigation pass this exact singleton pool. HTTP/stream
++  // pass a pinned, currently idle request client; never infer its ownership
++  // from connect(), which a connected PoolClient also exposes.
++  if (client === canonicalPool) await seedRbmAssessmentFromPool(canonicalPool, actor, { programId });
++  else await seedRbmAssessment(client, actor, { programId }, 'owned');
++}
++
+ // Seed or summarize a study Risk Assessment (RACT) for a program.
+ registerToolHandler('run_rbm_assessment', async (input, ctx) => {
+   const programId = typeof input.programId === 'string' ? input.programId : undefined;
+@@ -3286,12 +3304,7 @@
+   );
+ 
+   if (existing.rows.length === 0 && input.seed === true) {
+-    const actor = { organizationId: orgId, userId: Number(ctx?.userId) };
+-    // Realtime/deep-investigation pass this exact singleton pool. HTTP/stream
+-    // pass a pinned, currently idle request client; never infer its ownership
+-    // from connect(), which a connected PoolClient also exposes.
+-    if (pool === canonicalPool) await seedRbmAssessmentFromPool(canonicalPool, actor, { programId });
+-    else await seedRbmAssessment(pool, actor, { programId }, 'owned');
++    await seedRbmWithDispatchClient(pool, canonicalPool, programId, orgId, ctx);
+   }
+ 
+   const items = await pool.query(

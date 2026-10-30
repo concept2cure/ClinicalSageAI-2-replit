@@ -1,0 +1,13 @@
+import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
+const repo='/workspace/ClinicalSageAI-2-replit';
+const here='/workspace/.cloud-setup/rbm-navigation';
+const require=createRequire(repo+'/package.json');
+const {createServer}=await import(pathToFileURL(require.resolve('vite')).href);
+const server=await createServer({root:repo,configFile:false,cacheDir:here+'/browser-vite-cache',
+resolve:{alias:{'@':repo+'/client/src','@shared':repo+'/shared'},dedupe:['react','react-dom','@tanstack/react-query']},
+server:{host:'127.0.0.1',port:5217,strictPort:true,watch:null,fs:{allow:[repo,here]}},
+optimizeDeps:{include:['react','react-dom/client','@tanstack/react-query']}});
+await server.listen();
+for(const signal of ['SIGINT','SIGTERM'])process.once(signal,async()=>{await server.close();process.exit(0);});
+process.stdout.write('Private actual-component RBM fixture ready on127.0.0.1:5217\n');

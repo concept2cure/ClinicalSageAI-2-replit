@@ -1,0 +1,10 @@
+Merge made by the 'ort' strategy.
+ .../CSR_STF_SOURCE_VERIFICATION_2026-10-30.md      |   5 +
+ .../2026-10-30-stf-source-verification/README.md   |   8 +-
+ .../csr-stf-commit.log.gz                          | Bin 0 -> 915 bytes
+ .../csr-stf-push.log.gz                            | Bin 0 -> 4614 bytes
+ .../publication-receipt.json                       | 112 +++++++++++++++++++++
+ 5 files changed, 124 insertions(+), 1 deletion(-)
+ create mode 100644 docs/evidence/D2-CSR/2026-10-30-stf-source-verification/csr-stf-commit.log.gz
+ create mode 100644 docs/evidence/D2-CSR/2026-10-30-stf-source-verification/csr-stf-push.log.gz
+ create mode 100644 docs/evidence/D2-CSR/2026-10-30-stf-source-verification/publication-receipt.json

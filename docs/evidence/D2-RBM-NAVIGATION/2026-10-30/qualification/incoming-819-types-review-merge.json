@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-10-30T18:04:12.417419+00:00",
+  "reviewer": "/root/rbm_signature_review",
+  "verdict": "Compiler successor and latest Vault compatibility clear; read-only review, no tests executed",
+  "compilerSourceCommit": "e0c8ed6185643026ff6427d2b37265b7a891f35f",
+  "typeReceiptReferences": [
+    "access-type-final-freeze.json",
+    "access-type-tests-final-freeze.json",
+    "access-type-seed-final-freeze.json"
+  ],
+  "typeFindings": "Truthful PGlite row/results and RBM UiSurface/segment props; minimal fixture assignment; null-only legacy author and fail-closed valid numeric author narrowing; no any/suppression or weaker production query contract.",
+  "incoming": "819029e2c",
+  "mergeCommit": "506064adb29e56c0489c5c304fc0466676098086",
+  "conflicts": [
+    "docs/work-orders/README.md"
+  ],
+  "conflictResolution": "Preserved enhanced incoming Vault receipt/convergence row and both distinct owned RBM/company rows; no production conflicts.",
+  "incomingBehavior": "Use validated receipt stored title for new-version confirmation; neutral fallback for blank/null title. Same upload, auth, exact-program/ID receipt, navigation and unknown guards. No RBM/current actor/signature/CSS/dependency changes.",
+  "incomingHookSha256": "bd24e2c28da897010dac7247de47d73c991cfe3befc57b915eaef1480e68890e",
+  "freshVaultTests": [
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx",
+    "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx"
+  ],
+  "upstreamTotalsNotBorrowed": true
+}

@@ -31,6 +31,9 @@ import request from 'supertest';
 /* A benign pool. The guard is asserted by the 422 AND by `query` never being
    called — a throwing mock surfaced as an unhandled error and attributed itself
    to every test in the file, which hid which one actually regressed. */
+// This domain suite retains its existing fixture admission; current project denial is covered separately.
+vi.mock('../../services/rbm/rbm-access', async original => ({ ...(await original<Record<string, unknown>>()), rbmRequestAdmission: (_req: unknown, _res: unknown, next: () => void) => next(), recheckRbmWrite: async () => {} }));
+
 const query = vi.hoisted(() => vi.fn(async () => ({ rows: [], rowCount: 0 })));
 vi.mock('../../db', () => ({
   pool: { query, connect: vi.fn(async () => ({ query, release: vi.fn() })) },
@@ -45,6 +48,7 @@ function app() {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: 7, userId: 7, organizationId: 1, role: 'admin' };
+    Object.assign(req, { dbClient: { query } });
     next();
   });
   a.use('/api/mdx', rbmRouter);

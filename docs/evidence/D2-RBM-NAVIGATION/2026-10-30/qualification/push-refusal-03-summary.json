@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-10-30T18:13:02.332150+00:00",
+  "kind": "Git compare-and-swap refusal after all normal gates passed",
+  "sourceCommit": "498403dc3a2e5c99f12b055f84b751e2263a3a6e",
+  "selected153InputsUnchanged": true,
+  "wholeTypeScriptErrors": 0,
+  "baseline": 0,
+  "allNormalGatesPassed": true,
+  "remoteAdvancedTo": "ed5c9105845e0f82f8a0579c41a06fcea63b7542",
+  "expectedRemote": "819029e2c187f2a8d5f092fd3bce836b200977e3",
+  "publication": false,
+  "next": "Normal fetch/merge, bounded compatibility/source qualification and normal push retry; no force or bypass."
+}

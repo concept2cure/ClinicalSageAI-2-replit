@@ -1,0 +1,13 @@
+{
+  "files": [
+    "server/routes/c2c/__tests__/project-settings.pglite.test.ts"
+  ],
+  "inputs": [
+    "server/routes/c2c/__tests__/project-settings.pglite.test.ts",
+    "server/routes/c2c/projects.ts",
+    "server/routes/c2c/project-settings.ts",
+    "server/services/c2c/programme-profile-write.ts",
+    "vitest.config.ts",
+    "tests/golden-journeys/harness.ts"
+  ]
+}

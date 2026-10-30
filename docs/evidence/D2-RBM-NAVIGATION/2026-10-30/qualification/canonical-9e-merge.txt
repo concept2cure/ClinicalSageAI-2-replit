@@ -1,0 +1,122 @@
+Merge made by the 'ort' strategy.
+ assets/ectd-dtd/README.md                          |  10 +-
+ assets/ectd-dtd/checksums.txt                      |   5 +
+ .../design/ECTD_AGENCY_QUALIFICATION_2026-10-30.md |  37 ++
+ .../ASSET_REVIEW.md                                |  49 ++
+ .../2026-10-30-agency-qualification/README.md      |  79 +++
+ .../candidate-final-input-verification.json        |  90 +++
+ .../dtd-agency-source-observations.json            | 650 +++++++++++++++++++++
+ .../dtd-stf-audit.json                             | 119 ++++
+ .../ectd-agency-build.log.gz                       | Bin 0 -> 4727 bytes
+ .../ectd-agency-candidate.log.gz                   | Bin 0 -> 195 bytes
+ .../ectd-agency-concurrent-sync.log.gz             | Bin 0 -> 3079 bytes
+ .../ectd-agency-corrected-tests.json.gz            | Bin 0 -> 4641 bytes
+ .../ectd-agency-corrected-tests.log.gz             | Bin 0 -> 2968 bytes
+ .../ectd-agency-final-build.log.gz                 | Bin 0 -> 4747 bytes
+ .../ectd-agency-final-candidate.log.gz             | Bin 0 -> 195 bytes
+ .../ectd-agency-final-tests.json.gz                | Bin 0 -> 20648 bytes
+ .../ectd-agency-final-tests.log.gz                 | Bin 0 -> 13498 bytes
+ .../ectd-agency-lint-green.log.gz                  | Bin 0 -> 57 bytes
+ .../ectd-agency-lint.json.gz                       | Bin 0 -> 587 bytes
+ .../ectd-agency-lint.log.gz                        | Bin 0 -> 363 bytes
+ .../ectd-agency-red.json.gz                        | Bin 0 -> 4272 bytes
+ .../ectd-agency-red.log.gz                         | Bin 0 -> 4304 bytes
+ .../ectd-agency-retained-proof-red.json.gz         | Bin 0 -> 2506 bytes
+ .../ectd-agency-retained-proof-red.log.gz          | Bin 0 -> 1727 bytes
+ .../final-source-freeze.json                       |  52 ++
+ .../final-test-inputs.json                         |  52 ++
+ .../final-unconfigured-candidate/assessment.json   |  97 +++
+ .../raw-qualification.json                         | 147 +++++
+ .../synthetic-0000.zip                             | Bin 0 -> 23758 bytes
+ .../synthetic-0001.zip                             | Bin 0 -> 19595 bytes
+ .../integration-attempt1-ectd-agency-tests.json.gz | Bin 0 -> 20977 bytes
+ .../integration-attempt1-ectd-agency-tests.log.gz  | Bin 0 -> 13759 bytes
+ .../integration-attempt1-inputs.json               |  52 ++
+ .../qualify-existing-harness.mts.txt               |  22 +
+ .../red-inputs.json                                |  17 +
+ .../red-inputs/package-lock.json.gz                | Bin 0 -> 271640 bytes
+ .../red-inputs/package.json.gz                     | Bin 0 -> 10335 bytes
+ ..._ectd____tests_____dtd-validation-fixture.ts.gz | Bin 0 -> 531 bytes
+ ...rvices__ectd____tests____dtd-bundler.test.ts.gz | Bin 0 -> 3786 bytes
+ ...__ectd____tests____stf-agency-source.test.ts.gz | Bin 0 -> 1331 bytes
+ .../server__services__ectd__dtd-bundler.ts.gz      | Bin 0 -> 5180 bytes
+ .../server__services__ectd__stf-generator.ts.gz    | Bin 0 -> 5228 bytes
+ ...____regional-packager-dtd-validation.test.ts.gz | Bin 0 -> 3602 bytes
+ ...s__submission-gateways__regional-packager.ts.gz | Bin 0 -> 25237 bytes
+ .../red-inputs/tsconfig.json.gz                    | Bin 0 -> 1350 bytes
+ .../red-inputs/vitest.config.ts.gz                 | Bin 0 -> 1763 bytes
+ .../retained-proof-red-inputs.json                 |   8 +
+ ...rvices__ectd____tests____dtd-bundler.test.ts.gz | Bin 0 -> 4225 bytes
+ .../server__services__ectd__dtd-bundler.ts.gz      | Bin 0 -> 5240 bytes
+ .../scoped-lint-check.mjs.txt                      |  19 +
+ .../2026-10-30-agency-qualification/test-files.txt |  28 +
+ .../unconfigured-candidate/assessment.json         |  97 +++
+ .../unconfigured-candidate/raw-qualification.json  | 147 +++++
+ .../unconfigured-candidate/synthetic-0000.zip      | Bin 0 -> 23763 bytes
+ .../unconfigured-candidate/synthetic-0001.zip      | Bin 0 -> 19603 bytes
+ .../2026-10-30-agency-qualification/xml-tool.json  |   9 +
+ docs/runbooks/ectd-dtd-vendoring.md                |  13 +-
+ .../MR-10-ectd-conformance-and-transmission.md     |   8 +
+ server/services/ectd/__tests__/dtd-bundler.test.ts | 118 ++++
+ .../ectd/__tests__/stf-agency-source.test.ts       |  57 ++
+ server/services/ectd/dtd-bundler.ts                |  14 +-
+ server/services/ectd/stf-generator.ts              |  34 +-
+ .../__tests__/pre-transmit-check.test.ts           |   2 +-
+ .../regional-packager-dtd-validation.test.ts       |  52 +-
+ .../submission-gateways/regional-packager.ts       |   2 +
+ 65 files changed, 2070 insertions(+), 16 deletions(-)
+ create mode 100644 docs/design/ECTD_AGENCY_QUALIFICATION_2026-10-30.md
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ASSET_REVIEW.md
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/README.md
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/candidate-final-input-verification.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/dtd-agency-source-observations.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/dtd-stf-audit.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-build.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-candidate.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-concurrent-sync.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-corrected-tests.json.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-corrected-tests.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-final-build.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-final-candidate.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-final-tests.json.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-final-tests.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-lint-green.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-lint.json.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-lint.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-red.json.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-red.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-retained-proof-red.json.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-retained-proof-red.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/final-source-freeze.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/final-test-inputs.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/final-unconfigured-candidate/assessment.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/final-unconfigured-candidate/raw-qualification.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/final-unconfigured-candidate/synthetic-0000.zip
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/final-unconfigured-candidate/synthetic-0001.zip
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/integration-attempt1-ectd-agency-tests.json.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/integration-attempt1-ectd-agency-tests.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/integration-attempt1-inputs.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/qualify-existing-harness.mts.txt
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/package-lock.json.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/package.json.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/server__services__ectd____tests_____dtd-validation-fixture.ts.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/server__services__ectd____tests____dtd-bundler.test.ts.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/server__services__ectd____tests____stf-agency-source.test.ts.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/server__services__ectd__dtd-bundler.ts.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/server__services__ectd__stf-generator.ts.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/server__services__submission-gateways____tests____regional-packager-dtd-validation.test.ts.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/server__services__submission-gateways__regional-packager.ts.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/tsconfig.json.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/red-inputs/vitest.config.ts.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/retained-proof-red-inputs.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/retained-proof-red-inputs/server__services__ectd____tests____dtd-bundler.test.ts.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/retained-proof-red-inputs/server__services__ectd__dtd-bundler.ts.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/scoped-lint-check.mjs.txt
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/test-files.txt
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/unconfigured-candidate/assessment.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/unconfigured-candidate/raw-qualification.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/unconfigured-candidate/synthetic-0000.zip
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/unconfigured-candidate/synthetic-0001.zip
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/xml-tool.json
+ create mode 100644 server/services/ectd/__tests__/stf-agency-source.test.ts

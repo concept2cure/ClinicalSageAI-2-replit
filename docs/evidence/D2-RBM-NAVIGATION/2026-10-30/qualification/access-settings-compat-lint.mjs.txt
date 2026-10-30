@@ -1,0 +1,9 @@
+import { createRequire } from 'node:module';
+import { readFileSync, writeFileSync } from 'node:fs';
+const r='/workspace/ClinicalSageAI-2-replit', p='/workspace/.cloud-setup/rbm-navigation';
+const require=createRequire(r+'/package.json'); const {ESLint}=require('eslint'); const eslint=new ESLint({cwd:r});
+const path=JSON.parse(readFileSync(p+'/access-settings-compat-selection.json','utf8')).files[0];
+const before=readFileSync(p+'/access-settings-compat-source-before.txt','utf8');const after=readFileSync(r+'/'+path,'utf8');
+const [old]=await eslint.lintText(before,{filePath:path});const [next]=await eslint.lintText(after,{filePath:path});
+const x={method:'ESLint lintText with original file path and saved original source; no temporary TypeScript or baseline change',path,beforeErrors:old.errorCount,beforeWarnings:old.warningCount,afterErrors:next.errorCount,afterWarnings:next.warningCount,messages:next.messages};
+writeFileSync(p+'/access-settings-compat-lint.json',JSON.stringify(x,null,2)+'\n');console.log(JSON.stringify(x));process.exitCode=x.afterErrors||x.afterWarnings>x.beforeWarnings?1:0;

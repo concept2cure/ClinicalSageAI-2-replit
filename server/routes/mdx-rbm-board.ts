@@ -19,17 +19,18 @@
  *
  * RLS: queries run through requestDb(req) (request-scoped, tenant-pinned) and
  * additionally filter organization_id explicitly (defense in depth, matches the
- * mdx-rbm.ts convention). Fails closed (empty board) when the rbm_* store is
- * absent rather than 500-ing.
+ * mdx-rbm.ts convention). Failed or missing RBM stores return an explicit failure, never a healthy empty board.
  *
  * @module routes/mdx-rbm-board
  */
 
 import { Router, Request, Response } from 'express';
-import { and, eq, isNull, isNotNull, inArray, desc } from 'drizzle-orm';
+import { and, eq, isNull, inArray, desc } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger';
-import { requestDb } from '../db/requestDb';
+import { requestDb, requestPgClient } from '../db/requestDb';
+import { requireRbmProgram, respondRbmAccessFailure } from '../services/rbm/rbm-access';
+import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent } from '../services/c2c/current-program-access';
 import {
   rbmRiskAssessments, rbmRiskItems, rbmKris, rbmKriValues, rbmQtls,
   rbmSignals, rbmSiteRiskScores, rbmPatientProfiles, rbmMonitoringPlans,
@@ -46,11 +47,6 @@ import { actorLabel, resolveActorNames } from '../services/tenant/actor-names';
 const log = createScopedLogger('mdx-rbm-board');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-// Postgres error code for "relation does not exist" — the rbm_* store hasn't
-// been migrated into this database yet. Read routes fail closed to an empty
-// board rather than surfacing a 500.
-const UNDEFINED_TABLE = '42P01';
 
 const OPEN_SIGNAL = new Set(['new', 'triaged', 'investigating']);
 const HIGH_SEV = new Set(['high', 'critical']);
@@ -162,9 +158,11 @@ export default function createRbmBoardRoutes(): Router {
 
     const asOf = new Date().toISOString();
     const todayStr = asOf.slice(0, 10);
-    const db = requestDb(req);
-
     try {
+      const identity = { organizationId: orgId, userId: Number((req as Request & { user?: { id?: unknown } }).user?.id) };
+      const q = requestPgClient(req);
+      await requireRbmProgram(q, identity, { programId });
+      const db = requestDb(req);
       // ── Fetch the raw, tenant-scoped rows for every board section. ──────────
       const [
         rawAssessmentRows, rawItemRows, kriRows, qtlRows, signalRows,
@@ -271,13 +269,10 @@ export default function createRbmBoardRoutes(): Router {
       const actionRows = rawActionRows.map(r => ({ ...r, owner: actorLabel(people, r.act.owner) }));
 
       // ── Per-source data freshness: the newest run per feed. ────────────────
-      // Queried defensively in its own try/catch rather than inside the board's
-      // outer one: an older database can carry the rbm_* store without the
-      // ingestion tables, and a missing rbm_data_runs must not blank the whole
-      // board. No runs simply means no feed is tracked, which the surface says
-      // outright rather than treating as healthy.
+      // Missing ingestion tables fail explicitly with the board's other sources.
+      // An empty successful read alone means no feed is tracked.
       let freshness: SourceFreshness[] = [];
-      try {
+      {
         const runRows = await db.select({
           source: rbmDataRuns.source,
           startedAt: rbmDataRuns.startedAt,
@@ -308,8 +303,6 @@ export default function createRbmBoardRoutes(): Router {
           }, now))
           // Stale first — the feed that stopped is the one worth seeing.
           .sort((x, y) => Number(y.stale) - Number(x.stale) || x.source.localeCompare(y.source));
-      } catch (err) {
-        if ((err as { code?: string })?.code !== UNDEFINED_TABLE) throw err;
       }
 
       // ── Choose the governing assessment/plan (active, else most-recent). ────
@@ -611,6 +604,7 @@ export default function createRbmBoardRoutes(): Router {
         patients: { scored: patientRows.length, flagged: flaggedPatients, review: reviewPatients },
       };
 
+      await requireRbmProgram(q, identity, { programId });
       return res.json({
         success: true,
         data: {
@@ -635,77 +629,39 @@ export default function createRbmBoardRoutes(): Router {
         },
       });
     } catch (err) {
-      // The rbm_* store hasn't been provisioned in this database — fail closed
-      // to an empty board rather than 500.
-      if ((err as { code?: string })?.code === UNDEFINED_TABLE) {
-        return res.json({
-          success: true,
-          data: {
-            programId, asOf,
-            summary: {
-              overallRisk: null, asOf,
-              riskItems: { total: 0, critical: 0, open: 0, high: 0 },
-              kris: { total: 0, red: 0, amber: 0, notEvaluated: 0 },
-              qtls: { total: 0, breached: 0, approaching: 0, notEvaluated: 0 },
-              signals: { total: 0, open: 0, high: 0 },
-              sites: { total: 0, enhanced: 0 },
-              patients: { scored: 0, flagged: 0, review: 0 },
-            },
-            attention: [], report: null, reportMarkdown: null,
-            assessment: null, items: [], kris: [], qtls: [], signals: [],
-            patients: [], sites: [], oversight: {}, plan: null, governingPlanId: null, actions: [],
-            freshness: [],
-            pendingStore: true,
-          },
-        });
-      }
       log.error('rbm-board failed', { err: err instanceof Error ? err.message : String(err) });
-      return res.status(500).json({ success: false, error: 'Failed to assemble RBM board' });
+      return respondRbmAccessFailure(res, err);
     }
   });
 
-  /**
-   * GET /api/mdx-rbm/rbm-programs
-   * The programs (studies) that have a real RBM risk assessment for this org —
-   * the selectable studies for the RBM shell's study picker. Ids are the same
-   * program_id UUIDs the board keys on, so a selected study always resolves.
-   * The label is the most-recent assessment title (the only program-level label
-   * the RBM store carries — there is no separate program-name column, so nothing
-   * is fabricated). Fails closed to an empty list when the store is unprovisioned.
-   * Response: { success: true, data: { id: string; label: string }[], total }
-   */
+  /** Canonical projects opted into monitoring or carrying retained RBM records. */
   router.get('/rbm-programs', async (req: Request, res: Response) => {
-    const orgId = getOrgId(req);
-    if (orgId === null) {
-      return res.status(403).json({ success: false, error: 'Organization context required' });
-    }
-    const db = requestDb(req);
+    const identity = { organizationId: Number(getOrgId(req)), userId: Number((req as Request & { user?: { id?: unknown } }).user?.id) };
     try {
-      const rows = await db
-        .select({
-          programId: rbmRiskAssessments.programId,
-          title: rbmRiskAssessments.title,
-        })
-        .from(rbmRiskAssessments)
-        .where(and(
-          eq(rbmRiskAssessments.organizationId, orgId),
-          isNotNull(rbmRiskAssessments.programId),
-          isNull(rbmRiskAssessments.deletedAt),
-        ))
-        .orderBy(desc(rbmRiskAssessments.updatedAt));
-
-      const seen = new Map<string, string>();
-      for (const r of rows) {
-        if (r.programId && !seen.has(r.programId)) seen.set(r.programId, r.title);
-      }
-      const data = Array.from(seen.entries()).map(([id, label]) => ({ id, label }));
-      return res.json({ success: true, data, total: data.length });
-    } catch (err: unknown) {
-      if ((err as { code?: string })?.code === UNDEFINED_TABLE) {
-        return res.json({ success: true, data: [], total: 0 });
-      }
+      const q = requestPgClient(req);
+      const scope = await getCurrentAccessibleProgramScope(q, identity);
+      const meta = scope.reconciliationRequired ? { reconciliationRequired: true, message: 'Some project relationships need repair before monitoring can be shown. No unavailable project details are supplied.' } : {};
+      if (!scope.programIds.length) return res.json({ success: true, data: [], total: 0, meta });
+      const { rows } = await q.query(`SELECT p.id::text AS id,p.name AS label,p.code,p.product_type AS "productType",p.program_type AS "programType"
+        FROM regulatory_programs p WHERE p.organization_id=$1 AND p.deleted_at IS NULL AND p.id=ANY($2::uuid[])
+        AND ((p.metadata::jsonb)->'riskBasedMonitoring'='true'::jsonb
+          OR EXISTS(SELECT 1 FROM rbm_risk_assessments r WHERE r.organization_id=p.organization_id AND r.program_id=p.id AND r.deleted_at IS NULL)
+          OR EXISTS(SELECT 1 FROM rbm_risk_items r WHERE r.organization_id=p.organization_id AND r.program_id=p.id AND r.deleted_at IS NULL)
+          OR EXISTS(SELECT 1 FROM rbm_kris r WHERE r.organization_id=p.organization_id AND r.program_id=p.id AND r.deleted_at IS NULL)
+          OR EXISTS(SELECT 1 FROM rbm_qtls r WHERE r.organization_id=p.organization_id AND r.program_id=p.id AND r.deleted_at IS NULL)
+          OR EXISTS(SELECT 1 FROM rbm_signals r WHERE r.organization_id=p.organization_id AND r.program_id=p.id AND r.deleted_at IS NULL)
+          OR EXISTS(SELECT 1 FROM rbm_site_risk_scores r WHERE r.organization_id=p.organization_id AND r.program_id=p.id)
+          OR EXISTS(SELECT 1 FROM rbm_patient_profiles r WHERE r.organization_id=p.organization_id AND r.program_id=p.id AND r.deleted_at IS NULL)
+          OR EXISTS(SELECT 1 FROM rbm_monitoring_plans r WHERE r.organization_id=p.organization_id AND r.program_id=p.id AND r.deleted_at IS NULL)
+          OR EXISTS(SELECT 1 FROM rbm_data_runs r WHERE r.organization_id=p.organization_id AND r.program_id=p.id))
+        ORDER BY p.name,p.id`, [identity.organizationId, scope.programIds]);
+      if (!rows.every(row => typeof row.id === 'string' && UUID_RE.test(row.id) && typeof row.label === 'string' && row.label.trim())) throw new Error('RBM project identities could not be verified');
+      await requireProgramScopeStillCurrent(q, identity, scope);
+      const data = rows.map(row => ({ id: row.id, label: row.label, code: row.code, productType: row.productType, programType: row.programType }));
+      return res.json({ success: true, data, total: data.length, meta });
+    } catch (err) {
       log.error('rbm-programs failed', { err: err instanceof Error ? err.message : String(err) });
-      return res.status(500).json({ success: false, error: 'Failed to list RBM programs' });
+      return respondRbmAccessFailure(res, err);
     }
   });
 

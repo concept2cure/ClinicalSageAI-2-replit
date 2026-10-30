@@ -1,0 +1,149 @@
+Merge made by the 'ort' strategy.
+ client/src/concept2cure/mdx/MdxSurfaceHost.tsx     |   2 +-
+ .../mdx/__tests__/MdxSurfaceHost.test.tsx          |  17 +
+ client/src/concept2cure/mdx/app.css                |  10 +
+ .../mdx/surfaces/EngineeringSurface.tsx            |   6 +-
+ .../EngineeringSurface.designControls.test.tsx     |   2 +-
+ .../EngineeringSurface.riskRegister.test.tsx       |  20 +-
+ .../__tests__/engineeringPanelTarget.test.tsx      |  68 +++
+ .../mdx/surfaces/engineeringPanelTarget.ts         |  43 ++
+ .../v2/__tests__/ProjectMdxWorkflow.test.tsx       |  13 +-
+ .../v2/__tests__/anaDrivesWave3.test.tsx           |   6 +-
+ .../v2/__tests__/riskAcceptResidualSigned.test.tsx |   8 +-
+ .../concept2cure/v2/__tests__/riskHonesty.test.tsx |   7 +-
+ .../v2/__tests__/riskRecordRead.test.tsx           | 182 +++++++
+ .../__tests__/riskSignedContentOnScreen.test.tsx   |  28 +-
+ client/src/concept2cure/v2/projectScopedRead.tsx   |   6 +-
+ .../v2/surfaces/ProjectMdxWorkflow.tsx             |  14 +-
+ .../src/concept2cure/v2/surfaces/RiskRegister.tsx  | 119 +++--
+ .../src/concept2cure/v2/surfaces/riskRecordRead.ts |  92 ++++
+ docs/design/MDX_PROJECT_WORKFLOW_2026-10-23.md     |  27 +
+ .../D2-MDX-PROJECT-WORKFLOW/2026-10-30/README.md   |  67 +++
+ .../2026-10-30/qualification.json                  | 118 +++++
+ .../2026-10-30/receipt-manifest.json               | 200 ++++++++
+ .../2026-10-30/receipts/browser-green.txt.gz       | Bin 0 -> 423 bytes
+ .../2026-10-30/receipts/browser-mobile-red.txt.gz  | Bin 0 -> 695 bytes
+ .../2026-10-30/receipts/column-gate.txt.gz         | Bin 0 -> 158 bytes
+ .../2026-10-30/receipts/companion-tests.txt.gz     | Bin 0 -> 241 bytes
+ .../receipts/csr-follow-through-integration.txt.gz | Bin 0 -> 11758 bytes
+ .../receipts/csr-integrated-prepush.txt.gz         | Bin 0 -> 4578 bytes
+ .../2026-10-30/receipts/csr-integration.txt.gz     | Bin 0 -> 9149 bytes
+ .../receipts/editor-integrated-prepush.txt.gz      | Bin 0 -> 4578 bytes
+ .../2026-10-30/receipts/editor-integration.txt.gz  | Bin 0 -> 3093 bytes
+ .../receipts/engineering-owner-red.txt.gz          | Bin 0 -> 1038 bytes
+ .../2026-10-30/receipts/eslint.json.gz             | Bin 0 -> 58150 bytes
+ .../receipts/first-integrated-prepush.txt.gz       | Bin 0 -> 4576 bytes
+ .../2026-10-30/receipts/full-prepush.txt.gz        | Bin 0 -> 4593 bytes
+ .../2026-10-30/receipts/integration-green.txt.gz   | Bin 0 -> 8239 bytes
+ .../2026-10-30/receipts/production-build.txt.gz    | Bin 0 -> 4736 bytes
+ .../2026-10-30/receipts/program-gate.txt.gz        | Bin 0 -> 175 bytes
+ .../receipts/protocol-integrated-prepush.txt.gz    | Bin 0 -> 4593 bytes
+ .../receipts/protocol-integration.txt.gz           | Bin 0 -> 3471 bytes
+ .../2026-10-30/receipts/ratchet-integration.txt.gz | Bin 0 -> 488 bytes
+ .../receipts/risk-access-red-diagnostic.txt.gz     | Bin 0 -> 4336 bytes
+ .../2026-10-30/receipts/risk-entry-red.txt.gz      | Bin 0 -> 1401 bytes
+ .../2026-10-30/receipts/risk-server-green.txt.gz   | Bin 0 -> 8541 bytes
+ .../2026-10-30/receipts/risk-ui-green.txt.gz       | Bin 0 -> 3642 bytes
+ .../2026-10-30/receipts/risk-ui-red.txt.gz         | Bin 0 -> 5861 bytes
+ .../2026-10-30/receipts/root-green.txt.gz          | Bin 0 -> 2231 bytes
+ .../2026-10-30/receipts/source-prepush.txt.gz      | Bin 0 -> 4576 bytes
+ .../2026-10-30/receipts/sql-gate.txt.gz            | Bin 0 -> 800 bytes
+ .../receipts/stf-integrated-prepush.txt.gz         | Bin 0 -> 4594 bytes
+ .../2026-10-30/receipts/stf-integration.txt.gz     | Bin 0 -> 2071 bytes
+ .../receipts/upload-receipt-integration.txt.gz     | Bin 0 -> 4783 bytes
+ .../receipts/vault-convergence-integration.txt.gz  | Bin 0 -> 4446 bytes
+ .../receipts/vault-integrated-prepush.txt.gz       | Bin 0 -> 4580 bytes
+ .../2026-10-30/receipts/vault-integration.txt.gz   | Bin 0 -> 4892 bytes
+ .../2026-10-30/source-fingerprints.json            | 224 ++++++++
+ .../2026-10-30/ui/browser-check.mjs                | 136 +++++
+ .../2026-10-30/ui/browser-fixtures.mjs             |  15 +
+ .../2026-10-30/ui/browser-index.html               |   1 +
+ .../2026-10-30/ui/browser-probe.tsx                |  36 ++
+ .../desktop-project-risk-controls.jpg              | Bin 0 -> 61966 bytes
+ .../desktop-selected-hazard-controls.jpg           | Bin 0 -> 73182 bytes
+ .../desktop-unavailable-controls.jpg               | Bin 0 -> 65882 bytes
+ .../2026-10-30/ui/browser-red-mobile/failure.jpg   | Bin 0 -> 26676 bytes
+ .../2026-10-30/ui/browser-red-mobile/failure.json  | 367 +++++++++++++
+ .../desktop-project-risk-controls.jpg              | Bin 0 -> 61966 bytes
+ .../desktop-selected-hazard-controls.jpg           | Bin 0 -> 73182 bytes
+ .../desktop-unavailable-controls.jpg               | Bin 0 -> 61966 bytes
+ .../mobile-project-risk-controls.jpg               | Bin 0 -> 26676 bytes
+ .../mobile-selected-hazard-controls.jpg            | Bin 0 -> 22771 bytes
+ .../2026-10-30/ui/browser-result/result.json       | 383 ++++++++++++++
+ .../2026-10-30/ui/browser-server.mjs               |   2 +
+ .../mdx-risk-accept-residual-signature.test.ts     |  35 +-
+ .../routes/risk-acceptance-locked.pglite.test.ts   |  14 +
+ .../mdx-engineering-panels-by-project.test.ts      |  13 +
+ .../__tests__/mdx-engineering-per-product.test.ts  |  13 +
+ .../mdx-engineering-trace-by-project.test.ts       |  13 +
+ .../__tests__/mdx-engineering.contract.test.ts     |  39 +-
+ server/routes/__tests__/mdx-risk-access.test.ts    | 565 +++++++++++++++++++++
+ .../__tests__/mdx-risk-assignee-membership.test.ts |  39 +-
+ .../__tests__/mdx-risk-program-scope.test.ts       |  52 +-
+ server/routes/__tests__/mdx-risk-recompute.test.ts |   8 +-
+ server/routes/mdx-engineering.ts                   |  33 +-
+ server/routes/mdx-risk-acceptance-lock.ts          |  22 +-
+ server/routes/mdx-risk-access.ts                   | 169 ++++++
+ server/routes/mdx-risk-management.ts               | 264 ++++++----
+ shared/navigation/index.ts                         |   5 +-
+ tests/mdx-beta-surfaces-routes.test.ts             |  21 +
+ 88 files changed, 3242 insertions(+), 282 deletions(-)
+ create mode 100644 client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx
+ create mode 100644 client/src/concept2cure/mdx/surfaces/engineeringPanelTarget.ts
+ create mode 100644 client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx
+ create mode 100644 client/src/concept2cure/v2/surfaces/riskRecordRead.ts
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/README.md
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/qualification.json
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipt-manifest.json
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/browser-green.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/browser-mobile-red.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/column-gate.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/companion-tests.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/csr-follow-through-integration.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/csr-integrated-prepush.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/csr-integration.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/editor-integrated-prepush.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/editor-integration.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/engineering-owner-red.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/eslint.json.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/first-integrated-prepush.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/full-prepush.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/integration-green.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/production-build.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/program-gate.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/protocol-integrated-prepush.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/protocol-integration.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/ratchet-integration.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/risk-access-red-diagnostic.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/risk-entry-red.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/risk-server-green.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/risk-ui-green.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/risk-ui-red.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/root-green.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/source-prepush.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/sql-gate.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/stf-integrated-prepush.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/stf-integration.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/upload-receipt-integration.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/vault-convergence-integration.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/vault-integrated-prepush.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/receipts/vault-integration.txt.gz
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/source-fingerprints.json
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-check.mjs
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-fixtures.mjs
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-index.html
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-probe.tsx
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-red-mobile/desktop-project-risk-controls.jpg
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-red-mobile/desktop-selected-hazard-controls.jpg
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-red-mobile/desktop-unavailable-controls.jpg
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-red-mobile/failure.jpg
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-red-mobile/failure.json
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-result/desktop-project-risk-controls.jpg
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-result/desktop-selected-hazard-controls.jpg
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-result/desktop-unavailable-controls.jpg
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-result/mobile-project-risk-controls.jpg
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-result/mobile-selected-hazard-controls.jpg
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-result/result.json
+ create mode 100644 docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-server.mjs
+ create mode 100644 server/routes/__tests__/mdx-risk-access.test.ts
+ create mode 100644 server/routes/mdx-risk-access.ts

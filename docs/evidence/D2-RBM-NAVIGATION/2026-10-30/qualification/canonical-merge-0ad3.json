@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-10-30T17:45:04.433037+00:00",
+  "incoming": "0ad3a15ce",
+  "mergedCommit": "027c07b8f2f7d24536c3ac45f777bb91938e4dd2",
+  "mergeMethod": "normal merge",
+  "conflicts": [
+    "docs/work-orders/README.md"
+  ],
+  "resolution": "Preserved distinct incoming Vault receipt work-order row and both owned RBM/company rows; no production conflicts.",
+  "predecessorReceipt": "final-03-summary.json",
+  "predecessorResult": "1082pass/54files",
+  "unchangedPredecessorSelectedInputs": 119,
+  "changedPredecessorSelectedInputs": []
+}

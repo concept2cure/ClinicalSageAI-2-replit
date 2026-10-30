@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts shared/constants/__tests__/mdx-project-features.test.ts shared/regulatory/__tests__/work-packages.test.ts server/services/entitlements/__tests__/launch-scope.test.ts server/__tests__/routes/k510-document-preview.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/correspondence-session/incoming-results.json",
+  "exitCode": 0,
+  "passed": 109,
+  "failed": 0,
+  "skipped": 0,
+  "files": 13,
+  "unchangedInputs": true,
+  "failures": []
+}

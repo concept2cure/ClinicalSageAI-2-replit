@@ -1,0 +1,23 @@
+{
+  "observedAt": "2026-10-30T18:36:31.168782+00:00",
+  "incoming": "1ba873279",
+  "mergeCommit": "837b34a038be6c515aed37af262bcf96eec24bb4",
+  "conflicts": [],
+  "productionPins": {
+    "client/src/concept2cure/v2/styles/protocol-dev-editing.css": "7fd38926c09f86499ad6f629638426926b00cc0e5e880d133c803b6b0ac5bcc9",
+    "client/src/concept2cure/v2/surfaces/ProtocolDev.tsx": "22448338d2553688a4fe761035a2702c42a70ff6ebbfc7c6984be268783adeb1",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx": "e8de2294e6b960c45660bf5a09d079b1a660521be2755b8c073b4e484e24a936",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx": "9fcd277dddce321f77acde6a8b3abee3a151c3c72cbd8c5c2b696b194de1aef0",
+    "client/src/concept2cure/v2/surfaces/ProtocolWorkNavigation.ts": "a01c32ac3690c9cb54e9701607645e19df1717ede7885c64489f23cb19bacd11",
+    "client/src/concept2cure/v2/surfaces/ProtocolWorkflowGuide.tsx": "f97b849ddde5313dc55cdb0c4ea88caf8fcd2f1109907ecbd32ffc3c0c427b8f"
+  },
+  "freshRegression": [
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx"
+  ],
+  "sourceScope": "Protocol workflow UI only; bounded RBM compatibility reviewed separately; no upstream totals borrowed.",
+  "reviewer": "/root/rbm_seed_and_context_types",
+  "readOnlyReviewNoExecution": true,
+  "verdict": "No RBM compatibility blocker; protocol-local existing leave guard/unregister cleanup and tab selection only; no import-time mutation, actor/shared/server change; CSS pde-flow selectors only and no RBM match. Prior whole-CSS browser receipts remain predecessor evidence."
+}

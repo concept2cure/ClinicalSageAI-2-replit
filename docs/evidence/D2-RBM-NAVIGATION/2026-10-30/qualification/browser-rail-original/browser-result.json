@@ -1,0 +1,127 @@
+{
+  "result": "passed",
+  "scope": "Actual shipped Rail/providers rendered in Chromium with intercepted synthetic HTTP/auth records. No application backend, authenticated hosted acceptance, production writes or agency validation.",
+  "checks": [
+    {
+      "name": "Desktop actual Rail places RBM after CMC and invokes its existing rbm navigation callback",
+      "passed": true,
+      "labels": [
+        "CMC / Module 3",
+        "Risk-based monitoring",
+        "Quality",
+        "Reporting & analytics"
+      ]
+    },
+    {
+      "name": "Actual RBM rail button is keyboard-operable with visible focus",
+      "passed": true,
+      "outline": "solid",
+      "width": "2px"
+    },
+    {
+      "name": "Phone-width collapsed actual Rail keeps RBM accessible and invokes the same callback",
+      "passed": true,
+      "railWidth": 56
+    },
+    {
+      "name": "Actual phone rail expands with the same RBM label and peers",
+      "passed": true
+    },
+    {
+      "name": "Actual lock panel explains Professional subscription without navigating into RBM",
+      "passed": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/tenants",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/clients",
+      "query": "?organizationId=7"
+    },
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/tenants",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/clients",
+      "query": "?organizationId=7"
+    },
+    {
+      "method": "GET",
+      "path": "/api/module-subscriptions/navigation",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/tenants",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/clients",
+      "query": "?organizationId=7"
+    }
+  ],
+  "unexpected": [],
+  "errors": [],
+  "consoleErrors": [],
+  "selectedInputsUnchanged": true,
+  "files": {
+    "client/src/concept2cure/v2/registryModel.ts": "192340d35184bd95307631524d900db4e75bd1f97953efc64dd30ec6723a075a",
+    "client/src/concept2cure/v2/Shell.tsx": "1c5777170c14e5f0e1d5d8c5f1a2991019b2aca7ec37fa58fe8107b5f178ff66",
+    "client/src/concept2cure/v2/navEntitlements.tsx": "ab1071c9978943440ecd49c3cca3d95885ef0ca59d5c96a5d4d2aaabb6e914cf",
+    "client/src/concept2cure/v2/NavUnlockPanel.tsx": "4107a7abf4f0e7637293c9501f22d8b6163e7b0a83e8526304bcb1c85ba5492c",
+    "client/src/concept2cure/v2/dataConnect.tsx": "51b03e8cf336df448663742c5b31bb4dc9c93f6879b437cc490420fcc6809815",
+    "client/src/concept2cure/v2/clinicalRegulatoryGraphFlag.ts": "536e14980d446551f256f90a675ddd54473889411f0476501195b653038d7243",
+    "client/src/contexts/TenantContext.tsx": "716e80a1c3912f4953d5efa655cd3b52946696258c4f19a462d4096cc2d73387",
+    "client/src/services/portal/authService.tsx": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54",
+    "client/src/utils/authToken.ts": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c",
+    "client/src/lib/queryClient.ts": "169dd465b658b06756d3dda372bed53ef587052cd9b86702486d3852e4b6da3a",
+    "shared/constants/launch-scope.ts": "2bdfbf4271d116e11c39f3403d15ced81e0b9237d9831d399012a126a0809506",
+    "shared/constants/ui-surface-registry.ui-v2.ts": "3037f59fde53562e7d0cecf35180235603642a82bc85b9c7425aff251d7386d1",
+    "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
+    "client/src/index.css": "c6f279c1a9c09a86c7087eaf44e4b42ba377011f91ff9859131d145a83d6594b",
+    "client/src/concept2cure/v2/styles/app-v2.css": "83409a950412bf267f232e6ad333c7cf6f9c63ba7ece242f154b4c3554dd1270",
+    "client/src/concept2cure/v2/styles/surfaces-v2.css": "b45f5b5123e4402f274cd2c3e908e83ff6d9070221dead41ec16e23142809246",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css": "8e5341cb1be8062c3c696d4645d1b2df5a01b93e9c5d89aff0c73f9da2f467ce",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "a9c012ae4b2cc88dd0292a4971288bc4d989e666d9667b5995c1ccd882c55b20",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "e7e63f77b32041d0981edc522f8194e7d279ed9caa4032dcedf7ccf562189551",
+    "private:browser-server.mjs": "769e4b841b95002755ef654c9c98bf71e7c9469d43a65f782a4ec3b1cdce6ffb",
+    "private:browser-index.html": "56284e9b8eb066d525df7524881950e0968b166e48015230d893d1f0eee810d5",
+    "private:browser-rail.tsx": "b21d9b6f7acb86c61785563c7daba1ab37e4657ce95dc23d90b0e399f70896f5",
+    "private:browser-check.mjs": "1130da73609d174c00bbc1d2c5688a41592f58cb7f7a8914a9189285470dc1df"
+  },
+  "finishedAt": "2026-10-30T16:55:21.839Z"
+}

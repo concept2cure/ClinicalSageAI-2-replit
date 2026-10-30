@@ -1,0 +1,9 @@
+{
+  "method": "ESLint lintText with original file path and saved original source; no temporary TypeScript or baseline change",
+  "path": "server/routes/c2c/__tests__/project-settings.pglite.test.ts",
+  "beforeErrors": 0,
+  "beforeWarnings": 0,
+  "afterErrors": 0,
+  "afterWarnings": 0,
+  "messages": []
+}

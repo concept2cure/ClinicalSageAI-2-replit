@@ -1,0 +1,64 @@
+{
+  "observedAt": "2026-10-30T16:56:35.605602+00:00",
+  "commit": "6328a385bb54c2126d9c1f4b9f1835a0723a93bb",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "d57a3c27bbede1a9821d206a7975e27ff8daba4be092fe76626327d20a41598f",
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx": "865c285d912d306d0aa4bc57376e91e15bb89886ecb897ad041fb01931e591dc",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "846447fe7bbaa44e91c19f511c4bce06755e382476752d9c4ce7fe914867d92e",
+    "client/src/concept2cure/v2/surfaces/rbmBoard.ts": "2e88b3a40cb6797efcbc58d40f4d8458eacb675d7eaf95ea59d716e782f8d9e7",
+    "server/routes/c2c/projects.ts": "08c8e25d518e2f2918ce0ab55ada6143ce2049c97c359c4d84487096bfd4ae6e",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx": "e3270495a246c7a075e6468c6396b57d5481b9a9340996b0335fae0963ce0232",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "d60dcb3221a0f2920ca4fcfa7664ab79e9d059503c8d680245a40e152d963941",
+    "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx": "1231c041cde83252e2a670e4ca373039f76762a3fc8690ab0b53682eb71e1da1",
+    "server/routes/c2c/__tests__/projects-create.test.ts": "430252bbfeb057d72961ba2887cb7d5265e117215e616b21c05289fa18d64d22"
+  },
+  "qualification": {
+    "exitCode": 0,
+    "passed": 174,
+    "failed": 0,
+    "skipped": 0,
+    "files": 8,
+    "all13InputsUnchanged": true,
+    "perFile": [
+      {
+        "file": "/workspace/ClinicalSageAI-2-replit/server/routes/c2c/__tests__/projects-create.test.ts",
+        "passed": 42
+      },
+      {
+        "file": "/workspace/ClinicalSageAI-2-replit/server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts",
+        "passed": 41
+      },
+      {
+        "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx",
+        "passed": 9
+      },
+      {
+        "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx",
+        "passed": 2
+      },
+      {
+        "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx",
+        "passed": 26
+      },
+      {
+        "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx",
+        "passed": 9
+      },
+      {
+        "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+        "passed": 12
+      },
+      {
+        "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx",
+        "passed": 33
+      }
+    ]
+  },
+  "intermediates": {
+    "project-red": "0/1 functional missing checkbox, unchanged5production+test",
+    "project-owned-01": "164/168; original3argument-array assertion rejected existing4thheaderarg; 3crosslinknames lacked accessible wordseparator. Rawreceipt andsources retained.",
+    "project-owned-02": "168/169; rawbrowser bearer drift allowed oldnavigation dueguardmissing presentedbrowserbearer. Actual defect corrected.",
+    "project-aba-red": "0/2 targeted batchedprojectABA cases; 16othercases skippedbytestNamePattern. OldguardsblockedfreshUIuntilnewlocalvisit; correctedwithout revivingoldclosures."
+  },
+  "limits": "Mounted client/SQL-mocked route proof, not hosted deployment or clinical qualification. Context test mocks only specialist dock and a Body callback probe; canonical session, shell-project and HTTP read hooks execute."
+}

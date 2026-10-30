@@ -1,0 +1,18 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/routes/__tests__/rbm-approval-signature.pglite.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/access-signature-green-01-results.json",
+  "exitCode": 1,
+  "passed": 29,
+  "failed": 2,
+  "skipped": 0,
+  "files": 1,
+  "unchangedInputs": true,
+  "failures": [
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/rbm-approval-signature.pglite.test.ts",
+      "cases": [
+        "mounted RBM approvals persist their electronic signature 'assessment' activation and signature commit together",
+        "mounted RBM approvals persist their electronic signature 'plan' activation and signature commit together"
+      ]
+    }
+  ]
+}

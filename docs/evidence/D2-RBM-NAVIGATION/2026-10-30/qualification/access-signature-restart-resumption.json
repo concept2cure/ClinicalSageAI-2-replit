@@ -1,0 +1,8 @@
+{
+  "observedAt": "2026-10-30T17:37:11.181849+00:00",
+  "commit": "b4edc78bc909ec06e72f7689759e3a7b95625a27",
+  "predecessorReceipt": "final-02-finish.json",
+  "predecessorSelectedInputs": 98,
+  "changedSelectedInputs": [],
+  "restartResult": "Workspace preserved. Previous idle agents ended; signature producer and independent read-only reviewer re-created. No previous signature implementation/source was lost; it had not started."
+}

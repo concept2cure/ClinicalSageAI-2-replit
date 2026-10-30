@@ -1,0 +1,10 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx": "6529590a0e180f1a1179c1c93599c308db7e410d024e4bd875b0870669b05cbc",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx": "e0b6f1678d3a2b60429b7bb484187e03077b4281a425c716622d2a0c23804531",
+    "server/services/entitlements/__tests__/rbm-launch-claim.test.ts": "5142abab8bbcce27b8f9ca3b0c173cc835574ee791a3295a0a42e73f5867e4a7"
+  },
+  "shellNavExistingExpectLinesPreserved": 67,
+  "expectedCases": 68,
+  "redResult": "37 pass / 31 fail, 3 actual files, source stable; no production edits"
+}

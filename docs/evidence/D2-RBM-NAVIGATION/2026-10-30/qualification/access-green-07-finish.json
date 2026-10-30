@@ -1,0 +1,32 @@
+{
+  "observedAt": "2026-10-30T17:17:28.472366+00:00",
+  "commit": "6328a385bb54c2126d9c1f4b9f1835a0723a93bb",
+  "files": {
+    "migrations/20260629_rbm_surfaces.sql": "2125d652a5ceb596ded19224a55e0d9cb0e47e1b39bb5ebd0d53ddffe187ec24",
+    "server/bootstrap/register-clinical-intel-routes.ts": "f747d24e89f7a9474815e537e2718d65515a92f711d7b9d1be96d3fc19eb29fc",
+    "server/bootstrap/register-inline-routes.ts": "dcfa17e0bc0617575d7b66ff8b034bdb2092e8dad8efff9fb4a6c84a3a0c85be",
+    "server/db.ts": "e053da9718ede0e02d6b530e9fb45abfa606d85102b942186e312fb4a8b45859",
+    "server/db/runtime.ts": "3cb629ec8998503a258434fce52c0754c78a1c3f4074584ee03f39cfd0c60542",
+    "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts": "a0463c214c877a5975012558ff64e30ec3a5eee9e5fc0cda4691d1780b2e1adc",
+    "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts": "982b5c95eecfa845fba5677db7a891a1040fc4486cc1bead6d2c96647c99d9e7",
+    "server/routes/__tests__/mdx-rbm-signed-records.test.ts": "105764ab039ba6747a0f2c5289118972d22a76b522b530d77e987c5f97271f5c",
+    "server/routes/__tests__/rbm-assessment-integrity.test.ts": "365e58c3e395d48f4d2c5494e92cb1af0061f862f2bf47c4efc38a86f426edf4",
+    "server/routes/__tests__/rbm-board-current-project.test.ts": "8da78c857c6c8c429a2eb6d63ae6c959a640072b5edff0e556d22a514a6bed38",
+    "server/routes/__tests__/rbm-current-project-admission.test.ts": "b75c299cd6020fd747510521de11b50a15fc06c7fe87ecca83bffcb6fdb20be2",
+    "server/routes/mdx-rbm-board.ts": "1c2cdb68ba1712f8bd904b2f31485bc8d6c6750bae525c6d3d0d1a22ff433bdb",
+    "server/routes/mdx-rbm-data.ts": "b32a9139bb5ac334f75c32c9e091bc9364da65ad7c39e58cb5a94be218d40e60",
+    "server/routes/mdx-rbm.ts": "6587472f7f692419b3a9f73d7a4befa0e8fe0db3fe54fe760fc07c021e62b53f",
+    "server/services/ana/AnaToolExecutor.ts": "6340c0eafc0bde783b9b032da205ee5325145898e566983a5d57f9280fa65f46",
+    "server/services/ana/__tests__/ana-cannot-sign.test.ts": "ced14d27af58ab6b115e4aaca20f505ddfb17dae46e6e205b45c06eb68dccc4d",
+    "server/services/ana/__tests__/rbm-launch-admission.test.ts": "282efa9d80c9f614bf02893f50345922869eddd835343f1b4a8a8ec6a1c49eaa",
+    "server/services/ana/ana-realtime.ts": "8d4e0fc5bf1c95a935f4d9fc6b2ba7184ee96c6750e9232b2a5bf6e5973567a0",
+    "server/services/ana/deep-investigation.ts": "be87ea791ff4bee8135d31126604fccfe20cea5dbca00702315127fc7d360d1f",
+    "server/services/ana/evidence-literature-tool-defs.ts": "137a41e92fa2b66dd9833e76e7c409be7a60acc1f245d78775dd6f83e3c75278",
+    "server/services/rbm/__tests__/rbm-access.test.ts": "43779d407e31a2f7f0103f8b09bdd59cf4d9e2c665f3a4358836afa9d6b27536",
+    "server/services/rbm/__tests__/rbm-actuator.test.ts": "156331d4740b7cd0aa1f424e61f5716edf80a9cf7fd0bacc4b35be6ea436b48f",
+    "server/services/rbm/__tests__/rbm-assessment-seed.test.ts": "0940e6cfa7312c235f7f26a0bc396ccf370986d2394d4c5a21013ecde2f108f9",
+    "server/services/rbm/rbm-access.ts": "09726bf718a82198dafbb697bd1c830e94b5df8d357a36225c1e20ce18c97441",
+    "server/services/rbm/rbm-actuator.ts": "806c7d4ffc544b801f4029848ce5d1782186958f8ed11ecf4661339191cfd5d0",
+    "server/services/rbm/rbm-assessment-seed.ts": "73010d8d30540420fd3aa83df1377f90b5844c66cc99e999e1c5cc808a262a2a"
+  }
+}

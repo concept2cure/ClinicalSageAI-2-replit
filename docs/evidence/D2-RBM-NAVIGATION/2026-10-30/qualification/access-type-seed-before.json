@@ -1,0 +1,8 @@
+{
+  "observedAt": "2026-10-30T18:01:50.372321+00:00",
+  "files": {
+    "server/services/rbm/rbm-assessment-seed.ts": "73010d8d30540420fd3aa83df1377f90b5844c66cc99e999e1c5cc808a262a2a",
+    "server/services/rbm/__tests__/rbm-assessment-seed.test.ts": "0940e6cfa7312c235f7f26a0bc396ccf370986d2394d4c5a21013ecde2f108f9",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "c94373903863c699201803e9a8a7bfda51e0474f312102f492703f374ce3e646"
+  }
+}

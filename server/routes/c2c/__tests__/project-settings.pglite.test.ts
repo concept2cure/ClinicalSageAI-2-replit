@@ -157,6 +157,22 @@ describe('governed programme settings over HTTP and actual SQL', () => {
     expect(statements.at(-1)).toBe('COMMIT'); expect(releases).toEqual([undefined]);
   });
 
+  it('preserves the RBM setup choice and unrelated metadata when project settings change', async () => {
+    const [original] = await rows<{ metadata: unknown }>('SELECT metadata FROM regulatory_programs WHERE id=$1', [PROGRAM]);
+    const metadata = { riskBasedMonitoring: true, retainedClientOption: { label: 'keep', enabled: false } };
+    await jdb.pool.query('UPDATE regulatory_programs SET metadata=$1 WHERE id=$2', [JSON.stringify(metadata), PROGRAM]);
+    try {
+      const revision = (await settings()).body.data.revision;
+      const res = await update(write(revision, { description: 'Monitoring oversight', priority: 'high', targetSubmissionDate: '2031-09-17' }));
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(await saved()).toEqual({ description: 'Monitoring oversight', priority: 'high', day: '2031-09-17' });
+      const [persisted] = await rows<{ metadata: unknown }>('SELECT metadata FROM regulatory_programs WHERE id=$1', [PROGRAM]);
+      expect(persisted.metadata).toEqual(metadata);
+    } finally {
+      await jdb.pool.query('UPDATE regulatory_programs SET metadata=$1 WHERE id=$2', [original.metadata == null ? null : JSON.stringify(original.metadata), PROGRAM]);
+    }
+  });
+
   it('clears optional values and writes only actual differences', async () => {
     const initial = (await settings()).body.data;
     const res = await update(write(initial.revision, { description: '  ', priority: 'medium', targetSubmissionDate: null }));

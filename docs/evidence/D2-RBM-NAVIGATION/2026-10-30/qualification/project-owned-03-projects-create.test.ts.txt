@@ -1,0 +1,727 @@
+/**
+ * POST /api/c2c/projects — real project create contract.
+ *
+ * The v2 New-Project wizard persists here instead of the old client-only
+ * window.C2C_PROJECT stub. This locks: org scoping, required-field + enum
+ * validation (so bad input never reaches business SQL), the INSERT into the SAME
+ * regulatory_programs table the portfolio list reads, the org-unique code
+ * retry on 23505, the { data } response shaped to the portfolio display
+ * contract, and the 503 PENDING_STORE fail-soft on an unprovisioned store.
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import request from 'supertest';
+import type { ScaffoldResult } from '../../../services/c2c/scaffold-project-documents.js';
+import { ANCHOR, KEYS, shapedRow, validBody, executeProjectFixtureQuery, projectFixtureApp } from './projects-create-fixture';
+
+// The create route now runs the program INSERT and the document scaffold in ONE
+// transaction, so it acquires a client. `query` models that client: every
+// statement the route issues — BEGIN, the INSERT, the scaffold's reads/writes,
+// COMMIT — lands here in order. The pool's own `query` still serves the
+// post-commit re-select, which deliberately runs outside the transaction.
+const { query, release, membershipQuery, activeMemberships } = vi.hoisted(() => ({
+  query: vi.fn(), release: vi.fn(), activeMemberships: new Map<string, string>(),
+  membershipQuery: vi.fn<(sql: string, params: unknown[]) => Promise<{ rows: { role: string }[] }>>(),
+}));
+
+function executeFixtureQuery(...args: unknown[]) {
+  return executeProjectFixtureQuery(query, membershipQuery, ...args);
+}
+/** The transaction client the route checked out — captured so the spine test
+ *  can prove createSubmissionTx received THIS client (same transaction). */
+let txnClient: { query: (...a: unknown[]) => unknown; release: () => void } | null = null;
+vi.mock('../../../db.js', () => ({
+  pool: {
+    query: executeFixtureQuery,
+    connect: async () => (txnClient = { query: executeFixtureQuery, release }),
+  },
+}));
+// The scaffold is exercised by its own contract test; here it is stubbed so
+// these assertions stay about the create route's transaction and contract.
+//
+// Typed against the real ScaffoldResult rather than left to inference: inferring
+// from the happy-path implementation narrows documentId to `string` and drops
+// `skipped` entirely, so the skip test below could not express its own case. The
+// import is type-only, so it is erased before vi.mock replaces the module.
+const scaffold = vi.fn<(...a: unknown[]) => Promise<ScaffoldResult>>(
+  async () => ({ documentId: 'doc_test', sectionCount: 24 }),
+);
+vi.mock('../../../services/c2c/scaffold-project-documents.js', () => ({
+  scaffoldProjectDocuments: (...a: unknown[]) => scaffold(...a),
+}));
+// Create now enforces the licensed program quota before it opens the
+// transaction. checkProgramQuota reads through the same mocked pool, so left
+// unstubbed its two statements would consume the head of every queue below and
+// every test here would assert against the wrong call. Stubbed for the same
+// reason the scaffold is: these assertions are about the create route's
+// transaction and contract, and the quota has its own coverage in
+// license-manager. The deny path gets an explicit test at the end.
+const programQuota = vi.fn(async () => ({ withinQuota: true, currentCount: 0, maxAllowed: 10, unlimited: false }));
+vi.mock('../../../services/license-manager.js', () => ({
+  checkProgramQuota: (...a: unknown[]) => programQuota(...(a as [])),
+}));
+// The creation now writes a hash-chained audit_logs row in the same
+// transaction. Sealing reads the previous chain head through the client, so
+// like the quota it would otherwise consume queue entries these tests assert
+// positionally. The chain itself is covered by services/audit; what matters
+// here is that the row is written INSIDE the transaction, asserted below.
+vi.mock('../../../services/audit/chain.js', () => ({
+  hashPayload: () => 'payload-hash-test',
+  computeAuditChainSealed: async () => ({ sha256Chain: 'chain-test', hmacSeal: 'seal-test' }),
+}));
+// Drug intakes now create the canonical `submissions` spine on the SAME
+// transaction client, through the submission-service's transactional insert.
+// Stubbed so these assertions stay about the route's transaction and contract
+// (the insert's field mapping lives in submission-service); the route still
+// issues its identity probe (SELECT … FROM submissions) through the mocked
+// client, so drug-program tests queue one extra slot for it.
+const createSubmissionTx = vi.fn(async () => ({ id: 3101 }));
+vi.mock('../../../services/submission-service/submission-service.js', () => ({
+  createSubmissionTx: (...a: unknown[]) => createSubmissionTx(...(a as [])),
+}));
+
+import projectsRouter, { serializeProgramDetail } from '../projects';
+
+function appWith(org: number | null, userId?: number, requestId?: string) {
+  return projectFixtureApp(projectsRouter, org, userId, requestId);
+}
+
+beforeEach(() => {
+  query.mockReset();
+  release.mockReset();
+  membershipQuery.mockReset();
+  activeMemberships.clear();
+  activeMemberships.set('7:3', 'member');
+  membershipQuery.mockImplementation(async (_sql, [organizationId, userId]) => {
+    const role = activeMemberships.get(`${organizationId}:${userId}`);
+    return { rows: role ? [{ role }] : [] };
+  });
+  txnClient = null;
+  scaffold.mockReset();
+  scaffold.mockResolvedValue({ documentId: 'doc_test', sectionCount: 24 });
+  createSubmissionTx.mockReset();
+  createSubmissionTx.mockResolvedValue({ id: 3101 });
+  programQuota.mockReset();
+  programQuota.mockResolvedValue({ withinQuota: true, currentCount: 0, maxAllowed: 10, unlimited: false });
+  delete process.env.PROGRAM_QUOTA_MODE;
+  // Default: BEGIN and COMMIT resolve; individual tests queue the rest.
+  query.mockResolvedValue({ rows: [] });
+});
+
+/** Statements the route issued, in order, normalised for assertion. */
+const sqlCalls = () => query.mock.calls.map((c) => String(c[0]).trim().split(/\s+/).slice(0, 3).join(' '));
+/** The nth call matching a fragment. */
+const callWith = (frag: string) =>
+  query.mock.calls.find((c) => String(c[0]).includes(frag)) as [string, unknown[]] | undefined;
+
+describe('POST /api/c2c/projects', () => {
+  it('403 without org context', async () => {
+    const res = await request(appWith(null)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(403);
+    expect(query).not.toHaveBeenCalled();
+    expect(membershipQuery).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['missing membership', 7, null, 'PROJECT_ACTOR_ACCESS_DENIED'],
+    ['membership in a different organization', 8, 'member', 'PROJECT_ACTOR_ACCESS_DENIED'],
+    ['active viewer', 7, 'viewer', 'PROJECT_WRITE_ACCESS_DENIED'],
+  ] as const)('refuses %s before quota or any program mutation', async (_name, org, role, error) => {
+    activeMemberships.clear();
+    if (role) activeMemberships.set('7:3', role);
+    const res = await request(appWith(org, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe(error);
+    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [org, 3, false]);
+    for (const operation of [query, programQuota, scaffold, createSubmissionTx]) expect(operation).not.toHaveBeenCalled();
+  });
+
+  it('rolls back if membership is revoked between preflight and the locked admission', async () => {
+    query.mockImplementationOnce(async (sql: string) => {
+      expect(sql).toBe('BEGIN');
+      activeMemberships.delete('7:3');
+      return { rows: [] };
+    });
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('PROJECT_ACTOR_ACCESS_DENIED');
+    expect(membershipQuery.mock.calls).toEqual([
+      [expect.not.stringContaining('FOR SHARE'), [7, 3, false]],
+      [expect.stringContaining('FOR SHARE OF ou,u,o'), [7, 3]],
+    ]);
+    expect(sqlCalls()).toEqual(['BEGIN', 'ROLLBACK']);
+    expect(release).toHaveBeenCalledExactlyOnceWith();
+    expect(scaffold).not.toHaveBeenCalled();
+    expect(createSubmissionTx).not.toHaveBeenCalled();
+  });
+
+  it('400 when name is missing', async () => {
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send({ ...validBody, name: '' });
+    expect(res.status).toBe(400);
+    expect(query).not.toHaveBeenCalled();
+    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [7, 3, false]);
+  });
+
+  it('400 on an invalid programType (never reaches business SQL)', async () => {
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send({ ...validBody, programType: 'bogus' });
+    expect(res.status).toBe(400);
+    expect(query).not.toHaveBeenCalled();
+    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [7, 3, false]);
+  });
+
+  it.each(['true', 1, null, {}, []])('refuses a malformed monitoring selection %j before business SQL', async choice => {
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send({ ...validBody, riskBasedMonitoring: choice });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('boolean');
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it.each([true, false])('records monitoring choice %s in the program and same-transaction audit', async choice => {
+    query.mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3])
+      .mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send({ ...validBody, riskBasedMonitoring: choice });
+    expect(res.status).toBe(201);
+    const metadata = callWith('INSERT INTO regulatory_programs')![1].filter(value => typeof value === 'string').map(value => {
+      try { return JSON.parse(value as string); } catch { return null; }
+    }).find(value => value?.createdVia === 'v2-new-project-wizard');
+    expect(metadata).toMatchObject({ riskBasedMonitoring: choice });
+    const audit = callWith('INSERT INTO audit_logs')![1].filter(value => typeof value === 'string').map(value => {
+      try { return JSON.parse(value as string); } catch { return null; }
+    }).find(value => value?.created_via === 'v2-new-project-wizard');
+    expect(audit).toMatchObject({ riskBasedMonitoring: choice });
+    const statements = query.mock.calls.map(([sql]) => String(sql));
+    expect(statements.findIndex(sql => sql.includes('INSERT INTO audit_logs'))).toBeLessThan(statements.findIndex(sql => sql === 'COMMIT'));
+    expect(statements.some(sql => /INSERT INTO rbm_|organization_modules|module_subscriptions/.test(sql))).toBe(false);
+  });
+
+  it.each([true, false, 'true', 1, undefined])('projects only the exact stored monitoring boolean %j', choice => {
+    const result = serializeProgramDetail({ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05', metadata: { riskBasedMonitoring: choice, createdVia: 'private-provenance' } });
+    expect(result.riskBasedMonitoring).toBe(choice === true);
+    expect(result).not.toHaveProperty('metadata');
+  });
+
+  it('inserts into regulatory_programs and returns the portfolio display contract', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT ... RETURNING id
+      .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT (nda = drug)
+      // Program anchor (slice C1), on the same transaction client, between the
+      // spine and the audit row: preflight (column present, exactly one
+      // workspace) → no existing anchor → INSERT INTO projects RETURNING id.
+      .mockResolvedValueOnce({ rows: [{ has_column: 1, workspace_count: 1, workspace_id: 55 }] })
+      .mockResolvedValueOnce({ rows: [] })                                            // anchor: no existing project
+      .mockResolvedValueOnce({ rows: [{ id: 55, name: 'Fixture client' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 9001 }] })                                // anchor: INSERT INTO projects
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
+      .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select (post-commit, on the pool)
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(201);
+    expect(res.body.meta.created).toBe(true);
+    expect(membershipQuery.mock.calls).toEqual([
+      [expect.not.stringContaining('FOR SHARE'), [7, 3, false]],
+      [expect.stringContaining('FOR SHARE OF ou,u,o'), [7, 3]],
+    ]);
+    for (const k of KEYS) expect(res.body.data).toHaveProperty(k);
+
+    const insert = callWith('INSERT INTO regulatory_programs');
+    expect(insert, 'no INSERT was issued').toBeDefined();
+    const params = insert![1];
+    // org, program_type, product_type persisted as given
+    expect(params[0]).toBe(7);
+    // Filing, product class and creating lead persist together.
+    expect(params).toEqual(expect.arrayContaining(['nda', 'drug', 3]));
+  });
+
+  it('derives product_type from program_type when the client omits it', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT (bla = drug)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
+      .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
+    const { productType, ...noProduct } = validBody;
+    void productType;
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send({ ...noProduct, programType: 'bla' });
+    expect(res.status).toBe(201);
+    const params = callWith('INSERT INTO regulatory_programs')![1];
+    expect(params).toContain('biologic'); // bla → biologic
+  });
+
+  it('retries with a suffixed code on a unique-code collision (23505)', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockRejectedValueOnce(Object.assign(new Error('dup'), { code: '23505' }))      // INSERT collides
+      .mockResolvedValueOnce({ rows: [] })                                            // ROLLBACK
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN (fresh txn)
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // retry INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
+      .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(201);
+    const inserts = query.mock.calls.filter((c) => String(c[0]).includes('INSERT INTO regulatory_programs'));
+    expect(inserts).toHaveLength(2);
+    const firstCode = (inserts[0] as [string, unknown[]])[1][2];
+    const retryCode = (inserts[1] as [string, unknown[]])[1][2];
+    expect(retryCode).not.toBe(firstCode);
+    expect(String(retryCode).startsWith(String(firstCode))).toBe(true);
+    // A bare retry inside the aborted transaction would raise 25P02, so the
+    // route must ROLLBACK and BEGIN again between attempts.
+    expect(sqlCalls()).toContain('ROLLBACK');
+  });
+
+  it('runs the insert and the scaffold in ONE transaction, and releases the client', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
+      .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(201);
+    const order = sqlCalls();
+    expect(order[0]).toBe('BEGIN');
+    expect(order).toContain('COMMIT');
+    // The scaffold must run BEFORE the commit — a project that commits without
+    // its document is the exact bug being fixed.
+    expect(scaffold).toHaveBeenCalledTimes(1);
+    expect(order.indexOf('COMMIT')).toBeGreaterThan(0);
+    expect(release).toHaveBeenCalled();
+
+    // The audit row is written on the CLIENT, between BEGIN and COMMIT — not
+    // after, and not on the pool. A program that commits while its audit row
+    // fails is a record a regulated tenant cannot defend, so the two have to
+    // roll back together.
+    const auditIdx = query.mock.calls.findIndex((c) => String(c[0]).includes('INSERT INTO audit_logs'));
+    expect(auditIdx, 'no audit_logs row was written').toBeGreaterThan(-1);
+    expect(auditIdx).toBeLessThan(order.indexOf('COMMIT'));
+  });
+
+  it('rolls the program back when its audit row cannot be written', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
+      .mockRejectedValueOnce(new Error('audit_logs write failed'));                   // audit INSERT fails
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(500);
+    const order = sqlCalls();
+    expect(order).toContain('ROLLBACK');
+    expect(order).not.toContain('COMMIT');
+    expect(release).toHaveBeenCalled();
+  });
+
+  // 2026-10-08 (F19b): a scaffold that finds no outline no longer creates the
+  // project with an empty Vault. The filing is not offered (WORKFLOW_DECISION
+  // §4 Q2), with the market verdict's reason, and the creation is rolled back.
+  // projects-create-market-offer.test.ts covers each refused market.
+  it('a scaffold that finds no outline refuses the filing (422 FILING_NOT_OFFERED) and rolls the creation back', async () => {
+    scaffold.mockResolvedValueOnce({
+      documentId: null, sectionCount: 0,
+      skipped: 'NO_RULE_PACK',
+      detail: "No rule pack defines 'nda' for 'fda' (or any fallback).",
+    });
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
+      .mockResolvedValueOnce({ rows: [] });                                           // ROLLBACK
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    expect(res.body.message).toMatch(/^FDA has no governed NDA outline here/);
+    const order = sqlCalls();
+    expect(order).toContain('ROLLBACK');
+    expect(order).not.toContain('COMMIT');
+  });
+
+  it('reports the scaffolded document and section count on success', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] })
+      .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.body.meta.documentId).toBe('doc_test');
+    expect(res.body.meta.scaffoldedSections).toBe(24);
+  });
+
+  it('503 PENDING_STORE when the store is not provisioned (42P01)', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                        // BEGIN
+      .mockRejectedValueOnce(Object.assign(new Error('relation missing'), { code: '42P01' }));
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('PENDING_STORE');
+  });
+
+  it('does NOT call it a provisioning failure when the named relation EXISTS', async () => {
+    // A 42P01 names a relation in its message, and the route used to take that
+    // name at face value and tell the operator to provision it. The drug-NDA
+    // golden journey produces exactly that against a relation the same database
+    // still resolves, so the one code path whose job is to say what is wrong
+    // was confidently saying the wrong thing — and the operator's next step,
+    // provisioning a store that is already there, dead-ends too.
+    query
+      .mockResolvedValueOnce({ rows: [] })                                   // BEGIN
+      .mockRejectedValueOnce(
+        Object.assign(new Error('relation "audit_logs" does not exist'), { code: '42P01' }),
+      )
+      .mockResolvedValueOnce({ rows: [] })                                   // ROLLBACK
+      .mockResolvedValueOnce({ rows: [{ reg: 'audit_logs' }] });             // to_regclass — it IS there
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).not.toBe(503);
+    expect(res.body.error).not.toBe('PENDING_STORE');
+  });
+
+  it('still calls it a provisioning failure when the relation really is absent', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                   // BEGIN
+      .mockRejectedValueOnce(
+        Object.assign(new Error('relation "audit_logs" does not exist'), { code: '42P01' }),
+      )
+      .mockResolvedValueOnce({ rows: [] })                                   // ROLLBACK
+      .mockResolvedValueOnce({ rows: [{ reg: null }] });                     // to_regclass — genuinely missing
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('PENDING_STORE');
+  });
+
+  it('refuses the create when the org is at its licensed program quota', async () => {
+    // The quota ships in warn mode so it cannot retroactively lock out tenants
+    // already over a limit that was never enforced; enforce is what this asserts.
+    process.env.PROGRAM_QUOTA_MODE = 'enforce';
+    programQuota.mockResolvedValue({ withinQuota: false, currentCount: 10, maxAllowed: 10, unlimited: false });
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('QUOTA_EXCEEDED');
+    // The numbers travel with the refusal so support can answer "why" without a
+    // database session, and so the client can name the limit in its message.
+    expect(String(res.body.message)).toContain('10 of 10');
+    // Nothing was written: the quota gate runs before the transaction opens, so
+    // a refused create must not have issued a single statement.
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  // P-19: a program is never created without its project record.
+  it('refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
+      .mockResolvedValueOnce({ rows: [{ has_column: 0, workspace_count: 1, workspace_id: 55 }] }); // anchor preflight
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('PENDING_STORE');
+    expect(JSON.stringify(res.body)).not.toMatch(/regulatory_program_id|projects\.|migration/i);
+    expect(sqlCalls()).toContain('ROLLBACK');
+    expect(sqlCalls()).not.toContain('COMMIT');
+    expect(callWith('INSERT INTO projects')).toBeUndefined();
+    expect(callWith('INSERT INTO audit_logs')).toBeUndefined();
+    expect(release).toHaveBeenCalled();
+  });
+
+  it('refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT
+      .mockResolvedValueOnce({ rows: [{ has_column: 1, workspace_count: 2, workspace_id: 55, default_workspace_id: null }] })
+      .mockResolvedValueOnce({ rows: [] })                                           // anchor: none yet
+      .mockResolvedValueOnce({ rows: [{ id: 55, name: 'Alpha' }, { id: 56, name: 'Beta' }] });
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ error: 'PROJECT_RECORD_UNAVAILABLE', reason: 'AMBIGUOUS_CLIENT_WORKSPACE' });
+    expect(res.body.correlationId).toEqual(expect.any(String));
+    expect(res.body.message).toMatch(/Nothing was saved/);
+    expect(res.body.message).not.toMatch(/client_workspace_id|projects\./);
+    expect(sqlCalls()).toContain('ROLLBACK');
+    expect(sqlCalls()).not.toContain('COMMIT');
+    expect(callWith('INSERT INTO audit_logs')).toBeUndefined();
+  });
+});
+
+// ── Canonical submission spine (drug programs) ────────────────────────────────
+//
+// Intake used to write regulatory_programs + the document scaffold but never a
+// `submissions` row, leaving every canonical-core surface (IndLifecycle
+// checklist, NdaCockpit, SubmissionCenter, DispatchReadiness) permanently empty
+// for self-serve drug programs. These lock: the spine is created on the SAME
+// transaction client as the program (commit/rollback atomically), only for drug
+// application types, anchored to the program it was created for
+// (submissions.program_id, LX-22), reused only when already anchored to THAT
+// program — never adopted from another project by product name — and reflected
+// in both the sealed audit row and the 201 meta.
+describe('POST /api/c2c/projects — canonical submission spine', () => {
+  /** Queue the happy-path statement sequence for a drug program. */
+  const queueDrugCreate = () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT (no match)
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
+  };
+
+  it('creates the submissions row transactionally for a drug program (nda)', async () => {
+    queueDrugCreate();
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(201);
+
+    // The insert ran ONCE, on the SAME client the transaction runs on — not on
+    // the pool — so the spine commits or rolls back with the program.
+    expect(createSubmissionTx).toHaveBeenCalledTimes(1);
+    const [clientArg, input, ctx] = createSubmissionTx.mock.calls[0] as unknown as [
+      unknown,
+      Record<string, unknown>,
+      Record<string, unknown>,
+    ];
+    expect(clientArg).toBe(txnClient);
+
+    // …and BETWEEN this transaction's BEGIN and COMMIT.
+    const order = sqlCalls();
+    const beginOrder = query.mock.invocationCallOrder[order.indexOf('BEGIN')];
+    const commitOrder = query.mock.invocationCallOrder[order.indexOf('COMMIT')];
+    const spineOrder = createSubmissionTx.mock.invocationCallOrder[0];
+    expect(spineOrder).toBeGreaterThan(beginOrder);
+    expect(spineOrder).toBeLessThan(commitOrder);
+
+    // The spine is anchored to the program it was created for (LX-22), with
+    // the org and the canonical fields.
+    expect(input).toMatchObject({
+      programId: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05',
+      title: 'BX-204 — NDA',
+      productName: 'BX-204',
+      applicationType: 'nda',
+      clientType: 'pharma', // productType 'drug'
+      primaryRegion: 'fda', // primaryAgency FDA
+    });
+    expect(ctx).toEqual({ organizationId: 7, userId: 3 });
+
+    // The sealed audit row records BOTH creations.
+    const audit = callWith('INSERT INTO audit_logs');
+    expect(audit).toBeDefined();
+    const details = JSON.parse(String(audit![1][14]));
+    expect(details.submission_id).toBe(3101);
+    expect(details.submission_created).toBe(true);
+    expect(details.submission_application_type).toBe('nda');
+
+    // …and the 201 meta surfaces the linkage (never silent).
+    expect(res.body.meta.submissionId).toBe(3101);
+    expect(res.body.meta.submissionCreated).toBe(true);
+  });
+
+  it('reuses only a spine already anchored to THIS program', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
+      .mockResolvedValueOnce({ rows: [{ id: 55 }] })                                  // anchored-spine SELECT → this program's spine
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(201);
+    expect(createSubmissionTx).not.toHaveBeenCalled();
+    expect(res.body.meta.submissionId).toBe(55);
+    expect(res.body.meta.submissionCreated).toBe(false);
+
+    // The probe is org-scoped and keyed by the PROGRAM, never by name: two
+    // projects for one product used to share one filing spine because it
+    // matched on product_name/title (PF-creation-1).
+    const probe = callWith('FROM submissions');
+    expect(probe).toBeDefined();
+    expect(probe![0]).toMatch(/program_id = \$2/);
+    expect(probe![0]).not.toMatch(/product_name|title/);
+    expect(probe![1]).toEqual([7, 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05', 'nda']);
+  });
+
+  it('creates NO submissions row for a device program (510k)', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (no spine slot)
+      .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
+    const res = await request(appWith(7, 3))
+      .post('/api/c2c/projects')
+      .send({ ...validBody, name: 'CGM Sensor 510(k)', programType: '510k', productType: 'device' });
+    expect(res.status).toBe(201);
+    expect(createSubmissionTx).not.toHaveBeenCalled();
+    expect(callWith('FROM submissions')).toBeUndefined();
+    expect(res.body.meta).not.toHaveProperty('submissionId');
+  });
+
+  it('creates NO submissions row for a CER program', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
+      .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (no spine slot)
+      .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
+      .mockResolvedValueOnce({ rows: [shapedRow()] }).mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] });                                // re-select
+    const res = await request(appWith(7, 3))
+      .post('/api/c2c/projects')
+      .send({ ...validBody, name: 'CGM CER', programType: 'cer', productType: 'device' });
+    expect(res.status).toBe(201);
+    expect(createSubmissionTx).not.toHaveBeenCalled();
+    expect(callWith('FROM submissions')).toBeUndefined();
+    expect(res.body.meta).not.toHaveProperty('submissionId');
+  });
+
+  it('rolls the WHOLE creation back when the spine insert fails', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
+      .mockResolvedValueOnce({ rows: [] });                                           // identity SELECT (no match)
+    createSubmissionTx.mockRejectedValueOnce(new Error('submissions insert failed'));
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(500);
+    const order = sqlCalls();
+    // No half-created program: the transaction rolled back and never committed,
+    // and no audit row was written for a creation that did not happen.
+    expect(order).toContain('ROLLBACK');
+    expect(order).not.toContain('COMMIT');
+    expect(callWith('INSERT INTO audit_logs')).toBeUndefined();
+    expect(release).toHaveBeenCalled();
+  });
+
+  it('503 PENDING_STORE when the submissions store is not provisioned (42P01)', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
+      .mockRejectedValueOnce(Object.assign(new Error('relation "submissions" does not exist'), { code: '42P01' })); // identity SELECT
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('PENDING_STORE');
+    expect(sqlCalls()).toContain('ROLLBACK');
+  });
+
+  it('names the step and a support reference, and discloses no schema object', async () => {
+    // A bare { error: 'PENDING_STORE' } is a correct status and an unactionable
+    // outage: this endpoint touches the quota tables, the program row, the
+    // submission spine and the PM-spine anchor, so "some store is missing"
+    // narrows it to four candidates and nobody can tell what to provision.
+    //
+    // The first correction answered that by putting the relation name in the
+    // client-facing message. That is the disclosure this asserts is gone: the
+    // body is rendered in a browser, and the schema shape of a governed store
+    // is not something a regulated product may put on a screen. The relation
+    // goes to the log instead, keyed by the correlation id returned here, so
+    // the operator question is still one lookup away.
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
+      .mockRejectedValueOnce(
+        Object.assign(new Error('relation "submissions" does not exist'), { code: '42P01' }),
+      );
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('PENDING_STORE');
+    expect(res.body.step).toBe('creating the project');
+    expect(res.body.correlationId).toEqual(expect.any(String));
+    expect(res.body.correlationId.length).toBeGreaterThan(5);
+
+    // Nothing in the envelope names the relation, echoes the driver text, or
+    // tells the user to run migrations — none of which is their action to take.
+    const body = JSON.stringify(res.body);
+    expect(body).not.toMatch(/submissions/);
+    expect(body).not.toMatch(/relation /i);
+    expect(body).not.toMatch(/migration/i);
+    expect(res.body.store).toBeUndefined();
+  });
+
+  it('degrades to the same safe body when the relation cannot be parsed', async () => {
+    // Postgres does not populate `err.table` for 42P01, so the relation is read
+    // out of the message for the LOG. An unrecognised message must still
+    // produce a usable response, never one reading "the undefined store".
+    query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockRejectedValueOnce(Object.assign(new Error('relation missing'), { code: '42P01' }));
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(503);
+    expect(res.body.message).not.toMatch(/undefined|null/);
+    expect(res.body.correlationId).toEqual(expect.any(String));
+    expect(res.body.message.length).toBeGreaterThan(20);
+  });
+});
+
+/**
+ * MDX UAT 2026-08-18, item A1 — the create failure must be diagnosable.
+ *
+ * The UAT captured three reference ids from three failed creates
+ * (3b46779335ffb1ec…, 54492778b381db05…, 39eeaa435dc6b42a…) and none of them
+ * could be looked up, because the catch ran
+ *
+ *   console.error('[c2c/projects] POST /', err);
+ *   return res.status(500).json({ error: 'INTERNAL_ERROR' });
+ *
+ * — no correlation id in the log line, and no message or reference in the body.
+ * The UI therefore rendered its generic status fallback ("The server could not
+ * complete this request") and invited the user to quote a reference that
+ * pointed at nothing in the logs. Fixing the underlying exception needs the
+ * exception; this is what makes the NEXT one recoverable in one lookup.
+ *
+ * The id asserted here is the one `auditLog` (middleware/enterprise-security.ts)
+ * sets and echoes as `X-Request-Id` — the same value the user reads off the
+ * error banner.
+ */
+describe('POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees', () => {
+  const REF = '3b46779335ffb1ec4187935db4df7570';
+
+  /** The app with the request-id middleware the real server mounts. */
+  function appWithRequestId(org: number, userId: number) {
+    return appWith(org, userId, REF);
+  }
+
+  it('echoes the reference id in the body and says what failed', async () => {
+    // A non-42P01 failure — the class the UAT hit, which falls through the
+    // PENDING_STORE branch to the generic catch.
+    query
+      .mockResolvedValueOnce({ rows: [] })                                  // BEGIN
+      .mockRejectedValueOnce(
+        Object.assign(new Error('null value in column "code" violates not-null constraint'), {
+          code: '23502',
+        }),
+      );
+
+    const res = await request(appWithRequestId(7, 3)).post('/api/c2c/projects').send(validBody);
+
+    expect(res.status).toBe(500);
+    expect(res.body.correlationId).toBe(REF);
+    // Names the operation, so the banner is not the bare status fallback.
+    expect(res.body.message).toMatch(/creating the project/);
+    // …and still discloses nothing internal: no column, constraint, SQL or code.
+    const body = JSON.stringify(res.body);
+    expect(body).not.toMatch(/not-null|constraint|23502|column/i);
+  });
+
+  it('rolls the transaction back and releases the client on that failure', async () => {
+    // The diagnosability change must not have altered the failure semantics:
+    // a failed create leaves no half-written program behind.
+    query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockRejectedValueOnce(Object.assign(new Error('boom'), { code: '23502' }));
+
+    await request(appWithRequestId(7, 3)).post('/api/c2c/projects').send(validBody);
+
+    expect(sqlCalls()).toContain('ROLLBACK');
+    expect(release).toHaveBeenCalled();
+  });
+});

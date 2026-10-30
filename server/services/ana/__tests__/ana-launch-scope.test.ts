@@ -56,8 +56,11 @@ describe('the inventory', () => {
   });
 
   it('brings a tool back when its surface joins the launch catalog, without editing the inventory', () => {
-    expect(anaCapabilityInLaunchScope('run_rbm_assessment', HIDDEN_APP_TOOLS)).toBe(false);
-    expect(anaCapabilityInLaunchScope('run_rbm_assessment', HIDDEN_APP_TOOLS, new Set(['rbm']))).toBe(true);
+    const beforeAdmission = new Map([['run_rbm_assessment', ['rbm']]]);
+    expect(anaCapabilityInLaunchScope('run_rbm_assessment', beforeAdmission, new Set())).toBe(false);
+    expect(anaCapabilityInLaunchScope('run_rbm_assessment', beforeAdmission, new Set(['rbm']))).toBe(true);
+    expect(HIDDEN_APP_TOOLS.has('run_rbm_assessment')).toBe(false);
+    expect(anaCapabilityInLaunchScope('run_rbm_assessment', HIDDEN_APP_TOOLS)).toBe(true);
   });
 });
 
@@ -91,8 +94,9 @@ describe('governedToolsetFor, the one toolset every chat door composes', () => {
   // device surfaces joined the launch catalog (62a8d5e7f); they are kept now.
   // prepare_meeting_package (agency-meetings) and create_tmf (etmf), still outside
   // the catalog, take their places.
-  const HIDDEN = ['create_iacuc_protocol', 'record_grant_award', 'run_rbm_assessment', 'prepare_meeting_package', 'create_tmf', 'build_sae_line_listing'];
+  const HIDDEN = ['create_iacuc_protocol', 'record_grant_award', 'prepare_meeting_package', 'create_tmf', 'build_sae_line_listing'];
   const KEPT = [
+    'run_rbm_assessment', // existing RBM central service, founder P-76
     'search_literature', // knowledge
     'lookup_fda_guidance', // knowledge
     'create_qms_document', // quality (launch)

@@ -1,0 +1,17 @@
+{
+  "observedAt": "2026-10-30T17:22:02.647849+00:00",
+  "productionChanged": false,
+  "testsRepeated": false,
+  "serverLegacySuiteRestoredByteForByteToHead": true,
+  "serverMovedCaseCount": 12,
+  "serverMovedBodiesSha256": "1aba0a35c30f5659a515a0efb91ac5499cd97547132cb8645015cffabd7f88f6",
+  "allMovedServerBodiesBytePreserved": true,
+  "clientAllOriginalCaseBodiesBytePreserved": true,
+  "clientAssertionLinesUnchanged": 30,
+  "files": {
+    "server/routes/c2c/__tests__/projects-create.test.ts": "33283656903653ba248e2873212c3450b662754a1dd0232c8b8c582cd9ab9cdc",
+    "server/routes/c2c/__tests__/projects-rbm-choice.test.ts": "745ea87e511c4f3e0503aa684724450b2b004349cac6ec40b5c60195b97f34bc",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "c94373903863c699201803e9a8a7bfda51e0474f312102f492703f374ce3e646"
+  },
+  "note": "Structural lint successor only. Existing174/8 receipt remains exact to its archived prior source; root final cohort will exercise the split9-file selection."
+}

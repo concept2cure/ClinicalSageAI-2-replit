@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-30T19:09:21.669719+00:00",
+  "commit": "3e8840459e5cd5bb2d05cb4d02a99a4d1361b007",
+  "selectedInputs": 245,
+  "unchangedInputs": true,
+  "wholeTypeScriptErrors": 0,
+  "baseline": 0,
+  "allNormalGatesPassed": true,
+  "remoteUpdate": false,
+  "refusal": "Git compare-and-swap concurrent remote advance af226ae6a while checking d79abdf9f; no force or bypass.",
+  "transcriptSha256": "31e62b899fbf5a6a3c0c391129985f85b7532d33c4efd97f2761d402ff6bccf1"
+}

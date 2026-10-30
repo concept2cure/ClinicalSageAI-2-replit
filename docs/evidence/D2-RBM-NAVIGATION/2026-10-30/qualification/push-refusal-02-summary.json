@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-10-30T18:01:56.796249+00:00",
+  "kind": "normal pre-push compiler refusal before remote update",
+  "sourceCommit": "7b0c1f64fbaea110be2e42b41c3a81c6bdf25b74",
+  "selectedInputsUnchanged": 147,
+  "precedingHookGates": "passed including lint0errors and no warning growth",
+  "failedGate": "ci:pushed-typecheck (canonical tsc --noEmit --incremental)",
+  "compilerErrors": 27,
+  "baseline": 0,
+  "fullDiagnostics": "push-refusal-02-all-diagnostics.json",
+  "diagnosticsExtraction": "All27 semanticDiagnosticsPerFile entries from canonical incremental build-info, supplementing hook truncated last15 lines. Cache not altered or published.",
+  "buildInfoSha256": "6174ace1655d0092b2a4d03833fbb1f032e7e620dac57f017b4a6ea5de94e15c",
+  "action": "Fix accurate PGlite/test view/request contracts, explicit seed result type and fail-closed numeric author narrowing; no baseline changes or suppressed diagnostics."
+}

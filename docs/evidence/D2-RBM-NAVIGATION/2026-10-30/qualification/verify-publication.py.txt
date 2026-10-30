@@ -1,0 +1,14 @@
+from pathlib import Path
+import datetime,hashlib,json,subprocess,sys
+root=Path('/workspace/ClinicalSageAI-2-replit');p=Path('/workspace/.cloud-setup/rbm-navigation')
+git=lambda *a:subprocess.check_output(['git',*a],cwd=root)
+accepted=json.loads((p/'code-push-exit.json').read_text());assert accepted['processExit']==0 and accepted['unchangedInputs']
+head=git('rev-parse','HEAD').decode().strip();remote=git('ls-remote','origin','refs/heads/concept2cure-v2').decode().split()[0]
+assert head==remote,(head,remote)
+source=json.loads((root/'docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualified-source.json').read_text())['files']
+assert all(hashlib.sha256((root/f).read_bytes()).hexdigest()==h and hashlib.sha256(git('show',remote+':'+f)).hexdigest()==h for f,h in source.items())
+assert subprocess.run(['git','merge-base','--is-ancestor',accepted['pushedCommit'],remote],cwd=root).returncode==0
+unmerged=git('diff','--name-only','--diff-filter=U').decode().splitlines();assert not unmerged
+status=git('status','--porcelain').decode();assert not status,status
+r={'observedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'acceptedCodeCommit':accepted['pushedCommit'],'localCommit':head,'freshRemoteCommit':remote,'branchEqual':True,'sourcePinsMatchingLocalAndRemote':len(source),'unmerged':unmerged,'cleanWorktree':True,'codePushExit':0,'codePushTranscriptSha256':accepted['transcriptSha256'],'limits':'Selected source/test inputs only. Local mounted/synthetic-HTTP and source publication proof; no authenticated deployment or agency acceptance.'}
+p.joinpath(sys.argv[1]).write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r,indent=2))

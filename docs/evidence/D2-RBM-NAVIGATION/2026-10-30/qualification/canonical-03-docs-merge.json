@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-30T18:30:47.896502+00:00",
+  "incoming": "03cb814a9",
+  "mergeCommit": "dd53c5a5fcd360d8c0b1b9a3cf72cc56fa19f039",
+  "productionChanges": [],
+  "selected180InputsExact": true,
+  "conflicts": [],
+  "scope": "Accepted STF publication/qualification evidence only; normal merge, no source rechecks needed."
+}

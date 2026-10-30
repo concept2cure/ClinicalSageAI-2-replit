@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-30T18:01:39.828720+00:00",
+  "typeFailureReceipt": "push-refusal-02-all-diagnostics.json",
+  "scope": "Two author fields remain unknown from requestSqlClient; PGlite query untyped rows. No remote publication.",
+  "files": {
+    "server/routes/mdx-rbm.ts": "f4846168482a55cd3b64c426aed415c1196da8c2dc532d7d149d2a80e803aa76",
+    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts": "568d1e4a95111bef1b06c1a7b25527dba269184bc3bdcb7b7dec82ee9ff6edf1"
+  }
+}

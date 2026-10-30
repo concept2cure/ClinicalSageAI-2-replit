@@ -1,0 +1,20 @@
+{
+  "commit": "787b45505de409c41e37a46676962e824fcb4d8b",
+  "files": {
+    "client/src/concept2cure/v2/registryModel.ts": "ba89a28135a8ad92e18468ce5cf6358fb821df06540b92913ce801e045e07112",
+    "client/src/concept2cure/v2/Shell.tsx": "1c5777170c14e5f0e1d5d8c5f1a2991019b2aca7ec37fa58fe8107b5f178ff66",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "ee950d346c04d6eb95e52a4aa9935db27ddd135d9dc1ffce2d45660948cf9853",
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx": "e1cef29da504cf80cb10e73cb13f28e54a020b10536e3d695b6299121b8dcf1c",
+    "client/src/concept2cure/v2/surfaces/rbmBoard.ts": "c0753192714891602a07c5182886b1e72a1f2c658316e6810fa3e2aef46d69ab",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "8c25ac8a223318f0f28c67222d7e11c208caa31260665d6e2835b77dbf5e8bd3",
+    "client/src/concept2cure/v2/shellProject.ts": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
+    "shared/constants/launch-scope.ts": "64f7ba4e86a892bb814df986f82b6e87d9107b1e2d2586d59463e62ff4932e5c",
+    "shared/constants/ui-surface-registry.ui-v2.ts": "151c266145d333539ccfd884aea70edf4814f03609aeab61c444f0c99b60a8b9",
+    "server/routes/c2c/projects.ts": "a93bb159a64ace35c4f8c2dd60bb6ca6864e1f4165a76a05ae691caa93eb348b",
+    "server/routes/mdx-rbm-board.ts": "7ccefe3f11d07243ae557e588262f96b7cf952cd0d528d7385e3bb275984e9c9",
+    "server/routes/mdx-rbm.ts": "994577d60958b6fa1fecbba2e2aad4523fa464c41193bd87dd766f96e1943d9c",
+    "server/routes/mdx-rbm-data.ts": "78b3536deb86bf3ac915f421d2ffe71caa2affcd2c549ae0bf293d5c4c8fc4e9",
+    "server/services/ana/AnaToolExecutor.ts": "5df4351c23f0510bac2682b88f7e278521011df28974bbbe534efb55692c3d7a",
+    "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c"
+  }
+}

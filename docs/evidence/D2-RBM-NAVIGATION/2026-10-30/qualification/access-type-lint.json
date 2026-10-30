@@ -1,0 +1,18 @@
+[
+  {
+    "file": "server/routes/mdx-rbm.ts",
+    "sha256": "37060ac4a24f735320dc56318e6404fea499f99ea6d8e56b19462eeed075da6c",
+    "beforeWarnings": 7,
+    "afterWarnings": 7,
+    "errors": 0,
+    "messages": []
+  },
+  {
+    "file": "server/routes/__tests__/rbm-approval-signature.pglite.test.ts",
+    "sha256": "31f493321e4d71e61d613c55e9428af30232120ad046e2dd846061926e8e74f6",
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "errors": 0,
+    "messages": []
+  }
+]

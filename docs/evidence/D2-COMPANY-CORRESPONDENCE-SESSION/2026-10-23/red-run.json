@@ -1,0 +1,18 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx --reporter=json --outputFile=/workspace/.cloud-setup/correspondence-session/red-results.json",
+  "exitCode": 1,
+  "passed": 0,
+  "failed": 2,
+  "files": 2,
+  "all7InputsUnchanged": true,
+  "failures": [
+    {
+      "name": "canonical correspondence captured account does not dispatch a retained create click in the same frame as account replacement",
+      "message": "AssertionError: expected [ [ 'POST', \u2026(2) ] ] to have a length of +0 but got 1\n    at Proxy.<anonymous> (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1389:20)\n    at Proxy.<anonymous> (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/chai/index.js:1700:25)\n    at /workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx:34:75\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/di"
+    },
+    {
+      "name": "canonical correspondence draft continuity preserves unsaved correspondence through real bearer refresh and the same parent rerender",
+      "message": "AssertionError: expected null not to be null\n    at /workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx:33:84\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+    }
+  ]
+}

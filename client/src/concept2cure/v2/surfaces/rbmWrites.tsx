@@ -19,8 +19,27 @@ import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import { useLiveRows } from '../dataConnect';
 
-/** Base for the granular RBM CRUD/compute routes (server/routes/mdx-rbm.ts). */
-const RBM_API = '/api/mdx';
+/** Explicit addresses keep the shared transport within the admitted RBM paths.
+ * Each existing caller still supplies its relative resource/action path. */
+const RBM_ENDPOINTS: Readonly<Record<string, string>> = {
+  '/rbm-assessments': '/api/mdx/rbm-assessments',
+  '/rbm-risk-items': '/api/mdx/rbm-risk-items',
+  '/rbm-kris': '/api/mdx/rbm-kris',
+  '/rbm-qtls': '/api/mdx/rbm-qtls',
+  '/rbm-signals': '/api/mdx/rbm-signals',
+  '/rbm-site-risk/recompute': '/api/mdx/rbm-site-risk/recompute',
+  '/rbm-monitoring-plans': '/api/mdx/rbm-monitoring-plans',
+  '/rbm-monitoring-actions': '/api/mdx/rbm-monitoring-actions',
+  '/rbm-metric-ingest': '/api/mdx/rbm-metric-ingest',
+  '/rbm-central-monitoring/run': '/api/mdx/rbm-central-monitoring/run',
+  '/rbm-patient-profiles/score': '/api/mdx/rbm-patient-profiles/score',
+};
+function rbmEndpoint(path: string): string {
+  const endpoint = Object.entries(RBM_ENDPOINTS).find(([relative]) => path === relative
+    || path.startsWith(`${relative}/`) || path.startsWith(`${relative}?`));
+  if (!endpoint) throw new Error('This monitoring action is not available.');
+  return endpoint[1] + path.slice(endpoint[0].length);
+}
 
 /** The verbs the RBM write layer uses. Declared here rather than imported from
  *  queryClient because the ambient `declare module '@/lib/queryClient'` in
@@ -37,7 +56,7 @@ export async function rbmWrite<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const res = await apiRequest(method, `${RBM_API}${path}`, body);
+  const res = await apiRequest(method, rbmEndpoint(path), body);
   const payload = await res.json().catch(() => null) as
     | { data?: unknown; error?: unknown; meta?: unknown }
     | null;
@@ -55,7 +74,7 @@ export async function rbmWriteWithMeta<T>(
   path: string,
   body?: unknown,
 ): Promise<{ data: T; meta: Record<string, unknown> }> {
-  const res = await apiRequest(method, `${RBM_API}${path}`, body);
+  const res = await apiRequest(method, rbmEndpoint(path), body);
   const payload = await res.json().catch(() => null) as
     | { data?: unknown; error?: unknown; meta?: unknown }
     | null;

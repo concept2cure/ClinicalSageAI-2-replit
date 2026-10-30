@@ -1,0 +1,35 @@
+{
+  "method": "ESLint lintText in memory on original file paths; no temporary TypeScript",
+  "files": [
+    {
+      "path": "server/services/rbm/rbm-assessment-seed.ts",
+      "sha256": "17842f208ca929140511c2805a12bdb99721e37cad90f98946d334ac1f22907f",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+      "sha256": "2305a3ad5c332e0c603e31c32e320a0a59cf5d70cbedfff5b1d83c4fd07091d4",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+      "sha256": "c4e9a2d65ec014d40a0c7055d0f7d931dedd23d1266531ba6f42b44f87829279",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    }
+  ],
+  "beforeWarnings": 0,
+  "afterWarnings": 0,
+  "afterErrors": 0
+}

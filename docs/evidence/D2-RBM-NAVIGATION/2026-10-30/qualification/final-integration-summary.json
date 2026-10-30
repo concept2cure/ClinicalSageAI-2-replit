@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/routes/__tests__/mdx-risk-access.test.ts server/routes/__tests__/mdx-engineering.contract.test.ts server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts server/__tests__/routes/risk-acceptance-locked.pglite.test.ts client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx server/routes/__tests__/rbm-current-project-admission.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/final-integration-results.json",
+  "exitCode": 0,
+  "passed": 237,
+  "failed": 0,
+  "skipped": 0,
+  "files": 12,
+  "unchangedInputs": true,
+  "failures": []
+}

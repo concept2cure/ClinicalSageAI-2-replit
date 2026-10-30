@@ -1,0 +1,8 @@
+{
+  "exitCode": 1,
+  "passed": 0,
+  "failed": 1,
+  "files": 1,
+  "all6InputsUnchanged": true,
+  "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"checkbox\" and name `/risk-based monitoring/i`"
+}

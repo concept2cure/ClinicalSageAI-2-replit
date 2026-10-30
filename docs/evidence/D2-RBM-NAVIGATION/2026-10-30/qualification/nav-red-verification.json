@@ -1,0 +1,9 @@
+{
+  "rootOwnedProductionMatchesDiscovery": [
+    "client/src/concept2cure/v2/registryModel.ts",
+    "shared/constants/launch-scope.ts",
+    "shared/constants/ui-surface-registry.ui-v2.ts"
+  ],
+  "all12InputsStable": true,
+  "functionalFailure": "Actual rail omits RBM; real launch scope overwrites catalog verdict and excludes/unmaps called RBM API families. Existing unrelated negative controls pass."
+}

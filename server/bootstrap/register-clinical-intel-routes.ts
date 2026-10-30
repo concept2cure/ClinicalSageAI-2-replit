@@ -1,3 +1,4 @@
+import { requireTenantContext } from '../middleware/tenantContext';
 /**
  * IND, intelligence, CSR and protocol routes.
  *
@@ -203,7 +204,7 @@ export async function registerClinicalIntelRoutes({
   // ── RBM board (risk-based monitoring program read-model) ──
   try {
     const rbmBoardModule = await import('../routes/mdx-rbm-board');
-    app.use('/api/mdx-rbm', authenticateToken, rbmBoardModule.default());
+    app.use('/api/mdx-rbm', authenticateToken, requireTenantContext, rbmBoardModule.default());
     console.log('✅ RBM board route mounted (GET /api/mdx-rbm/rbm-board/:programId)');
   } catch (error) {
     console.error('Failed to mount RBM board routes:', error);

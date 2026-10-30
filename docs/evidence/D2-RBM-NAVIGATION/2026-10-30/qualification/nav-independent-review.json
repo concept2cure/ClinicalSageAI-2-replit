@@ -1,0 +1,30 @@
+{
+  "reviewer": "/root/rbm_nav_tests",
+  "result": "Read-only root-owned scope review clear after generic starter correction. No execution by this review.",
+  "files": {
+    "client/src/concept2cure/v2/registryModel.ts": "192340d35184bd95307631524d900db4e75bd1f97953efc64dd30ec6723a075a",
+    "shared/constants/launch-scope.ts": "2bdfbf4271d116e11c39f3403d15ced81e0b9237d9831d399012a126a0809506",
+    "shared/constants/ui-surface-registry.ui-v2.ts": "3037f59fde53562e7d0cecf35180235603642a82bc85b9c7425aff251d7386d1",
+    "scripts/ci/check-launch-scope.mjs": "516085865d7fabbc16d395aa9f7146780409f07e66b04328ae7130c5cd9e1555",
+    "scripts/ci/launch-scope-fixture-allowlist.json": "a805bd6cf090ed93d6869b678444a32d1040b2e8c074a29e14677695d6016a2c",
+    "server/services/ana/ana-launch-scope.inventory.json": "486a2416ceea7ea30034d1be95cf5d06539097d2fadf19c51be4b8edde7606db",
+    "server/services/ana/__tests__/ana-launch-scope.test.ts": "40814ce4c0abf6127d71432a0d9e7c952e1b36a158120b9c0d269ac1cccd2c8a",
+    "server/services/entitlements/__tests__/launch-scope.test.ts": "c4e57837544428966da947deed7b2fc834aa590c9475c2edf0a4936c0360de7d",
+    "server/middleware/__tests__/launch-scope-api-gate.test.ts": "12d8d6648acbe274fb9c06badd07ce261e0829ee4adbb87376b1f0014584689d",
+    "docs/LAUNCH_DEFINITION_OF_DONE.md": "1fb170d210dccc3dfcaacbfe9402af84d221ec4da3ae239c5b14fa8b836eed48",
+    ".design/client-journey/INFORMATION_ARCHITECTURE.md": "99a33b1990c97609b53e30b48e2ffe4b314906d0429081e2f00f0786f7a5add9",
+    "client/src/concept2cure/v2/fixtures/rbm-data.ts": "74a79c73c31fc2bd7642f48ca75f4a3c2e2d29eef3e899c7089d4f6964dfe7db"
+  },
+  "observations": [
+    "20existingtools promoted, commands unchanged, no duplicates",
+    "Surfaces-only scope: no default module grant, professional tier retained",
+    "7new narrow API claims, no broad MDX claims",
+    "Actual rail placement after CMC with unique existing activity icon",
+    "Only2presentation symbols allowlisted; invented subject starter removed",
+    "Unrelated negative controls retained"
+  ],
+  "excludes": [
+    "Still-changing project/access/seed worker production",
+    "Hosted or clinical validation"
+  ]
+}

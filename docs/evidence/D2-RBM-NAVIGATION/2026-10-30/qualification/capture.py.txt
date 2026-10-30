@@ -1,0 +1,7 @@
+from pathlib import Path
+import datetime,hashlib,json,subprocess,sys
+r=Path('/workspace/ClinicalSageAI-2-replit');p=Path('/workspace/.cloud-setup/rbm-navigation')
+s=json.loads((p/'final-selection.json').read_text());paths=set(s['files'])|set(s['inputs'])
+assert all((r/f).is_file() for f in paths)
+x={'observedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=r,text=True).strip(),'scope':'Selected source/test/configuration inputs, not a full dependency closure.','files':{f:hashlib.sha256((r/f).read_bytes()).hexdigest() for f in sorted(paths)}}
+p.joinpath(sys.argv[1]).write_text(json.dumps(x,indent=2)+'\n');print('Captured',len(paths),'inputs at',x['commit'])

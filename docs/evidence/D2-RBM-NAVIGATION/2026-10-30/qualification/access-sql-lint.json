@@ -1,0 +1,26 @@
+[
+  {
+    "file": "server/routes/mdx-rbm.ts",
+    "sha256": "f4846168482a55cd3b64c426aed415c1196da8c2dc532d7d149d2a80e803aa76",
+    "beforeWarnings": 7,
+    "afterWarnings": 7,
+    "errors": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/rbm/rbm-actuator.ts",
+    "sha256": "d9bfeeef9a49f7513b257bf1eaec65198b6e2345b09579448ed256b165085143",
+    "beforeWarnings": 11,
+    "afterWarnings": 11,
+    "errors": 0,
+    "messages": []
+  },
+  {
+    "file": "server/routes/__tests__/rbm-approval-signature.pglite.test.ts",
+    "sha256": "568d1e4a95111bef1b06c1a7b25527dba269184bc3bdcb7b7dec82ee9ff6edf1",
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "errors": 0,
+    "messages": []
+  }
+]

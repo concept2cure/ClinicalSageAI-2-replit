@@ -1,0 +1,31 @@
+{
+  "files": [
+    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts",
+    "server/services/part11/__tests__/version-binding.test.ts",
+    "server/services/part11/__tests__/governed-sign-meaning.test.ts",
+    "server/services/part11/__tests__/signer-org-scope.test.ts",
+    "server/services/part11/__tests__/signed-content-lock.test.ts",
+    "server/services/part11/__tests__/labeling-risk-content-binders.test.ts"
+  ],
+  "inputs": [
+    "migrations/20260629_rbm_surfaces.sql",
+    "migrations/20260918_rbm_author_attribution.sql",
+    "migrations/20260930_rbm_plan_versioning.sql",
+    "scripts/ci/sign-ceremony-baseline.json",
+    "server/db/requestDb.ts",
+    "server/routes/c2c/actions.ts",
+    "server/routes/mdx-rbm.ts",
+    "server/services/part11/governed-target-binders.ts",
+    "server/services/part11/resolve-signer-identity.ts",
+    "server/services/part11/reverify-signer-deps.ts",
+    "server/services/part11/reverify-signer.ts",
+    "server/services/part11/signature-persistence.ts",
+    "server/services/part11/signed-content-state.ts",
+    "server/services/part11/signing-authority-gate.ts",
+    "server/services/rbm/rbm-access.ts",
+    "server/services/rbm/rbm-actuator.ts",
+    "server/services/rbm/rbm-signature-content.ts",
+    "shared/schema.ts",
+    "vitest.config.ts"
+  ]
+}

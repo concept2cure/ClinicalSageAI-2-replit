@@ -1,0 +1,18 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx (1250 lines)
+  client/src/concept2cure/v2/surfaces/Vault.tsx (3020 lines)
+  server/routes/c2c/project-vault.ts (3106 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3555 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 1afc89725] Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2

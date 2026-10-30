@@ -1,0 +1,19 @@
+{
+  "files": [
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx",
+    "server/routes/c2c/__tests__/projects-create.test.ts",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts"
+  ],
+  "production": [
+    "client/src/concept2cure/v2/surfaces/Projects.tsx",
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+    "client/src/concept2cure/v2/surfaces/rbmBoard.ts",
+    "server/routes/c2c/projects.ts"
+  ]
+}

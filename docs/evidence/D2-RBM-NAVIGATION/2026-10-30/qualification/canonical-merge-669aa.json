@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-30T17:34:54.478658+00:00",
+  "incoming": "669aa2236",
+  "mergedCommit": "b4edc78bc909ec06e72f7689759e3a7b95625a27",
+  "mergeMethod": "normal merge, no conflicts",
+  "changedProductionFiles": [],
+  "scope": "24 CSR evidence documents only; no selected source input changes",
+  "prior891CaseRegressionStillExactSource": true
+}

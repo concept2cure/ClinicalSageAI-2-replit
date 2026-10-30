@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx server/routes/c2c/__tests__/project-settings.pglite.test.ts server/routes/c2c/__tests__/project-recorded-context.pglite.test.ts server/routes/c2c/__tests__/projects-rbm-choice.test.ts server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts shared/__tests__/project-settings.test.ts shared/__tests__/project-recorded-context.test.ts server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts server/services/unified-work/__tests__/unified-work-view.test.ts server/services/ana/__tests__/rbm-launch-admission.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/final-settings-results.json",
+  "exitCode": 0,
+  "passed": 318,
+  "failed": 0,
+  "skipped": 0,
+  "files": 15,
+  "unchangedInputs": true,
+  "failures": []
+}

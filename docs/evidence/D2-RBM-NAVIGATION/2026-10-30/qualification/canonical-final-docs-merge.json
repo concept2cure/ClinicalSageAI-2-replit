@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-30T17:52:59.624008+00:00",
+  "incoming": "a97f503b5",
+  "mergeCommit": "7b0c1f64fbaea110be2e42b41c3a81c6bdf25b74",
+  "productionChanges": [],
+  "selected147SourceInputsStillExact": true,
+  "mergeConflicts": [],
+  "result": "CSR publication evidence documents only; normal merge. No source checks repeated."
+}

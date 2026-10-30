@@ -1,0 +1,24 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 8d56077d6] Qualify RBM navigation with catalog and task-board recovery
+ 27 files changed, 2260 insertions(+), 117 deletions(-)
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-recovery-exit.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-recovery-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-recovery-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-recovery-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-recovery.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-recovery-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-recovery-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-recovery-results.json.gz
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-recovery-selection.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-recovery-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-recovery-summary.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-recovery-tests.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-settings-ci-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-settings-ci-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-settings-ci-summary.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-settings-lint.json.gz
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-d4-catalog-tasking-review.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/lint-recovery-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/run-build-recovery.sh.txt

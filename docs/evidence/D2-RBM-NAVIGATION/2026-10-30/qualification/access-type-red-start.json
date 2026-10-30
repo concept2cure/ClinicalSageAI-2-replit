@@ -1,0 +1,26 @@
+{
+  "observedAt": "2026-10-30T18:01:40.798981+00:00",
+  "commit": "7b0c1f64fbaea110be2e42b41c3a81c6bdf25b74",
+  "files": {
+    "migrations/20260629_rbm_surfaces.sql": "2125d652a5ceb596ded19224a55e0d9cb0e47e1b39bb5ebd0d53ddffe187ec24",
+    "migrations/20260918_rbm_author_attribution.sql": "6ee2214b0fe86211c1a7452b71231478308bb7fcb585f102d3cd654810d11dfd",
+    "migrations/20260930_rbm_plan_versioning.sql": "1725fedbe3f8f7e344b4ab625a17d24336b2ebd183811d166c97c8ec7a07102e",
+    "scripts/ci/sign-ceremony-baseline.json": "fc61fb2a80e62d9c6f1f608aeb0048df1640421a3e54526e3528641963d357e8",
+    "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts": "31f493321e4d71e61d613c55e9428af30232120ad046e2dd846061926e8e74f6",
+    "server/routes/c2c/actions.ts": "672391d8f6da7ba218b4585f7aab26ed0e9efc3582da93a491fcde613c7e5e81",
+    "server/routes/mdx-rbm.ts": "f4846168482a55cd3b64c426aed415c1196da8c2dc532d7d149d2a80e803aa76",
+    "server/services/part11/governed-target-binders.ts": "253e1e5b01ce16a6dfbe37846c6573b8a7bb629d791e6e7b67185a2288150bcb",
+    "server/services/part11/resolve-signer-identity.ts": "de8774ee5bf459834d36c8b0d77289359725549a86b9956e710596255f101e37",
+    "server/services/part11/reverify-signer-deps.ts": "27225c73bac44369544cf867b8fd11f7eb7b0c30859a3eab2ffe291eef89ecb5",
+    "server/services/part11/reverify-signer.ts": "5ce5a917c6e9b2830a3f605a982b8e8f04fd42e4336114101306f7a33f6e13c2",
+    "server/services/part11/signature-persistence.ts": "1dafa1e30adee13a46b6a4217338da6ea22fd18b1dce437651e90756588da522",
+    "server/services/part11/signed-content-state.ts": "2cec02221269b6dd7bdfe5eec8ad7ee2b9c7e9a4040f26c48eb858c515a008f7",
+    "server/services/part11/signing-authority-gate.ts": "74490440e10fb7b0b8567ff8e6d6509fbc2f4ef108e0b90e240c79fc5d99feb4",
+    "server/services/rbm/rbm-access.ts": "09726bf718a82198dafbb697bd1c830e94b5df8d357a36225c1e20ce18c97441",
+    "server/services/rbm/rbm-actuator.ts": "d9bfeeef9a49f7513b257bf1eaec65198b6e2345b09579448ed256b165085143",
+    "server/services/rbm/rbm-signature-content.ts": "24b96c9b4709f50d7ac4df34633622e01a533497305026d7daa304615b04bf99",
+    "shared/schema.ts": "f5dcde2abbcbc409989c4d3d6690f5cb0edce1f4117dcc5ecd1f155a04db9cba",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  }
+}

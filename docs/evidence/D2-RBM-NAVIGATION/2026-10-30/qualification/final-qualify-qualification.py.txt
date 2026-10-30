@@ -1,0 +1,37 @@
+from pathlib import Path
+import datetime, json
+
+p = Path('/workspace/.cloud-setup/rbm-navigation')
+e = Path('/workspace/ClinicalSageAI-2-replit/docs/evidence/D2-RBM-NAVIGATION/2026-10-30')
+tests = json.loads((p / 'final-qualification-summary.json').read_text())
+build = json.loads((p / 'build-qualification-exit.json').read_text())
+lint = json.loads((p / 'lint-final.json').read_text())
+start = json.loads((p / 'final-qualification-start.json').read_text())
+finish = json.loads((p / 'final-qualification-finish.json').read_text())
+assert tests['exitCode'] == 0 and tests['failed'] == 0 and tests['unchangedInputs']
+assert build['processExit'] == 0 and build['unchangedInputs']
+assert lint['afterErrors'] == 0 and lint['afterWarnings'] <= lint['beforeWarnings']
+assert start['files'] == finish['files'] and len(start['files']) == 328
+q = json.loads((e / 'qualified-source.json').read_text())
+assert len(q['files']) == 320
+assert all(finish['files'][name] == digest for name, digest in q['files'].items())
+for item in q['qualification']:
+    if item['receipt'] == 'qualification/lint-final.json.gz':
+        item['receipt'] = 'qualification/final-live-lint.json.gz'
+q['observedAt'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+q['sourceCommit'] = finish['commit']
+q['scope'] = '328 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.'
+q['files'] = finish['files']
+q['qualification'] += [
+    {'receipt': 'qualification/final-qualification-summary.json', 'result': f"{tests['passed']}/{tests['passed']} across{tests['files']}files at{finish['commit'][:9]};328inputs unchanged. Existing eCTD qualification outcomes, validator selection and real missing-prerequisite CLI refusal. All320 preceding selected inputs identical; no agency-corpus or hosted qualification claim."},
+    {'receipt': 'qualification/build-qualification-exit.json', 'result': f"build0 at{finish['commit'][:9]};328inputs unchanged"},
+    {'receipt': 'qualification/lint-final.json.gz', 'result': f"{len(lint['files'])}changedTypeScriptfiles,0errors,{lint['beforeWarnings']}before/{lint['afterWarnings']}afterwarnings against{lint['base'][:9]}"},
+]
+q['priorWholeTypeScript'] = {
+    'commit': '7f5af0e27643bd3d32f0974e97792dcf86049262', 'errors': 0, 'baseline': 0,
+    'allNormalGatesPassed': True, 'remoteUpdate': False,
+    'refusal': 'Concurrent remote advance; push-refusal-09. Those310inputs were stable and are identical in the current integration. Current normal push is still pending.'
+}
+q['publication'] = 'Pending actual normal push/fresh remote proof for latest328inputs. Earlier gate and remote-advancement refusals retained; no force/bypass/baseline growth.'
+(e / 'qualified-source.json').write_text(json.dumps(q, indent=2) + '\n')
+print(json.dumps({'qualifiedSource': finish['commit'], 'inputs': len(finish['files']), 'passed': tests['passed'], 'files': tests['files']}))

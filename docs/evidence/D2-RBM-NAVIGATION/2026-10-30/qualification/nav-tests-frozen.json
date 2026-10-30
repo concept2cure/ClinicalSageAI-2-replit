@@ -1,0 +1,20 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx": "376cbb6f3e65be35982ada60aeb78226419d35871ab118f2f63ff9810ac7fd69",
+    "client/src/concept2cure/v2/__tests__/shellNav.test.tsx": "e0b6f1678d3a2b60429b7bb484187e03077b4281a425c716622d2a0c23804531",
+    "server/services/entitlements/__tests__/rbm-launch-claim.test.ts": "681c5b8c6f9a9d7d3af901102c3fb2865237340bc568f204811c061c189102e9"
+  },
+  "shellNavExistingExpectLinesPreserved": 67,
+  "finalResult": {
+    "exitCode": 0,
+    "passed": 68,
+    "failed": 0,
+    "skipped": 0,
+    "actualFiles": 3,
+    "unchangedInputs": true,
+    "failures": []
+  },
+  "finalSourcePins": "nav-green-02-finish.json",
+  "qualifiedChangesFromRed": "nav-test-correction.json",
+  "limits": "Owned Rail/API admission tests only. No browser deployment, server project-access, seed, or project-intake qualification supplied by this cohort."
+}

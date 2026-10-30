@@ -1,0 +1,23 @@
+{
+  "incomingCommit": "61fe4fd81d7283c6e47a221ef44bc20bd7af1b62",
+  "mergedCommit": "54d53bd5aef2c8dd9b1df20862ae219def8f6db7",
+  "changedInputs": [
+    "scripts/ectd/qualify-ectd.ts",
+    "server/services/ectd/external-validator/__tests__/external-validator.test.ts",
+    "server/services/ectd/external-validator/index.ts",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts",
+    "server/services/ectd/qualification/__tests__/qualification.test.ts",
+    "server/services/ectd/qualification/outcome.ts",
+    "server/services/ectd/qualification/qualify.ts",
+    "tests/regulatory/ectd-qualification-cli.test.ts"
+  ],
+  "priorSelectedInputsUnchanged": 320,
+  "productionFixNeeded": false,
+  "scope": "Existing eCTD qualification harness/CLI outcome truth, no RBM/launch/actor/sharedproject source change. Root focused harness/CLI checks are not agency-corpus or human-witnessed qualification. Work-order conflict resolved by preserving distinct RBM/company and incoming eCTD rows.",
+  "checks": [
+    "server/services/ectd/external-validator/__tests__/external-validator.test.ts",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts",
+    "server/services/ectd/qualification/__tests__/qualification.test.ts",
+    "tests/regulatory/ectd-qualification-cli.test.ts"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "exitCode": 1,
+  "passed": 37,
+  "failed": 31,
+  "skipped": 0,
+  "actualFiles": 3,
+  "unchangedInputs": true,
+  "failures": [
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/server/services/entitlements/__tests__/rbm-launch-claim.test.ts",
+      "cases": [
+        "RBM release admission admits the existing surface without provisioning an RBM subscription grant",
+        "RBM release admission keeps the existing tier refusal after release admission",
+        "RBM release admission keeps the existing disabled refusal after release admission",
+        "RBM release admission preserves a real subscription verdict instead of replacing it with a release lock",
+        "RBM release admission admits the called RBM path /api/mdx-rbm/rbm-programs through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx-rbm/rbm-board/11111111-1111-4111-8111-111111111111 through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-assessments/7/amend through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-assessments/7/approve through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-risk-items through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-risk-items/7 through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-kris through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-kris/7/values through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-qtls through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-qtls/7 through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-signals/7 through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-site-risk/recompute through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-monitoring-plans/7/amend through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-monitoring-plans/7/approve through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-monitoring-actions through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-monitoring-actions/7 through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-metric-ingest through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-central-monitoring/run through its existing surface",
+        "RBM release admission admits the called RBM path /api/mdx/rbm-patient-profiles/score through its existing surface"
+      ]
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx",
+      "cases": [
+        "RBM in the main left rail opens the existing RBM destination beside the other work areas (collapsed=false)",
+        "RBM in the main left rail opens the existing RBM destination beside the other work areas (collapsed=true)",
+        "RBM in the main left rail keeps the same entitled central service for the medtech client view",
+        "RBM in the main left rail keeps the same entitled central service for the cro client view",
+        "RBM in the main left rail explains the real Professional subscription lock without opening RBM"
+      ]
+    },
+    {
+      "file": "/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+      "cases": [
+        "the rail lists the places, then the work areas exactly the places, then the work areas, in order",
+        "the rail lists the places, then the work areas the work areas are a named group under their own heading",
+        "the rail lists the places, then the work areas every entry opens a screen in this release"
+      ]
+    }
+  ]
+}

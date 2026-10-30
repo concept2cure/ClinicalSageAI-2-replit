@@ -265,6 +265,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
      therapeutic area is not an indication; the dropdown is gone and nothing
      else reads it. */
   const [indication, setIndication] = useState('');
+  const [riskBasedMonitoring, setRiskBasedMonitoring] = useState(false);
   /* The drug / biologic class, for a filing type that does not fix it. Starts
      unstated; Continue waits for it. */
   const [statedClass, setStatedClass] = useState<ProductType | ''>('');
@@ -449,6 +450,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
           : {}),
         targetSubmissionDate: target || null,
         teamMembers: team,
+        riskBasedMonitoring,
       };
       const answer = await createProjectIntake(actor, verifiedWorkspace, body, currentSession);
       if (!mountedSession()) return;
@@ -839,6 +841,11 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 </>
               )}
 
+              <label className="npw-field npw-field-wide npw-flag">
+                <input type="checkbox" checked={riskBasedMonitoring} onChange={event => setRiskBasedMonitoring(event.target.checked)} />
+                <span><span className="npw-field-l">Risk-based monitoring</span>{' '}<span className="npw-field-help">Include risk assessment, monitoring indicators and site oversight for this project. No assessment or monitoring data is created during setup; existing access requirements apply.</span></span>
+              </label>
+
               <div className="npw-field npw-field-wide">
                 <span className="npw-field-l">Team members</span>
                 {/* Backend gap: no endpoint lists selectable org members for a
@@ -882,6 +889,10 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 <div className="npw-review-row">
                   <dt>Project name</dt>
                   <dd>{savedName}</dd>
+                </div>
+                <div className="npw-review-row">
+                  <dt>Risk-based monitoring</dt>
+                  <dd>{riskBasedMonitoring ? 'Included for this project' : 'Not selected'}</dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Product</dt>

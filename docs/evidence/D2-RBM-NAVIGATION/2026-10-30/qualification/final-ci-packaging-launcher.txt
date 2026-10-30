@@ -1,0 +1,32 @@
+Captured 180 inputs at 0af600d7e411797907ef1b334644178b9d694185
+Captured 180 inputs at 0af600d7e411797907ef1b334644178b9d694185
+{
+  "finishedAt": "2026-10-30T18:29:19.142826+00:00",
+  "commands": [
+    {
+      "command": "npm run --silent ci:launch-scope",
+      "exitCode": 0,
+      "transcript": "final-packaging-launch-scope.txt",
+      "sha256": "6e5e2d3a8d6808c665b201601d9bedf156de7f2d1a76b52a6e20b9f8422ce904"
+    },
+    {
+      "command": "npm run --silent ci:launch-scope-api",
+      "exitCode": 0,
+      "transcript": "final-packaging-launch-scope-api.txt",
+      "sha256": "269e9f3a9a45c0257ae547f3e9e011142c4f8fd01b4210b9e552cf87dc0f6138"
+    },
+    {
+      "command": "npm run --silent ci:sign-ceremony",
+      "exitCode": 0,
+      "transcript": "final-packaging-sign-ceremony.txt",
+      "sha256": "2d6ee1ca864ebe41d9e62611e00a00ca6906ee819bbbd564d4f60bbc1fb5ec6c"
+    },
+    {
+      "command": "npm run --silent ci:sql-interpolation",
+      "exitCode": 0,
+      "transcript": "final-packaging-sql-interpolation.txt",
+      "sha256": "95f4e9d522d6cabb89fcc3370e60ba9694c24dcb74dac323979e405dea31dff4"
+    }
+  ],
+  "unchangedInputs": true
+}

@@ -1,0 +1,18 @@
+{
+  "observedAt": "2026-10-30T17:33:16.915376+00:00",
+  "reviewer": "/root/rbm_release_review",
+  "base": "be078603b",
+  "incoming": "6747c44709702ed016afa446ef52d2c99710614d",
+  "readOnlyReviewNoExecution": true,
+  "actorVerifier": {
+    "path": "server/services/csr/project-scope.ts",
+    "result": "readCsrProjectActor byte-identical; CSR-only changes do not affect RBM raw SQL actor resolution",
+    "functionSha256": "942d5af054cc4a1db49b5163f1a9f773e70f5a121b01e1a3fc582e30aab47d7d"
+  },
+  "browserCss": {
+    "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+    "currentSha256": "e51c1f78075f4fb168459f9ddcf3efc9df16add9cb10fbcc49acd9a384cb0aec",
+    "result": "Only .qms-training-successor appended to existing light/dark selector lists and comment count. No declaration, Rail, RBM, or Projects selector changes. Preserve predecessor browser CSS pins; this is a bounded source review, not execution of exact current whole CSS."
+  },
+  "regression": "Root final48 includes dataConnectOwnedRead, CSR current/active-write and program-access checks; upstream historical totals are not borrowed."
+}

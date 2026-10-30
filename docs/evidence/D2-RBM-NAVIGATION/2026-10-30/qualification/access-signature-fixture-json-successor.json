@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-30T17:40:16.279580+00:00",
+  "attempt": "access-signature-green-01",
+  "actualOutcome": "29passed2failed;13selectedinputsunchanged",
+  "failureCause": "Fixture declared signature_manifest JSONB, which reorders keys. Actual canonical shared/schema.ts electronic_signatures uses JSON; canonical attribution hash intentionally preserves original manifest order. Corrected only fixture column to JSON.",
+  "actualSchemaSource": {
+    "path": "shared/schema.ts",
+    "sha256": "f5dcde2abbcbc409989c4d3d6690f5cb0edce1f4117dcc5ecd1f155a04db9cba"
+  },
+  "productionNotChangedToAccommodateFixture": true,
+  "countsOverlapDoNotSum": true
+}

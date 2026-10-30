@@ -1,0 +1,4 @@
+{
+  "reason": "Long-lived Vite fixture uses watch:null; a transform may remain cached after source edit. Filesystem pins alone cannot establish fresh served JSX. Superseded by a fresh-host rerun with DOM spacing verification.",
+  "doNotClaimFinalSuccessorSource": true
+}

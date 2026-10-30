@@ -13,6 +13,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
+// This domain suite retains its existing fixture admission; current project denial is covered separately.
+vi.mock('../../services/rbm/rbm-access', async original => ({ ...(await original<Record<string, unknown>>()), rbmRequestAdmission: (_req: unknown, _res: unknown, next: () => void) => next(), recheckRbmWrite: async () => {} }));
+
 const h = vi.hoisted(() => ({
   routes: [] as { match: RegExp; rows: unknown[] | Error }[],
   calls: [] as { sql: string; args: unknown[] }[],
@@ -40,6 +43,7 @@ function app() {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: 7, organizationId: 1, role: 'admin' };
+    Object.assign(req, { dbClient: { query } });
     next();
   });
   a.use('/api/mdx', dataRouter);

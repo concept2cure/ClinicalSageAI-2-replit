@@ -1,0 +1,10 @@
+{
+  "observedAt": "2026-10-30T17:49:12.248065+00:00",
+  "failure": "Normal push 4c678fa5d refused by unchanged SQL-interpolation gate before TypeScript. mdx-rbm30>29 and actuator7>6.",
+  "receipt": "code-push-exit.json",
+  "files": {
+    "server/routes/mdx-rbm.ts": "493a20f9b5e554a00562b5aae47fefb0dd532c09b7ee058ee6553fda6c011886",
+    "server/services/rbm/rbm-actuator.ts": "806c7d4ffc544b801f4029848ce5d1782186958f8ed11ecf4661339191cfd5d0",
+    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts": "fa702c7e63faafbf3b0fb2cb6a5726865eaf127f5a49affb94c9d47c9e353434"
+  }
+}

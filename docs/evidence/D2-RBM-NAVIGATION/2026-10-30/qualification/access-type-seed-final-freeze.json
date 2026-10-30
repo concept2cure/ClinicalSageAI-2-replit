@@ -1,0 +1,34 @@
+{
+  "frozenAt": "2026-10-30T18:02:49.752002+00:00",
+  "status": "FROZEN; no edits after focused19/19 pass",
+  "files": {
+    "server/services/rbm/rbm-assessment-seed.ts": "17842f208ca929140511c2805a12bdb99721e37cad90f98946d334ac1f22907f",
+    "server/services/rbm/__tests__/rbm-assessment-seed.test.ts": "2305a3ad5c332e0c603e31c32e320a0a59cf5d70cbedfff5b1d83c4fd07091d4",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "c4e9a2d65ec014d40a0c7055d0f7d931dedd23d1266531ba6f42b44f87829279"
+  },
+  "protectedInputPins": {
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "c4e9a2d65ec014d40a0c7055d0f7d931dedd23d1266531ba6f42b44f87829279",
+    "client/src/concept2cure/v2/surfaceViews.ts": "3026a4c2bece76334497b1f7d4694d056545ffa18876da209509d739fff42376",
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx": "865c285d912d306d0aa4bc57376e91e15bb89886ecb897ad041fb01931e591dc",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "package.json": "d5237fb405d77f3fb5aba77245c8ba832be7c88d65114822e5b2bfe221757fc6",
+    "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+    "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+    "server/services/c2c/governed-program-write.ts": "abba32cc5105c77d1b869b80674353688b4fa05448fd979058e6e1054d76e18a",
+    "server/services/rbm/__tests__/rbm-assessment-seed.test.ts": "2305a3ad5c332e0c603e31c32e320a0a59cf5d70cbedfff5b1d83c4fd07091d4",
+    "server/services/rbm/rbm-access.ts": "09726bf718a82198dafbb697bd1c830e94b5df8d357a36225c1e20ce18c97441",
+    "server/services/rbm/rbm-assessment-seed.ts": "17842f208ca929140511c2805a12bdb99721e37cad90f98946d334ac1f22907f",
+    "server/services/rbm/rbm-engine.ts": "496026a5b551ec548636d03585c5784536f67cf3df167535adc04b2420982770",
+    "shared/constants/ui-surface-registry.ts": "44dd09b081a9d265ee383e0fe2bc87e1d2c52ebd534d7ba0866bba1509bfc2f9",
+    "shared/constants/ui-surface-registry.ui-v2.ts": "3037f59fde53562e7d0cecf35180235603642a82bc85b9c7425aff251d7386d1",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "result": "19/19 tests across2files;15selectedinputs unchanged",
+  "lint": "0errors;0before/0afterwarnings across3files",
+  "assertionBearingLinesUnchanged": {
+    "server/services/rbm/__tests__/rbm-assessment-seed.test.ts": 17,
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": 30
+  },
+  "semantics": "Production change is only a truthful Record-plus-items Promise return annotation; PGlite generics and actual registered UI surface/biopharma props repair test contracts. No SQL, transaction boundary, caller authority, query interface or assertion changed.",
+  "limits": "Whole TypeScript and publication remain root checks; no TSC/Git/build run by this owner."
+}

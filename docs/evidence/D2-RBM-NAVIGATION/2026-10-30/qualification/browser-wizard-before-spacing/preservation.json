@@ -1,0 +1,6 @@
+{
+  "originalWizardChecks": 12,
+  "all28SelectedSourceAndHarnessPinsVerified": true,
+  "originalProjectsSha256": "d57a3c27bbede1a9821d206a7975e27ff8daba4be092fe76626327d20a41598f",
+  "reason": "Preserve exact pre-spacing proof before qualifying the explicit JSX space successor."
+}

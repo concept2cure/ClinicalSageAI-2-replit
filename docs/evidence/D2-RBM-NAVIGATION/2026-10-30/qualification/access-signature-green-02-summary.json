@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/routes/__tests__/rbm-approval-signature.pglite.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/access-signature-green-02-results.json",
+  "exitCode": 0,
+  "passed": 35,
+  "failed": 0,
+  "skipped": 0,
+  "files": 1,
+  "unchangedInputs": true,
+  "failures": []
+}

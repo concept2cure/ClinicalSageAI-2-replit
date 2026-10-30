@@ -22,6 +22,10 @@ import { AGENCY_RESPONSE_DIGEST_RECIPE, agencyResponseDigest } from '../agency-r
 import { COMMITMENT_FULFILMENT_DIGEST_RECIPE, commitmentFulfilmentDigest } from '../ha-interactions/ha-logic.js';
 import { readCommitmentFulfilmentContent } from '../ha-interactions/fulfilment-record.js';
 import {
+  readRbmAssessmentSignatureContent, readRbmPlanSignatureContent,
+  RBM_ASSESSMENT_SIGNATURE_RECIPE, RBM_PLAN_SIGNATURE_RECIPE,
+} from '../rbm/rbm-signature-content.js';
+import {
   FILED_BASELINE_DIGEST_RECIPE,
   filedBaselineDigest,
   readFiledBaselineById,
@@ -623,8 +627,28 @@ const riskResidualAcceptanceBinding: ContentBinder = async (client, rest, orgId,
   };
 };
 
+/** Signing and verification use the same immutable RBM version recipe. */
+function rbmContentBinding(kind: 'assessment' | 'plan'): ContentBinder {
+  const assessment = kind === 'assessment';
+  const recipe = assessment ? RBM_ASSESSMENT_SIGNATURE_RECIPE : RBM_PLAN_SIGNATURE_RECIPE;
+  const read = assessment ? readRbmAssessmentSignatureContent : readRbmPlanSignatureContent;
+  return async (client, rest, orgId, fallback, options) => {
+    if (!/^\d+$/.test(rest) || !Number.isSafeInteger(Number(rest)) || Number(rest) <= 0) return fallback('malformed RBM pointer');
+    const unknown = otherRecipe(options, recipe);
+    if (unknown) return fallback(unknown);
+    const content = await read(client, Number(rest), orgId);
+    if (!content) return fallback('RBM version content or project relationships cannot be verified');
+    return { digest: sha256CanonicalJson(content),
+      basis: assessment ? BINDING_BASIS.RBM_ASSESSMENT_CONTENT : BINDING_BASIS.RBM_MONITORING_PLAN_CONTENT,
+      note: `sha256 (recipe ${recipe}) over the retained RBM version, project identity and immutable content; workflow stamps and monitoring execution actions excluded.`,
+      manifest: { bindingRecipe: recipe } };
+  };
+}
+
 /** The binders deriveGovernedTargetBinding delegates to, by target prefix. */
 export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
+  'rbm-assessment': rbmContentBinding('assessment'),
+  'rbm-monitoring-plan': rbmContentBinding('plan'),
   'protocol-document': (client, rest, orgId, fallback) =>
     protocolContentBinding(client, 'protocol-document', rest, orgId, fallback),
   'protocol-review-assignment': (client, rest, orgId, fallback) =>

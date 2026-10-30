@@ -1,0 +1,27 @@
+{
+  "observedAt": "2026-10-30T18:25:52.680885+00:00",
+  "incoming": "c3f16c8a2",
+  "mergeCommit": "bbaffa1f7bd5a2d3b3984eb1d2cd58b0a939b6f9",
+  "conflicts": [
+    "docs/work-orders/README.md"
+  ],
+  "resolution": "Preserve distinct incoming accepted device attachment row and both owned rows; no production conflicts.",
+  "sourceChanges": [
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx"
+  ],
+  "testChanges": [
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx"
+  ],
+  "sourcePins": {
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx": "8d5545cd11b2b74ccf1c6e712b5485fc7f6ccc6dd632842ed516e5f007641aa6",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx": "629150ec97a0ade1649d91e475d219c2ffef19606f5f6a088f967d22f2691d5a",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "c4e9a2d65ec014d40a0c7055d0f7d931dedd23d1266531ba6f42b44f87829279",
+    "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx": "1231c041cde83252e2a670e4ca373039f76762a3fc8690ab0b53682eb71e1da1",
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx": "46a8025705065400161b27eed4c243b1bb51c197d9d212544ecf821c3b247e87"
+  },
+  "priorWholeTypeScript": "0/allnormalgates at59d0bd6eb; remote advanced before update. No force or bypass.",
+  "reviewer": "/root/rbm_seed_and_context_types",
+  "readOnlyReviewNoExecution": true,
+  "verdict": "No compatibility blocker: snapshot original files and indexed stored statuses; same captured programme/pathway/section, authority, receipt validation, selection/history and shared/RBM policies; no CSS change."
+}

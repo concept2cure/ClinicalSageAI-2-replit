@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/csr/__tests__/csr-stf-source-values.test.ts server/services/ectd/__tests__/stf-csr-source-values.test.ts server/services/ectd/__tests__/stf-generator.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/final-current-results.json",
+  "exitCode": 0,
+  "passed": 70,
+  "failed": 0,
+  "skipped": 0,
+  "files": 3,
+  "unchangedInputs": true,
+  "failures": []
+}

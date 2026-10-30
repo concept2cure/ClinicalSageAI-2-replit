@@ -1,0 +1,187 @@
+🔒 Pre-push: Running eCTD contract enforcement gates...
+   Validating eCTD stubs bundle against schema (AJV)...
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+   ✅ eCTD bundle validation passed.
+   Validating risk code contracts...
+OK: Generated risk code types are up to date.
+   ✅ Risk code validation passed.
+   Validating migration apply-order invariants...
+[ci:migration-set-order] OK — 459 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+   Validating that guarded tables are created before they are guarded...
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+   ✅ Migration apply-order passed.
+   Validating the fresh-install overlay can reach what it depends on...
+[ci:install-fresh-overlay-deps] 386 overlay file(s) · 694 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s).
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+   ✅ Fresh-install overlay dependencies reachable.
+   Validating DROPs are replay-safe...
+[ci:migration-drop-safety] OK — 459 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+   ✅ Replay-safe DROPs passed.
+   Validating no class vocabulary is restated...
+[ci:class-vocabulary] OK — 5882 file(s) scanned, no restated class vocabulary.
+   ✅ One class vocabulary passed.
+   Validating new migrations are on a deploy path...
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+   ✅ Deploy-path check passed.
+   Validating queried columns are reachable...
+[ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+   ✅ Column reachability passed.
+   Validating server code runs no DDL on the runtime connection...
+[ci:runtime-ddl] 75 DDL statement(s) in 11 runtime server file(s); 13 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+   ✅ No runtime DDL.
+   Validating jsonb operators are not applied to json columns...
+[ci:json-operator-types] 960 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3544 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+   ✅ No jsonb operator on a json column.
+   Validating the migration manifest tracks db/migrations...
+Manifest is in sync.
+   ✅ Migration manifest in sync.
+   Validating no new unscoped Drizzle query on tenant data...
+[ci:drizzle-tenant-scope] OK — 90 site(s), all baselined.
+   ✅ Drizzle tenant scope passed.
+   Validating every v2 className is defined in a stylesheet...
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+   ✅ v2 class names passed.
+   Validating every raw client fetch() sends the bearer token...
+✅ ci:unauthenticated-fetch — 72 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+   ✅ Client fetch() authentication passed.
+   Validating no new session-scoped RLS bypass...
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 0 baselined occurrence(s) remain in 0 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+[ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (789 migration file(s) and 4363 code file(s) read), and no script writes either (P-70).
+   ✅ No new session-scoped RLS bypass.
+   Validating no new value interpolated into SQL text...
+[ci:sql-interpolation] 30 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/routes/c2c/project-vault.ts:1728:21 vaultLifecycleStageSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1747:44 vaultUnfiledSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1748:44 vaultSuggestedSql('d') <- ../../services/vault/vault-document-filter.js
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:36:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:36:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:86:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:95:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:652:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-folder-export.ts:64:15 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+   ✅ No new value interpolated into SQL text.
+   Validating ledger integrity (row ids, evidence paths)...
+   ✅ Ledger integrity passed.
+   Validating module catalog copy...
+[ci:catalog-copy] OK — 107 catalog description(s) across 3 migration(s) read as product copy.
+   ✅ Catalog copy passed.
+   Checking for fixture fallback in client surfaces...
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+   ✅ No ungated fixture fallback.
+   Checking for mock data in production routes...
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+   ✅ No mock data in production routes.
+   Checking for manufactured signer identity...
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+   ✅ Fabricated-identity check passed.
+   Checking that every program-ownership check is the one check...
+[self-test] OK — 10 copies found, 6 reads passed.
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+   ✅ One program-ownership check.
+   Checking that project creation stays with its recorded owners...
+[ci:project-creation-owners:selftest] OK { planted: 25, readsAndComments: 5, owners: 4 }
+[ci:project-creation-owners] OK — one canonical program writer and three explicit, bounded PM writers (4 sites).
+   ✅ Project creation stays with its recorded owners.
+   Checking for a discarded Part 11 audit-write outcome...
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+   ✅ No discarded audit-write outcome.
+   Checking that the client address has one source...
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+   ✅ One source for the client address.
+   Checking the filing-exit agreement gate catches what it must...
+[ci:filing-exit-agreement:selftest] ✓ a new seal with no agreement check fails, naming the file and the kind
+[ci:filing-exit-agreement:selftest] ✓ the same seal passes once it asks the question
+[ci:filing-exit-agreement:selftest] ✓ a new device package built from the filing fails
+[ci:filing-exit-agreement:selftest] ✓ a baseline entry with no written reason fails, so it cannot be a snooze
+[ci:filing-exit-agreement:selftest] ✓ a baseline allowing more than exists fails, so freed allowance cannot absorb a new door
+[ci:filing-exit-agreement:selftest] ✓ a door baselined with a real reason passes, and the count is reported
+[ci:filing-exit-agreement:selftest] ✓ the module that defines the question is not read as a door
+[ci:filing-exit-agreement:selftest] ✓ an empty tree passes
+[ci:filing-exit-agreement:selftest] OK — the gate fails on every shape it exists to catch, and stays quiet on the rest.
+   ✅ The filing-exit gate fails on what it must.
+   Checking that every seal asks whether the filing holds this document's text...
+[ci:filing-exit-agreement] OK — every seal and every filing-built package asks the agreement question, or is baselined with a reason. 5 baselined site(s) in 2 file(s), exactly as baselined.
+   ✅ Every seal asks the filing-agreement question.
+   Checking that every sign ledger row comes from a signature ceremony...
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+   ✅ Every new sign ledger row has its ceremony.
+   Checking that every upload site is bounded, filtered and byte-checked...
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 20 file(s) build uploads.
+   ✅ Every upload site is guarded, or baselined with a reason.
+   Checking .trivyignore hygiene (expiry, owner, reason; no tree-wide resource ignores)...
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /workspace/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+   ✅ .trivyignore entries are bounded and owned.
+   Checking no file crosses the size ceiling (the ratchet the auto-refresh was absorbing)...
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+- content-duplicate groups: 0 (0 files)   [gated]
+- duplicate basenames: 255   [reported, not gated]
+- files over byte threshold: 56
+- files over line threshold: 112
+
+✅ repo health strict gate passed.
+   ✅ No new oversized file.
+   Checking that no 5xx body carries the caught error's text...
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+   ✅ No 5xx body carries the caught error's text.
+   Checking that pushed imports resolve to tracked files...
+[ci:untracked-imports] OK — every relative import in 55 file(s) resolves to a tracked file.
+   ✅ Pushed imports all resolve to tracked files.
+   Checking for ESLint errors in the pushed files...
+[ci:pushed-lint-errors] OK — no ESLint errors in 55 changed file(s) against origin/concept2cure-v2.
+   ✅ No ESLint errors in the pushed files.
+   Checking that the pushed files gained no ESLint warnings...
+[ci:eslint-warning-ratchet] --since 1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10 (1ba873279) -- 55 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since 1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10.
+   ✅ The pushed files gained no ESLint warnings.
+   Typechecking (only if this push can change a type)...
+[ci:pushed-typecheck] 55 type-relevant file(s) changed against origin/concept2cure-v2: client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx, client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx, +50 more
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+   ✅ Typecheck passed (or nothing type-relevant was pushed).
+✅ Pre-push checks complete — all gates passed.
+To https://github.com/concept2cure/ClinicalSageAI-2-replit.git
+ ! [remote rejected]     concept2cure-v2 -> concept2cure-v2 (cannot lock ref 'refs/heads/concept2cure-v2': is at 89b67685e582ff7a6f91487fa0877527f5ab6ea8 but expected 1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10)
+error: failed to push some refs to 'https://github.com/concept2cure/ClinicalSageAI-2-replit.git'

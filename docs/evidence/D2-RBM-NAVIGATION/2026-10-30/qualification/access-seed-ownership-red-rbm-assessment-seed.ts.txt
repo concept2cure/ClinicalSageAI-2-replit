@@ -1,0 +1,26 @@
+/** One transactional draft seed, shared by the existing route and AnA handler. */
+import type { RequestSqlClient } from '../../db/requestDb';
+import { requireRbmProgram, type RbmActor } from './rbm-access';
+import { DEFAULT_CTQ_FACTORS, scoreRisk, overallRiskFromScores } from './rbm-engine';
+interface SeedClient extends RequestSqlClient { release?: () => void }
+interface SeedSource extends RequestSqlClient { connect?: () => Promise<SeedClient> }
+export async function seedRbmAssessment(source: SeedSource, actor: RbmActor, input: { programId: string; title?: string; framework?: string }) {
+  const leased = typeof source.connect === 'function', client = leased ? await source.connect!() : source;
+  try {
+    await client.query('BEGIN');
+    await requireRbmProgram(client, actor, { programId: input.programId }, true);
+    const overall = overallRiskFromScores(DEFAULT_CTQ_FACTORS.map(f => scoreRisk(f.likelihood, f.impact).score));
+    const { rows } = await client.query(`INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status, created_by)
+      VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`, [actor.organizationId, input.programId, input.title ?? 'Risk assessment (RACT)', input.framework ?? 'ich_e6r3', overall, actor.userId]);
+    const assessment = rows[0];
+    if (!assessment) throw new Error('Assessment seed identity missing');
+    for (const f of DEFAULT_CTQ_FACTORS) {
+      await client.query(`INSERT INTO rbm_risk_items (organization_id, assessment_id, program_id, category, ctq_factor, risk_description, likelihood, impact, risk_score, is_critical, mitigation, status)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'open')`, [actor.organizationId, assessment.id, input.programId, f.category, f.ctqFactor, f.riskDescription, f.likelihood, f.impact, scoreRisk(f.likelihood, f.impact).score, f.isCritical, f.mitigation]);
+    }
+    const items = await client.query('SELECT * FROM rbm_risk_items WHERE organization_id=$1 AND assessment_id=$2 ORDER BY risk_score DESC,id', [actor.organizationId, assessment.id]);
+    await client.query('COMMIT');
+    return { ...assessment, items: items.rows };
+  } catch (error) { await client.query('ROLLBACK').catch(() => {}); throw error; }
+  finally { if (leased) (client as SeedClient).release?.(); }
+}

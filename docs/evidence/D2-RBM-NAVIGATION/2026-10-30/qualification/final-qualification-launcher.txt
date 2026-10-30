@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/ectd/external-validator/__tests__/external-validator.test.ts server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts server/services/ectd/qualification/__tests__/qualification.test.ts tests/regulatory/ectd-qualification-cli.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/final-qualification-results.json",
+  "exitCode": 0,
+  "passed": 57,
+  "failed": 0,
+  "skipped": 0,
+  "files": 4,
+  "unchangedInputs": true,
+  "failures": []
+}

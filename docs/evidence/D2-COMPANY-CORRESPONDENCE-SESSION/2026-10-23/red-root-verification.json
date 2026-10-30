@@ -1,0 +1,6 @@
+{
+  "allSevenCapturedInputsUnchangedDuringRun": true,
+  "fourProductionInputsMatchDiscoveryAndCurrent": true,
+  "productionEditsNotStarted": true,
+  "functionalResult": "0 passed / 2 failed; actual draft refresh loss and stale account dispatch"
+}

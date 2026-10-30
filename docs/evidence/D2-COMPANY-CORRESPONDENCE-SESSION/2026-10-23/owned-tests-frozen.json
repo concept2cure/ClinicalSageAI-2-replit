@@ -1,0 +1,31 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx": {
+      "sha256": "63aa99355a56c769003f52e68a2a599e1fb127c2aca665938351b8ce72cde1f2",
+      "lines": 207
+    },
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx": {
+      "sha256": "50bbd9c81143ad5a209f6f469104519f7cf1bca0691d001f78c025e3943d7da9",
+      "lines": 283
+    },
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx": {
+      "sha256": "420baf6139a2282f32cb992d4bbfe3090a37a8dcc08a80457702cf38a5174715",
+      "lines": 101
+    },
+    "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx": {
+      "sha256": "9ece2df6acaab75190ee5a2e6e44c8f2839fc4d62a6f1a332cc8c66e1bc43b99",
+      "lines": 114
+    }
+  },
+  "initialRedCaseBodiesBytePreserved": {
+    "companyCorrespondenceSessionContinuity.test.tsx": true,
+    "companyCorrespondenceSessionBoundaries.test.tsx": true
+  },
+  "originalSevenCases": 7,
+  "originalExpectLines": 19,
+  "allOriginalExpectLinesBytePreserved": true,
+  "status": "Final frozen sources qualified by owned-02: 47 passed across 4 files; all 8 production/test inputs stable.",
+  "revisionAt": "2026-10-23T21:31:14.857320+00:00",
+  "finalCohort": "owned-02",
+  "finalizedAt": "2026-10-23T21:31:53.604605+00:00"
+}

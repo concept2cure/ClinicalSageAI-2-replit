@@ -1,0 +1,90 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks a retained draft create after session changes 171ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks a retained draft create after browser bearer changes 32ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks a retained draft create after sign out changes 22ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > retires a role snapshot with the same bearer and auth revision before create 23ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks stale confirmed Authoring navigation after owner replacement 44ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks stale recovery Authoring navigation after owner replacement 37ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks stale unidentified Authoring navigation after owner replacement 32ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > rechecks ownership after the actual editor-target event before navigating 30ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > withdraws private draft fields on the first replacement layout 17ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > does not decode an old create response after account retirement 19ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > does not decode an old create response after filing ABA retirement 18ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > does not decode an old create response after unmount retirement 16ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > discards a draft JSON body that finishes after the account changes 68ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > does not unlock a newer pending draft when a prior owner’s request completes 48ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > cannot revive an earlier stationery-visit create callback after variant A to B to A 15ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > blocks an old review save in the same frame as account replacement 24ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > checks current review authority before a retained save 18ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > dispatches a review once for duplicate same-frame clicks 19ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > does not decode a comparison from an earlier profile A to B to A visit 8ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > does not decode a comparison from an earlier variant A to B to A visit 7ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > drops a delayed private review error body when its presentation changes 73ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > published variant and parent admission boundaries > blocks stale selection and page reads after account replacement 28ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > published variant and parent admission boundaries > does not revive an old sequence’s variant response on filing A to B to A 6ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > published variant and parent admission boundaries > blocks a retained identity retry after unadopted browser bearer drift 8ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > published variant and parent admission boundaries > withholds parent-admitted forms without losing the same filing’s unsaved draft 55ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > canonical correspondence captured account > does not dispatch a retained create click in the same frame as account replacement 16ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > correspondence sent operation and uncertain hold continuity > confirms one pending create after actual bearer refresh and opens its exact Authoring document 205ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > correspondence sent operation and uncertain hold continuity > retains an unconfirmed create hold across refresh and changing stationery without sending another copy 55ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > correspondence sent operation and uncertain hold continuity > retains an identified committed recovery handoff through refresh and a new stationery choice 42ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > stationery intent belongs to the correspondence operation > preserves unsaved text when a new stationery choice is used for the next create 41ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > stationery intent belongs to the correspondence operation > settles a sent receipt against its original stationery after selection changes and keeps the duplicate hold 33ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > stationery intent belongs to the correspondence operation > does not accept another stationery identity as the confirmed receipt for the sent operation 31ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > sequence-admitted published stationery continuity > keeps the explicit selection and loaded pages across real bearer refresh without a new read 56ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > sequence-admitted published stationery continuity > accepts only a loaded published ID or the explicit saved-preference default 18ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > sequence-admitted published stationery continuity > retries a current stationery failure and never turns it into an empty successful inventory 29ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > filing identity review continuity > keeps a chosen role and review reason through real bearer refresh without rereading the comparison 18ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > filing identity review continuity > confirms one pending review through actual bearer refresh with the exact displayed hashes and revision 25ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > canonical correspondence draft continuity > preserves unsaved correspondence through real bearer refresh and the same parent rerender 14ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > connected correspondence draft > saves the actual sequence and opens only the confirmed canonical Authoring document 229ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > connected correspondence draft > keeps a committed but unconfirmed handoff identifiable and blocks a duplicate create 52ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > connected correspondence draft > ignores a late create receipt after changing the filing 27ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > filing identity review > uses the selected variant and clears a previous variant’s reviewed difference 26ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > filing identity review > shows actual differences and binds an explicit role review to both current hashes 27ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > filing identity review > does not offer an acknowledgment for missing identity facts 6ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > company legal versions on agency communications > reads only the admitted project inventory and submits IDs and outcome without claiming a hash or approval 74ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx > real filing parent and correspondence children > preserves chosen stationery, draft text and identity review fields on real bearer refresh without rereads 336ms
+ × client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx > real filing parent and correspondence children > keeps the same filing draft and sent result while an unrelated inventory search withholds parent admission 126ms
+   → expected <textarea …(2)></textarea> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx > real filing parent and correspondence children > keeps the same filing draft and sent result while an unrelated inventory search withholds parent admission
+AssertionError: expected <textarea …(2)></textarea> to be null
+
+- Expected:
+null
+
++ Received:
+<textarea
+  maxlength="100000"
+  rows="6"
+>
+  Private parent response paragraphs.
+</textarea>
+
+ ❯ client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx:91:79
+     89|     fireEvent.click(screen.getByRole('button', { name: 'Search legal i…
+     90|     await waitFor(() => expect(apiRequest.mock.calls.filter(([, path])…
+     91|     expect(screen.queryByDisplayValue('Private parent response paragra…
+       |                                                                               ^
+     92|     await act(async () => { sent.resolve(json({ authoringDocId: DOC, p…
+     93|     expect(screen.queryByRole('button', { name: 'Open identified corre…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 46 passed (47)
+   Start at  21:30:39
+   Duration  5.91s (transform 632ms, setup 356ms, import 972ms, tests 2.34s, environment 1.74s)
+
+JSON report written to /workspace/.cloud-setup/correspondence-session/owned-01-results.json
+npm notice
+npm notice New major version of npm available! 10.9.9 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice

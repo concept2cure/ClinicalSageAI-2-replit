@@ -1,0 +1,27 @@
+import { createRequire } from 'node:module';
+import { execFileSync } from 'node:child_process';
+import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const repo='/workspace/ClinicalSageAI-2-replit';
+process.chdir(repo);
+const require=createRequire(repo+'/package.json');
+const {ESLint}=require('eslint');
+const eslint=new ESLint({cwd:repo});
+const base='6747c44709702ed016afa446ef52d2c99710614d';
+const git=(args)=>execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();
+const changed=git(['diff','--name-only',base,'--','client','server','shared','scripts']).split('\n');
+const added=git(['ls-files','--others','--exclude-standard','--','client','server','shared','scripts']).split('\n');
+const files=[...new Set([...changed,...added])].filter(p=>/\.(ts|tsx)$/.test(p)&&existsSync(p));
+const output=[];
+for(const path of files){
+ const source=readFileSync(path,'utf8');
+ const [next]=await eslint.lintText(source,{filePath:path});
+ let old={errorCount:0,warningCount:0,messages:[]};
+ try { const before=execFileSync('git',['show',base+':'+path],{cwd:repo,encoding:'utf8',maxBuffer:32*1024*1024,stdio:['ignore','pipe','pipe']}); [old]=await eslint.lintText(before,{filePath:path}); } catch(e) { if(e.status!==128)throw e; }
+ output.push({path,sha256:createHash('sha256').update(source).digest('hex'),beforeErrors:old.errorCount,beforeWarnings:old.warningCount,afterErrors:next.errorCount,afterWarnings:next.warningCount,messages:next.messages});
+}
+const beforeWarnings=output.reduce((s,x)=>s+x.beforeWarnings,0), afterWarnings=output.reduce((s,x)=>s+x.afterWarnings,0), afterErrors=output.reduce((s,x)=>s+x.afterErrors,0);
+const result={base,sourceCommit:git(['rev-parse','HEAD']),method:'ESLint lintText using existing original file paths; historical text in memory, no temporary TypeScript source',beforeWarnings,afterWarnings,warningDelta:afterWarnings-beforeWarnings,afterErrors,files:output};
+writeFileSync('/workspace/.cloud-setup/rbm-navigation/lint-final.json',JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify({files:output.length,beforeWarnings,afterWarnings,afterErrors}));
+process.exitCode=afterErrors||afterWarnings>beforeWarnings?1:0;

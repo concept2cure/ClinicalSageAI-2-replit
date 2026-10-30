@@ -93,7 +93,8 @@ const findings = [];
    under decision P-28; seven from 2026-09-30, Reporting & analytics). The count
    is pinned so the catalog cannot grow or shrink without a decision being
    written down. */
-if (apps.length !== 7) findings.push({ rule: 'shape', detail: `expected 7 launch apps, parsed ${apps.length}` });
+// P-76, 2026-10-30: RBM is the eighth central-service launch app; no new module grant.
+if (apps.length !== 8) findings.push({ rule: 'shape', detail: `expected 8 launch apps, parsed ${apps.length}` });
 
 // ── 2. Routable + registered ───────────────────────────────────────────────
 const viewsSrc = read(VIEWS);

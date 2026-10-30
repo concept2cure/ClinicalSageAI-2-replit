@@ -1,0 +1,164 @@
+[
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 4439,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 4975,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 5820,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 6256,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 7294,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 7781,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 8234,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 9151,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 9876,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 10407,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "code": 2739,
+    "start": 11176,
+    "message": "Type '{ onNav: Mock<Procedure>; }' is missing the following properties from type 'OwnedSurfaceViewProps': segment, surface"
+  },
+  {
+    "file": "../../../server/routes/mdx-rbm.ts",
+    "code": 2322,
+    "start": 53999,
+    "message": "Type '{} | null' is not assignable to type 'number | null'. Type '{}' is not assignable to type 'number'. "
+  },
+  {
+    "file": "../../../server/routes/mdx-rbm.ts",
+    "code": 2322,
+    "start": 60136,
+    "message": "Type '{} | null' is not assignable to type 'number | null'. Type '{}' is not assignable to type 'number'. "
+  },
+  {
+    "file": "../../../server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts",
+    "code": 2322,
+    "start": 2131,
+    "message": "Type 'Mock<(sql: string, args?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number; }>>' is not assignable to type '{ <T extends Submittable>(queryStream: T): T; <R extends any[] = any[], I extends any[] = any[]>(queryConfig: QueryArrayConfig<I>, values?: I | undefined): Promise<QueryArrayResult<R>>; <R extends QueryResultRow = any, I extends any[] = any[]>(queryConfig: QueryConfig<...>): Promise<...>; <R extends QueryResultRow =...'. Types of parameters 'sql' and 'queryConfig' are incompatible. Type 'QueryArrayConfig<any>' is not assignable to type 'string'. "
+  },
+  {
+    "file": "../../../server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts",
+    "code": 2322,
+    "start": 2817,
+    "message": "Type 'Mock<() => Promise<{ rows: never[]; rowCount: number; }>>' is not assignable to type '{ <T extends Submittable>(queryStream: T): T; <R extends any[] = any[], I extends any[] = any[]>(queryConfig: QueryArrayConfig<I>, values?: I | undefined): Promise<QueryArrayResult<R>>; <R extends QueryResultRow = any, I extends any[] = any[]>(queryConfig: QueryConfig<...>): Promise<...>; <R extends QueryResultRow =...'. Type 'Promise<{ rows: never[]; rowCount: number; }>' is not assignable to type 'Promise<QueryArrayResult<any>>'. Type '{ rows: never[]; rowCount: number; }' is missing the following properties from type 'QueryArrayResult<any>': command, oid, fields "
+  },
+  {
+    "file": "../../../server/routes/__tests__/mdx-rbm-signed-records.test.ts",
+    "code": 2322,
+    "start": 2992,
+    "message": "Type 'Mock<(sql: string, args?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number; }>>' is not assignable to type '{ <T extends Submittable>(queryStream: T): T; <R extends any[] = any[], I extends any[] = any[]>(queryConfig: QueryArrayConfig<I>, values?: I | undefined): Promise<QueryArrayResult<R>>; <R extends QueryResultRow = any, I extends any[] = any[]>(queryConfig: QueryConfig<...>): Promise<...>; <R extends QueryResultRow =...'. Types of parameters 'sql' and 'queryConfig' are incompatible. Type 'QueryArrayConfig<any>' is not assignable to type 'string'. "
+  },
+  {
+    "file": "../../../server/routes/__tests__/rbm-approval-signature.pglite.test.ts",
+    "code": 2322,
+    "start": 3906,
+    "message": "Type '(sql: string, args: unknown[] | undefined) => Promise<Results<unknown>>' is not assignable to type '(sql: string, args?: unknown[] | undefined) => Promise<{ rows: Record<string, unknown>[]; }>'. Type 'Promise<Results<unknown>>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'. Type 'Results<unknown>' is not assignable to type '{ rows: Record<string, unknown>[]; }'. Types of property 'rows' are incompatible. Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'. Type 'unknown' is not assignable to type 'Record<string, unknown>'. "
+  },
+  {
+    "file": "../../../server/routes/__tests__/rbm-board-current-project.test.ts",
+    "code": 18046,
+    "start": 4336,
+    "message": "'row' is of type 'unknown'."
+  },
+  {
+    "file": "../../../server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "code": 2345,
+    "start": 1617,
+    "message": "Argument of type '{ query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'. The types returned by 'query(...)' are incompatible between these types. Type 'Promise<Results<unknown>>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'. Type 'Results<unknown>' is not assignable to type '{ rows: Record<string, unknown>[]; }'. Types of property 'rows' are incompatible. Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'. Type 'unknown' is not assignable to type 'Record<string, unknown>'. "
+  },
+  {
+    "file": "../../../server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "code": 2345,
+    "start": 2407,
+    "message": "Argument of type '{ query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'. The types returned by 'query(...)' are incompatible between these types. Type 'Promise<Results<unknown>>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'. Type 'Results<unknown>' is not assignable to type '{ rows: Record<string, unknown>[]; }'. Types of property 'rows' are incompatible. Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'. Type 'unknown' is not assignable to type 'Record<string, unknown>'. "
+  },
+  {
+    "file": "../../../server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "code": 2345,
+    "start": 3004,
+    "message": "Argument of type '{ query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'. The types returned by 'query(...)' are incompatible between these types. Type 'Promise<Results<unknown>>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'. Type 'Results<unknown>' is not assignable to type '{ rows: Record<string, unknown>[]; }'. Types of property 'rows' are incompatible. Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'. Type 'unknown' is not assignable to type 'Record<string, unknown>'. "
+  },
+  {
+    "file": "../../../server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "code": 2345,
+    "start": 3420,
+    "message": "Argument of type '{ query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'. The types returned by 'query(...)' are incompatible between these types. Type 'Promise<Results<unknown>>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'. Type 'Results<unknown>' is not assignable to type '{ rows: Record<string, unknown>[]; }'. Types of property 'rows' are incompatible. Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'. Type 'unknown' is not assignable to type 'Record<string, unknown>'. "
+  },
+  {
+    "file": "../../../server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "code": 2345,
+    "start": 4107,
+    "message": "Argument of type '{ connect: Mock<() => Promise<never>>; query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'. The types returned by 'query(...)' are incompatible between these types. Type 'Promise<Results<unknown>>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'. Type 'Results<unknown>' is not assignable to type '{ rows: Record<string, unknown>[]; }'. Types of property 'rows' are incompatible. Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'. Type 'unknown' is not assignable to type 'Record<string, unknown>'. "
+  },
+  {
+    "file": "../../../server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "code": 2339,
+    "start": 4196,
+    "message": "Property 'status' does not exist on type '{ items: Record<string, unknown>[]; }'."
+  },
+  {
+    "file": "../../../server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "code": 2345,
+    "start": 4506,
+    "message": "Argument of type '{ connect: Mock<() => Promise<{ release: Mock<Procedure>; query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }>>; }' is not assignable to parameter of type 'RbmSeedPool'. The types returned by 'connect(...)' are incompatible between these types. Type 'Promise<{ release: Mock<Procedure>; query: (sql: string, args?: unknown[] | undefined) => Promise<Results<unknown>>; }>' is not assignable to type 'Promise<SeedLease>'. Type '{ release: Mock<Procedure>; query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to type 'SeedLease'. The types returned by 'query(...)' are incompatible between these types. Type 'Promise<Results<unknown>>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'. Type 'Results<unknown>' is not assignable to type '{ rows: Record<string, unknown>[]; }'. Types of property 'rows' are incompatible. Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'. Type 'unknown' is not assignable to type 'Record<string, unknown>'. "
+  },
+  {
+    "file": "../../../server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "code": 2339,
+    "start": 4584,
+    "message": "Property 'status' does not exist on type '{ items: Record<string, unknown>[]; }'."
+  },
+  {
+    "file": "../../../server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "code": 2345,
+    "start": 5317,
+    "message": "Argument of type '{ query: (sql: string, args?: unknown[]) => Promise<Results<unknown>>; }' is not assignable to parameter of type 'RequestSqlClient'. The types returned by 'query(...)' are incompatible between these types. Type 'Promise<Results<unknown>>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'. Type 'Results<unknown>' is not assignable to type '{ rows: Record<string, unknown>[]; }'. Types of property 'rows' are incompatible. Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'. Type 'unknown' is not assignable to type 'Record<string, unknown>'. "
+  }
+]

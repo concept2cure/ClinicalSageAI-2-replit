@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-10-30T17:48:53.607247+00:00",
+  "kind": "normal pre-push gate refusal before TypeScript and remote update",
+  "failedGate": "ci:sql-interpolation",
+  "sites": [
+    "server/routes/mdx-rbm.ts plan retirement predicate",
+    "server/services/rbm/rbm-actuator.ts draft lock mode"
+  ],
+  "attemptReceipt": "push-refusal-01-code-push-exit.json",
+  "sourceCommit": "4c678fa5dddc7d703b5b8faf7400f6787cf02f0e",
+  "all137SelectedInputsUnchanged": true,
+  "action": "Replace fragments with bound boolean and whole static lock statements; baseline and scanner unchanged. No TypeScript success or publication claimed for this attempt."
+}

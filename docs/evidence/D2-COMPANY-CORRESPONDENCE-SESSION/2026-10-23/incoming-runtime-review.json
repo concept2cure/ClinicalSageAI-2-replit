@@ -1,0 +1,49 @@
+{
+  "incoming": "eba2d8050",
+  "merged": "fd64f340c",
+  "reviewer": "/root/incoming_mdx_review",
+  "changedSourceTestPaths": [
+    "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+    "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/appsMdxSolution.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskBoardResponseShape.test.tsx",
+    "client/src/concept2cure/v2/surfaces/MdxCatalogSolution.tsx",
+    "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx",
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+    "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx",
+    "client/src/lib/__tests__/api-request-active-organization.test.ts",
+    "client/src/utils/__tests__/authToken.test.ts",
+    "client/src/utils/authToken.ts",
+    "server/routes/__tests__/taskBoard-runtime-recovery.test.ts",
+    "server/routes/taskBoard.routes.ts"
+  ],
+  "result": "No production integration blocker found. authToken keeps bearer/storage handling unchanged and reuses active-bearer JWT org for generic org/header readers. TaskBoard changes remain read shape/recovery; MDX uses existing project Author stage and does not widen surface, entitlements or regulatory scope.",
+  "runtimeEvidence": {
+    "root": "docs/evidence/W2/2026-10-23-catalog-task-board-runtime/",
+    "sourcePinsMatch": 11,
+    "manifestEntries": 51,
+    "matchingPreservedArtifacts": 43,
+    "missingFromIncomingGit": [
+      "board/green.log",
+      "board/lint-baseline-client.log",
+      "board/lint-baseline-server.log",
+      "board/lint.log",
+      "board/partial-empty-red.log",
+      "board/red.log",
+      "board/shape-final.log",
+      "typecheck.log"
+    ],
+    "limit": "Upstream artifact manifest is incomplete. No assertion that all51artifacts are retained. Current root re-execution and normal push gates supply current-source proof.",
+    "qualificationSha256": "200b3439a3b186b03c74d31da9f1de71eaaf3ccef114664bca34739cb96c1410",
+    "manifestSha256": "f5f2feb34e5889bffd2103cc94d00c5a281a5064970cd2151be418d4c1ffe798"
+  },
+  "mdxContinuationEvidence": {
+    "root": "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/continuation/",
+    "matchingSourcePins": 6,
+    "matchingReceiptPins": 8,
+    "qualificationSha256": "130dfe757bac7d40611591a4b7dd1433c4be80ace7ca9530b6caa475312bf3c0"
+  },
+  "upstreamCohortsAreHistoricalOverlapping": true,
+  "currentRootRegression": "runtime-selection.json includes original20 affected files plus8 incoming/companion regressions; results pending when review recorded.",
+  "uniqueSourcePinsCoveringAll13IncomingPaths": 17
+}

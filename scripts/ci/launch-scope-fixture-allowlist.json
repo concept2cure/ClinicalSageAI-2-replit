@@ -58,6 +58,8 @@
     "commcenter.CC_CLOSURE": "CC_CLOSURE: closure-status to tone map for the inbox pills \u2014 reference configuration, no records (added 2026-10-17 when Communication's launch entry was gated)",
     "commcenter.CC_INTERACTION_TYPES": "CC_INTERACTION_TYPES: display labels for the agency meeting types the ha_interactions CHECK admits \u2014 reference vocabulary, no records (added 2026-10-17)",
     "commcenter.CC_SOURCE_TYPES": "CC_SOURCE_TYPES: display labels for the communication source types \u2014 reference vocabulary, no records (added 2026-10-17)",
-    "commcenter.CC_TONE": "CC_TONE: urgency to tone map for the inbox pills \u2014 reference configuration, no records (added 2026-10-17)"
+    "commcenter.CC_TONE": "CC_TONE: urgency to tone map for the inbox pills \u2014 reference configuration, no records (added 2026-10-17)",
+    "rbm-data.RBM_NAV": "Existing navigation labels, tool IDs and starter prompts only; no project, study or risk records. Reviewed for founder P-76 RBM admission, 2026-10-30.",
+    "rbm-data.RBM_LINKS": "Existing cross-service destination labels and navigation metadata only; no project or monitoring records. Reviewed for founder P-76 RBM admission, 2026-10-30."
   }
 }

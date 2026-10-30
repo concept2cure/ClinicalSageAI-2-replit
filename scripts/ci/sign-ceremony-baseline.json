@@ -83,7 +83,7 @@
     },
     "server/services/rbm/rbm-actuator.ts": {
       "count": 2,
-      "reason": "Approval stamp (2026-10-01): approveAssessment / approvePlan. The mdx-rbm approve routes re-verify the signer (reverifySigner) and refuse the author, but NO electronic_signatures row is written, so a re-authenticated RBM approval leaves no signature record. A real gap, found by this widening. RBM is outside the launch catalog (RULE 2), so it is recorded here, not fixed."
+      "reason": "Approval stamps (2026-10-30, P-76): approveAssessment / approvePlan are domain writes on the caller's transaction. Their only signing callers are POST /rbm-assessments/:id/approve and POST /rbm-monitoring-plans/:id/approve in routes/mdx-rbm.ts: canonical signing authority and credential re-verification, current-project write recheck, locked draft/two-person check, domain approval, recordGovernedAction(command:'sign') and persistGovernedSignSignature(requiredBasis RBM version content), then COMMIT on the pinned request client. Signature failure rolls back approval, supersession, ledger and action carry. AnA approval tools refuse and cannot invoke these writes. PROOF ACROSS A BOUNDARY, verified by mounted PGlite RBM approval tests; the stamp and the ceremony are in different functions. The prior outside-catalog missing-signature deferral is closed."
     },
     "server/services/submission-gateways/governed-transmit.ts": {
       "count": 1,

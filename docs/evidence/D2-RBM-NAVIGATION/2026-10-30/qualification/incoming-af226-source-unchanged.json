@@ -1,0 +1,10 @@
+{
+  "observedAt": "2026-10-30T19:09:40.389101+00:00",
+  "incomingCommit": "af226ae6a5efa16fbd79a3a91234c9bfa5d54277",
+  "mergedCommit": "5d756830409b2948c355c574d09e1420d957bee9",
+  "priorQualifiedCode": "3e8840459e5cd5bb2d05cb4d02a99a4d1361b007",
+  "netTreeDiff": "",
+  "selectedSourcePinsUnchanged": 245,
+  "newSourceTestsBuildRequired": false,
+  "qualification": "Identical complete tree after normal merge; previous source receipts remain exact. Normal push8 retries without bypass."
+}
