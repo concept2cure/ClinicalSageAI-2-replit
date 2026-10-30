@@ -10,10 +10,18 @@ import { describe, it, expect } from 'vitest';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { PDFDocument } from 'pdf-lib';
 import { packageEctdSubmission, type EctdLeaf } from '../regional-packager';
 import type { CrossReference } from '../../ectd/cross-reference-resolver';
 
-function pdf(l: string): Buffer { return Buffer.from(`%PDF-1.4\n% ${l}\n%%EOF\n`, 'utf8'); }
+/* A real one-page PDF. A comment-only stub has no catalog or page tree, which the packager's
+   original-PDF integrity check (original-pdf-integrity.ts) refuses before any cross-reference is read. */
+async function pdf(l: string): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  doc.setTitle(l);
+  doc.addPage();
+  return Buffer.from(await doc.save({ useObjectStreams: false }));
+}
 
 async function pkg(work: string, opts: {
   crossReferences?: CrossReference[];
@@ -22,7 +30,7 @@ async function pkg(work: string, opts: {
 }) {
   const src = path.join(work, 'src');
   await fs.mkdir(src, { recursive: true });
-  for (const n of ['summary.pdf', 'study.pdf']) await fs.writeFile(path.join(src, n), pdf(n));
+  for (const n of ['summary.pdf', 'study.pdf']) await fs.writeFile(path.join(src, n), await pdf(n));
   const leaves: EctdLeaf[] = [
     { ctdSection: '2.7.3', operation: 'new', sourcePath: path.join(src, 'summary.pdf'), fileName: 'summary.pdf', title: 'Clinical Summary' },
     // 2026-09-23 (W5/D7, round-2 skeptic): the withdrawn target used to carry
