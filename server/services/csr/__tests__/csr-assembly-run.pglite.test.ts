@@ -189,7 +189,7 @@ it('places every leaf under 5.3.5.1 with its STF role once each blocking appendi
     expect(writes[i]).toMatchObject({ sequenceId: 90, sectionCode: 'm5.3.5.1', lifecycleOp: 'new', documentTable: 'rendered_leaf_files',
       documentId: leaf.renderedLeafFileId, checksum: leaf.md5, studyId: 'SYN-LMN201-B', stfFileTag: leaf.fileTag, reason: 'CSR for the Part B data cut' });
   }
-  expect(writes.find(w => w.documentId === run.result!.leaves.find(l => l.fileName === 'csr-body.pdf')!.renderedLeafFileId)).toMatchObject({ stfFileTag: 'study-report' });
+  expect(writes.find(w => w.documentId === run.result!.leaves.find(l => l.fileName === 'csr-body.pdf')!.renderedLeafFileId)).toMatchObject({ stfFileTag: 'study-report-body' });
   expect(placement).toMatchObject({ state: 'placed', sequenceNumber: '0004', placedBy: 5, declarations: run.notApplicable });
   expect((await readLatestCsrAssembly(q, 7, 41))!.placement).toMatchObject({ state: 'placed', sequenceId: 90 });
   await expect(place(placementDeps({}), id)).rejects.toMatchObject({ code: 'CSR_PLACEMENT_ALREADY_PLACED' });
@@ -213,6 +213,26 @@ async function placeable(): Promise<number> {
   const previous = (await readLatestCsrAssembly(q, 7, 41))!;
   return assembled({ supplied: previous.supplied, notApplicable: Object.fromEntries(Object.entries(previous.notApplicable).map(([n, d]) => [n, d.reason])) });
 }
+
+it.each([
+  ['body', 'study-report'],
+  ['body', 'case-report-forms'],
+  ['16.1.1', 'case-report-forms'],
+])('refuses retained %s role %s before claiming or writing and preserves stored evidence', async (appendix, fileTag) => {
+  writes.length = 0;
+  const id = await placeable();
+  const current = (await readLatestCsrAssembly(q, 7, 41))!;
+  expect(current.result!.leaves.some(leaf => leaf.appendix === appendix)).toBe(true);
+  const retained = { ...current.result!, leaves: current.result!.leaves.map(leaf => leaf.appendix === appendix ? { ...leaf, fileTag } : leaf) };
+  await pg.query('UPDATE csr_assembly_runs SET result=$1::jsonb WHERE id=$2', [JSON.stringify(retained), id]);
+  const before = (await pg.query('SELECT * FROM csr_assembly_runs WHERE id=$1', [id])).rows;
+  const hashes = [...stored].map(([key, value]) => [key, value.sha256, createHash('sha256').update(value.input.bytes).digest('hex')]);
+  await expect(place(placementDeps({}), id)).rejects.toMatchObject({ code: 'CSR_PLACEMENT_STF_ROLE_STALE', status: 409,
+    message: expect.stringMatching(/Assemble again.*Nothing was placed\./) });
+  expect(writes).toEqual([]);
+  expect((await pg.query('SELECT * FROM csr_assembly_runs WHERE id=$1', [id])).rows).toEqual(before);
+  expect([...stored].map(([key, value]) => [key, value.sha256, createHash('sha256').update(value.input.bytes).digest('hex')])).toEqual(hashes);
+}, 180_000);
 
 it('refuses to place an assembly made before the build’s sections changed (its fingerprint is not the job’s now)', async () => {
   writes.length = 0;
@@ -279,9 +299,9 @@ it('D18: files a landed §14.3.3 checked against csr_narrative_outputs, places i
     expect(run.unresolvedReferences).toEqual([]);
     expect(run.missing.filter(m => m.blocking)).toEqual([]);
     const narratives = run.leaves.find(l => l.appendix === '14.3.3')!;
-    expect(narratives).toMatchObject({ fileName: 'csr-14-3-3-narratives.pdf', fileTag: 'study-report', origin: 'generated', ctdSection: '5.3.5.1' });
+    expect(narratives).toMatchObject({ fileName: 'csr-14-3-3-narratives.pdf', fileTag: 'study-report-body', origin: 'generated', ctdSection: '5.3.5.1' });
     await expect(place(placementDeps({}), id)).resolves.toMatchObject({ state: 'placed' });
-    expect(writes.find(w => w.documentId === narratives.renderedLeafFileId)).toMatchObject({ sectionCode: 'm5.3.5.1', stfFileTag: 'study-report', studyId: 'SYN-LMN201-B' });
+    expect(writes.find(w => w.documentId === narratives.renderedLeafFileId)).toMatchObject({ sectionCode: 'm5.3.5.1', stfFileTag: 'study-report-body', studyId: 'SYN-LMN201-B' });
     // A narrative edited in the table after §14.3.3 landed: §14.3.3 is a blocking gap, and no leaf is filed for it.
     await pg.query(`UPDATE csr_narrative_outputs SET content = content || ' Edited.' WHERE job_id = 41 AND sequence = 0`);
     await assembled({ supplied: previous.supplied, notApplicable });
