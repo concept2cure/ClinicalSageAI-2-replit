@@ -1,0 +1,8 @@
+{
+  "commit": "4c4a27daf1cbdc462b24b1acb6c6ce970dcfec4b",
+  "note": "Working-tree source and test qualified by final 124-check cohort. Root owns integration/publication.",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "dce2dac454a3f6f3aef27237d2e35a4f024a6bf9d37f9f5d36ae9f278cd9c4ac",
+    "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx": "f9fb6e237935ff31c3e56541ee1ef4acba8c332152e16d6853f30feca765304e"
+  }
+}
