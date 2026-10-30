@@ -67,7 +67,8 @@ import {useControlledDocumentTarget,ControlledDocumentTargetStatus} from './Cont
 
 import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
-import { TrainingCoverage, DocumentReadButton } from './TrainingCoverage';
+import { TrainingCoverage, DocumentReadButton, TrainingAssignmentsPanel } from './TrainingCoverage';
+import { QMS_TRAINABLE_DOCUMENT_TYPES } from '@shared/qms/training';
 import { TrainingExpiry } from './TrainingExpiry';
 import { RegisterSignatureLine } from './RegisterSignatureLine';
 export interface SopRegisterProps {
@@ -233,6 +234,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   };
   const [setup, setSetup] = React.useState<{ document?: QmsDoc; template?: SopTemplate; revision?: boolean } | null>(null);
   const [reviewing, setReviewing] = React.useState<QmsDoc | null>(null);
+  /** The document whose training assignments are open (P-49). */
+  const [assigning, setAssigning] = React.useState<QmsDoc | null>(null);
   const [revising, setRevising] = React.useState<QmsDoc | null>(null);
   const [editingId, setEditingId] = React.useState<number | null>(null);
   const [history, setHistory] = React.useState<QmsDoc | null>(null);
@@ -511,6 +514,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                 <NextReviewCell doc={d} overdue={overdue} />
                 <div className="qms-cell qms-rowacts">
                   <DocumentReadButton doc={d} disabled={!personalTrainingScope(user, d.id)} onOpen={openReader} />
+                  <TrainingChip doc={d} onOpen={setAssigning} />
                   {d.status === 'draft' && (
                     <button
                       className="qms-chip"
@@ -608,6 +612,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
         <TrainingExpiry />
       </div>
       {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
+      {assigning && <TrainingAssignmentsPanel doc={assigning} onClose={() => { setAssigning(null); trainComp.refresh(); }} />}
       {setup && <ControlledDocumentSetup document={setup.document} template={setup.template} templates={templates} revision={setup.revision}
         onClose={() => setSetup(null)} onCreated={openCreated} onNavigate={onNavigate} />}
       {reviewing && <QmsRouteForm doc={reviewing} mode="send" onClose={() => setReviewing(null)} onSent={() => sent(reviewing)} />}
@@ -672,4 +677,11 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       )}
     </>
   );
+}
+
+/** Who must train on this document (P-49): offered on a document that carries read-and-understood, until it is retired. */
+function TrainingChip({ doc, onOpen }: { doc: QmsDoc; onOpen: (doc: QmsDoc) => void }) {
+  if (doc.status === 'retired' || !(QMS_TRAINABLE_DOCUMENT_TYPES as readonly string[]).includes(doc.docType)) return null;
+  return <button type="button" className="qms-chip" title="Who must read and acknowledge this document: job roles and named people"
+    onClick={() => onOpen(doc)}>{I.users} Training</button>;
 }
