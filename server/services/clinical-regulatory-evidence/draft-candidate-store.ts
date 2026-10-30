@@ -34,6 +34,8 @@ import { pool } from '../../db';
 import { createHash } from 'node:crypto';
 import type { Queryable } from './span-lineage.service';
 import type { ParaphraseAssertion } from './source-attribution';
+import { parseDraftProductAudit, type DraftProductAudit } from '../ana/draft-product-advisory';
+import { parseDraftExcerptReceipt, type DraftExcerptReceipt } from '../authoring/authoring-draft-excerpts';
 
 /** Default executor — the pool (its own transaction per statement). */
 const defaultExec: Queryable = pool as unknown as Queryable;
@@ -74,6 +76,10 @@ export interface DraftGenerator {
   vaultSources?: import('../authoring/authoring-draft-sources.js').SectionDraftSourceReceipt;
   /** Exact selected catalogue excerpts verified before and after generation. */
   assemblySources?: import('../../../shared/authoring/assembly-sources').AssemblySourceManifest;
+  /** Authenticated recorded/declared field origins; context is unqualified advice. */
+  recordedProductContext?: DraftProductAudit;
+  /** Automatic retrieval spans actually shown, indexed by the prompt's SRC number. */
+  retrievalExcerpts?: Array<{ sourceNumber: number; sourceId: string | null; selection: DraftExcerptReceipt }>;
   /** The saved section the server actually drafted against. Never accepted
    * from the client. Kept in the existing generator JSON, without new storage. */
   savedSectionBase?: SavedSectionDraftBase;
@@ -119,6 +125,14 @@ export class DraftCandidateBaseChangedError extends Error {
   constructor() {
     super('The candidate\'s saved section base could not be verified against the current section. Nothing was saved and the candidate was retained. Inspect the current section and generate a fresh draft before accepting.');
     this.name = 'DraftCandidateBaseChangedError';
+  }
+}
+
+export class DraftCandidateProvenanceError extends Error {
+  readonly code = 'DRAFT_PROVENANCE_INVALID';
+  constructor() {
+    super('The recorded drafting context or excerpt receipt is invalid. Generate a fresh draft before accepting. Nothing was saved.');
+    this.name = 'DraftCandidateProvenanceError';
   }
 }
 
@@ -348,6 +362,7 @@ function parsedDraftGenerator(raw: unknown): DraftGenerator | null {
   if (!g || typeof g !== 'object' || Array.isArray(g)) return null;
   const value = g as Record<string, unknown>;
   return {
+    ...parsedDraftContext(value),
     model: stringOrNull(value.model),
     provider: stringOrNull(value.provider),
     promptSha256: stringOrNull(value.promptSha256),
@@ -367,6 +382,29 @@ function parsedDraftGenerator(raw: unknown): DraftGenerator | null {
     ...(value.derivedFrom && typeof value.derivedFrom === 'object'
       ? { derivedFrom: value.derivedFrom as DraftDerivation } : {}),
   };
+}
+
+function parsedDraftContext(value: Record<string, unknown>): Pick<DraftGenerator, 'recordedProductContext' | 'retrievalExcerpts'> {
+  const result: Pick<DraftGenerator, 'recordedProductContext' | 'retrievalExcerpts'> = {};
+  if (value.recordedProductContext !== undefined) {
+    const context = parseDraftProductAudit(value.recordedProductContext);
+    if (!context) throw new DraftCandidateProvenanceError();
+    result.recordedProductContext = context;
+  }
+  if (value.retrievalExcerpts !== undefined) result.retrievalExcerpts = parseRetrievalExcerpts(value.retrievalExcerpts);
+  return result;
+}
+
+function parseRetrievalExcerpts(raw: unknown): NonNullable<DraftGenerator['retrievalExcerpts']> {
+  if (!Array.isArray(raw) || raw.length > 5) throw new DraftCandidateProvenanceError();
+  let total = 0;
+  return raw.map((item, index) => {
+    if (!item || typeof item !== 'object' || item.sourceNumber !== index + 1 ||
+      (item.sourceId !== null && (typeof item.sourceId !== 'string' || !item.sourceId))) throw new DraftCandidateProvenanceError();
+    const selection = parseDraftExcerptReceipt(item.selection);
+    if (!selection || (total += selection.shownChars) > 12_000) throw new DraftCandidateProvenanceError();
+    return { sourceNumber: item.sourceNumber, sourceId: item.sourceId, selection };
+  });
 }
 
 function safeParseObject(s: string): Record<string, unknown> | null {

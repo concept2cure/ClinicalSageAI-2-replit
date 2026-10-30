@@ -101,8 +101,16 @@ function makeApp() {
 }
 
 function sectionExists() {
-  mockQuery.mockImplementation(async (sql: unknown) => {
+  mockQuery.mockImplementation(async (sql: unknown, params?: unknown[]) => {
     const s = String(sql);
+    // Admission is the explicit premise mocked above, not an absent program.
+    // The admitted row has no product facts/charter in this envelope-only suite;
+    // actual admission and product-currentness are exercised through PGlite.
+    if (s.includes('SELECT product_type, indication')) {
+      expect(params).toEqual([PROGRAM, 7]);
+      return { rowCount: 1, rows: [{}] };
+    }
+    if (s.includes('FROM project_charters')) return { rowCount: 0, rows: [] };
     // The canonical reference-size aggregate returns one zero row on an empty audit set.
     if (s.includes('AS reference_bytes')) return { rowCount: 1, rows: [{ reference_bytes: 0 }] };
     if (s.includes('d.status')) return { rowCount: 1, rows: [{ status: null }] }; // edit guard

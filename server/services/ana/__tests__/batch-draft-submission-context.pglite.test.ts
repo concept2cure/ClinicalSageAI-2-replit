@@ -15,10 +15,11 @@ import { getToolHandler, type ToolContext } from '../AnaToolExecutor';
 let pg: PGlite;
 const PROGRAM = '20000000-0000-4000-8000-000000000001';
 const CTX: ToolContext = { organizationId: 7, userId: 3, projectRef: PROGRAM };
+const SQL = { query: h.query };
 const SECTION = '3.2.S.2.3';
 const sections = [{ section_type: SECTION, instructions: 'Draft only supplied sponsor facts.' }];
 const run = (input: Record<string, unknown> = {}, ctx: ToolContext = CTX) =>
-  getToolHandler('batch_draft_sections')!({ sections, ...input }, ctx).then(JSON.parse);
+  getToolHandler('batch_draft_sections')!({ sections, ...input }, { sqlClient: SQL, ...ctx }).then(JSON.parse);
 const request = (index = 0) => h.route.mock.calls[index][0];
 const prompt = (index = 0) => request(index).messages[1].content as string;
 const response = { content: '<p>Generated draft.</p>', model: 'test-model', usage: { inputTokens: 10, outputTokens: 20, estimatedCostUsd: 0 }, latencyMs: 5, finishReason: 'end_turn' };
@@ -27,16 +28,36 @@ beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(`CREATE TABLE regulatory_programs (
     id uuid PRIMARY KEY, organization_id integer NOT NULL, program_type text,
-    primary_agency text, metadata jsonb, deleted_at timestamp
-  ); CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, regulatory_program_id uuid)`);
+    primary_agency text, metadata jsonb, deleted_at timestamp, product_type text, indication text
+  );
+    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, client_workspace_id integer,
+      regulatory_program_id uuid, owner_id integer, created_by_id integer, settings jsonb);
+    CREATE TABLE organization_users (id serial PRIMARY KEY, organization_id integer, user_id integer, role text);
+    CREATE TABLE users (id integer PRIMARY KEY, status text);
+    CREATE TABLE organizations (id integer PRIMARY KEY, status text);
+    CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);
+    CREATE TABLE project_members (project_id integer, organization_id integer, user_id integer, role text, status text);
+    CREATE TABLE concept2cure_review_assignments (reviewer_id integer, organization_id integer, artifact_id uuid, status text);
+    CREATE TABLE concept2cure_artifacts (id uuid PRIMARY KEY, project_id integer, organization_id integer);
+    CREATE TABLE project_charters (id serial PRIMARY KEY, organization_id integer, project_id integer, version integer,
+      updated_at timestamptz, approval_status text, therapeutic_area text, development_stage text, target_population text);`);
 });
 afterAll(async () => { await pg?.close(); });
 beforeEach(async () => {
-  await pg.exec('TRUNCATE regulatory_programs, projects');
+  await pg.exec(`TRUNCATE regulatory_programs, projects, organization_users, users, organizations,
+    project_members, project_charters RESTART IDENTITY;
+    INSERT INTO organizations VALUES(7,'active'),(8,'active');
+    INSERT INTO users VALUES(3,'active'),(5,'active'),(8,'active');
+    INSERT INTO organization_users(organization_id,user_id,role) VALUES(7,3,'member'),(7,5,'member'),(7,8,'member');
+    INSERT INTO projects VALUES(11,7,71,'${PROGRAM}',5,5,'{"projectSharing":{"visibility":"private","members":[]}}');
+    INSERT INTO project_members VALUES(11,7,3,'use','active');
+    INSERT INTO project_charters(organization_id,project_id,version,approval_status,therapeutic_area,development_stage,target_population)
+      VALUES(7,11,3,'draft','oncology','phase_2','Adults');`);
   h.query.mockReset().mockImplementation((sql: string, args: unknown[] = []) => pg.query(sql, args));
   h.getPool.mockReset().mockReturnValue({ query: h.query });
   h.route.mockReset().mockResolvedValue(response);
   await seed();
+  await pg.query('UPDATE regulatory_programs SET product_type=$1, indication=$2 WHERE id=$3', ['drug','Recorded synthetic indication',PROGRAM]);
 });
 
 async function seed(overrides: Record<string, unknown> = {}) {
@@ -64,7 +85,8 @@ describe('omitted batch submission type reaches canonical IND drafting requireme
     expect(prompt()).toContain('## Drafting: Module 3.2.S.2.3 — Control of Materials');
     expect(prompt()).toContain('PROJECT SOURCE STATUS: UNASSESSED');
     expect(prompt()).not.toContain('SUBMISSION REQUIREMENTS STATUS: UNASSESSED');
-    expect(h.query.mock.calls.map(call => call[1])).toEqual([[PROGRAM, 7], [PROGRAM, 7]]);
+    expect(h.query.mock.calls.some(call => String(call[0]).includes('FROM project_charters') && call[1][0] === 11 && call[1][1] === 7)).toBe(true);
+    expect(h.query.mock.calls.some(call => String(call[0]).includes('FROM organization_users') && call[1][0] === 3 && call[1][1] === 7)).toBe(true);
     expect(out).toMatchObject({ status: 'drafted', count: 1, failed: 0, savedCount: 0, engine: 'framework-grade', sections: [{ requestIndex: 0, sectionType: SECTION, content: response.content, saved: false, authoringDocId: null }] });
   });
 
@@ -81,10 +103,9 @@ describe('omitted batch submission type reaches canonical IND drafting requireme
   });
 
   it('resolves the legacy project anchor through the same tenant-owned program check', async () => {
-    await pg.query('INSERT INTO projects VALUES ($1,$2,$3)', [11, 7, PROGRAM]);
     await run({}, { organizationId: 7, userId: 3, projectId: 11 });
     expect(request().metadata.submissionType).toBe('US_IND');
-    expect(h.query.mock.calls.map(call => call[1])).toEqual([[11, 7], [PROGRAM, 7], [PROGRAM, 7]]);
+    expect(h.query.mock.calls.some(call => String(call[0]).includes('FROM projects') && call[1][0] === 11 && call[1][1] === 7)).toBe(true);
   });
 
   it('uses the existing exact FDA+IND legacy mapping only when no choice was recorded', async () => {
@@ -101,10 +122,11 @@ describe('omitted batch submission type reaches canonical IND drafting requireme
     expect(prompt()).toContain('## Drafting: Module 3.2.S.2.3');
   });
 
-  it.each([' EU_MAA ', 'NOT_A_REAL_TYPE'])('preserves explicit nonblank type %j without any project read', async submission_type => {
+  it.each([' EU_MAA ', 'NOT_A_REAL_TYPE'])('preserves explicit nonblank type %j while still admitting the recorded project', async submission_type => {
     await run({ submission_type });
     expect(request().metadata.submissionType).toBe(submission_type);
-    expect(h.query).not.toHaveBeenCalled();
+    expect(h.query.mock.calls.some(call => String(call[0]).includes('FROM organization_users'))).toBe(true);
+    expect(h.query.mock.calls.some(call => String(call[0]).includes('FROM project_charters'))).toBe(true);
     expect(h.getPool).not.toHaveBeenCalled();
     expect(prompt()).not.toContain('SUBMISSION REQUIREMENTS STATUS: UNASSESSED');
   });
@@ -140,27 +162,35 @@ describe('unresolved project facts never become an inferred US filing', () => {
     { organizationId: 8 }, { deletedAt: '2026-10-01' },
   ])('does not read filing facts from another tenant or a deleted program %j', async override => {
     await seed(override);
-    await run();
-    expectUnassessed();
-    expect(h.query).toHaveBeenCalledTimes(1);
+    const out = await run();
+    expect(out).toMatchObject({ count: 0, failed: 1 });
+    expect(out.sections[0].error).toBe('ANA_PROJECT_NOT_FOUND');
+    expect(h.route).not.toHaveBeenCalled();
+    expect(h.query.mock.calls.some(call => String(call[0]).includes('FROM project_charters'))).toBe(false);
   });
 
   it.each([
     { organizationId: 7, userId: 3 },
     { organizationId: 7, userId: 3, projectRef: 'invalid-id' },
     { organizationId: 0, userId: 3, projectRef: PROGRAM },
-  ])('keeps absent or invalid open context unassessed without a program-fact read %j', async ctx => {
-    await run({}, ctx);
-    expectUnassessed();
+  ])('keeps absent context unassessed and refuses explicit invalid scope %j', async ctx => {
+    const out = await run({}, ctx);
+    if ('projectRef' in ctx) {
+      expect(out).toMatchObject({ count: 0, failed: 1 });
+      expect(out.sections[0].error).toMatch(/^ANA_PROJECT_/);
+      expect(h.route).not.toHaveBeenCalled();
+    } else {
+      expectUnassessed();
+    }
     expect(h.query).not.toHaveBeenCalled();
   });
 
   it('does not trust a legacy anchor that names another tenant program', async () => {
     await seed({ organizationId: 8 });
-    await pg.query('INSERT INTO projects VALUES ($1,$2,$3)', [11, 7, PROGRAM]);
-    await run({}, { organizationId: 7, userId: 3, projectId: 11 });
-    expectUnassessed();
-    expect(h.query).toHaveBeenCalledTimes(2);
+    const out = await run({}, { organizationId: 7, userId: 3, projectId: 11 });
+    expect(out).toMatchObject({ count: 0, failed: 1 });
+    expect(out.sections[0].error).toBe('ANA_PROJECT_NOT_FOUND');
+    expect(h.route).not.toHaveBeenCalled();
   });
 
   it('keeps no-project drafting available without acquiring a database pool', async () => {
@@ -187,11 +217,31 @@ describe('inference read failures stop model calls with the existing batch failu
   });
 });
 
+describe('recorded product context retains current project admission', () => {
+  it.each([{}, { submission_type: 'US_IND' }])('refuses a private project without active membership even with explicit hints %j', async input => {
+    const out = await run(input, { ...CTX, userId: 8 });
+    expect(out).toMatchObject({ count: 0, failed: 1, retryIndices: [0] });
+    expect(out.sections[0].error).toBe('ANA_PROJECT_ACCESS_DENIED');
+    expect(h.route).not.toHaveBeenCalled();
+    expect(h.query.mock.calls.some(call => String(call[0]).includes('FROM project_charters'))).toBe(false);
+  });
+
+  it.each(['missing', 'ambiguous'])('refuses a %s anchor before product facts or generation', async kind => {
+    if (kind === 'missing') await pg.exec('DELETE FROM projects');
+    else await pg.query('INSERT INTO projects VALUES(12,7,71,$1,5,5,\'{}\')', [PROGRAM]);
+    const out = await run();
+    expect(out).toMatchObject({ count: 0, failed: 1 });
+    expect(out.sections[0].error).toBe('ANA_PROJECT_ANCHOR_UNRESOLVED');
+    expect(h.route).not.toHaveBeenCalled();
+    expect(h.query.mock.calls.some(call => String(call[0]).includes('FROM project_charters'))).toBe(false);
+  });
+});
+
 describe('inference retains bounded batch and per-section behavior', () => {
-  it('accepts 20 sections, reads filing facts once and keeps the 21-section guard before reads', async () => {
+  it('accepts 20 admitted sections and keeps the 21-section guard before reads', async () => {
     const twenty = Array.from({ length: 20 }, () => sections[0]);
     expect(await run({ sections: twenty })).toMatchObject({ count: 20, failed: 0, savedCount: 0 });
-    expect(h.query).toHaveBeenCalledTimes(2);
+    expect(h.query.mock.calls.some(call => String(call[0]).includes('FROM project_charters'))).toBe(true);
     expect(h.route).toHaveBeenCalledTimes(20);
     h.query.mockClear(); h.route.mockClear();
     expect((await run({ sections: [...twenty, sections[0]] })).error).toContain('20 sections');

@@ -110,6 +110,7 @@ function mount(props: Partial<React.ComponentProps<typeof AuthoringAiDraft>> = {
       sectionId="S1"
       sectionCode="3.2.S.1"
       sectionTitle="General Information"
+      region="FDA"
       docSealed={false}
       editorDirty={false}
       onAccepted={onAccepted}

@@ -8,6 +8,10 @@ const gatewayRoute = vi.hoisted(() => vi.fn(async (_request: unknown) => ({
   finishReason: 'end_turn',
 })));
 vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: gatewayRoute }) }));
+// This suite qualifies exact leaf requirements/wiring, not product admission;
+// that independent boundary has real-PGlite qualification without this mock.
+vi.mock('../draft-product-context', async () => ({ loadRecordedDraftProductContext:
+  (await import('./support/unassessed-product-context-fixture.js')).unassessedProductContextFixture }));
 
 import { AnaDocumentDraftingService, resolveDraftingRequirements } from '../AnaDocumentDraftingService';
 import { CTD_AUTHORING_GUIDANCE } from '../../ind/ctd/authoring-guidance';

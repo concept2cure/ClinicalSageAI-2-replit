@@ -1,0 +1,555 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > opens on the EU application agency and sends that explicit choice 100ms
+   → expected 'FDA' to be 'EMA' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > uses the exact saved section agency before a different program or caller preference 40ms
+   → expected 'FDA' to be 'PMDA' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > lets a GLOBAL section defer to the recorded application 34ms
+   → expected 'FDA' to be 'Health Canada' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > requires an explicit supported choice when no receiving agency is recorded 13ms
+   → expected 'FDA' to be '' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > offers only agencies mapped by the shared drafting vocabulary, without MHRA 21ms
+   → expected [ 'FDA', 'EMA', 'PMDA', 'MHRA', …(1) ] to deeply equal [ '', 'FDA', 'Health Canada', …(2) ]
+ × client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > holds an unavailable exact section reference instead of falling back to its US program 14ms
+   → expected 'FDA' to be '' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > updates an untouched default when the scoped read completes and changes projects 14ms
+   → expected 'FDA' to be '' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > keeps a person’s supported selection and states the application mismatch 29ms
+   → Unable to find an element by: [data-testid="ai-draft-region-note"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"ai-draft-h"[39m
+      [33mclass[39m=[32m"scaf-note"[39m
+      [33mdata-testid[39m=[32m"ai-draft-panel"[39m
+      [33mstyle[39m=[32m"margin-bottom: 12px; display: grid; gap: 10px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: baseline;"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"ai-draft-h"[39m
+          [33mstyle[39m=[32m"font-size: 13px; font-weight: 600; margin: 0px;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 3v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 5h-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 17v2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 18H3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Draft [0m
+          [0mpurpose[0m
+          [0m from Data Room sources[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mstyle[39m=[32m"flex: 1 1 0%;"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"nda-open"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mstyle[39m=[32m"font-size: 12px; margin: 0px; opacity: 0.85;"[39m
+      [36m>[39m
+        [0mRetrieves evidence from this project’s Data Room and drafts[0m
+        [0m [0m
+        [36m<b>[39m
+          [0mpurpose[0m
+          [0m [0m
+          [0mPurpose[0m
+        [36m</b>[39m
+        [0m [0m
+        [0mfrom it. Nothing is saved until you accept the result — and accepting records the verified source spans behind the text, which a normal save cannot do.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 10px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"font-size: 12px; display: grid; gap: 3px;"[39m
+        [36m>[39m
+          [0mTone[0m
+          [36m<select[39m
+            [33mstyle[39m=[32m"height: 28px;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"professional"[39m
+            [36m>[39m
+              [0mprofessional[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"concise"[39m
+            [36m>[39m
+              [0mconcise[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"detailed"[39m
+            [36m>[39m
+              [0mdetailed[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"font-size: 12px; display: grid; gap: 3px;"[39m
+        [36m>[39m
+          [0mRegion[0m
+          [36m<select[39m
+            [33mstyle[39m=[32m"height: 28px;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"FDA"[39m
+            [36m>[39m
+              [0mFDA[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"EMA"[39m
+            [36m>[39m
+              [0mEMA[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"PMDA"[39m
+            [36m>[39m
+              [0mPMDA[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"MHRA"[39m
+            [36m>[39m
+              [0mMHRA[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Health Canada"[39m
+            [36m>[39m
+              [0mHealth Canada[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mstyle[39m=[32m"font-size: 12px; display: grid; gap: 3px;"[39m
+      [36m>[39m
+        [0mContext (optional)[0m
+        [36m<input[39m
+          [33mplaceholder[39m=[32m"What this section needs to establish"[39m
+          [33mstyle[39m=[32m"height: 28px;"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mstyle[39m=[32m"font-size: 12px; display: grid; gap: 3px;"[39m
+      [36m>[39m
+        [0mRequirements (optional)[0m
+        [36m<input[39m
+          [33mplaceholder[39m=[32m"Constraints the draft must satisfy"[39m
+          [33mstyle[39m=[32m"height: 28px;"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn primary"[39m
+          [33mdata-testid[39m=[32m"ai-draft-generate"[39m
+          [33mstyle[39m=[32m"height: 30px;"[39m
+        [36m>[39m
+          [0mDraft section[0m
+        [36m</button>[39m
+        [0m [0m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mdata-testid[39m=[32m"ai-draft-alternatives"[39m
+          [33mstyle[39m=[32m"height: 30px;"[39m
+        [36m>[39m
+          [0mDraft three alternatives[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mstyle[39m=[32m"font-size: 11px; margin: 0px; color: var(--text-300);"[39m
+      [36m>[39m
+        [0mThree alternatives ask for a professional, a concise and a detailed text in turn. Region, context and requirements apply to each. Each is a separate draft with its own check.[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > blocks an old unsupported retained choice without discarding the reviewed candidate 69ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > opens on the EU application agency and sends that explicit choice
+AssertionError: expected 'FDA' to be 'EMA' // Object.is equality
+
+Expected: "EMA"
+Received: "FDA"
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx:41:28
+     39|   it('opens on the EU application agency and sends that explicit choic…
+     40|     render(<AuthoringAiDraft {...props({ recordedFiling: { registryId:…
+     41|     expect(region().value).toBe('EMA');
+       |                            ^
+     42|     await draft();
+     43|     expect(generation()[0][2]).toEqual({ tone: 'professional', region:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > uses the exact saved section agency before a different program or caller preference
+AssertionError: expected 'FDA' to be 'PMDA' // Object.is equality
+
+Expected: "PMDA"
+Received: "FDA"
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx:49:28
+     47|     render(<AuthoringAiDraft {...props({ region: 'FDA', recordedFiling…
+     48|       draftingRegion: 'PMDA', draftingRegionState: 'recorded', state: …
+     49|     expect(region().value).toBe('PMDA');
+       |                            ^
+     50|     await draft();
+     51|     expect(generation()[0][2]).toEqual({ tone: 'professional', region:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > lets a GLOBAL section defer to the recorded application
+AssertionError: expected 'FDA' to be 'Health Canada' // Object.is equality
+
+Expected: "Health Canada"
+Received: "FDA"
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx:57:28
+     55|     render(<AuthoringAiDraft {...props({ recordedFiling: { registryId:…
+     56|       draftingRegionState: 'global', state: 'ready' } })} />);
+     57|     expect(region().value).toBe('Health Canada');
+       |                            ^
+     58|   });
+     59|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > requires an explicit supported choice when no receiving agency is recorded
+AssertionError: expected 'FDA' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ FDA
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx:62:28
+     60|   it('requires an explicit supported choice when no receiving agency i…
+     61|     render(<AuthoringAiDraft {...props({ recordedFiling: { registryId:…
+     62|     expect(region().value).toBe('');
+       |                            ^
+     63|     expect(screen.getByTestId('ai-draft-generate').hasAttribute('disab…
+     64|     await draft(); expect(generation()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > offers only agencies mapped by the shared drafting vocabulary, without MHRA
+AssertionError: expected [ 'FDA', 'EMA', 'PMDA', 'MHRA', …(1) ] to deeply equal [ '', 'FDA', 'Health Canada', …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "",
+    "FDA",
+-   "Health Canada",
+    "EMA",
+    "PMDA",
++   "MHRA",
++   "Health Canada",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx:72:70
+     70|   it('offers only agencies mapped by the shared drafting vocabulary, w…
+     71|     render(<AuthoringAiDraft {...props({ recordedFiling: { registryId:…
+     72|     expect(Array.from(region().options).map(option => option.value)).t…
+       |                                                                      ^
+     73|     expect(region().value).toBe('');
+     74|     expect(screen.getByTestId('ai-draft-region-note').textContent).toM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > holds an unavailable exact section reference instead of falling back to its US program
+AssertionError: expected 'FDA' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ FDA
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx:80:28
+     78|     render(<AuthoringAiDraft {...props({ recordedFiling: { registryId:…
+     79|       draftingRegionState: 'unavailable', state: 'ready' } })} />);
+     80|     expect(region().value).toBe('');
+       |                            ^
+     81|     fireEvent.change(region(), { target: { value: 'FDA' } });
+     82|     await draft(); expect(generation()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > updates an untouched default when the scoped read completes and changes projects
+AssertionError: expected 'FDA' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ FDA
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx:88:28
+     86|   it('updates an untouched default when the scoped read completes and …
+     87|     const view = render(<AuthoringAiDraft {...props({ recordedFiling: …
+     88|     expect(region().value).toBe('');
+       |                            ^
+     89|     view.rerender(<AuthoringAiDraft {...props({ recordedFiling: { regi…
+     90|     expect(region().value).toBe('EMA');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > keeps a person’s supported selection and states the application mismatch
+TestingLibraryElementError: Unable to find an element by: [data-testid="ai-draft-region-note"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"ai-draft-h"[39m
+      [33mclass[39m=[32m"scaf-note"[39m
+      [33mdata-testid[39m=[32m"ai-draft-panel"[39m
+      [33mstyle[39m=[32m"margin-bottom: 12px; display: grid; gap: 10px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: baseline;"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"ai-draft-h"[39m
+          [33mstyle[39m=[32m"font-size: 13px; font-weight: 600; margin: 0px;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 3v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 5h-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 17v2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 18H3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Draft [0m
+          [0mpurpose[0m
+          [0m from Data Room sources[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mstyle[39m=[32m"flex: 1 1 0%;"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"nda-open"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mstyle[39m=[32m"font-size: 12px; margin: 0px; opacity: 0.85;"[39m
+      [36m>[39m
+        [0mRetrieves evidence from this project’s Data Room and drafts[0m
+        [0m [0m
+        [36m<b>[39m
+          [0mpurpose[0m
+          [0m [0m
+          [0mPurpose[0m
+        [36m</b>[39m
+        [0m [0m
+        [0mfrom it. Nothing is saved until you accept the result — and accepting records the verified source spans behind the text, which a normal save cannot do.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 10px; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"font-size: 12px; display: grid; gap: 3px;"[39m
+        [36m>[39m
+          [0mTone[0m
+          [36m<select[39m
+            [33mstyle[39m=[32m"height: 28px;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"professional"[39m
+            [36m>[39m
+              [0mprofessional[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"concise"[39m
+            [36m>[39m
+              [0mconcise[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"detailed"[39m
+            [36m>[39m
+              [0mdetailed[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mstyle[39m=[32m"font-size: 12px; display: grid; gap: 3px;"[39m
+        [36m>[39m
+          [0mRegion[0m
+          [36m<select[39m
+            [33mstyle[39m=[32m"height: 28px;"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"FDA"[39m
+            [36m>[39m
+              [0mFDA[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"EMA"[39m
+            [36m>[39m
+              [0mEMA[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"PMDA"[39m
+            [36m>[39m
+              [0mPMDA[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"MHRA"[39m
+            [36m>[39m
+              [0mMHRA[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"Health Canada"[39m
+            [36m>[39m
+              [0mHealth Canada[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<label[39m
+        [33mstyle[39m=[32m"font-size: 12px; display: grid; gap: 3px;"[39m
+      [36m>[39m
+        [0mContext (optional)[0m
+        [36m<input[39m
+          [33mplaceholder[39m=[32m"What this section needs to establish"[39m
+          [33mstyle[39m=[32m"height: 28px;"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mstyle[39m=[32m"font-size: 12px; display: grid; gap: 3px;"[39m
+      [36m>[39m
+        [0mRequirements (optional)[0m
+        [36m<input[39m
+          [33mplaceholder[39m=[32m"Constraints the draft must satisfy"[39m
+          [33mstyle[39m=[32m"height: 28px;"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+      [36m</label>[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn primary"[39m
+          [33mdata-testid[39m=[32m"ai-draft-generate"[39m
+          [33mstyle[39m=[32m"height: 30px;"[39m
+        [36m>[39m
+          [0mDraft section[0m
+        [36m</button>[39m
+        [0m [0m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+          [33mdata-testid[39m=[32m"ai-draft-alternatives"[39m
+          [33mstyle[39m=[32m"height: 30px;"[39m
+        [36m>[39m
+          [0mDraft three alternatives[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mstyle[39m=[32m"font-size: 11px; margin: 0px; color: var(--text-300);"[39m
+      [36m>[39m
+        [0mThree alternatives ask for a professional, a concise and a detailed text in turn. Region, context and requirements apply to each. Each is a separate draft with its own check.[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx:102:19
+    100|     view.rerender(<AuthoringAiDraft {...props({ recordedFiling: { regi…
+    101|     expect(region().value).toBe('FDA');
+    102|     expect(screen.getByTestId('ai-draft-region-note').textContent).toM…
+       |                   ^
+    103|   });
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > blocks an old unsupported retained choice without discarding the reviewed candidate
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx:112:80
+    110|     render(<AuthoringAiDraft {...props({ recordedFiling: { registryId:…
+    111|       reviewSession: { state, update, isCurrent: () => true } })} />);
+    112|     expect(screen.getByTestId('ai-draft-regenerate').hasAttribute('dis…
+       |                                                                                ^
+    113|     await act(async () => { fireEvent.click(screen.getByTestId('ai-dra…
+    114|     expect(generation()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  16:32:37
+   Duration  2.60s (transform 672ms, setup 232ms, import 929ms, tests 335ms, environment 895ms)
+

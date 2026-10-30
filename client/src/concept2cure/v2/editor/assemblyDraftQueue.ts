@@ -5,6 +5,7 @@ import type { AssemblyDraftSlot } from './assemblyBuildState';
 import { inspectAssemblyDocument, normalizedAssemblyCode } from './assemblyBuildTransport';
 import type { AssemblyPlan, AssemblyPlanRow } from '@shared/authoring/assembly';
 import { assemblySelectionKey } from './assemblySourceSelection';
+import { writingAgencyOf, type SectionDraftingRegion } from '@shared/authoring/writing-regions';
 
 function boundedReferenceText(value: string, encodedLimit: number): string {
   let end = Math.min(value.length, encodedLimit);
@@ -43,8 +44,17 @@ async function draftSlot(operation: AssemblyOperation, slot: AssemblyDraftSlot, 
     updateSlot(operation, slot, { status: 'preserved', message: 'Saved text now exists. It was preserved; no new candidate was generated.' });
     return !operation.bucket.stopRequested;
   }
+  const projection = row as typeof row & Partial<SectionDraftingRegion>;
+  // A current saved section may have a different exact source than its parent
+  // or retained plan. Explicit unavailable/GLOBAL state never borrows that plan.
+  const currentRegion = projection.draftingRegionState === undefined ? writingAgencyOf(region)
+    : projection.draftingRegionState === 'recorded' ? writingAgencyOf(projection.draftingRegion) : null;
+  if (!currentRegion) {
+    updateSlot(operation, slot, { status: 'failed', message: 'The saved section does not establish a drafting region. Confirm its recorded template or region before retrying.' });
+    return false;
+  }
   updateSlot(operation, slot, { status: 'drafting', message: undefined });
-  const generationInputs = { tone: 'professional', region, context: slot.referenceContext,
+  const generationInputs = { tone: 'professional', region: currentRegion, context: slot.referenceContext,
     requirements: operation.bucket.state.requirements.trim() };
   const result = await generateAuthoringDraft({ sectionId: slot.section.id, ...generationInputs,
     ...(slot.sources ? { sources: slot.sources } : {}) },
@@ -65,7 +75,7 @@ export async function runAssemblyDrafts(operation: AssemblyOperation): Promise<v
   const pending = bucket.state.slots.filter(slot => slot.sourceSelectionKey === assemblySelectionKey(bucket.state.sourceSelection) && ['failed', 'not-started'].includes(slot.status)
     && (!bucket.state.targetCode || normalizedAssemblyCode(slot.section.code) === normalizedAssemblyCode(bucket.state.targetCode)));
   if (!pending.length) { operation.update({ phase: 'built', message: 'Structure is saved. No selected empty section is eligible for AnA drafting.' }); return; }
-  if (pending.some(slot => !slot.draftRegion || !['FDA', 'EMA', 'PMDA', 'Health Canada'].includes(slot.draftRegion))) {
+  if (pending.some(slot => !writingAgencyOf(slot.draftRegion))) {
     operation.update({ phase: 'stopped', message: 'Structure is saved. The template does not establish an AnA drafting region, so no candidate was generated.' }); return;
   }
   operation.update({ phase: 'drafting', message: 'Preparing section candidates sequentially. Nothing is accepted automatically.' });

@@ -23,6 +23,7 @@ vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFi
 
 import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
 import { ApiRequestError } from '@/lib/queryClient';
+import { PassageAlternatives, type PassageAlternativesProps } from '../DraftPassage';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000012';
 const SEC = 'aaaaaaaa-0000-4000-8000-000000000012';
@@ -46,12 +47,16 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
   if (typeof proto.getBoundingClientRect !== 'function') proto.getBoundingClientRect = () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 });
 }
 
-type Body = { tone?: string; passage?: { quote: string; prefix: string; suffix: string } };
+type Body = { tone?: string; region?: string; passage?: { quote: string; prefix: string; suffix: string } };
 const SEC2 = 'aaaaaaaa-0000-4000-8000-000000000013';
-function serve(content: string, opts: { qualified?: boolean; echo?: boolean; refuse?: ApiRequestError } = {}) {
-  const { qualified = true, echo = true, refuse } = opts;
-  const section = { id: SEC, doc_id: DOC, code: '11.4.1', title: 'Analysis of Efficacy', content, order_index: 0, updated_at: AT };
-  const second = { id: SEC2, doc_id: DOC, code: '12.2', title: 'Adverse Events', content: '<p>No deaths were reported.</p>', order_index: 1, updated_at: AT };
+function serve(content: string, opts: { qualified?: boolean; echo?: boolean; refuse?: ApiRequestError;
+  draftingRegion?: string | null; programRegistryId?: string } = {}) {
+  const { qualified = true, echo = true, refuse, draftingRegion = 'FDA', programRegistryId = 'US_IND' } = opts;
+  const draftingScope = { draftingRegion, draftingRegionState: draftingRegion === null ? 'not-recorded' : 'recorded' };
+  const section = { id: SEC, doc_id: DOC, code: '11.4.1', title: 'Analysis of Efficacy', content, order_index: 0, updated_at: AT,
+    ...draftingScope };
+  const second = { id: SEC2, doc_id: DOC, code: '12.2', title: 'Adverse Events', content: '<p>No deaths were reported.</p>', order_index: 1, updated_at: AT,
+    ...draftingScope };
   apiRequest.mockImplementation(async (method: string, url: string, body: Body) => {
     if (method === 'POST' && url === `/api/authoring/sections/${SEC}/ai/draft`) {
       if (refuse) throw refuse;
@@ -64,6 +69,7 @@ function serve(content: string, opts: { qualified?: boolean; echo?: boolean; ref
     if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section, second] });
+    if (method === 'GET' && url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'Recorded program', registry_id: programRegistryId });
     if (url.startsWith('/api/c2c/documents/')) return ok({ success: false }, 404);
     return ok({ success: true });
   });
@@ -103,6 +109,81 @@ beforeEach(() => {
   apiRequest.mockReset();
 });
 afterEach(() => { cleanup(); localStorage.clear(); delete window.C2C_PROJECT; });
+
+describe('The passage generation hold keeps arrived review available', () => {
+  const HOLD = 'Choose a supported writing region before asking for another draft.';
+  const passageProps = (): PassageAlternativesProps & { generationHold?: string } => ({
+    passage: { sectionId: SEC, requestId: 1, quote: QUOTE, prefix: 'The ', suffix: ' in the 10 mg arm.' },
+    docId: DOC, programId: PID, sectionCode: '11.4.1', region: 'FDA', docSealed: false,
+    editorDirty: false, savedUpdatedAt: AT, fireToast: vi.fn(), onBack: vi.fn(), onClose: vi.fn(),
+    renderFacts: draft => <p data-testid="held-passage-facts">{draft.generated}</p>,
+    target: { propose: vi.fn().mockResolvedValue({ ok: true }), getProposalState: () => 'pending',
+      subscribeProposalChanges: () => () => undefined },
+  });
+
+  it('blocks a new request with its reason, then permits explicit drafting after the hold is lifted', async () => {
+    serve(CURRENT);
+    const props = passageProps();
+    const view = render(<PassageAlternatives {...props} generationHold={HOLD} />);
+    const ask = within(panel()).getByRole('button', { name: 'Draft three alternatives for this passage' }) as HTMLButtonElement;
+    expect(within(panel()).getByRole('status').textContent).toBe(HOLD);
+    expect(ask.disabled).toBe(true);
+    fireEvent.click(ask);
+    expect(drafts()).toHaveLength(0);
+
+    view.rerender(<PassageAlternatives {...props} />);
+    expect(within(panel()).queryByText(HOLD)).toBeNull();
+    await threeForPassage();
+    expect(drafts()).toHaveLength(3);
+  });
+
+  it('holds regeneration while preserving comparison, tracked replacement and navigation', async () => {
+    serve(CURRENT);
+    const props = passageProps();
+    const view = render(<PassageAlternatives {...props} />);
+    await threeForPassage();
+    view.rerender(<PassageAlternatives {...props} generationHold={HOLD} />);
+
+    const again = within(panel()).getByRole('button', { name: 'Draft the alternatives again' }) as HTMLButtonElement;
+    expect(again.disabled).toBe(true);
+    fireEvent.click(again);
+    expect(drafts()).toHaveLength(3);
+    const group = within(panel()).getByRole('radiogroup', { name: /alternatives/i });
+    fireEvent.click(within(group).getByRole('radio', { name: /Concise/ }));
+    expect(within(panel()).getByTestId('held-passage-facts').textContent).toBe(TEXT.concise);
+    const replace = within(panel()).getByRole('button', { name: 'Replace the selected passage with this alternative' }) as HTMLButtonElement;
+    expect(replace.disabled).toBe(false);
+    fireEvent.click(replace);
+    await waitFor(() => expect(props.target!.propose).toHaveBeenCalledTimes(1));
+    expect(props.target!.propose).toHaveBeenCalledWith(expect.objectContaining({
+      sectionId: SEC, quote: QUOTE, replacement: TEXT.concise,
+    }), expect.anything(), expect.anything(), false);
+    fireEvent.click(within(panel()).getByRole('button', { name: 'Back to drafting the section' }));
+    fireEvent.click(within(panel()).getByRole('button', { name: 'Close' }));
+    expect(props.onBack).toHaveBeenCalledTimes(1);
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+    expect(patched()).toHaveLength(0);
+  });
+});
+
+describe('The workbench passes the recorded writing scope into passage drafts', () => {
+  it.each([
+    { description: 'the Japanese section instead of its US IND program', draftingRegion: 'PMDA', programRegistryId: 'US_IND', expectedAgency: 'PMDA' },
+    { description: 'the EU CTA program when the section has no regional projection', draftingRegion: null, programRegistryId: 'EU_CTA', expectedAgency: 'EMA' },
+  ])('uses $description', async ({ draftingRegion, programRegistryId, expectedAgency }) => {
+    serve(CURRENT, { draftingRegion, programRegistryId });
+    await openSection('as the protocol required');
+    select(QUOTE, 1);
+    offer();
+    await waitFor(() => expect((within(panel()).getByRole('button', { name: 'Draft three alternatives for this passage' }) as HTMLButtonElement).disabled).toBe(false));
+    await threeForPassage();
+
+    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/projects/${PID}`);
+    expect(drafts().map(call => (call[2] as Body).region)).toEqual([expectedAgency, expectedAgency, expectedAgency]);
+    expect(drafts().every(call => (call[2] as Body).passage?.quote === QUOTE)).toBe(true);
+    expect(patched()).toHaveLength(0);
+  });
+});
 
 describe('Alternatives for a selected passage', () => {
   it('drafts three replacements of exactly the selection, and the one chosen replaces exactly it as AnA’s tracked change', async () => {

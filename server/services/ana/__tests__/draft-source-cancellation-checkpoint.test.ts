@@ -1,7 +1,9 @@
 /** Actual loader, private source authority, drafting service and batch scheduler.
  * Catalog/scope operations and gateway/provider are synthetic boundaries. The
  * gateway seam invokes the real beforeDispatch closure; it is not gateway.ts
- * and proves no native semaphore, transport, retry or provider cancellation. */
+ * and proves no native semaphore, transport, retry or provider cancellation.
+ * Product admission is isolated as unassessed; its real-PGlite qualification
+ * is separate from this actual source-checkpoint cancellation subject. */
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GatewayRequest } from '../../ai-gateway/types';
@@ -11,6 +13,8 @@ vi.mock('../catalog-scope', async () => ({ catalogScope: seam.scope,
   sourceReadInput: (await import('./support/source-read-tool-fixture.js')).syntheticInput }));
 vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForActor: seam.load, revalidateActorSourceScope: seam.actor }));
 vi.mock('../../c2c/current-program-access', () => ({ requireProgramScopeStillCurrent: seam.program }));
+vi.mock('../draft-product-context', async () => ({ loadRecordedDraftProductContext:
+  (await import('./support/unassessed-product-context-fixture.js')).unassessedProductContextFixture }));
 vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: seam.gateway }),
   GatewayPolicyError: class extends Error {}, GatewayNoProviderError: class extends Error {},
   GatewayAllProvidersFailedError: class extends Error {}, ModelNotApprovedError: class extends Error {},

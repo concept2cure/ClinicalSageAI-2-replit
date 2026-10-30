@@ -38,7 +38,7 @@ function retained(sectionId = FIRST, generationInputs?: Inputs): Review {
 }
 function props(extra: Partial<AuthoringAiDraftProps> = {}): AuthoringAiDraftProps {
   return { sectionId: FIRST, docId: DOC, programId: PROGRAM, sectionCode: 'purpose', sectionTitle: 'Scientific purpose',
-    docSealed: false, editorDirty: false, onAccepted, onClose, fireToast, ...extra };
+    docSealed: false, editorDirty: false, region: 'FDA', onAccepted, onClose, fireToast, ...extra };
 }
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -116,9 +116,16 @@ describe('existing retained review uses its explicit regional generation inputs'
     expect(input).toEqual(chosen(region));
   });
 
-  it.each([undefined, 'Health Canada'])('keeps standalone defaults compatible with initialRegion=%s', async region => {
+  it.each([undefined, 'Health Canada'])('uses an explicit supported standalone choice, with no default for initialRegion=%s', async region => {
     render(<AuthoringAiDraft {...props({ region })} />);
-    expect(options()).toEqual(defaults(region));
+    expect(options()).toEqual(defaults(region ?? ''));
+
+    if (!region) {
+      expect((screen.getByTestId('ai-draft-generate') as HTMLButtonElement).disabled).toBe(true);
+      await generate();
+      expect(draftCalls()).toHaveLength(0);
+      fireEvent.change(screen.getByLabelText('Region'), { target: { value: 'FDA' } });
+    }
 
     await generate();
 

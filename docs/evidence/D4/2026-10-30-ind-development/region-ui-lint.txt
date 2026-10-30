@@ -1,0 +1,25 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+   353:8   warning  Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15                                                      complexity
+   783:1   warning  File has too many lines (5065). Maximum allowed is 500                                                                              max-lines
+  1252:8   warning  Function 'DocumentWorkbench' has too many lines (4223). Maximum allowed is 100                                                      max-lines-per-function
+  1252:8   warning  Function 'DocumentWorkbench' has a complexity of 481. Maximum allowed is 15                                                         complexity
+  2169:82  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                                                                  complexity
+  2442:16  warning  Arrow function has a complexity of 32. Maximum allowed is 15                                                                        complexity
+  3167:50  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                                                                  complexity
+  3223:55  warning  Async arrow function has a complexity of 36. Maximum allowed is 15                                                                  complexity
+  3388:5   warning  React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  3755:43  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                                                                  complexity
+  6264:28  warning  Arrow function has too many lines (210). Maximum allowed is 100                                                                     max-lines-per-function
+  6264:28  warning  Arrow function has a complexity of 24. Maximum allowed is 15                                                                        complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/DraftPassage.tsx
+  54:8  warning  Function 'PassageAlternatives' has a complexity of 17. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx
+  294:8  warning  Function 'AuthoringAiDraft' has too many lines (325). Maximum allowed is 100  max-lines-per-function
+  294:8  warning  Function 'AuthoringAiDraft' has a complexity of 93. Maximum allowed is 15     complexity
+  634:1  warning  File has too many lines (510). Maximum allowed is 500                         max-lines
+
+✖ 16 problems (0 errors, 16 warnings)
+

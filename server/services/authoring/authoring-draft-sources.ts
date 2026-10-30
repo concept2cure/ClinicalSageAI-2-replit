@@ -58,14 +58,26 @@ export async function retrieveSectionDraftSources(args: {
  * source-table reservation used by saved authoring receipts prevents a check-in
  * or withdrawal between revalidation and the accepted content's commit. */
 export async function reserveSectionDraftSources(q: Queryable, organizationId: number, raw: unknown, currentUserId: number): Promise<void> {
+  await checkSectionDraftSources(q, organizationId, raw, currentUserId, true);
+}
+
+/** Generation checkpoints re-read the same receipt without holding a database
+ * transaction open across an outbound model call. Acceptance still reserves it. */
+export async function assertSectionDraftSourcesCurrent(q: Queryable, organizationId: number, raw: unknown, currentUserId: number): Promise<void> {
+  await checkSectionDraftSources(q, organizationId, raw, currentUserId, false);
+}
+
+async function checkSectionDraftSources(q: Queryable, organizationId: number, raw: unknown, currentUserId: number, reserve: boolean): Promise<void> {
   if (raw === undefined) return; // Legacy candidates predate source receipts.
   requireVerifiedActor(currentUserId);
   const receipt = raw as SectionDraftSourceReceipt | null;
   if (!receipt || typeof receipt.programId !== 'string' || !UUID.test(receipt.programId) ||
       !Array.isArray(receipt.documents) || receipt.documents.length > 5) throw new SectionDraftSourcesUnavailableError();
   if (receipt.documents.length === 0) return;
-  await lockDocumentDispositionProgram(q, organizationId, receipt.programId);
-  await q.query('LOCK TABLE vault.documents, vault.document_catalog IN SHARE MODE');
+  if (reserve) {
+    await lockDocumentDispositionProgram(q, organizationId, receipt.programId);
+    await q.query('LOCK TABLE vault.documents, vault.document_catalog IN SHARE MODE');
+  }
   for (const source of receipt.documents) {
     if (!validSourceIdentity(source)) throw new SectionDraftSourcesUnavailableError();
     const doc = await loadDocumentForOrg(source.documentId, organizationId, { executor: q, userId: currentUserId, programId: receipt.programId, currentOnly: true });

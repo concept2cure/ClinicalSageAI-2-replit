@@ -35,6 +35,8 @@ export interface PassageAlternativesProps {
   programId?: string | null;
   sectionCode: string;
   region: string;
+  /** Stops new drafting while the caller resolves its scope; arrived review stays available. */
+  generationHold?: string;
   docSealed: boolean;
   editorDirty: boolean;
   savedUpdatedAt: string | null;
@@ -61,6 +63,7 @@ export function PassageAlternatives(props: PassageAlternativesProps) {
   const busy = review.generating;
   const pressed = useFocusReturn(busy);
   const ask = (control: HTMLElement) => {
+    if (props.generationHold) return;
     pressed(control);
     void review.generateAlternatives({ tone: 'professional', region: props.region, context: '', requirements: '' });
   };
@@ -77,15 +80,12 @@ export function PassageAlternatives(props: PassageAlternativesProps) {
       </div>
       <blockquote style={{ margin: 0, paddingLeft: 10, borderLeft: '3px solid var(--border)', fontSize: 13 }}>{passage.quote}</blockquote>
       <p role="note" data-testid="ai-draft-passage-note" style={NOTE}>{PASSAGE_NOTE}</p>
+      {props.generationHold && <p role="status" data-testid="ai-draft-passage-generation-hold" style={NOTE}>{props.generationHold}</p>}
       {refusal && <div className="scaf-note" role="alert" data-testid="ai-draft-passage-refusal" style={{ ...NOTE, color: 'var(--error)' }}>{refusal}</div>}
       {busy && <AnaActivity streaming phase={review.phase ?? `Drafting alternatives for the passage of ${sectionCode}…`}
         startedAt={review.generatingSince ?? undefined} />}
-      <div>
-        <button type="button" className={alternatives?.length ? 'btn ghost' : 'btn primary'} style={{ height: 30 }} onClick={e => ask(e.currentTarget)}
-          disabled={busy || docSealed} title={docSealed ? 'This document is frozen — its content cannot be edited.' : undefined}>
-          {alternatives?.length ? 'Draft the alternatives again' : 'Draft three alternatives for this passage'}
-        </button>
-      </div>
+      <PassageDraftControl alternativeCount={alternatives?.length ?? 0} busy={busy} docSealed={docSealed}
+        generationHold={props.generationHold} onAsk={ask} />
       {draft && alternatives?.length ? (
         <>
           <AlternativesPicker state={review.state} accepting={false} onShow={review.showAlternative} />
@@ -94,6 +94,21 @@ export function PassageAlternatives(props: PassageAlternativesProps) {
         </>
       ) : null}
     </section>
+  );
+}
+
+/** The one drafting action: its label and availability change together as alternatives arrive. */
+function PassageDraftControl({ alternativeCount, busy, docSealed, generationHold, onAsk }: {
+  alternativeCount: number; busy: boolean; docSealed: boolean; generationHold?: string;
+  onAsk: (control: HTMLButtonElement) => void;
+}) {
+  return (
+    <div>
+      <button type="button" className={alternativeCount ? 'btn ghost' : 'btn primary'} style={{ height: 30 }} onClick={e => onAsk(e.currentTarget)}
+        disabled={busy || docSealed || !!generationHold} title={docSealed ? 'This document is frozen — its content cannot be edited.' : generationHold}>
+        {alternativeCount ? 'Draft the alternatives again' : 'Draft three alternatives for this passage'}
+      </button>
+    </div>
   );
 }
 

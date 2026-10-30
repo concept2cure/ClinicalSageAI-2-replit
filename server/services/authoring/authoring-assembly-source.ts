@@ -11,6 +11,7 @@ import { filingDocumentClassForFiling } from '../../../shared/regulatory/filing-
 import { canonicalRegionOf } from '../../../shared/regulatory/region-identity';
 import { AGENCY_TO_CODE, PROGRAM_TO_DOC_TYPE, documentAgencyCandidates, resolveDocumentClass } from '../c2c/document-class';
 import { PROGRAM_TYPE_REGISTRY } from '../c2c/program-registry-context';
+import { writingAgencyOf } from '../../../shared/authoring/writing-regions';
 
 interface BoundFilingScope {
   docType: string; agency: string; region: string; registryIds: string[]; exactRegistryId?: string; snapshot: string;
@@ -113,13 +114,16 @@ async function boundFilingScope(q: Queryable, tenantId: number, doc: AssemblyDoc
   return boundScope(row);
 }
 
-function draftRegion(raw: unknown): string | null {
-  const value = typeof raw === 'string' ? raw.trim().toUpperCase().replace(/[ _-]/g, '') : '';
-  if (['US', 'FDA'].includes(value)) return 'FDA';
-  if (['CA', 'HC', 'CANADA', 'HEALTHCANADA'].includes(value)) return 'Health Canada';
-  if (['EU', 'EMA', 'EMEA'].includes(value)) return 'EMA';
-  if (['JP', 'JAPAN', 'PMDA'].includes(value)) return 'PMDA';
-  return null;
+async function programWritingRegion(q: Queryable, tenantId: number, doc: AssemblyDocument, lock: boolean): Promise<string | null> {
+  try {
+    const sql = lock
+      ? `SELECT p.primary_agency FROM regulatory_programs p
+         WHERE p.id=$1 AND p.organization_id=$2 AND p.deleted_at IS NULL FOR SHARE OF p`
+      : `SELECT p.primary_agency FROM regulatory_programs p
+         WHERE p.id=$1 AND p.organization_id=$2 AND p.deleted_at IS NULL`;
+    const result = await q.query(sql, [doc.client_program_id, tenantId]);
+    return result.rows.length === 1 ? writingAgencyOf(result.rows[0].primary_agency) : null;
+  } catch { return null; }
 }
 
 async function persistedHeader(q: Queryable, tenantId: number, templateId: string, lock: boolean): Promise<{ kind: string; row: Record<string, unknown> }> {
@@ -238,9 +242,8 @@ function persistedModule(doc: AssemblyDocument, row: Record<string, unknown>): v
     'This reference template belongs to a different recorded CTD module. Nothing was changed.');
 }
 
-function resolvedBuiltin(builtin: BuiltinAuthoringTemplate, sections: TemplateSectionSeed[]): AssemblyTemplate {
+function resolvedBuiltin(builtin: BuiltinAuthoringTemplate, sections: TemplateSectionSeed[], region: string | null): AssemblyTemplate {
   const source = builtinTemplateSource(builtin)!;
-  const region = builtin.filingContext ? draftRegion(builtin.filingContext.region) : 'FDA';
   const eligible = builtin.aiDraftable && region !== null;
   return { id: builtin.id, name: builtin.name, snapshot: source.sha256, sections,
     draftRegion: region, aiDraftable: eligible,
@@ -250,6 +253,15 @@ function resolvedBuiltin(builtin: BuiltinAuthoringTemplate, sections: TemplateSe
     metadataFor: code => ({ template_id: builtin.id, seeded: true, ...builtinTemplateSectionMetadata(builtin, source, code) }),
     draftingModeFor: code => builtin.sections.find(row => row.code === code)?.guidance.drafting_mode,
     guidanceFor: code => builtin.sections.find(row => row.code === code)?.guidance.guidance_text };
+}
+
+async function builtinWritingRegion(q: Queryable, tenantId: number, doc: AssemblyDocument,
+  builtin: BuiltinAuthoringTemplate, context: { filing: BoundFilingScope | null; lock: boolean }): Promise<string | null> {
+  // Explicit GLOBAL is not a receiving jurisdiction. Only an unqualified
+  // legacy outline may use the verified filing/program authority.
+  if (builtin.filingContext) return writingAgencyOf(builtin.filingContext.region);
+  if (context.filing) return writingAgencyOf(context.filing.region);
+  return programWritingRegion(q, tenantId, doc, context.lock);
 }
 
 export async function resolveAssemblyTemplate(q: Queryable, tenantId: number, templateId: string, doc: AssemblyDocument, lock: boolean): Promise<AssemblyTemplate> {
@@ -265,10 +277,13 @@ export async function resolveAssemblyTemplate(q: Queryable, tenantId: number, te
   if (stored) { persistedModule(doc, stored.row); storedFilingApplicability(filing, stored.row); }
   const sections = await resolveTemplateSections(q, tenantId, templateId, { builtin, transaction: true, lock });
   if (!Array.isArray(sections)) throw new AssemblyError(sections.status, sections.code ?? 'ASSEMBLY_TEMPLATE_NOT_FOUND', sections.error);
-  if (builtin) return { ...resolvedBuiltin(builtin, sections), ...target };
+  if (builtin) {
+    const region = await builtinWritingRegion(q, tenantId, doc, builtin, { filing, lock });
+    return { ...resolvedBuiltin(builtin, sections, region), ...target };
+  }
   const { kind, row } = stored!;
   const regions = Array.isArray(row.regions) ? row.regions : [row.agency];
-  const region = regions.length === 1 ? draftRegion(regions[0]) : null;
+  const region = regions.length === 1 ? writingAgencyOf(regions[0]) : null;
   const eligibility = ownEligibility(row, region);
   const identity = { id: templateId, kind, header: row, sections };
   return { id: templateId, name: String(row.template_name ?? 'Selected template'), snapshot: assemblyHash(identity), sections,

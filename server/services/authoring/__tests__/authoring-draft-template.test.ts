@@ -112,13 +112,13 @@ describe('the adapter renders only the exact admitted section reference', () => 
 
   it('preserves null for an unbound document instead of inventing a program sentinel', async () => {
     h.review.mockResolvedValue(reviewed(null));
-    await savedSectionDraftTemplate(q, { ...SCOPE, programId: null }, header, undefined);
+    await savedSectionDraftTemplate(q, { ...SCOPE, programId: null }, header, 'FDA');
     expect(h.review.mock.calls[0][1]).toMatchObject({ programId: null });
   });
 
   it('keeps an ad-hoc document available without inventing a template or eligibility record', async () => {
     h.review.mockResolvedValue({ template: { id: null, sourceState: 'not-recorded' }, source: null, references: [], items: [] } satisfies SavedTemplateReview);
-    const result = await savedSectionDraftTemplate(q, SCOPE, { template_id: null, provenance: null }, undefined);
+    const result = await savedSectionDraftTemplate(q, SCOPE, { template_id: null, provenance: null }, 'FDA');
     expect(result.region).toBe('FDA');
     expect(blockJson(result.referenceBlock)).toMatchObject({ templateId: null, templateSource: null,
       sourceVerification: 'not-recorded', references: [] });
@@ -197,10 +197,22 @@ describe('writing region follows the effective saved source without inventing a 
     expect((await read('PMDA')).region).toBe('PMDA');
   });
 
-  it.each([reviewed(null), reviewed(source('GLOBAL'))])('retains legacy/default writing preference without promoting it to recorded jurisdiction', async input => {
+  it.each([reviewed(null), reviewed(source('GLOBAL'))])('requires an explicit writing region when the saved reference has no receiving region', async input => {
     h.review.mockResolvedValue(input);
-    expect((await read()).region).toBe('FDA');
+    await denied('DRAFT_REGION_REQUIRED', 409);
     expect((await read('Health Canada')).region).toBe('Health Canada');
+  });
+
+  it.each(['', 'unknown', 'GLOBAL', null, {}, 7])('refuses an invalid requested writing region %j', async value => {
+    await denied('DRAFT_REGION_REQUIRED', 409, value);
+  });
+
+  it.each([['ICH_CSR', 'csr'], ['ICH_PROTOCOL', 'protocol'], ['ICH_IB', 'ctd']])('uses exact %s template identity for the document kind', async (registryId, documentKind) => {
+    const recorded = source('GLOBAL');
+    if (!recorded.filingContext) throw new Error('This source fixture must include its filing identity');
+    recorded.filingContext.registryId = registryId;
+    h.review.mockResolvedValue(reviewed(recorded));
+    expect(await read('FDA')).toMatchObject({ documentKind });
   });
 });
 

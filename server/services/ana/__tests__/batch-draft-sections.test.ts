@@ -70,6 +70,7 @@ describe('batch_draft_sections', () => {
     // Context threaded through to each request.
     expect(arg.requests[0].organizationId).toBe(7);
     expect(arg.requests[0].submissionType).toBe('US_IND');
+    expect(arg.requests[0].contextSqlClient).toBe(executor);
 
     expect(out.status).toBe('drafted');
     expect(out.count).toBe(2);

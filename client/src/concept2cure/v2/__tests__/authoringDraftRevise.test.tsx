@@ -48,7 +48,7 @@ const draftCalls = () => apiRequest.mock.calls.filter((c: unknown[]) => c[0] ===
 const revisionCalls = () => draftCalls().filter((c: unknown[]) => (c[2] as Body).revise);
 
 const fireToast = vi.fn();
-const mount = () => render(<AuthoringAiDraft sectionId="S1" sectionCode="11.4.1" sectionTitle="Analysis of Efficacy" docSealed={false}
+const mount = () => render(<AuthoringAiDraft sectionId="S1" sectionCode="11.4.1" sectionTitle="Analysis of Efficacy" region="FDA" docSealed={false}
   editorDirty={false} onAccepted={vi.fn()} onClose={vi.fn()} fireToast={fireToast} />);
 const alternatives = () => screen.getByRole('radiogroup', { name: /alternatives/i });
 const radio = (name: RegExp) => within(alternatives()).getByRole('radio', { name });

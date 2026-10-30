@@ -69,7 +69,7 @@ import { useAuthoringRefileSavedText } from './AuthoringRefileSavedText';
 import { refileControlRefusal, refileSavedSource } from './authoringRefileSavedTextState';
 import { hasUnsavedSessionWork } from '@/lib/sessionChangeGuard';
 import { SendForReviewDialog } from './SendForReviewDialog';
-import { useProgramSummary, programHeadline, programName } from './programSummary';
+import { useProgramRead, programHeadline, programName } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt, originWithSavedVersion, prefillConversation, type AskOrigin, type SavedSectionVersion } from './askAnaToDraft';
 import { describeClaimsCheck, describeFigureCheck, describeProvenance } from './provenance';
 import { DraftFigureLine } from './DraftFigureLine';
@@ -189,6 +189,9 @@ interface AuthSection {
   revision_count: number | string | null;
   citation_count: number | string | null;
   updated_at: string | null;
+  /** Exact effective saved-reference projection from the admitted section read. */
+  draftingRegion?: string | null;
+  draftingRegionState?: import('@shared/authoring/writing-regions').DraftingRegionState;
 }
 
 interface AuthRevision {
@@ -1281,7 +1284,7 @@ export function DocumentWorkbench({
   const projectIdForOutline = programId;
   /* The program's name and phase, for the header. Read from the one program
      route (GET /api/c2c/projects/:id); null while unread or with no program. */
-  const program = useProgramSummary(programId);
+  const { program, state: programReadState } = useProgramRead(programId);
 
   /* ── The active document ──
      DERIVED, not reconciled after the fact. The surface's loader used to set
@@ -5400,6 +5403,10 @@ export function DocumentWorkbench({
                     programId={programId}
                     sectionCode={activeSection.code}
                     sectionTitle={activeSection.title}
+                    recordedFiling={{ registryId: program?.id === programId ? program.registryId ?? null : null,
+                      draftingRegion: activeSection.draftingRegion, draftingRegionState: activeSection.draftingRegionState,
+                      state: !sectionsCurrent || sectionsState === 'loading' || programReadState === 'loading' ? 'loading'
+                        : sectionsState === 'error' || programReadState === 'error' ? 'error' : 'ready' }}
                     docSealed={docSealed}
                     editorDirty={dirty}
                     reviewSession={assembly.reviewSessions[activeSection.id]}

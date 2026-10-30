@@ -15,6 +15,10 @@ vi.mock('../catalog-scope', async () => ({ catalogScope: sourceAuthority.scope,
   sourceReadInput: (await import('./support/source-read-tool-fixture.js')).syntheticInput }));
 vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForActor: sourceAuthority.load, revalidateActorSourceScope: sourceAuthority.actor }));
 vi.mock('../../c2c/current-program-access', () => ({ requireProgramScopeStillCurrent: sourceAuthority.program }));
+// These are blueprint/source-grounding tests. Product admission is explicitly
+// unassessed here; its actor/anchor/currentness contract has real-PGlite tests.
+vi.mock('../draft-product-context', async () => ({ loadRecordedDraftProductContext:
+  (await import('./support/unassessed-product-context-fixture.js')).unassessedProductContextFixture }));
 
 import { AnaDocumentDraftingService, resolveDraftingRequirements, resolveSectionRequirements } from '../AnaDocumentDraftingService';
 import { renderSectionBrief } from '../../ind/ctd/section-brief';

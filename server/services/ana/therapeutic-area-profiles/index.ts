@@ -41,12 +41,19 @@ import { respiratoryProfile } from './respiratory.js';
 import { transplantProfile } from './transplant.js';
 import { urologyProfile } from './urology.js';
 import { vaccinesProfile } from './vaccines.js';
+import { normalizeModality } from '../../../../shared/regulatory/modality.js';
+import { normalizeClinicalPhase } from '../../../../shared/constants/domain/aliases.js';
+import { CLINICAL_PHASES } from '../../../../shared/constants/domain/clinical-phases.js';
+import { checkGuidanceFreshness, type FreshnessResultItem } from '../../regulatory-currency/guidance-ingestion-service.js';
+import { REGULATORY_FACTS, isVerificationStale, verificationAgeDays } from '../../regulatory-currency/currency-registry.js';
 import type {
   TherapeuticAreaId,
   TherapeuticAreaProfile,
   ContextRule,
   GuidanceRef,
   PathwayHint,
+  ProfileDocumentKind,
+  ProfileProductContext,
 } from './types.js';
 
 export type {
@@ -55,6 +62,8 @@ export type {
   ContextRule,
   GuidanceRef,
   PathwayHint,
+  ProfileDocumentKind,
+  ProfileProductContext,
 };
 
 /**
@@ -204,6 +213,14 @@ export interface RenderProfileOptions {
   maxBulletsPerSection?: number;
   /** Keep nested section drafts to matching/always rules; no section means always only. */
   onlyApplicableRules?: boolean;
+  /** Disambiguates an E3 heading from a CTD heading; never inferred from therapeutic area. */
+  documentKind?: ProfileDocumentKind;
+  /** Advisory product facts; recorded labels do not establish qualified evidence. */
+  productContext?: ProfileProductContext;
+  /** Writing jurisdiction, when known, for the existing dated-registry lookup. */
+  jurisdiction?: string;
+  /** ISO date for the existing currency check; not a historical qualification receipt. */
+  asOf?: string;
 }
 
 /**
@@ -216,8 +233,10 @@ export function renderProfileForPrompt(
   profile: TherapeuticAreaProfile,
   options: RenderProfileOptions = {}
 ): string {
-  const max = options.maxBulletsPerSection ?? 8;
+  const requestedMax = options.maxBulletsPerSection ?? 8;
+  const max = Number.isFinite(requestedMax) ? Math.max(0, Math.floor(requestedMax)) : 8;
   const activeSection = options.activeCtdSection?.trim() || null;
+  const product = productFacts(options.productContext);
 
   const lines: string[] = [];
   lines.push(
@@ -225,85 +244,36 @@ export function renderProfileForPrompt(
     `> ${profile.description}`,
     ''
   );
-
-  // Pathway hint at the top when one is active.
-  if (options.activePathway) {
-    const hint = profile.pathwayHints.find(
-      h => h.pathway === options.activePathway
-    );
-    if (hint) {
-      lines.push(`### Active Pathway: ${hint.pathway}`);
-      lines.push(`- Applicability: ${hint.applicability}`);
-      lines.push(
-        `- Impacted sections: ${hint.impactedSections.join(', ')}`
-      );
-      lines.push(`- Reviewer notes: ${hint.reviewerNotes}`);
-      lines.push('');
-    }
+  lines.push('Section selection is advisory; clinical applicability remains undetermined unless explicit indexed conditions resolve it. Neither a label nor a structural match establishes qualified evidence.');
+  if (options.productContext) {
+    lines.push(`Product context (${options.productContext.source === 'recorded' ? 'recorded' : 'declared'} advisory, not evidence): ${JSON.stringify(product)}.`);
+  } else {
+    lines.push('Phase, modality and population: undetermined.');
   }
+  lines.push('');
+
+  lines.push(...pathwayBlock(profile, options.activePathway));
 
   // Context rules — relevant ones first, then the rest.
   const scopedRules = options.onlyApplicableRules
     ? profile.contextRules.filter(rule => contextRuleMatchesSection(rule, activeSection))
     : profile.contextRules;
-  const rules = sortContextRules(scopedRules, activeSection);
-  if (rules.length > 0) {
-    lines.push('### Context Rules');
-    for (const rule of rules.slice(0, max)) {
-      const sevTag = `[${rule.severity}]`;
-      const ref = rule.guidanceRef ? ` (${rule.guidanceRef})` : '';
-      lines.push(`- ${sevTag} ${rule.instruction}${ref}`);
-    }
-    lines.push('');
-  }
-
-  // Risk factors.
-  if (profile.riskFactors.length > 0) {
-    lines.push('### Risk Factors');
-    for (const r of profile.riskFactors.slice(0, max)) {
-      lines.push(`- ${r}`);
-    }
-    lines.push('');
-  }
-
-  // Reviewer expectations — highest-leverage for review-mode authoring.
-  if (profile.reviewerExpectations.length > 0) {
-    lines.push('### Reviewer Expectations');
-    for (const r of profile.reviewerExpectations.slice(0, max)) {
-      lines.push(`- ${r}`);
-    }
-    lines.push('');
-  }
+  const assessed = sortContextRules(scopedRules, activeSection)
+    .map(rule => ({ rule, applicability: ruleApplicability(rule, product) }));
+  const rules = assessed.filter(item => item.applicability !== 'not-applicable').map(item => item.rule);
+  const selectedRules = rules.slice(0, max);
+  const excluded = assessed.filter(item => item.applicability === 'not-applicable').map(item => item.rule.id);
+  if (excluded.length) lines.push(`Advisory rules not applicable to supplied indexed conditions: ${excluded.join(', ')}. This is not a legal waiver.`, '');
+  lines.push(...bulletBlock('Context Rules', selectedRules.map(rule =>
+    `[${rule.severity}] [applicability ${ruleApplicability(rule, product)}] ${rule.instruction}${rule.guidanceRef ? ` (${rule.guidanceRef})` : ''}`), max));
+  lines.push(...bulletBlock('Risk Factors', profile.riskFactors, max));
+  lines.push(...bulletBlock('Reviewer Expectations', profile.reviewerExpectations, max));
 
   // Statistical considerations — only inject when authoring stat-relevant sections.
-  const wantStat =
-    (!activeSection && !options.onlyApplicableRules) ||
-    /^11\.|^11$|^9\.|^9$|^2\.7\.[34]/.test(activeSection ?? '');
-  if (wantStat && profile.statisticalConsiderations.length > 0) {
-    lines.push('### Statistical Considerations');
-    for (const r of profile.statisticalConsiderations.slice(0, max)) {
-      lines.push(`- ${r}`);
-    }
-    lines.push('');
-  }
-
-  // Endpoint considerations — same gate.
-  if (wantStat && profile.endpointConsiderations.length > 0) {
-    lines.push('### Endpoint Considerations');
-    for (const r of profile.endpointConsiderations.slice(0, max)) {
-      lines.push(`- ${r}`);
-    }
-    lines.push('');
-  }
-
-  // Guidance references — compact list, always include.
-  if (profile.guidanceRefs.length > 0) {
-    lines.push('### Key Guidance References');
-    for (const g of profile.guidanceRefs.slice(0, max)) {
-      lines.push(`- [${g.authority}] ${g.code} — ${g.title}`);
-      lines.push(`    Why: ${g.why}`);
-    }
-    lines.push('');
+  const wantStat = clinicalConsiderationsApply(activeSection, options);
+  if (wantStat) {
+    lines.push(...bulletBlock('Statistical Considerations', profile.statisticalConsiderations, max));
+    lines.push(...bulletBlock('Endpoint Considerations', profile.endpointConsiderations, max));
   }
 
   // Common gaps — terse; full registry is loaded via gap-classifier.
@@ -311,17 +281,137 @@ export function renderProfileForPrompt(
     ? profile.commonGaps.filter(gap => activeSection && (activeSection === gap.ctdSection ||
       (gap.prefix && activeSection.startsWith(`${gap.ctdSection}.`))))
     : profile.commonGaps;
-  if (commonGaps.length > 0) {
-    lines.push('### Common Gaps in This Therapeutic Area');
-    for (const g of commonGaps.slice(0, max)) {
-      lines.push(
-        `- [${g.severity}] §${g.ctdSection}: ${g.description}`
-      );
-    }
-    lines.push('');
-  }
+  const selectedGaps = commonGaps.slice(0, max);
 
+  // A source cited by this section's selected rules/gaps outranks general
+  // background. The existing order remains the deterministic fallback.
+  const cited = [...selectedRules.map(rule => rule.guidanceRef), ...selectedGaps.map(gap => gap.guidanceRef)]
+    .filter((ref): ref is string => !!ref);
+  lines.push(...guidanceBlock(profile.guidanceRefs, cited, options, max));
+  lines.push(...bulletBlock('Common Gaps in This Therapeutic Area', selectedGaps.map(g =>
+    `[${g.severity}] §${g.ctdSection}: ${g.description}`), max));
   return lines.join('\n').trimEnd() + '\n';
+}
+
+function bulletBlock(title: string, bullets: readonly string[], max: number): string[] {
+  const selected = bullets.slice(0, max);
+  return selected.length ? [`### ${title}`, ...selected.map(text => `- ${text}`), ''] : [];
+}
+
+function pathwayBlock(profile: TherapeuticAreaProfile, pathway: RenderProfileOptions['activePathway']): string[] {
+  const hint = pathway ? profile.pathwayHints.find(item => item.pathway === pathway) : undefined;
+  return hint ? [`### Active Pathway: ${hint.pathway}`, `- Applicability: ${hint.applicability}`,
+    `- Impacted sections: ${hint.impactedSections.join(', ')}`, `- Reviewer notes: ${hint.reviewerNotes}`, ''] : [];
+}
+
+function guidanceBlock(refs: GuidanceRef[], cited: string[], options: RenderProfileOptions, max: number): string[] {
+  const references = refs.map((reference, index) => ({ reference, index,
+    relevant: cited.some(citation => referenceCited(reference, citation)) }))
+    .sort((a, b) => Number(b.relevant) - Number(a.relevant) || a.index - b.index)
+    .slice(0, max);
+  if (!references.length) return [];
+  return ['### Key Guidance References',
+    'Dated-registry checks do not establish applicability or scientific source qualification; unresolved references need primary-source review.',
+    ...references.flatMap(({ reference: g }) => [`- [${g.authority}] ${g.code} — ${g.title}`,
+      `    Why: ${g.why}`, `    ${referenceCurrency(g, options)}`]), ''];
+}
+
+/** Clinical arrays belong to scientific clinical documents, not a disease-specific CMC or tox section. */
+function clinicalConsiderationsApply(section: string | null, options: RenderProfileOptions): boolean {
+  if (section && /^(?:2\.(?:4|6)|[34])(?:\.|$)/.test(section)) return false;
+  if (section && /^(?:2\.5|2\.7\.[34]|5\.3\.[45])(?:\.|$)/.test(section)) return true;
+  if (options.documentKind === 'protocol') return true;
+  if (options.documentKind === 'csr') return !section || /^(?:2|9|10|11|12|13)(?:\.|$)/.test(section);
+  if (!section) return !options.onlyApplicableRules;
+  // Retain the original bare E3 9/11 contract only when the caller supplied no document kind.
+  return !options.documentKind && /^(?:9|11)(?:\.|$)/.test(section);
+}
+
+function factLabel(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null;
+  const label = value.trim().slice(0, 200);
+  return !label || /^(?:unknown|unassessed|undetermined|unspecified|not recorded|not provided|n\/a)$/i.test(label) ? null : label;
+}
+
+function productFacts(context: ProfileProductContext | undefined) {
+  return { phase: factLabel(context?.phase), modality: normalizeModality(factLabel(context?.modality)),
+    population: factLabel(context?.population) };
+}
+
+/** Only canonical known phase/modality mismatches can exclude; free-text populations remain uncertain. */
+function ruleApplicability(rule: ContextRule, facts: ReturnType<typeof productFacts>): 'conditional' | 'not-applicable' | 'undetermined' {
+  const conditions = rule.applicability;
+  if (!conditions) return 'undetermined';
+  const states = [
+    indexedMatch(conditions.phases, facts.phase, canonicalPhase),
+    indexedMatch(conditions.modalities, facts.modality, normalizeModality),
+    // The record has free-text populations, not a canonical population ontology.
+    // An unmatched spelling is uncertainty, never evidence of incompatibility.
+    conditions.populations?.length ? (facts.population && conditions.populations.some(value =>
+      value.toLowerCase().trim() === facts.population!.toLowerCase().trim()) ? 'match' : 'unknown') : 'unindexed',
+  ];
+  if (states.includes('mismatch')) return 'not-applicable';
+  return states.includes('match') && !states.includes('unknown') ? 'conditional' : 'undetermined';
+}
+
+function canonicalPhase(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const key = value.toLowerCase().trim().replace(/[\s-]+/g, '_');
+  const canonical = CLINICAL_PHASES.find(phase => phase.value === key)?.value ?? normalizeClinicalPhase(key);
+  return typeof canonical === 'string' && CLINICAL_PHASES.some(phase => phase.value === canonical) ? canonical : null;
+}
+
+function indexedMatch(allowed: readonly string[] | undefined, actual: string | null,
+  normalize: (value: string | null | undefined) => string | null): 'match' | 'mismatch' | 'unknown' | 'unindexed' {
+  if (!allowed?.length) return 'unindexed';
+  const value = normalize(actual);
+  const choices = allowed.map(normalize);
+  if (!value || choices.includes(null)) return 'unknown';
+  return choices.includes(value) ? 'match' : 'mismatch';
+}
+
+function referenceCited(reference: GuidanceRef, citation: string): boolean {
+  const normalize = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const cited = ` ${normalize(citation)} `;
+  return [reference.code, reference.title].some(value => {
+    const label = normalize(value);
+    return label.length >= 5 && cited.includes(` ${label} `);
+  });
+}
+
+/** Currency comes only from existing dated registries; a matched title is never source qualification. */
+function referenceCurrency(reference: GuidanceRef, options: RenderProfileOptions): string {
+  const authorityJurisdiction: Partial<Record<GuidanceRef['authority'], string>> = {
+    FDA: 'US', EMA: 'EU', PMDA: 'JP', HC: 'CA', ICH: 'ICH', NMPA: 'CN',
+  };
+  const asOf = options.asOf ?? new Date().toISOString().slice(0, 10);
+  const jurisdiction = options.jurisdiction ?? authorityJurisdiction[reference.authority];
+  // The identifier can name a specific annex while the display title names
+  // the whole guideline. Resolve that identifier first, so the generic title
+  // cannot silently select the base guideline's different effective date.
+  let result = checkGuidanceFreshness({ asOf, citedGuidances: [{ title: reference.code, jurisdiction }] }).results[0];
+  if (result.verification === 'unverified') {
+    result = checkGuidanceFreshness({ asOf, citedGuidances: [{ title: `${reference.code} ${reference.title}`, jurisdiction }] }).results[0];
+  }
+  if (result.verification === 'unverified') return `currency unresolved: unverified. ${result.warning}`;
+  const parts = [`Registry currency as of ${asOf}: identified; current=${String(result.current)} (does not establish applicability).`];
+  if (result.latestKnownDate) parts.push(`Latest known registry date: ${result.latestKnownDate}.`);
+  parts.push(...currencyBasis(result.basis, asOf));
+  if (result.warning) parts.push(result.warning);
+  return parts.join(' ');
+}
+
+function currencyBasis(basis: FreshnessResultItem['basis'], asOf: string): string[] {
+  if (!basis) return ['source verification unresolved: no registry basis.'];
+  const parts = [`Basis: ${basis.registry}/${basis.id}.`];
+  if (basis.sourceUrl) parts.push(`Source: ${basis.sourceUrl}.`);
+  if (basis.lastVerified) parts.push(`Last verified: ${basis.lastVerified}.`);
+  const fact = basis.registry === 'currency_registry' ? REGULATORY_FACTS.find(entry => entry.id === basis.id) : undefined;
+  const age = fact ? verificationAgeDays(fact, asOf) : null;
+  if (!fact || age === null || age < 0 || isVerificationStale(fact, asOf)) {
+    parts.push('source verification unresolved: missing, future-dated or outside the registry verification interval.');
+  }
+  return parts;
 }
 
 /** Applicability is structural scope only; a matching rule is still advisory. */

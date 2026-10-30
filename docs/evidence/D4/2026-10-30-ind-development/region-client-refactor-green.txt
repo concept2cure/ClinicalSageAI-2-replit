@@ -1,0 +1,62 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates PMDA with its retained inputs and ignores conflicting optional metadata 221ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates EMA with its retained inputs and ignores conflicting optional metadata 53ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates Health Canada with its retained inputs and ignores conflicting optional metadata 58ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates FDA with its retained inputs and ignores conflicting optional metadata 39ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > uses an explicit supported standalone choice, with no default for initialRegion=undefined 50ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > uses an explicit supported standalone choice, with no default for initialRegion=Health Canada 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > keeps a legacy controlled candidate compatible with initialRegion rather than provider metadata 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > Discard exposes the retained inputs in the same existing four controls 26ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > keeps all four manual options through generation, Discard and a controlled Close/reopen 234ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > isolates manual options for each section across actual controlled remounts 120ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > merges synchronous edits to different fields without overwriting earlier values 102ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a transport regeneration refusal preserves the reviewed candidate, reason and options 100ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a truncated regeneration refusal preserves the reviewed candidate, reason and options 90ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a provider regeneration refusal preserves the reviewed candidate, reason and options 92ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > unknown acceptance prevents another generation and preserves the retained inputs 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > a no-longer-current retained session cannot generate from its options 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed session change 44ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed project-round-trip change 38ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed section-switch change 149ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed unmount change 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > a retrieval OUTAGE is not reported as an empty corpus 8ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > names the gap when retrieved evidence cannot all carry citations 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > reports a fully attributable draft plainly 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a claimed (410) draft is discarded — a retry of it can only fail 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a LINEAGE_REQUIRED rollback KEEPS the draft — the candidate survived it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > names an unauthenticated session rather than blaming the draft 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > falls back to the server’s sentence, never to a bare code 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > generating does not save anything — the section is untouched until accept 327ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > shows the wait as AnA's live record — what is running and a clock — then removes it 103ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays 63ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a transport failure yields no draft body and says nothing changed 53ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a model draft with no parked candidate says citations are impossible for it 99ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > accepts through the lineage endpoint, sending the draftId and the text actually saved 98ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > names the consequence on the regenerate control once edits exist 66ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > passes a MISSING lineage summary up as absent, never as a summary of zero 66ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > warns while it is still a choice that an edited draft is no longer the model’s words 84ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a consumed (410) draft is cleared, not left behind a button that can only fail 72ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > reports the fail-closed lineage rollback as a rollback, and adopts nothing 69ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > says unsaved editor edits are not part of the draft being accepted 47ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > DocumentAuthoring — the drafting panel is reachable > opens the panel from the editor toolbar, and drafts nothing until asked 549ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > shows the engine’s check of the draft before the accept: what was not found, and the verdict 67ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft the server did not check says so, and never reads as a pass 52ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft whose record was not filed says so, with the server’s reason 62ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > once the author edits the draft, the check says the edits are not checked 61ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > opens on the EU application agency and sends that explicit choice 151ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > uses the exact saved section agency before a different program or caller preference 40ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > lets a GLOBAL section defer to the recorded application 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > requires an explicit supported choice when no receiving agency is recorded 67ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > offers the complete shared writing vocabulary and opens on MHRA for a UK application 12ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > holds an unavailable exact section reference instead of falling back to its US program 13ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > updates an untouched default when the scoped read completes and changes projects 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > keeps a person’s supported selection and states the application mismatch 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx > the editor writing agency follows the admitted recorded filing > blocks an old unsupported retained choice without discarding the reviewed candidate 226ms
+
+ Test Files  3 passed (3)
+      Tests  53 passed (53)
+   Start at  17:18:35
+   Duration  12.82s (transform 4.31s, setup 379ms, import 5.81s, tests 4.09s, environment 2.00s)
+

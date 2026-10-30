@@ -37,7 +37,7 @@ const candidate = (id: string, content: string) => response({ success: true,
   draft: { draftId: id, content, metadata: { source: 'model', retrievalStatus: 'ok' } } });
 
 function mount() {
-  return render(<AuthoringAiDraft sectionId="section-1" sectionCode="2.5" sectionTitle="Overview"
+  return render(<AuthoringAiDraft sectionId="section-1" sectionCode="2.5" sectionTitle="Overview" region="FDA"
     docId={DOC} docSealed={false} editorDirty={false} onAccepted={onAccepted}
     onClose={onClose} fireToast={fireToast} />);
 }

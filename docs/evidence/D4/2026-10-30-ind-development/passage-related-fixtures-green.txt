@@ -1,0 +1,89 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > a retrieval OUTAGE is not reported as an empty corpus 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > names the gap when retrieved evidence cannot all carry citations 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > reports a fully attributable draft plainly 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a claimed (410) draft is discarded — a retry of it can only fail 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a LINEAGE_REQUIRED rollback KEEPS the draft — the candidate survived it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > names an unauthenticated session rather than blaming the draft 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > falls back to the server’s sentence, never to a bare code 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > generating does not save anything — the section is untouched until accept 223ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > shows the wait as AnA's live record — what is running and a clock — then removes it 63ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays 29ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a transport failure yields no draft body and says nothing changed 25ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a model draft with no parked candidate says citations are impossible for it 48ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > accepts through the lineage endpoint, sending the draftId and the text actually saved 68ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > names the consequence on the regenerate control once edits exist 36ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > passes a MISSING lineage summary up as absent, never as a summary of zero 49ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > warns while it is still a choice that an edited draft is no longer the model’s words 48ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a consumed (410) draft is cleared, not left behind a button that can only fail 49ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > reports the fail-closed lineage rollback as a rollback, and adopts nothing 35ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > says unsaved editor edits are not part of the draft being accepted 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > DocumentAuthoring — the drafting panel is reachable > opens the panel from the editor toolbar, and drafts nothing until asked 276ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > shows the engine’s check of the draft before the accept: what was not found, and the verdict 25ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft the server did not check says so, and never reads as a pass 24ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft whose record was not filed says so, with the server’s reason 32ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > once the author edits the draft, the check says the edits are not checked 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage generation hold keeps arrived review available > blocks a new request with its reason, then permits explicit drafting after the hold is lifted 360ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage generation hold keeps arrived review available > holds regeneration while preserving comparison, tracked replacement and navigation 176ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > drafts three replacements of exactly the selection, and the one chosen replaces exactly it as AnA’s tracked change 732ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Alternatives for a selected passage > replaces the first occurrence when that is the one selected 521ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps focus with the person: on the alternative shown, and back on Replace once the change is in the editor 539ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > says before the click that the replacement carries no source citations and AnA supplies no figures 441ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps an answer the governed-write rule does not admit out of the section 366ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > refuses an answer the server did not draft for the passage selected, and lists nothing 342ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage panel keeps the person in control: focus, notes and refusals > keeps a refusal from the server beside the passage, with its remedy, and lists nothing 329ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > goes back to the section draft, which is as it was 485ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > ends the passage when the panel closes, so Draft from sources opens the section draft 742ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > opens the section draft, not the passage, when Draft from sources is pressed in Document view 715ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > The passage view is left as the person leaves it: back, closed, another view or another section > belongs to its section: another section, and coming back, show the section draft 662ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > with nothing selected 276ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > for a selection that runs across paragraphs 275ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx > Offering alternatives is refused, with the reason, before anything is asked > for words that read the same, with the same text around them, in more than one place 292ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > retains the candidate and blocks a new acceptance after a saved-base conflict 104ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > does not remount over text typed while acceptance was pending 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > holds a mismatched saved receipt {"id":"section-2","doc_id":"document-1"} 200ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > holds a mismatched saved receipt {"id":"section-1","doc_id":"another-document"} 61ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > admits one acceptance when the control is clicked twice synchronously 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > refuses a locally generated candidate from the previous signed-in session 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > leaves a retained review held when its acceptance completes after a section switch 20ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > shared drafting transport admission > makes no provider or acceptance request for a stale owner 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > shared drafting transport admission > does not decode a response after the owner becomes stale 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > uncertain acceptance inspection > shows freshly checked saved text beside the retained candidate without another save 77ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > blocks acceptance while the actual editor has unsaved text 20ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > retains each controlled candidate, edits and reason when sections change 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after section change 12ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after session change 10ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after project round trip 11ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after unmount 10ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > holds an unknown acceptance after lost transport until an explicit exact saved-section check 68ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > holds an unknown acceptance after uncertain server commit until an explicit exact saved-section check 57ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft — revise the text shown by instruction > asks the existing route to revise the candidate shown, by its draftId and its tone, with the instruction as sent 520ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft — revise the text shown by instruction > shows the revision against the text it revised as a redline, and the person can go back to any earlier entry 370ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft — revise the text shown by instruction > keeps focus where the person is: on the control pressed, or wherever they moved it 188ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft — revise the text shown by instruction > accepts the whole revision through the existing accept, by the revision’s own candidate 121ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft — revise the text shown by instruction > revises a lone draft and lists both, keeping “Draft again” a single draft 95ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft — a revision fails closed > refuses an answer the server did not derive from the text shown, and keeps what is shown 88ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft — a revision fails closed > says a revision failed and keeps the text shown 80ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft — a revision fails closed > cannot revise a draft the server did not retain, and says why before the click 35ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftRevise.test.tsx > AuthoringAiDraft — a revision fails closed > says before the click that AnA does not supply figures and the check names any the sources do not hold 56ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > asks the existing draft route once per approach and labels each by what was asked 379ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > shows each alternative as it arrives, without moving focus 157ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > puts focus on the alternative shown when the control the person pressed leaves the panel 78ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — up to three alternatives, each its own candidate > keeps each alternative’s own edits when the person switches between them 135ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — accepting, comparing and ending a set of alternatives > accepts the whole alternative that is shown, through the existing accept 102ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — accepting, comparing and ending a set of alternatives > compares the shown alternative with another one as a redline 68ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — accepting, comparing and ending a set of alternatives > says how many arrived when one alternative fails, and keeps the ones that did 41ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — accepting, comparing and ending a set of alternatives > refuses with no provider and shows nothing that looks like a draft 24ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftAlternatives.test.tsx > AuthoringAiDraft — accepting, comparing and ending a set of alternatives > discarding drops every alternative, from the screen and from the retained review 51ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > retains the nested 422 classification through the shared generation transport 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > a fresh refusal creates no review body or Accept control and reports the repair action 107ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > failed regeneration preserves the prior valid candidate and edited review until explicit acceptance 118ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 6ms
+
+ Test Files  6 passed (6)
+      Tests  80 passed (80)
+   Start at  16:35:41
+   Duration  21.67s (transform 3.06s, setup 461ms, import 5.63s, tests 11.97s, environment 2.67s)
+

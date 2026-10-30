@@ -108,7 +108,9 @@ async function section(doc = DOC): Promise<string> {
     VALUES ($1,$2,$3,'Clinical overview','',$4,$5)`, [id, doc, `2.5.${sequence}`, sequence, ORG]);
   return id;
 }
-const generate = (id: string, body: Record<string, unknown> = {}) => author(request(app).post(`/api/authoring/sections/${id}/ai/draft`)).send(body);
+// These safety cases select FDA explicitly. Regional-derivation cases remove
+// the preference with region: undefined, so the wire request truly omits it.
+const generate = (id: string, body: Record<string, unknown> = {}) => author(request(app).post(`/api/authoring/sections/${id}/ai/draft`)).send({ region: 'FDA', ...body });
 const accept = (id: string, draftId: string) => author(request(app).post(`/api/authoring/sections/${id}/ai/draft/accept`)).send({ draftId });
 const parked = async (draftId: string) => (await jdb.pglite.query('SELECT id FROM authoring_ai_draft_candidates WHERE id=$1', [draftId])).rows.length;
 
@@ -307,7 +309,7 @@ describe('the existing section draft uses its admitted saved template reference'
     const source = regionalSource('JP');
     const parent = templateSource({ id: PARENT_TEMPLATE, aiDraftable: false, kind: 'preparation', authoringMode: 'manual', limitations: ['Parent-only official form limit.'] });
     await recordGuidance(id, assemblyMetadata(source, 'Japanese section-specific clinical evidence guidance.'), parent);
-    const response = await generate(id);
+    const response = await generate(id, { region: undefined });
     expect(response.status, JSON.stringify(response.body)).toBe(200);
     expect(response.body.draft.metadata.region).toBe('PMDA');
     expect(h.prompts[0]).toContain('Japanese section-specific clinical evidence guidance.');
@@ -323,7 +325,7 @@ describe('the existing section draft uses its admitted saved template reference'
     'derives $writing only when the saved $region section request omits region', async ({ region, writing }) => {
       const id = await section(); const source = regionalSource(region);
       await recordGuidance(id, savedMetadata(source), source);
-      const response = await generate(id);
+      const response = await generate(id, { region: undefined });
       expect(response.status, JSON.stringify(response.body)).toBe(200);
       expect(response.body.draft.metadata.region).toBe(writing);
       expect(h.prompts[0]).toContain(source.filingContext!.registryId!);
@@ -439,15 +441,27 @@ describe('legacy and reference-only scope stays honest in the same draft route',
     await expectDraftRefusal(id, 'TEMPLATE_NOT_DRAFTABLE');
   }, T);
 
-  it.each([undefined, 'EMA'])('keeps GLOBAL guidance separate from the %s writing preference', async region => {
+  it.each(['FDA', 'EMA'])('keeps GLOBAL guidance separate from the explicit %s writing preference', async region => {
     const id = await section(); const source = templateSource({ entryId: 'component:shared-plan',
       filingContext: { registryId: null, region: 'GLOBAL', agency: 'Reference standards' } });
     await recordGuidance(id, savedMetadata(source, 'Shared laboratory plan guidance.'), source);
-    const response = await generate(id, region ? { region } : {});
+    const response = await generate(id, { region });
     expect(response.status, JSON.stringify(response.body)).toBe(200);
-    expect(response.body.draft.metadata.region).toBe(region ?? 'FDA');
+    expect(response.body.draft.metadata.region).toBe(region);
     expect(h.prompts[0]).toContain('Shared laboratory plan guidance.');
     expect(h.prompts[0]).toMatch(/GLOBAL[\s\S]*(?:not|no)[\s\S]*jurisdiction/i);
+  }, T);
+
+  it('requires a writing region for GLOBAL guidance without choosing FDA implicitly', async () => {
+    const id = await section(); const source = templateSource({ entryId: 'component:shared-plan',
+      filingContext: { registryId: null, region: 'GLOBAL', agency: 'Reference standards' } });
+    await recordGuidance(id, savedMetadata(source, 'Shared laboratory plan guidance.'), source);
+    const response = await generate(id, { region: undefined });
+    expect(response.status, JSON.stringify(response.body)).toBe(409);
+    expect(response.body.error.code).toBe('DRAFT_REGION_REQUIRED');
+    expect(h.prompts).toEqual([]);
+    expect(h.searches).toEqual([]);
+    expect((await jdb.pglite.query('SELECT id FROM authoring_ai_draft_candidates WHERE section_id=$1', [id])).rows).toEqual([]);
   }, T);
 
   it('allows ad-hoc drafting with an honest unverified reference state', async () => {

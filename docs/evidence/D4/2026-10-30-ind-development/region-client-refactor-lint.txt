@@ -1,0 +1,7 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx
+  289:8  warning  Function 'AuthoringAiDraft' has too many lines (308). Maximum allowed is 100  max-lines-per-function
+  289:8  warning  Function 'AuthoringAiDraft' has a complexity of 58. Maximum allowed is 15     complexity
+
+✖ 2 problems (0 errors, 2 warnings)
+

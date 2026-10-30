@@ -1,0 +1,334 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > retains distant CSR metadata, methods, denominator, result, safety and limitations beyond the table of contents 61ms
+   → expected 'Excerpt 1; UTF-16 source offsets [0, …' to contain 'Patients with condition X were random…'
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > keeps different efficacy and exposed-safety populations attached to their own denominators 5ms
+   → expected false to be true // Object.is equality
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > uses relevant CMC text without clinical-topic windows or instructions 13ms
+   → expected 'Excerpt 1; UTF-16 source offsets [0, …' to contain 'Stability batches showed assay and im…'
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > does not convert nonclinical safety pharmacology into a clinical-topic search 7ms
+   → expected 'Excerpt 1; UTF-16 source offsets [0, …' to contain 'Safety pharmacology telemetry in dogs…'
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > preserves Unicode source coordinates after lowercase expansion and never slices a surrogate pair 6ms
+   → expected 'Excerpt 1; UTF-16 source offsets [0, …' to contain '主要評価項目の有効性解析では、対象患者300人を分母として評価した。🧬'
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > uses the full short chunk without claiming a whole-document review 21ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 1 character allowance 119ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 2 character allowance 10ms
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > bounds every chunk and the passed remaining total allowance across seven sources 6ms
+   → expected 4200 to be 12000 // Object.is equality
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 3 character allowance 6ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > shows no source text at budget zero and names the omitted characters 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 7 character allowance 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets -1 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets 1.5 1ms
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects a quote present only in omitted text or stitched across two shown spans 2ms
+   → expected 1 to be greater than 1
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets NaN 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects a changed original even when the requested quote and all shown text are unchanged 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets Infinity 0ms
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > authenticates an unrelated shown span before accepting a quote from the first 2ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > rejects invalid source budgets 9007199254740992 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"version":2} 1ms
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > deduplicates nearby clinical topics rather than charging the same source characters twice 2ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"originalTextSha256":"not-a-hash"} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > keeps exact code-point boundaries at a tiny 0 character allowance 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"originalTextLength":-1} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"shownChars":100000} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"omittedChars":-1} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"budgetChars":2401} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"promptChars":null} 15ms
+ ✓ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects malformed persisted receipt arithmetic or authority {"basis":"sufficient"} 0ms
+ × server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects reversed, out-of-bounds, overlapping and split-surrogate span receipts 16ms
+   → expected { version: 1, basis: 'opening', …(7) } to be null
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > retains distant CSR metadata, methods, denominator, result, safety and limitations beyond the table of contents
+AssertionError: expected 'Excerpt 1; UTF-16 source offsets [0, …' to contain 'Patients with condition X were random…'
+
+- Expected
++ Received
+
+- Patients with condition X were randomized in a double-blind parallel study; the prespecified primary analysis used the intention-to-treat population.
++ Excerpt 1; UTF-16 source offsets [0, 600); SHA-256 45572ac244fbf3ee624fbcff2f84e6c374e09922767f475662978dd432a33886
++ BEGIN_SOURCE_EXCERPT_1
++ Clinical Study Report
++ Protocol CLR-203, version 3, 14 September 2026
++ Table of Contents
++ 9 Study methods and population .... 14
++ 11 Primary efficacy denominator .... 40
++ 12 Safety population adverse events .... 70
++ 13 Limitations missing data .... 90
++
++ Appendix A: administrative attachment text without study findings.
++
++ Appendix A: administrative attachment text without study findings.
++
++ Appendix A: administrative attachment text without study findings.
++
++ Appendix A: administrative attachment text without study findings.
++
++ Appendix A: administrative attachment text without study findings.
++
++ Appendix A: a
++ END_SOURCE_EXCERPT_1
++
++ Excerpt coverage: 600 of 38530 source characters shown; 37930 characters omitted and not shown. Excerpts do not establish evidence sufficiency or a whole-document review. Do not infer what omitted evidence says.
+
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:48:33
+     46|     const result = clinical();
+     47|     for (const statement of ['Protocol CLR-203, version 3', METHODS, D…
+     48|       expect(result.promptText).toContain(statement);
+       |                                 ^
+     49|     }
+     50|     expect(result.basis).toBe('clinical-context-windows');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > keeps different efficacy and exposed-safety populations attached to their own denominators
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:59:53
+     57|   it('keeps different efficacy and exposed-safety populations attached…
+     58|     const result = clinical();
+     59|     expect(quoteWasShown(CSR, result, DENOMINATOR)).toBe(true);
+       |                                                     ^
+     60|     expect(quoteWasShown(CSR, result, SAFETY)).toBe(true);
+     61|     expect(quoteWasShown(CSR, result, 'The safety population included …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > uses relevant CMC text without clinical-topic windows or instructions
+AssertionError: expected 'Excerpt 1; UTF-16 source offsets [0, …' to contain 'Stability batches showed assay and im…'
+
+- Expected
++ Received
+
+- Stability batches showed assay and impurity results within the recorded specifications at the stated storage condition.
++ Excerpt 1; UTF-16 source offsets [0, 600); SHA-256 2880bd6e567b8742f435b1f848469a9315130166c4bcd4bc980c1f2dc856dd10
++ BEGIN_SOURCE_EXCERPT_1
++ Background clinical safety population and patient history.
++
++ Manufacturing records: administrative attachment text without study findings.
++
++ Manufacturing records: administrative attachment text without study findings.
++
++ Manufacturing records: administrative attachment text without study findings.
++
++ Manufacturing records: administrative attachment text without study findings.
++
++ Manufacturing records: administrative attachment text without study findings.
++
++ Manufacturing records: administrative attachment text without study findings.
++
++ Manufacturing records: administrative attachment text without stud
++ END_SOURCE_EXCERPT_1
++
++ Excerpt coverage: 600 of 8920 source characters shown; 8320 characters omitted and not shown. Excerpts do not establish evidence sufficiency or a whole-document review. Do not infer what omitted evidence says.
+
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:69:31
+     67|     const content = 'Background clinical safety population and patient…
+     68|     const result = buildDraftExcerpts(content, { query: 'Stability ass…
+     69|     expect(result.promptText).toContain(target);
+       |                               ^
+     70|     expect(result.spans.flatMap(span => span.basis)).not.toEqual(expec…
+     71|     expect(result.basis).toBe('section-window');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > does not convert nonclinical safety pharmacology into a clinical-topic search
+AssertionError: expected 'Excerpt 1; UTF-16 source offsets [0, …' to contain 'Safety pharmacology telemetry in dogs…'
+
+- Expected
++ Received
+
+- Safety pharmacology telemetry in dogs assessed cardiovascular and respiratory endpoints under the nonclinical protocol.
++ Excerpt 1; UTF-16 source offsets [0, 600); SHA-256 0a52af568caf8f444a1d6eceffb3690e10657d4e7dfcd46268a29d4ed7f4445c
++ BEGIN_SOURCE_EXCERPT_1
++
++ Study archive: administrative attachment text without study findings.
++
++ Study archive: administrative attachment text without study findings.
++
++ Study archive: administrative attachment text without study findings.
++
++ Study archive: administrative attachment text without study findings.
++
++ Study archive: administrative attachment text without study findings.
++
++ Study archive: administrative attachment text without study findings.
++
++ Study archive: administrative attachment text without study findings.
++
++ Study archive: administrative attachment text without study findings.
++
++ Study archive: administrative a
++ END_SOURCE_EXCERPT_1
++
++ Excerpt coverage: 600 of 7929 source characters shown; 7329 characters omitted and not shown. Excerpts do not establish evidence sufficiency or a whole-document review. Do not infer what omitted evidence says.
+
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:79:31
+     77|     const content = padding('Study archive') + target;
+     78|     const result = buildDraftExcerpts(content, { query: 'Nonclinical s…
+     79|     expect(result.promptText).toContain(target);
+       |                               ^
+     80|     expect(result.spans.flatMap(span => span.basis).every(basis => !['…
+     81|     exactSpans(content, result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > bounded editor excerpts reuse source windows without treating an opening prefix as clinical evidence > preserves Unicode source coordinates after lowercase expansion and never slices a surrogate pair
+AssertionError: expected 'Excerpt 1; UTF-16 source offsets [0, …' to contain '主要評価項目の有効性解析では、対象患者300人を分母として評価した。🧬'
+
+- Expected
++ Received
+
+- 主要評価項目の有効性解析では、対象患者300人を分母として評価した。🧬
++ Excerpt 1; UTF-16 source offsets [0, 600); SHA-256 7d8f6e40b6caa0ce46a4602f41cd28baf26ba1fb284179cff37c533cdb955417
++ BEGIN_SOURCE_EXCERPT_1
++ İİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİİ
++ 資料: administrative attachment text without study findings.
++
++ 資料: administrative attachment text without study findings.
++
++ 資料: administrative attachment text without study findings.
++
++ 資料: administrative attachment text without study findings.
++
++ 資料: administrative attachment text without study findings.
++
++ END_SOURCE_EXCERPT_1
++
++ Excerpt coverage: 600 of 8743 source characters shown; 8143 characters omitted and not shown. Excerpts do not establish evidence sufficiency or a whole-document review. Do not infer what omitted evidence says.
+
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:88:31
+     86|     const content = 'İ'.repeat(300) + padding('資料') + '\n有効性解析\n' + st…
+     87|     const result = buildDraftExcerpts(content, { query: '有効性解析 対象患者', …
+     88|     expect(result.promptText).toContain(statement);
+       |                               ^
+     89|     exactSpans(content, result);
+     90|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > bounds every chunk and the passed remaining total allowance across seven sources
+AssertionError: expected 4200 to be 12000 // Object.is equality
+
+- Expected
++ Received
+
+- 12000
++ 4200
+
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:114:73
+    112|       return result;
+    113|     });
+    114|     expect(results.reduce((sum, result) => sum + result.shownChars, 0)…
+       |                                                                         ^
+    115|     expect(results.at(-1)?.spans).toEqual([]);
+    116|     expect(results.at(-1)?.basis).toBe('budget-exhausted');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > source-character budgets are explicit and independent from prompt wrapper characters > deduplicates nearby clinical topics rather than charging the same source characters twice
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:141:62
+    139|     const result = clinical(content);
+    140|     exactSpans(content, result);
+    141|     expect(result.spans.some(span => span.basis.length > 1)).toBe(true…
+       |                                                              ^
+    142|   });
+    143|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects a quote present only in omitted text or stitched across two shown spans
+AssertionError: expected 1 to be greater than 1
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:154:33
+    152|   it('rejects a quote present only in omitted text or stitched across …
+    153|     const result = clinical();
+    154|     expect(result.spans.length).toBeGreaterThan(1);
+       |                                 ^
+    155|     const first = result.spans[0]; const second = result.spans[1];
+    156|     const joined = CSR.slice(first.end - 12, first.end) + CSR.slice(se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > authenticates an unrelated shown span before accepting a quote from the first
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:176:102
+    174|     const forged = receipt(result);
+    175|     forged.spans = forged.spans.map((span, index) => index === 1 ? { .…
+    176|     expect(quoteWasShown(CSR, forged, CSR.slice(result.spans[0].start,…
+       |                                                                                                      ^
+    177|   });
+    178|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-excerpts.test.ts > persisted excerpt receipts authenticate the entire original and every shown span > rejects reversed, out-of-bounds, overlapping and split-surrogate span receipts
+AssertionError: expected { version: 1, basis: 'opening', …(7) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "basis": "opening",
+  "budgetChars": 2400,
+  "omittedChars": 37930,
+  "originalTextLength": 38530,
+  "originalTextSha256": "ee4ab8b2b47781df430edb6a555a869dcc12607b1a691c6ac7950e4ac1af0623",
+  "promptChars": 973,
+  "shownChars": 600,
+  "spans": [
+    {
+      "basis": [
+        "source-opening",
+      ],
+      "end": 600,
+      "sha256": "45572ac244fbf3ee624fbcff2f84e6c374e09922767f475662978dd432a33886",
+      "start": 0,
+    },
+  ],
+  "version": 1,
+}
+
+ ❯ server/services/authoring/__tests__/authoring-draft-excerpts.test.ts:193:82
+    191|     }
+    192|     const overlapping = result.spans.map((span, index) => index === 1 …
+    193|     expect(parseDraftExcerptReceipt({ ...receipt(result), spans: overl…
+       |                                                                                  ^
+    194|     const unicode = buildDraftExcerpts('🧬abc', { maxChars: 2 });
+    195|     const split: DraftExcerptReceipt = { ...receipt(unicode), spans: […
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 21 passed (31)
+   Start at  16:48:01
+   Duration  3.67s (transform 868ms, setup 709ms, import 1.08s, tests 310ms, environment 0ms)
+

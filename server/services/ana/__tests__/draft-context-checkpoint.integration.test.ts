@@ -1,5 +1,6 @@
-/** Actual loader + drafting service; synthetic authority and gateway boundary.
- * No database/provider/network. Native gateway controls have a separate suite. */
+/** Actual source loader + drafting service; synthetic authority/gateway boundary.
+ * Recorded-product admission is isolated as unassessed and qualified separately
+ * on real PGlite; genuine source identity/checkpoint behavior remains actual. */
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GatewayRequest } from '../../ai-gateway/types';
@@ -13,6 +14,8 @@ vi.mock('../catalog-scope', () => ({ catalogScope: seams.scope,
 }));
 vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForActor: seams.load, revalidateActorSourceScope: seams.actor }));
 vi.mock('../../c2c/current-program-access', () => ({ requireProgramScopeStillCurrent: seams.program }));
+vi.mock('../draft-product-context', async () => ({ loadRecordedDraftProductContext:
+  (await import('./support/unassessed-product-context-fixture.js')).unassessedProductContextFixture }));
 vi.mock('../../ai-gateway/gateway', async original => ({
   ...await original<typeof import('../../ai-gateway/gateway')>(),
   getGateway: () => ({ route: seams.gateway }),

@@ -31,6 +31,7 @@ vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => exe
 
 import { createDraftCandidate, consumeDraftCandidate, readDraftCandidate, savedSectionDraftBase, type DraftGenerator } from '../draft-candidate-store';
 import type { Queryable } from '../span-lineage.service';
+import { renderDraftProductAdvisory } from '../../ana/draft-product-advisory';
 
 const ORG_A = 711;
 const ORG_B = 822;
@@ -116,6 +117,20 @@ describe('draft-candidate store', () => {
 });
 
 describe('draft-candidate generator and derivation receipts', () => {
+  it('retains field origins and conflicts through the database JSON round trip', async () => {
+    const recordedProductContext = renderDraftProductAdvisory({ therapeuticArea: 'oncology', phase: 'phase_2' }, '2.5', 'test').audit;
+    const generator: DraftGenerator = { model: 'test', provider: 'test', promptSha256: null, generatedAt: '2026-10-30', recordedProductContext };
+    const parked = await createDraftCandidate(ORG_A, SECTION, 'Draft.', [], 'user-1', exec, generator);
+    expect((await consumeDraftCandidate(ORG_A, SECTION, parked.id, exec))?.generator?.recordedProductContext).toEqual(recordedProductContext);
+  });
+
+  it('refuses a malformed modern product audit instead of discarding the rest of its provenance', async () => {
+    const parked = await createDraftCandidate(ORG_A, SECTION, 'Draft.', [], 'user-1', exec,
+      { model: 'test', provider: 'test', promptSha256: null, generatedAt: '2026-10-30' });
+    await exec.query(`UPDATE authoring_ai_draft_candidates SET generator=generator || $1::jsonb WHERE id=$2`,
+      [JSON.stringify({ recordedProductContext: { productContextSource: 'recorded-unqualified' } }), parked.id]);
+    await expect(consumeDraftCandidate(ORG_A, SECTION, parked.id, exec)).rejects.toMatchObject({ code: 'DRAFT_PROVENANCE_INVALID' });
+  });
   /* ── Generator capture (GA ledger L33) ───────────────────────────────────
      Model, provider and prompt digest existed at draft time and reached only
      the browser, so "what produced this text?" survived about as long as the

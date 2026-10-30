@@ -22,14 +22,13 @@
  * @module server/services/ana/batch-draft-result
  */
 
-import type { GatewayErrorCode } from '../ai-gateway/gateway-error-map';
 import { isTruncated } from '../ai-gateway/finish-reason';
 import type { DocumentDraftResponse } from './AnaDocumentDraftingService';
 
 export interface BatchDraftFailure {
-  /** A gateway classification, DRAFT_FAILED for a fault of ours, or
+  /** A gateway/project-scope classification, DRAFT_FAILED for a fault of ours, or
    * DRAFT_CANCELLED when the person stopped the run before it was drafted. */
-  error: GatewayErrorCode | 'DRAFT_FAILED' | 'DRAFT_CANCELLED';
+  error: string;
   /** A sentence the author can act on. Internals are never placed here. */
   message: string;
   /** The section the request named, so the failure can be matched to its card. */

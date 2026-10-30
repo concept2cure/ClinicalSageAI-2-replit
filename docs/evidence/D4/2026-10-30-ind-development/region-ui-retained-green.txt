@@ -1,0 +1,44 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates PMDA with its retained inputs and ignores conflicting optional metadata 162ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates EMA with its retained inputs and ignores conflicting optional metadata 50ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates Health Canada with its retained inputs and ignores conflicting optional metadata 69ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates FDA with its retained inputs and ignores conflicting optional metadata 61ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > uses an explicit supported standalone choice, with no default for initialRegion=undefined 70ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > uses an explicit supported standalone choice, with no default for initialRegion=Health Canada 44ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > keeps a legacy controlled candidate compatible with initialRegion rather than provider metadata 46ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > Discard exposes the retained inputs in the same existing four controls 59ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > keeps all four manual options through generation, Discard and a controlled Close/reopen 400ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > isolates manual options for each section across actual controlled remounts 117ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > merges synchronous edits to different fields without overwriting earlier values 87ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a transport regeneration refusal preserves the reviewed candidate, reason and options 85ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a truncated regeneration refusal preserves the reviewed candidate, reason and options 72ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a provider regeneration refusal preserves the reviewed candidate, reason and options 76ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > unknown acceptance prevents another generation and preserves the retained inputs 21ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > a no-longer-current retained session cannot generate from its options 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed session change 33ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed project-round-trip change 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed section-switch change 87ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed unmount change 26ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > uses canonical agency names for the existing four-region template contract 2ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary Health Canada 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary health_canada 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary  CA  0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary ca 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown undefined unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown null unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown  unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown GLOBAL unresolved 1ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown ICH unresolved 1ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown UK unresolved 1ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown MHRA unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown NMPA unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown invented unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown 7 unresolved 0ms
+
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+   Start at  16:35:22
+   Duration  4.47s (transform 1.31s, setup 252ms, import 1.75s, tests 1.64s, environment 499ms)
+

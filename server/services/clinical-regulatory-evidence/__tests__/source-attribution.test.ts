@@ -130,6 +130,53 @@ describe('attributeQuotedSpans — multi-source behavior', () => {
   });
 });
 
+describe('attributeQuotedSpans — separate shown excerpts retain one canonical source identity', () => {
+  const excerpts: RetrievedSource[] = [
+    { sourceId: 101, content: `Results excerpt. ${S1}` },
+    { sourceId: 101, content: `Discussion excerpt. ${S1}` },
+  ];
+
+  it('records one quoted range when the same sentence appears in two excerpts of one source', () => {
+    const spans = attributeQuotedSpans(S1, excerpts, { granularity: 'sentence' });
+    expect(spans).toEqual([{ charStart: 0, charEnd: S1.length, sourceId: 101, usage: 'quoted', spanText: S1 }]);
+  });
+
+  it('keeps distinct sources while removing their repeated excerpt matches', () => {
+    const spans = attributeQuotedSpans(S1, [
+      ...excerpts.map(source => ({ ...source, sourceId: 202 })),
+      ...excerpts,
+    ], { granularity: 'sentence' });
+    expect(spans.map(span => span.sourceId)).toEqual([101, 202]);
+  });
+
+  it('can match a later excerpt when an earlier excerpt from that source does not contain the quote', () => {
+    const spans = attributeQuotedSpans(S1, [
+      { sourceId: 101, content: S2 },
+      { sourceId: 101, content: S1 },
+    ], { granularity: 'sentence' });
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({ sourceId: 101, spanText: S1 });
+  });
+
+  it('retains each occurrence in the generated text as a different quoted range', () => {
+    const generated = `${S1} ${S1}`;
+    const spans = attributeQuotedSpans(generated, excerpts, { granularity: 'sentence' });
+    expect(spans.map(span => [span.charStart, span.charEnd, span.sourceId])).toEqual([
+      [0, S1.length, 101], [S1.length + 1, generated.length, 101],
+    ]);
+    for (const span of spans) expect(generated.slice(span.charStart, span.charEnd)).toBe(span.spanText);
+  });
+
+  it('never joins separate excerpts to invent a quotation across omitted source text', () => {
+    const split = S1.indexOf('at week');
+    const sources = [
+      { sourceId: 101, content: S1.slice(0, split) },
+      { sourceId: 101, content: S1.slice(split) },
+    ];
+    expect(attributeQuotedSpans(S1, sources, { granularity: 'sentence' })).toEqual([]);
+  });
+});
+
 describe('attributeQuotedSpans — the offset invariant', () => {
   it('every returned span selects exactly its text in the original generated string', () => {
     const sources: RetrievedSource[] = [

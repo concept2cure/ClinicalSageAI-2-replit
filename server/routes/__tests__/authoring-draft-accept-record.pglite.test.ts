@@ -225,6 +225,22 @@ const candidateExists = async (draftId: string) =>
   (await n('SELECT count(*)::int AS n FROM authoring_ai_draft_candidates WHERE id = $1', [draftId])) === 1;
 
 describe('the accept is one transaction', () => {
+  it.each([
+    { recordedProductContext: { productContextSource: 'recorded-unqualified' } },
+    { retrievalExcerpts: [{ sourceNumber: 1, sourceId: null, selection: { version: 1 } }] },
+  ])('retains the candidate and all prior content when modern drafting provenance is malformed: %j', async invalid => {
+    const sectionId = await seedSection();
+    const draftId = await parkCandidate(sectionId);
+    await jdb.pglite.query('UPDATE authoring_ai_draft_candidates SET generator=generator || $1::jsonb WHERE id=$2',
+      [JSON.stringify(invalid), draftId]);
+    const before = await stateOf(sectionId);
+    const response = await accept(sectionId, { draftId });
+    expect(response.status, JSON.stringify(response.body)).toBe(409);
+    expect(response.body.error.code).toBe('DRAFT_PROVENANCE_INVALID');
+    expect(await stateOf(sectionId)).toEqual(before);
+    expect(await candidateExists(draftId)).toBe(true);
+  }, T);
+
   it('the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT', async () => {
     const sectionId = await seedSection();
     const draftId = await parkCandidate(sectionId);
