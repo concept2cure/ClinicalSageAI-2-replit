@@ -11,6 +11,11 @@
  * leaf, its index.xml leaf ID and the STF's relative path to index.xml; this
  * returns the XML keyed by study.
  *
+ * 2026-10-30: the official STF v2.6.1 §III.B was read for CSR document
+ * roles. The body role is study-report-body; the unsupported study-report
+ * spelling is refused for emitted documents. The mixed list's other regional
+ * and dataset claims retain the provenance limits below.
+ *
  * What rests on a search extract and what is recall alone (2026-10-05,
  * g-stf-name-tags-and-shape; the record is
  * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
@@ -53,7 +58,7 @@
 import { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
 import { STF_DTD } from './dtd-bundler';
 export { stfFileName } from '../../../shared/regulatory/ectd-leaf-rules';
-import { FDA_STUDY_DATA_TRC, recall } from '../ind/ctd/regulatory-basis';
+import { FDA_STUDY_DATA_TRC, ICH_STF_SPEC_261, recall } from '../ind/ctd/regulatory-basis';
 import type { RegulatoryBasis } from '../ind/ctd/types';
 
 export type StfOperation = 'new' | 'append' | 'replace' | 'delete';
@@ -132,12 +137,13 @@ export const STF_DATASET_FILE_TAGS: {
 
 /**
  * ICH STF file-tags for study documents and non-standardized data, from recall.
- * A tag outside this list is reported as a warning, not refused, until the list
- * is checked against the STF specification (fda.gov/media/159383).
+ * CSR role values were checked in STF v2.6.1 §III.B pp8–9 on 2026-10-30.
+ * Other entries remain recall; an unknown tag retains the advisory behavior.
+ * The exact unsupported study-report spelling is separately refused.
  */
 export const STF_DOCUMENT_FILE_TAGS: { readonly tags: readonly string[]; readonly basis: RegulatoryBasis } = {
   tags: [
-    'synopsis', 'study-report', 'legacy-clinical-study-report', 'pre-clinical-study-report',
+    'synopsis', 'study-report-body', 'legacy-clinical-study-report', 'pre-clinical-study-report',
     'protocol-or-amendment', 'sample-case-report-form', 'iec-irb-consent-form-list',
     'list-description-investigator-site', 'signatures-investigators', 'list-patients-with-batches',
     'randomisation-scheme', 'audit-certificates-report', 'statistical-methods-interim-analysis-plan',
@@ -194,6 +200,12 @@ function checkStfLeaf(leaf: StfLeaf, warnings: string[]): void {
       `FDA TRC 1735: "${leaf.href}" (study ${leaf.studyId}) is tagged "${leaf.fileTag}"; a standardized ` +
         `${required === STF_DATASET_FILE_TAGS.xpt ? 'dataset (.xpt)' : 'define.xml'} must be tagged ${required.join(', ')}. ` +
         `A wrong tag is a technical rejection. Legacy (non-standardized) datasets are not packaged by this platform.`,
+    );
+  }
+  if (leaf.operation !== 'delete' && leaf.fileTag === 'study-report') {
+    throw new Error(
+      `${ICH_STF_SPEC_261.ref}: "study-report" is not a defined file-tag; the CSR body role is "study-report-body". ` +
+        'Reassemble the CSR or correct its study-tagging metadata before packaging.',
     );
   }
   if (!required && !STF_DOCUMENT_FILE_TAGS.tags.includes(leaf.fileTag)) {
