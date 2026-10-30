@@ -1,0 +1,44 @@
+######## c2c_p72_scr_rds (RDS-shaped owner, P arm)
+== master-admin.ts:215 organization list (p72 rows): name | members | last_active set | enabled_modules | credits_30d
+name | member_count | last_active_known | enabled_modules | credits_30d
+p72 a | 1 | f | 2 | 1
+p72 b | 1 | f | 2 | 1
+== the same joins, counted: users joined | module_subscriptions rows | usage_records rows
+users_joined | module_subscriptions | usage_records
+2 | 4 | 2
+== access-management.ts:60 active platform role grants
+grants
+1
+== master-enterprise-requests.ts:73 licence requests
+license_requests
+1
+== audit-siem.ts:133 audit events of organization B
+audit_events_b
+1
+== scim-tenants.ts:103 SCIM tenants (all)
+scim_tenants
+2
+== a platform write: access-management grant (INSERT platform_role_grants)
+INSERT 0 1
+######## c2c_p72_con_noarm (RDS-shaped owner, P arm removed)
+== master-admin.ts:215 organization list (p72 rows): name | members | last_active set | enabled_modules | credits_30d
+name | member_count | last_active_known | enabled_modules | credits_30d
+p72 a | 1 | f | 0 | 0
+p72 b | 1 | f | 0 | 0
+== the same joins, counted: users joined | module_subscriptions rows | usage_records rows
+users_joined | module_subscriptions | usage_records
+0 | 0 | 0
+== access-management.ts:60 active platform role grants
+grants
+0
+== master-enterprise-requests.ts:73 licence requests
+license_requests
+0
+== audit-siem.ts:133 audit events of organization B
+audit_events_b
+0
+== scim-tenants.ts:103 SCIM tenants (all)
+scim_tenants
+0
+== a platform write: access-management grant (INSERT platform_role_grants)
+INSERT 0 0

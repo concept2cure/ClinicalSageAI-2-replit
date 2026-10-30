@@ -1,0 +1,7 @@
+// Prints the modules the real registry says claim each path (read-only).
+import { buildPrefixMap, modulesForPath } from '/home/user/ClinicalSageAI-2-replit/server/services/entitlements/api-prefix-map.ts';
+const map = buildPrefixMap();
+for (const p of process.argv.slice(2)) {
+  const m = modulesForPath(p.toLowerCase(), map);
+  console.log(`${p}: ${m && m.size ? [...m].sort().join(', ') : 'no claimant'}`);
+}

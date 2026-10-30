@@ -1,0 +1,20 @@
+-- P-72 slice 0 / F5 side check (owner): export-discovered tables (public, vault) whose preferred tenant key is NOT an
+-- integer. The export compares "<col>"::text = '<integer id>', so a uuid-keyed row can never match, under any scope.
+WITH k AS (
+  SELECT DISTINCT ON (c.table_schema, c.table_name) c.table_schema s, c.table_name t, c.column_name col, c.data_type typ
+    FROM information_schema.columns c JOIN information_schema.tables tb ON tb.table_schema = c.table_schema AND tb.table_name = c.table_name
+   WHERE c.table_schema IN ('public','vault') AND tb.table_type = 'BASE TABLE' AND c.column_name IN ('organization_id','org_id','tenant_id')
+   ORDER BY c.table_schema, c.table_name, array_position(ARRAY['organization_id','org_id','tenant_id'], c.column_name::text))
+SELECT typ, count(*) FROM k GROUP BY 1 ORDER BY 2 DESC;
+\echo '-- uuid-keyed export tables, and rows keyed to p72-a''s uuid / p72-b''s uuid (owner)'
+CREATE TEMP TABLE k AS
+  SELECT DISTINCT ON (c.table_schema, c.table_name) c.table_schema s, c.table_name t, c.column_name col, c.data_type typ
+    FROM information_schema.columns c JOIN information_schema.tables tb ON tb.table_schema = c.table_schema AND tb.table_name = c.table_name
+   WHERE c.table_schema IN ('public','vault') AND tb.table_type = 'BASE TABLE' AND c.column_name IN ('organization_id','org_id','tenant_id')
+   ORDER BY c.table_schema, c.table_name, array_position(ARRAY['organization_id','org_id','tenant_id'], c.column_name::text);
+DO $$ DECLARE r record; a uuid; b uuid; na bigint; nb bigint; BEGIN
+  SELECT uuid INTO a FROM organizations WHERE slug = 'p72-a'; SELECT uuid INTO b FROM organizations WHERE slug = 'p72-b';
+  FOR r IN SELECT * FROM k WHERE typ NOT IN ('integer','bigint','smallint') ORDER BY 1, 2 LOOP
+    EXECUTE format('SELECT count(*) FILTER (WHERE %I::text = $1), count(*) FILTER (WHERE %I::text = $2) FROM %I.%I', r.col, r.col, r.s, r.t) INTO na, nb USING a::text, b::text;
+    RAISE NOTICE '% | %.% | % | uuid-keyed rows A=% B=%', r.typ, r.s, r.t, r.col, na, nb;
+  END LOOP; END $$;

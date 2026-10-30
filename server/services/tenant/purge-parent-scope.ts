@@ -139,6 +139,14 @@ export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.free
   'vault.document_catalog': `document_id IN (${VAULT_TENANT_DOCUMENT_IDS})`,
   'vault.document_read_receipts': `document_id IN (${VAULT_TENANT_DOCUMENT_IDS})`,
   'vault.evidence_citations': `source_document_id IN (${VAULT_TENANT_DOCUMENT_IDS})`,
+  // The IVDR module's Part 11 change histories (migrations/001_create_ivdr_tables.sql),
+  // each by the record it is the history of, through the parent and key of its
+  // tenant policy. Held out of the purge until P-58 (2026-10-29), and never in
+  // the export either: they carry no tenant column, so a departing tenant's
+  // export returned none of them (docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/).
+  'ivdr_validation_parameter_history': 'validation_id IN (SELECT id FROM ivdr_analytical_validations WHERE organization_id = $1)',
+  'ivdr_evidence_result_history': 'evidence_id IN (SELECT id FROM ivdr_clinical_evidence WHERE organization_id = $1)',
+  'ivdr_cdx_status_history': 'workflow_id IN (SELECT id FROM ivdr_cdx_workflows WHERE organization_id = $1)',
 });
 
 /**

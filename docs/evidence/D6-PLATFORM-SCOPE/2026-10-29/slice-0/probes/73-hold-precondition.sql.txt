@@ -1,0 +1,10 @@
+-- P-72 slice 0, item 4: the doors' legal-hold precondition reads vault.legal_holds through its policy. B is pending
+-- deletion with an ACTIVE hold. As the runtime role in the system scope (as purgeTenant), call one door; rolled back.
+\set ON_ERROR_STOP off
+\pset footer off
+SELECT id AS b_id FROM organizations WHERE slug = 'p72-b' \gset
+BEGIN;
+SELECT set_config('app.current_tenant_id','0',true), set_config('app.current_org_id','',true), set_config('app.current_user_role','app_super_admin',true), set_config('app.rls_enforce','on',true) \gset
+SELECT (SELECT count(*) FROM vault.legal_holds WHERE organization_id = :b_id AND lifted_at IS NULL) AS active_holds_visible_to_the_system_scope;
+SELECT * FROM public.purge_tenant_reg_questions(:b_id);
+ROLLBACK;

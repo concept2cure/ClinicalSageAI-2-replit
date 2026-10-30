@@ -15,7 +15,6 @@
  */
 
 import { getPool } from '../../db';
-import { projectBelongsToTenant } from '../cmc/project-membership';
 import type { StatisticalInput } from '../ana-biostats/types';
 import type { PoolClient } from 'pg';
 import type { AuditTaskActionParams } from '../tasking/task-audit.js';
@@ -1930,89 +1929,110 @@ export async function erasePersonalData(
 // 6. SUBMISSION PACKAGING
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** The device filings create_submission_package tracks, by the family name the model gives. */
+const DEVICE_FILING_FAMILY_KEYS: Readonly<Record<string, string>> = Object.freeze({
+  '510k': '510k',
+  '510(k)': '510k',
+  de_novo: 'de_novo',
+  denovo: 'de_novo',
+  pma: 'pma_original',
+});
+
 /**
- * Create a submission package for a project.
+ * Track a device filing for a project (D2, fold F5 item 1, 2026-10-30;
+ * decision P-61 item 1: one device-filing store, estar_submissions).
  *
- * An e-signature-tier command: the INSERT and the creator's electronic
- * signature commit in ONE transaction, or neither does. A new package has no
- * content yet, so the signer attests to the creation DECISION — the package
- * definition in the payload — and the signature binds the ledger chain hash
- * under the governed-action-ledger basis. It claims no content hash
- * (2026-09-28; until then no signature was recorded at all).
+ * The command kept its name, and its e-signature tier: the tracked filing, its
+ * `created` event and the creator's electronic signature commit in ONE
+ * transaction, or none does. A new filing has no content yet, so the signer
+ * attests to the creation DECISION, the filing definition in the payload, and
+ * the signature binds the ledger chain hash under the governed-action-ledger
+ * basis. It claims no content hash.
+ *
+ * It wrote c2c_submission_packages, whose creator is on no deploy applier, and
+ * which no screen lists now. It writes the filing through the one insert the
+ * HTTP route uses (insertTrackedFiling), so Submission Center lists what AnA
+ * starts. The family is a device filing (510(k), De Novo, PMA) or any eSTAR
+ * catalogue key; an IND, NDA, BLA or CER is not a device filing and is refused
+ * by name, with where each is made.
  */
 export async function createSubmissionPackage(
   ctx: CommandContext,
   params: {
     projectId: number;
     title: string;
-    packageFamily: 'ind' | '510k' | 'cer' | 'nda' | 'bla' | 'pma';
-    description?: string;
-    targetDate?: string;
+    packageFamily?: string;
+    /** An eSTAR submission type (estar-catalog.ts), in place of the family. */
+    catalogKey?: string;
+    variant?: 'device' | 'ivd';
   }
 ): Promise<CommandResult> {
+  const { getCatalogEntry } = await import('../pathway-engines/estar/estar-catalog');
+  const family = String(params.packageFamily ?? '').trim().toLowerCase();
+  const catalogKey = params.catalogKey ?? DEVICE_FILING_FAMILY_KEYS[family];
+  if (!catalogKey || !getCatalogEntry(catalogKey as never)) {
+    return {
+      success: false,
+      action: 'create_submission_package',
+      error: 'NOT_A_DEVICE_FILING',
+      message:
+        `"${params.catalogKey ?? params.packageFamily ?? ''}" is not a device filing. This command tracks an eSTAR filing ` +
+        '(510(k), De Novo, PMA, Q-Sub, IDE, 513(g)) in Submission Center. An IND, NDA or BLA is a submission created in ' +
+        'Submission Center, and a CER is authored on the Clinical evaluation screen. Nothing was created.',
+    };
+  }
+  const variant = params.variant === 'ivd' ? 'ivd' : 'device';
+  const { insertTrackedFiling, EstarSubmissionError } = await import('../pathway-engines/estar/estar-submission-service');
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    /* The package's project is a projects row of this organization (PF-03),
-       the same rule as POST /api/submission-ops/packages. The id comes from the
-       command's params, which the model fills; it was inserted as given. */
-    if (!(await projectBelongsToTenant({ organizationId: ctx.organizationId, projectId: String(params.projectId) }, client))) {
-      await client.query('ROLLBACK');
-      return {
-        success: false,
-        action: 'create_submission_package',
-        error: 'PROJECT_NOT_FOUND',
-        message: `Project ${params.projectId} is not a project of this organization. No package was created.`,
-      };
+    /* The filing's project is a projects row of this organization (PF-03),
+       checked inside insertTrackedFiling on this transaction, before anything
+       is written. The id comes from the command's params, which the model fills. */
+    let filing: { id: string };
+    try {
+      filing = await insertTrackedFiling(
+        client,
+        { catalogKey, variant, title: params.title, projectId: params.projectId },
+        { organizationId: ctx.organizationId, userId: ctx.userId },
+        { via: 'create_submission_package' },
+      );
+    } catch (err) {
+      if (err instanceof EstarSubmissionError && err.code === 'NOT_FOUND') {
+        await client.query('ROLLBACK');
+        return {
+          success: false,
+          action: 'create_submission_package',
+          error: 'PROJECT_NOT_FOUND',
+          message: `Project ${params.projectId} is not a project of this organization. No filing was created.`,
+        };
+      }
+      throw err;
     }
-    const result = await client.query(
-      /* created_by_id: who created the package, as the HTTP route records it
-         (submission-ops.ts). Separation of duties names it the package's
-         author at transmit (SINGLE_AUTHOR['submission-package']); without it
-         every package AnA created read "no creator recorded" and nobody could
-         transmit it to the agency. */
-      `INSERT INTO c2c_submission_packages
-         (package_id, org_id, project_id, package_family, title, description,
-          target_date, status, created_by_id, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'active', $7, NOW(), NOW())
-       RETURNING package_id, title, package_family, status`,
-      [
-        ctx.organizationId,
-        params.projectId,
-        params.packageFamily,
-        params.title,
-        params.description || '',
-        params.targetDate || null,
-        ctx.userId,
-      ]
-    );
-    const pkg = result.rows[0];
     const { signatureId } = await signGovernedCommand(client, ctx, {
       command: 'create_submission_package',
-      target: `submission-package:${pkg.package_id}`,
+      target: `estar-submission:${filing.id}`,
       payload: {
         projectId: params.projectId,
-        packageFamily: params.packageFamily,
+        catalogKey,
+        variant,
         title: params.title,
-        targetDate: params.targetDate ?? null,
       },
-      binding: ledgerBinding('A new submission package has no content to bind: the signer attests to the decision to create it, as defined in the signed payload.'),
+      binding: ledgerBinding('A new tracked filing has no content to bind: the signer attests to the decision to create it, as defined in the signed payload.'),
     });
     await client.query('COMMIT');
     return {
       success: true,
       action: 'create_submission_package',
-      data: { packageId: pkg.package_id, title: pkg.title, family: pkg.package_family, signatureId },
-      message: `Submission package "${
-        params.title
-      }" created (${params.packageFamily.toUpperCase()}).`,
+      data: { filingId: filing.id, catalogKey, variant, title: params.title, status: 'draft', signatureId },
+      message: `Tracked filing "${params.title}" started (${catalogKey}, ${variant}), at draft. It is listed in Submission Center.`,
     };
   } catch (err: unknown) {
     await client.query('ROLLBACK').catch(() => undefined);
     return {
       success: false,
       action: 'create_submission_package',
-      message: 'Failed to create submission package.',
+      message: 'Failed to start the tracked filing.',
       error: err instanceof Error ? err.message : String(err),
     };
   } finally {
@@ -4872,9 +4892,9 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'create_submission_package',
-    description: 'Create a submission package for regulatory filing',
-    parameters: 'projectId, title, packageFamily (ind/510k/cer/nda/bla/pma), targetDate?',
-    example: '"Create an IND submission package for project 5"',
+    description: 'Track a device filing (eSTAR) for a project in Submission Center: a 510(k), De Novo, PMA or another eSTAR submission type, at draft',
+    parameters: 'projectId, title, packageFamily (510k/de_novo/pma) or catalogKey (an eSTAR submission type), variant? (device/ivd)',
+    example: '"Start tracking a 510(k) filing for project 5"',
   },
   {
     name: 'create_review_thread',

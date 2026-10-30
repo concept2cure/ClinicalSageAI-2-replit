@@ -185,6 +185,8 @@ beforeAll(async () => {
       INSERT INTO project_members (project_id, organization_id, user_id, role, status) VALUES (42, ${ORG}, ${REVIEWER.id}, 'edit', 'active');
       CREATE TABLE IF NOT EXISTS notification_preferences (id serial PRIMARY KEY, user_id integer, timezone text);
       ${GOVERNED_ACTION_LEDGER_PGLITE_DDL}
+      -- The ledger is created here, after the routes migration ran, so its grant to the route writer (P-59) is given here, as the migration gives it where the ledger already exists.
+      GRANT SELECT ON c2c_ana_actions TO review_route_writer;
     `,
   });
   h.db = jdb.db;

@@ -159,6 +159,8 @@ beforeAll(async () => {
     ],
     testOnlySql: `
       ${GOVERNED_ACTION_LEDGER_PGLITE_DDL}
+      -- The ledger is created here, after the routes migration ran, so its grant to the route writer (P-59) is given here, as the migration gives it where the ledger already exists.
+      GRANT SELECT ON c2c_ana_actions TO review_route_writer;
       INSERT INTO users (id, name, email) VALUES
         (${REVIEWER.id}, '${REVIEWER.name}', '${REVIEWER.email}'),
         (${OTHER_REVIEWER.id}, '${OTHER_REVIEWER.name}', '${OTHER_REVIEWER.email}');

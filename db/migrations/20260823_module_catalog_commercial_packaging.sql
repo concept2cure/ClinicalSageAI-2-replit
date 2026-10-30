@@ -1,3 +1,17 @@
+-- AMENDED IN PLACE 2026-10-30 — D2 fold F5 item 1: device submission packages into Submission Center (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts device-submission; its replay deprecates the
+-- existing row. Remove its packaging row too, so the unknown-module guard below
+-- still passes on a fresh database that never holds it. Replayed databases keep
+-- the deprecated row, the tier it was given ('standard'), its subscriptions and
+-- every other module's tier unchanged (submission-center stays 'standard').
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/README.md.
+-- AMENDED IN PLACE 2026-10-29 — D2 fold F5 item 2: the organization-wide blocker list retires (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts device-validation; its replay deprecates the
+-- existing row. Remove its packaging row too, so the unknown-module guard below
+-- still passes on a fresh database that never holds it. Replayed databases keep
+-- the deprecated row, the tier it was given ('standard'), its subscriptions and
+-- every other module's tier unchanged (submission-center stays 'standard').
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/README.md.
 -- AMENDED IN PLACE 2026-10-29 — D2 folds F1c and F2 (CLAUDE.md Rule 1).
 -- 20260810 no longer upserts risk or ivd-completeness; its replay deprecates the
 -- existing rows. Remove their packaging rows too, so the unknown-module guard
@@ -240,9 +254,7 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('device-pma', 'standard'),
   ('device-presub', 'standard'),
   ('device-software', 'standard'),
-  ('device-submission', 'standard'),
   ('device-udi', 'standard'),
-  ('device-validation', 'standard'),
   ('device-workstream', 'standard'),
   ('dispatch-readiness', 'standard'),
   ('doc-journey', 'standard'),

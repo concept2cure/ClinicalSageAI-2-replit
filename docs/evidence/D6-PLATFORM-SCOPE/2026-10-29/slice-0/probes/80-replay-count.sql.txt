@@ -1,0 +1,7 @@
+-- P-72 slice 0, §3.1: after a deploy-migrate replay on the arm-removed copy, which policies carry the P arm again, by table schema.
+SET search_path = pg_catalog;
+SELECT count(*) AS policies_with_p FROM pg_policy pol WHERE coalesce(pg_get_expr(polqual, polrelid),'') || coalesce(pg_get_expr(polwithcheck, polrelid),'') ~ 'app_super_admin';
+SELECT count(*) AS policies FROM pg_policy;
+SELECT n.nspname, count(*) FROM pg_policy pol JOIN pg_class c ON c.oid = pol.polrelid JOIN pg_namespace n ON n.oid = c.relnamespace
+ WHERE coalesce(pg_get_expr(polqual, polrelid),'') || coalesce(pg_get_expr(polwithcheck, polrelid),'') ~ 'app_super_admin' GROUP BY 1 ORDER BY 2 DESC;
+SELECT pol.polname, count(*) FROM pg_policy pol WHERE coalesce(pg_get_expr(polqual, polrelid),'') || coalesce(pg_get_expr(polwithcheck, polrelid),'') ~ 'app_super_admin' GROUP BY 1 ORDER BY 2 DESC LIMIT 15;

@@ -340,6 +340,57 @@ describe('a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8)', (
   });
 });
 
+describe('the Authoring signature door (RR5 merged with P-59)', () => {
+  /** The door, called as the runtime role in the organization's own scope, the way review-route.ts calls it. */
+  async function throughDoor(routeId: string, taskId: string, signatureId: string) {
+    const runtime = new Pool({ connectionString: process.env.APP_DATABASE_URL, max: 1 });
+    const c = await runtime.connect();
+    try {
+      await c.query('BEGIN');
+      await c.query(`SELECT set_config('app.current_tenant_id',$1,true), set_config('app.rls_enforce','on',true)`, [String(orgA)]);
+      const r = await c.query('SELECT public.review_route_record_authoring_signature($1, $2::uuid, $3, $4::uuid, $5) AS status',
+        [orgA, routeId, taskId, signatureId, users.r1]);
+      await c.query('COMMIT');
+      return r.rows[0].status as string;
+    } catch (e) {
+      await c.query('ROLLBACK');
+      throw e;
+    } finally {
+      c.release();
+      await runtime.end();
+    }
+  }
+  const forge = async (docId: string, email: string, meaning: string, hash: string) => {
+    const id = randomUUID();
+    await owner.query(
+      `INSERT INTO authoring_signatures (id, doc_id, signer_email, signer_name, meaning, reason, method, content_hash, pin_verified, tenant_id)
+       VALUES ($1, $2, $3, 'Forged', $4, 'test', 'PIN', $5, true, $6)`, [id, docId, email, meaning, hash, orgA]);
+    return id;
+  };
+
+  it('closes a member’s task only on their own signature, with REVIEWER, over this document and the routed content', async () => {
+    const docId = await draft('door');
+    const other = await draft('door-other');
+    expect((await ask(docId, ['r1'])).status).toBe(200);
+    const routeId = String((await routes(docId))[0].id);
+    const member = await memberOf(docId, 'r1');
+    const digest = await digestOf(docId);
+    const refused = async (sig: Promise<string>) =>
+      expect(throughDoor(routeId, member.task_id, await sig)).rejects.toThrow(/ROUTE_TASK_OWNED_BY_ROUTE/);
+
+    await refused(forge(docId, emails.r2, 'REVIEWER', digest));          // not the member's own
+    await refused(forge(docId, emails.r1, 'APPROVER', digest));          // the wrong meaning for a reviewer
+    await refused(forge(docId, emails.r1, 'REVIEWER', 'f'.repeat(64)));  // content the route is not about
+    await refused(forge(other, emails.r1, 'REVIEWER', digest));          // another document
+    expect(await memberOf(docId, 'r1')).toMatchObject({ status: 'pending', route_authoring_signature_id: null });
+
+    // The control: the member's own REVIEWER signature over the routed content closes the task.
+    const own = await forge(docId, emails.r1, 'REVIEWER', digest);
+    expect(await throughDoor(routeId, member.task_id, own)).toBe('completed');
+    expect(await memberOf(docId, 'r1')).toMatchObject({ status: 'completed', route_authoring_signature_id: own });
+  });
+});
+
 describe('a negative verdict returns the route and opens nobody’s step (RR5, §2.9, B5)', () => {
   it('“changes requested” is recorded, the route is returned with its reason, every unsigned member is cancelled, the sender is told', async () => {
     const docId = await draft('changes');

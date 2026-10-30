@@ -1,0 +1,28 @@
+######## database c2c_p72_pre
+== pre-auth scope (tenant 0, no role, no account): sign-in and password reset (server/services/auth/pre-auth-account.ts)
+user_id_for_email_b | user_id_for_reset_token_b | users_visible_directly
+2 | 2 | 0
+== tenant B scope (tenant id + org uuid, role admin): invitations_for_member and actor_name, as their callers use them
+invitations_for_member_b | actor_name_member_of_b | actor_name_member_of_a_seen_from_b
+1 | p72 b admin | 
+######## database c2c_p72_pre_su_noarm
+== pre-auth scope (tenant 0, no role, no account): sign-in and password reset (server/services/auth/pre-auth-account.ts)
+user_id_for_email_b | user_id_for_reset_token_b | users_visible_directly
+2 | 2 | 0
+== tenant B scope (tenant id + org uuid, role admin): invitations_for_member and actor_name, as their callers use them
+invitations_for_member_b | actor_name_member_of_b | actor_name_member_of_a_seen_from_b
+1 | p72 b admin | 
+######## database c2c_p72_pre_rds_arm
+== pre-auth scope (tenant 0, no role, no account): sign-in and password reset (server/services/auth/pre-auth-account.ts)
+user_id_for_email_b | user_id_for_reset_token_b | users_visible_directly
+2 | 2 | 0
+== tenant B scope (tenant id + org uuid, role admin): invitations_for_member and actor_name, as their callers use them
+invitations_for_member_b | actor_name_member_of_b | actor_name_member_of_a_seen_from_b
+1 | p72 b admin | 
+######## database c2c_p72_pre_rds_noarm
+== pre-auth scope (tenant 0, no role, no account): sign-in and password reset (server/services/auth/pre-auth-account.ts)
+user_id_for_email_b | user_id_for_reset_token_b | users_visible_directly
+ |  | 0
+== tenant B scope (tenant id + org uuid, role admin): invitations_for_member and actor_name, as their callers use them
+invitations_for_member_b | actor_name_member_of_b | actor_name_member_of_a_seen_from_b
+1 | p72 b admin | 

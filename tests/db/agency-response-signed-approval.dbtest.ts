@@ -651,7 +651,7 @@ describe('the Word package reproduces the signed text line for line', () => {
 });
 
 describe('a tenant that answered an agency can still be erased', () => {
-  it('purge removes the questions, their history and the commitments from them; the signatures stay', async () => {
+  it('purge removes the questions, their history, the commitments from them and, after custody, the signature', async () => {
     const { purgeTenant } = await import('../../server/services/tenant/tenant-offboarding');
     const org = Number((await owner.query(`INSERT INTO organizations (name, slug, status) VALUES ($1, $1, 'active') RETURNING id`, [`${PREFIX}-purge`])).rows[0].id);
     const u = Number((await owner.query(`INSERT INTO users (email, name, password_hash, status) VALUES ($1, 'Purge Actor', 'x', 'active') RETURNING id`, [`${PREFIX}-purge@example.invalid`])).rows[0].id);
@@ -669,7 +669,10 @@ describe('a tenant that answered an agency can still be erased', () => {
       [org, u, 'b'.repeat(64), `agency-question:${qid}`, 'a'.repeat(64)],
     )).rows[0].id);
     await owner.query(`UPDATE organizations SET status = 'pending_deletion', purged_at = NULL, deletion_requested_at = now() - interval '40 days', purge_eligible_at = now() - interval '1 day' WHERE id = $1`, [org]);
-    await owner.query(`INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by) VALUES ($1, $2, 1, 1, NULL)`, [org, `${PREFIX}-digest`]);
+    await owner.query(`INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by, export_scope) VALUES ($1, $2, 1, 1, NULL, 'organization')`, [org, `${PREFIX}-digest`]);
+    // P-58: the signature is a held record; it is erased only once an administrator signed custody of this export.
+    const { signCustody } = await import('./offboarding-custody-signature');
+    const custody = await signCustody(owner, org, u, `${PREFIX}-digest`);
 
     // As the purge route runs it: the runtime pool, in the platform scope, the full default purge list.
     const { getPool } = await import('../../server/db/runtime');
@@ -680,8 +683,12 @@ describe('a tenant that answered an agency can still be erased', () => {
     for (const t of ['agency_question_response_revisions', 'agency_communication_questions', 'regulatory_commitments', 'commitment_milestones', 'projects']) {
       expect((await owner.query(`SELECT count(*)::int AS n FROM ${t} WHERE organization_id = $1`, [org])).rows[0].n, t).toBe(0);
     }
-    // The signature is a Part 11 record with its own retention; erasing the answer does not erase it.
-    expect((await owner.query(`SELECT signed_target FROM electronic_signatures WHERE id = $1`, [sig])).rows).toEqual([{ signed_target: `agency-question:${qid}` }]);
+    // The signature left in the export the customer took custody of (P-58), and is erased with the tenant;
+    // the custody signature stays, named by the offboarding certificate.
+    expect((await owner.query(`SELECT id FROM electronic_signatures WHERE id = $1`, [sig])).rows).toEqual([]);
+    expect(purged.offboardingCertificate).not.toBeNull();
+    expect((await owner.query(`SELECT custody_signature_id, held_record_total FROM tenant_offboarding_certificates WHERE organization_id = $1`, [org])).rows)
+      .toEqual([{ custody_signature_id: custody, held_record_total: 1 }]);
   }, 60_000);
 });
 

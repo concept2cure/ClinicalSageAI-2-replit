@@ -204,4 +204,21 @@ describe('applySignedFiling', () => {
     ];
     expect(order[0]).toBeLessThan(order[1]);
   });
+
+  /* Fold F5 item 1 (2026-10-30): the filing's own history records the filing,
+     on the same client, so it commits with the filing and its signature. */
+  it('writes the filed event to the filing\'s history on the same client, after the signature', async () => {
+    const { client, calls } = makeClient();
+    const { artifactSha256 } = await applySignedFiling(client, params);
+    const event = calls.find((c) => /INSERT INTO estar_submission_events/i.test(c.sql))!;
+    expect(event, 'no filed event was written').toBeDefined();
+    expect(event.params.slice(0, 6)).toEqual([2, ID, 'filed', 'draft', 'filed', 7]);
+    expect(JSON.parse(String(event.params[6]))).toEqual({
+      artifactDocumentId: DOC, artifactSha256, fdaTrackingNumber: 'K260001', meaning: 'approval', reason: params.reason,
+    });
+    expect(event.params[7]).toBe(NOW);
+    const eventAt = calls.indexOf(event);
+    expect(eventAt).toBeGreaterThan(calls.findIndex((c) => /UPDATE estar_submissions/i.test(c.sql)));
+    expect(mockPersistSignature.mock.invocationCallOrder[0]).toBeLessThan(client.query.mock.invocationCallOrder[eventAt]);
+  });
 });

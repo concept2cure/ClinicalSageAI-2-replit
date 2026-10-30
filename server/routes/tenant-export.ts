@@ -3,6 +3,8 @@
  *
  *   GET /api/tenant-export                  full data dump for the caller's org
  *   GET /api/tenant-export/attestation      hash-chain attestation report
+ *   GET  /api/tenant-export/custody?digest  what a custody signature on that export attests (P-58)
+ *   POST /api/tenant-export/custody         sign it: the customer takes custody before the purge
  *
  * Both endpoints are admin-only (role check) and tenant-scoped via the
  * caller's JWT organizationId. The signed audit-log export remains the
@@ -51,10 +53,13 @@ import {
   recordExportReceipt,
   TenantNotFoundError as FullExportTenantNotFoundError,
 } from '../services/tenant-export/tenant-full-export.service';
+import { withIntegrity } from '../services/tenant-export/held-record-integrity';
+import { custodyAct, custodyAttestation, CustodyRefusal, EXPORT_DIGEST } from '../services/tenant/offboarding-custody';
+import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { serverError } from '../lib/api-response';
 import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence';
 import { createScopedLogger } from '../utils/logger';
-import { companyExportSnapshot } from '../services/tenant-export/company-export-snapshot';
+import { companyExportSnapshot, ExportScopeUnavailableError, inOrganizationScope } from '../services/tenant-export/company-export-snapshot';
 
 const router = Router();
 const log = createScopedLogger('tenant-export');
@@ -126,7 +131,10 @@ router.get('/', async (req: Request, res: Response) => {
   }
   try {
     if (!await mayExportTenantData(req, orgId)) return res.status(403).json({ error: 'Current organization owner or administrator authority is required for tenant data return.' });
-    const manifest = await companyExportSnapshot(pool, orgId, client => exportTenantData(client, orgId));
+    // In the organization's own scope (P-58's data return, 2026-10-29): the platform scope this mount
+    // runs in returned none of its Vault documents or knowledge graph (company-export-snapshot.ts).
+    const manifest = await inOrganizationScope(pool, orgId, 'GET /api/tenant-export',
+      () => companyExportSnapshot(pool, orgId, client => exportTenantData(client, orgId)));
     if (!await mayExportTenantData(req, orgId)) return res.status(403).json({ error: 'Tenant export authority changed. No tenant data was returned.' });
 
     /* WO-16C #133. Was `void auditService.logAction({…})`, which discarded the
@@ -159,6 +167,9 @@ router.get('/', async (req: Request, res: Response) => {
     if (err instanceof TenantNotFoundError) {
       return res.status(404).json({ error: err.message });
     }
+    if (err instanceof ExportScopeUnavailableError) {
+      return res.status(409).json({ error: err.message, code: 'EXPORT_SCOPE_UNAVAILABLE' });
+    }
     return serverError(res, log, 'exporting the tenant data', err, { organizationId: orgId });
   }
 });
@@ -184,7 +195,15 @@ router.get('/full', async (req: Request, res: Response) => {
   }
   try {
     if (!await mayExportTenantData(req, orgId)) return res.status(403).json({ error: 'Current organization owner or administrator authority is required for tenant data return.' });
-    const payload = await companyExportSnapshot(pool, orgId, client => exportTenantFull(client, orgId));
+    // With the integrity verdict of each hash chain and each signature's
+    // manifest (P-58), inside the digest: the copy a customer keeps carries
+    // the proof that it is whole.
+    // In the organization's own scope, its tenant id and its uuid (P-58's data return, 2026-10-29): under
+    // the platform scope this mount runs in, eight tables returned none of its rows, the Vault's among
+    // them (company-export-snapshot.ts). The export states the scope it ran in, inside the digest, and
+    // only an export made in it records a receipt a purge accepts (recordExportReceipt).
+    const payload = await inOrganizationScope(pool, orgId, 'GET /api/tenant-export/full',
+      () => companyExportSnapshot(pool, orgId, async client => withIntegrity(client, orgId, await exportTenantFull(client, orgId))));
     const digest = digestOf(payload);
     if (!await mayExportTenantData(req, orgId)) return res.status(403).json({ error: 'Tenant export authority changed. No tenant data was returned or export receipt recorded.' });
 
@@ -245,6 +264,9 @@ router.get('/full', async (req: Request, res: Response) => {
   } catch (err: unknown) {
     if (err instanceof FullExportTenantNotFoundError) {
       return res.status(404).json({ error: err.message });
+    }
+    if (err instanceof ExportScopeUnavailableError) {
+      return res.status(409).json({ error: err.message, code: 'EXPORT_SCOPE_UNAVAILABLE' });
     }
     return serverError(res, log, 'exporting the full tenant data', err, { organizationId: orgId });
   }
@@ -325,6 +347,48 @@ router.get('/attestation', async (req: Request, res: Response) => {
     }
     return serverError(res, log, 'generating the attestation report', err, { organizationId: orgId });
   }
+});
+
+/**
+ * Custody of the export, a signed act (P-58, D6, 2026-10-29;
+ * services/tenant/offboarding-custody.ts). Before the purge erases a held
+ * record (a signature, an audit trail, a sealed report, a ledger), one of the
+ * organization's administrators signs that they received this export and took
+ * custody of it, and accepts the obligation to keep the records still inside
+ * the organization's retention period, which the attestation lists.
+ *
+ * GET returns the attestation and its SHA-256: what the administrator reads
+ * before signing. POST signs it through the platform's one ceremony
+ * (signGovernedAct: password, second factor where enrolled, the meaning
+ * `responsibility`, a reason, signing authority from the membership role, the
+ * ledger pair and the electronic_signatures row on one transaction), naming
+ * the SHA-256 it read: an attestation that changed since is refused. Reached
+ * while the organization is pending deletion (the lifecycle guard's data
+ * portability carve-out covers this prefix).
+ */
+router.get('/custody', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  const digest = typeof req.query.digest === 'string' ? req.query.digest.trim() : '';
+  if (!EXPORT_DIGEST.test(digest)) {
+    return res.status(400).json({ error: { code: 'CUSTODY_DIGEST_INVALID', message: 'Name the export by the digest it returned (sha256:<64 hex>).' } });
+  }
+  try {
+    if (!await mayExportTenantData(req, orgId)) return res.status(403).json({ error: 'Current organization owner or administrator authority is required for tenant data return.' });
+    return res.json(await custodyAttestation(pool, orgId, digest));
+  } catch (err: unknown) {
+    if (err instanceof CustodyRefusal) return res.status(err.status).json({ error: { code: err.code, message: err.message } });
+    return serverError(res, log, 'reading the custody attestation', err, { organizationId: orgId });
+  }
+});
+
+router.post('/custody', signedActAttempts, async (req: Request, res: Response) => {
+  const digest = typeof req.body?.digest === 'string' ? req.body.digest.trim() : '';
+  const attestationSha256 = typeof req.body?.attestationSha256 === 'string' ? req.body.attestationSha256.trim() : '';
+  if (!EXPORT_DIGEST.test(digest) || !/^[0-9a-f]{64}$/.test(attestationSha256)) {
+    return res.status(400).json({ error: { code: 'CUSTODY_REQUEST_INVALID', message: 'Name the export by its digest, and the attestation you read by its SHA-256. Nothing was signed.' } });
+  }
+  return signGovernedAct(req, res, custodyAct(digest, attestationSha256));
 });
 
 export default router;

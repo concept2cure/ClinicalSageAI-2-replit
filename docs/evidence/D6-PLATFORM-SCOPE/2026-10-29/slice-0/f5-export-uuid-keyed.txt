@@ -1,0 +1,7 @@
+typ | count
+integer | 806
+bigint | 8
+(2 rows)
+-- uuid-keyed export tables, and rows keyed to p72-a's uuid / p72-b's uuid (owner)
+SELECT 814
+DO

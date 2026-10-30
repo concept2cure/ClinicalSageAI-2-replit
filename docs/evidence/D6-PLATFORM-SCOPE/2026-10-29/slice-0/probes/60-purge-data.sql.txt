@@ -1,0 +1,18 @@
+-- P-72 slice 0, item 4: make tenant B (p72-b) purgeable as the doors' own preconditions define it (owner, past triggers,
+-- a scratch copy only): status pending_deletion, its legal hold lifted (attributed), and a signed custody of an
+-- organization-scoped export (tenant_export_custody_signed). Tenant A stays active, with its hold, as the control.
+\set ON_ERROR_STOP on
+SET session_replication_role = 'replica';
+UPDATE organizations SET status = 'pending_deletion' WHERE slug = 'p72-b';
+UPDATE vault.legal_holds SET lifted_at = now(), lifted_by = (SELECT id FROM users WHERE email = 'p72-b-admin@example.invalid'),
+       lift_reason = 'p72 slice 0 probe: lifted so the purge doors admit the organization'
+ WHERE organization_id = (SELECT id FROM organizations WHERE slug = 'p72-b') AND lifted_at IS NULL;
+UPDATE tenant_export_receipts SET export_scope = 'organization', digest = 'p72b-digest'
+ WHERE organization_id = (SELECT id FROM organizations WHERE slug = 'p72-b');
+UPDATE electronic_signatures SET signed_target = 'tenant-export-custody:p72b-digest', signature_type = 'governed-action',
+       superseded_by = NULL, is_valid = true, verification_status = NULL
+ WHERE organization_id = (SELECT id FROM organizations WHERE slug = 'p72-b');
+SET session_replication_role = 'origin';
+SELECT o.slug, o.status, (SELECT count(*) FROM vault.legal_holds h WHERE h.organization_id = o.id AND h.lifted_at IS NULL) AS active_holds,
+       public.tenant_export_custody_signed(o.id) AS custody_signed
+  FROM organizations o WHERE o.slug LIKE 'p72-%' ORDER BY 1;

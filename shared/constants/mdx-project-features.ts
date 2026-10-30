@@ -21,8 +21,10 @@ export const MDX_PROJECT_FEATURE_SURFACE_IDS = [
   // (D2, fold F3, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/).
   // No device task workbench: it folded into Tasks, a core service of every
   // project (D2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/).
-  'device-validation',
-  'device-submission',
+  // No organization-wide blocker list: a blocker is its filing's readiness (D2,
+  // fold F5 item 2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/).
+  // No device submission packages: a device filing is Submission Center's, over
+  // one store, estar_submissions (D2, fold F5 item 1, 2026-10-30).
   'device-analytics',
   // No risk management or design controls: both folded into device-engineering
   // (D2, fold F1c, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/).

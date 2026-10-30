@@ -28,6 +28,7 @@ import { Pool, type PoolClient } from 'pg';
 import { databaseUrl } from '../setup.db';
 import { PURGE_CHILD_TABLES, purgeTenant } from '../../server/services/tenant/tenant-offboarding';
 import { verifyAuditChain } from '../../server/services/audit/chain';
+import { forgetOffboardingCertificate } from './offboarding-custody-signature';
 
 const ORG = 90623;
 const PURGER = 4242;
@@ -96,6 +97,8 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await removeFixtureAuditRows();
+  // A purge leaves the tenant's offboarding certificate (P-58), one per tenant; each case purges this one again.
+  await forgetOffboardingCertificate(owner, ORG);
   await owner.query(
     `INSERT INTO organizations (id, name, slug, status, deletion_requested_at, deletion_requested_by,
                                 deletion_reason, purge_eligible_at)
@@ -106,8 +109,8 @@ beforeEach(async () => {
   );
   await owner.query('DELETE FROM tenant_export_receipts WHERE organization_id = $1', [ORG]);
   await owner.query(
-    `INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by)
-     VALUES ($1, $2, 5, 10, NULL)`,
+    `INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by, export_scope)
+     VALUES ($1, $2, 5, 10, NULL, 'organization')`,
     [ORG, DIGEST],
   );
   await owner.query(`DELETE FROM ${ROWS} WHERE organization_id = $1`, [ORG]);
@@ -119,6 +122,7 @@ afterAll(async () => {
   await removeFixtureAuditRows().catch((err) => console.warn('[P1-23] audit rows left in place:', err));
   await owner.query(`DROP TABLE IF EXISTS ${ROWS}`);
   await owner.query('DELETE FROM tenant_export_receipts WHERE organization_id = $1', [ORG]);
+  await forgetOffboardingCertificate(owner, ORG);
   await owner.query('DELETE FROM organizations WHERE id = $1', [ORG]);
   await owner.end();
 });
@@ -202,5 +206,7 @@ describe('a purge whose audit row cannot be written does not happen', () => {
     expect(await rowsLeft(), 'an unrecorded purge must destroy nothing').toBe(2);
     expect((await organization()).status).toBe('pending_deletion');
     expect(await purgeAuditRows()).toHaveLength(0);
+    // Nor certify itself: the certificate is on the same transaction (P-58).
+    expect((await owner.query('SELECT count(*)::int AS n FROM tenant_offboarding_certificates WHERE organization_id = $1', [ORG])).rows[0].n).toBe(0);
   });
 });

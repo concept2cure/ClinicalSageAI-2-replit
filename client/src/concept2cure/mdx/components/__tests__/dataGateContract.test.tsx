@@ -279,7 +279,7 @@ describe('the synthesized Part 11 record is gone, and cannot be reintroduced', (
       'surfaces/cer/EquivalenceTab.tsx',
       'surfaces/EstarFilingPanel.tsx',
       'presub/PreSubManager.tsx',
-      'workbench/Workbench.tsx',
+      // No workbench/Workbench.tsx: its last screen folded into Submission Center (D2, fold F5 item 1, 2026-10-30).
       'MdxSurfaceHost.tsx',
     ];
     const offenders: string[] = [];

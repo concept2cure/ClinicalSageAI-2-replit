@@ -1,0 +1,134 @@
+# paths run: 41; behaviour differs without P: 17; identical: 24
+
+## DIFFERS without the P arm (arm -> arm removed)
+
+### auditService.logAction (enterprise-security security event; audit:initialize)  [server/middleware/enterprise-security.ts:987 + server/services/auditService.ts:176]
+  result with P   : {"persisted":true,"chained":true,"tamperProof":true}
+  result without P: {"persisted":true,"chained":false,"tamperProof":true,"error":"new row violates row-level security policy for table \"audit_logs\""}
+  rows 1 -> ERR | INSERT INTO audit_logs (id, tenant_id, user_id, action, table_name, record_id, actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal, old_values, new_value
+
+### readLatestWindowResult (org A)  [server/db/scheduledOnce.ts:219]
+  result with P   : {"result":{"p72":true},"finishedAt":"2026-10-29T23:59:28.530Z"}
+  result without P: null
+  rows 1 -> 0 | SELECT result, finished_at FROM scheduled_job_claims WHERE organization_id = $1 AND job_name = $2 AND finished_at IS NOT NULL ORDER BY finished_at DESC LIMIT 1
+
+### runRetentionSweep  [server/jobs/retentionCron.ts:212]
+  result with P   : {"scanned":0,"archived":0,"softDeleted":0,"destructionRefused":0,"heldByLegalHold":0,"alreadyDisposed":0,"errors":0}
+  result without P: {"scanned":0,"archived":0,"softDeleted":0,"destructionRefused":0,"heldByLegalHold":0,"alreadyDisposed":0,"errors":0}
+  rows 1 -> 0 | select "program_id", "document_id" from "vault"."legal_holds" where "vault"."legal_holds"."lifted_at" is null
+
+### runTaskDueSweep  [server/jobs/taskDueSweep.ts:155]
+  result with P   : {"scanned":2,"dueSoonNotified":0,"overdueNotified":2,"skippedNotEntitled":0,"errors":0}
+  result without P: {"scanned":0,"dueSoonNotified":0,"overdueNotified":0,"skippedNotEntitled":0,"errors":0}
+  rows 1 -> - | INSERT INTO mdx_notifications ( organization_id, recipient_user_id, recipient_role, category, severity, title, body, resource_type, resource_id, action_url, metadata, exp
+  rows 1,1 -> - | select "status", "payment_status" from "organizations" where "organizations"."id" = $1 limit $2
+  rows 2 -> 0 | select "task_id", "organization_id", "assignee_id", "title", "due_date", "metadata" from "unified_tasks" where ("unified_tasks"."status" in ($1, $2, $3, $4) and NOT ("uni
+  rows 1,1 -> - | update "unified_tasks" set "metadata" = $1, "updated_at" = $2 where ("unified_tasks"."task_id" = $3 and "unified_tasks"."organization_id" = $4 and COALESCE("unified_tasks
+
+### runVaultProcessingOnce  [server/jobs/vaultProcessingSweep.ts:230]
+  result with P   : {"organizations":4,"examined":0,"extracted":0,"failed":0,"skipped":0}
+  result without P: {"organizations":4,"examined":0,"extracted":0,"failed":0,"skipped":0}
+  rows 1 -> - | INSERT INTO mdx_notifications ( organization_id, recipient_user_id, recipient_role, category, severity, title, body, resource_type, resource_id, action_url, metadata, exp
+  rows - -> 1,1 | select "status", "payment_status" from "organizations" where "organizations"."id" = $1 limit $2
+
+### runDriftSentinelSweep  [server/jobs/driftSentinelSweep.ts:54]
+  result with P   : {"programs":2,"driftDetected":2,"healed":0,"errors":0,"processedPrograms":2,"skippedUnverifiedProgram":0,"skippedNotEntitled":0,"skippedUnverifiedTenant":0,"skippedPrograms":[],"skipDetailsLimitReached":false,"packetAuditReceipts":[]}
+  result without P: {"programs":0,"driftDetected":0,"healed":0,"errors":0,"processedPrograms":0,"skippedUnverifiedProgram":0,"skippedNotEntitled":0,"skippedUnverifiedTenant":0,"skippedPrograms":[],"skipDetailsLimitReached":false,"packetAuditReceipts":[]}
+  rows 1,1 -> - | insert into "fact_drift" ("id", "organization_id", "program_id", "fact_id", "binding_id", "expected_value", "observed_value", "drift_type", "severity", "status", "detecte
+  rows 1,1 -> - | select "fact_bindings"."id", "fact_bindings"."organization_id", "fact_bindings"."program_id", "fact_bindings"."fact_id", "fact_bindings"."target", "fact_bindings"."target
+  rows 1,1 -> - | select "organization_id" from "regulatory_programs" where ("regulatory_programs"."id" = $1 and "regulatory_programs"."deleted_at" is null) limit $2
+  rows 2 -> 0 | select distinct "program_id" from "fact_bindings"
+  rows 1,1 -> - | update "fact_bindings" set "binding_status" = $1, "last_checked_at" = $2, "updated_at" = $3 where "fact_bindings"."id" = $4
+
+### runCsrQueueRecoveryOnce  [server/jobs/csrQueueRecovery.ts:37]
+  result with P   : {"found":4,"resumed":0,"refused":4,"skippedNotPermitted":0,"notClaimed":0,"errors":0,"items":[{"queue":"assembly","id":1,"outcome":"refused","code":"CSR_ASSEMBLY_REQUESTER_MISSING"},{"queue":"assembly","id":2,"outcome":"refused","code":"CSR_ASSEMBLY_REQUESTER_MISSING"},{"queue":"narrative","id":1,"o
+  result without P: {"found":0,"resumed":0,"refused":0,"skippedNotPermitted":0,"notClaimed":0,"errors":0,"items":[]}
+  rows 2 -> 0 | SELECT id, organization_id, job_id, requested_by FROM csr_assembly_runs WHERE status IN ('queued', 'assembling') AND updated_at < now() - $1 * interval '1 minute' ORDER B
+  rows 2 -> 0 | SELECT id, organization_id, job_id, requested_by FROM csr_narrative_runs WHERE status IN ('queued', 'running') AND updated_at < now() - $1 * interval '1 minute' ORDER BY 
+  rows 1,1 -> - | UPDATE csr_assembly_runs SET status = 'failed', stage = 'Failed', error = $4::jsonb, completed_at = now(), updated_at = now() WHERE id = $1 AND organization_id = $2 AND s
+  rows 1,1 -> - | UPDATE csr_narrative_runs SET status = 'failed', error = $4::jsonb, completed_at = now(), updated_at = now() WHERE id = $1 AND organization_id = $2 AND status IN ('queued
+
+### sweepDueSubscriptions (scan only: generator records, never delivers)  [server/services/report-os/scheduling/worker.ts:119]
+  result with P   : {"out":{"scanned":2,"ran":0,"skippedEntitlement":0,"failed":2,"items":[{"subscriptionId":1,"organizationId":7,"reportTypeId":"p72a-mvu6wl5314y","disposition":"failed","reason":"Failed to mark report subscription run: Invalid report schedule time"},{"subscriptionId":2,"organizationId":8,"reportTypeId
+  result without P: {"out":{"scanned":0,"ran":0,"skippedEntitlement":0,"failed":0,"items":[]},"generatedFor":[]}
+  rows 1,1,2 -> 0 | select "id", "organization_id", "client_workspace_id", "report_type_id", "scope_type", "scope_id", "schedule", "recipients", "format", "channel", "persona", "enabled", "l
+
+### stopRunsFor(user A, session end) [before the reaper]  [server/services/ana/run-control.ts:1359,1376]
+  result with P   : ["p72a-mvu6whwd3c"]
+  result without P: []
+  rows 1 -> - | INSERT INTO audit.tamper_proof_log ( id, event_type, event_timestamp, user_id, user_name, session_id, correlation_id, resource_type, resource_id, action, details, previou
+  rows 1 -> - | INSERT INTO audit_logs (id, tenant_id, user_id, action, table_name, record_id, actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal, old_values, new_value
+  rows 1 -> - | SELECT EXISTS ( SELECT 1 FROM pg_attribute WHERE attrelid = to_regclass('audit_logs') AND attname = 'chain_seq' AND NOT attisdropped ) AS present
+  rows 1 -> - | SELECT chain_hash, sequence_number FROM audit.tamper_proof_log ORDER BY sequence_number DESC LIMIT 1
+  rows 1 -> - | SELECT pg_advisory_xact_lock($1)
+  rows 1 -> - | SELECT pg_advisory_xact_lock($1, $2)
+  rows 1 -> - | SELECT pg_notify($1, id) FROM unnest($2::text[]) AS id
+  rows 1 -> - | SELECT sha256_chain FROM audit_logs WHERE sha256_chain IS NOT NULL AND tenant_id = $1 ORDER BY chain_seq DESC NULLS LAST, occurred_at DESC, id DESC LIMIT 1
+  rows 1 -> 0 | UPDATE ana_runs SET status = 'cancelled', stopped_reason = $3, stopped_detail = $4::jsonb, finished_at = now(), updated_at = now(), hold = NULL WHERE user_id = $1 AND sta
+
+### run-control poll (its SQL)  [server/services/ana/run-control.ts:1846,1890]
+  result with P   : ["running","cancelled"]
+  result without P: []
+  rows 2 -> 0 | SELECT id, status, stopped_reason, stopped_detail FROM ana_runs WHERE id = ANY($1::text[])
+
+### reapOrphanedRuns  [server/services/ana/run-control.ts:1533,1494]
+  result with P   : 1
+  result without P: 0
+  rows 1 -> - | SELECT pg_notify($1, id) FROM unnest($2::text[]) AS id
+  rows 1 -> 0 | UPDATE ana_runs SET status = 'failed', stopped_reason = 'orphaned', finished_at = now(), updated_at = now() WHERE status IN ('running','paused','awaiting_approval') AND h
+
+### runOnDemandCheck (chain integrity monitor)  [server/services/audit/chainIntegrityMonitor.ts:318]
+  result with P   : {"lastCheckAt":"2026-10-30T00:00:00.257Z","status":"healthy","totalEntries":2,"hashedEntries":2,"unhashedEntries":0,"brokenLinks":0,"details":[],"intervalMs":86400000}
+  result without P: {"lastCheckAt":"2026-10-30T00:00:04.239Z","status":"unverified","totalEntries":0,"hashedEntries":0,"unhashedEntries":0,"brokenLinks":0,"details":[],"intervalMs":86400000,"reason":"no entries: there is no chain to verify"}
+  rows 2 -> 0 | SELECT id, organization_id, sequence_number, record_hash, previous_hash FROM audit_events ORDER BY organization_id, sequence_number ASC
+
+### runConsolidation (explicit app_super_admin scope)  [server/services/memory-consolidation-job.ts:110]
+  result with P   : {"threadsProcessed":0,"memoriesConsolidated":0,"skipped":0,"rejectedByGate":0,"quarantined":0,"errors":0,"startedAt":"2026-10-30T00:00:00.305Z","completedAt":"2026-10-30T00:00:00.308Z"}
+  result without P: {"threadsProcessed":0,"memoriesConsolidated":0,"skipped":0,"rejectedByGate":0,"quarantined":0,"errors":0,"startedAt":"2026-10-30T00:00:04.292Z","completedAt":"2026-10-30T00:00:04.295Z"}
+
+### sweepExpiredProposals  [server/services/ana/submission-chat-sweep-scheduler.ts:57]
+  result with P   : {"expired":2}
+  result without P: {"expired":0}
+  rows 2 -> 0 | UPDATE ana_submission_chat_proposals SET status = 'expired' WHERE status = 'pending' AND expires_at < NOW() RETURNING id
+
+### verifyTenantChainOnAdminScope(A) (explicit app_super_admin scope)  [server/services/audit/tenant-chain-verdict.ts:80]
+  result with P   : {"ok":true,"rowsChecked":2,"tenants":1,"legacyRows":0,"sequencedRows":2,"head":{"verified":false,"status":"not_configured","anchorKey":null,"anchoredAt":null,"breaks":[],"reason":"head not verified against the anchor: no anchor store is configured on this deployment, so this verdict is the chain wal
+  result without P: {"ok":true,"rowsChecked":0,"tenants":0,"legacyRows":0,"sequencedRows":0,"head":{"verified":false,"status":"not_configured","anchorKey":null,"anchoredAt":null,"breaks":[],"reason":"head not verified against the anchor: no anchor store is configured on this deployment, so this verdict is the chain wal
+  rows - -> 1 | SELECT EXISTS ( SELECT 1 FROM pg_attribute WHERE attrelid = to_regclass('audit_logs') AND attname = 'chain_seq' AND NOT attisdropped ) AS present
+  rows 2 -> 0 | SELECT id, tenant_id, action, actor_id, target, payload_hash, occurred_at, sha256_chain, hmac_seal, chain_seq FROM audit_logs WHERE sha256_chain IS NOT NULL AND tenant_id
+
+### verifyTenantSealsOnAdminScope(A) (explicit app_super_admin scope)  [server/services/audit/compliance-reports/integrity-checks.ts:38]
+  result with P   : {"ran":true,"valid":true,"sealedRows":2,"brokenAt":null}
+  result without P: {"ran":true,"valid":true,"sealedRows":0,"brokenAt":null}
+  rows 2 -> 0 | SELECT id, tenant_id, action, actor_id, target, payload_hash, occurred_at, sha256_chain, hmac_seal, chain_seq FROM audit_logs WHERE sha256_chain IS NOT NULL AND tenant_id
+
+### ivdr-pack-worker claim (its SQL, rolled back)  [server/workers/ivdr-pack-worker.ts:695]
+  result with P   : ["7"]
+  result without P: []
+  rows 1 -> 0 | SELECT id, organization_id, project_id, pack_type, requested_by_user_id, outputs, use_latest_approved, sign_build FROM ivdr_pack_build_jobs WHERE status = 'QUEUED' ORDER 
+
+## IDENTICAL with and without the P arm
+- assertRlsCatalogPosture  [server/index.ts:170] : 3 statements; result {"role":"app_service","roleIsSuperuser":false,"roleBypassesRls":false,"tables":[{"table":"account_canon_items","rlsEnabled":true,"rlsForced":true,"policyCount":
+- runStartupInvariants  [server/lib/startup-invariants.ts:144] : 4 statements; result {"allPassed":false,"criticalFailures":1,"warnings":1,"invariants":[{"name":"database_connectivity","passed":true,"severity":"critical","message":"Database reach
+- assertAuthoringAuthorizationReady  [server/startup/authoringAuthorizationInvariant.ts:42] : 4 statements; result undefined
+- assertAuditImmutabilityForProduction  [server/startup/audit-enforcement.ts:215] : 1 statements; result {"ok":true,"expected":35,"present":35,"missing":[],"disabled":[],"tablesAbsent":[]}
+- findVectorsFromAnotherModel  [server/services/embedding-corpus-policy.ts:380,399] : 55 statements; result {"model":"BAAI/bge-m3","nativeDimensions":1024,"examined":["document_vectors","rag_chunks","knowledge_entries","client_memory_entries","project_memory_entries",
+- GatewayAuditLogger.initialize (store probe)  [server/services/ai-gateway/audit.ts:163] : 3 statements; result undefined
+- GatewayAuditLogger.log (ledger write)  [server/services/ai-gateway/audit.ts:368] : 4 statements; result undefined
+- FeatureToggleService.initializeFeatureToggle  [server/services/featureToggleService.ts:327] : 2 statements; result undefined
+- FeatureToggleService.isFeatureEnabled (no scope)  [server/services/featureToggleService.ts:59] : 1 statements; result false
+- FeatureToggleService.workspaceInOrganization (no scope)  [server/services/featureToggleService.ts:82] : 1 statements; result false
+- seedCapabilityRegistry  [server/services/ana-capability-registry.ts:653] : 113 statements; result {"seeded":55,"total":55}
+- backfillCapabilityGovernance  [server/services/ana-capability-registry.ts:719] : 56 statements; result {"updated":55}
+- seedTemplatesIfMissing  [server/services/intelligence/template-seeds.ts:692] : 202 statements; result {"ran":true,"inserted":20,"updated":0,"sections":141}
+- loadPatternRegistry(A)  [server/services/intelligence/pattern-registry.ts:727] : 1 statements; result {"loaded":false,"learnedCount":0}
+- runScheduledOnce  [server/db/scheduledOnce.ts:74] : 2 statements; result {"ran":true,"value":"ran"}
+- readLatestWindowResult (org 0)  [server/db/scheduledOnce.ts:219] : 1 statements; result null
+- registerSession + sessionInactivityReason  [server/services/session-inactivity.ts:226] : 4 statements; result {"ended":[],"reason":"lifetime"}
+- runAuditChainIntegrityCheck  [server/jobs/auditChainIntegritySweep.ts:595] : 6 statements; result {"ok":false,"rowsChecked":0,"stores":[{"store":"audit_logs.chain","status":"error","reason":"audit chain: this connection is scoped to one tenant (app.rls_enfor
+- runDigestHeartbeatTick (09:00Z Monday)  [server/services/digest/digest-heartbeat.ts:127,141] : 19 statements; result {"orgsChecked":4,"digestsCreated":2,"orgsFailed":0,"skipped":null}
+- runDigestHeartbeatTick, second tick (idempotency)  [server/services/digest/digest-heartbeat.ts:141] : 15 statements; result {"orgsChecked":4,"digestsCreated":2,"orgsFailed":0,"skipped":null}
+- registerDefaultSchedulesForActiveOrgs  [server/services/automation/scheduled-jobs.ts:492] : 0 statements; result 0
+- beatOwnedRuns  [server/services/ana/run-control.ts:1650] : 0 statements; result 0
+- runSecuritySelfTest  [server/services/securityHealth.ts:581] : 1 statements; result ["jwt_secret_strength:pass","jwt_rotation_status:pass","csp_middleware_active:pass","clamav_connectivity:skipped","audit_chain_integrity:skipped","audit_immutab
+- processWebhookEvent (minimal unhandled event type)  [server/routes/billing.ts:328] : 3 statements; result undefined

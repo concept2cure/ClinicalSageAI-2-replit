@@ -1,0 +1,4 @@
+ × tests/db/review-route-authoring-rr5.dbtest.ts > the Authoring signature door (RR5 merged with P-59) > closes a member’s task only on their own signature, with REVIEWER, over this document and the routed content 409ms
+   → promise resolved "'completed'" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 15 skipped (16)
