@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states a refused headings read as an alert, never an empty review 5088ms
+   → Unable to find an element with the text: /does not have access to this project/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 skipped (7)
