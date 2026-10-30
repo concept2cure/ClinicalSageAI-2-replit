@@ -43,7 +43,8 @@ describe('the CSR listings are generated streaming, at several thousand pages', 
       const t0 = performance.now();
       const result = await assembleCsr({ studyId: 'SYN-SCALE', title: SCALE_LABEL, sections: SECTIONS.filter(s => s.code !== '1'), tables: buildCSRTables(envelope.studyData),
         listingSource: { study: envelope.studyData, participants: envelope.participants, laboratory, protocolDeviations: [] },
-        supplied, notApplicable: { '16.2.6': 'SYNTHETIC scale test: no subject-level efficacy data' }, outDir: out, contentModifiedAt: new Date('2026-06-30T00:00:00Z') });
+        supplied, notApplicable: { '16.2.6': 'SYNTHETIC scale test: no subject-level efficacy data',
+          '14.3.3': 'SYNTHETIC scale test: listings only; the narratives leaf streams in csr-assembly-narratives.test.ts' }, outDir: out, contentModifiedAt: new Date('2026-06-30T00:00:00Z') });
       const seconds = (performance.now() - t0) / 1000;
       clearInterval(sampler);
       const listingPages = result.listings.reduce((n, l) => n + l.pages, 0);

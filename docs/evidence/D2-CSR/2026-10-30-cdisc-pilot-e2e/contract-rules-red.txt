@@ -1,0 +1,7 @@
+ × shared/__tests__/csr-source-contract.test.ts > the CSR source contract documents every declared field > names every optional field of the source, the ADaM manifest and the efficacy file in its rules
+   → expected { source: [ …(43) ], …(2) } to deeply equal { source: [], manifest: [], …(1) }
+ × shared/__tests__/csr-source-contract.test.ts > the CSR source contract documents every declared field > states the D10–D12 and D17 declarations as the validator and the derivation apply them
+   → expected 'All study and protocol identifiers, S…' to match /efficacyStatus "not-supplied"[^\n]*co…/
+ ✓ shared/__tests__/csr-source-contract.test.ts > the CSR source contract documents every declared field > fails when a declaration loses its rule (the check is not vacuous)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)
