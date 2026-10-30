@@ -3,6 +3,7 @@
  * meaning, validate a statistical method, or certify that a model found every
  * claim. The assigned human reviewer explicitly attests coverage and meaning.
  */
+import { stableStringify } from '../../../shared/canonical-json';
 import { createHash } from 'node:crypto';
 
 /* The format, the table keys, the shapes and the exact numerical-display rule
@@ -50,16 +51,19 @@ export const scientificSha256 = (text: string) => createHash('sha256').update(te
 
 
 
-/** Canonical JSON for JSONB round trips. Undefined object properties are omitted. */
+/** Canonical JSON for JSONB round trips: the one serializer (shared/canonical-json.ts), after refusing
+ *  what it would otherwise coerce. A non-finite number or a non-JSON value is refused, never written as null.
+ *  Undefined object properties are omitted, as stableStringify omits them. */
 export function canonicalScientificJson(value: unknown): string {
-  const normalize = (v: unknown): unknown => {
-    if (v === null || typeof v === 'boolean' || typeof v === 'string') return v;
-    if (typeof v === 'number' && Number.isFinite(v)) return v;
-    if (Array.isArray(v)) return v.map(normalize);
-    if (object(v)) return Object.fromEntries(Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => [k, normalize(v[k])]));
-    return fail('CSR_EVIDENCE_INVALID', 'Evidence contains a non-JSON or non-finite value.');
+  const check = (v: unknown): void => {
+    if (v === null || typeof v === 'boolean' || typeof v === 'string') return;
+    if (typeof v === 'number' && Number.isFinite(v)) return;
+    if (Array.isArray(v)) { v.forEach(check); return; }
+    if (object(v)) { for (const k of Object.keys(v)) if (v[k] !== undefined) check(v[k]); return; }
+    fail('CSR_EVIDENCE_INVALID', 'Evidence contains a non-JSON or non-finite value.');
   };
-  return JSON.stringify(normalize(value));
+  check(value);
+  return stableStringify(value);
 }
 
 export function parseScientificReviewSubmission(raw: unknown): ScientificReviewSubmission {
