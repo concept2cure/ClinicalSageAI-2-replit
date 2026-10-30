@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/routes/c2c/__tests__/project-settings.pglite.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/access-settings-compat-green-results.json",
+  "exitCode": 0,
+  "passed": 38,
+  "failed": 0,
+  "skipped": 0,
+  "files": 1,
+  "unchangedInputs": true,
+  "failures": []
+}

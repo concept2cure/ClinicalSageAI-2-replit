@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts server/services/ana/__tests__/batch-draft-sections.test.ts server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts server/services/ana/__tests__/draft-product-context.pglite.test.ts server/services/ana/__tests__/rbm-launch-admission.test.ts server/services/ana/__tests__/ana-cannot-sign.test.ts server/services/ana/__tests__/tool-authorization.test.ts server/services/ana/__tests__/tool-authorization-enforcement.test.ts server/services/ana/__tests__/ana-launch-scope-execution.test.ts server/routes/__tests__/ana-intelligence-recorded-project.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/final-ana-results.json",
+  "exitCode": 0,
+  "passed": 223,
+  "failed": 0,
+  "skipped": 0,
+  "files": 9,
+  "unchangedInputs": true,
+  "failures": []
+}

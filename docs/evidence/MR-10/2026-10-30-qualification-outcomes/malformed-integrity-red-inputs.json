@@ -1,0 +1,10 @@
+{
+  "base": "1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10",
+  "kind": "malformed captured integrity false failure before final guard",
+  "files": {
+    "server/services/ectd/qualification/qualify.ts": "cbf5cfadbd7c7e9c32c752af19960cd50afbaca4ecba13fdf01d4a4c3b555937",
+    "server/services/ectd/qualification/outcome.ts": "635e3f6f11452eb9ac63f5e3aa519d5276144f736b905c77eccd95b2b64aae37",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts": "13841db360af52be5b82a419dff505da15cb417c48153782e636f80d65aec399",
+    "server/services/ectd/dtd-bundler.ts": "87849d63455d8eb05291a327586382747531223a4284a7ca7bbe8ef850b0901f"
+  }
+}

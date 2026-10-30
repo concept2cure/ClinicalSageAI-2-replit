@@ -1,0 +1,30 @@
+{
+  "frozenAt": "2026-10-30T18:02:08.900395+00:00",
+  "scope": "Four existing RBM tests only. No production files, assertions, baseline, dependency, Git, build or whole TypeScript changes.",
+  "files": {
+    "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts": "8d479d67059716eb5726a9be31edd9ddbd5684377016d4a2f1096a6242616a1e",
+    "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts": "aae63c3c0207d6186dc06a9a1bc986e7c93f80f02d64595998b963cae2c9b607",
+    "server/routes/__tests__/mdx-rbm-signed-records.test.ts": "42f8caff0caa0837d36dcc99cabd418244e3629f92e7c50ac8c21f297f52ede9",
+    "server/routes/__tests__/rbm-board-current-project.test.ts": "28d1d285967033058f087b0e33b97dbfcc4ba7c335c430eaa09503d0bae81e9c"
+  },
+  "assertionLinesIdenticalToBefore": true,
+  "edits": [
+    "Three minimal request dbClient collaborators attached using Object.assign instead of intersecting Express Request with full pg client assignment",
+    "One typed PGlite column_name projection"
+  ],
+  "tests": {
+    "receipt": "access-type-tests-green-summary.json",
+    "passed": 37,
+    "failed": 0,
+    "files": 4,
+    "selectedInputs": 5,
+    "unchangedInputs": true
+  },
+  "lint": {
+    "receipt": "access-type-tests-lint.json",
+    "errors": 0,
+    "beforeWarnings": 0,
+    "afterWarnings": 0
+  },
+  "limits": "Focused execution pins four test files and Vitest config only, not a complete production dependency closure. Root owns current merged-source regression and full TypeScript gate."
+}

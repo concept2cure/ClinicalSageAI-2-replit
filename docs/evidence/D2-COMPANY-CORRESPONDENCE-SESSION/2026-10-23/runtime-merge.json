@@ -1,0 +1,11 @@
+{
+  "before": "fc12f268a29ceaeacf2575a4ef96bc131d1f5fa9",
+  "incoming": "eba2d8050",
+  "merged": "fd64f340ccc8b72b8b30b34515d4394e8bd129bd",
+  "normalMerge": true,
+  "conflictsResolved": [
+    "docs/work-orders/README.md: concurrent row insertion; retained each unique company-correspondence and runtime lane row once."
+  ],
+  "productionConflicts": [],
+  "firstPush": "All gates passed, full TypeScript0; remote compare-and-swap refused after another session advanced canonical. No bypass/force."
+}
