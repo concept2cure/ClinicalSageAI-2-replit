@@ -83,6 +83,7 @@ export interface SopRegisterProps {
   /** The shell holds its other tabs while the canonical editor is open. */
   onEditorOpenChange?: (open: boolean) => void;
   qmsDocumentId?:string;
+  qmsIntent?:'read';
   qmsTargetRequest?:number;
 }
 export type StatusFilter = 'all' | 'effective' | 'in_review' | 'draft';
@@ -176,7 +177,7 @@ export function SopRegister(props: SopRegisterProps) {
   const user = useAuthUser();
   return <SopRegisterSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
 }
-function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEditorOpenChange, qmsDocumentId, qmsTargetRequest }: SopRegisterProps) {
+function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEditorOpenChange, qmsDocumentId, qmsIntent, qmsTargetRequest }: SopRegisterProps) {
   const reg = useSopRegister();
   const tpl = useSopTemplates();
   const rev = useReviewDue();
@@ -203,7 +204,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const training = trainComp.rows ?? NO_TRAINING;
   const user = useAuthUser(); // server resolves every signer and acknowledging actor
   const readerScope = `${user?.organizationId ?? ''}:${user?.id ?? ''}`;
-  const [reading, setReading] = React.useState<{ documentId: number; scope: string } | null>(null);
+  const [reading, setReading] = React.useState<{ documentId: number; scope: string; successor?: boolean } | null>(null);
   React.useEffect(() => { setReading(null); }, [readerScope]);
   const openReader = (documentId: number) => setReading({ documentId, scope: readerScope });
   const canOpen = (documentId: number) => personalTrainingScope(user, documentId) !== null;
@@ -248,9 +249,11 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
     if(!d)return;
     if(editingId===d.id){target.clear();return;}
     if(editingId!==null)return; // Keep the canonical workbench's unsaved-leave decision in control.
+    // A training notice opens the reader, on the version approved for a later day when one waits (slice 4b).
+    if(qmsIntent==='read'){target.clear();setReading({documentId:d.id,scope:readerScope,successor:true});return;}
     if(d.authoringDocumentId){target.clear();setEditingId(d.id);}
     else if(d.status==='draft'){target.clear();setSetup({document:d});}
-  },[target.document,target.clear,editingId]);
+  },[target.document,target.clear,editingId,qmsIntent,readerScope]);
   const targetStatus=<ControlledDocumentTargetStatus target={target} editing={editingId!==null} onRevise={d=>{target.clear();setSetup({document:d,revision:true});}} />;
   React.useEffect(() => { onEditorOpenChange?.(editingId !== null); }, [editingId, onEditorOpenChange]);
   const openDocument = (d: QmsDoc) => {
@@ -625,7 +628,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           setRevising(null); reg.refresh?.(); setEditingId(row.id);
         }} />}
       {reading && reading.scope === readerScope && (
-        <PersonalTrainingReader key={`${readerScope}:${reading.documentId}`} documentId={reading.documentId} onClose={() => setReading(null)} onAcknowledged={() => { trainComp.refresh(); reg.refresh(); }} />
+        <PersonalTrainingReader key={`${readerScope}:${reading.documentId}`} documentId={reading.documentId} startOnSuccessor={reading.successor} onClose={() => setReading(null)} onAcknowledged={() => { trainComp.refresh(); reg.refresh(); }} />
       )}
       {recordReview.row && (
         <RecordPeriodicReview row={recordReview.row} signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}

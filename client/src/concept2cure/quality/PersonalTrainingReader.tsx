@@ -12,6 +12,8 @@ import { usePersonalTrainingAcknowledgement, usePersonalTrainingRecord, type Per
 
 export interface PersonalTrainingReaderProps {
   documentId: number;
+  /** Open on the version approved for a later day, when one waits (a training notice); otherwise the version in force. */
+  startOnSuccessor?: boolean;
   onClose: () => void;
   onAcknowledged: () => void | Promise<void>;
 }
@@ -40,7 +42,7 @@ function mayEdit(props: ReaderSessionProps, record: PersonalTrainingRecord): boo
 }
 
 function ReaderSession(props: ReaderSessionProps) {
-  const record = usePersonalTrainingRecord(props.scope, props.isCurrent);
+  const record = usePersonalTrainingRecord(props.scope, props.isCurrent, props.startOnSuccessor ? 'successor' : 'in-force');
   const { busy, inFlight, acknowledge } = usePersonalTrainingAcknowledgement(props.scope, record, props.onAcknowledged);
   const [editing, setEditing] = React.useState(false);
   const beforeClose = React.useRef<(() => Promise<boolean>) | null>(null);

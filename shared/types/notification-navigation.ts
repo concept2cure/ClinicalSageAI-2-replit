@@ -11,7 +11,9 @@ export interface NotificationRecordTarget {
 export const NOTICE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const noticePositiveId = (value: unknown): value is string => typeof value === 'string' && /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) <= 2_147_483_647;
 /** A unified task's id: `TASK-…`, or a review route member's `ROUTE-…` (server/services/review/review-route.ts). */
-export const noticeTaskId = (value: unknown): value is string => typeof value === 'string' && /^(TASK|ROUTE)-[A-Za-z0-9_-]{1,120}$/.test(value);
+/** A task's id as each writer makes it: TASK-/ROUTE- (the task routes, review routes) or a UUID (createUnifiedTask, every source-task). */
+export const noticeTaskId = (value: unknown): value is string => typeof value === 'string'
+  && (/^(TASK|ROUTE)-[A-Za-z0-9_-]{1,120}$/.test(value) || NOTICE_UUID.test(value));
 /** An AnA conversation's id, as its address carries it (client v2/routing.ts). */
 export const noticeThreadId = (value: unknown): value is string => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(value);
 export const noticeSafeSectionCode = (value: string): boolean => value.length > 0 && value.length <= 128
@@ -20,7 +22,7 @@ export const noticeSafeSectionCode = (value: string): boolean => value.length > 
 const allowedKeys: Record<NotificationTargetSurface, readonly string[]> = {
   insights: ['reportRunId'], tasks: ['taskId'], 'document-authoring': ['documentId', 'sectionCode'],
   'project-home': [], 'submission-center': ['submissionId', 'sequenceId', 'ws'],
-  'gateway-transmittals': ['transmittalId'], 'protocol-dev': ['protocol', 'protocolScope'], quality: ['qmsDocumentId'],
+  'gateway-transmittals': ['transmittalId'], 'protocol-dev': ['protocol', 'protocolScope'], quality: ['qmsDocumentId', 'qmsIntent'],
   'conversation-thread': ['threadId'],
   // A Vault version: a review route's notice opens it (RR1b, REVIEW_ROUTING §2.11).
   vault: ['documentId'],
@@ -35,7 +37,8 @@ const validParams: Record<NotificationTargetSurface, (p: Record<string, string>)
     && (p.ws === undefined || SUBMISSION_WORKSPACES.some(workspace => workspace.id === p.ws)),
   'gateway-transmittals': p => noticePositiveId(p.transmittalId),
   'protocol-dev': p => noticePositiveId(p.protocol) && (p.protocolScope === undefined || p.protocolScope === 'unfiled'),
-  quality: p => noticePositiveId(p.qmsDocumentId),
+  // `qmsIntent: 'read'`: a training task's notice opens the training reader (MR-12 Stage 4 slice 4b).
+  quality: p => noticePositiveId(p.qmsDocumentId) && (p.qmsIntent === undefined || p.qmsIntent === 'read'),
   'conversation-thread': p => noticeThreadId(p.threadId),
   vault: p => typeof p.documentId === 'string' && NOTICE_UUID.test(p.documentId),
 };

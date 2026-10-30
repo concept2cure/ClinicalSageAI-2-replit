@@ -47,6 +47,8 @@ export interface QualityAppProps {
   /** Which surface to open first. */
   initialTab?: QualityTab;
   qmsDocumentId?: string;
+  /** 'read': the notice that selected the document asks its reader to read it (a training task's). */
+  qmsIntent?: 'read';
   qmsTargetRequest?: number;
 }
 
@@ -106,7 +108,7 @@ export function recordTabContext(tab: QmsRecordTab, ctx: RecordRegisterContext |
   };
 }
 
-export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumentId,qmsTargetRequest }: QualityAppProps) {
+export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumentId,qmsIntent,qmsTargetRequest }: QualityAppProps) {
   const [tab, setTab] = React.useState<QualityTab>(initialTab);
   React.useEffect(()=>{if(qmsDocumentId)setTab('sop');},[qmsDocumentId,qmsTargetRequest]);
   const [editingDocument, setEditingDocument] = React.useState(false);
@@ -368,7 +370,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
             <QmsRecords tab={tab} onAsk={onAsk} onContext={setRecordCtx} />
           ) : tab === 'sop' ? (
             <SopRegister onAsk={onAsk} onNavigate={onNavigate} filter={sopFilter} onFilterChange={setSopFilter}
-              onEditorOpenChange={setEditingDocument} qmsDocumentId={qmsDocumentId} qmsTargetRequest={qmsTargetRequest} />
+              onEditorOpenChange={setEditingDocument} qmsDocumentId={qmsDocumentId} qmsIntent={qmsIntent} qmsTargetRequest={qmsTargetRequest} />
           ) : (
             <ChangeControl
               onAsk={onAsk} onNavigate={onNavigate} onEditorOpenChange={setEditingDocument}
