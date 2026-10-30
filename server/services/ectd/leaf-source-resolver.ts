@@ -293,6 +293,22 @@ export function notFinalizedStatus(
   return status ?? whenMissing;
 }
 
+/**
+ * Whether a file this server rendered may be released (P-22: only approved
+ * documents are released). 2026-10-30, the CSR path sweep: an assembled clinical
+ * study report ('csr_assembly', csr-assembly-run.ts) is rendered from the build
+ * job's sections, not from an approved, signed document, and nothing binds an
+ * assembly to one. The CSR's approval is the Authoring document's. Until a
+ * binding exists, its files read as not approved here, in Validation and
+ * Dispatch (leaf-document-resolver) and at freeze and transmit (the assembler
+ * below). The server's own rendered forms and reports keep their own rules.
+ */
+export function renderedLeafNotTransmittable(renderedFrom: string | null | undefined): string | null {
+  return renderedFrom === 'csr_assembly'
+    ? 'an assembled clinical study report, not bound to an approved and signed CSR'
+    : null;
+}
+
 /** Rows of a `db.execute` result across drivers (node-postgres QueryResult / PGlite Results / bare array). */
 function rowsOf(result: unknown): Array<Record<string, unknown>> {
   if (Array.isArray(result)) return result as Array<Record<string, unknown>>;
@@ -732,6 +748,7 @@ export async function materializeLeafSources(
           md5: renderedLeafFiles.md5,
           mime: renderedLeafFiles.mime,
           fileName: renderedLeafFiles.fileName,
+          renderedFrom: renderedLeafFiles.renderedFrom,
         })
         .from(renderedLeafFiles)
         .where(and(eq(renderedLeafFiles.id, documentId), eq(renderedLeafFiles.organizationId, organizationId)))
@@ -774,6 +791,8 @@ export async function materializeLeafSources(
       await fs.writeFile(sourcePath, bytes);
       byKey.set(key, { fileName, sourcePath, md5: row.md5, sha256: row.sha256 });
       materialized++;
+      const renderedUnfinalized = renderedLeafNotTransmittable(row.renderedFrom);
+      if (renderedUnfinalized) noteUnfinalized(row.fileName || `rendered_leaf_files:${documentId}`, renderedUnfinalized);
       continue;
     }
 

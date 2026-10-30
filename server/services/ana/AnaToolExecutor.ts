@@ -10058,22 +10058,26 @@ registerToolHandler('explain_validation_findings', async (input, ctx) => {
   }
 });
 
+// Rule 2 (2026-10-30): the verdict is the stored sequence's assessment (the gate
+// freeze, dispatch and transmit enforce), never counts typed into the call. It
+// took validation_errors and unresolved_shadow_criticals from the model and
+// returned clearedToDispatch from them; only the route ever passed the assessment.
 registerToolHandler('dispatch_qc_check', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'dispatch_qc_check requires tenant context (organizationId and userId).' });
   }
-  const region = typeof input.region === 'string' ? input.region : '';
-  const validationErrors = typeof input.validation_errors === 'number' ? input.validation_errors : NaN;
-  const unresolvedShadowCriticals = typeof input.unresolved_shadow_criticals === 'number' ? input.unresolved_shadow_criticals : NaN;
-  const leaves = Array.isArray(input.leaves) ? (input.leaves as any[]) : [];
-  if (!region) return JSON.stringify({ error: 'region is required.' });
-  if (!Number.isFinite(validationErrors)) return JSON.stringify({ error: 'validation_errors (number) is required.' });
-  if (!Number.isFinite(unresolvedShadowCriticals)) return JSON.stringify({ error: 'unresolved_shadow_criticals (number) is required.' });
+  const sequenceId = typeof input.sequence_id === 'number' && Number.isSafeInteger(input.sequence_id) && input.sequence_id > 0 ? input.sequence_id : NaN;
+  if (!Number.isFinite(sequenceId)) {
+    return JSON.stringify({ error: 'sequence_id (number) is required: the dispatch verdict is read from the stored sequence, never from counts given in the call.' });
+  }
   try {
-    const { runDispatchQc } = await import('../submission-ai/submission-ai-service.js');
+    const [{ assessSequenceDispatchReadiness }, { runDispatchQc }] = await Promise.all([
+      import('../ectd/assess-dispatch-readiness.js'), import('../submission-ai/submission-ai-service.js')]);
+    const assessment = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ctx.organizationId });
     const result = await runDispatchQc(
-      { region, validationErrors, unresolvedShadowCriticals, leaves: leaves.map((l) => ({ sectionCode: l.section_code, operation: l.operation })) },
-      { organizationId: ctx.organizationId, userId: ctx.userId, submissionId: typeof input.submission_id === 'number' ? input.submission_id : undefined }
+      { region: assessment.region, validationErrors: assessment.validationErrors, unresolvedShadowCriticals: assessment.unacknowledgedShadowCriticals, leaves: [] },
+      { organizationId: ctx.organizationId, userId: ctx.userId, submissionId: typeof input.submission_id === 'number' ? input.submission_id : undefined },
+      { assessment },
     );
     return JSON.stringify({ ok: true, ...((result as object) ?? {}) });
   } catch (err) {

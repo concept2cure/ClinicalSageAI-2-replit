@@ -98,9 +98,39 @@ export function isExactNumericalDisplayAt(text: string, offset: number, display:
   if (text.slice(offset, offset + display.length) !== display) return false;
   const left = offset > 0 ? text[offset - 1] : '';
   const right = text[offset + display.length] ?? '';
+  // 2026-10-30: a decimal point or thousands separator followed by a digit
+  // continues the number ("12" is not inside "12.5", "1" not inside "1,190");
+  // one that ends a sentence or a clause does not ("was 12.").
+  const continuesRight = /[0-9%/]/.test(right) || (/[.,]/.test(right) && /[0-9]/.test(text[offset + display.length + 1] ?? ''));
   const startsNumerically = /^[0-9.,%/]/.test(display);
   const endsNumerically = /[0-9.,%/]$/.test(display);
-  return !(startsNumerically && /[0-9.,%/]/.test(left)) && !(endsNumerically && /[0-9%/]/.test(right));
+  return !(startsNumerically && /[0-9.,%/]/.test(left)) && !(endsNumerically && continuesRight);
+}
+
+/** Character ranges inside HTML tags and entities: a digit there is markup, not a reported result. */
+export function markupRanges(content: string): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  for (const m of content.matchAll(/<[^>]*>|&#?[a-zA-Z0-9]+;/g)) ranges.push([m.index ?? 0, (m.index ?? 0) + m[0].length]);
+  return ranges;
+}
+
+/**
+ * Whether a retained cell's value `display` is reported at `at` in a saved
+ * section's `content`: outside markup and on the number boundaries above, so
+ * "190" is not inside "1190" and "12" is not inside "12.5". A following "%"
+ * continues a number ("12" is not "12%"), except for a cell in a percentage
+ * column (`header` names "%"), whose value the text reports with its unit
+ * ("83.3%"). The one rule by which the screen offers an occurrence
+ * (csrEvidenceMap.ts figureOccurrences) and the server verifies a claim against
+ * the whole saved section (csr-scientific-review-core.ts, 2026-10-30; it checked
+ * only inside the claimed span, which has no neighbours).
+ */
+export function reportedDisplayAt(content: string, at: number, display: string, header: string,
+  markup: ReadonlyArray<[number, number]> = markupRanges(content)): boolean {
+  const end = at + display.length;
+  if (content.slice(at, end) !== display || markup.some(([a, b]) => at < b && end > a)) return false;
+  if (isExactNumericalDisplayAt(content, at, display)) return true;
+  return content[end] === '%' && header.includes('%') && isExactNumericalDisplayAt(content.slice(0, end), at, display);
 }
 
 /** Do not accept a source cell of "190" merely because the draft says "1190".
