@@ -1,0 +1,40 @@
+{
+  "method": "ESLint lintText with original file paths and saved original source; no temporary TypeScript file or baseline change",
+  "files": [
+    {
+      "path": "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/routes/__tests__/mdx-rbm-signed-records.test.ts",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/routes/__tests__/rbm-board-current-project.test.ts",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "messages": []
+    }
+  ],
+  "beforeWarnings": 0,
+  "afterWarnings": 0,
+  "afterErrors": 0
+}

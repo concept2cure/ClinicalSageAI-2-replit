@@ -1,0 +1,42 @@
+[
+  {
+    "file": "server/routes/mdx-rbm.ts",
+    "sha256": "493a20f9b5e554a00562b5aae47fefb0dd532c09b7ee058ee6553fda6c011886",
+    "beforeWarnings": 7,
+    "afterWarnings": 7,
+    "errors": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/rbm/rbm-signature-content.ts",
+    "sha256": "24b96c9b4709f50d7ac4df34633622e01a533497305026d7daa304615b04bf99",
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "errors": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/part11/signature-persistence.ts",
+    "sha256": "1dafa1e30adee13a46b6a4217338da6ea22fd18b1dce437651e90756588da522",
+    "beforeWarnings": 1,
+    "afterWarnings": 1,
+    "errors": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/part11/governed-target-binders.ts",
+    "sha256": "253e1e5b01ce16a6dfbe37846c6573b8a7bb629d791e6e7b67185a2288150bcb",
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "errors": 0,
+    "messages": []
+  },
+  {
+    "file": "server/routes/__tests__/rbm-approval-signature.pglite.test.ts",
+    "sha256": "fa702c7e63faafbf3b0fb2cb6a5726865eaf127f5a49affb94c9d47c9e353434",
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "errors": 0,
+    "messages": []
+  }
+]

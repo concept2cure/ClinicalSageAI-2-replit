@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-10-30T18:29:05.059923+00:00",
+  "incoming": "9e6ee17ba",
+  "mergeCommit": "0af600d7e411797907ef1b334644178b9d694185",
+  "conflicts": [],
+  "productionPins": {
+    "server/services/ectd/dtd-bundler.ts": "87849d63455d8eb05291a327586382747531223a4284a7ca7bbe8ef850b0901f",
+    "server/services/ectd/stf-generator.ts": "c77399a62aa963ef77f9a309af0dd2b40b6050ca4b50341cdbf276dc1c0586e8",
+    "server/services/submission-gateways/regional-packager.ts": "997d58bc39e1f4af533fa3243c049e14fd418deee4926b6c96a9e731e38d9277"
+  },
+  "freshRegression": [
+    "server/services/ectd/__tests__/dtd-bundler.test.ts",
+    "server/services/ectd/__tests__/stf-agency-source.test.ts",
+    "server/services/ectd/__tests__/stf-generator.test.ts",
+    "server/services/submission-gateways/__tests__/regional-packager-dtd-validation.test.ts"
+  ],
+  "sourceScope": "STF supportive file and agency prerequisites only; bounded RBM compatibility review separately recorded; no upstream cohort borrowed.",
+  "reviewer": "/root/rbm_signature_review",
+  "readOnlyReviewNoExecution": true,
+  "verdict": "No RBM compatibility blocker; source-based STF info types, supportive-file readiness and package-relative stylesheet; optional option backward-compatible; no import-time external work or actor/project/signature change."
+}

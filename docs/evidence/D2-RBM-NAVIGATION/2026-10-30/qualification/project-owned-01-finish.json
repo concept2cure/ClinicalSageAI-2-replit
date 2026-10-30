@@ -1,0 +1,18 @@
+{
+  "observedAt": "2026-10-30T16:51:32.351188+00:00",
+  "files": {
+    "client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx": "9b3c8bd0292d3af16397f6ac9cfccadb5d2dcadf6b4aae5ff0c0ebdf5822ca7a",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": "8ca3ab79399f1258a7d7a60dcf9a312d9588e3af372185912bbbaf33b8a88557",
+    "client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx": "79222e1509427a19621a677a24d3783f1e60a3bd20e51248e208e9888ec00c5b",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx": "a0375e6d1c59959e86a1a6fc92113791b095affe9ec22c3674eb8711bf0bcbd4",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx": "2d4b4f0094928debf9fdb4f2fae292529993a1021293bc4e40c160ca671217e9",
+    "client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx": "3ab404e3a6872bb1b4fcd28680d4b11607159f4d03bc87f6aaab1165a6263fdc",
+    "server/routes/c2c/__tests__/projects-create.test.ts": "430252bbfeb057d72961ba2887cb7d5265e117215e616b21c05289fa18d64d22",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts": "821759b412d4687f6ea3f40341f58081074832de255341605933d24196c163af",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "d57a3c27bbede1a9821d206a7975e27ff8daba4be092fe76626327d20a41598f",
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx": "5f55b3acc35a8437662dfb3d10dc628d71fd787ee5bd3f334826d8df0a4418ac",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "fc480bcd1f210c77c9068daeff4576f7930d7d1dc0968cb8a82a8806c8f57b22",
+    "client/src/concept2cure/v2/surfaces/rbmBoard.ts": "2e88b3a40cb6797efcbc58d40f4d8458eacb675d7eaf95ea59d716e782f8d9e7",
+    "server/routes/c2c/projects.ts": "08c8e25d518e2f2918ce0ab55ada6143ce2049c97c359c4d84487096bfd4ae6e"
+  }
+}

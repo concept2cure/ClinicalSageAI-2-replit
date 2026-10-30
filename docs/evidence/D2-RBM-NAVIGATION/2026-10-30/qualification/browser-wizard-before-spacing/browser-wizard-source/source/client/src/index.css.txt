@@ -1,0 +1,1045 @@
+/* Canonical Concept2Cure design-system tokens are loaded ONCE, by
+   client/src/main.tsx, before this file. They are deliberately NOT re-imported
+   here.
+
+   They used to be, and the two imports resolved to the same path — so Vite
+   inlined design-system/colors_and_type.css into the entry chunk twice
+   (~19 KB duplicated, both a full and a minified copy of the same :root and
+   .dark blocks). Removing the duplicate is safe because the only stylesheet
+   loaded between main.tsx's import and this one — styles/projects-prototype.css
+   — declares zero custom properties, so nothing was relying on the second copy
+   to win a cascade.
+
+   The design-system folder remains the single source of truth; do not copy its
+   contents into v2's own CSS (that re-introduces the 2026-04-26 regression
+   class). See design-system/CLAUDE.md.
+
+   `zen.css` (799 lines, 49 --zen-* tokens, 92 .zen-* selectors) was imported
+   here and shipped on every page load with zero consumers: no var(--zen-*) and
+   no .zen-* class name appeared in any source file in the repository. It is
+   deleted rather than left loading. tests/ui/token-authority.test.ts pins both
+   facts so neither can come back silently. */
+/* ─── Tailwind, scanning the CLIENT and nothing else ──────────────────────────
+   `source(none)` turns OFF Tailwind v4's automatic source detection, and the
+   two `@source` lines put back exactly what the browser ships.
+
+   Automatic detection walks the whole project root minus .gitignore, and that
+   is not a theoretical over-reach here — the shipped stylesheet contained
+   thirty-four rules harvested from this repository's own tooling, among them
+
+       .\[ci\:no-dev-auth-in-prod\]   .\[ci\:jwt-verify-pinned\]
+       .\[ci\:password-hygiene\]      .\[ci\:rls-allowlist-sync\]
+       .\[ci\:tenant-isolation\]      .\[ci\:client-reachability\]
+
+   — the console prefixes of scripts/ci/*.mjs, read as Tailwind arbitrary
+   properties and compiled into a public asset. A named list of the repo's
+   security guardrails was being served to every visitor. `.\[ci\:test-imports\]`
+   is in that set, which dates it: adding a CI script an hour ago changed the
+   production CSS.
+
+   The same scan is where `.bg-gray-200`, `.text-gray-500` and `.bg-black/20`
+   came from — no file under client/src uses any of those three. Scoping
+   detection to the client removed 200 selectors and 13,991 bytes (10.2%) from
+   this stylesheet and added none; each of the 200 was checked against the
+   scanned sources, and the two apparent hits were artefacts of a looser
+   tokeniser than Tailwind's own (`sticky` in a code comment, `blur` inside
+   `backdropFilter: 'blur(12px)'`).
+
+   Two further consequences, both quiet: any edit to a doc or a script could
+   change the production CSS hash and bust every client's cache, and
+   `tailwind.config.ts`'s `content: [...]` array has been dead since the v4
+   upgrade — v4 does not read a JS config without an explicit `@config`, so
+   anyone reading that file has had a false model of what gets scanned.
+
+   ── The theme, and why `@config` is now here ──────────────────────────────
+   v4 also stops reading the config's THEME without `@config`, and that theme is
+   115 hex values remapping fifteen colour families to "Anthropic warm". It was
+   inert: `.bg-black/20` compiled to `#0003`, Tailwind's stock black, not the
+   config's `#141413`.
+
+   The first measurement of the blast radius said nil, and that was wrong —
+   `git grep -E` does not honour `\b` as I assumed, so a search for palette
+   utilities under client/src returned zero and I wrote it down as fact. A
+   proper walk finds 31 distinct utilities across four files: the three auth
+   entry pages and the error boundary. They are precisely the surfaces that
+   render OUTSIDE the v2 shell, and they use ZERO design-system custom
+   properties — they are styled entirely in Tailwind utilities, saturated with
+   `stone-*`, which only makes sense against the warm remap. They were authored
+   for this palette, and the v4 migration silently substituted another one.
+
+   So `@config` is added, and both risks were checked by building rather than by
+   reasoning:
+
+     · source scoping SURVIVES it. `source(none)` + the two `@source` lines
+       still win, and the `.\[ci\:…\]` rules stay out of the bundle. (The
+       config's own `content` array happens to name the same two globs, so
+       there was nothing to fight over.)
+     · the palette actually lands. `bg-stone-50` is now `#faf9f5` not stock
+       oklch; `bg-blue-50` `#edf3f8` (Anthropic blue) not stock cool blue;
+       `text-emerald-600` `#647746` and `bg-green-100` `#e4ebd8` (earthy green)
+       not stock emerald. Zero stock `--color-*-NNN: oklch(…)` tokens remain.
+
+   Cost: the entry stylesheet goes 123,298 → 140,690 bytes, because utilities
+   now compile to the config's literals. That is the price of the signup and
+   login screens rendering in the palette they were designed against instead of
+   Tailwind's defaults. */
+@import "tailwindcss" source(none);
+@source "../index.html";
+@source "./**/*.{js,jsx,ts,tsx}";
+@config "../../tailwind.config.ts";
+
+/* ─── Global token-name shim ──────────────────────────────────────
+   Canonical names the brand accent --accent-main-{000,100,200} and the
+   motion duration --dur-normal. Several mirrored kit stylesheets (most
+   notably the Phase 3 Projects prototype, which is mirror-synced and
+   must not be hand-edited, plus shared module CSS files) reference the
+   shorter --accent-{000,100,200} and bare --dur. Alias once globally so
+   var() lookups resolve regardless of which name the source CSS uses.
+   Do NOT redeclare bg/text/border/radius/font tokens here — those come
+   straight from canonical. */
+:root {
+  --accent-000: var(--accent-main-000);
+  --accent-100: var(--accent-main-100);
+  --accent-200: var(--accent-main-200);
+
+  /* Shadow base for the kits' warm elevation. Canonical --shadow-* are
+     Claude-flat (0-alpha); the kit menus and modals mix their own shadow from a
+     near-black at low alpha. NOT --text-100: that inverts to #faf9f5 in dark
+     mode and a shadow has to stay dark in both. Both v2 and the device kit read
+     it, so it is declared once here rather than twice in stylesheets that can
+     load independently and disagree. */
+  --black: #141413;
+
+  --dur: var(--dur-normal);
+
+  --border-light: var(--border-subtle, var(--border));
+  /* projects-prototype.css references --border-200 (defined only inside the
+     pdev module's scoped sheet); alias to the same bg-300 value globally so
+     the per-file token-cascade gate resolves it. */
+  --border-200: var(--bg-300);
+  --border-100: var(--bg-200);
+
+  /* Layout widths — the v2/biopharma/mdx family sheets reference these; the
+     module roots re-declare them scoped (app-v2.css .c2c-v2, mdx app.css),
+     which wins over this :root fallback. Declared here so the per-file
+     token-cascade gate resolves them in every family sheet. */
+  --rail: 264px;
+  --rail-collapsed: 56px;
+  --rail-expanded: 260px;
+
+  /* pdev module vars — defined on the module's scoped root in
+     concept2cure/pdev/app.css (which wins); mirrored here for the gate. */
+  --pdev-rail-w: 280px;
+  --pdev-rail-collapsed: 56px;
+  --pdev-ana-w: 380px;
+  --pdev-ana-seam: 32px;
+  --pdev-dur: var(--dur-normal, 200ms);
+  --pdev-ease: var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+
+  /* Element-scoped dynamic vars: [data-tone] rules set --t/--tm per tone and
+     gauges set --pct inline; these :root defaults only give var() a resolvable
+     fallback (idle tone, empty gauge) and are always overridden in use. */
+  --t: var(--text-400);
+  --tm: var(--idle-muted);
+  --pct: 0;
+  --bg-50: var(--bg-100);
+
+  /* Status colors — projects-prototype.css uses bare --err/--ok aliases. */
+  --err: var(--error);
+  --ok:  var(--success);
+
+  /* ui-v2 kit shared vars — the concept2cure/v2 family stylesheets reference
+     these (they are also declared in v2/styles/app-v2.css for the .c2c-v2 root,
+     with the dark override on .c2c-v2.dark). Declared here too so the
+     per-file token-cascade gate resolves them across every family sheet.
+     Values match app-v2.css light mode. */
+  --idle: #b0aea5;
+  --idle-muted: #eeece4;
+  --accent-bg: var(--accent-main-000);
+  --p: 0; /* progress-ring fill %, set per-element at runtime (.cp-ring) */
+  --v2-shadow-xs: 0 1px 2px 0 rgb(20 20 19 / .04);
+  --v2-shadow-sm: 0 1px 3px 0 rgb(20 20 19 / .06), 0 1px 2px -1px rgb(20 20 19 / .06);
+  --v2-shadow-md: 0 4px 8px -2px rgb(20 20 19 / .08), 0 2px 4px -2px rgb(20 20 19 / .06);
+  --v2-shadow-lg: 0 12px 28px -6px rgb(20 20 19 / .14), 0 4px 10px -4px rgb(20 20 19 / .08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ═══ Radix switch role styling ═══
+   Uses canonical earthy tokens (design-system/colors_and_type.css:122-126)
+   so switches match the CEO-signed palette. Previously hardcoded to the
+   generic Tailwind palette (#22c55e / #ef4444 / #16a34a / #dc2626), which
+   bypassed the token surface entirely — the audit called this out as
+   "Radix override colors pin generic Tailwind palette". Fallback hexes
+   are the canonical values (no drift). */
+[role='switch'][aria-checked='true'] {
+  background-color: var(--success, #5e6d49) !important;
+}
+[role='switch'][aria-checked='false'] {
+  background-color: var(--error, #b63939) !important;
+}
+[role='switch'][aria-checked='true'] span,
+[role='switch'][aria-checked='false'] span {
+  background-color: white !important;
+}
+[role='switch'][aria-checked='true']:hover {
+  /* Slightly darkened success — filter keeps the hover derived from the
+     canonical token rather than a hardcoded second color. */
+  background-color: var(--success, #5e6d49) !important;
+  filter: brightness(0.9);
+}
+[role='switch'][aria-checked='false']:hover {
+  background-color: var(--error, #b63939) !important;
+  filter: brightness(0.9);
+}
+
+/* ═══ Radix select / popover fixes ═══ */
+[data-radix-select-content] {
+  background-color: white !important;
+  backdrop-filter: blur(4px) !important;
+}
+[data-radix-select-viewport] {
+  background-color: white !important;
+}
+[data-radix-select-item] {
+  background-color: white !important;
+}
+[data-radix-select-item]:hover {
+  background-color: var(--color-gray-50) !important;
+}
+[data-radix-select-item]:focus {
+  background-color: #faf0ec !important;
+  color: var(--color-primary-dark) !important;
+}
+
+/* ═══ AnA Chat — Claude-style response typography ═══ */
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.ana-response {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  color: #1a1a1a;
+}
+.ana-response p {
+  margin: 0.75em 0;
+  line-height: 1.7;
+}
+.ana-response p:first-child {
+  margin-top: 0;
+}
+.ana-response p:last-child {
+  margin-bottom: 0;
+}
+.ana-response strong {
+  font-weight: 600;
+  color: #0d0d0d;
+}
+.ana-response em {
+  font-style: italic;
+}
+.ana-response h1,
+.ana-response h2,
+.ana-response h3,
+.ana-response h4,
+.ana-response h5,
+.ana-response h6 {
+  font-weight: 600;
+  color: #0d0d0d;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+.ana-response h1 {
+  font-size: 1.25em;
+}
+.ana-response h2 {
+  font-size: 1.15em;
+}
+.ana-response h3 {
+  font-size: 1.05em;
+}
+.ana-response ul,
+.ana-response ol {
+  margin: 0.75em 0;
+  padding-left: 1.5em;
+}
+.ana-response li {
+  margin: 0.35em 0;
+  line-height: 1.7;
+}
+.ana-response li::marker {
+  color: #999;
+}
+.ana-response code {
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+  font-size: 0.875em;
+  background: #f5f5f5;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: #c7254e;
+}
+.ana-response pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 1em 0;
+  overflow-x: auto;
+  font-size: 0.875em;
+  line-height: 1.6;
+}
+.ana-response pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+  border-radius: 0;
+}
+.ana-response blockquote {
+  border-left: 3px solid #d4d4d4;
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #555;
+  font-style: italic;
+}
+.ana-response a {
+  color: #2563eb;
+  text-decoration: none;
+}
+.ana-response a:hover {
+  text-decoration: underline;
+}
+.ana-response table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+.ana-response th {
+  background: #f9f9f9;
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 2px solid #e5e5e5;
+}
+.ana-response td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.ana-response tr:hover td {
+  background: #fafafa;
+}
+.ana-response hr {
+  border: none;
+  border-top: 1px solid #e5e5e5;
+  margin: 1.5em 0;
+}
+
+/* ═══ Radix popover / calendar fix ═══ */
+[data-radix-popover-content],
+[data-radix-popper-content-wrapper],
+.rdp {
+  background-color: white !important;
+  background: white !important;
+  border: 1px solid #e8e6dc !important;
+  border-radius: 0.375rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  backdrop-filter: none !important;
+  z-index: 9999 !important;
+}
+
+/* ═══ Single canonical :root — tokens actually used in the codebase ═══ */
+:root {
+  /* Brand — stone-dark primary (per design principles: black/white foundation) */
+  --color-primary: #292524;
+  --color-primary-dark: #1c1917;
+  --color-primary-light: #44403c;
+  --color-primary-glow: rgba(41, 37, 36, 0.15);
+  --color-secondary-glow: rgba(41, 37, 36, 0.1);
+  --color-accent-glow: rgba(120, 140, 93, 0.2);
+
+  /* Status */
+  --color-success: #788c5d;
+  --color-warning: #d97706;
+
+  /* Neutrals (used) */
+  --color-gray-50: #faf9f5;
+  --color-gray-100: #f4f3ee;
+  --color-gray-200: #e8e6dc;
+  --color-gray-300: #d6d3c8;
+  --color-gray-400: #b0aea5;
+  --color-gray-500: #8a8880;
+  --color-surface: #ffffff;
+
+  /* Text */
+  --color-text-secondary: #4a4a46;
+  --color-text-tertiary: #6b6963;
+  /* --color-text-code is deliberately GONE. It was #141413, and the rule it fed
+     — `code, pre, kbd` below — is the last generic code rule in this sheet, so
+     it beat the `code,kbd,pre,.mono { color: var(--text-200) }` above it and
+     painted every inline <code> near-black: 1.22:1 on the dark page.
+     Re-pointing it at var(--text-200) here did NOT fix it, and that is the
+     point worth recording: a custom property is substituted where it is
+     DECLARED, and :root is never .dark, so the alias just froze the LIGHT
+     --text-200 (#3d3d3a) instead — 1.44:1, a different wrong answer. The rule
+     below now reads the themed token directly, with no :root indirection to
+     freeze. */
+  --color-link: #2563eb;
+  --color-link-hover: #1d4ed8;
+
+  /* Dark mode (used) */
+  --dark-bg-primary: #1c1917;
+  --dark-bg-secondary: #292524;
+
+  /* Gradients (used) */
+  --gradient-primary: linear-gradient(135deg, #292524 0%, #1c1917 100%);
+  --gradient-secondary: linear-gradient(135deg, #44403c 0%, #292524 100%);
+  --gradient-accent: linear-gradient(135deg, #788c5d 0%, #647746 100%);
+
+  /* Shadows. Renamed to --shadcn-* to avoid colliding with the
+   * canonical design-system --shadow-lg / --shadow-xl tokens that the
+   * Phase 3 Projects prototype CSS consumes directly. (Audit 2026-04-29.)
+   */
+  --shadcn-shadow-lg: 0 10px 15px rgba(20, 20, 19, 0.06), 0 4px 6px rgba(20, 20, 19, 0.04);
+  --shadcn-shadow-xl: 0 20px 25px rgba(20, 20, 19, 0.08), 0 8px 10px rgba(20, 20, 19, 0.04);
+
+  /* Spacing (used) */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+
+  /* Tailwind/shadcn HSL semantic tokens.
+   * Namespaced under --shadcn-* to avoid colliding with the canonical
+   * design-system tokens loaded by main.tsx (design-system/colors_and_type.css).
+   * Canonical defines --border, --accent, etc. as direct color values
+   * (oklch); these shadcn tokens are HSL component triples that
+   * Tailwind's `hsl(var(--shadcn-xxx))` consumer wraps.
+   * Renamed 2026-04-29 after the audit found `var(--border)` from the
+   * Phase 3 prototype CSS resolved to `45 17% 88%` (invalid as a
+   * direct color), breaking borders.
+   * tailwind.config.ts colors map is updated to match.
+   */
+  --shadcn-background: 45 33% 97%;
+  --shadcn-foreground: 60 3% 8%;
+  --shadcn-card: 0 0% 100%;
+  --shadcn-card-foreground: 50 5% 8%;
+  --shadcn-popover: 0 0% 100%;
+  --shadcn-popover-foreground: 50 5% 8%;
+  --shadcn-muted: 45 20% 96%;
+  --shadcn-muted-foreground: 40 5% 35%;
+  --shadcn-primary: 18 60% 60%;
+  --shadcn-primary-foreground: 45 33% 97%;
+  --shadcn-secondary: 45 20% 96%;
+  --shadcn-secondary-foreground: 45 33% 97%;
+  --shadcn-accent: 45 20% 96%;
+  --shadcn-accent-foreground: 45 33% 97%;
+  --shadcn-destructive: 0 84% 60%;
+  --shadcn-destructive-foreground: 45 33% 97%;
+  --shadcn-border: 45 17% 88%;
+  --shadcn-input: 45 17% 88%;
+  --shadcn-ring: 18 60% 60%;
+  --shadcn-radius: 0.5rem;
+  --shadcn-sidebar-background: 45 33% 97%;
+  --shadcn-sidebar-foreground: 50 5% 8%;
+  --shadcn-sidebar-primary: 18 60% 60%;
+  --shadcn-sidebar-primary-foreground: 45 33% 97%;
+  --shadcn-sidebar-accent: 45 20% 96%;
+  --shadcn-sidebar-accent-foreground: 50 5% 8%;
+  --shadcn-sidebar-border: 42 18% 90%;
+  --shadcn-sidebar-ring: 18 60% 60%;
+  --shadcn-chart-1: 18 60% 60%;
+  --shadcn-chart-2: 100 20% 46%;
+  --shadcn-chart-3: 210 40% 61%;
+  --shadcn-chart-4: 45 70% 55%;
+  --shadcn-chart-5: 340 45% 55%;
+}
+
+/* ═══ Base element styles ═══ */
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  /* The canonical themed tokens, not the two literal --color-* ones that used
+     to sit here (#141413 / #faf9f5, referenced nowhere else in the repo). Body
+     is above the shell in the tree, so V2App marks BODY with the dark class as
+     well — without that these still resolve light, which is exactly how the
+     old pair went unnoticed. */
+  color: var(--text-100);
+  background: var(--bg-000);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* UI elements use system sans */
+button,
+input,
+select,
+textarea,
+label,
+nav,
+.btn,
+[role='button'],
+[role='tab'],
+[role='menuitem'] {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+a {
+  color: var(--color-link);
+}
+a:hover {
+  color: var(--color-link-hover);
+}
+
+::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 1;
+}
+
+code,
+pre,
+kbd {
+  color: var(--text-200);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  font-variant-ligatures: none;
+}
+
+/* ═══ Minimal keyframes ═══ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+.animate-slideUp {
+  /* Calm-motion rule (design-system CLAUDE.md): 200ms ease-out, no overshoot.
+     The prior cubic-bezier(0.175, 0.885, 0.32, 1.275) is an overshoot curve. */
+  animation: slideUp var(--dur-normal, 200ms) var(--ease, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ═══ Spinner ═══ */
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+/* ═══ Skeleton loader ═══ */
+.skeleton {
+  background: linear-gradient(90deg, #f4f3ee 25%, #e8e6dc 50%, #f4f3ee 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* ═══ Scrollbar — Claude-style minimal ═══ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-400);
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+}
+
+/* ═══ Focus accessibility ═══ */
+button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ═══ Progress ring ═══ */
+.progress-ring {
+  transform: rotate(-90deg);
+  transition: stroke-dashoffset 0.35s;
+}
+
+/* ═══ Embedded file browser animation kill ═══ */
+.embedded-file-browser * {
+  animation: none !important;
+}
+
+/* ═══ Markdown content (Lumen AI / chat) ═══ */
+.markdown-content {
+  color: inherit;
+}
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.markdown-content h1 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #e8e6dc;
+  padding-bottom: 0.3em;
+}
+.markdown-content h2 {
+  font-size: 1.3em;
+  border-bottom: 1px solid #e8e6dc;
+  padding-bottom: 0.2em;
+}
+.markdown-content h3 {
+  font-size: 1.15em;
+}
+.markdown-content h4 {
+  font-size: 1.05em;
+}
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+.markdown-content ul {
+  list-style-type: disc;
+}
+.markdown-content ol {
+  list-style-type: decimal;
+}
+.markdown-content li {
+  margin: 0.25em 0;
+}
+.markdown-content li p {
+  margin: 0.5em 0;
+}
+.markdown-content a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+.markdown-content pre {
+  background-color: #f4f3ee;
+  border-radius: 0.375rem;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 1em 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+.markdown-content code {
+  background-color: #f4f3ee;
+  border-radius: 0.25rem;
+  padding: 0.2em 0.4em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+}
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+.markdown-content blockquote {
+  border-left: 4px solid #e8e6dc;
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #8a8880;
+}
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #e8e6dc;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+.markdown-content th {
+  background-color: #faf9f5;
+  font-weight: 600;
+}
+.markdown-content tr:nth-of-type(even) {
+  background-color: #faf9f5;
+}
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid #e8e6dc;
+  margin: 1.5em 0;
+}
+.markdown-content p {
+  margin: 0.75em 0;
+  line-height: 1.6;
+}
+.markdown-content *:first-child {
+  margin-top: 0;
+}
+.markdown-content *:last-child {
+  margin-bottom: 0;
+}
+
+/* ═══ TipTap / ProseMirror Editor ═══ */
+.ProseMirror {
+  outline: none;
+  min-height: 500px;
+  padding: 2rem;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #1c1917;
+}
+.ProseMirror > * + * {
+  margin-top: 0.75em;
+}
+.ProseMirror h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: #0c0a09;
+}
+.ProseMirror h2 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-top: 1.25em;
+  margin-bottom: 0.4em;
+  color: #1c1917;
+}
+.ProseMirror h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1em;
+  margin-bottom: 0.3em;
+  color: #292524;
+}
+.ProseMirror p {
+  margin-bottom: 0.5em;
+}
+.ProseMirror a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.ProseMirror a:hover {
+  color: #1d4ed8;
+}
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 0.75em auto;
+  display: block;
+}
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1em 0;
+  overflow: hidden;
+}
+.ProseMirror td,
+.ProseMirror th {
+  min-width: 1em;
+  border: 1px solid #d6d3d1;
+  padding: 6px 10px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  font-size: 13px;
+}
+.ProseMirror th {
+  font-weight: 600;
+  text-align: left;
+  background-color: #f5f5f4;
+  color: #44403c;
+}
+.ProseMirror .selectedCell::after {
+  z-index: 2;
+  position: absolute;
+  content: '';
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.08);
+  pointer-events: none;
+}
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: #3b82f6;
+  pointer-events: none;
+}
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+.ProseMirror ul[data-type='taskList'] {
+  list-style: none;
+  padding: 0;
+}
+.ProseMirror ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+.ProseMirror ul[data-type='taskList'] li > label {
+  flex-shrink: 0;
+  margin-top: 0.15em;
+}
+.ProseMirror ul[data-type='taskList'] li > label input[type='checkbox'] {
+  cursor: pointer;
+  accent-color: #57534e;
+}
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'] > div > p {
+  text-decoration: line-through;
+  color: #a8a29e;
+}
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+}
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+}
+.ProseMirror li {
+  margin-bottom: 0.25em;
+}
+.ProseMirror li p {
+  margin: 0;
+}
+.ProseMirror blockquote {
+  border-left: 3px solid #d6d3d1;
+  padding-left: 1em;
+  margin-left: 0;
+  color: #57534e;
+  font-style: italic;
+}
+.ProseMirror code {
+  background-color: #f5f5f4;
+  border-radius: 3px;
+  padding: 0.15em 0.35em;
+  font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 0.875em;
+  color: var(--accent-main-200);
+}
+.ProseMirror pre {
+  background-color: #1c1917;
+  border-radius: 6px;
+  padding: 1em;
+  overflow-x: auto;
+}
+.ProseMirror pre code {
+  color: #e7e5e4;
+  background: none;
+  padding: 0;
+  font-size: 0.875em;
+}
+.ProseMirror hr {
+  border: none;
+  border-top: 1px solid #e7e5e4;
+  margin: 1.5em 0;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #a8a29e;
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+.ProseMirror sup {
+  font-size: 0.75em;
+  vertical-align: super;
+}
+.ProseMirror sub {
+  font-size: 0.75em;
+  vertical-align: sub;
+}
+.ProseMirror mark {
+  background-color: #fef08a;
+  padding: 0.1em 0.15em;
+  border-radius: 2px;
+}
+.collaboration-cursor__caret {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 2px solid;
+  border-right: 0;
+  word-break: normal;
+  pointer-events: none;
+}
+.collaboration-cursor__label {
+  position: absolute;
+  top: -1.4em;
+  left: -1px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  color: white;
+  padding: 0.1em 0.4em;
+  border-radius: 3px 3px 3px 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ═══ Print ═══ */
+@media print {
+  .no-print,
+  button {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  .ProseMirror {
+    padding: 0;
+    font-size: 12pt;
+  }
+  .ProseMirror table {
+    page-break-inside: avoid;
+  }
+  .ProseMirror h1,
+  .ProseMirror h2,
+  .ProseMirror h3 {
+    page-break-after: avoid;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * CJK typography fallbacks (i18n)
+ *
+ * When the active language is Japanese, Chinese or Korean, append
+ * locale-appropriate CJK font families so glyphs render with native shaping
+ * rather than tofu. Driven by the <html lang> attribute that i18next keeps in
+ * sync, so the :lang() selectors activate automatically on language switch.
+ * CJK scripts also read better with slightly looser line-height.
+ * ───────────────────────────────────────────────────────────────────────── */
+:lang(ja) {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
+    "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+}
+
+:lang(zh) {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Noto Sans SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+}
+
+:lang(ko) {
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Noto Sans KR", "Malgun Gothic", "Nanum Gothic", system-ui, sans-serif;
+}
+
+:lang(ja) body,
+:lang(zh) body,
+:lang(ko) body,
+html:lang(ja) .greetH1,
+html:lang(zh) .greetH1,
+html:lang(ko) .greetH1 {
+  line-height: 1.7;
+}

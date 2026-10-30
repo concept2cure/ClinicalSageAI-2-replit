@@ -142,8 +142,8 @@ describe('a US IND’s Plan is what the filing needs, by phase', () => {
     expect(heading.compareDocumentPosition(filing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const choice = within(plan).getByRole('combobox', { name: 'Core work' });
     expect(within(choice).getAllByRole('option', { name: 'Study & Protocol Design' })).toHaveLength(1);
-    // RBM and Biostatistics are not in this release; naming a peer does not admit it.
-    expect(Array.from((choice as HTMLSelectElement).options).map(option => option.value)).toEqual(['', 'protocol-dev', 'cmc']);
+    // RBM is admitted by P-76; Biostatistics remains outside this release.
+    expect(Array.from((choice as HTMLSelectElement).options).map(option => option.value)).toEqual(['', 'protocol-dev', 'cmc', 'rbm']);
     fireEvent.change(choice, { target: { value: 'protocol-dev' } });
     expect(onNav).not.toHaveBeenCalled();
     fireEvent.click(within(plan).getByRole('button', { name: 'Start selected work' }));

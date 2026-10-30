@@ -170,6 +170,7 @@ export const RAIL_CORE = [
   { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
   { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker', group: 'work-areas' as const },
+  { id: 'rbm', label: 'Risk-based monitoring', icon: 'activity', group: 'work-areas' as const },
   { id: 'quality', label: 'Quality', icon: 'shieldCheck', group: 'work-areas' as const },
   { id: 'insights', label: 'Reporting & analytics', icon: 'barChart', group: 'work-areas' as const },
 ];

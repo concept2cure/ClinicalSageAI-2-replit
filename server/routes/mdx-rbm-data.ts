@@ -38,7 +38,9 @@ import {
 } from '../services/rbm/central-statistical-monitoring';
 import { ingestMetrics, METRIC_SOURCES } from '../services/rbm/metric-ingestion';
 
+import { rbmRequestAdmission, recheckRbmWrite } from '../services/rbm/rbm-access';
 const router = Router();
+router.use(rbmRequestAdmission);
 const log = createScopedLogger('mdx-rbm-data');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -133,6 +135,7 @@ router.post('/rbm-central-monitoring/run', async (req, res) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
       await client.query(
         `DELETE FROM rbm_signals WHERE organization_id = $1 AND program_id = $2
            AND source = 'central_stat' AND status = 'new'`,
@@ -274,6 +277,7 @@ router.post('/rbm-patient-profiles/score', async (req, res) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
       for (const r of rows) {
         const s = byId.get(r.id)!;
         // The per-dimension z breakdown is persisted alongside the score, under
@@ -341,6 +345,7 @@ router.post('/rbm-metric-ingest', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await recheckRbmWrite(req, client);
     const result = await ingestMetrics(client, orgId, {
       ...parsed.data,
       ingestedBy: getUserId(req),

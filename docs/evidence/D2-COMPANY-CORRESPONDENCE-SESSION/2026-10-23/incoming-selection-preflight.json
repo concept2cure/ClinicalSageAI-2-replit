@@ -1,0 +1,4 @@
+{
+  "executed": false,
+  "reason": "Initial proposed selection used incorrect .tsx suffix for useMdxPrograms.productType.test.ts; preflight rejected missing file before Vitest. Corrected using actual file discovery."
+}

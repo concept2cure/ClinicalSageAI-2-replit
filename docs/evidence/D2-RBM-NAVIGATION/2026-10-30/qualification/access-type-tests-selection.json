@@ -1,0 +1,15 @@
+{
+  "files": [
+    "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts",
+    "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts",
+    "server/routes/__tests__/mdx-rbm-signed-records.test.ts",
+    "server/routes/__tests__/rbm-board-current-project.test.ts"
+  ],
+  "inputs": [
+    "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts",
+    "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts",
+    "server/routes/__tests__/mdx-rbm-signed-records.test.ts",
+    "server/routes/__tests__/rbm-board-current-project.test.ts",
+    "vitest.config.ts"
+  ]
+}

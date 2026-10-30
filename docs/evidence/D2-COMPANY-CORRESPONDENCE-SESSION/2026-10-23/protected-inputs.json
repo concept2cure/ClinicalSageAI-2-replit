@@ -1,0 +1,24 @@
+{
+  "discoveryCommit": "62a8d5e7f6862ffba3010d9c83dd4a44e8d4814e",
+  "unchanged": 17,
+  "files": {
+    "client/src/concept2cure/v2/surfaces/CompanyLegalCommunicationLinks.tsx": "ad6d6c70d09ee8d421b6b60f2cc6a1e3cbbe84a068557071484ba036c06ae955",
+    "client/src/concept2cure/v2/surfaces/AgencyInbox.tsx": "ca01183744db3d5073691e6a0a91377272248b32d89442beef8695bd9c017f95",
+    "client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx": "351a6ae1e3e4d6a63bbb453fc3503c83dd62785401d5fc0ff418584549939736",
+    "client/src/concept2cure/v2/surfaces/useCompanySubmissionLibrary.ts": "b1f70f0d2054f51b72917633dd84b0e2fed36aa71165ce767e81a68c8ff09a5b",
+    "client/src/concept2cure/v2/surfaces/company-documents/companySession.ts": "40f523f58260df8f4694579002c7a164c5643ae419869904022e7ef06946aa51",
+    "client/src/concept2cure/v2/surfaces/company-documents/useCompanyLegalResource.ts": "a260ff641e4f73e9ba7ece650ea3ee6ca4ba7078738cf2225851a9bf64781df7",
+    "client/src/concept2cure/v2/apiCall.ts": "7c3f191aaf8b6e2d149d3971917eb21eeef5edc719c56b016cad1ba4f29d8ae1",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "a31ded5ed7f652119e1780edca7a5709ceed63eeff3be3d3a74fa32a3fb12695",
+    "client/src/concept2cure/v2/editorTarget.ts": "491700804c22d4fffcadeb032ab4b60f9294b9581e9493fc266e512c3021f6af",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/lib/queryClient.ts": "97c74f6fbb498c5cda051ea0ced04ae7f867a2c88753a9e81457640eb9866a70",
+    "client/src/concept2cure/v2/__tests__/_company-session-fixture.ts": "47208860703758afb5a5a25f2f77f590167d4830f88e0945bbc78934c611f212",
+    "server/services/company-documents/correspondence.ts": "2ec42a889591d1145d2e7777dd35c33f8749dfc777444f5e5f6bd654afac0a93",
+    "server/services/company-documents/identity.ts": "e23c07298de270c31cb55be8987123a9de2d9630417ff461eae70ab5c99afdef",
+    "server/services/company-documents/designs.ts": "788e9ff969be89024e63771e61dc7f1b243499b55b3392e7963cb6585dddf81a",
+    "server/routes/company-documents.ts": "0b2f35028e6c28a6c6f6482af4bc4c1d53ad38805285736513259699a0db267a",
+    "shared/company-correspondence.ts": "b33a707798c72ed16ed4282a9b88f9a4180ff5fe26f97c251515bd7c98a814d4"
+  },
+  "scope": "The17discovered protected inputs, excluding4approvedproductionfiles andexistingworkflowfixture. Not a dependency closure."
+}
