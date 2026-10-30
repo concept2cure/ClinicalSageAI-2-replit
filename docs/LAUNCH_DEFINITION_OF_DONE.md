@@ -994,6 +994,8 @@ for `assess_inspection_readiness`, which answers from stated inputs, labelled (2
 - **The old IND briefing-book assembler goes.** Its replacement is `IndBriefingBookStart.tsx`, starting the US
   meeting-package templates (5894e1aaa). The server routes and service it called are deleted once a search shows
   they have no caller.
+  *2026-10-30:* deleted. Agency Meetings, the last caller, opens the editor's meeting package instead
+  (`docs/evidence/D2-BRIEFING-BOOK/2026-10-30-assembler-retired/`).
 
 ### P-55 — The Authoring questions of 2026-10-26 are decided as recommended
 

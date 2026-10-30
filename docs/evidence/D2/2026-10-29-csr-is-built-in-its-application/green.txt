@@ -1,0 +1,11 @@
+# Green
+ ✓ document-class-not-an-application.pglite.test.ts > a document class is not an application > no submission is created in a clinical study report project, and the refusal says where to build it
+ ✓ document-class-not-an-application.pglite.test.ts > a document class is not an application > a clinical study report is not created as an application, in any project
+ ✓ document-class-not-an-application.pglite.test.ts > a document class is not an application > the IND project takes its IND
+ ✓ document-class-not-an-application.pglite.test.ts > a document class is not an application > the refusal is a 422 wherever a route surfaces it, never a 500
+      Tests  4 passed (4)
+
+# with add-project-market, projects-create-market-offer, registryPickerOffers, documentClassSubmitTab, market-support-offer
+ Test Files  1 failed | 5 passed (6)
+      Tests  139 passed | 4 skipped (143)
+# (green1 ran before the fixture organization was named; the new suite is green2 above)

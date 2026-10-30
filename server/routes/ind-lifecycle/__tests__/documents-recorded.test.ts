@@ -2,10 +2,10 @@
  * A rendered IND document is recorded before it is delivered (D5).
  *
  * The cover letter, the 312.33 annual report and its SAE line listing, the
- * letter of authorization, the right-of-reference statement and the briefing
- * book are documents a sponsor files, and these routes handed each back with
- * nothing recorded: no audit row, no hash, nothing that says who took which
- * document and when (2026-10-15 launch-boundary re-proof,
+ * letter of authorization and the right-of-reference statement are documents a
+ * sponsor files, and these routes handed each back with nothing recorded: no
+ * audit row, no hash, nothing that says who took which document and when
+ * (2026-10-15 launch-boundary re-proof,
  * docs/evidence/D2-API-SCOPE/2026-10-15-reproof/). Held to the rule every
  * generated download is held to (sendAuditedDownload): an EXPORT_GENERATED
  * row with the SHA-256 of the exact bytes, and no delivery when it does not
@@ -32,7 +32,6 @@ vi.mock('../../../services/ind-lifecycle/ind-document-renderer', () => {
   return {
     renderIndSafetyReportPdf: render,
     renderIndAnnualReportPdf: render,
-    renderBriefingBookPdf: render,
     renderCoverLetterPdf: render,
     renderLetterOfAuthorizationPdf: render,
     renderRightOfReferenceStatementPdf: render,
@@ -92,12 +91,6 @@ const cases = [
     name: 'right-of-reference PDF',
     path: '/api/ind-lifecycle/right-of-reference/pdf',
     body: { sponsorName: 'Acme Bio', referencedFileType: 'DMF', referencedFileNumber: '012345' },
-    bytes: PDF,
-  },
-  {
-    name: 'briefing book PDF',
-    path: '/api/ind-lifecycle/briefing-book/pdf',
-    body: { productName: 'Zexanib', indication: 'NSCLC', meetingType: 'Type B', questions: [] },
     bytes: PDF,
   },
 ];

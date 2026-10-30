@@ -21,17 +21,14 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { createScopedLogger } from '../utils/logger.js';
-import { CsrScopeError } from '../services/csr/project-scope';
 import { nctNumberSchema } from '../../shared/csr-source-input.js';
 
 const logger = createScopedLogger('csr-builder-routes');
 
 import {
-  launchCSRBuild,
   getICHE3Structure,
   draftCSRSection,
   flattenICHE3Sections,
-  csrSectionSelectionRefusal,
   isDraftableE3Heading,
   compareWithExistingCSRs,
 } from '../services/csr-builder.js';
@@ -94,15 +91,6 @@ const studyInfoSchema = z.object({
   nctNumber: nctNumberSchema.optional(),
 });
 
-const buildRequestSchema = z.object({
-  projectId: z.number().int().positive().optional(),
-  studyInfo: studyInfoSchema,
-  sectionsToGenerate: z.array(z.string().max(16)).max(150).optional().refine(
-    (sections) => !csrSectionSelectionRefusal(sections),
-    { message: 'sectionsToGenerate must be unique ICH E3 section numbers that are drafted, not prepared from source (§3, §14–16)' }
-  ),
-});
-
 const draftSectionSchema = z.object({
   sectionNumber: z.string().max(16).refine(isDraftableE3Heading,
     { message: 'sectionNumber must be an ICH E3 heading the model drafts (a narrative heading with content of its own)' }),
@@ -144,43 +132,12 @@ router.get('/structure', (_req: Request, res: Response) => {
   });
 });
 
-/**
- * POST /api/csr-builder/build
- * Launch a full CSR build job with AI-powered drafting.
- */
-router.post('/build', async (req: Request, res: Response) => {
-  try {
-    const validation = buildRequestSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({ error: 'Invalid request', details: validation.error.issues });
-    }
-
-    const { organizationId, userId } = getAuthContext(req);
-
-    const job = await launchCSRBuild({
-      organizationId,
-      userId,
-      ...validation.data,
-    });
-
-    res.json({
-      success: true,
-      job: {
-        id: job.id,
-        status: job.status,
-        progress: job.progress,
-        sectionCount: job.sections.length,
-        draftedSections: job.sections.filter(s => s.status === 'drafted').length,
-        createdAt: job.createdAt,
-      },
-      sections: job.sections,
-    });
-  } catch (err) {
-    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
-    logger.error('Build failed', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: safeErrorMessage(err, 'CSR build failed') });
-  }
-});
+// POST /api/csr-builder/build, retired 2026-10-29 (hand-on from the CSR
+// end-to-end lane): a second CSR build path beside the one users take. It
+// drafted every section in the request, with no persisted job and no retained
+// run, and nothing called it. A CSR build is POST /api/csr/jobs (csr-jobs.ts),
+// started from the Submission Center's CSR card (CsrBuildDraftControl), which
+// queues a job bound to the run that holds the engine tables.
 
 /**
  * POST /api/csr-builder/draft-section
