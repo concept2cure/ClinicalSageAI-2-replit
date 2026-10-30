@@ -35,3 +35,8 @@ Official ICH STF v2.6.1 pp4–5 places the STF stylesheet in `util/style` and sh
 ### Retained-proof interaction discovered after the first RED
 
 The existing `hasPassedPackageDtdValidation` trusts a stored supportive requirement list. A historic STF-bearing proof may omit the newly mandatory stylesheet and still pass. Extend the same guard, using its already validated expected STF paths, to require both STF DTD and current stylesheet in the inventories and verified byte set whenever STFs exist. No historic record is rewritten. The worker writes adversarial and complete/non-STF control tests first; root freezes and runs this separate genuine RED before changing the guard. Root owns the reported pre-transmit test's independent expected stylesheet list update; producer-to-consumer assertions remain.
+
+
+## Published bounded correction
+
+Implementation `1e928c801e3cec785ee9abc3fe858cba7aa0c2d5` is accepted at canonical `9e6ee17ba1de7d60f35b8ddbf68338385341f9b9`. Final406/28 checks, zero-error/no-warning-growth lint, qualified client/server/audit-verifier build and normal full-compiler0/push gates pass; 46 committed input pins match. Evidence retains failing-first runs, source facts, unsigned exact-asset review and both real unconfigured candidate runs. The agency qualification goal remains blocked on its recorded legal/asset/engine/human prerequisites, not marked complete by local synthetic checks.
