@@ -526,5 +526,29 @@
     "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
     "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
   },
-  "publication": "Pending actual normal push/fresh remote proof for latest328inputs. Earlier gate and remote-advancement refusals retained; no force/bypass/baseline growth."
+  "publication": {
+    "acceptedCodeCommit": "233df90704075850206c7616463ba9dae2272adb",
+    "observedAt": "2026-10-30T19:28:58.223739+00:00",
+    "normalPushExit": 0,
+    "wholeTypeScriptErrors": 0,
+    "baseline": 0,
+    "selectedSourcePinsMatchingLocalAndFreshRemote": 328,
+    "proof": "qualification/publication-code-proof.json",
+    "transcript": "qualification/code-push.txt",
+    "transcriptSha256": "b8cdf708c13ba1771c8dda63239a85a03b348f0da4c84fe529bbd7f2b1841e2c",
+    "interruptedAttemptsRetained": [
+      "qualification/push-interrupted-10-summary.json"
+    ],
+    "priorRefusalsRetained": [
+      "qualification/push-refusal-01-summary.json",
+      "qualification/push-refusal-02-summary.json",
+      "qualification/push-refusal-03-summary.json",
+      "qualification/push-refusal-04-summary.json",
+      "qualification/push-refusal-05-summary.json",
+      "qualification/push-refusal-06-summary.json",
+      "qualification/push-refusal-07-summary.json",
+      "qualification/push-refusal-08-summary.json",
+      "qualification/push-refusal-09-summary.json"
+    ]
+  }
 }

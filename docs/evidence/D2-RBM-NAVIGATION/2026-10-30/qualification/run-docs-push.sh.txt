@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 source /workspace/.cloud-setup/activate.sh
 cd /workspace/ClinicalSageAI-2-replit || exit 99
+python3 /workspace/.cloud-setup/rbm-navigation/push-preflight.py || exit 98
 python3 /workspace/.cloud-setup/rbm-navigation/capture.py docs-push-start.json
 c2c_rbm_push_head=$(git rev-parse HEAD)
 git -c core.hooksPath=.husky push origin concept2cure-v2 > /workspace/.cloud-setup/rbm-navigation/docs-push.txt 2>&1
