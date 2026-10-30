@@ -1,0 +1,67 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5242/api/authoring/documents/9a6313a3-6018-40e1-b7f7-478b05f5b231/review-route",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 30,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "round": {
+        "route": {
+          "id": "2e9589ac-b241-4559-b491-20e7217285fb",
+          "round": 1,
+          "senderId": 1,
+          "senderName": "OQ Runner",
+          "order": "parallel",
+          "status": "open",
+          "statusReason": null,
+          "statusBy": null,
+          "statusAt": null,
+          "contentDigest": "c2f09ccb3ab88796c1142308f5a9ea4a83015442b4eeb2d6d3542c38424e1ccf",
+          "reviewDueAt": "2026-11-06T23:59:59.999Z",
+          "approvalDueAt": null,
+          "createdAt": "2026-10-30T15:08:13.363Z"
+        },
+        "members": [
+          {
+            "taskId": "ROUTE-2e9589ac-2",
+            "userId": 2,
+            "role": "reviewer",
+            "step": 1,
+            "printedName": "OQ Signer",
+            "outcome": "pending",
+            "stepOpen": true,
+            "dueDate": "2026-11-06T23:59:59.999Z",
+            "signature": null,
+            "actId": null
+          }
+        ],
+        "reviewComplete": false,
+        "approvalComplete": false,
+        "history": [
+          {
+            "action": "send",
+            "at": "2026-10-30T15:08:13.413Z",
+            "actorId": 1,
+            "actorName": "OQ Runner",
+            "reason": "OQ-003 step 17: ready for medical review for validation",
+            "members": [
+              {
+                "userId": 2,
+                "role": "reviewer",
+                "printedName": "OQ Signer"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

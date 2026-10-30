@@ -1,0 +1,60 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5242/api/authoring/docs/9a6313a3-6018-40e1-b7f7-478b05f5b231/sections",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 55,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "sections": [
+        {
+          "id": "b29d9dc8-bb62-4017-83c4-eeac78a0c7c9",
+          "doc_id": "9a6313a3-6018-40e1-b7f7-478b05f5b231",
+          "code": "2.5",
+          "title": "Clinical Overview",
+          "content": "<p>Initial 2.5 text.</p>",
+          "order_index": 0,
+          "track_changes": false,
+          "created_at": "2026-10-30T15:08:05.852Z",
+          "updated_at": "2026-10-30T15:08:05.852Z",
+          "tenant_id": 5,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        },
+        {
+          "id": "3dc18854-d326-4626-b41e-2efa8a67c230",
+          "doc_id": "9a6313a3-6018-40e1-b7f7-478b05f5b231",
+          "code": "2.7",
+          "title": "Clinical Summary",
+          "content": "<p>Initial 2.7 text.</p>",
+          "order_index": 1,
+          "track_changes": false,
+          "created_at": "2026-10-30T15:08:05.531Z",
+          "updated_at": "2026-10-30T15:08:05.531Z",
+          "tenant_id": 5,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        }
+      ],
+      "count": 2,
+      "structure": {
+        "duplicateCodes": [],
+        "outOfOrder": false,
+        "suggestedOrder": [
+          "2.5",
+          "2.7"
+        ]
+      },
+      "readScope": "document"
+    }
+  }
+}

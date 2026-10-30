@@ -1,0 +1,74 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5241/api/authoring/docs/afe3ea45-deba-4252-850b-7bde8dae2081/frozen",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 46,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "version": "1.0",
+      "contentHash": "94cdd5e3b2554d5acac24c3cd856034441c600d1fcde37c0d156c153905a140c",
+      "frozenAt": "2026-10-30T15:03:34.473Z",
+      "frozenBy": "oq-runner@validation.local",
+      "content": {
+        "document": {
+          "id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+          "title": "OQ-003 Clinical Overview 20261030150319",
+          "module": "M2",
+          "product_code": null,
+          "locale": "en-US",
+          "status": "IN_REVIEW",
+          "created_by": "1",
+          "template_id": null,
+          "submitted_at": "2026-10-30T15:03:30.601Z",
+          "current_workflow_id": "6aebdcd4-2fd3-4a3f-a816-ec73a93f448b",
+          "approved_at": null,
+          "frozen_at": null,
+          "locked_at": null,
+          "locked_by": null,
+          "version": null,
+          "tenant_id": 5,
+          "created_at": "2026-10-30T15:03:20.912Z",
+          "updated_at": "2026-10-30T15:03:23.858Z",
+          "client_program_id": "7d6330ec-03d0-49ed-afb2-757b79754837",
+          "c2c_document_id": "doc_c2828a7e28e24c118305351044f2e73e",
+          "provenance": null
+        },
+        "sections": [
+          {
+            "id": "8a5b7ed2-88e9-4baf-9baa-4e42529953ab",
+            "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+            "code": "2.5",
+            "title": "Clinical Overview",
+            "content": "<p>Initial 2.5 text.</p>",
+            "order_index": 0,
+            "track_changes": false,
+            "created_at": "2026-10-30T15:03:21.527Z",
+            "updated_at": "2026-10-30T15:03:23.857Z",
+            "tenant_id": 5
+          },
+          {
+            "id": "37093d74-516a-4eff-8830-1d9fd12638e2",
+            "doc_id": "afe3ea45-deba-4252-850b-7bde8dae2081",
+            "code": "2.7",
+            "title": "Clinical Summary",
+            "content": "<p>Initial 2.7 text.</p>",
+            "order_index": 1,
+            "track_changes": false,
+            "created_at": "2026-10-30T15:03:21.216Z",
+            "updated_at": "2026-10-30T15:03:21.216Z",
+            "tenant_id": 5
+          }
+        ],
+        "frozenAt": "2026-10-30T15:03:34.859Z"
+      }
+    }
+  }
+}
