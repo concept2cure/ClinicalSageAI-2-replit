@@ -27,7 +27,7 @@ import '../styles/project-home-v2.css';
 // fixture and is gone: the register reads the real risk file.
 import { RISK_ENUMS, SEV_LABELS, PROB_LABELS } from '../fixtures/risk-data';
 import type { RiskRow, RiskControl } from '../fixtures/risk-data';
-import { C2CToast, useToast } from '../toast';
+import { C2CToast, useToast, type FireToast } from '../toast';
 import { SignedContentLine, signedContentForAna, signedContentWords, useSignedRecord, type SignedRecordRead } from '../SignedContentState';
 
 /* ════ The ISO 14971 risk register ════
@@ -534,7 +534,7 @@ interface WriteDeps {
   setForm: (open: boolean) => void;
   setCtrlForm: (open: boolean) => void;
   setAccepting: (r: RiskRow | null) => void;
-  fire: (m: string) => void;
+  fire: FireToast;
 }
 
 function riskWrites(d: WriteDeps) {

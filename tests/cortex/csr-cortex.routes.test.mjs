@@ -12,7 +12,9 @@ const temp = mkdtempSync(resolve(tmpdir(), 'c2c-cortex-routes-'));
 function write(path, value) { mkdirSync(dirname(resolve(temp, path)), { recursive: true }); writeFileSync(resolve(temp, path), value); }
 write('package.json', '{"type":"module"}');
 const files = ['server/routes/ana-cortex', 'server/services/clinical-regulatory-evidence/csr-content-projection',
-  'server/services/clinical-regulatory-evidence/csr-index-batch', 'server/services/csr/cortex-authoring-context', 'server/services/csr/cortex-authoring-reader'];
+  'server/services/clinical-regulatory-evidence/csr-index-batch', 'server/services/csr/cortex-authoring-context', 'server/services/csr/cortex-authoring-reader',
+  // Imported by cortex-authoring-context since the scientific-review receipts.
+  'shared/authoring/csr-scientific-review'];
 for (const path of files) {
   const source = readFileSync(resolve(root, `${path}.ts`), 'utf8');
   const result = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 }, reportDiagnostics: true, fileName: `${path}.ts` });
