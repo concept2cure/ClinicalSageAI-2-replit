@@ -131,6 +131,39 @@ describe('document disposition impact preview', () => {
   });
 });
 
+describe('a restored Vault document (MR-08 Stage 5)', () => {
+  // A restore puts an earlier version's file on a later version of the same
+  // document, so two rows hold one file. They are one identity, both linked.
+  const restored = async (f: Awaited<ReturnType<typeof setup>>, code: string | null, from: string | null) => {
+    const id = randomUUID();
+    await f.pg.query(`INSERT INTO vault.documents (id,organization_id,program_id,document_title,document_code,content_hash,processing_status,extracted_text,supersedes_id,restored_from_id)
+      VALUES ($1,$2,$3,'Study PDF',$4,$5,'INDEXED','Extracted study values',$6,$7)`, [id, f.org, f.program, code, HASH, f.vault, from]);
+    return id;
+  };
+
+  it('links every copy of a restored document, so a withdrawal covers each one', async () => {
+    const f = await setup();
+    await f.pg.query(`UPDATE vault.documents SET document_code='DOC-1' WHERE id=$1`, [f.vault]);
+    const copy = await restored(f, 'DOC-1', f.vault);
+    const result = await f.service.preview(f.scope);
+    expect(result.linkedIds.vaultDocumentIds).toEqual([f.vault, copy].sort());
+  });
+
+  it('still refuses two unrelated rows holding one file as ambiguous', async () => {
+    const f = await setup();
+    await f.pg.query(`UPDATE vault.documents SET document_code='DOC-1' WHERE id=$1`, [f.vault]);
+    await restored(f, 'DOC-2', null);
+    await expect(f.service.preview(f.scope)).rejects.toMatchObject({ code: 'AMBIGUOUS_LINKS' });
+  });
+
+  it('refuses a row that claims to restore a row outside the set', async () => {
+    const f = await setup();
+    await f.pg.query(`UPDATE vault.documents SET document_code='DOC-1' WHERE id=$1`, [f.vault]);
+    await restored(f, 'DOC-1', randomUUID());
+    await expect(f.service.preview(f.scope)).rejects.toMatchObject({ code: 'AMBIGUOUS_LINKS' });
+  });
+});
+
 describe('document disposition confirmation', () => {
   it.each(['keep_data', 'remove_data'] as const)('%s writes one decision and audit receipt while preserving all source and lineage rows', async choice => {
     const f = await setup();

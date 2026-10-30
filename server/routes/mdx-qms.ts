@@ -134,6 +134,7 @@ import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-
 import { getOrgId, getUserId, qmsClient, admitBodyProject, admittedProject } from './mdx-qms-context';
 import qmsRecordsRouter from './mdx-qms-records';
 import qmsDeviationsRouter from './mdx-qms-deviations';
+import qmsControlledCopyRouter from './mdx-qms-controlled-copy';
 import qmsTrainingRouter from './mdx-qms-training';
 
 const router = Router();
@@ -713,6 +714,7 @@ function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Doc
   if (err.code === 'INVALID_AUTHORSHIP') return clientError(res, 409, err.message, { code: 'QMS_INVALID_AUTHORSHIP' });
   // Its own code: the remedy is to re-file the section, not to change the document's state.
   if (err.code === 'FILING_DIVERGED') return clientError(res, 409, err.message, { code: 'FILING_DIVERGED' });
+  if (err.code === 'EFFECTIVE_DATE_BACKDATED') return clientError(res, 422, err.message, { code: 'QMS_EFFECTIVE_DATE_BACKDATED' });
   return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
 }
 
@@ -928,6 +930,8 @@ router.use(qmsTrainingRouter);
 router.use(qmsRecordsRouter);
 /* The GMP deviation register (mdx-qms-deviations.ts, P-57). */
 router.use(qmsDeviationsRouter);
+// The controlled copy of a version in force (MR-12 Stage 8): mdx-qms-controlled-copy.ts.
+router.use(qmsControlledCopyRouter);
 
 /* ─── Management reviews ────────────────────────────────────── */
 

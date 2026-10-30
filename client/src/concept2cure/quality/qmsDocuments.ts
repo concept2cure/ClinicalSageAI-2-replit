@@ -64,3 +64,21 @@ export async function readQmsSignedVersions(id: number): Promise<QmsSignedVersio
   }
   return data as QmsSignedVersion[];
 }
+
+/**
+ * The controlled copy of a document's version in force (MR-12 Stage 8): the
+ * server renders it with its approval signature and CONTROLLED COPY marking on
+ * every page, and records its issue before delivering it. Throws the server's
+ * reason when no copy is issued (nothing in force, an approval that does not
+ * stand, no permission to read it).
+ */
+export async function fetchQmsControlledCopy(id: number, format: 'pdf' | 'docx' = 'pdf'): Promise<{ blob: Blob; filename: string }> {
+  const res = await apiRequest('GET', `/api/mdx/qms/documents/${id}/controlled-copy?format=${format}`);
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    throw new Error(serverMessage(payload) ?? 'The controlled copy could not be issued. Nothing was downloaded.');
+  }
+  const disposition = res.headers.get('Content-Disposition') ?? '';
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? `controlled_copy.${format}`;
+  return { blob: await res.blob(), filename };
+}

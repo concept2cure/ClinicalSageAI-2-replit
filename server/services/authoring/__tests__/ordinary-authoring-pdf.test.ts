@@ -63,6 +63,22 @@ describe('ordinary Authoring PDFs share the rich Word converter', () => {
     expect(zip.readAsText('word/document.xml')).toContain('No electronic signature applies to this copy');
   });
 
+  /* MR-12 Stage 8: a QMS controlled copy prints its banner on every page and the
+     QMS approval's manifestation, never the empty Authoring signature store. */
+  it('carries the controlled-copy banner on every page and prints the QMS approval, not "no signatures"', async () => {
+    await renderAuthoringExport({ ...input(), controlledCopy: {
+      banner: 'CONTROLLED COPY · SOP-001 v1.0 · effective 2026-09-01 · uncontrolled when printed',
+      manifest: [['Approved by: Dana Whitfield', 'Meaning: Approval', 'Executed: 2026-09-01 09:00:00 UTC']] } });
+    const zip = word();
+    const banners = zip.getEntries().filter(entry => /^word\/(?:header|footer)\d+\.xml$/.test(entry.entryName));
+    expect(banners).toHaveLength(2);
+    for (const entry of banners) expect(entry.getData().toString()).toContain('CONTROLLED COPY · SOP-001 v1.0');
+    const body = zip.readAsText('word/document.xml');
+    for (const text of ['Approved by: Dana Whitfield', 'Executed: 2026-09-01 09:00:00 UTC']) expect(body).toContain(text);
+    expect(body).not.toContain('No electronic signatures are recorded');
+    await expect(renderAuthoringExport({ ...input(), format: 'xml', controlledCopy: { banner: 'x', manifest: [] } })).rejects.toThrow(/DOCX or PDF only/);
+  });
+
   it('retains pending insertions and deletions as genuine Word revisions at the converter boundary', async () => {
     const args = input();
     args.sections[0].content = '<p>Dose <ins data-author-name="Writer" data-at="2026-10-23T00:00:00Z">20 mg</ins>' +

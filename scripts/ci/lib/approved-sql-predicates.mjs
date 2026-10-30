@@ -40,7 +40,13 @@ const VAULT_SEAL_BUILDERS = new Map([
   ['supersededSql', './vault-version-family.js'],
   ['vaultLifecycleStageSql', './vault-document-filter.js'],
 ]);
+// A Vault restore (MR-08 Stage 5, 2026-10-29) refuses a version whose original
+// file a disposition withdrew, by the one availability predicate, alias `s`.
+const VAULT_RESTORE_BUILDERS = new Map([
+  ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility.js'],
+]);
 const CALLERS = new Map([
+  ['server/services/vault/vault-version-restore.ts', { alias: 's', builders: VAULT_RESTORE_BUILDERS }],
   ['server/routes/c2c/project-vault.ts', { alias: 'd', builders: VAULT_FILTER_FROM_ROUTES }],
   ['server/services/vault/vault-search.ts', { alias: 'd', builders: VAULT_FILTER_FROM_VAULT }],
   ['server/services/vault/vault-seal.service.ts', { alias: 'd', builders: VAULT_SEAL_BUILDERS }],

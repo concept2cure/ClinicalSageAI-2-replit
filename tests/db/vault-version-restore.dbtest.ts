@@ -39,6 +39,7 @@ let userId: number;
 let viewerId: number;
 let mine: Tenant;
 let otherProgram: Tenant;
+let otherOrg: Tenant;
 
 const pdf = (tag: string) =>
   Buffer.from(`%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n% ${tag}\ntrailer<</Root 1 0 R>>\n%%EOF\n`, 'utf8');
@@ -85,7 +86,7 @@ const family = async (code: string) => (await owner.query(
   `SELECT id::text, version, supersedes_id::text, content_hash FROM vault.documents
     WHERE document_code = $1 AND deleted_at IS NULL ORDER BY created_at`, [code])).rows;
 const auditOf = async (id: string) => (await owner.query(
-  `SELECT action, user_id, new_values FROM audit_logs WHERE record_id = $1 ORDER BY created_at`, [id])).rows;
+  `SELECT action, user_id, reason, new_values FROM audit_logs WHERE record_id = $1 ORDER BY created_at`, [id])).rows;
 
 async function storedFile(t: Tenant, documentId: string): Promise<string> {
   const { rows } = await owner.query('SELECT storage_version_id FROM vault.documents WHERE id = $1', [documentId]);
@@ -121,6 +122,9 @@ beforeAll(async () => {
     [`${PROBE}org`, `dbtest-vrestore-${RUN}`]);
   mine = await tenantProgram(Number(org.rows[0].id), String(org.rows[0].uuid), 'DBTEST-VRESTORE-A');
   otherProgram = await tenantProgram(mine.orgId, mine.orgUuid, 'DBTEST-VRESTORE-B');
+  const org2 = await owner.query(`INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE}other org`, `dbtest-vrestore-${RUN}-other`]);
+  otherOrg = await tenantProgram(Number(org2.rows[0].id), String(org2.rows[0].uuid), 'DBTEST-VRESTORE-C');
   viewerId = Number((await owner.query(
     `INSERT INTO users (email, name, password_hash, status) VALUES ($1, 'Vic Viewer', 'x', 'active') RETURNING id`,
     [`dbtest-vrestore-${RUN}-viewer@example.test`])).rows[0].id);
@@ -165,7 +169,9 @@ describe('restoring an earlier version of a Vault document', () => {
 
     const audit = await auditOf(v3);
     expect(audit).toHaveLength(1);
-    expect(audit[0]).toMatchObject({ action: 'vault.document.ingest', user_id: userId });
+    // The reason on the row's own column, where the history reads it, and the line it shows.
+    expect(audit[0]).toMatchObject({ action: 'vault.document.ingest', user_id: userId, reason: REASON });
+    expect(audit[0].new_values).toMatchObject({ description: 'Restored version 1.0 as version 3.0' });
     expect(audit[0].new_values).toMatchObject({
       contentHash: sha(pdf('dosing table, approved')), version: '3.0',
       lineage: { supersedes: v2, predecessorVersion: '2.0', filingKept: true, restoredFrom: { versionId: v1, version: '1.0', reason: REASON } },
@@ -200,6 +206,9 @@ describe('what a restore refuses', () => {
     expect(elsewhere.status, JSON.stringify(elsewhere.body)).toBe(201);
     const sibling = await ingest(mine, pdf('a sibling document in this program'), { documentCode: `${CODE}-SIBLING` });
     expect(sibling.status, JSON.stringify(sibling.body)).toBe(201);
+    const theirs = await ingest(otherOrg, pdf('another organization\'s document'), { documentCode: `${CODE}-THEIRS` });
+    expect(theirs.status, JSON.stringify(theirs.body)).toBe(201);
+    const theirVersion = String(theirs.body.document.id);
     const before = await family(code);
     const cases: Array<[string, Awaited<ReturnType<typeof restore>>, number, string]> = [
       ['no reason', await restore(mine, v3, v2, {}), 422, 'REASON_REQUIRED'],
@@ -209,6 +218,7 @@ describe('what a restore refuses', () => {
       ['bytes the current version holds', await restore(mine, v3, v1), 409, 'CONTENT_ALREADY_CURRENT'],
       ['another program\'s version, named on this one', await restore(mine, v3, elsewhere.body.document.id), 404, 'VERSION_NOT_FOUND'],
       ['another document\'s version, named on this one', await restore(mine, v3, sibling.body.document.id), 404, 'VERSION_NOT_FOUND'],
+      ['another organization\'s version, named on this one', await restore(mine, v3, theirVersion), 404, 'VERSION_NOT_FOUND'],
       ['this program\'s version, through another program', await restore(otherProgram, v3, v2), 404, ''],
     ];
     for (const [what, res, status, error] of cases) {
@@ -248,6 +258,28 @@ describe('what a restore refuses', () => {
     expect(await family(forgedCode)).toEqual(before);
   });
 
+  it('refuses a version whose original file a data disposition withdrew', async () => {
+    const withdrawnCode = `${CODE}-WITHDRAWN`;
+    const a = (await ingest(mine, pdf('withdrawn v1'), { documentCode: withdrawnCode })).body.document.id as string;
+    const b = (await ingest(mine, pdf('withdrawn v2'), { documentCode: withdrawnCode, supersedesDocumentId: a })).body.document.id as string;
+    // A recorded withdrawal of v1's original file (document-data-disposition).
+    await owner.query(
+      `INSERT INTO document_data_dispositions (organization_id, program_id, vault_document_id, choice, reason, actor_id,
+         source_sha256, preview_hash, linked_ids, impact_snapshot, audit_receipt)
+       VALUES ($1, $2, $3, 'remove_data', 'Withdrawn: it carries personal data.', $4, $5, $6, $7, '{}', $8)`,
+      [mine.orgId, mine.programId, a, userId, sha(pdf('withdrawn v1')), 'b'.repeat(64),
+        JSON.stringify({ capturedSourceIds: [], vaultDocumentIds: [a], artifactIds: [], uploadIds: [] }),
+        JSON.stringify({ id: randomUUID(), sha256Chain: 'c'.repeat(64) })]);
+    const before = await family(withdrawnCode);
+    const res = await restore(mine, b, a);
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error).toBe('SOURCE_WITHDRAWN');
+    expect(await family(withdrawnCode)).toEqual(before);
+  });
+
+});
+
+describe('what the database refuses', () => {
   it('the database admits a restore only of a version of the same document holding the same bytes', async () => {
     const rawRow = (restoredFrom: string | null, hash: string, documentCode: string) => owner.query(
       `INSERT INTO vault.documents (program_id, organization_id, document_code, document_title, version, content_hash, restored_from_id)
@@ -264,6 +296,21 @@ describe('what a restore refuses', () => {
       .rejects.toThrow(/VAULT_RESTORE_INVALID|immutable|write-once/i);
   });
 
+  it('the database refuses a restore between two rows with no document code', async () => {
+    const hash = sha(pdf(`uncoded ${RUN}`));
+    const uncoded = randomUUID();
+    await owner.query(`INSERT INTO vault.documents (id, program_id, organization_id, document_title, version, content_hash)
+      VALUES ($1, $2, $3, 'Uncoded', '1.0', $4)`, [uncoded, mine.programId, mine.orgId, hash]);
+    await owner.query(`UPDATE vault.documents SET document_code = NULL WHERE id = $1`, [uncoded]).catch(() => undefined);
+    const code = (await owner.query(`SELECT document_code FROM vault.documents WHERE id = $1`, [uncoded])).rows[0].document_code;
+    await expect(owner.query(`INSERT INTO vault.documents (program_id, organization_id, document_title, version, content_hash, restored_from_id)
+      VALUES ($1, $2, 'Uncoded copy', '2.0', $3, $4)`, [mine.programId, mine.orgId, hash, uncoded])).rejects.toThrow(/VAULT_RESTORE_INVALID/);
+    expect(code ?? null).toBeNull();
+  });
+
+});
+
+describe('restoring again', () => {
   it('restores an earlier version that is not the oldest', async () => {
     const res = await restore(mine, v1, v2);
     expect(res.status, JSON.stringify(res.body)).toBe(201);
