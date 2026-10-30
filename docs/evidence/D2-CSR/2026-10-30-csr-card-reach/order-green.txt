@@ -1,0 +1,23 @@
+# GREEN: csr-jobs.ts restored, orderBy(desc(updatedAt), desc(id))
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stderr | server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol
+{
+  "timestamp": "2026-10-30T02:14:29.553Z",
+  "level": "error",
+  "message": "[csr-jobs] CSR evidence source check failed",
+  "context": {
+    "err": "pool exhausted",
+    "organizationId": 7
+  }
+}
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > queues a build bound to the run once its tables read for this protocol 27ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol 10ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses a run retained under another program than the build, before reading it 3ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > records each decision as the signed-in reviewer, never a body-supplied one 31ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > refuses a send-back without a reason and a malformed section number 5ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > lists only this organization's builds bound to the run, newest first 4ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > refuses a missing or malformed run and a missing program, never an empty list 5ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  02:14:22
+   Duration  6.87s (transform 2.01s, setup 95ms, import 3.84s, tests 2.68s, environment 0ms)

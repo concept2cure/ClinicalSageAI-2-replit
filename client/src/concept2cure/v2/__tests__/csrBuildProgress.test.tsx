@@ -53,8 +53,9 @@ it('offers "Build CSR draft" only for a saved run that holds retained tables, an
   expect(apiRequest).toHaveBeenCalledWith('POST', '/api/csr/jobs', {
     programId: PROGRAM, studyInfo: receipt.studyInfo, evidenceSource: { programId: PROGRAM, runId: RUN, studyId: 'LMN-201-201' },
   });
-  fireEvent.click(screen.getByRole('button', { name: /Open build progress/ }));
-  expect(nav).toHaveBeenCalledWith('csr-workflow');
+  // The board is refused in production (2026-10-30): the queued build is reached on the card, not by navigation.
+  expect(screen.queryByRole('button', { name: /Open build progress/ })).toBeNull();
+  expect(nav).not.toHaveBeenCalledWith('csr-workflow');
 });
 
 it('renders no build control for a run with no retained tables', async () => {

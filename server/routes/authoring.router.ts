@@ -92,7 +92,7 @@ import {
 import {
   checkSectionWritable,
   checkDocumentWritable,
-  reserveWritableSection, reserveWritableDocument, DocumentWriteReservationError,
+  reserveWritableSection, reserveWritableDocument, DocumentWriteReservationError, refuseNarrativeReferenceContentWrite,
   LOCKED_DOCUMENT_STATUSES as LOCKED_STATUSES,
 } from '../services/authoring/document-lock';
 // The document/section creators, the Part 11 evidence writers and the export
@@ -1880,6 +1880,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
     try {
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
+      if (content !== undefined) await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
 
       // The previous body is a transaction-held fact, read after the parent
       // reservation and before this update. Client-supplied text and the
@@ -2240,6 +2241,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     try {
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
+      await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
       result = await client.query(
         `UPDATE authoring_sections
          SET content = $1, updated_at = NOW()
@@ -3821,6 +3823,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       transaction.began = true;
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
+      await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
 
       const candidate = await consumeDraftCandidate(tenantId, String(sectionId), draftId, client, true);
       if (!candidate) {

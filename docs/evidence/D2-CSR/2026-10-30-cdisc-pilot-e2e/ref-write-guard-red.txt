@@ -1,0 +1,7 @@
+ × server/services/authoring/__tests__/narrative-reference-write.pglite.test.ts > a save that changes §14.3.3 held by reference is refused (SYNTHETIC) > refuses the section the import holds by reference, with 409 and its code 17ms
+ × server/services/authoring/__tests__/narrative-reference-write.pglite.test.ts > a save that changes §14.3.3 held by reference is refused (SYNTHETIC) > keeps refusing after the section is renamed: the creation receipt decides, not the current code 9ms
+ ✓ server/services/authoring/__tests__/narrative-reference-write.pglite.test.ts > a save that changes §14.3.3 held by reference is refused (SYNTHETIC) > allows every other section of the same import 4ms
+ ✓ server/services/authoring/__tests__/narrative-reference-write.pglite.test.ts > a save that changes §14.3.3 held by reference is refused (SYNTHETIC) > allows a §14.3.3 imported before the reference existed (held as its own text) 3ms
+ × server/services/authoring/__tests__/narrative-reference-write.pglite.test.ts > a save that changes §14.3.3 held by reference is refused (SYNTHETIC) > allows a section that is not a CSR import, and does not read across tenants 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 2 passed (5)

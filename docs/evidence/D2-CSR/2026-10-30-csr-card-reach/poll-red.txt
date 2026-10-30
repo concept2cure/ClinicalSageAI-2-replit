@@ -1,0 +1,24 @@
+# RED 1: the list is read once, as before this fix (poll disabled: 'if (false && ...)' in CsrRunBuilds.tsx)
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > carries the narrative build and the assembly for a build of the saved run, on the card 256ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > a newly queued build is selected on the card; nothing navigates to the board 141ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states that no build exists for the run, and a refused build list as an alert, never an empty list 56ms
+ × client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > follows a drafting build until it ends, then stops re-reading the list 5111ms
+   → Unable to find an element with the text: /CSR build 43 · complete · 100%/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > follows a drafting build until it ends, then stops re-reading the list
+TestingLibraryElementError: Unable to find an element with the text: /CSR build 43 · complete · 100%/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+    100|     expect(await within(region).findByText(/CSR build 43 · complete · …
+      Tests  1 failed | 3 passed (4)
+
+# RED 2: the poll made unconditional (never stops once every build has ended)
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > carries the narrative build and the assembly for a build of the saved run, on the card 293ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > a newly queued build is selected on the card; nothing navigates to the board 142ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states that no build exists for the run, and a refused build list as an alert, never an empty list 67ms
+ × client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > follows a drafting build until it ends, then stops re-reading the list 78ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > follows a drafting build until it ends, then stops re-reading the list
+- Expected
++ Received
+- 2
++ 5
+      Tests  1 failed | 3 passed (4)

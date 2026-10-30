@@ -1,0 +1,24 @@
+### MUTATION server/services/market-specs/document-template-library.ts: 'sections: ICH_E3_GUIDANCE.map(e3TemplateSection)' -> 'sections: ICH_E3_GUIDANCE.filter((s) => !s.number.includes('.')).map(e3TemplateSection)'
+ FAIL  tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the market-specs CSR spine (get_document_template) is every E3 heading, in order, each with the tree’s summary
+AssertionError: expected [ { number: '1', …(4) }, …(15) ] to have a length of 119 but got 16
+ FAIL  tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal every node of ICH_E3_GUIDANCE, §1–§16 among them
+AssertionError: expected [ '1 Title Page', '2 Synopsis', …(14) ] to deeply equal [ Array(119) ]
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record
+AssertionError: expected [ '1 Title Page', '2 Synopsis', …(14) ] to deeply equal [ Array(119) ]
+ Test Files  3 failed (3)
+      Tests  3 failed | 49 passed (52)
+### MUTATION server/services/ana/submission-center-tool-defs.ts: ''Paged authoring outlines; not drafted prose, verified evidence or readiness. ' +' -> ''Paged authoring outlines; not drafted prose, verified evidence or readiness. ' + 'x'.repeat(240) +'
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last
+AssertionError: the trim falls inside the hand-kept list: expected 1051 to be less than or equal to 1023
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+### MUTATION server/routes/csr-jobs.ts: 'review: effectiveReviewState(section)' -> 'review: { state: 'draft', staleApproval: false }'
+ FAIL  tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId/sections > returns the section array
+AssertionError: expected { sections: [ { id: 1, …(5) }, …(3) ] } to deeply equal { sections: [ { id: 1, …(5) }, …(3) ] }
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+### MUTATION server/services/market-specs/document-template-library.ts: '  ...US_BIOTECH_LIFECYCLE_TEMPLATES,' -> '  ...US_BIOTECH_LIFECYCLE_TEMPLATES.slice(1),'
+ FAIL  server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > preserves all 446 prior builtin objects and their recorded snapshots
+AssertionError: expected [ { …(12) }, { …(12) }, …(443) ] to have a length of 446 but got 445
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 passed (22)

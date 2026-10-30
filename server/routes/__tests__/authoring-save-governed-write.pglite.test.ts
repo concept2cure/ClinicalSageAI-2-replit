@@ -461,3 +461,35 @@ describe('the saver is told what was not credited', () => {
     expect(saved.body.machineText).toEqual({ credited: 1, refused: [] });
   }, T);
 });
+
+describe('§14.3.3 of an imported CSR, held by reference, is not saved over (2026-10-30, SYNTHETIC)', () => {
+  const reference = { schema: 'c2c.csr-narrative-reference.v1', jobId: 7, sectionNumber: '14.3.3', narratives: 1500,
+    storeDigest: 'a'.repeat(64), landedSha256: 'b'.repeat(64), landedLength: 2_327_062, openingSha256: 'c'.repeat(64) };
+  /** The creation receipt insertSectionSeedTx writes for an imported CSR section. */
+  async function importedReceipt(docId: string, sectionId: string, withReference: boolean): Promise<void> {
+    const origin = { code: '2.5.4', sourceRowId: 'csr_section_outputs:1', contentSha256: 'd'.repeat(64), originalAuthorship: 'machine',
+      model: null, modelEvidence: 'unrecorded', ...(withReference ? { narrativeReference: reference } : {}) };
+    await jdb.pool.query(`INSERT INTO authoring_audit_trail(doc_id,section_id,operation_type,actor_email,actor_id,tenant_id,metadata)
+      VALUES($1,$2,'CREATE','author@example.test',$3,$4,$5::jsonb)`, [docId, sectionId, AUTHOR.id, ORG,
+      JSON.stringify({ provenance: { importSource: { kind: 'csr', sectionOrigins: [origin] } }, drafted: true, workflowSourceOrigin: origin, section_code: '2.5.4' })]);
+  }
+  const patch = (sectionId: string) => author(request(app).patch(`/api/authoring/sections/${sectionId}`))
+    .send({ content: `<p>${OWN_WORDS}</p>`, changeReason: REASON });
+
+  it('refuses a content save with 409 and its code, and the text stays as imported', async () => {
+    const { docId, sectionId } = await seedSection();
+    await importedReceipt(docId, sectionId, true);
+    const res = await patch(sectionId);
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('CSR_NARRATIVE_REFERENCE_READ_ONLY');
+    const [section] = await rows<{ content: string }>('SELECT content FROM authoring_sections WHERE id = $1', [sectionId]);
+    expect(section.content).toBe('<p>Placeholder.</p>');
+    expect(await rows('SELECT 1 FROM doc_revisions WHERE section_id = $1 AND tenant_id = $2', [sectionId, ORG])).toEqual([]);
+  });
+
+  it('saves the same imported section when its receipt holds no reference', async () => {
+    const { docId, sectionId } = await seedSection();
+    await importedReceipt(docId, sectionId, false);
+    expect((await patch(sectionId)).status).toBe(200);
+  });
+});
