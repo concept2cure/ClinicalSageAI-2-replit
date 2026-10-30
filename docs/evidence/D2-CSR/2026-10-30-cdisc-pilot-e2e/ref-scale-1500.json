@@ -1,0 +1,32 @@
+{
+  "narratives": 1500,
+  "landedCharacters": 2327062,
+  "landedSha256": "f2aa767a453af6face6438ddef5c7143a8247ef9137e6f361e969d7b9b99cfea",
+  "land": {
+    "seconds": 2.07,
+    "peakHeapMiB": 121.1,
+    "peakRssMiB": 942.3
+  },
+  "import": {
+    "seconds": 0.743,
+    "heapBeforeMiB": 105.7,
+    "peakHeapMiB": 115.1,
+    "peakRssMiB": 778.1,
+    "inlineCharacters": 579,
+    "referenceNarratives": 1500
+  },
+  "assembly": {
+    "seconds": 6.054,
+    "heapBeforeMiB": 107.7,
+    "peakHeapMiB": 142.6,
+    "peakRssMiB": 783.1,
+    "narrativesVerified": true,
+    "narrativesSubjects": 1500,
+    "findings": 0,
+    "leafPages": 563,
+    "leafBytes": 1096049,
+    "storePagesRead": 31,
+    "totalPages": 583
+  },
+  "note": "PGlite runs in this process, so RSS includes the database. Synthetic narratives of about 1,400 characters each."
+}

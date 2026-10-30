@@ -14,7 +14,8 @@ export function ImportSourceNotice({ source }: { source: DocumentProvenance['imp
       <p className="de-desc">Snapshot fingerprint: <span className="source-import-hash">{source.fingerprint}</span></p>
       <p>This identity does not establish scientific source support. This copy has its own review and signature controls.</p>
       {source.association.reason && <p>Project association reason: {source.association.reason}</p>}
-      <ul>{source.sectionOrigins.map(s => <li key={s.code}>{s.code} · {workflowOriginLine(s)}</li>)}</ul>
+      <ul>{source.sectionOrigins.map(s => <li key={s.code}>{s.code} · {workflowOriginLine(s)}{s.narrativeReference
+        ? ` · ${s.narrativeReference.narratives} narratives held by reference to CSR build ${s.narrativeReference.jobId}'s narrative store, not copied` : ''}</li>)}</ul>
       {source.sectionOrigins.some(s => s.originalAuthorship === 'machine') && <p>Reviewer adoption does not certify model qualification. Machine passages remain held unless their qualification requirements are met or the affected passages are replaced by human writing.</p>}
       {source.gaps.length > 0 && <><strong>Recorded gaps</strong><ul>{source.gaps.map((gap, i) => <li key={i}>{gap}</li>)}</ul></>}
     </> : <>

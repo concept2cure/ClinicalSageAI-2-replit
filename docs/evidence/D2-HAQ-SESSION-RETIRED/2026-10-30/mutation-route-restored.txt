@@ -1,0 +1,4 @@
+ × server/routes/c2c/__tests__/c2c-router.parity.test.ts > the HAQ session store is retired onto the project inbox (P-39 step 4) > no router answers the HAQ session paths, and /reviews/pending is on the reviews router 5ms
+   → PUT /projects/:projectId/haq-session should be on no router: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: PUT /projects/:projectId/haq-session should be on no router: expected true to be false // Object.is equality

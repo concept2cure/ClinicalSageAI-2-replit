@@ -271,8 +271,13 @@ export function CsrNarrativeBuild({ jobId, headings, onChanged, pollMs = 2000 }:
     {message && <p role={message.alert ? 'alert' : 'status'}>{message.text}</p>}
     {rows === null ? null : rows.length === 0
       ? <p>No narratives have been composed for this build.</p>
-      : <ul aria-label="Narrative QC" style={{ listStyle: 'none', padding: 0, margin: '8px 0 0' }}>{rows.map(r => <NarrativeQcItem key={r.subjectId} row={r} />)}</ul>}
+      : <NarrativeQcList rows={rows} />}
   </section>;
+}
+
+/** The per-subject narrative QC list; also shown beside the read-only §14.3.3 in Authoring (editor/CsrNarrativeReferenceView.tsx). */
+export function NarrativeQcList({ rows }: { rows: CsrNarrativeQcRow[] }) {
+  return <ul aria-label="Narrative QC" style={{ listStyle: 'none', padding: 0, margin: '8px 0 0' }}>{rows.map(r => <NarrativeQcItem key={r.subjectId} row={r} />)}</ul>;
 }
 
 function NarrativeQcItem({ row }: { row: CsrNarrativeQcRow }) {

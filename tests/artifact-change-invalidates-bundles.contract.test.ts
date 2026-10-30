@@ -88,7 +88,6 @@ describe('artifact routes invalidate the bundles built from what they change', (
 /** Writers that invalidate at write time (the human-facing artifact routes). */
 const WIRED_FILES = [
   'server/routes/c2c/artifacts.ts',
-  'server/routes/c2c/haq-sessions.ts',
   'server/services/ai-actions/handlers/refine-with-validation.ts',
 ];
 
