@@ -120,6 +120,16 @@ describe('composeSafetyNarrative — CDISC terms as a medical writer states them
     expect(event({ outcome: 'transferred' })).toContain('The outcome was reported as transferred.');
   });
 
+  it('takes "an" before an age read with a vowel sound (8, 11, 18, 80–89)', () => {
+    const intro = (age: number) => composeSafetyNarrative({ subjectId: 'S', age, sex: 'female', event: { term: 'Rash' } }).narrative;
+    expect(intro(80)).toContain('Subject S, an 80-year-old female subject');
+    expect(intro(8)).toContain('an 8-year-old');
+    expect(intro(11)).toContain('an 11-year-old');
+    expect(intro(18)).toContain('an 18-year-old');
+    expect(intro(67)).toContain('a 67-year-old');
+    expect(intro(81)).toContain('an 81-year-old');
+  });
+
   it('states dechallenge and rechallenge as a sentence', () => {
     expect(event({ dechallenge: 'positive' })).toContain('Dechallenge was positive.');
     expect(event({ dechallenge: 'positive', rechallenge: 'not done' })).toContain('Dechallenge was positive and rechallenge was not done.');
