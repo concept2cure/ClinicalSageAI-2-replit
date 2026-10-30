@@ -23,13 +23,13 @@ export function TrainingCoverage(props: TrainingCoverageProps) {
   return <section className="qms-sec">
     <div className="qms-sec-head">
       <h2>Read-and-understood training</h2>
-      <span className="meta">Current released revision · active organization roster</span>
+      <span className="meta">Version in force · people assigned</span>
       <span className="spacer" />
       <button type="button" className="qms-chip" title="The job functions people hold, which documents require them to train"
         onClick={() => setRolesOpen(true)}>{I.users} Job roles</button>
     </div>
     {rolesOpen && <JobRolesPanel onClose={() => setRolesOpen(false)} />}
-    <p className="qms-training-summary">Coverage counts personal acknowledgements of the current verified release. It does not assess competency or role-based training requirements. Open a document to read it and acknowledge for yourself.</p>
+    <p className="qms-training-summary">Coverage counts the people assigned to each document, by job role or by name, who have acknowledged the version in force. It does not assess competency. Open a document to read it and acknowledge for yourself.</p>
     <div className="qms-train">
       {props.failed && <ErrorState title="Training records could not be read" message={props.error} retry={props.refresh} testId="sop-training-failed" />}
       {props.unread && !props.failed && <div className="qms-empty" role="status">Loading training records…</div>}
@@ -39,20 +39,43 @@ export function TrainingCoverage(props: TrainingCoverageProps) {
   </section>;
 }
 
+/** The figure a row may show: only an assigned, readable document with people assigned has one (P-49). */
+function coverageState(row: TrainingRow): { label: string; note: string } | { current: number; of: number } {
+  if (row.eligible === false) return { label: 'Unavailable', note: row.unavailableReason ?? 'Verified released text is unavailable.' };
+  if (row.assignment === 'not_assigned') return { label: 'Not assigned', note: 'Nobody is assigned to train on this document.' };
+  if (row.assignment === 'no_active_assignees') return { label: 'No active assignees', note: 'No one assigned to this document is an active member.' };
+  if (row.current === null || row.of === null) return { label: 'No figure', note: 'The server returned no coverage for this document.' };
+  return { current: row.current, of: row.of };
+}
+
+function myLine(me: TrainingRow['me']): string | null {
+  if (!me?.assigned) return null;
+  return me.countsNow ? 'You are current on the version in force.' : 'You are assigned and have not acknowledged the version in force.';
+}
+
 function CoverageRow({ row, canOpen, onOpen }: Pick<TrainingCoverageProps, 'canOpen' | 'onOpen'> & { row: TrainingRow }) {
-  const pct = row.of > 0 ? Math.round((row.current / row.of) * 100) : 0;
-  const tone = pct < 80 ? 'err' : pct < 95 ? 'warn' : 'ok';
+  const state = coverageState(row);
   const disabled = !row.documentId || !canOpen(row.documentId);
+  const mine = myLine(row.me);
   return <div className="qms-train-row">
     <span className="qms-train-doc" title={row.doc}>{row.doc}{row.documentVersion ? ` · v${row.documentVersion}` : ''}</span>
-    {row.eligible === false ? <span className="qms-train-unavailable">Unavailable</span> : <>
-      <span className="qms-train-bar"><span className="qms-train-fill" data-tone={tone} style={{ width: `${pct}%` }} /></span>
-      <span className="qms-train-pct mono">{row.current}/{row.of}</span>
-    </>}
-    {row.eligible === false ? <span className="qms-train-when">{row.unavailableReason ?? 'Verified released text is unavailable.'}</span> :
-      <span className="qms-train-when" title="Most recent acknowledgement on the active roster">Latest {row.lastCycle}</span>}
+    {'label' in state ? <>
+      <span className="qms-train-unavailable">{state.label}</span>
+      <span className="qms-train-when">{state.note}</span>
+    </> : <CoverageFigure current={state.current} of={state.of} lastCycle={row.lastCycle} />}
+    {mine && <span className="qms-train-when" data-testid="qms-train-me">{mine}</span>}
     <button className="qms-link" disabled={disabled} aria-label={`My acknowledgement for ${row.doc}`} onClick={() => { if (row.documentId) onOpen(row.documentId); }}>My acknowledgement</button>
   </div>;
+}
+
+function CoverageFigure({ current, of, lastCycle }: { current: number; of: number; lastCycle: string }) {
+  const pct = of > 0 ? Math.round((current / of) * 100) : 0;
+  const tone = pct < 80 ? 'err' : pct < 95 ? 'warn' : 'ok';
+  return <>
+    <span className="qms-train-bar"><span className="qms-train-fill" data-tone={tone} style={{ width: `${pct}%` }} /></span>
+    <span className="qms-train-pct mono" title={`${current} of ${of} assigned have acknowledged the version in force`}>{current}/{of}</span>
+    <span className="qms-train-when" title="Most recent acknowledgement by the people assigned">Latest {lastCycle}</span>
+  </>;
 }
 
 export function DocumentReadButton({ doc, disabled, onOpen }: {
