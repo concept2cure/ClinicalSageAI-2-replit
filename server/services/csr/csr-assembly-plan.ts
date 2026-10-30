@@ -28,7 +28,18 @@ export type CsrTable = { title: string; headers: string[]; rows: string[][] };
 export const CSR_CTD_SECTIONS = ['5.3.5.1', '5.3.5.2', '5.3.5.3', '5.3.5.4'] as const;
 export type CsrCtdSection = typeof CSR_CTD_SECTIONS[number];
 
-/** The STF file-tag of the body and of the §14 tables leaf. */
+/**
+ * The STF file-tag of the body and of the §14 tables leaf, from the reviewed
+ * recall list STF_DOCUMENT_FILE_TAGS (stf-generator.ts, "not read").
+ * UNVERIFIED, with a lead against it (2026-10-30): a web search summary of
+ * FDA's Study Data Technical Conformance Guide names the study-report tags
+ * "pre-clinical-study-report", "legacy-clinical-study-report" and
+ * "study-report-body", not "study-report". A summary is not the source, so the
+ * value is unchanged. It is settled by reading the ICH STF valid values
+ * (fda.gov/media/159383; ICH valid-values.xml), which this environment's
+ * network policy refuses (fda.gov, admin.ich.org). If the source says
+ * "study-report-body", every CSR STF written so far carries an invalid tag.
+ */
 export const CSR_BODY_FILE_TAG = 'study-report';
 
 /** §14 numbering of every engine table (slice 4's convention). */
