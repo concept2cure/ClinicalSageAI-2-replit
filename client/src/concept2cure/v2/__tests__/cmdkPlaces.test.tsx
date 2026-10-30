@@ -104,7 +104,7 @@ describe('⌘K: places, the open project\'s steps, and features already shown', 
     serve();
     await mount();
     expect(rowsUnder('Jump to')).toEqual([
-      'Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'CMC / Module 3', 'Quality', 'Reporting & analytics',
+      'Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics',
     ]);
   });
 
