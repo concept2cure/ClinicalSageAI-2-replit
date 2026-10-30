@@ -12,6 +12,9 @@
  * - §14.3.3 is checked against, and drawn from, the build's stored narratives
  *   (csr-narrative-store.ts sqlNarrativeStore, read a page at a time); when it
  *   has not landed, the narrative job's saved state is named in the gap (D18).
+ *   The import holds §14.3.3 by reference, not as text (2026-10-30): the landed
+ *   text is read here a slice at a time (csr-narrative-landed.ts
+ *   sqlLandedNarratives), and must be the text the reference was made from.
  * - Population flags, protocol deviations, ADLB and the sponsor's documents are
  *   not in a retained run; the caller supplies them, or the assembly lists the
  *   listings and appendices they would produce as missing.
@@ -26,6 +29,8 @@ import { hasUnresolvedPlaceholders } from './csr-placeholders.js';
 import { sqlNarrativeStore } from './csr-narrative-store.js';
 import { CSR_NARRATIVES_SECTION } from './csr-assembly-plan.js';
 import type { CsrNarrativesSource } from './csr-assembly-narratives.js';
+import { sqlLandedNarratives, type LandedNarratives } from './csr-narrative-landed.js';
+import type { CsrNarrativeReference } from '../../../shared/csr-narrative-reference.js';
 
 export interface AssembleCsrJobInput extends Pick<CsrAssemblyInput, 'supplied' | 'notApplicable' | 'ctdSection' | 'outDir' | 'onStage' | 'shipAs'> {
   organizationId: number; userId: number; programId: string; projectId: number; jobId: number;
@@ -62,6 +67,16 @@ async function narrativesOf(q: Queryable, input: AssembleCsrJobInput, landed: bo
   return { page: store.page, notLandedReason, savedNarratives: composed + refused };
 }
 
+/** The landed §14.3.3 the import's reference was made from, or a refusal: it changed between the two reads. */
+async function landedOf(q: Queryable, input: AssembleCsrJobInput, reference: CsrNarrativeReference | null): Promise<LandedNarratives | undefined> {
+  if (!reference) return undefined;
+  const landed = await sqlLandedNarratives(q, { organizationId: input.organizationId, jobId: input.jobId });
+  if (!landed || landed.sha256 !== reference.landedSha256 || landed.length !== reference.landedLength) {
+    throw new CsrAssemblyError('CSR_ASSEMBLY_SOURCE_CHANGED', 'Section 14.3.3 changed while this assembly read it. Assemble again.');
+  }
+  return landed;
+}
+
 export async function assembleCsrJob(q: Queryable & RequestSqlClient, input: AssembleCsrJobInput): Promise<AssembledCsrJob> {
   const source = await materializeCsrAssemblySource({ organizationId: input.organizationId, userId: input.userId,
     target: { programId: input.programId, projectId: input.projectId }, source: { kind: 'csr', jobId: input.jobId } }, q);
@@ -71,7 +86,7 @@ export async function assembleCsrJob(q: Queryable & RequestSqlClient, input: Ass
   const stamp = source.lastGeneratedAt && source.lastGeneratedAt > cut ? source.lastGeneratedAt : cut;
   const result = await assembleCsr({
     studyId: source.studyId, title: source.title, nctNumber: source.nctNumber, ctdSection: input.ctdSection, sections: source.sections, gaps: source.gaps.filter(g => !ASSEMBLED_HERE.test(g)),
-    tables: retained.tables, narratives: await narrativesOf(q, input, source.sections.some(s => s.code === CSR_NARRATIVES_SECTION)), outDir: input.outDir, contentModifiedAt: stamp, supplied: input.supplied, notApplicable: input.notApplicable, onStage: input.onStage, shipAs: input.shipAs,
+    tables: retained.tables, narratives: await narrativesOf(q, input, !!source.narratives || source.sections.some(s => s.code === CSR_NARRATIVES_SECTION)), landedNarratives: await landedOf(q, input, source.narratives), outDir: input.outDir, contentModifiedAt: stamp, supplied: input.supplied, notApplicable: input.notApplicable, onStage: input.onStage, shipAs: input.shipAs,
     listingSource: { study: subjectLevel(retained.study), participants: input.participants, protocolDeviations: input.protocolDeviations, laboratory: input.laboratory },
   });
   const placeholderSections = source.sections.filter(s => hasUnresolvedPlaceholders(s.content)).map(s => s.code);
