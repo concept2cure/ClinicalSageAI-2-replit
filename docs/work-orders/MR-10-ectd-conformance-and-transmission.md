@@ -141,6 +141,14 @@ Evidence and publication receipt: `docs/evidence/MR-10/2026-10-30-qualification-
 Stage3/CAT2-01 remain open for official assets, licensed profile/current-criteria
 coverage and the remaining agency/human acceptance checks.
 
+2026-10-30 checksum continuation: qualification now reaches the existing export
+ZIP validator on original and amendment v3 packages. Required root-MD5 and
+backbone-leaf checksum errors fail qualification independently of a coherent
+platform util manifest. Full per-sequence canonical results remain in the report;
+warnings and existing DTD/external blockers stay distinct. 375 affected checks/25
+files pass; actual unconfigured CLI remains BLOCKED with canonical ZIP checks
+passing. Evidence: `docs/evidence/MR-10/2026-10-30-qualification-integrity/`.
+
 This is the root of stages 4–7, 9, 10 and 11. Nothing downstream can be proved without it.
 
 1. Re-confirm CAT2-01 at the current head (statuses here are from 94b4f9238).

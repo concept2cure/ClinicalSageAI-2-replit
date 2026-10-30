@@ -38,13 +38,13 @@ import { verifiedTrainingReceipt } from './training-content';
 import { reconcileSourceTasks, type DesiredSourceTask } from '../tasking/source-task';
 import { notifyTaskEvent } from '../tasking/task-side-effects';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
-import { QMS_TRAINABLE_DOCUMENT_TYPES } from '../../../shared/qms/training';
+import { QMS_TRAINABLE_DOCUMENT_TYPES, QMS_TRAINING_TASK_SOURCE } from '../../../shared/qms/training';
 import { createScopedLogger } from '../../utils/logger';
 
 const log = createScopedLogger('qms-training-task');
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export const TRAINING_TASK_SOURCE = 'qms_training';
+export const TRAINING_TASK_SOURCE = QMS_TRAINING_TASK_SOURCE;
 /** The due-soon notice before the due day (taskDueSweep reads it). */
 export const TRAINING_REMIND_DAYS = 7;
 /** P-50 Q1: someone covered after the version took effect is due this many days after they were covered. */

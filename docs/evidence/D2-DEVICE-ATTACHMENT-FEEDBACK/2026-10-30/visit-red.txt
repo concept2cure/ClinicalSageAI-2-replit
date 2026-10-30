@@ -1,0 +1,188 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'section id' 234ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'backend document' 34ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'program' 28ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'pathway' 33ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a section-label A to B to A visit instead of reviving the first completion 24ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a batched shell A to B to A visit even when drawer props return unchanged 20ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=false 17ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=true 16ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across close and reopening the same section 19ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across unmount and reopening the same section 19ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > publishes a confirmed file when its original visit remains current 17ms
+   → Unable to fire a "change" event - please provide a DOM element.
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > keeps an ordinary bearer refresh current and accepts its valid unchanged receipt 17ms
+   → Unable to fire a "change" event - please provide a DOM element.
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'section id'
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'backend document'
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'program'
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'pathway'
+Error: Unable to fire a "change" event - please provide a DOM element.
+ ❯ createEvent node_modules/@testing-library/dom/dist/events.js:27:11
+ ❯ Function.createEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:106:38
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:110:68
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/react/dist/fire-event.js:15:52
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:97:15
+     95|   const file = new File(['original selected performance bytes'], 'owne…
+     96|   await act(async () => {
+     97|     fireEvent.change(showAttachments(), { target: { files: [file] } });
+       |               ^
+     98|     await receipt.entered.promise;
+     99|   });
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ start client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:96:9
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:161:71
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a section-label A to B to A visit instead of reviving the first completion
+Error: Unable to fire a "change" event - please provide a DOM element.
+ ❯ createEvent node_modules/@testing-library/dom/dist/events.js:27:11
+ ❯ Function.createEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:106:38
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:110:68
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/react/dist/fire-event.js:15:52
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:97:15
+     95|   const file = new File(['original selected performance bytes'], 'owne…
+     96|   await act(async () => {
+     97|     fireEvent.change(showAttachments(), { target: { files: [file] } });
+       |               ^
+     98|     await receipt.entered.promise;
+     99|   });
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ start client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:96:9
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:174:71
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a batched shell A to B to A visit even when drawer props return unchanged
+Error: Unable to fire a "change" event - please provide a DOM element.
+ ❯ createEvent node_modules/@testing-library/dom/dist/events.js:27:11
+ ❯ Function.createEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:106:38
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:110:68
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/react/dist/fire-event.js:15:52
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:97:15
+     95|   const file = new File(['original selected performance bytes'], 'owne…
+     96|   await act(async () => {
+     97|     fireEvent.change(showAttachments(), { target: { files: [file] } });
+       |               ^
+     98|     await receipt.entered.promise;
+     99|   });
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ start client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:96:9
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:185:71
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=false
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=true
+Error: Unable to fire a "change" event - please provide a DOM element.
+ ❯ createEvent node_modules/@testing-library/dom/dist/events.js:27:11
+ ❯ Function.createEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:106:38
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:110:68
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/react/dist/fire-event.js:15:52
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:97:15
+     95|   const file = new File(['original selected performance bytes'], 'owne…
+     96|   await act(async () => {
+     97|     fireEvent.change(showAttachments(), { target: { files: [file] } });
+       |               ^
+     98|     await receipt.entered.promise;
+     99|   });
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ start client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:96:9
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:199:71
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across close and reopening the same section
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across unmount and reopening the same section
+Error: Unable to fire a "change" event - please provide a DOM element.
+ ❯ createEvent node_modules/@testing-library/dom/dist/events.js:27:11
+ ❯ Function.createEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:106:38
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:110:68
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/react/dist/fire-event.js:15:52
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:97:15
+     95|   const file = new File(['original selected performance bytes'], 'owne…
+     96|   await act(async () => {
+     97|     fireEvent.change(showAttachments(), { target: { files: [file] } });
+       |               ^
+     98|     await receipt.entered.promise;
+     99|   });
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ start client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:96:9
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:213:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > publishes a confirmed file when its original visit remains current
+Error: Unable to fire a "change" event - please provide a DOM element.
+ ❯ createEvent node_modules/@testing-library/dom/dist/events.js:27:11
+ ❯ Function.createEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:106:38
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:110:68
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/react/dist/fire-event.js:15:52
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:97:15
+     95|   const file = new File(['original selected performance bytes'], 'owne…
+     96|   await act(async () => {
+     97|     fireEvent.change(showAttachments(), { target: { files: [file] } });
+       |               ^
+     98|     await receipt.entered.promise;
+     99|   });
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ start client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:96:9
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:231:71
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > keeps an ordinary bearer refresh current and accepts its valid unchanged receipt
+Error: Unable to fire a "change" event - please provide a DOM element.
+ ❯ createEvent node_modules/@testing-library/dom/dist/events.js:27:11
+ ❯ Function.createEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:106:38
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/dom/dist/events.js:110:68
+ ❯ Function.fireEvent.<computed> [as change] node_modules/@testing-library/react/dist/fire-event.js:15:52
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:97:15
+     95|   const file = new File(['original selected performance bytes'], 'owne…
+     96|   await act(async () => {
+     97|     fireEvent.change(showAttachments(), { target: { files: [file] } });
+       |               ^
+     98|     await receipt.entered.promise;
+     99|   });
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ start client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:96:9
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:242:74
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  18:56:11
+   Duration  2.72s (transform 889ms, setup 248ms, import 1.11s, tests 486ms, environment 681ms)
+

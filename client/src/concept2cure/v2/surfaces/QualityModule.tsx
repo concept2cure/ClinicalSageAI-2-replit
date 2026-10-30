@@ -17,10 +17,12 @@ import QualityRoute from '../../quality/QualityRoute';
 import {consumeNavParams,NAV_PARAMS_EVENT} from '../navParams';
 
 export function QualityModule({ onAsk, onNav }: SurfaceViewProps) {
-  const [target,setTarget]=React.useState(()=>({id:consumeNavParams('quality')?.qmsDocumentId,request:0}));
+  // A training task's notice says `qmsIntent: 'read'` (MR-12 Stage 4 slice 4b): the register opens the reader, not the editor.
+  const intentOf=(params:Record<string,string>|null)=>params?.qmsIntent==='read'?'read' as const:undefined;
+  const [target,setTarget]=React.useState(()=>{const params=consumeNavParams('quality');return {id:params?.qmsDocumentId,intent:intentOf(params),request:0};});
   React.useEffect(()=>{
-    const receive=()=>{const params=consumeNavParams('quality');if(params?.qmsDocumentId)setTarget(current=>({id:params.qmsDocumentId,request:current.request+1}));};
+    const receive=()=>{const params=consumeNavParams('quality');if(params?.qmsDocumentId)setTarget(current=>({id:params.qmsDocumentId,intent:intentOf(params),request:current.request+1}));};
     window.addEventListener(NAV_PARAMS_EVENT,receive);return()=>window.removeEventListener(NAV_PARAMS_EVENT,receive);
   },[]);
-  return <QualityRoute onAskAna={onAsk} onNavigate={onNav} qmsDocumentId={target.id} qmsTargetRequest={target.request} />;
+  return <QualityRoute onAskAna={onAsk} onNavigate={onNav} qmsDocumentId={target.id} qmsIntent={target.intent} qmsTargetRequest={target.request} />;
 }
