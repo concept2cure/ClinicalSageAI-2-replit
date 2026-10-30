@@ -1,0 +1,86 @@
+# Slice 4 mutations — each mutant applied alone, the named suites run, the file restored (scratchpad/mut4.py)
+
+## Run 1: all thirteen
+M1 an open task that records the same thing is rewritten: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  6 failed | 7 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes nothing when planned again 70ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > completes only the task of the person who acknowledged the version 80ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes a task only for the people an added assignment or role member newly covers 85ms
+    server/services/tasking/__tests__/source-task.test.ts: Tests  2 failed | 5 passed (7)
+      × server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > leaves the open task when it already records the same thing 9ms
+      × server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > keeps what is wanted, closes the rest as the act says, and writes what is missing 4ms
+M2 the prefix is not checked on the rows read: KILLED
+    server/services/tasking/__tests__/source-task.test.ts: Tests  1 failed | 6 passed (7)
+      × server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > never treats document 10 as under the prefix of document 1 10ms
+M3 a receipt closes its task as withdrawn, not done: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  4 failed | 9 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > completes only the task of the person who acknowledged the version 93ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws a task when its person is no longer covered, and keeps the task of a person still named 73ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws every open task when the document is retired 53ms
+M4 no grace for late assignment: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  2 failed | 11 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > is due 14 days after they were covered for someone assigned after it was in force (P-50 Q1) 58ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > gives a task due in the future one due-soon notice and one overdue notice from the sweep 17ms
+    server/services/qms/__tests__/training-task.test.ts: Tests  4 failed | 3 passed (7)
+      × server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > is 14 days, the grace P-50 decided 11ms
+      × server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > gives someone covered after it was in force 14 days from the day they were covered 5ms
+      × server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > compares moments, not days: covered after a same-day approval is late, covered before it is not 3ms
+M5 days compared instead of moments: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  2 failed | 11 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > is due 14 days after they were covered for someone assigned after it was in force (P-50 Q1) 50ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > gives a task due in the future one due-soon notice and one overdue notice from the sweep 17ms
+    server/services/qms/__tests__/training-task.test.ts: Tests  1 failed | 6 passed (7)
+      × server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > compares moments, not days: covered after a same-day approval is late, covered before it is not 8ms
+M6 a task born due gets no sweep markers: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  1 failed | 12 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > is due now for someone it reached with no training period, and the sweep does not also say overdue 66ms
+M7 a failed assignee read planned as nobody assigned: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  1 failed | 12 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > closes nothing when the plan could not be read 44ms
+M8 governedQmsWrite never runs afterCommit: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  4 failed | 9 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes a task only for the people an added assignment or role member newly covers 27ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws a task when its person is no longer covered, and keeps the task of a person still named 14ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > is due 14 days after they were covered for someone assigned after it was in force (P-50 Q1) 41ms
+M9 afterCommit not awaited before the answer: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  4 failed | 9 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes a task only for the people an added assignment or role member newly covers 31ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws a task when its person is no longer covered, and keeps the task of a person still named 21ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > is due 14 days after they were covered for someone assigned after it was in force (P-50 Q1) 31ms
+M10 approval plans no tasks: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  4 failed | 9 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > reaches each person assigned with one task due the day it takes effect, and one notice 136ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes nothing when planned again 35ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > is due now for someone it reached with no training period, and the sweep does not also say overdue 60ms
+M11 retirement plans no tasks: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  2 failed | 11 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws every open task when the document is retired 55ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > gives a task due in the future one due-soon notice and one overdue notice from the sweep 32ms
+M12 an acknowledgement plans no tasks: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  4 failed | 9 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > completes only the task of the person who acknowledged the version 64ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes a task only for the people an added assignment or role member newly covers 79ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > gives a task due in the future one due-soon notice and one overdue notice from the sweep 37ms
+    server/routes/__tests__/qms-personal-training.test.ts: Tests  1 failed | 20 passed (21)
+      × server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > allows a viewer to record only their own explicit attestation with atomic audit 19ms
+M13 an unreadable release is distributed: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  1 failed | 12 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > distributes no release whose text no longer matches its signature: nobody could complete the task 88ms
+
+## Run 2: M1, M2 and M10 again, after reconcileSourceTasks and the approval's after-commit step were split into smaller functions (ESLint complexity), so their patterns moved
+M1 an open task that records the same thing is rewritten: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  6 failed | 7 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes nothing when planned again 69ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > completes only the task of the person who acknowledged the version 58ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes a task only for the people an added assignment or role member newly covers 92ms
+    server/services/tasking/__tests__/source-task.test.ts: Tests  2 failed | 5 passed (7)
+      × server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > leaves the open task when it already records the same thing 9ms
+      × server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > keeps what is wanted, closes the rest as the act says, and writes what is missing 4ms
+M2 the prefix is not checked on the rows read: KILLED
+    server/services/tasking/__tests__/source-task.test.ts: Tests  1 failed | 6 passed (7)
+      × server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > never treats document 10 as under the prefix of document 1 7ms
+M10 approval plans no tasks: KILLED
+    tests/db/qms-training-tasks.dbtest.ts: Tests  4 failed | 9 passed (13)
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > reaches each person assigned with one task due the day it takes effect, and one notice 160ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes nothing when planned again 45ms
+      × tests/db/qms-training-tasks.dbtest.ts > a version in force > is due now for someone it reached with no training period, and the sweep does not also say overdue 67ms
