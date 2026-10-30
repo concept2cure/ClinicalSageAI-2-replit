@@ -1,0 +1,1391 @@
+-    reportsStatus = 200; reportsPayload = { data: [], meta: { total: 0, hasMore: false, limit: 100, offset: 0 } };
+-    fireEvent.click(screen.getByRole('button', { name: 'Retry saved reports' }));
+-    await screen.findByText(/No saved reports are visible in your authorized report register/);
+-    mounted.unmount();
+-  });
+-
+-  it('does not claim empty or zero metrics while loading', async () => {
+-    metricsDeferred = true;
+-    render(<AnalyticsSurface onAskAna={vi.fn()} />);
+-    await screen.findByText('Loading analytics metrics…');
+-    expect(screen.queryByText(/0 submitted|0 cleared|No saved reports/)).toBeNull();
+-  });
+-
+-  it('rejects a malformed successful library as unavailable', async () => {
+-    reportsPayload = { data: null };
+-    render(<AnalyticsSurface onAskAna={vi.fn()} />);
+-    await screen.findByText(/Saved reports are unavailable/);
+-    expect(screen.queryByText(/No saved reports/)).toBeNull();
+-  });
+-
+-  it('does not offer pathway filters that the aggregate cannot honor', async () => {
+-    render(<AnalyticsSurface onAskAna={vi.fn()} />);
+-    await screen.findByText('Submission pace');
+-    for (const name of ['510(k)', 'PMA', 'CER']) {
+-      expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(true);
+-    }
+-    expect(screen.getByText(/Pathway filtering is unavailable/)).toBeTruthy();
+-    await waitFor(() => expect(fetch).not.toHaveBeenCalledWith('/api/mdx/analytics?pathway=k510', expect.anything()));
+-  });
+-});
+diff --git a/client/src/concept2cure/mdx/surfaces/__tests__/Overview.pathwayReadiness.test.tsx b/client/src/concept2cure/mdx/surfaces/__tests__/Overview.pathwayReadiness.test.tsx
+deleted file mode 100644
+index 9b93cc5a7..000000000
+--- a/client/src/concept2cure/mdx/surfaces/__tests__/Overview.pathwayReadiness.test.tsx
++++ /dev/null
+@@ -1,45 +0,0 @@
+-// @vitest-environment jsdom
+-import * as React from 'react';
+-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+-import type { Program } from '../../data/programs';
+-import { Overview } from '../Overview';
+-
+-vi.mock('../../components/ClientReviewZone', () => ({ ClientReviewZone: () => null }));
+-const row = (id: string, pathway = 'k510', readiness: number | null = null) => ({
+-  id, title: `Device ${id}`, code: id, pathway, readiness, stage: 'Planning', stageIdx: 0,
+-  status: 'idle', lead: '', owners: [], nextBlocker: null, dueLabel: 'No target set',
+-  dueTone: 'ok', lastActivity: 'Now', meta: '',
+-}) as Program;
+-const mount = (programs: Program[]) => render(<Overview programs={programs} onOpenProgram={vi.fn()} onAskAna={vi.fn()} onNewProject={vi.fn()} />);
+-const average = () => document.querySelectorAll('.health-card')[1];
+-beforeEach(() => localStorage.clear());
+-afterEach(cleanup);
+-
+-describe('device portfolio pathway visibility and absent readiness', () => {
+-  it('states Not recorded for a fresh device project and no readiness bar', () => {
+-    mount([row('fresh')]);
+-    expect(average()?.textContent).toContain('Not recorded');
+-    expect(screen.getAllByText('Not recorded')).toHaveLength(2);
+-    expect(document.querySelectorAll('.pg-bar-fill')).toHaveLength(0);
+-    expect(document.body.textContent).not.toMatch(/0%|null%/);
+-  });
+-  it('does not average an absent figure as zero, and states measured coverage', () => {
+-    mount([row('measured', 'pma', 40), row('unset')]);
+-    expect(average()?.querySelector('.health-metric')?.textContent).toBe('40%');
+-    expect(average()?.textContent).toMatch(/1 of 2/);
+-  });
+-  it('lets a person filter IDE, regional and Other rows in grid and list', () => {
+-    mount([row('ide', 'ide'), row('regional', 'mdl'), row('unknown', 'other'), row('ivdr', 'ivdr')]);
+-    fireEvent.click(screen.getByRole('button', { name: /^IDE 1$/ }));
+-    expect(screen.getByText('Device ide')).toBeTruthy();
+-    expect(screen.queryByText('Device regional')).toBeNull();
+-    fireEvent.click(screen.getByRole('button', { name: /^MDL 1$/ }));
+-    expect(screen.getByText('Device regional')).toBeTruthy();
+-    fireEvent.click(screen.getByRole('button', { name: /^Other 1$/ }));
+-    expect(screen.getByText('Device unknown')).toBeTruthy();
+-    fireEvent.click(screen.getByRole('button', { name: 'List' }));
+-    expect(document.querySelector('.pg-list-row')?.textContent).toContain('Other');
+-    expect(document.querySelector('.pg-list-row')?.textContent).toContain('Not recorded');
+-  });
+-});
+diff --git a/client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx b/client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx
+index e657e6954..e02cbf4e8 100644
+--- a/client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx
++++ b/client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx
+@@ -169,9 +169,9 @@ describe('project MDX workflow — doors and headings', () => {
+    (fold-device-tasks), device-vault into the Vault (fold-f3-vault), risk and design-controls into device-engineering
+    (fold F1c), ivd-completeness into device-diagnostics (fold F2; grant-continuity-and-f1c-f2), and the
+    organization-wide blocker list device-validation retired (fold F5 item 2) and device-submission folded into
+-   Submission Center (fold F5 item 1; fold-f5-device-filing), so 14 remain. Plan's device workflow opens twelve of
+-   them. Each of the other two has no door from inside the project, for the reason given below. One folds into a
+-   place the project already reaches, and one is the old device home
++   Submission Center (fold F5 item 1; fold-f5-device-filing), device-analytics joined Reporting & analytics (fold
++   F4; fold-f4-device-analytics), and device-workstream, the old device home, folded into Projects with its MDX
++   filter (fold F6; fold-f6-device-workstream), so 12 remain, and Plan's device workflow opens every one of them
+    (FUNCTION_PARITY.md; INFORMATION_ARCHITECTURE.md section 5 and convergences 3, 7, 8, 11). */
+ const REACHED_FROM_PLAN = [
+   'device-510k', 'device-pma', 'device-cer', 'device-diagnostics',
+@@ -181,12 +181,6 @@ const REACHED_FROM_PLAN = [
+   /* Its screen reads the open project's file (device-features-human-factors, 2026-10-29). */
+   'human-factors',
+ ];
+-const NO_PROJECT_DOOR: Record<string, string> = {
+-  /* (b) Folds into a place the project already reaches; a door would keep a duplicate. */
+-  'device-analytics': 'folds into Reporting & analytics',
+-  /* (c) The old device home. */
+-  'device-workstream': 'the old device portfolio, which folds into Projects (A2.10)',
+-};
+ 
+ /** Every recorded fact that picks the device plan: each route the plan compiles (and two it does not), each device
+  *  product type, and each added filing that opens another feature. */
+@@ -216,15 +210,11 @@ function surfacesPlanOpens(): Set<string> {
+ }
+ 
+ describe('device features inside the project', () => {
+-  it('places each of the 16 project features once: opened from Plan, or listed with why it has no door', () => {
+-    expect([...REACHED_FROM_PLAN, ...Object.keys(NO_PROJECT_DOOR)].sort()).toEqual([...MDX_PROJECT_FEATURE_SURFACE_IDS].sort());
++  it('places each of the 12 project features once, each opened from Plan', () => {
++    expect([...REACHED_FROM_PLAN].sort()).toEqual([...MDX_PROJECT_FEATURE_SURFACE_IDS].sort());
+   });
+ 
+   it('opens exactly those twelve features from a device project\'s Plan, over every recorded route and product type', () => {
+     expect([...surfacesPlanOpens()].sort()).toEqual([...REACHED_FROM_PLAN].sort());
+   });
+-
+-  it.each(Object.entries(NO_PROJECT_DOOR))('offers no door to %s from inside the project', (id, why) => {
+-    expect(surfacesPlanOpens().has(id), `${id}: ${why}`).toBe(false);
+-  });
+ });
+diff --git a/client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts b/client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+new file mode 100644
+index 000000000..8665d029a
+--- /dev/null
++++ b/client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+@@ -0,0 +1,135 @@
++/**
++ * Device analytics (device-analytics) is folded into Reporting & analytics, and
++ * stays folded (D2, fold F4, 2026-10-30; decision P-61 item 3,
++ * docs/LAUNCH_DEFINITION_OF_DONE.md; docs/design/DEVICE_FOLDS_2026-10-29.md F4;
++ * docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/).
++ *
++ * `device-analytics` was AnalyticsSurface (mdx/surfaces/AnalyticsSurface.tsx)
++ * over GET /api/mdx/analytics (server/routes/mdx-analytics.ts): counts of every
++ * program of the organization, drug programs included, whether or not the reader
++ * could open them, with three facets always null. The decision: device analytics
++ * joins Reporting & analytics at its tier (standard), over accessible projects
++ * only. Its three real figures are the device section of the Reporting overview
++ * (readDevicePortfolio over getAccessibleReportProjectIds), shown by Insights.
++ *
++ * This pins the fold from both ends:
++ *   - the old id resolves to Reporting & analytics through the alias, from a
++ *     URL, an in-app move or AnA's kept target, with or without a project open;
++ *     the overview reads the device section over the accessible projects, and
++ *     the canvas mounts it;
++ *   - the old screen is gone: no view, no registry entry (so ⌘K cannot list it),
++ *     no kit id, no host publish, no hook, no client call of the old route; the
++ *     organization-wide kit aggregate is gone from its router, and no registry
++ *     entry claims /api/mdx/analytics, so production refuses the facet routes
++ *     kept there with no caller;
++ *   - neither project scope list names it, nor the rail, a focus list or the
++ *     shell's group tables, and no tour stops there.
++ */
++import fs from 'node:fs';
++import path from 'node:path';
++import { describe, expect, it } from 'vitest';
++
++import { destinationFor, locationForSurface, surfaceIdFromLocation } from '../routing';
++import { DEEP_LINK_ALIASES, NAV_GROUP_OF, NAV_HIDDEN, SEGMENT_MODULES, SEGMENTS, SURFACE_ACTIONS } from '../registryModel';
++import { SURFACE_VIEWS } from '../surfaceViews';
++import { MDX_SURFACE_IDS } from '../../mdx/surfaceIds';
++import { getSurface, UI_SURFACES } from '@shared/constants/ui-surface-registry';
++import { isLaunchSurface, LAUNCH_APPS } from '@shared/constants/launch-scope';
++import { MDX_PROJECT_FEATURE_SURFACE_IDS } from '@shared/constants/mdx-project-features';
++import { findNavigationTarget } from '@shared/navigation';
++import { DEMO_SCRIPTS } from '@shared/navigation/demo-scripts';
++
++const CLIENT = path.resolve(__dirname, '../../..');
++const REPO = path.resolve(CLIENT, '../..');
++const CONCEPT2CURE = path.join(CLIENT, 'concept2cure');
++const SELF = path.resolve(__filename);
++const read = (rel: string) => fs.readFileSync(path.join(CONCEPT2CURE, rel), 'utf8');
++const ID = 'device-analytics';
++
++function sourceFiles(dir: string): string[] {
++  const out: string[] = [];
++  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
++    const full = path.join(dir, entry.name);
++    if (entry.isDirectory()) {
++      if (entry.name !== 'node_modules') out.push(...sourceFiles(full));
++    } else if (/\.(ts|tsx)$/.test(entry.name) && full !== SELF) {
++      out.push(full);
++    }
++  }
++  return out;
++}
++/* The tree is shared with other sessions; a file gone between listing and reading names nothing. */
++const text = (f: string) => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } };
++const code = (f: string) => text(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
++
++describe('device-analytics is folded into Reporting & analytics', () => {
++  it('resolves the old id to Reporting & analytics from a link, an in-app move and AnA, with or without a project open', () => {
++    expect(DEEP_LINK_ALIASES[ID]).toBe('insights');
++    expect(surfaceIdFromLocation(locationForSurface(ID))).toBe('insights');
++    expect(surfaceIdFromLocation('/concept2cure/device-analytics?pathway=all')).toBe('insights');
++    expect(destinationFor(ID, true).surfaceId).toBe('insights');
++    expect(destinationFor(ID, false).surfaceId).toBe('insights');
++    // AnA's handle is kept so an old conversation's move still lands, and says where.
++    expect(findNavigationTarget(ID)).toBeDefined();
++    expect(findNavigationTarget(ID)!.description).toMatch(/Reporting/);
++    expect(findNavigationTarget(ID)!.description).not.toMatch(/analytics panels/);
++  });
++
++  it('lands on Reporting & analytics, whose overview reads the device section over the projects the reader can open', () => {
++    expect(SURFACE_VIEWS.insights).toBeDefined();
++    expect(getSurface('insights')).toBeDefined();
++    const canvas = read('v2/surfaces/Insights.tsx');
++    expect(canvas).toContain("'/api/insights-canvas/overview'");
++    expect(code(path.join(CONCEPT2CURE, 'v2/surfaces/Insights.tsx'))).toMatch(/<InsightsDevicePortfolio device=\{data\??\.device\}/);
++    const route = code(path.join(REPO, 'server/routes/insights-canvas-routes.ts'));
++    expect(route).toMatch(/readDevicePortfolio\(requestPgClient\(req\), organizationId, accessibleProjectIds,/);
++    expect(route).toMatch(/const accessibleProjectIds = await getAccessibleReportProjectIds\(/);
++    // Device is the Projects MDX filter's classification, from the one vocabulary.
++    const engine = code(path.join(REPO, 'server/services/report-os/device-portfolio.ts'));
++    expect(engine).toMatch(/workstreamSqlCase\('rp\.program_type', 'rp\.product_type'\)\} = 'MDX'/);
++    expect(engine).not.toMatch(/aiComplete|unified-ai-client|callModel/);
++  });
++
++  it('keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish', () => {
++    expect(SURFACE_VIEWS[ID]).toBeUndefined();
++    expect(getSurface(ID)).toBeUndefined();
++    expect(UI_SURFACES.some((s) => s.id === ID)).toBe(false);
++    expect(MDX_SURFACE_IDS as readonly string[]).not.toContain(ID);
++    expect(SURFACE_ACTIONS[ID]).toBeUndefined();
++    const host = code(path.join(CONCEPT2CURE, 'mdx/MdxSurfaceHost.tsx'));
++    expect(host).not.toContain(`'${ID}'`);
++    expect(host).not.toMatch(/\bAnalyticsSurface\b/);
++  });
++
++  it('leaves no client code, no organization-wide aggregate and no claim for the old route', () => {
++    for (const gone of ['mdx/surfaces/AnalyticsSurface.tsx', 'mdx/hooks/useAnalytics.ts', 'mdx/data/analytics.ts', 'mdx/components/AnalyticsReportLibrary.tsx']) {
++      expect(fs.existsSync(path.join(CONCEPT2CURE, gone)), gone).toBe(false);
++    }
++    const files = sourceFiles(CLIENT);
++    const naming = files.filter((f) => /\b(AnalyticsSurface|useAnalytics|AnalyticsReportLibrary)\b/.test(code(f)));
++    expect(naming.map((f) => path.relative(CLIENT, f))).toEqual([]);
++    const calling = files.filter((f) => code(f).includes('/api/mdx/analytics'));
++    expect(calling.map((f) => path.relative(CLIENT, f))).toEqual([]);
++    const router = code(path.join(REPO, 'server/routes/mdx-analytics.ts'));
++    expect(router).not.toMatch(/router\.get\(\s*['"]\/analytics['"]/);
++    expect(router).not.toMatch(/pace24m|kpis/);
++    // No launch screen claims the old family, so the production gate refuses it
++    // (launch-scope-device-features.test.ts asks the gate itself).
++    const OLD = '/api/mdx/analytics';
++    const covers = (prefix: string) => OLD === prefix || OLD.startsWith(`${prefix}/`) || prefix.startsWith(`${OLD}/`);
++    expect(UI_SURFACES.filter((s) => isLaunchSurface(s.id))
++      .flatMap((s) => s.apiPrefixes.filter(covers).map((p) => `${s.id} ${p}`))).toEqual([]);
++  });
++
++  it('is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there', () => {
++    expect(LAUNCH_APPS.find((a) => a.id === 'projects')!.surfaces).not.toContain(ID);
++    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain(ID);
++    const rail = Object.values(SEGMENT_MODULES).flatMap((groups) => groups.flatMap((g) => g.items));
++    expect(rail).not.toContain(ID);
++    expect(SEGMENTS.flatMap((s) => s.focus ?? [])).not.toContain(ID);
++    expect(Object.hasOwn(NAV_GROUP_OF, ID)).toBe(false);
++    expect(NAV_HIDDEN.has(ID)).toBe(false);
++    const steps = DEMO_SCRIPTS.flatMap((s) => s.steps);
++    expect(steps.filter((s) => s.navigate?.target === ID)).toEqual([]);
++  });
++});
+diff --git a/client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts b/client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts
+new file mode 100644
+index 000000000..ad8e8c81f
+--- /dev/null
++++ b/client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts
+@@ -0,0 +1,133 @@
++/**
++ * The device workstream (device-workstream) is folded into Projects, and stays
++ * folded (D2, fold F6, 2026-10-30; decision P-61 item 5,
++ * docs/LAUNCH_DEFINITION_OF_DONE.md; docs/design/DEVICE_FOLDS_2026-10-29.md F6;
++ * docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/).
++ *
++ * `device-workstream` was the kit's portfolio, mdx/surfaces/Overview.tsx, which
++ * the host drew from its `default:` branch. Its strip figures were computed in
++ * the browser from a kit mapping of each program (blocked from a status
++ * mapping, in flight from a stage index), not by any engine; the decision keeps
++ * only figures computed from the project's own records, so they are dropped.
++ * Projects already counts the device portfolio on the server (total, by
++ * pathway, filing within 60 days) behind its MDX filter, and now shows each
++ * project's last activity in both views. The Client Review Room, which the
++ * portfolio drew for the whole organization, is mounted on the device project's
++ * Review step for that project, through the room's admitted read.
++ *
++ * This pins the fold from both ends:
++ *   - the old id resolves to Projects with the MDX filter, from a URL, an
++ *     in-app move and AnA's kept target, and both device tours stop there;
++ *   - the old screen is gone: no view, no registry entry, no kit id, no host
++ *     publish, no portfolio branch in the host, no Overview;
++ *   - neither project scope list names it, nor the rail, a focus list or the
++ *     shell's group tables;
++ *   - the room is reached from the project, which claims its read.
++ */
++import fs from 'node:fs';
++import path from 'node:path';
++import { describe, expect, it } from 'vitest';
++
++import { destinationFor, locationForSurface, surfaceIdFromLocation } from '../routing';
++import { ALIAS_APPLIES, DEEP_LINK_ALIASES, NAV_GROUP_OF, NAV_HIDDEN, SEGMENT_MODULES, SEGMENTS, SURFACE_ACTIONS } from '../registryModel';
++import { SURFACE_VIEWS } from '../surfaceViews';
++import { MDX_SURFACE_IDS } from '../../mdx/surfaceIds';
++import { getSurface, UI_SURFACES } from '@shared/constants/ui-surface-registry';
++import { LAUNCH_APPS } from '@shared/constants/launch-scope';
++import { MDX_PROJECT_FEATURE_SURFACE_IDS } from '@shared/constants/mdx-project-features';
++import { findNavigationTarget } from '@shared/navigation';
++import { DEMO_SCRIPTS } from '@shared/navigation/demo-scripts';
++
++const CLIENT = path.resolve(__dirname, '../../..');
++const CONCEPT2CURE = path.join(CLIENT, 'concept2cure');
++const SELF = path.resolve(__filename);
++const ID = 'device-workstream';
++const MDX_FILTER = { actionId: 'projects.filter', params: { workstream: 'MDX' } };
++
++function sourceFiles(dir: string): string[] {
++  const out: string[] = [];
++  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
++    const full = path.join(dir, entry.name);
++    if (entry.isDirectory()) {
++      if (entry.name !== 'node_modules') out.push(...sourceFiles(full));
++    } else if (/\.(ts|tsx)$/.test(entry.name) && full !== SELF && !/\/__tests__\//.test(full)) {
++      out.push(full);
++    }
++  }
++  return out;
++}
++/* The tree is shared with other sessions; a file gone between listing and reading names nothing. */
++const text = (f: string) => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } };
++const code = (f: string) => text(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
++const at = (rel: string) => path.join(CONCEPT2CURE, rel);
++
++describe('device-workstream is folded into Projects', () => {
++  it('resolves the old id to Projects with the MDX filter, from a link, an in-app move and AnA, with or without a project open', () => {
++    expect(DEEP_LINK_ALIASES[ID]).toBe('projects');
++    expect(ALIAS_APPLIES[ID]).toEqual(MDX_FILTER);
++    expect(surfaceIdFromLocation(locationForSurface(ID))).toBe('projects');
++    expect(surfaceIdFromLocation('/concept2cure/device-workstream?view=list')).toBe('projects');
++    expect(destinationFor(ID, true)).toEqual({ surfaceId: 'projects', applies: MDX_FILTER });
++    expect(destinationFor(ID, false)).toEqual({ surfaceId: 'projects', applies: MDX_FILTER });
++    // The same place the `mdx` alias already opens (A2.8).
++    expect(destinationFor(ID, false)).toEqual(destinationFor('mdx', false));
++    // AnA's handle is kept so an old conversation's move still lands, and says where.
++    expect(findNavigationTarget(ID)!.description).toMatch(/Projects/);
++    expect(findNavigationTarget(ID)!.description).not.toMatch(/portfolio health KPIs/);
++  });
++
++  it('keeps no screen of its own: no view, no registry entry, no kit id, no host publish and no portfolio in the host', () => {
++    expect(SURFACE_VIEWS[ID]).toBeUndefined();
++    expect(getSurface(ID)).toBeUndefined();
++    expect(UI_SURFACES.some((s) => s.id === ID)).toBe(false);
++    expect(MDX_SURFACE_IDS as readonly string[]).not.toContain(ID);
++    expect(SURFACE_ACTIONS[ID]).toBeUndefined();
++    expect(fs.existsSync(at('mdx/surfaces/Overview.tsx'))).toBe(false);
++    const host = code(at('mdx/MdxSurfaceHost.tsx'));
++    expect(host).not.toContain(`'${ID}'`);
++    expect(host).not.toMatch(/\bOverview\b/);
++    // No fallthrough draws anything: every id the host is given is a named case.
++    expect(host).not.toMatch(/^\s*default:\s*$/m);
++    // The kit's Overview only: the PDEV kit has an Overview of its own (pdev/surfaces/Overview.tsx), which stays.
++    const kit = at('mdx') + path.sep;
++    const naming = sourceFiles(CLIENT).filter((f) => {
++      const c = code(f);
++      return /mdx\/surfaces\/Overview['"]/.test(c) || (f.startsWith(kit) && /\bfrom ['"][^'"]*\/Overview['"]|<Overview\b/.test(c));
++    });
++    expect(naming.map((f) => path.relative(CLIENT, f))).toEqual([]);
++  });
++
++  it('is in neither project scope list, the rail, a focus list nor the group tables, and both device tours stop at filtered Projects', () => {
++    expect(LAUNCH_APPS.find((a) => a.id === 'projects')!.surfaces).not.toContain(ID);
++    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain(ID);
++    const rail = Object.values(SEGMENT_MODULES).flatMap((groups) => groups.flatMap((g) => g.items));
++    expect(rail).not.toContain(ID);
++    expect(SEGMENTS.flatMap((s) => s.focus ?? [])).not.toContain(ID);
++    expect(SEGMENTS.map((s) => s.defaultSurface)).not.toContain(ID);
++    expect(Object.hasOwn(NAV_GROUP_OF, ID)).toBe(false);
++    expect(NAV_HIDDEN.has(ID)).toBe(false);
++    const steps = DEMO_SCRIPTS.flatMap((s) => s.steps.map((step) => ({ script: s.id, step })));
++    expect(steps.filter(({ step }) => step.navigate?.target === ID)).toEqual([]);
++    // The two device tours (training and sales) opened on the kit portfolio; each now opens filtered Projects.
++    for (const script of ['training-medtech', 'sales-medtech']) {
++      const stops = steps.filter(({ script: id, step }) => id === script && step.navigate);
++      expect(stops[0]?.step.navigate?.target, script).toBe('mdx');
++      expect(stops[0]?.step.say, script).toMatch(/Projects, filtered to [a-z]+ device projects/);
++      expect(steps.some(({ step }) => /device portfolio/i.test(step.say)), 'no stop names the retired portfolio').toBe(false);
++    }
++  });
++
++  it('reaches the Client Review Room from the device project, for that project, and claims its read there', () => {
++    const home = code(at('v2/surfaces/ProjectHome.tsx'));
++    // Mounted on the Review step, with the program and the verified integer project.
++    expect(home).toMatch(/stage === 'review'[\s\S]*?<ProjectClientReview programId=\{pid\} projectId=\{sharingProjectId\}/);
++    const mount = code(at('v2/surfaces/ProjectClientReview.tsx'));
++    expect(mount).toMatch(/import\(\s*'\.\.\/\.\.\/mdx\/ClientReviewRoom'\s*\)/);
++    expect(mount).not.toMatch(/^\s*import\s+[^(]*['"][^'"]*mdx\//m);
++    // The room is drawn from one place now, always for a project.
++    const drawing = sourceFiles(CLIENT).filter((f) => /<ClientReviewZone\b/.test(code(f)));
++    expect(drawing.map((f) => path.relative(CLIENT, f))).toEqual(['concept2cure/mdx/ClientReviewRoom.tsx']);
++    expect(code(at('mdx/ClientReviewRoom.tsx'))).toMatch(/<ClientReviewZone projectId=\{projectId\} programId=\{programId\} \/>/);
++    expect(getSurface('project-home')!.apiPrefixes).toContain('/api/mdx/client-review');
++  });
++});
+diff --git a/client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx b/client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx
+new file mode 100644
+index 000000000..95152c016
+--- /dev/null
++++ b/client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx
+@@ -0,0 +1,155 @@
++// @vitest-environment jsdom
++/**
++ * Reporting & analytics shows the device section (D2, fold F4, 2026-10-30;
++ * decision P-61 item 3; docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/).
++ *
++ * The device analytics screen is retired into Reporting. The section shows what
++ * the overview's device read computed (server/services/report-os/device-portfolio.ts)
++ * over the device projects the reader can open: each recorded status's count,
++ * the 24-month submission pace, and the AnA draft acceptance rate. It computes
++ * nothing of its own: every figure on screen is a field of the payload. A failed
++ * read is said, never drawn as zeros; a reader with no device project sees no
++ * section; a rate with no draft recorded is not a number.
++ *
++ * Only the transport (`apiRequest`) and the signed-in user are replaced.
++ */
++import React from 'react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
++
++const apiRequest = vi.hoisted(() => vi.fn());
++vi.mock('@/lib/queryClient', async (importOriginal) => ({
++  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
++  apiRequest,
++}));
++vi.mock('@/services/portal/authService', async (importOriginal) => ({
++  ...(await importOriginal<typeof import('@/services/portal/authService')>()),
++  useAuthUser: () => ({ id: 3, role: 'manager', permissions: ['governed:write'] }),
++}));
++vi.mock('../../../../../server/db', () => ({ pool: {}, db: {}, getPool: () => ({}) }));
++
++import { InsightsCanvas } from '../surfaces/Insights';
++import { InsightsDevicePortfolio, type DevicePortfolioView } from '../surfaces/InsightsDevicePortfolio';
++import type { OwnedSurfaceViewProps } from '../surfaceViews';
++import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
++
++const PROGRAM = 'd979e567-4622-46f1-8cb7-8bf434227f25';
++const ok = (obj: unknown) => ({ ok: true, status: 200, json: async () => obj }) as unknown as Response;
++const MONTHS = Array.from({ length: 24 }, (_, i) => {
++  const d = new Date(Date.UTC(2024, 10 + i, 1));
++  return d.toISOString().slice(0, 7);
++});
++const COUNTS = MONTHS.map((m) => (m === '2026-09' ? 2 : m === '2025-11' ? 1 : 0));
++const COMPUTED: DevicePortfolioView = {
++  state: 'computed',
++  projectCount: 5,
++  byStatus: [{ status: 'active', count: 3 }, { status: 'approved', count: 1 }, { status: 'submitted', count: 1 }],
++  pace: { months: MONTHS, counts: COUNTS, total: 3 },
++  anaDrafts: { state: 'computed', accepted: 3, pending: 1, acceptanceRate: 75 },
++};
++const LEAD = {
++  projectId: 12, code: 'ABC-101', label: 'ABC-101', filing: null, indication: null,
++  readiness: null, confidence: null, scope: 'project', scopeId: '12', agency: null, pdufa: null, criticalBlockerCount: 0,
++};
++let device: unknown = COMPUTED;
++let lead: unknown = LEAD;
++const overview = () => ({
++  data: {
++    organizationId: 1, tier: 'standard', tierResolved: true, segments: ['device'], reportTypes: CANVAS_REPORT_TYPES,
++    leadProgram: lead, openProgram: lead ? { programId: PROGRAM, state: 'lead' } : null,
++    programs: lead ? [] : [{ programId: PROGRAM, code: 'ABC-101', label: 'ABC-101' }],
++    portfolio: { entitled: false, requiredTier: 'enterprise', summary: null, programs: null },
++    dataScope: 'accessible_projects',
++    device,
++  },
++});
++
++beforeEach(() => {
++  device = COMPUTED;
++  lead = LEAD;
++  window.history.replaceState({}, '', '/');
++  (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM, title: 'ABC-101', code: 'ABC-101' };
++  apiRequest.mockReset();
++  apiRequest.mockImplementation(async (_method: string, url: string) => {
++    if (url.startsWith('/api/insights-canvas/overview')) return ok(overview());
++    return ok({ data: [] });
++  });
++});
++afterEach(() => {
++  cleanup();
++  delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
++  sessionStorage.clear();
++});
++
++const section = () => screen.getByRole('region', { name: 'Device projects' });
++
++describe('the device section shows what the device read computed, and nothing else', () => {
++  it('states each recorded status with its count, the pace and the acceptance rate', () => {
++    render(<InsightsDevicePortfolio device={COMPUTED} />);
++    const s = section();
++    expect(within(s).getByText(/5 device projects you can open/)).toBeTruthy();
++    const statuses = within(s).getByRole('list', { name: 'Device projects by status' });
++    expect([...statuses.querySelectorAll('li')].map((li) => li.textContent)).toEqual(['Active3', 'Approved1', 'Submitted1']);
++    expect(within(s).getByText('3 submitted in the 24 months to 2026-10')).toBeTruthy();
++    const pace = within(s).getByRole('list', { name: 'Submissions by month' });
++    expect(pace.querySelectorAll('li')).toHaveLength(24);
++    expect(within(pace).getByText('2026-09').closest('li')!.textContent).toBe('2026-092');
++    expect(within(s).getByTestId('device-ana-rate').textContent).toBe('75%');
++    expect(within(s).getByText('3 of 4 AnA drafts accepted')).toBeTruthy();
++    // Where it reads from, in words a reader can check.
++    expect(s.textContent).toMatch(/projects you can open/);
++  });
++
++  it('says when no AnA draft is recorded, rather than a rate of zero', () => {
++    render(<InsightsDevicePortfolio device={{ ...COMPUTED, anaDrafts: { state: 'computed', accepted: 0, pending: 0, acceptanceRate: null } } as DevicePortfolioView} />);
++    expect(screen.queryByTestId('device-ana-rate')).toBeNull();
++    expect(within(section()).getByText(/No AnA draft is recorded against a device project you can open/)).toBeTruthy();
++  });
++
++  it('withholds only the rate when the drafts could not be read', () => {
++    render(<InsightsDevicePortfolio device={{ ...COMPUTED, anaDrafts: { state: 'unavailable' } } as DevicePortfolioView} />);
++    expect(screen.queryByTestId('device-ana-rate')).toBeNull();
++    expect(within(section()).getByText(/AnA draft acceptance could not be read/)).toBeTruthy();
++    expect(within(section()).getByText(/5 device projects you can open/)).toBeTruthy();
++  });
++
++  it('says a failed read failed, and draws no figure', () => {
++    render(<InsightsDevicePortfolio device={{ state: 'unavailable' }} />);
++    const s = section();
++    expect(within(s).getByRole('alert').textContent).toMatch(/could not be read/);
++    expect(s.textContent).not.toMatch(/\d/);
++  });
++
++  it('draws nothing for a reader with no device project, or an overview without the section', () => {
++    const { container, rerender } = render(<InsightsDevicePortfolio device={{ state: 'none' }} />);
++    expect(container.innerHTML).toBe('');
++    rerender(<InsightsDevicePortfolio device={undefined} />);
++    expect(container.innerHTML).toBe('');
++  });
++});
++
++describe('Reporting & analytics carries the device section from its overview', () => {
++  const renderCanvas = () =>
++    render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment="medtech" onNav={vi.fn()} />);
++
++  it('on the canvas of an open project', async () => {
++    renderCanvas();
++    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
++    expect(within(section()).getByTestId('device-ana-rate').textContent).toBe('75%');
++  });
++
++  it('with no project open, beside the project picker', async () => {
++    lead = null;
++    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
++    renderCanvas();
++    await waitFor(() => expect(screen.getByTestId('rc-program-picker')).toBeTruthy());
++    expect(within(section()).getByText(/5 device projects you can open/)).toBeTruthy();
++  });
++
++  it('a failed device read is said on the canvas', async () => {
++    device = { state: 'unavailable' };
++    renderCanvas();
++    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
++    expect(within(section()).getByRole('alert')).toBeTruthy();
++  });
++});
+diff --git a/client/src/concept2cure/v2/__tests__/navigationReachability.test.ts b/client/src/concept2cure/v2/__tests__/navigationReachability.test.ts
+index e1181a578..57169888a 100644
+--- a/client/src/concept2cure/v2/__tests__/navigationReachability.test.ts
++++ b/client/src/concept2cure/v2/__tests__/navigationReachability.test.ts
+@@ -65,15 +65,18 @@ describe('navigation-registry ↔ shell reachability', () => {
+     expect(LAUNCH_SURFACE_IDS.has(surfaceIdFromLocation(locationForSurface('biopharma')))).toBe(true);
+   });
+ 
+-  it('the retained MDX handle reaches admitted Projects while the device portfolio remains registered', () => {
++  it('the retained MDX handle and the folded device portfolio\'s handle both reach admitted Projects', () => {
+     const target = NAVIGATION_TARGETS.find(t => t.id === 'mdx');
+     expect(target?.scope).toBe('global');
+     expect(target?.description).toMatch(/Projects/);
+     expect(surfaceIdFromLocation(locationForSurface('mdx'))).toBe('projects');
+     expect(LAUNCH_SURFACE_IDS.has(surfaceIdFromLocation(locationForSurface('mdx')))).toBe(true);
++    /* The device portfolio folded into Projects (D2, fold F6, 2026-10-30): AnA's handle is kept and lands where
++       `mdx` does; the screen, its registry row and its view are gone (foldDeviceWorkstream.test.ts). */
+     expect(NAVIGATION_TARGETS.some(t => t.id === 'device-workstream')).toBe(true);
+-    expect(UI_SURFACES.some(s => s.id === 'device-workstream')).toBe(true);
+-    expect(SURFACE_VIEWS['device-workstream']).toBeTruthy();
++    expect(surfaceIdFromLocation(locationForSurface('device-workstream'))).toBe('projects');
++    expect(UI_SURFACES.some(s => s.id === 'device-workstream')).toBe(false);
++    expect(SURFACE_VIEWS['device-workstream']).toBeUndefined();
+   });
+ 
+   it('aliases only point AT real views — a dangling alias is drift in the other direction', () => {
+diff --git a/client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx b/client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx
+new file mode 100644
+index 000000000..bf7b55cdc
+--- /dev/null
++++ b/client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx
+@@ -0,0 +1,83 @@
++// @vitest-environment jsdom
++/**
++ * The Client Review Room on the device project (D2, fold F6, 2026-10-30;
++ * decision P-61 item 5: the room admits the project before anything is read or
++ * shared; docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/).
++ *
++ * The room was drawn on the kit portfolio (mdx/surfaces/Overview.tsx) with no
++ * project, so it read the organization's room: every project's client-visible
++ * tasks. The portfolio is retired into Projects; the room is mounted on the
++ * device project's Review step (ProjectHome.tsx) for that project only. It asks
++ * GET /api/mdx/client-review with the project's verified integer id and its
++ * program, so the route admits both before anything is read
++ * (server/routes/__tests__/mdx-client-review-admits-project.test.ts), and says it
++ * is the project's room. With no verified project it reads nothing.
++ *
++ * Only the transport (`fetch`) is replaced.
++ */
++import React from 'react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { cleanup, render, screen, waitFor } from '@testing-library/react';
++
++import { ProjectClientReview } from '../surfaces/ProjectClientReview';
++
++const PROGRAM = 'd979e567-4622-46f1-8cb7-8bf434227f25';
++const fetchMock = vi.fn();
++const json = (status: number, body: unknown) =>
++  ({ ok: status < 400, status, json: async () => body, text: async () => JSON.stringify(body) }) as unknown as Response;
++const TASK = {
++  taskId: 't-1', title: 'Confirm the predicate device list', description: null, status: 'open', priority: 'high',
++  progress: null, taskType: null, moduleType: 'device', projectId: 12, lifecyclePhase: null, market: 'US',
++  filingType: '510(k)', clientVisibility: 'client_action_required', dueDate: null, completedAt: null,
++  updatedAt: '2026-10-29T10:00:00Z',
++};
++const ROOM = {
++  data: {
++    groups: { client_action_required: [TASK], client_visible: [], authority_ready: [] },
++    counts: { client_action_required: 1, client_visible: 0, authority_ready: 0 },
++    total: 1,
++  },
++  meta: { scope: 'project', projectId: 12, programId: PROGRAM },
++};
++
++beforeEach(() => {
++  fetchMock.mockReset().mockResolvedValue(json(200, ROOM));
++  vi.stubGlobal('fetch', fetchMock);
++});
++afterEach(() => {
++  cleanup();
++  vi.unstubAllGlobals();
++});
++
++describe('the Client Review Room on a device project', () => {
++  it('asks for this project\'s room, by its verified integer id and its program, and says it is the project\'s', async () => {
++    render(<ProjectClientReview programId={PROGRAM} projectId={12} />);
++    const room = await screen.findByRole('region', { name: 'Client review' });
++    await waitFor(() => expect(room.textContent).toContain('Confirm the predicate device list'));
++    expect(fetchMock).toHaveBeenCalledTimes(1);
++    const url = new URL(String(fetchMock.mock.calls[0][0]), 'http://localhost');
++    expect(url.pathname).toBe('/api/mdx/client-review');
++    expect(url.searchParams.get('project_id')).toBe('12');
++    expect(url.searchParams.get('programId')).toBe(PROGRAM);
++    expect(room.textContent).toMatch(/Scoped to the selected project/);
++    expect(room.textContent).not.toMatch(/Organization-wide/);
++    // Drawn inside the device kit's scope root, where its styles apply.
++    expect(room.closest('.mdx-shell')).not.toBeNull();
++  });
++
++  it('reads nothing, and draws nothing, until the project is verified', () => {
++    const { container, rerender } = render(<ProjectClientReview programId={PROGRAM} projectId={null} />);
++    expect(container.innerHTML).toBe('');
++    rerender(<ProjectClientReview programId={null} projectId={12} />);
++    expect(container.innerHTML).toBe('');
++    expect(fetchMock).not.toHaveBeenCalled();
++  });
++
++  it('says a refused or failed read is one, never an empty room', async () => {
++    fetchMock.mockResolvedValue(json(404, { error: { code: 'NOT_FOUND', message: 'Project not found' } }));
++    render(<ProjectClientReview programId={PROGRAM} projectId={12} />);
++    const room = await screen.findByRole('region', { name: 'Client review' });
++    await waitFor(() => expect(room.querySelectorAll('[role="alert"]').length).toBeGreaterThan(0));
++    expect(room.textContent).not.toContain('Confirm the predicate device list');
++  });
++});
+diff --git a/client/src/concept2cure/v2/__tests__/projectDestination.test.ts b/client/src/concept2cure/v2/__tests__/projectDestination.test.ts
+index 697822b43..8f6309e65 100644
+--- a/client/src/concept2cure/v2/__tests__/projectDestination.test.ts
++++ b/client/src/concept2cure/v2/__tests__/projectDestination.test.ts
+@@ -47,9 +47,10 @@ describe('one destination for a project-scoped visit', () => {
+     expect(destinationFor('mdx', false).applies?.params).toEqual({ workstream: 'MDX' });
+   });
+ 
+-  it('retains the device portfolio destination until its separate parity fold', () => {
+-    expect(destinationFor('device-workstream', false)).toEqual({ surfaceId: 'device-workstream' });
+-    expect(destinationFor('device-workstream', true)).toEqual({ surfaceId: 'device-workstream' });
++  it('sends the folded device portfolio to Projects with the MDX filter, with or without a project open (fold F6)', () => {
++    const filtered = { surfaceId: 'projects', applies: { actionId: 'projects.filter', params: { workstream: 'MDX' } } };
++    expect(destinationFor('device-workstream', false)).toEqual(filtered);
++    expect(destinationFor('device-workstream', true)).toEqual(filtered);
+   });
+ 
+   it('keeps the raw URL id until its requested action has been applied', () => {
+diff --git a/client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx b/client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx
+new file mode 100644
+index 000000000..e3bdbb496
+--- /dev/null
++++ b/client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx
+@@ -0,0 +1,77 @@
++// @vitest-environment jsdom
++/**
++ * Projects shows each project's last activity, in both views (D2, fold F6,
++ * 2026-10-30; decision P-61 item 5; .design/client-journey/FUNCTION_PARITY.md,
++ * "From `device-workstream`": "Owners, description and last activity ... Goes
++ * to: render p.activity on Projects").
++ *
++ * The kit portfolio (mdx/surfaces/Overview.tsx) showed when each device project
++ * last moved. Projects is where the device workstream folded, and the server
++ * already sends the figure on every card: `activity`, read from the project's
++ * own record (`'Updated ' || to_char(p.updated_at, 'Mon DD')`,
++ * server/services/c2c/project-portfolio.ts). It was never drawn. It is now, on
++ * the card and on the list row; a card the server sent none for shows none.
++ *
++ * Only the transport (`apiRequest`) and the signed-in user are replaced.
++ */
++import React from 'react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
++
++const apiRequest = vi.hoisted(() => vi.fn());
++vi.mock('@/lib/queryClient', async (importOriginal) => ({
++  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
++  apiRequest,
++}));
++vi.mock('@/services/portal/authService', () => ({
++  useAuth: () => ({ user: { id: 7, firstName: 'Ada' } }),
++}));
++vi.mock('@/utils/authToken', async (importOriginal) => ({
++  ...(await importOriginal<typeof import('@/utils/authToken')>()),
++  getAuthToken: () => 't',
++  getAuthHeaders: () => ({ Authorization: 'Bearer t', 'x-organization-id': '1' }),
++}));
++
++import { Projects } from '../surfaces/Projects';
++
++const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as never;
++const props = () =>
++  ({ surface: { id: 'projects', label: 'Projects' } as never, onAsk: vi.fn(), onNav: vi.fn(), segment: 'medtech' });
++const row = (id: string, activity: string | null) => ({
++  id, title: `Program ${id}`, ws: 'MDX', code: id.toUpperCase(), stage: 'Planning', readiness: null,
++  status: 'active', lead: 'Rae Okafor', blocker: null, due: '—', due_date: null, activity,
++});
++const card = (title: string) =>
++  Array.from(document.querySelectorAll('.pj-card')).find((c) => c.textContent?.includes(title)) as HTMLElement;
++const listRow = (title: string) =>
++  Array.from(document.querySelectorAll('.ct-row')).find((c) => c.textContent?.includes(title)) as HTMLElement;
++
++afterEach(cleanup);
++beforeEach(() => {
++  apiRequest.mockReset();
++  apiRequest.mockImplementation(async (_m: string, url: string) =>
++    url === '/api/c2c/projects'
++      ? ok({ data: [row('k510', 'Updated Oct 29'), row('pma', null)] })
++      : ok({ data: [] }),
++  );
++});
++
++describe('Projects shows the last activity its record holds', () => {
++  it('on the card, and on the list row', async () => {
++    render(<Projects {...props()} />);
++    await waitFor(() => expect(screen.getByText('Program k510')).toBeTruthy());
++    expect(card('Program k510').textContent).toContain('Updated Oct 29');
++    fireEvent.click(screen.getByRole('button', { name: 'List' }));
++    await waitFor(() => expect(listRow('Program k510')).toBeTruthy());
++    expect(listRow('Program k510').textContent).toContain('Updated Oct 29');
++  });
++
++  it('shows none where the record holds none, in either view', async () => {
++    render(<Projects {...props()} />);
++    await waitFor(() => expect(screen.getByText('Program pma')).toBeTruthy());
++    expect(card('Program pma').textContent).not.toMatch(/Updated/);
++    fireEvent.click(screen.getByRole('button', { name: 'List' }));
++    await waitFor(() => expect(listRow('Program pma')).toBeTruthy());
++    expect(listRow('Program pma').textContent).not.toMatch(/Updated/);
++  });
++});
+diff --git a/client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx b/client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx
+index fcebed8fc..8d226487e 100644
+--- a/client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx
++++ b/client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx
+@@ -90,9 +90,11 @@ describe('breadcrumb client category (finding 128)', () => {
+     expect(breadcrumbTierOf(surface('identity-console'))?.label).toBe('Admin');
+   });
+ 
+-  it('does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD")', () => {
+-    // The device workstream's own name is the old tier's; its parent is Projects.
+-    expect(breadcrumbTierOf(surface('device-workstream'))?.label).toBe('Projects');
++  it('does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD"), for every surface', () => {
++    // The device workstream, whose own name was the old tier's, folded into Projects (D2, fold F6, 2026-10-30) and
++    // has no registry row now; the rule it was checked for holds for every surface that remains.
++    expect(UI_SURFACES.some((s) => s.id === 'device-workstream')).toBe(false);
++    for (const s of UI_SURFACES) expect(breadcrumbTierOf(s)?.label, s.id).not.toBe(s.label);
+   });
+ 
+   it('never names a category the rail does not list the surface under — for every surface', () => {
+diff --git a/client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts b/client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts
+index 029fd01a0..026861464 100644
+--- a/client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts
++++ b/client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts
+@@ -85,9 +85,11 @@ describe('the retired kit paths still land somewhere real', () => {
+       surfaceId: 'projects', applies: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
+     });
+     expect(getSurface('mdx')).toBeUndefined();
+-    // A2.8 changes only the alias. The old portfolio shell stays until A2.10.
+-    expect(getSurface('device-workstream')).toBeDefined();
+-    expect(surfaceIdFromLocation('/concept2cure/device-workstream')).toBe('device-workstream');
++    // A2.8 changed only the alias; the old portfolio shell folded into Projects at A2.10 (D2, fold F6, 2026-10-30),
++    // so its own address lands in the same place.
++    expect(getSurface('device-workstream')).toBeUndefined();
++    expect(surfaceIdFromLocation('/concept2cure/device-workstream')).toBe('projects');
++    expect(destinationFor('device-workstream', false)).toEqual(destinationFor('mdx', false));
+   });
+ 
+   it('/concept2cure/pdev resolves to itself — it is a real surface id now', () => {
+diff --git a/client/src/concept2cure/v2/fixtures/collab-data.ts b/client/src/concept2cure/v2/fixtures/collab-data.ts
+index f4531f47b..92faa854e 100644
+--- a/client/src/concept2cure/v2/fixtures/collab-data.ts
++++ b/client/src/concept2cure/v2/fixtures/collab-data.ts
+@@ -63,7 +63,6 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
+   'haq-manager':            { mod: 'Regulatory',      noun: 'health-authority question', et: 'haq' },
+   'ectd-coauthor':          { mod: 'eCTD',            noun: 'eCTD leaf',                 et: 'section' },
+   'nda-cockpit':            { mod: 'Regulatory',      noun: 'NDA/BLA filing',            et: 'filing' },
+-  'device-workstream':      { mod: 'MedicalDevice',   noun: 'device submission',         et: 'submission' },
+   'device-510k':            { mod: 'MedicalDevice',   noun: '510(k) section',            et: 'section' },
+   'device-cer':             { mod: 'MedicalDevice',   noun: 'CER section',               et: 'section' },
+   'device-diagnostics':     { mod: 'MedicalDevice',   noun: 'diagnostics item',          et: 'device' },
+diff --git a/client/src/concept2cure/v2/registryModel.ts b/client/src/concept2cure/v2/registryModel.ts
+index dce315fe0..6ee62cb3b 100644
+--- a/client/src/concept2cure/v2/registryModel.ts
++++ b/client/src/concept2cure/v2/registryModel.ts
+@@ -49,7 +49,7 @@ export const NAV_TIERS_V2 = [
+ ];
+ /** Surface → client-type rail group (mdx | biopharma | admin | both) */
+ export const NAV_GROUP_OF: Record<string, string> = {
+-  'device-workstream': 'mdx',
++  // No device-workstream: the device portfolio folded into Projects (D2, fold F6, 2026-10-30).
+   labeling: 'mdx',
+   'human-factors': 'mdx',
+   'labeling-pi': 'biopharma',
+@@ -214,8 +214,9 @@ export const SEGMENTS = [
+        opened a "Not in this release" panel. Projects is where a client's work
+        starts (docs/SURFACE_DECISIONS_2026-10-08.md, build step 6). */
+     defaultSurface: 'projects',
++    /* 2026-10-30 (D2, fold F6): the device portfolio folded into Projects, the
++       default surface, which opens on the MDX filter from the old address. */
+     focus: [
+-      'device-workstream',
+       'labeling',
+       'human-factors',
+       'precedent-intelligence',
+@@ -637,8 +638,8 @@ export const SEGMENT_MODULES = {
+     { label: 'MDX project workflows', items: ['projects'] },
+     {
+       label: 'Author & assemble',
++      // 2026-10-30 (D2, fold F6): the device portfolio folded into Projects, on every segment's rail (RAIL_CORE).
+       items: [
+-        'device-workstream',
+         'device-510k',
+         'device-pma',
+         'device-cer',
+@@ -672,7 +673,8 @@ export const SEGMENT_MODULES = {
+       // sizing, Bayesian device sizing, MRMC, group-sequential operating
+       // characteristics — were reachable only from the two pharma segments.
+       // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), which this segment lists under Evidence & data.
+-      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
++      // 2026-10-30 (D2, fold F4): device analytics joined Reporting & analytics, a work area on every segment's rail (RAIL_CORE).
++      items: ['precedent-intelligence', 'device-postmarket', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
+     },
+     { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
+   ],
+@@ -966,8 +968,17 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
+   features: 'apps',
+   'ind-lifecycle': 'ind-checklist',
+   // Legacy MDX links reach the existing device-filtered Projects view.
+-  // The device-workstream screen retains its separate A2.10 parity work.
+   mdx: 'projects',
++  /* The device workstream folded into Projects (D2, fold F6, 2026-10-30;
++     decision P-61 item 5; docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/).
++     The kit portfolio (mdx/surfaces/Overview.tsx) is gone: Projects with the MDX
++     filter counts the device portfolio on the server and shows each project's
++     last activity; the strip figures no engine computed (blocked, in flight)
++     are dropped. The Client Review Room is on the device project's Review step,
++     for that project. Old links, ⌘K hits and AnA's `device-workstream` target
++     land on filtered Projects, as `mdx` does; a subscription carries to
++     Projects (decision P-61 item 4). */
++  'device-workstream': 'projects',
+   /* The device task workbench folded into Tasks (D2, 2026-10-29;
+      docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/). Tasks reads the
+      same submission-ops work item by item, beside every other store, and marks
+@@ -1050,6 +1061,16 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
+      (decision P-61 item 4). It once aliased to `document-authoring`, while
+      SURFACE_VIEWS routed the same id to the kit; now there is one meaning. */
+   'device-submission': 'submission-center',
++  /* Device analytics joined Reporting & analytics (D2, fold F4, 2026-10-30;
++     decision P-61 item 3; docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/).
++     Its screen counted every program of the organization, drug programs
++     included, whether or not the reader could open them. Its three real figures
++     (status counts, the 24-month submission pace, the AnA draft acceptance rate)
++     are the device section of the Reporting overview, over the device projects
++     the reader can open (report-os/device-portfolio.ts). Old links, ⌘K hits and
++     AnA's `device-analytics` target land there; a subscription carries to it
++     (decision P-61 item 4, server/services/entitlements/folded-module-successors.ts). */
++  'device-analytics': 'insights',
+   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
+      the precondition for AnA Live Drive): these ten registry ids are what AnA
+      navigates by — `navigate_to` refuses everything else — but they predate
+@@ -1082,6 +1103,7 @@ export const ALIAS_APPLIES: Readonly<Record<string, SurfaceApplies>> = {
+   dossier: { actionId: 'project-home.set-stage', params: { stage: 'author' } },
+   'dossier-map': { actionId: 'project-home.set-stage', params: { stage: 'author' } },
+   mdx: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
++  'device-workstream': { actionId: 'projects.filter', params: { workstream: 'MDX' } },
+   setup: { actionId: 'admin-console.open-tab', params: { tab: 'settings' } },
+ };
+ 
+diff --git a/client/src/concept2cure/v2/styles/insights-v2.css b/client/src/concept2cure/v2/styles/insights-v2.css
+index cfa1d9eef..fe55bca5c 100644
+--- a/client/src/concept2cure/v2/styles/insights-v2.css
++++ b/client/src/concept2cure/v2/styles/insights-v2.css
+@@ -133,6 +133,9 @@
+ .ro-sev{ font-size:10px; letter-spacing:.05em; text-transform:uppercase; font-weight:600; flex:0 0 62px; }
+ .ro-sev.sev-critical{ color:var(--error); font-weight:700; } .ro-sev.sev-high{ color:var(--error); } .ro-sev.sev-medium{ color:var(--warning); } .ro-sev.sev-low{ color:var(--text-400); }
+ .ro-li-b{ color:var(--text-100); flex:1; min-width:0; }
++/* The device section's 24-month submission pace (fold F4): one month per cell, the count beside it. */
++.ro-pace{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:0 14px; }
++.ro-pace .ro-li{ border-top:none; padding:3px 0; }
+ .ro-li-msg{ display:block; font-size:11px; color:var(--text-400); margin-top:2px; }
+ .ro-disc{ margin:0 0 12px; padding:12px 14px; border-left:3px solid var(--warning); background:color-mix(in srgb,var(--warning) 6%,transparent); border-radius:var(--radius-lg); max-width:680px; }
+ .ro-disc-h{ font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; color:var(--text-400); margin-bottom:4px; }
+diff --git a/client/src/concept2cure/v2/surfaceViews.ts b/client/src/concept2cure/v2/surfaceViews.ts
+index 8d9f29eac..cced4aa74 100644
+--- a/client/src/concept2cure/v2/surfaceViews.ts
++++ b/client/src/concept2cure/v2/surfaceViews.ts
+@@ -427,7 +427,8 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
+   // gone — the shell owns the chrome and owns the conversation, so none of
+   // these claims the rail's column.
+   'device-510k': { component: DeviceSurfaces['device-510k'], full: true },
+-  'device-analytics': { component: DeviceSurfaces['device-analytics'], full: true },
++  // No device-analytics: it joined Reporting & analytics (D2, fold F4, 2026-10-30);
++  // its address opens `insights` (DEEP_LINK_ALIASES), whose overview carries the device section.
+   'device-cer': { component: DeviceSurfaces['device-cer'], full: true },
+   'device-clinical-studies': { component: DeviceSurfaces['device-clinical-studies'], full: true },
+   'device-diagnostics': { component: DeviceSurfaces['device-diagnostics'], full: true },
+@@ -440,7 +441,8 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
+   'device-udi': { component: DeviceSurfaces['device-udi'], full: true },
+   // No device-validation: the organization-wide blocker list retired (D2, fold F5
+   // item 2, 2026-10-29); its address opens Submission Center (DEEP_LINK_ALIASES).
+-  'device-workstream': { component: DeviceSurfaces['device-workstream'], full: true },
++  // No device-workstream: the device portfolio folded into Projects (D2, fold F6,
++  // 2026-10-30); its address opens Projects with the MDX filter (DEEP_LINK_ALIASES).
+   'dispatch-readiness': { component: DispatchReadiness, full: true },
+   'doc-journey': { component: DocJourney },
+   // Full-width editing, with no second AnA input. Requests preserve the saved
+diff --git a/client/src/concept2cure/v2/surfaces/Insights.tsx b/client/src/concept2cure/v2/surfaces/Insights.tsx
+index b93984654..4d014d7c1 100644
+--- a/client/src/concept2cure/v2/surfaces/Insights.tsx
++++ b/client/src/concept2cure/v2/surfaces/Insights.tsx
+@@ -23,6 +23,7 @@ import { CatalogPanel, COUNTS_NOT_NARROWED, ORGANIZATION_WIDE_RECORDS, Organizat
+ import { RunsPanel } from './InsightsRunsPanel';
+ import { SchedulesPanel } from './InsightsSchedulesPanel';
+ import { RunEvidence } from './InsightsRunEvidence';
++import { InsightsDevicePortfolio, type DevicePortfolioView } from './InsightsDevicePortfolio';
+ import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
+ import type { BundlePdfContent, ReportRunRow } from './insightsLibraryModel';
+ import { getSurfaceMeta } from '../registryModel';
+@@ -280,6 +281,10 @@ interface CanvasOverview {
+   /** The programs the canvas can be opened on, for the picker shown when none is open. */
+   programs?: Array<{ programId: string; code: string | null; label: string }>;
+   portfolio: CanvasPortfolio;
++  /** Device analytics, folded into Reporting (D2, fold F4, 2026-10-30; decision
++   *  P-61 item 3): the device projects the reader can open, computed by the
++   *  server (report-os/device-portfolio.ts). Absent on a server that predates it. */
++  device?: DevicePortfolioView;
+ }
+ 
+ /** The name to call a program in prose.
+@@ -2011,7 +2016,11 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
+   };
+   const planNotice = !tierResolved && <div className="ro-dash-note" role="status" data-testid="rc-tier-unresolved">{I.alertTriangle} {REPORT_PLAN_UNVERIFIED} This is not a statement about your plan — try again in a moment, and contact your administrator if it persists.</div>;
+   const recoveryNotice = reloaded && <ReportingRecoveryNotice />;
+-  const withoutProgram = (content: React.ReactNode) => <div className="rc" {...ownerEvents}><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}{recoveryNotice}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />}</div></div>;
++  /* The device section (fold F4): the device projects the reader can open, as
++     the overview computed them, on the Report tab's landing canvas, with or
++     without a project open. It shows nothing for a reader with no device project. */
++  const deviceSection = paneView === 'report' && !report && !dashboard ? <InsightsDevicePortfolio device={data?.device} /> : null;
++  const withoutProgram = (content: React.ReactNode) => <div className="rc" {...ownerEvents}><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}{recoveryNotice}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}{deviceSection}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />}</div></div>;
+ 
+   // Four-state render: loading → honest error → honest empty (no flagship
+   // program) → the live canvas. No fixture stand-in in any state.
+@@ -2270,6 +2279,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
+               )}
+             </div>
+           ))}
++        {deviceSection}
+         </div>
+       </div>
+       {signing && report && reportRunId != null && (
+diff --git a/client/src/concept2cure/v2/surfaces/InsightsDevicePortfolio.tsx b/client/src/concept2cure/v2/surfaces/InsightsDevicePortfolio.tsx
+new file mode 100644
+index 000000000..da9dd9035
+--- /dev/null
++++ b/client/src/concept2cure/v2/surfaces/InsightsDevicePortfolio.tsx
+@@ -0,0 +1,94 @@
++/**
++ * Device projects in Reporting & analytics (D2, fold F4, 2026-10-30; decision
++ * P-61 item 3, docs/LAUNCH_DEFINITION_OF_DONE.md;
++ * docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/).
++ *
++ * The device analytics screen (mdx/surfaces/AnalyticsSurface.tsx) retired into
++ * Reporting. This section shows what the overview's device read computed
++ * (server/services/report-os/device-portfolio.ts) over the device projects the
++ * reader can open: each recorded status with its count, the submission pace
++ * over 24 months, and the AnA draft acceptance rate. Every figure on screen is
++ * a field of the payload; nothing is computed, estimated or filled in here.
++ *
++ * A failed read is said, and no figure is drawn. A reader with no device
++ * project sees no section. With no AnA draft recorded there is no rate, rather
++ * than a rate of zero.
++ */
++import React from 'react';
++import { I } from '../icons';
++
++export type DevicePortfolioView =
++  | { state: 'none' }
++  | { state: 'unavailable' }
++  | {
++      state: 'computed';
++      projectCount: number;
++      byStatus: Array<{ status: string; count: number }>;
++      pace: { months: string[]; counts: number[]; total: number };
++      anaDrafts:
++        | { state: 'computed'; accepted: number; pending: number; acceptanceRate: number | null }
++        | { state: 'unavailable' };
++    };
++
++/** A recorded status as words: 'in_review' reads "In review". The value itself is the record's. */
++function statusLabel(status: string): string {
++  const words = status.replace(/_/g, ' ').trim();
++  return words ? words.charAt(0).toUpperCase() + words.slice(1) : status;
++}
++
++export function InsightsDevicePortfolio({ device }: { device: DevicePortfolioView | undefined }) {
++  const headingId = React.useId();
++  if (!device || device.state === 'none') return null;
++  if (device.state === 'unavailable') {
++    return (
++      <section className="ro-sec" aria-labelledby={headingId}>
++        <h3 className="ro-sec-h" id={headingId}>Device projects</h3>
++        <div className="ro-dash-note" role="alert">
++          {I.alertTriangle} The device projects you can open could not be read just now. No figure is shown in their place.
++        </div>
++      </section>
++    );
++  }
++  const { projectCount, byStatus, pace, anaDrafts } = device;
++  const lastMonth = pace.months[pace.months.length - 1];
++  return (
++    <section className="ro-sec" aria-labelledby={headingId} data-testid="rc-device-portfolio">
++      <h3 className="ro-sec-h" id={headingId}>Device projects</h3>
++      <p className="ro-summary">
++        {projectCount} device {projectCount === 1 ? 'project' : 'projects'} you can open, by the status each project's record holds.
++      </p>
++      <ul className="ro-list" aria-label="Device projects by status">
++        {byStatus.map((row) => (
++          <li key={row.status} className="ro-li">
++            <span className="ro-li-b">{statusLabel(row.status)}</span>
++            <span className="ro-bar-val">{row.count}</span>
++          </li>
++        ))}
++      </ul>
++
++      <div className="ro-rep-eyebrow">Submission pace</div>
++      <p className="ro-summary">{pace.total} submitted in the {pace.months.length} months to {lastMonth}</p>
++      <ul className="ro-list ro-pace" aria-label="Submissions by month">
++        {pace.months.map((month, index) => (
++          <li key={month} className="ro-li">
++            <span className="ro-li-b">{month}</span>
++            <span className="ro-bar-val">{pace.counts[index]}</span>
++          </li>
++        ))}
++      </ul>
++
++      <div className="ro-rep-eyebrow">AnA draft acceptance</div>
++      {anaDrafts.state === 'unavailable' ? (
++        <div className="ro-dash-note" role="note">{I.info} AnA draft acceptance could not be read, so no rate is shown.</div>
++      ) : anaDrafts.acceptanceRate === null ? (
++        <p className="ro-summary">No AnA draft is recorded against a device project you can open, so there is no rate.</p>
++      ) : (
++        <div className="ro-metric">
++          <div className="ro-m-lbl">Accepted</div>
++          <div className="ro-m-val" data-testid="device-ana-rate">{anaDrafts.acceptanceRate}%</div>
++          <p className="ro-m-prov">{anaDrafts.accepted} of {anaDrafts.accepted + anaDrafts.pending} AnA drafts accepted</p>
++        </div>
++      )}
++    </section>
++  );
++}
+diff --git a/client/src/concept2cure/v2/surfaces/ProjectClientReview.tsx b/client/src/concept2cure/v2/surfaces/ProjectClientReview.tsx
+new file mode 100644
+index 000000000..d6a9cf900
+--- /dev/null
++++ b/client/src/concept2cure/v2/surfaces/ProjectClientReview.tsx
+@@ -0,0 +1,28 @@
++/**
++ * The Client Review Room on a device project's Review step (D2, fold F6,
++ * 2026-10-30; decision P-61 item 5; .design/client-journey/FUNCTION_PARITY.md,
++ * "From `device-workstream`": "Client Review Room ... Goes to: a mount on
++ * Project home that passes the integer projects.id").
++ *
++ * The room is the device kit's (mdx/ClientReviewRoom.tsx over
++ * mdx/components/ClientReviewZone.tsx), so it is loaded lazily, with the kit's
++ * stylesheet, only when a device project's Review step is open. It reads only
++ * once the project is verified: `projectId` is Project home's verified integer
++ * project (useProjectTeam), and the route admits it and the program before
++ * anything is read or shared. Without both it reads and draws nothing.
++ */
++import React from 'react';
++import { EmptyState } from '../dataConnect';
++
++const Room = React.lazy(() =>
++  import('../../mdx/ClientReviewRoom').then((m) => ({ default: m.ClientReviewRoom })),
++);
++
++export function ProjectClientReview({ programId, projectId }: { programId: string | null; projectId: number | null }) {
++  if (!programId || projectId == null) return null;
++  return (
++    <React.Suspense fallback={<EmptyState busy title="Loading the client review room" />}>
++      <Room programId={programId} projectId={projectId} />
++    </React.Suspense>
++  );
++}
+diff --git a/client/src/concept2cure/v2/surfaces/ProjectHome.tsx b/client/src/concept2cure/v2/surfaces/ProjectHome.tsx
+index 899b0d6da..40ad39b1d 100644
+--- a/client/src/concept2cure/v2/surfaces/ProjectHome.tsx
++++ b/client/src/concept2cure/v2/surfaces/ProjectHome.tsx
+@@ -41,6 +41,7 @@ import { editingCopyOf } from '../editor/editingCopy';
+ import { sourceReadView } from '@shared/data-room-processing-status';
+ import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
+ import { ProjectSide } from './ProjectSide';
++import { ProjectClientReview } from './ProjectClientReview';
+ import { ProjectTeamSharing } from './ProjectTeamSharing';
+ import { mdxProjectPlan } from './ProjectMdxWorkflow';
+ import { ProjectPlan } from './ProjectPlan';
+@@ -1905,6 +1906,12 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
+             <div className="pj-stagebody">
+               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
+               <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} />
++              {/* What the client sees of this project's work (the Client Review
++                  Room), for this project only: the device portfolio drew it for
++                  the whole organization until it folded into Projects (D2, fold
++                  F6, 2026-10-30; P-61 item 5). The verified integer project and
++                  the program are both admitted by the route before any read. */}
++              {deviceFiling && <ProjectClientReview programId={pid} projectId={sharingProjectId} />}
+               <ComingLater stage="review" device={deviceFiling} />
+             </div>
+           )}
+diff --git a/client/src/concept2cure/v2/surfaces/Projects.tsx b/client/src/concept2cure/v2/surfaces/Projects.tsx
+index bf0087dcb..4619d9a54 100644
+--- a/client/src/concept2cure/v2/surfaces/Projects.tsx
++++ b/client/src/concept2cure/v2/surfaces/Projects.tsx
+@@ -1110,7 +1110,9 @@ interface ProjPortfolioEntry {
+   due: string;
+   /** target_submission_date as YYYY-MM-DD, or null when none is set. */
+   due_date?: string | null;
+-  activity: string;
++  /** When the project's record last changed ('Updated Oct 29'), from
++   *  projects.updated_at on the server; null when the record holds none. */
++  activity: string | null;
+   client_workspace_id?: number | null;
+   client_name?: string | null;
+ }
+@@ -1549,7 +1551,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
+           {list.map(p => (
+             <button key={p.id} className="pj-card" onClick={() => openProj(p)}>
+               <div className="pj-card-t">{p.title}</div>
+-              <div className="pj-card-m">{p.code} · {p.stage} · Lead {p.lead}</div>
++              {/* The last activity is the record's own (the device portfolio's
++                  "last activity", folded into Projects: D2, fold F6, 2026-10-30). */}
++              <div className="pj-card-m">{p.code} · {p.stage} · Lead {p.lead}{p.activity ? ` · ${p.activity}` : ''}</div>
+               {/* No figure draws no bar: an empty track reads as 0. */}
+               {isMeasuredReadiness(p.readiness, p.readinessState) ? (
+                 <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
+@@ -1589,7 +1593,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
+             <button key={p.id} className="ct-row" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }} onClick={() => openProj(p)}>
+               <div>
+                 <div className="ct-strong">{p.title}</div>
+-                <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.code}</div>
++                <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.code}{p.activity ? ` · ${p.activity}` : ''}</div>
+               </div>
+               <div><span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span></div>
+               <div>
+diff --git a/db/migrations/20260810_reconcile_module_catalog.sql b/db/migrations/20260810_reconcile_module_catalog.sql
+index dfbd388fb..8f6471dde 100644
+--- a/db/migrations/20260810_reconcile_module_catalog.sql
++++ b/db/migrations/20260810_reconcile_module_catalog.sql
+@@ -1,3 +1,32 @@
++-- AMENDED IN PLACE 2026-10-30 — D2 fold F6: the device workstream folds into Projects (CLAUDE.md Rule 1).
++-- Decision P-61 item 5: the device workstream into Projects shows only figures
++-- computed from the project's own records, and the Client Review Room admits
++-- the project. The kit portfolio (device-workstream, mdx/surfaces/Overview.tsx)
++-- retires; Projects with its MDX filter counts the device portfolio on the
++-- server, the Client Review Room is on the device project's Review step, and
++-- the old address opens filtered Projects. Removed: the id from step 1's
++-- keep-list and step 2's upsert, so a fresh database never holds the row and
++-- step 1 deprecates the existing row on every replay. The row, its metadata
++-- (its recorded tier, 'standard', included), module_subscriptions FKs and every
++-- tenant record stay; no DELETE, no appended DROP. A live grant carries to
++-- projects in the entitlement resolver (decision P-61 item 4,
++-- server/services/entitlements/folded-module-successors.ts); no grant row is
++-- written. 20260823's packaging row is removed with it.
++-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/README.md.
++-- AMENDED IN PLACE 2026-10-30 — D2 fold F4: device analytics joins Reporting & analytics (CLAUDE.md Rule 1).
++-- Decision P-61 item 3: device analytics joins Reporting & analytics at its tier
++-- (standard), over the projects the reader can open. Device pathway analytics
++-- (device-analytics) retires; its status counts, submission pace and AnA draft
++-- acceptance rate are the device section of the Reporting overview
++-- (server/services/report-os/device-portfolio.ts), and its address opens
++-- insights. Removed: the id from step 1's keep-list and step 2's upsert, so a
++-- fresh database never holds the row and step 1 deprecates the existing row on
++-- every replay. The row, its metadata (its recorded tier, 'professional',
++-- included), module_subscriptions FKs and every tenant record stay; no DELETE, no
++-- appended DROP. A live grant carries to insights in the entitlement resolver
++-- (decision P-61 item 4, server/services/entitlements/folded-module-successors.ts);
++-- no grant row is written. 20260823's packaging row is removed with it.
++-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/README.md.
+ -- AMENDED IN PLACE 2026-10-30 — D2 fold F5 item 1: device submission packages into Submission Center (CLAUDE.md Rule 1).
+ -- Decision P-61 item 1: one device-filing store, estar_submissions. The device
+ -- submission-packages screen (device-submission) is folded into Submission
+@@ -340,7 +369,6 @@ UPDATE available_modules
+    'decision-lineage',
+    'deep-research',
+    'device-510k',
+-   'device-analytics',
+    'device-cer',
+    'device-clinical-studies',
+    'device-diagnostics',
+@@ -350,7 +378,6 @@ UPDATE available_modules
+    'device-presub',
+    'device-software',
+    'device-udi',
+-   'device-workstream',
+    'dispatch-readiness',
+    'doc-journey',
+    'document-authoring',
+@@ -415,7 +442,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
+   ('device-diagnostics', 'IVDR evidence', 'Classification, performance testing, risk analysis, IVDR, CLIA, CDx, LDT. See ui_kits/risk + ui_kits/labeling.', 'Author & assemble', '/concept2cure/device-diagnostics', 'stethoscope', 70, '{"tiers": [], "industries": []}'::json),
+   ('device-pma', 'PMA', 'PMA module status and trial metrics over the program read-model. Had no v2 entry point before the kit shell was retired.', 'Author & assemble', '/concept2cure/device-pma', 'shieldCheck', 80, '{"tiers": [], "industries": []}'::json),
+   ('device-presub', 'Pre-submission (Q-Sub)', 'Q-Sub meeting manager. Previously reachable only through a persisted localStorage value — no rail, tab or palette entry existed.', 'Author & assemble', '/concept2cure/device-presub', 'messageSquare', 90, '{"tiers": [], "industries": []}'::json),
+-  ('device-workstream', 'Medical Device & IVD', 'The MDX workstream — one door. Programs portfolio with classification + 510(k)/PMA/CER/De Novo pathway tabs, predicate intelligence, eSTAR/Annex XIV editors. Built in the MDX kit.', 'Author & assemble', '/concept2cure/device-workstream', 'stethoscope', 100, '{"tiers": [], "industries": []}'::json),
+   ('doc-journey', 'Document journey', 'One document, ideation → submission: ideate → outline → AnA draft → revise → review → QC → approve (§11 e-sign) → assemble (eCTD leaf) → transmit (ESG). Document state visible at every stage.', 'Author & assemble', '/concept2cure/doc-journey', 'gitBranch', 110, '{"tiers": [], "industries": []}'::json),
+   ('document-authoring', 'The editor', 'See HANDOFF_TO_DESIGN_document_authoring.md — editor + Yjs co-author + track-changes + comments + versions + approval + e-sign all have working backends, no UI.', 'Author & assemble', '/concept2cure/document-authoring', 'penLine', 120, '{"tiers": [], "industries": []}'::json),
+   ('ectd-coauthor', 'eCTD co-author', 'eCTD tree + section authoring. Back-half pipeline (format→assemble→validate→transmit) is production-grade.', 'Author & assemble', '/concept2cure/ectd-coauthor', 'gitBranch', 140, '{"tiers": [], "industries": []}'::json),
+@@ -451,7 +477,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
+   ('tasks', 'Tasks', 'Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray.', 'Review & govern', '/concept2cure/tasks', 'checkSquare', 530, '{"tiers": [], "industries": []}'::json),
+   ('crl-library', 'FDA CRL library', 'Searchable view over the shared clinical-regulatory evidence graph — the same findings CSR workflow, study design and AnA read. Not a separate corpus, retrieval path or agent. Behind ENABLE_CLINICAL_REGULATORY_GRAPH.', 'Intelligence & risk', '/concept2cure/crl-library', 'gavel', 540, '{"tiers": [], "industries": []}'::json),
+   ('deep-research', 'Deep research', 'Long-running multi-source research (Opus). Shares the AnA rail in deep-research mode.', 'Intelligence & risk', '/concept2cure/deep-research', 'telescope', 550, '{"tiers": [], "industries": []}'::json),
+-  ('device-analytics', 'Device pathway analytics', 'Pathway-scoped device analytics. insights and report-engine answer protocol and report-run questions instead.', 'Intelligence & risk', '/concept2cure/device-analytics', 'barChart3', 560, '{"tiers": [], "industries": []}'::json),
+   ('device-postmarket', 'Post-market surveillance and CAPA', 'Device MDR/MAUDE vigilance and CAPA triage. A different regulatory regime from pv-cockpit, which is drug pharmacovigilance.', 'Intelligence & risk', '/concept2cure/device-postmarket', 'shieldAlert', 570, '{"tiers": [], "industries": []}'::json),
+   ('global-ri', 'Global regulatory intelligence', 'Gold-standard pattern: ~41 deterministic capabilities, 9 groups, one-call catalog drives nav + dynamic forms. See HANDOFF_TO_DESIGN_global_ri.md.', 'Intelligence & risk', '/concept2cure/global-ri', 'globe', 580, '{"tiers": [], "industries": []}'::json),
+   ('intelligence-catalog', 'Intelligence catalog', 'Read-only reference: 142 deterministic_registry tools across 24 domains, with the determinism-pedigree trust system and the shared deterministic-result rendering pattern. Contract ref (not yet a @shared file): server/services/ana/tool-pedigree.ts', 'Intelligence & risk', '/concept2cure/intelligence-catalog', 'shieldCheck', 590, '{"tiers": [], "industries": []}'::json),
+diff --git a/db/migrations/20260823_module_catalog_commercial_packaging.sql b/db/migrations/20260823_module_catalog_commercial_packaging.sql
+index 1c673dac1..c764fefc9 100644
+--- a/db/migrations/20260823_module_catalog_commercial_packaging.sql
++++ b/db/migrations/20260823_module_catalog_commercial_packaging.sql
+@@ -1,3 +1,19 @@
++-- AMENDED IN PLACE 2026-10-30 — D2 fold F6: the device workstream folds into Projects (CLAUDE.md Rule 1).
++-- 20260810 no longer upserts device-workstream; its replay deprecates the
++-- existing row. Remove its packaging row too, so the unknown-module guard below
++-- still passes on a fresh database that never holds it. Replayed databases keep
++-- the deprecated row, the tier it was given ('standard'), its subscriptions and
++-- every other module's tier unchanged (projects stays 'free', below the folded
++-- module's tier, so a plan that included it includes Projects).
++-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/README.md.
++-- AMENDED IN PLACE 2026-10-30 — D2 fold F4: device analytics joins Reporting & analytics (CLAUDE.md Rule 1).
++-- 20260810 no longer upserts device-analytics; its replay deprecates the
++-- existing row. Remove its packaging row too, so the unknown-module guard below
++-- still passes on a fresh database that never holds it. Replayed databases keep
++-- the deprecated row, the tier it was given ('professional'), its subscriptions
++-- and every other module's tier unchanged (insights stays 'standard', at or
++-- below the folded module's tier, so a plan that included it includes insights).
++-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/README.md.
+ -- AMENDED IN PLACE 2026-10-30 — D2 fold F5 item 1: device submission packages into Submission Center (CLAUDE.md Rule 1).
+ -- 20260810 no longer upserts device-submission; its replay deprecates the
+ -- existing row. Remove its packaging row too, so the unknown-module guard below
+@@ -255,7 +271,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
+   ('device-presub', 'standard'),
+   ('device-software', 'standard'),
+   ('device-udi', 'standard'),
+-  ('device-workstream', 'standard'),
+   ('dispatch-readiness', 'standard'),
+   ('doc-journey', 'standard'),
+   ('document-authoring', 'standard'),
+@@ -298,7 +313,8 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
+   --   biostatistics, biostat-workbench     FEATURE_TIER_MAP biostatistics:professional
+   --   pharmacovigilance, pv-cockpit        post-approval; a pre-approval company has no PV obligation
+   --   rbm                                  multi-study clinical operations
+-  --   device-postmarket, device-analytics  PMS/PMCF + "Advanced Analytics"
++  --   device-postmarket                    PMS/PMCF + "Advanced Analytics"
++  --                                        (device-analytics folded into insights, 2026-10-30, fold F4)
+   --   market-access, reg-change,
+   --   lifecycle-mgmt, pediatric, orphan    lifecycle and strategy: value after a first filing, not before
+   --   orchestration                        billing.ts "Custom Workflows"
+@@ -307,7 +323,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
+   --   qmp                                  quality-management PROGRAMS, not the compliance record
+   ('biostat-workbench', 'professional'),
+   ('biostatistics', 'professional'),
+-  ('device-analytics', 'professional'),
+   ('device-postmarket', 'professional'),
+   ('gateway-transmittals', 'professional'),
+   ('lifecycle-mgmt', 'professional'),
+diff --git a/docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/README.md b/docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/README.md
+new file mode 100644
+index 000000000..ca6cc8b6d
+--- /dev/null
++++ b/docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/README.md
+@@ -0,0 +1,111 @@
++# Fold F4: device analytics into Reporting & analytics (D2, 2026-10-30)
++
++Launch row: **D2** (one AnA, one product: the remaining in-shell device "apps" fold into core).
++Decision: **P-61 item 3** (`docs/LAUNCH_DEFINITION_OF_DONE.md`, "### P-61"): device analytics joins Reporting &
++analytics at its tier (standard); Reporting reads accessible projects only. Grant continuity: **P-61 item 4**.
++Plan: `docs/design/DEVICE_FOLDS_2026-10-29.md`, F4 and the common checklist.
++
++The work is a **convergence**: device analytics' three real figures are moved into the one Reporting overview,
++and the device screen, its hook and its kit aggregate are deleted. Nothing is built beside an existing reader.
++
++## What already exists (Rule 3)
++
++Searched by every name the capability could have: `device-analytics`, `AnalyticsSurface`, `useAnalytics`,
++`AnalyticsReportLibrary`, `/api/mdx/analytics`, `mdx-analytics`, `actual_submission_date`, `draft_source`,
++`acceptance rate|acceptanceRate|acceptRate`, `pace24m|submission pace`, `byStatus|status counts`,
++`workstreamSqlCase`, `device` over `server/services/report-os`, `server/routes/insights*`,
++`server/routes/report-os*` and `client/src/concept2cure/v2/surfaces/Insights*` (`what-exists-searches.txt`), and
++every deleted file by name (`history-search.txt`).
++
++| Piece | Path | What it did before this fold | What it did not do |
++|---|---|---|---|
++| The device analytics screen | `client/src/concept2cure/mdx/surfaces/AnalyticsSurface.tsx` (with `mdx/hooks/useAnalytics.ts`, `mdx/data/analytics.ts`, `mdx/components/AnalyticsReportLibrary.tsx`) | KPI cards (projects, active, approved, submitted), the AnA draft acceptance rate, a 24-month submission pace, open blockers by cause with Ask AnA, a saved-reports list, three facets drawn as unavailable | Read only the projects its reader could open; tell device from drug programs |
++| Its read | `server/routes/mdx-analytics.ts`, `GET /api/mdx/analytics` (the kit aggregate) | Counted **every** `regulatory_programs` row of the organization, drug programs included, and every AnA-drafted `cerv2_510k_sections` row; open `c2c_blockers` by type | Scope to accessible projects (`getAccessibleReportProjectIds` was never called) |
++| Its facets | the same file, `/analytics/portfolio`, `/submissions`, `/cycle-times`, `/blockers`, `/clinical`, `/ana-usage` | Organization-wide aggregates; **no client caller** | Scope to accessible projects |
++| The saved-reports panel | `AnalyticsReportLibrary.tsx` | A copy of Reporting's run register (`GET /api/report-os/runs`), linking to `/concept2cure/insights` | Anything Insights' Run history tab (`v2/surfaces/InsightsRunsPanel.tsx`) does not |
++| The target | `client/src/concept2cure/v2/surfaces/Insights.tsx` over `GET /api/insights-canvas/overview` (`server/routes/insights-canvas-routes.ts`) | The reporting canvas, scoped by `getAccessibleReportProjectIds` (`server/services/report-os/project-access.ts`) | Any device figure: none of `actual_submission_date`, `draft_source`, a status count or a pace was read anywhere under report-os or the canvas at HEAD |
++| The device classification | `workstreamSqlCase` (`shared/constants/domain/product-types.ts`), used by Projects' MDX filter (`server/services/c2c/project-portfolio.ts`) | The one vocabulary that says a program is MDX | — |
++| Catalogue | `db/migrations/20260810_reconcile_module_catalog.sql`, `20260823_module_catalog_commercial_packaging.sql` | `device-analytics` live, packaged at **professional** (`catalogue-at.txt`) | — |
++
++The history search finds no analytics screen, hook or route ever deleted before (`history-search.txt`; the clone
++is shallow, 1,646 commits reachable). This fold is the first, so nothing is rebuilt beside a deleted one.
++
++## What changed
++
++**Converged into Reporting.** One deterministic reader, `server/services/report-os/device-portfolio.ts`
++(`readDevicePortfolio`), computes the section over the projects the reader can open:
++
++- each recorded status (`regulatory_programs.status`) with its count, over device projects only (the Projects MDX
++  filter's `workstreamSqlCase`), never a drug, deleted or other-tenant project;
++- the submission pace: recorded `actual_submission_date` in each of the 24 calendar months to now;
++- the AnA draft acceptance rate: AnA-drafted kit sections recorded against those projects through their eSTAR
++  document (`cerv2_510k_sections.document_id → fda_510k_documents.project_id`), accepted over all.
++
++Every figure is a row count or a ratio of two counts; no model is asked for anything (Rule 2). An unreadable programs
++source throws, and the route says `{ state: 'unavailable' }` without withdrawing the rest of the canvas; a missing
++drafts table or column withholds only the rate; a genuine zero is zero; no draft recorded is no rate, never 0%.
++
++`GET /api/insights-canvas/overview` carries it as `device`, read on the request's own connection
++(`readDevicePortfolio(requestPgClient(req), organizationId, accessibleProjectIds, now)`), on every tier.
++`v2/surfaces/InsightsDevicePortfolio.tsx` shows it on the Report tab's landing canvas of `v2/surfaces/Insights.tsx`,
++with or without a project open; it draws nothing for a reader with no device project.
++
++**What the reader sees change, honestly.** The old figures were the organization's; the new ones are the reader's
++accessible device projects'. A kit section with no eSTAR document (`document_id` null, which is how
++`write_kit_section` writes today) belongs to no project, so it is not counted: an organization whose AnA drafts are
++all organization-level sees "No AnA draft is recorded against a device project you can open". That is the figure the
++decision asks for, not a regression to hide.
++
++**Not carried, by decision.** Open blockers by cause and its Ask AnA: there is no organization-wide blocker list
++(P-61 item 2). Reviewer velocity, per-tool AnA usage and phase timing were always null (no source). The pathway
++filter only ever offered "All".
++
++### Deleted, with the reachable replacement
++
++| Deleted | Replacement (path) | Reachability proof |
++|---|---|---|
