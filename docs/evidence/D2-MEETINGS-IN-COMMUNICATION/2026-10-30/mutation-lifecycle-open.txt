@@ -1,0 +1,6 @@
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > recording a meeting > names this organisation's submission, or none, and never another tenant's 12ms
+ × server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > moving a meeting > runs one way, needs the date a move records, and does not reopen a closed meeting 9ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > moving a meeting > does not move another organisation's meeting 2ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > listing meetings > shows meetings with no submission and those on programs the reader may open, and no other 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)

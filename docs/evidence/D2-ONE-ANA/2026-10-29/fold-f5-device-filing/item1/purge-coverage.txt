@@ -1,0 +1,12 @@
+# ci:purge-coverage on a deploy-shaped database (a private PostgreSQL 16 + pgvector on 127.0.0.1:55473, built from blank by install-fresh then deploy-migrate over this working tree; tools/build-db.sh.txt). Both logs: deploy-migrate applied migrations/20261030_estar_filing_one_store.sql ("fold F5: 0 device package(s) migrated ... (0 eligible)"); estar_submission_events has RLS on and one policy.
+
+## Red: the PURGE_CHILD_TABLES line removed (restored after, sha256 checked)
+     public.tenant_offboarding_certificates (custody_signature_id) → public.electronic_signatures, NO ACTION [tenant_offboarding_certificates_custody_signature_fk]
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - estar_submission_events
+First: confirm the table still exists on a CURRENT schema. This gate reads the
+live database, and a table some migration drops can linger on a local one
+
+## Green: with the line
+✅ purge-coverage: no foreign key stops the purge part-way (2 from tables it does not erase, each named).
+✅ purge-coverage: 454 org-keyed tables outside the purge reach (baseline 468, new 0, 14 now covered).

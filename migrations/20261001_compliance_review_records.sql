@@ -30,6 +30,16 @@
 -- Notes:
 --   - D6, 2026-10-01. Evidence:
 --     docs/evidence/D6/2026-10-01-tranche-4/P1-25-P1-43-review-records/.
+--   - AMENDED IN PLACE 2026-10-29 (D6, P-58; docs/evidence/D6-OFFBOARDING-CUSTODY/2026-10-29/):
+--     the retention note below is SUPERSEDED by the founder's decision P-58.
+--     A departing tenant's records, its signatures among them, are exported
+--     and erased with the tenant once its administrator signs custody of the
+--     export; a signed review names its signature, so it goes first. The
+--     guard admits ONE DELETE of a signed review: by tenant_record_purger,
+--     current_user only inside public.purge_tenant_signed_records
+--     (migrations/20261029k_tenant_offboarding_custody.sql: SECURITY DEFINER,
+--     platform scope, pending_deletion, no legal hold, custody signed). No
+--     other role, and no session setting, deletes a signed review.
 --   - Retained at tenant offboarding (fix round DP-70, 2026-10-01; comment
 --     only, no schema change). The tenant purge (PURGE_CHILD_TABLES,
 --     server/services/tenant/tenant-offboarding.ts) does not reach this table,
@@ -229,7 +239,8 @@ SET search_path = pg_catalog, public
 AS $fn$
 BEGIN
   IF TG_OP = 'DELETE' THEN
-    IF OLD.status = 'signed' THEN
+    -- The tenant purge's door (2026-10-29, P-58), and nothing else.
+    IF OLD.status = 'signed' AND current_user <> 'tenant_record_purger' THEN
       RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: review record % is signed and cannot be deleted (21 CFR 11.10(e); Annex 11 §9).', OLD.id
         USING ERRCODE = 'raise_exception';
     END IF;

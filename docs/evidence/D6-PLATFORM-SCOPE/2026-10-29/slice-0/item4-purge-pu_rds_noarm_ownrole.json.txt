@@ -1,0 +1,3204 @@
+{
+ "scope": "own+role",
+ "B": 8,
+ "A": 7,
+ "steps": [
+  {
+   "label": "delete company_document_designs",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete company_legal_registry",
+   "n": 0,
+   "rows": []
+  },
+  {
+   "label": "delete company_document_revisions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete company_document_grants",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete company_document_identity_reviews",
+   "n": 0,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_source_read_receipts",
+   "n": 1,
+   "rows": [
+    {
+     "receipts": 0
+    }
+   ]
+  },
+  {
+   "label": "delete mdx_notification_receipts",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete mdx_notifications",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ai_feedback",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete module_access_requests",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete organization_skill_settings",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_skill_settings",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_run_events",
+   "n": 1,
+   "rows": [
+    {
+     "events": 1
+    }
+   ]
+  },
+  {
+   "label": "delete ana_runs",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_workflows",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete organization_users",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_artifact_records",
+   "n": 1,
+   "rows": [
+    {
+     "signatures": 1,
+     "snapshots": 1
+    }
+   ]
+  },
+  {
+   "label": "delete commitment_milestones",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete regulatory_commitments",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete agency_communication_questions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_signed_records",
+   "n": 1,
+   "rows": [
+    {
+     "signatures": 0,
+     "reviews": 1,
+     "audit_entries": 1
+    }
+   ]
+  },
+  {
+   "label": "delete ind_package_plan_documents",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete document_comments",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete document_locks",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete document_sessions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete document_versions",
+   "err": "update or delete on table \"document_versions\" violates foreign key constraint \"electronic_signatures_version_id_document_versions_id_fk\" on table \"electronic_si"
+  },
+  {
+   "label": "delete document_sections",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete documents",
+   "err": "update or delete on table \"documents\" violates foreign key constraint \"document_versions_document_id_documents_id_fk\" on table \"document_versions\""
+  },
+  {
+   "label": "delete link_edges",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete section_links",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete section_propagations",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete section_patches",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete patches",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete section_graph_nodes",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete section_leaves",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete sections",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cross_module_task_links",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete task_dependencies",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_review_routes",
+   "n": 1,
+   "rows": [
+    {
+     "tasks": 1,
+     "routes": 1
+    }
+   ]
+  },
+  {
+   "label": "delete account_canon_resolution_log",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ana_outcome_log",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete rule_execution_log",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete bundle_execution_receipts",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_lineage_records",
+   "n": 1,
+   "rows": [
+    {
+     "lineage": 1,
+     "evidence_chains": 1
+    }
+   ]
+  },
+  {
+   "label": "delete governance_boundary_transitions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete report_seal_events",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete indemnification_attestations",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete report_atom_provenance",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete immutable_report_records",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ana_client_objectives",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ana_project_capabilities",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ana_relational_profiles",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_ingested_documents",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_memory_entries",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_intelligence_profiles",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_modules",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_predictions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_rules",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_schedule_goals",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_schedule_revisions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_schedule_of_events",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_tasks",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_workflow_stages",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete risk_detections",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete sentinel_findings",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete template_usage",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ctd_onboarding_projects",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete account_events",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete account_template_registry",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete account_term_dictionary",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete account_canon_items",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete account_skill_bundles",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete client_ingested_documents",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete client_memory_entries",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete client_intelligence_profiles",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete c2c_communication_timeline_events",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete c2c_correspondence_issues",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete c2c_secure_attachments",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete c2c_response_packages",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete c2c_correspondence",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete c2c_submissions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete communication_messages",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete fda_communications",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete communication_channels",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_approvals",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_clinical_evidence",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_compliance_checks",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_essential_requirements",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_exports",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_faers_data",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_literature",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_sections",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_version_history",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_workflows",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_reports",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_documents",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete client_user_permissions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_activities",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_documents",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_milestones",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cer_projects",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete csr_details",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete csr_reports",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete csr_knowledge_edges",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete csr_regulatory_intelligence",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete csr_training_data",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ctd_cross_references",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete csr_studies",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ctd_programs",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete csr_narrative_outputs",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete csr_assembly_runs",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete csr_narrative_runs",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete qc_deviations",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete lumen_knowledge_graph_edges",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete knowledge_graph_edges",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete knowledge_graph_nodes",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete fda_510k_documents",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete fda_510k_stage_progress",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete fda_510k_submission_packages",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete fda_510k_projects",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete grant_budget_lines",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete grant_closeout_records",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete grant_cost_share_contributions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete grant_expenditures",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete grant_invoices",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete grant_milestones",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete grant_nce_records",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete grant_subawards",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete effort_lines",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete grant_awards",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete grant_proposals",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ind_package_plan_modalities",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ind_package_plan_regions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ind_package_plan_requirements",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ind_package_plan_timelines",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ind_package_plans",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ind_submissions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ind_projects",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete reg_messages",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete reg_responses",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_reg_questions",
+   "n": 1,
+   "rows": [
+    {
+     "questions": 1
+    }
+   ]
+  },
+  {
+   "label": "delete reg_attachments",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete agency_correspondence",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete agency_communications",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete compliance_calendar",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete obligation_updates",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete regulatory_obligations",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete regulatory_calendar",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete post_approval_commitments",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete regulatory_tasks",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete gate_approvals",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete stage_gates",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete regulatory_submissions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete qmp_traceability_matrix",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ctq_factors",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete qmp_section_gating",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete quality_management_plans",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete report_details",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete reports",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete strategic_reports",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete supply_chain_coas",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete supply_chain_batches",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete supply_chain_materials",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete supply_chain_temperature_readings",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete supply_chain_shipments",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete supply_chain_suppliers",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete submission_twin_challenges",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete submission_twin_assessments",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete submission_twin_change_impacts",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete submission_twin_evidence_links",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete submission_twin_claims",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete submission_twin_drift_alerts",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete client_access",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete client_security_settings",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete client_workspace_settings",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete staff_assignments",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete sync_status",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete workflow_progress",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete protocols",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete udi_records",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete software_lifecycle_items",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete labeling_translations",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete labeling_symbols",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete labeling_documents",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ivd_analytical_performance",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ivd_clinical_performance",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ivd_clia_categorization",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ivdr_per_documents",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cdx_pairings",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_ivdr_histories",
+   "n": 1,
+   "rows": [
+    {
+     "validation_parameters": 1,
+     "evidence_results": 1,
+     "cdx_statuses": 1
+    }
+   ]
+  },
+  {
+   "label": "delete ivdr_clinical_evidence",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ivdr_analytical_validations",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ivdr_cdx_workflows",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete ivdr_classifications",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete c2c_documents",
+   "n": 5,
+   "rows": []
+  },
+  {
+   "label": "delete projects",
+   "err": "update or delete on table \"projects\" violates foreign key constraint \"documents_project_id_projects_id_fk\" on table \"documents\""
+  },
+  {
+   "label": "delete client_workspaces",
+   "err": "update or delete on table \"client_workspaces\" violates foreign key constraint \"documents_client_workspace_id_client_workspaces_id_fk\" on table \"documents\""
+  },
+  {
+   "label": "delete vault.document_chunks",
+   "n": 0,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_vault_records",
+   "n": 5,
+   "rows": [
+    {
+     "storage_version_id": null,
+     "storage_provider": null
+    }
+   ]
+  },
+  {
+   "label": "delete stats_computation_runs",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete risk_controls",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete risk_items",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete qms_nonconforming_products",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_vault_seals",
+   "n": 1,
+   "rows": [
+    {
+     "seals": 1
+    }
+   ]
+  },
+  {
+   "label": "delete saved_precedent_queries",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete regulatory_programs",
+   "err": "IMMUTABILITY_VIOLATION: cre_evidence_sources.client_program_id of source 158 is set once and cannot be changed or cleared (21 CFR 11.10(e)). Capture the file ag"
+  },
+  {
+   "label": "delete file_uploads",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete regulatory_twin_simulations",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_container_closures",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_reference_standards",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_impurity_profiles",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_dissolution_profiles",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_material_specs",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_formulation_records",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_characterization_studies",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete manufacturing_processes",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_interview_sessions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete rendered_leaf_files",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete assumption_records",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete decision_records",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete governed_decision_transitions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete collab_presence",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete project_continuity_snapshots",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete scheduled_job_claims",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_workflow_tasks",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_workflow_instances",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_checklist_instances",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_ai_tool_executions",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete cmc_workflows",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete organization_retention_settings",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "door purge_tenant_turn_records",
+   "n": 1,
+   "rows": [
+    {
+     "records": 1,
+     "blobs": 1
+    }
+   ]
+  },
+  {
+   "label": "delete organization_gateway_accounts",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete session_activity",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete coordination_leases",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete study_pivotal_declarations",
+   "n": 1,
+   "rows": []
+  },
+  {
+   "label": "delete submission_filed_baselines",
+   "n": 0,
+   "rows": []
+  },
+  {
+   "label": "delete citation_chains",
+   "n": 1,
+   "rows": []
+  }
+ ],
+ "before": {
+  "company_document_designs": [
+   1,
+   1
+  ],
+  "company_legal_registry": [
+   0,
+   0
+  ],
+  "company_document_revisions": [
+   1,
+   1
+  ],
+  "company_document_grants": [
+   1,
+   1
+  ],
+  "company_document_identity_reviews": [
+   0,
+   0
+  ],
+  "ana_source_read_receipts": [
+   0,
+   0
+  ],
+  "mdx_notification_receipts": [
+   1,
+   1
+  ],
+  "mdx_notifications": [
+   1,
+   1
+  ],
+  "ai_feedback": [
+   1,
+   1
+  ],
+  "module_access_requests": [
+   1,
+   1
+  ],
+  "organization_skill_settings": [
+   1,
+   1
+  ],
+  "project_skill_settings": [
+   1,
+   1
+  ],
+  "ana_run_events": [
+   1,
+   1
+  ],
+  "ana_runs": [
+   1,
+   1
+  ],
+  "project_workflows": [
+   1,
+   1
+  ],
+  "organization_users": [
+   1,
+   1
+  ],
+  "concept2cure_signatures": [
+   1,
+   1
+  ],
+  "concept2cure_submission_snapshots": [
+   1,
+   1
+  ],
+  "commitment_milestones": [
+   1,
+   1
+  ],
+  "regulatory_commitments": [
+   1,
+   1
+  ],
+  "agency_communication_questions": [
+   1,
+   1
+  ],
+  "compliance_review_records": [
+   1,
+   1
+  ],
+  "electronic_signatures": [
+   1,
+   1
+  ],
+  "document_audit_trail": [
+   1,
+   1
+  ],
+  "ind_package_plan_documents": [
+   1,
+   1
+  ],
+  "document_comments": [
+   1,
+   1
+  ],
+  "document_locks": [
+   1,
+   1
+  ],
+  "document_sessions": [
+   1,
+   1
+  ],
+  "document_versions": [
+   1,
+   1
+  ],
+  "document_sections": [
+   1,
+   1
+  ],
+  "documents": [
+   1,
+   1
+  ],
+  "link_edges": [
+   1,
+   1
+  ],
+  "section_links": [
+   1,
+   1
+  ],
+  "section_propagations": [
+   1,
+   1
+  ],
+  "section_patches": [
+   1,
+   1
+  ],
+  "patches": [
+   1,
+   1
+  ],
+  "section_graph_nodes": [
+   1,
+   1
+  ],
+  "section_leaves": [
+   1,
+   1
+  ],
+  "sections": [
+   1,
+   1
+  ],
+  "cross_module_task_links": [
+   1,
+   1
+  ],
+  "task_dependencies": [
+   1,
+   1
+  ],
+  "unified_tasks": [
+   1,
+   1
+  ],
+  "review_routes": [
+   1,
+   1
+  ],
+  "account_canon_resolution_log": [
+   1,
+   1
+  ],
+  "ana_outcome_log": [
+   1,
+   1
+  ],
+  "rule_execution_log": [
+   1,
+   1
+  ],
+  "bundle_execution_receipts": [
+   1,
+   1
+  ],
+  "data_lineage_records": [
+   1,
+   1
+  ],
+  "evidence_chain_records": [
+   1,
+   1
+  ],
+  "governance_boundary_transitions": [
+   1,
+   1
+  ],
+  "report_seal_events": [
+   1,
+   1
+  ],
+  "indemnification_attestations": [
+   1,
+   1
+  ],
+  "report_atom_provenance": [
+   1,
+   1
+  ],
+  "immutable_report_records": [
+   1,
+   1
+  ],
+  "ana_client_objectives": [
+   1,
+   1
+  ],
+  "ana_project_capabilities": [
+   1,
+   1
+  ],
+  "ana_relational_profiles": [
+   1,
+   1
+  ],
+  "project_ingested_documents": [
+   1,
+   1
+  ],
+  "project_memory_entries": [
+   1,
+   1
+  ],
+  "project_intelligence_profiles": [
+   1,
+   1
+  ],
+  "project_modules": [
+   1,
+   1
+  ],
+  "project_predictions": [
+   1,
+   1
+  ],
+  "project_rules": [
+   1,
+   1
+  ],
+  "project_schedule_goals": [
+   1,
+   1
+  ],
+  "project_schedule_revisions": [
+   1,
+   1
+  ],
+  "project_schedule_of_events": [
+   1,
+   1
+  ],
+  "project_tasks": [
+   1,
+   1
+  ],
+  "project_workflow_stages": [
+   1,
+   1
+  ],
+  "risk_detections": [
+   1,
+   1
+  ],
+  "sentinel_findings": [
+   1,
+   1
+  ],
+  "template_usage": [
+   1,
+   1
+  ],
+  "ctd_onboarding_projects": [
+   1,
+   1
+  ],
+  "account_events": [
+   1,
+   1
+  ],
+  "account_template_registry": [
+   1,
+   1
+  ],
+  "account_term_dictionary": [
+   1,
+   1
+  ],
+  "account_canon_items": [
+   1,
+   1
+  ],
+  "account_skill_bundles": [
+   1,
+   1
+  ],
+  "client_ingested_documents": [
+   1,
+   1
+  ],
+  "client_memory_entries": [
+   1,
+   1
+  ],
+  "client_intelligence_profiles": [
+   1,
+   1
+  ],
+  "c2c_communication_timeline_events": [
+   1,
+   1
+  ],
+  "c2c_correspondence_issues": [
+   1,
+   1
+  ],
+  "c2c_secure_attachments": [
+   1,
+   1
+  ],
+  "c2c_response_packages": [
+   1,
+   1
+  ],
+  "c2c_correspondence": [
+   1,
+   1
+  ],
+  "c2c_submissions": [
+   1,
+   1
+  ],
+  "communication_messages": [
+   1,
+   1
+  ],
+  "fda_communications": [
+   1,
+   1
+  ],
+  "communication_channels": [
+   1,
+   1
+  ],
+  "cer_approvals": [
+   1,
+   1
+  ],
+  "cer_clinical_evidence": [
+   1,
+   1
+  ],
+  "cer_compliance_checks": [
+   1,
+   1
+  ],
+  "cer_essential_requirements": [
+   1,
+   1
+  ],
+  "cer_exports": [
+   1,
+   1
+  ],
+  "cer_faers_data": [
+   1,
+   1
+  ],
+  "cer_literature": [
+   1,
+   1
+  ],
+  "cer_sections": [
+   1,
+   1
+  ],
+  "cer_version_history": [
+   1,
+   1
+  ],
+  "cer_workflows": [
+   1,
+   1
+  ],
+  "cer_reports": [
+   1,
+   1
+  ],
+  "cer_documents": [
+   1,
+   1
+  ],
+  "client_user_permissions": [
+   1,
+   1
+  ],
+  "project_activities": [
+   1,
+   1
+  ],
+  "project_documents": [
+   1,
+   1
+  ],
+  "project_milestones": [
+   1,
+   1
+  ],
+  "cer_projects": [
+   1,
+   1
+  ],
+  "csr_details": [
+   1,
+   1
+  ],
+  "csr_reports": [
+   1,
+   1
+  ],
+  "csr_knowledge_edges": [
+   1,
+   1
+  ],
+  "csr_regulatory_intelligence": [
+   1,
+   1
+  ],
+  "csr_training_data": [
+   1,
+   1
+  ],
+  "ctd_cross_references": [
+   1,
+   1
+  ],
+  "csr_studies": [
+   1,
+   1
+  ],
+  "ctd_programs": [
+   1,
+   1
+  ],
+  "csr_narrative_outputs": [
+   1,
+   1
+  ],
+  "csr_assembly_runs": [
+   1,
+   1
+  ],
+  "csr_narrative_runs": [
+   1,
+   1
+  ],
+  "qc_deviations": [
+   1,
+   1
+  ],
+  "lumen_knowledge_graph_edges": [
+   1,
+   1
+  ],
+  "knowledge_graph_edges": [
+   1,
+   1
+  ],
+  "knowledge_graph_nodes": [
+   1,
+   1
+  ],
+  "fda_510k_documents": [
+   1,
+   1
+  ],
+  "fda_510k_stage_progress": [
+   1,
+   1
+  ],
+  "fda_510k_submission_packages": [
+   1,
+   1
+  ],
+  "fda_510k_projects": [
+   1,
+   1
+  ],
+  "grant_budget_lines": [
+   1,
+   1
+  ],
+  "grant_closeout_records": [
+   1,
+   1
+  ],
+  "grant_cost_share_contributions": [
+   1,
+   1
+  ],
+  "grant_expenditures": [
+   1,
+   1
+  ],
+  "grant_invoices": [
+   1,
+   1
+  ],
+  "grant_milestones": [
+   1,
+   1
+  ],
+  "grant_nce_records": [
+   1,
+   1
+  ],
+  "grant_subawards": [
+   1,
+   1
+  ],
+  "effort_lines": [
+   1,
+   1
+  ],
+  "grant_awards": [
+   1,
+   1
+  ],
+  "grant_proposals": [
+   1,
+   1
+  ],
+  "ind_package_plan_modalities": [
+   1,
+   1
+  ],
+  "ind_package_plan_regions": [
+   1,
+   1
+  ],
+  "ind_package_plan_requirements": [
+   1,
+   1
+  ],
+  "ind_package_plan_timelines": [
+   1,
+   1
+  ],
+  "ind_package_plans": [
+   1,
+   1
+  ],
+  "ind_submissions": [
+   1,
+   1
+  ],
+  "ind_projects": [
+   1,
+   1
+  ],
+  "reg_messages": [
+   1,
+   1
+  ],
+  "reg_responses": [
+   1,
+   1
+  ],
+  "reg_questions": [
+   1,
+   1
+  ],
+  "reg_attachments": [
+   1,
+   1
+  ],
+  "agency_correspondence": [
+   1,
+   1
+  ],
+  "agency_communications": [
+   1,
+   1
+  ],
+  "compliance_calendar": [
+   1,
+   1
+  ],
+  "obligation_updates": [
+   1,
+   1
+  ],
+  "regulatory_obligations": [
+   1,
+   1
+  ],
+  "regulatory_calendar": [
+   1,
+   1
+  ],
+  "post_approval_commitments": [
+   1,
+   1
+  ],
+  "regulatory_tasks": [
+   1,
+   1
+  ],
+  "gate_approvals": [
+   1,
+   1
+  ],
+  "stage_gates": [
+   1,
+   1
+  ],
+  "regulatory_submissions": [
+   1,
+   1
+  ],
+  "qmp_traceability_matrix": [
+   1,
+   1
+  ],
+  "ctq_factors": [
+   1,
+   1
+  ],
+  "qmp_section_gating": [
+   1,
+   1
+  ],
+  "quality_management_plans": [
+   1,
+   1
+  ],
+  "report_details": [
+   1,
+   1
+  ],
+  "reports": [
+   1,
+   1
+  ],
+  "strategic_reports": [
+   1,
+   1
+  ],
+  "supply_chain_coas": [
+   1,
+   1
+  ],
+  "supply_chain_batches": [
+   1,
+   1
+  ],
+  "supply_chain_materials": [
+   1,
+   1
+  ],
+  "supply_chain_temperature_readings": [
+   1,
+   1
+  ],
+  "supply_chain_shipments": [
+   1,
+   1
+  ],
+  "supply_chain_suppliers": [
+   1,
+   1
+  ],
+  "submission_twin_challenges": [
+   1,
+   1
+  ],
+  "submission_twin_assessments": [
+   1,
+   1
+  ],
+  "submission_twin_change_impacts": [
+   1,
+   1
+  ],
+  "submission_twin_evidence_links": [
+   1,
+   1
+  ],
+  "submission_twin_claims": [
+   1,
+   1
+  ],
+  "submission_twin_drift_alerts": [
+   1,
+   1
+  ],
+  "client_access": [
+   1,
+   1
+  ],
+  "client_security_settings": [
+   1,
+   1
+  ],
+  "client_workspace_settings": [
+   1,
+   1
+  ],
+  "staff_assignments": [
+   1,
+   1
+  ],
+  "sync_status": [
+   1,
+   1
+  ],
+  "workflow_progress": [
+   1,
+   1
+  ],
+  "protocols": [
+   1,
+   1
+  ],
+  "udi_records": [
+   1,
+   1
+  ],
+  "software_lifecycle_items": [
+   1,
+   1
+  ],
+  "labeling_translations": [
+   1,
+   1
+  ],
+  "labeling_symbols": [
+   1,
+   1
+  ],
+  "labeling_documents": [
+   1,
+   1
+  ],
+  "ivd_analytical_performance": [
+   1,
+   1
+  ],
+  "ivd_clinical_performance": [
+   1,
+   1
+  ],
+  "ivd_clia_categorization": [
+   1,
+   1
+  ],
+  "ivdr_per_documents": [
+   1,
+   1
+  ],
+  "cdx_pairings": [
+   1,
+   1
+  ],
+  "ivdr_validation_parameter_history": [
+   1,
+   1
+  ],
+  "ivdr_evidence_result_history": [
+   1,
+   1
+  ],
+  "ivdr_cdx_status_history": [
+   1,
+   1
+  ],
+  "ivdr_clinical_evidence": [
+   1,
+   1
+  ],
+  "ivdr_analytical_validations": [
+   1,
+   1
+  ],
+  "ivdr_cdx_workflows": [
+   1,
+   1
+  ],
+  "ivdr_classifications": [
+   1,
+   1
+  ],
+  "c2c_documents": [
+   5,
+   5
+  ],
+  "projects": [
+   3,
+   3
+  ],
+  "client_workspaces": [
+   1,
+   1
+  ],
+  "vault.document_chunks": [
+   0,
+   0
+  ],
+  "vault.documents": [
+   5,
+   4
+  ],
+  "stats_computation_runs": [
+   1,
+   1
+  ],
+  "risk_controls": [
+   1,
+   1
+  ],
+  "risk_items": [
+   1,
+   1
+  ],
+  "qms_nonconforming_products": [
+   1,
+   1
+  ],
+  "vault_data_room_seals": [
+   1,
+   1
+  ],
+  "saved_precedent_queries": [
+   1,
+   1
+  ],
+  "regulatory_programs": [
+   3,
+   3
+  ],
+  "file_uploads": [
+   1,
+   1
+  ],
+  "regulatory_twin_simulations": [
+   1,
+   1
+  ],
+  "cmc_container_closures": [
+   1,
+   1
+  ],
+  "cmc_reference_standards": [
+   1,
+   1
+  ],
+  "cmc_impurity_profiles": [
+   1,
+   1
+  ],
+  "cmc_dissolution_profiles": [
+   1,
+   1
+  ],
+  "cmc_material_specs": [
+   1,
+   1
+  ],
+  "cmc_formulation_records": [
+   1,
+   1
+  ],
+  "cmc_characterization_studies": [
+   1,
+   1
+  ],
+  "manufacturing_processes": [
+   1,
+   1
+  ],
+  "cmc_interview_sessions": [
+   1,
+   1
+  ],
+  "rendered_leaf_files": [
+   1,
+   1
+  ],
+  "assumption_records": [
+   1,
+   1
+  ],
+  "decision_records": [
+   1,
+   1
+  ],
+  "governed_decision_transitions": [
+   1,
+   1
+  ],
+  "collab_presence": [
+   1,
+   1
+  ],
+  "project_continuity_snapshots": [
+   1,
+   1
+  ],
+  "scheduled_job_claims": [
+   1,
+   1
+  ],
+  "cmc_workflow_tasks": [
+   1,
+   1
+  ],
+  "cmc_workflow_instances": [
+   1,
+   1
+  ],
+  "cmc_checklist_instances": [
+   1,
+   1
+  ],
+  "cmc_ai_tool_executions": [
+   1,
+   1
+  ],
+  "cmc_workflows": [
+   1,
+   1
+  ],
+  "organization_retention_settings": [
+   1,
+   1
+  ],
+  "ana_turn_records": [
+   1,
+   1
+  ],
+  "ana_record_blobs": [
+   1,
+   1
+  ],
+  "organization_gateway_accounts": [
+   1,
+   1
+  ],
+  "session_activity": [
+   1,
+   1
+  ],
+  "coordination_leases": [
+   1,
+   1
+  ],
+  "study_pivotal_declarations": [
+   1,
+   1
+  ],
+  "submission_filed_baselines": [
+   0,
+   0
+  ],
+  "citation_chains": [
+   1,
+   1
+  ]
+ },
+ "after": {
+  "company_document_designs": [
+   0,
+   1
+  ],
+  "company_legal_registry": [
+   0,
+   0
+  ],
+  "company_document_revisions": [
+   0,
+   1
+  ],
+  "company_document_grants": [
+   0,
+   1
+  ],
+  "company_document_identity_reviews": [
+   0,
+   0
+  ],
+  "ana_source_read_receipts": [
+   0,
+   0
+  ],
+  "mdx_notification_receipts": [
+   0,
+   1
+  ],
+  "mdx_notifications": [
+   0,
+   1
+  ],
+  "ai_feedback": [
+   0,
+   1
+  ],
+  "module_access_requests": [
+   0,
+   1
+  ],
+  "organization_skill_settings": [
+   0,
+   1
+  ],
+  "project_skill_settings": [
+   0,
+   1
+  ],
+  "ana_run_events": [
+   0,
+   1
+  ],
+  "ana_runs": [
+   0,
+   1
+  ],
+  "project_workflows": [
+   0,
+   1
+  ],
+  "organization_users": [
+   0,
+   1
+  ],
+  "concept2cure_signatures": [
+   0,
+   1
+  ],
+  "concept2cure_submission_snapshots": [
+   0,
+   1
+  ],
+  "commitment_milestones": [
+   0,
+   1
+  ],
+  "regulatory_commitments": [
+   0,
+   1
+  ],
+  "agency_communication_questions": [
+   0,
+   1
+  ],
+  "compliance_review_records": [
+   0,
+   1
+  ],
+  "electronic_signatures": [
+   1,
+   1
+  ],
+  "document_audit_trail": [
+   0,
+   1
+  ],
+  "ind_package_plan_documents": [
+   0,
+   1
+  ],
+  "document_comments": [
+   0,
+   1
+  ],
+  "document_locks": [
+   0,
+   1
+  ],
+  "document_sessions": [
+   0,
+   1
+  ],
+  "document_versions": [
+   1,
+   1
+  ],
+  "document_sections": [
+   0,
+   1
+  ],
+  "documents": [
+   1,
+   1
+  ],
+  "link_edges": [
+   0,
+   1
+  ],
+  "section_links": [
+   0,
+   1
+  ],
+  "section_propagations": [
+   0,
+   1
+  ],
+  "section_patches": [
+   0,
+   1
+  ],
+  "patches": [
+   0,
+   1
+  ],
+  "section_graph_nodes": [
+   0,
+   1
+  ],
+  "section_leaves": [
+   0,
+   1
+  ],
+  "sections": [
+   0,
+   1
+  ],
+  "cross_module_task_links": [
+   0,
+   1
+  ],
+  "task_dependencies": [
+   0,
+   1
+  ],
+  "unified_tasks": [
+   0,
+   1
+  ],
+  "review_routes": [
+   0,
+   1
+  ],
+  "account_canon_resolution_log": [
+   0,
+   1
+  ],
+  "ana_outcome_log": [
+   0,
+   1
+  ],
+  "rule_execution_log": [
+   0,
+   1
+  ],
+  "bundle_execution_receipts": [
+   0,
+   1
+  ],
+  "data_lineage_records": [
+   0,
+   1
+  ],
+  "evidence_chain_records": [
+   0,
+   1
+  ],
+  "governance_boundary_transitions": [
+   0,
+   1
+  ],
+  "report_seal_events": [
+   0,
+   1
+  ],
+  "indemnification_attestations": [
+   0,
+   1
+  ],
+  "report_atom_provenance": [
+   0,
+   1
+  ],
+  "immutable_report_records": [
+   0,
+   1
+  ],
+  "ana_client_objectives": [
+   0,
+   1
+  ],
+  "ana_project_capabilities": [
+   0,
+   1
+  ],
+  "ana_relational_profiles": [
+   0,
+   1
+  ],
+  "project_ingested_documents": [
+   0,
+   1
+  ],
+  "project_memory_entries": [
+   0,
+   1
+  ],
+  "project_intelligence_profiles": [
+   0,
+   1
+  ],
+  "project_modules": [
+   0,
+   1
+  ],
+  "project_predictions": [
+   0,
+   1
+  ],
+  "project_rules": [
+   0,
+   1
+  ],
+  "project_schedule_goals": [
+   0,
+   1
+  ],
+  "project_schedule_revisions": [
+   0,
+   1
+  ],
+  "project_schedule_of_events": [
+   0,
+   1
+  ],
+  "project_tasks": [
+   0,
+   1
+  ],
+  "project_workflow_stages": [
+   0,
+   1
+  ],
+  "risk_detections": [
+   0,
+   1
+  ],
+  "sentinel_findings": [
+   0,
+   1
+  ],
+  "template_usage": [
+   0,
+   1
+  ],
+  "ctd_onboarding_projects": [
+   0,
+   1
+  ],
+  "account_events": [
+   0,
+   1
+  ],
+  "account_template_registry": [
+   0,
+   1
+  ],
+  "account_term_dictionary": [
+   0,
+   1
+  ],
+  "account_canon_items": [
+   0,
+   1
+  ],
+  "account_skill_bundles": [
+   0,
+   1
+  ],
+  "client_ingested_documents": [
+   0,
+   1
+  ],
+  "client_memory_entries": [
+   0,
+   1
+  ],
+  "client_intelligence_profiles": [
+   0,
+   1
+  ],
+  "c2c_communication_timeline_events": [
+   0,
+   1
+  ],
+  "c2c_correspondence_issues": [
+   0,
+   1
+  ],
+  "c2c_secure_attachments": [
+   0,
+   1
+  ],
+  "c2c_response_packages": [
+   0,
+   1
+  ],
+  "c2c_correspondence": [
+   0,
+   1
+  ],
+  "c2c_submissions": [
+   0,
+   1
+  ],
+  "communication_messages": [
+   0,
+   1
+  ],
+  "fda_communications": [
+   0,
+   1
+  ],
+  "communication_channels": [
+   0,
+   1
+  ],
+  "cer_approvals": [
+   0,
+   1
+  ],
+  "cer_clinical_evidence": [
+   0,
+   1
+  ],
+  "cer_compliance_checks": [
+   0,
+   1
+  ],
+  "cer_essential_requirements": [
+   0,
+   1
+  ],
+  "cer_exports": [
+   0,
+   1
+  ],
+  "cer_faers_data": [
+   0,
+   1
+  ],
+  "cer_literature": [
+   0,
+   1
+  ],
+  "cer_sections": [
+   0,
+   1
+  ],
+  "cer_version_history": [
+   0,
+   1
+  ],
+  "cer_workflows": [
+   0,
+   1
+  ],
+  "cer_reports": [
+   0,
+   1
+  ],
+  "cer_documents": [
+   0,
+   1
+  ],
+  "client_user_permissions": [
+   0,
+   1
+  ],
+  "project_activities": [
+   0,
+   1
+  ],
+  "project_documents": [
+   0,
+   1
+  ],
+  "project_milestones": [
+   0,
+   1
+  ],
+  "cer_projects": [
+   0,
+   1
+  ],
+  "csr_details": [
+   0,
+   1
+  ],
+  "csr_reports": [
+   0,
+   1
+  ],
+  "csr_knowledge_edges": [
+   0,
+   1
+  ],
+  "csr_regulatory_intelligence": [
+   0,
+   1
+  ],
+  "csr_training_data": [
+   0,
+   1
+  ],
+  "ctd_cross_references": [
+   0,
+   1
+  ],
+  "csr_studies": [
+   0,
+   1
+  ],
+  "ctd_programs": [
+   0,
+   1
+  ],
+  "csr_narrative_outputs": [
+   0,
+   1
+  ],
+  "csr_assembly_runs": [
+   0,
+   1
+  ],
+  "csr_narrative_runs": [
+   0,
+   1
+  ],
+  "qc_deviations": [
+   0,
+   1
+  ],
+  "lumen_knowledge_graph_edges": [
+   0,
+   1
+  ],
+  "knowledge_graph_edges": [
+   0,
+   1
+  ],
+  "knowledge_graph_nodes": [
+   0,
+   1
+  ],
+  "fda_510k_documents": [
+   0,
+   1
+  ],
+  "fda_510k_stage_progress": [
+   0,
+   1
+  ],
+  "fda_510k_submission_packages": [
+   0,
+   1
+  ],
+  "fda_510k_projects": [
+   0,
+   1
+  ],
+  "grant_budget_lines": [
+   0,
+   1
+  ],
+  "grant_closeout_records": [
+   0,
+   1
+  ],
+  "grant_cost_share_contributions": [
+   0,
+   1
+  ],
+  "grant_expenditures": [
+   0,
+   1
+  ],
+  "grant_invoices": [
+   0,
+   1
+  ],
+  "grant_milestones": [
+   0,
+   1
+  ],
+  "grant_nce_records": [
+   0,
+   1
+  ],
+  "grant_subawards": [
+   0,
+   1
+  ],
+  "effort_lines": [
+   0,
+   1
+  ],
+  "grant_awards": [
+   0,
+   1
+  ],
+  "grant_proposals": [
+   0,
+   1
+  ],
+  "ind_package_plan_modalities": [
+   0,
+   1
+  ],
+  "ind_package_plan_regions": [
+   0,
+   1
+  ],
+  "ind_package_plan_requirements": [
+   0,
+   1
+  ],
+  "ind_package_plan_timelines": [
+   0,
+   1
+  ],
+  "ind_package_plans": [
+   0,
+   1
+  ],
+  "ind_submissions": [
+   0,
+   1
+  ],
+  "ind_projects": [
+   0,
+   1
+  ],
+  "reg_messages": [
+   0,
+   1
+  ],
+  "reg_responses": [
+   0,
+   1
+  ],
+  "reg_questions": [
+   0,
+   1
+  ],
+  "reg_attachments": [
+   0,
+   1
+  ],
+  "agency_correspondence": [
+   0,
+   1
+  ],
+  "agency_communications": [
+   0,
+   1
+  ],
+  "compliance_calendar": [
+   0,
+   1
+  ],
+  "obligation_updates": [
+   0,
+   1
+  ],
+  "regulatory_obligations": [
+   0,
+   1
+  ],
+  "regulatory_calendar": [
+   0,
+   1
+  ],
+  "post_approval_commitments": [
+   0,
+   1
+  ],
+  "regulatory_tasks": [
+   0,
+   1
+  ],
+  "gate_approvals": [
+   0,
+   1
+  ],
+  "stage_gates": [
+   0,
+   1
+  ],
+  "regulatory_submissions": [
+   0,
+   1
+  ],
+  "qmp_traceability_matrix": [
+   0,
+   1
+  ],
+  "ctq_factors": [
+   0,
+   1
+  ],
+  "qmp_section_gating": [
+   0,
+   1
+  ],
+  "quality_management_plans": [
+   0,
+   1
+  ],
+  "report_details": [
+   0,
+   1
+  ],
+  "reports": [
+   0,
+   1
+  ],
+  "strategic_reports": [
+   0,
+   1
+  ],
+  "supply_chain_coas": [
+   0,
+   1
+  ],
+  "supply_chain_batches": [
+   0,
+   1
+  ],
+  "supply_chain_materials": [
+   0,
+   1
+  ],
+  "supply_chain_temperature_readings": [
+   0,
+   1
+  ],
+  "supply_chain_shipments": [
+   0,
+   1
+  ],
+  "supply_chain_suppliers": [
+   0,
+   1
+  ],
+  "submission_twin_challenges": [
+   0,
+   1
+  ],
+  "submission_twin_assessments": [
+   0,
+   1
+  ],
+  "submission_twin_change_impacts": [
+   0,
+   1
+  ],
+  "submission_twin_evidence_links": [
+   0,
+   1
+  ],
+  "submission_twin_claims": [
+   0,
+   1
+  ],
+  "submission_twin_drift_alerts": [
+   0,
+   1
+  ],
+  "client_access": [
+   0,
+   1
+  ],
+  "client_security_settings": [
+   0,
+   1
+  ],
+  "client_workspace_settings": [
+   0,
+   1
+  ],
+  "staff_assignments": [
+   0,
+   1
+  ],
+  "sync_status": [
+   0,
+   1
+  ],
+  "workflow_progress": [
+   0,
+   1
+  ],
+  "protocols": [
+   0,
+   1
+  ],
+  "udi_records": [
+   0,
+   1
+  ],
+  "software_lifecycle_items": [
+   0,
+   1
+  ],
+  "labeling_translations": [
+   0,
+   1
+  ],
+  "labeling_symbols": [
+   0,
+   1
+  ],
+  "labeling_documents": [
+   0,
+   1
+  ],
+  "ivd_analytical_performance": [
+   0,
+   1
+  ],
+  "ivd_clinical_performance": [
+   0,
+   1
+  ],
+  "ivd_clia_categorization": [
+   0,
+   1
+  ],
+  "ivdr_per_documents": [
+   0,
+   1
+  ],
+  "cdx_pairings": [
+   0,
+   1
+  ],
+  "ivdr_validation_parameter_history": [
+   0,
+   1
+  ],
+  "ivdr_evidence_result_history": [
+   0,
+   1
+  ],
+  "ivdr_cdx_status_history": [
+   0,
+   1
+  ],
+  "ivdr_clinical_evidence": [
+   0,
+   1
+  ],
+  "ivdr_analytical_validations": [
+   0,
+   1
+  ],
+  "ivdr_cdx_workflows": [
+   0,
+   1
+  ],
+  "ivdr_classifications": [
+   0,
+   1
+  ],
+  "c2c_documents": [
+   0,
+   5
+  ],
+  "projects": [
+   3,
+   3
+  ],
+  "client_workspaces": [
+   1,
+   1
+  ],
+  "vault.document_chunks": [
+   0,
+   0
+  ],
+  "vault.documents": [
+   0,
+   4
+  ],
+  "stats_computation_runs": [
+   0,
+   1
+  ],
+  "risk_controls": [
+   0,
+   1
+  ],
+  "risk_items": [
+   0,
+   1
+  ],
+  "qms_nonconforming_products": [
+   0,
+   1
+  ],
+  "vault_data_room_seals": [
+   0,
+   1
+  ],
+  "saved_precedent_queries": [
+   0,
+   1
+  ],
+  "regulatory_programs": [
+   3,
+   3
+  ],
+  "file_uploads": [
+   0,
+   1
+  ],
+  "regulatory_twin_simulations": [
+   0,
+   1
+  ],
+  "cmc_container_closures": [
+   0,
+   1
+  ],
+  "cmc_reference_standards": [
+   0,
+   1
+  ],
+  "cmc_impurity_profiles": [
+   0,
+   1
+  ],
+  "cmc_dissolution_profiles": [
+   0,
+   1
+  ],
+  "cmc_material_specs": [
+   0,
+   1
+  ],
+  "cmc_formulation_records": [
+   0,
+   1
+  ],
+  "cmc_characterization_studies": [
+   0,
+   1
+  ],
+  "manufacturing_processes": [
+   0,
+   1
+  ],
+  "cmc_interview_sessions": [
+   0,
+   1
+  ],
+  "rendered_leaf_files": [
+   0,
+   1
+  ],
+  "assumption_records": [
+   0,
+   1
+  ],
+  "decision_records": [
+   0,
+   1
+  ],
+  "governed_decision_transitions": [
+   0,
+   1
+  ],
+  "collab_presence": [
+   0,
+   1
+  ],
+  "project_continuity_snapshots": [
+   0,
+   1
+  ],
+  "scheduled_job_claims": [
+   0,
+   1
+  ],
+  "cmc_workflow_tasks": [
+   0,
+   1
+  ],
+  "cmc_workflow_instances": [
+   0,
+   1
+  ],
+  "cmc_checklist_instances": [
+   0,
+   1
+  ],
+  "cmc_ai_tool_executions": [
+   0,
+   1
+  ],
+  "cmc_workflows": [
+   0,
+   1
+  ],
+  "organization_retention_settings": [
+   0,
+   1
+  ],
+  "ana_turn_records": [
+   0,
+   1
+  ],
+  "ana_record_blobs": [
+   0,
+   1
+  ],
+  "organization_gateway_accounts": [
+   0,
+   1
+  ],
+  "session_activity": [
+   0,
+   1
+  ],
+  "coordination_leases": [
+   0,
+   1
+  ],
+  "study_pivotal_declarations": [
+   0,
+   1
+  ],
+  "submission_filed_baselines": [
+   0,
+   0
+  ],
+  "citation_chains": [
+   0,
+   1
+  ]
+ }
+}

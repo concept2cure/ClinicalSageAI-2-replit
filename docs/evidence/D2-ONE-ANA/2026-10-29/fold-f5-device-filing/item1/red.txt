@@ -1,0 +1,203 @@
+# Item 1, red. Each pin was written and run before the product change it pins (working tree over 041880cbd).
+
+## 1. The one-store migration (tests/schema-contract/estar-filing-one-store.pglite.test.ts), before the file existed: the suite cannot start its third block (ENOENT).
+ × tests/schema-contract/estar-filing-one-store.pglite.test.ts > the file is on the deploy set > after every estar_submissions creator and before the final sweep pair
+ × tests/schema-contract/estar-filing-one-store.pglite.test.ts > a database that never had the package store > gets the event history and migrates nothing, on every replay
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 skipped (7)
+      1 AssertionError: expected -1 to be greater than -1
+      2 Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261030_estar_filing_one_store.sql'
+
+## 2. The event history (estar-submission-events.pglite.test.ts, and the filed-event case in estar-submission-service.test.ts), before the service wrote it.
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > permits the forward path draft → filed → under_review → decision
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > allows the additional-info round trip
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > allows withdrawal from any non-terminal status
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > treats decision and withdrawn as terminal
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > rejects illegal jumps (draft → decision, filed → draft)
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > computeDecisionDue (review clock) > adds reviewGoalDays to filedAt
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > computeDecisionDue (review clock) > returns null when there is no review clock (meeting-based requests)
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > binds the filing to the vault row, and to the hash the VAULT holds
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > refuses an artifact that is not in this organization vault
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > refuses a retained administrative PreSTAR prefill before any filing, audit or signature write
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > signs nothing when the row moved underneath it
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > records the governed action and an electronic signature bound to the artifact
+ × server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > writes the filed event to the filing's history on the same client, after the signature
+ × server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts > the filing and its history commit together > starting to track a filing writes its created event
+ × server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts > the filing and its history commit together > a filing whose created event cannot be written is not tracked
+ × server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts > the filing and its history commit together > a status change writes its event, and does not land without it
+ × server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts > reading the history > in order, for the filing's organization only
+ × server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts > a migrated filing's review clock > is the catalogue's when the filing recorded none, and its own otherwise
+ Test Files  2 failed (2)
+      Tests  6 failed | 12 passed (18)
+      1 AssertionError: expected [] to deeply equal [ { event_type: 'created', …(4) } ]
+      1 AssertionError: no filed event was written: expected undefined to be defined
+      2 AssertionError: promise resolved "{ …(22) }" instead of rejecting
+      1 TypeError: listEstarSubmissionEvents is not a function
+      1 TypeError: reviewGoalDaysOf is not a function
+
+## 3. Each filing's gate and history over HTTP (tests/routes/estar-filing-row-gate.test.ts), before the routes existed.
+ × tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/readiness — the filing's own gate > answers what the filing-readiness panel answers for the filing's type, variant and project
+ × tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/readiness — the filing's own gate > does not assess a filing tracked under no project, and says so
+ × tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/readiness — the filing's own gate > does not assess a filing whose project anchors no program, and says so
+ × tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/readiness — the filing's own gate > assesses nothing for a caller the filing's project does not admit
+ × tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/events — the filing's history > returns the history once the filing's project admits the caller
+ × tests/routes/estar-filing-row-gate.test.ts > GET /submissions/:id/events — the filing's history > reads nothing for a caller the project does not admit
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+      2 Error: Missing route GET /submissions/:id/events
+      4 Error: Missing route GET /submissions/:id/readiness
+
+## 4. AnA's create_submission_package (ana-governed-command-signature.pglite.integration.test.ts), before it was repointed.
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > writes the signature with the artifact target, meaning, content binding and verified factors
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > without a verified sign-off it places nothing and signs nothing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > a failed signature write rolls the placement back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > refuses an artifact outside the caller's organization, writing nothing
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > writes the tracked filing and its created event, and the signature over the ledger, claiming no content hash
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > takes a De Novo, a PMA or any eSTAR submission type by its catalogue key
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > refuses a family that is not a device filing, by name, writing nothing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > another organization's project is refused before anything is written, signature included (PF-03)
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > without a verified sign-off creates no filing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package tracks a device filing and signs the creation decision > a failed signature write rolls the filing and its event back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > writes the reverted content as a new version, bound to that content and version
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > without a verified sign-off writes no version
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > a failed signature write rolls the new version back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > signs first: a self-erasure is signed under the pre-erasure name, bound to the ledger
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > retains regulated artifact content and reports it with the legal basis
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > without a verified sign-off erases nothing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > a failed signature write rolls the whole erasure back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > a failing redaction statement returns failure with nothing committed
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > an absent table is reported as not applicable, not as zero, and the erasure completes
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > the erasure record is not optional: a missing request table fails the erasure
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data records the reason the person stated, and keeps the review record > retains the subject’s review comments, word for word, outside its scope (D5, 2026-10-01)
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data records the reason the person stated, and keeps the review record > takes it from the sign-off, not from what AnA wrote
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > tagArtifact into a section that already has an artifact > updates that artifact, merging its metadata
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > add_review_comment files AnA’s words as AnA’s > stamps author_role ana and chains the comment with origin ana
+ Test Files  1 failed (1)
+      Tests  3 failed | 21 passed (24)
+      1 AssertionError: expected false to be true // Object.is equality
+      1 AssertionError: expected undefined to match object { organization_id: 7, …(7) }
+      1 AssertionError: ind: expected { success: true, …(3) } to match object { success: false, …(1) }
+
+## 5. The status filter, the row gate and the history on screen (deviceFilingsGateAndHistory.test.tsx), before the card and the history existed.
+ × client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > the status filter > offers only the statuses the list holds, each with its count, and shows only that status
+ × client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each draft filing's gate, from its own readiness > names every blocker of a blocked filing, and says "Can file now" only where the assessment did
+ × client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each draft filing's gate, from its own readiness > asks only for drafts: a filing past draft is not assessed for filing
+ × client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each draft filing's gate, from its own readiness > a filing with no project is not assessed, and says why
+ × client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each draft filing's gate, from its own readiness > a failed read is an error with a retry, never a verdict
+ × client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each filing's history, on its record > lists the events in order, with who and what, and an unknown person as —
+ × client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx > each filing's history, on its record > an empty history is said to be empty, and a failed read to have failed
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+
+## 6. The fold of device-submission (fold guard, grant pin, scope guard, catalogue cases), before the screen was retired.
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > keeps folded dossier identities deprecated across replay without deleting their rows
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > replays every catalog writer in the deploy set, in deploy order
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > seeds a non-trivial catalog (guards against asserting over zero rows)
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > shares its rules with the source gate rather than restating them
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > makes no unsupported compliance claim in any module description or name
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > states what the authoring-engine page is, since it reads no program data
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > states no fixed count of report types — the registry grows
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes batch-draft to a customer, not by its function names
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes document-authoring by what it does, not by an internal handoff note
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes the IND lifecycle without offering what P-32 withholds
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes agency-question approval as what it is, not as a signature
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired filing catalogue subscriptions > fresh replay neither creates a retired filing identity nor requires it for packaging
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired filing catalogue subscriptions > keeps an existing filing catalogue and subscription retired across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > fresh replay neither creates device-tasks nor requires it for packaging, and Tasks stays offered
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > keeps an existing device-tasks row and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Artifacts center and device vault > fresh replay creates neither row nor requires either for packaging, and the Vault stays offered at free
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Artifacts center and device vault > keeps each existing row and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > fresh replay creates no part11-console row, and Audit trail stays uncatalogued
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > deprecates a part11-console row added by another path, and keeps its subscription, across replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > a fresh database replaying the whole catalogue set twice never creates the row nor requires it for packaging, and eCTD Compile stays offered
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > keeps a deployed row, its tier and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired risk, design-controls and ivd-completeness > a fresh database replaying the whole catalogue set twice holds none of the three, and both targets and human factors stay offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired risk, design-controls and ivd-completeness > keeps each deployed row, its tier and its subscription, deprecated, across replay of every writer
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired organization-wide blocker list > a fresh database replaying the whole catalogue set twice never holds device-validation, and Submission Center stays offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired organization-wide blocker list > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+ × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device submission packages > a fresh database replaying the whole catalogue set twice never holds device-submission, and Submission Center stays offered at standard
+ × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device submission packages > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > agrees with the screens: each folded id opens its target
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves tasks's paths to an organization holding only device-tasks
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only device-vault
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only artifacts-center
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only risk
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only design-controls
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-diagnostics's paths to an organization holding only ivd-completeness
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-validation
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-submission
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > refuses a tiered target's own paths to an organization holding neither
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a revocation written on the target stands: the carried grant does not undo it
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a lapsed or revoked grant of the folded module carries nothing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > the target's own grant serves as before
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+ × server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows a revoked target as revoked, and a tenant holding neither as below its tier
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only its own module names the mapping
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only the licence read derives the carried grants, once
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > unset ⇒ on in production, off elsewhere
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > explicit values win in either environment
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > an explicit off in production is said once, as an error; off elsewhere and on are quiet
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > a value that is neither on nor off refuses to boot in production, and is off elsewhere
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > reaches MDX as project features without adding app or module grants
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > has seven apps and every app surface is in the id set
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC / Module 3 is a launch app — decision P-28, 2026-10-12
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC grants NO module, so the professional band still decides who sees it
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > Reporting & analytics is a launch app — founder decision, 2026-09-26
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > protocol development is in the Authoring app — founder decision, 2026-09-21
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the authoring engine explainer is outside the scope — swapped out for protocol development
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > keeps the Part 11 surface the catalog may never gate
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > program-journey is out of the projects app — fixture-demo: empty for every program a client creates
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > filings-catalog is out of the projects app — folded identity: reference discovery and creation live in the New project wizard
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > regulatory-workspace is out of the authoring app — a fixed paragraph where the editor should be
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > template-library is out of the authoring app — a saved template formats no document
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-coauthor is out of the submission-center app — a second editor whose checks report a fixed failure
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > dossier-map is out of the projects app — retired screen: its tracked records are reached in project Author
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-publishing is out of the submission-center app — a reference page that publishes nothing
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > qmp is out of the qms app — a plan cannot be given its gates, and nothing reads them
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-command — enterprise-only, and says runs are recorded that are not
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-memory — shows a store nothing writes, not the memory AnA loads
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries training — no path, lesson or certification exists
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > every app keeps a screen a client can work in
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device task workbench > is in neither project scope list: Tasks holds it (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Artifacts center and device vault > are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Part 11 console > is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded eCTD publishing reference > is in no scope list and no grant: eCTD Compile holds the reference (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded billing screen > is in no scope list and no grant: Licensing holds the invoices, usage keeps the limits (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded AnA memory > is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded risk file, design-control trace and IVDR readiness board > are in no scope list and no new grant: Engineering and IVDR evidence hold them (D2, folds F1c and F2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the retired organization-wide blocker list > is in no scope list and no new grant: each filing's readiness holds its blockers (D2, fold F5 item 2, 2026-10-29)
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the folded device submission packages > are in no scope list and no new grant: Submission Center holds the device filings (D2, fold F5 item 1, 2026-10-30)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > agency questions stay locked until approval is a signed act
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > P-32 grants NO module: the Submission Center modules are its own three plus dispatch-readiness, and the standard tier still decides
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > pharmacovigilance, which holds the IND safety-report routes, stays outside the scope (P-32)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > leaves a launch surface verdict untouched, whatever it said
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > locks a bought module outside the scope — the boundary never widens
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > emits a verdict for every registered surface outside the scope that has no catalog row
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > never emits a launch-scope verdict for a launch surface
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > is no longer an app of its own
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > its surface and module moved to Submission Center, so the readiness verdict stays reachable
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > grants a new organisation exactly the modules it was granted before the fold
+ × client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts > device-submission is folded into Submission Center > resolves the old id to Submission Center from a link, an in-app move and AnA, with or without a project open
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts > device-submission is folded into Submission Center > lands on Submission Center, whose device filings card reads the filing store, each draft's gate and each filing's history
+ × client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts > device-submission is folded into Submission Center > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish, no file
+ × client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts > device-submission is folded into Submission Center > leaves no client code that names the retired screen or reads the package store
+ × client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts > device-submission is folded into Submission Center > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+ Test Files  4 failed (4)
+      Tests  13 failed | 88 passed (101)
+      1 AssertionError: device-submission is deprecated by its fold: expected true to be false // Object.is equality
+      1 AssertionError: device-submission: expected undefined to be 'submission-center' // Object.is equality
+      2 AssertionError: expected [ 'projects', 'project-home', …(17) ] to not include 'device-submission'
+      1 AssertionError: expected [ …(8) ] to deeply equal []
+      1 AssertionError: expected undefined to be 'submission-center' // Object.is equality
+      1 AssertionError: expected { 'device-tasks': 'tasks', …(7) } to deeply equal { 'device-tasks': 'tasks', …(8) }
+      1 AssertionError: expected { component: [Function Surface], …(1) } to be undefined
+      1 AssertionError: expected { …(6) } to deeply equal { '/api/submissions': 'served', …(5) }

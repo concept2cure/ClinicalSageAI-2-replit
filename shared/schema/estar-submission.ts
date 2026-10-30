@@ -90,6 +90,12 @@ export const estarSubmissions = pgTable(
 
     notes: text('notes'),
 
+    /* The c2c_submission_packages.package_id this filing was migrated from (D2,
+       fold F5 item 1, 2026-10-30: one device-filing store, decision P-61 item 1),
+       unique where present; NULL for a filing tracked here. Written by the
+       migration only. migrations/20261030_estar_filing_one_store.sql */
+    sourcePackageId: text('source_package_id'),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     createdBy: integer('created_by'),
@@ -107,3 +113,21 @@ export const insertEstarSubmissionSchema = createInsertSchema(estarSubmissions, 
   status: z.enum(ESTAR_SUBMISSION_STATUSES),
 });
 export type InsertEstarSubmission = z.infer<typeof insertEstarSubmissionSchema>;
+
+/**
+ * A tracked filing's event history (D2, fold F5 item 1, 2026-10-30;
+ * migrations/20261030_estar_filing_one_store.sql). Written by
+ * estar-submission-service.ts on the transaction of the change it records,
+ * so a filing never holds a change its history lacks; the §11.10(e) audit row
+ * is separate and written after the commit. `imported_package` and
+ * `imported_milestone` are the migration's, from c2c_submission_packages and
+ * c2c_milestones. Append-only in the database (UPDATE and TRUNCATE refused).
+ */
+export const ESTAR_SUBMISSION_EVENT_TYPES = [
+  'created',
+  'status_changed',
+  'filed',
+  'imported_package',
+  'imported_milestone',
+] as const;
+export type EstarSubmissionEventType = (typeof ESTAR_SUBMISSION_EVENT_TYPES)[number];

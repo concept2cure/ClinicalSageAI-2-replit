@@ -37,6 +37,8 @@ beforeAll(async () => {
     [JSON.stringify({ companyDocuments: { companyName: 'Foreign private profile' } })]);
   for (const migration of ['migrations/20261018_company_document_governance.sql', 'migrations/20260531_template_specs.sql', 'migrations/20261018_company_document_designs.sql', 'migrations/20260813b_tenant_export_receipts.sql', 'migrations/20261018_company_document_export_receipts.sql',
     'migrations/20261018_company_document_export_receipts.sql', 'migrations/20261018_company_legal_registry.sql']) await db.exec(readFileSync(migration, 'utf8'));
+  // The scope column 20261029k adds (section 0): a receipt records the scope its export was read in.
+  await db.exec('ALTER TABLE tenant_export_receipts ADD COLUMN IF NOT EXISTS export_scope text');
   await db.exec(`INSERT INTO c2c_template_specs(id,org_id,name,spec) VALUES ('tpl_company',7,'Company variant','{"brand":{"logo":{"dataBase64":"variant-logo-bytes"}}}'),('tpl_unrelated',7,'Unrelated','{}'),('tpl_foreign',8,'Foreign private profile','{}');
     INSERT INTO company_document_designs(id,organization_id,template_id,name,identity,sha256,created_by) VALUES ('11111111-1111-4111-8111-111111111111',7,'tpl_company','Customer variant','{"companyName":"Subsidiary"}',repeat('a',64),3);
     INSERT INTO company_document_grants (organization_id,user_id,manage_brand,updated_by) VALUES (7,3,true,3),(8,3,false,3);

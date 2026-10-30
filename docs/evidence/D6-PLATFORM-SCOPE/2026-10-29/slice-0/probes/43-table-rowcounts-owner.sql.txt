@@ -1,0 +1,8 @@
+-- P-72 slice 0: the rows that exist (superuser owner), every RLS-enabled table.
+CREATE TEMP TABLE cnt (t text, n bigint);
+DO $$ DECLARE r record; n bigint; BEGIN
+  FOR r IN SELECT format('%I.%I', ns.nspname, c.relname) q FROM pg_class c JOIN pg_namespace ns ON ns.oid = c.relnamespace
+            WHERE c.relkind IN ('r','p') AND c.relrowsecurity AND ns.nspname NOT IN ('pg_catalog','information_schema') ORDER BY 1 LOOP
+    EXECUTE 'SELECT count(*) FROM ' || r.q INTO n; INSERT INTO cnt VALUES (r.q, n);
+  END LOOP; END $$;
+SELECT t || ' | ' || n FROM cnt ORDER BY t;

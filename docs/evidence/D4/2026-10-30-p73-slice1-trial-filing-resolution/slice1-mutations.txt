@@ -1,0 +1,3 @@
+SQL drops cta|MHRA -> RED ['Tests  1 failed | 56 passed (57)', '⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯']
+SQL compares agency without underscores -> RED ['Tests  2 failed | 55 passed (57)', '⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯']
+TS treats TGA as one application -> RED ['Tests  4 failed | 55 passed (59)', '⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯']

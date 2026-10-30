@@ -1,0 +1,25 @@
+-- P-72 slice 0, item 5: what a request's role string does at the database. As the runtime role, rolled back.
+\set ON_ERROR_STOP off
+\pset footer off
+SELECT id AS a_id, uuid AS a_uuid FROM organizations WHERE slug = 'p72-a' \gset
+SELECT id AS b_id FROM organizations WHERE slug = 'p72-b' \gset
+\echo '== 1. tenant A scope, role admin (an ordinary administrator): mint the platform role on own membership'
+BEGIN;
+SELECT set_config('app.current_tenant_id',:'a_id',true), set_config('app.current_org_id',:'a_uuid',true), set_config('app.current_user_role','admin',true), set_config('app.rls_enforce','on',true) \gset
+UPDATE organization_users SET role = 'app_super_admin' WHERE organization_id = :a_id;
+ROLLBACK;
+\echo '== 2. tenant A scope whose role string is app_super_admin (what establishRequestTenantScope / authoring.router.ts:8276 would send for such a claim)'
+BEGIN;
+SELECT set_config('app.current_tenant_id',:'a_id',true), set_config('app.current_org_id',:'a_uuid',true), set_config('app.current_user_role','app_super_admin',true), set_config('app.rls_enforce','on',true) \gset
+SELECT 'B rows read from A''s scope' AS what, (SELECT count(*) FROM unified_tasks WHERE organization_id = :b_id) AS unified_tasks,
+       (SELECT count(*) FROM audit_logs WHERE tenant_id = :b_id) AS audit_logs, (SELECT count(*) FROM users u JOIN organization_users ou ON ou.user_id = u.id WHERE ou.organization_id = :b_id) AS users_of_b,
+       (SELECT count(*) FROM vault.legal_holds WHERE organization_id = :b_id) AS legal_holds_of_b;
+UPDATE unified_tasks SET updated_at = updated_at WHERE organization_id = :b_id;
+UPDATE organization_users SET role = 'app_super_admin' WHERE organization_id = :a_id;
+ROLLBACK;
+\echo '== 3. the same, role admin (control): B rows read from A''s scope'
+BEGIN;
+SELECT set_config('app.current_tenant_id',:'a_id',true), set_config('app.current_org_id',:'a_uuid',true), set_config('app.current_user_role','admin',true), set_config('app.rls_enforce','on',true) \gset
+SELECT (SELECT count(*) FROM unified_tasks WHERE organization_id = :b_id) AS unified_tasks, (SELECT count(*) FROM audit_logs WHERE tenant_id = :b_id) AS audit_logs,
+       (SELECT count(*) FROM vault.legal_holds WHERE organization_id = :b_id) AS legal_holds_of_b;
+ROLLBACK;

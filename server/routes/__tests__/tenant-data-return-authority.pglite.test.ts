@@ -17,6 +17,10 @@ vi.mock('../../services/tenant-export/tenant-export.service', () => ({ exportTen
   TenantNotFoundError: class TenantNotFoundError extends Error {} }));
 vi.mock('../../services/tenant-export/tenant-full-export.service', () => ({ exportTenantFull: h.full,
   recordExportReceipt: h.receipt, digestOf: () => 'sha256:synthetic', TenantNotFoundError: class TenantNotFoundError extends Error {} }));
+// The integrity section (P-58) has its own suites; here the export passes through it unchanged.
+vi.mock('../../services/tenant-export/held-record-integrity', () => ({
+  withIntegrity: async (_c: unknown, _o: number, payload: Record<string, unknown>) => ({ ...payload, integrity: { chains: [], signatures: [], gateApprovals: [] } }),
+}));
 vi.mock('../../services/tenant-export/attestation-report.service', () => ({ generateAttestation: h.attestation,
   AttestationKeyMissingError: class AttestationKeyMissingError extends Error {} }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({ recordAuditRow: vi.fn(async () => ({ persisted: true, chained: true })) }));
@@ -29,7 +33,8 @@ let db: PGlite;
 const app = express(); app.use('/api/tenant-export', router);
 beforeAll(async () => {
   db = await PGlite.create();
-  await db.exec(`CREATE TABLE organizations (id int PRIMARY KEY,status text);
+  // uuid: the export runs in the organization's own scope, its tenant id and its uuid (P-58's data return).
+  await db.exec(`CREATE TABLE organizations (id int PRIMARY KEY,status text,uuid uuid DEFAULT gen_random_uuid());
     CREATE TABLE users (id int PRIMARY KEY,status text);
     CREATE TABLE organization_users (organization_id int,user_id int,role text);
     INSERT INTO organizations VALUES (7,'active'),(8,'active');

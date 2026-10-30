@@ -1,0 +1,11 @@
+#!/bin/bash
+# Build a template database from blank: install-fresh then deploy-migrate (the CI real-database lane's pair; copied from the custody lane).
+P=/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/p72
+. $P/env.sh
+NAME=${1:-c2c_p72_tpl}
+psql "$PGBASE/postgres?sslmode=disable" -q -c "DROP DATABASE IF EXISTS $NAME WITH (FORCE)" -c "CREATE DATABASE $NAME"
+export DATABASE_URL="$PGBASE/$NAME?sslmode=disable" DATABASE_OWNER_URL="$PGBASE/$NAME?sslmode=disable"
+export APP_DATABASE_URL="postgresql://app_service:local-p72-pw@127.0.0.1:55472/$NAME?sslmode=disable"
+cd /home/user/ClinicalSageAI-2-replit
+node scripts/db/install-fresh.mjs > $P/logs/install-fresh-$NAME.log 2>&1; echo "install-fresh exit $?" >> $P/logs/install-fresh-$NAME.log
+node scripts/db/deploy-migrate.mjs > $P/logs/deploy-migrate-$NAME.log 2>&1; echo "deploy-migrate exit $?" >> $P/logs/deploy-migrate-$NAME.log

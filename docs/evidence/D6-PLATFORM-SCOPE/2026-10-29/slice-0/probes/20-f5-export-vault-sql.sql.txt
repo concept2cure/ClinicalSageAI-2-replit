@@ -1,0 +1,26 @@
+-- F5 quick probe: the full export's own SQL for vault.* (tenant-full-export.service.ts: SELECT * FROM "vault"."<t>" WHERE "<col>"::text = $1),
+-- as the runtime role, inside the transaction the route opens (companyExportSnapshot), under each scope the pool would set.
+\set ON_ERROR_STOP on
+SELECT current_user, r.rolsuper, r.rolbypassrls FROM pg_roles r WHERE r.rolname = current_user;
+SELECT id AS a_id, uuid AS a_uuid FROM organizations WHERE slug = 'p72-a' \gset
+\echo '== 1. the route today: /api/tenant-export is in SYSTEM_SCOPE_PREFIXES -> tenant 0, org empty, role app_super_admin, enforce on'
+BEGIN ISOLATION LEVEL REPEATABLE READ;
+SELECT set_config('app.current_tenant_id','0',true), set_config('app.current_org_id','',true), set_config('app.current_user_role','app_super_admin',true), set_config('app.current_account_id','',true), set_config('app.rls_enforce','on',true) \gset
+SELECT 'vault.documents' t, count(*) FROM vault.documents WHERE organization_id::text = :'a_id'
+UNION ALL SELECT 'public.regulatory_programs', count(*) FROM regulatory_programs WHERE organization_id::text = :'a_id'
+UNION ALL SELECT 'public.organization_users', count(*) FROM organization_users WHERE organization_id::text = :'a_id';
+ROLLBACK;
+\echo '== 2. organization A own scope, tenant id only (no org uuid), role admin'
+BEGIN ISOLATION LEVEL REPEATABLE READ;
+SELECT set_config('app.current_tenant_id',:'a_id',true), set_config('app.current_org_id','',true), set_config('app.current_user_role','admin',true), set_config('app.rls_enforce','on',true) \gset
+SELECT 'vault.documents' t, count(*) FROM vault.documents WHERE organization_id::text = :'a_id'
+UNION ALL SELECT 'public.regulatory_programs', count(*) FROM regulatory_programs WHERE organization_id::text = :'a_id';
+ROLLBACK;
+\echo '== 3. organization A own scope, tenant id and org uuid (what establishRequestTenantScope sets for a user of A), role admin'
+BEGIN ISOLATION LEVEL REPEATABLE READ;
+SELECT set_config('app.current_tenant_id',:'a_id',true), set_config('app.current_org_id',:'a_uuid',true), set_config('app.current_user_role','admin',true), set_config('app.rls_enforce','on',true) \gset
+SELECT 'vault.documents' t, count(*) FROM vault.documents WHERE organization_id::text = :'a_id'
+UNION ALL SELECT 'vault.documents (all orgs visible)', count(*) FROM vault.documents WHERE document_code LIKE 'p72-%'
+UNION ALL SELECT 'public.regulatory_programs', count(*) FROM regulatory_programs WHERE organization_id::text = :'a_id';
+ROLLBACK;
+\echo '== owner (reference): rows that exist'

@@ -81,6 +81,7 @@ import { serverError } from '../lib/api-response';
 import type { RequestDbClient } from '../middleware/lazyRequestDbClient';
 import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
+import { signerOrganizationStatusesFor } from '../services/part11/custody-signature';
 import { reverifySigner, type SignerReverification } from '../services/part11/reverify-signer';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
 import { signMeaningRefusal, type GovernedSignMeaning } from '../services/part11/signature-meanings';
@@ -147,6 +148,14 @@ export interface SignedAct {
   contentBasis?: BindingBasis;
   /** Set as app.current_user_role on the signing transaction, where the route's other writes set it. */
   tenantRole?: string;
+  /**
+   * The organisation statuses a signer may sign from; active when absent. Only
+   * the custody act of a departing tenant's export (P-58,
+   * services/part11/custody-signature.ts isCustodyAct: its target, domain and
+   * meanings together) may name pending_deletion; any other act that does is
+   * held to active organisations, so its signer is refused as before.
+   */
+  signerOrganizationStatuses?: readonly ('active' | 'pending_deletion')[];
   /**
    * Asked before the signing authority check and the credential (RR4, B7): a
    * read on the request's client, outside the transaction, that refuses a
@@ -278,7 +287,7 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
   // the body. Until 2026-10-01 these routes had none, so a viewer who knew their
   // own password signed an IRB approval. Until 2026-10-08 (P-27) they asked a
   // copy of it, whose failed role lookup answered 500 rather than 503.
-  const authority = await checkSigningAuthority(userId, orgId, client);
+  const authority = await checkSigningAuthority(userId, orgId, client, { organizationStatuses: signerOrganizationStatusesFor(act) });
   if (authority) {
     refusal(res, authority.status, authority.code, authority.message);
     return;

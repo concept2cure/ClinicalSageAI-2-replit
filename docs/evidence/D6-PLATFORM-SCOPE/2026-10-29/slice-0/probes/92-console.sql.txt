@@ -1,0 +1,28 @@
+-- P-72 slice 0, §3.4: the platform console's reads, their own SQL text (server/routes/admin/*), as the runtime role in
+-- the system scope the console runs in (SYSTEM_SCOPE_PREFIXES: tenant 0, role app_super_admin), rolled back.
+\set ON_ERROR_STOP off
+\pset footer off
+SELECT id AS b_id FROM organizations WHERE slug = 'p72-b' \gset
+BEGIN;
+SELECT set_config('app.current_tenant_id','0',true), set_config('app.current_org_id','',true), set_config('app.current_user_role','app_super_admin',true), set_config('app.rls_enforce','on',true) \gset
+\echo '== master-admin.ts:215 organization list (p72 rows): name | members | last_active set | enabled_modules | credits_30d'
+SELECT o.name, COUNT(DISTINCT ou.user_id)::int AS member_count, MAX(u.last_login) IS NOT NULL AS last_active_known, COALESCE(ms.enabled_modules, 0)::int AS enabled_modules, COALESCE(us.credits_30d, 0)::int AS credits_30d
+  FROM organizations o LEFT JOIN organization_users ou ON ou.organization_id = o.id LEFT JOIN users u ON u.id = ou.user_id
+  LEFT JOIN (SELECT organization_id, COUNT(*) AS enabled_modules FROM module_subscriptions WHERE enabled = true GROUP BY organization_id) ms ON ms.organization_id = o.id
+  LEFT JOIN (SELECT organization_id, SUM(credits_used) AS credits_30d FROM usage_records WHERE created_at > now() - interval '30 days' GROUP BY organization_id) us ON us.organization_id = o.id
+ WHERE o.slug LIKE 'p72-%' GROUP BY o.id, ms.enabled_modules, us.credits_30d ORDER BY o.name;
+\echo '== the same joins, counted: users joined | module_subscriptions rows | usage_records rows'
+SELECT (SELECT count(*) FROM organization_users ou JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.organization_id WHERE o.slug LIKE 'p72-%') AS users_joined,
+       (SELECT count(*) FROM module_subscriptions WHERE organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%')) AS module_subscriptions,
+       (SELECT count(*) FROM usage_records WHERE organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%')) AS usage_records;
+\echo '== access-management.ts:60 active platform role grants'
+SELECT count(*) AS grants FROM platform_role_grants g JOIN users u ON u.id = g.user_id WHERE g.revoked_at IS NULL;
+\echo '== master-enterprise-requests.ts:73 licence requests'
+SELECT count(*) AS license_requests FROM license_requests WHERE COALESCE(status, 'pending') = 'pending';
+\echo '== audit-siem.ts:133 audit events of organization B'
+SELECT count(*) AS audit_events_b FROM audit_events WHERE organization_id = :b_id AND id > 0;
+\echo '== scim-tenants.ts:103 SCIM tenants (all)'
+SELECT count(*) AS scim_tenants FROM scim_tenants;
+\echo '== a platform write: access-management grant (INSERT platform_role_grants)'
+INSERT INTO platform_role_grants (user_id, role, granted_by, reason) SELECT id, 'support', 'p72-probe', 'p72 probe write' FROM users WHERE email = 'p72-b-admin@example.invalid';
+ROLLBACK;

@@ -52,6 +52,7 @@ const receiptResponse = {
       row_count: 340,
       created_at: new Date(),
       created_by: 7,
+      export_scope: 'organization',
     },
   ],
 };
@@ -62,11 +63,15 @@ function makePool(responses: Array<{ match: RegExp; rows: Row[] }>) {
     statements,
     query: vi.fn(async (text: string, params?: unknown[]) => {
       statements.push({ text, params });
+      // The offboarding certificate (P-58): the table is present, and the row is written.
+      if (/tenant_offboarding_certificates/.test(text)) return { rows: /INSERT/.test(text) ? [{ id: 'certificate-1' }] : [{ present: true }] };
       const hit = responses.find(r => r.match.test(text));
       if (/AS company_documents_present/.test(text)) return { rows: [{ company_documents_present: false, company_documents: null }] };
       if (!hit && /SELECT id, status, purged_at FROM organizations/.test(text)) {
         return { rows: responses.find(r => r.match.test('SELECT id, name, status'))?.rows ?? [] };
       }
+      // The purge's status change answers with the instant it recorded (the certificate is dated by it).
+      if (!hit && /^\s*UPDATE organizations[\s\S]*'purged'/.test(text)) return { rows: [{ purged_at: new Date('2026-10-29T12:00:00Z') }], rowCount: 1 };
       if (!hit && /to_regclass\('public.qms_document_versions'\)/.test(text)) {
         return { rows: [{ qms_versions: true, frozen_inputs: true }] };
       }

@@ -329,7 +329,6 @@ async function storedEarlierApproval(id: number, who: Who): Promise<number> {
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
-    await client.query(`SELECT set_config('c2c.review_route_writer', 'on', true)`);
     const target = `qms-document:${id}`;
     const reason = 'Approved as the designated QMS approver.';
     const gov = await recordGovernedAction(client, { orgId, userId: actors[who].id, command: 'approve', target, reason, domain: 'qms', surface: 'api',
@@ -342,8 +341,11 @@ async function storedEarlierApproval(id: number, who: Who): Promise<number> {
       binding: { digest: header.content_digest, basis: 'qms-document-version-content-sha256', note: 'as stored before 2026-10-29' },
       extraManifest: { docNumber: row.doc_number, version: row.version, twoPersonRule: 'enforced', originalAuthorId: actors.author.id, controlledTextAuthorUserIds: [] },
     });
+    // The guard admits the route writer's role, never a setting (P-59, 2026-10-29): the owner assumes it for this one row.
+    await client.query('SET LOCAL ROLE review_route_writer');
     await client.query(`UPDATE unified_tasks SET route_signature_id = $1, status = 'completed', updated_at = now()
       WHERE organization_id = $2 AND task_id = $3`, [signed.id, orgId, m.task_id]);
+    await client.query('RESET ROLE');
     await client.query('COMMIT');
     return signed.id;
   } catch (error) {

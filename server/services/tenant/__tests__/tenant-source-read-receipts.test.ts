@@ -11,8 +11,12 @@ const DOOR = 'purge_tenant_source_read_receipts';
 const row = { id: ORG, name: 'Synthetic tenant', status: 'pending_deletion',
   deletion_requested_at: new Date('2026-07-01'), deletion_requested_by: 4, deletion_reason: 'synthetic lifecycle test',
   purge_eligible_at: new Date('2026-08-01'), purged_at: null, final_export_digest: null };
-const receipt = { organization_id: ORG, digest: DIGEST, table_count: 2, row_count: 4, created_at: new Date('2026-10-01'), created_by: 4 };
+const receipt = { organization_id: ORG, digest: DIGEST, table_count: 2, row_count: 4, created_at: new Date('2026-10-01'), created_by: 4, export_scope: 'organization' };
 type Options = { present?: boolean; door?: boolean; counts?: any[]; currentStatus?: string; futureRetention?: boolean; lostExport?: boolean; held?: boolean; auditFailure?: boolean; laterRetentionFailure?: boolean; statusRows?: any[]; statusRowCount?: number | null };
+
+/** The offboarding certificate (P-58): the table is present, and the row is written. */
+const certificateResponse = (text: string) =>
+  /tenant_offboarding_certificates/.test(text) ? { rows: /INSERT/.test(text) ? [{ id: 'certificate-1' }] : [{ present: true }] } : null;
 
 function preconditionResponse(via: 'pool' | 'client', sql: string, opts: Options) {
   if (/AS company_documents_present/.test(sql)) return { rows: [{ company_documents_present: false, company_documents: null }] };
@@ -39,6 +43,8 @@ function fixture(opts: Options = {}) {
   const statements: Array<{ via: 'pool' | 'client'; sql: string; params: unknown[] }> = [];
   const respond = (via: 'pool' | 'client') => async (sql: string, params: unknown[] = []) => {
     statements.push({ via, sql, params });
+    const certificate = certificateResponse(sql);
+    if (certificate) return certificate;
     const precondition = preconditionResponse(via, sql, opts);
     if (precondition) return precondition;
     if (sql.includes(`FROM public.${DOOR}(`)) return { rows: opts.counts ?? [{ receipts: 3 }] };

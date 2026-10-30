@@ -1,0 +1,48 @@
+T9 red, against trunk 54b2929c54 (2026-10-30), before the control exists.
+Every case fails because there is no "Saved views" control and savedViewKey is not exported.
+
+ × vaultSavedViews.test.tsx > the list is read only when asked for, and a failed read is a failure > opening the Vault reads no saved views; opening the control reads this project's 1238ms
+ × vaultSavedViews.test.tsx > the list is read only when asked for, and a failed read is a failure > a failed read says so, never "No saved views yet", disables saving, and Try again reads again 935ms
+ × vaultSavedViews.test.tsx > the list is read only when asked for, and a failed read is a failure > a malformed list is a failed read, not an empty one 823ms
+ × vaultSavedViews.test.tsx > the list is read only when asked for, and a failed read is a failure > a verified empty list says there are none yet 953ms
+ × vaultSavedViews.test.tsx > the list is read only when asked for, and a failed read is a failure > groups my views and the organisation's, and says whose and how wide each is 737ms
+ × vaultSavedViews.test.tsx > applying a view sets the find view, and the search runs it > choosing a view changes nothing until Apply 747ms
+ × vaultSavedViews.test.tsx > applying a view sets the find view, and the search runs it > a project view fills the box, the filters and earlier versions, and the search carries exactly them 708ms
+ × vaultSavedViews.test.tsx > applying a view sets the find view, and the search runs it > a library view searches the accessible projects, with no folder 722ms
+ × vaultSavedViews.test.tsx > applying a view sets the find view, and the search runs it > a view that no longer applies changes nothing and says why 774ms
+ × vaultSavedViews.test.tsx > applying a view sets the find view, and the search runs it > a held folder disables "Accessible projects" with its reason, and is shown and removable 720ms
+ × vaultSavedViews.test.tsx > applying a view sets the find view, and the search runs it > several values in one dimension are shown, not hidden behind the select 823ms
+ × vaultSavedViews.test.tsx > only the acts a view allows are offered > an organisation view made by someone else offers no change, and says who shared it 750ms
+ × vaultSavedViews.test.tsx > only the acts a view allows are offered > Update view waits until the applied view's search has changed, and says why 826ms
+ × vaultSavedViews.test.tsx > saving sends the state on screen, and a refusal is said in the server's words > Save is offered only while searching, with its reason 703ms
+ × vaultSavedViews.test.tsx > saving sends the state on screen, and a refusal is said in the server's words > a read-only role may save for itself only, and is told so 657ms
+ × vaultSavedViews.test.tsx > saving sends the state on screen, and a refusal is said in the server's words > the POST body is the find view's state, and a saved view is re-read and applied 712ms
+ × vaultSavedViews.test.tsx > saving sends the state on screen, and a refusal is said in the server's words > a refused save shows the server's message, which stays until the next act 865ms
+ × vaultSavedViews.test.tsx > changing a view > a change after applying shows "(changed)", and Update view sends the new parameters 700ms
+ × vaultSavedViews.test.tsx > changing a view > Rename and Share each send one change 774ms
+ × vaultSavedViews.test.tsx > changing a view > Delete asks first, then deletes and forgets the applied view 781ms
+ × vaultSavedViews.test.tsx > savedViewKey > ignores value and key order and surrounding spaces, and tells a library view from a project one 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 21 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Saved views"
+TypeError: savedViewKey is not a function
+ Test Files  1 failed (1)
+      Tests  21 failed (21)
