@@ -30,8 +30,15 @@ const HEADER = 'File,Title,Document type,Classification,Folder,Evidence kind,CTD
 function stubIngest() {
   const sent: FormData[] = [];
   stubIngestXhr(vi.fn(async (_url: string, init: { body?: unknown }) => {
-    sent.push(init.body as FormData);
-    return { ok: true, status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+    const form = init.body as FormData;
+    sent.push(form);
+    const folderId = form.get('folderId');
+    return { ok: true, status: 201, json: async () => ({ success: true,
+      document: { id: sent.length === 1 ? '44444444-4444-4444-8444-444444444444' : '55555555-5555-4555-8555-555555555555',
+        programId: PID, version: '1.0', documentTitle: form.get('documentTitle') },
+      filing: { folderId, folderLabel: folderId === 'module-3' ? 'Module 3 · Quality' : null,
+        placementStatus: folderId ? 'confirmed' : 'unfiled', needsReview: !folderId },
+    }) };
   }));
   return sent;
 }

@@ -88,7 +88,7 @@ describe('after an upload, the Vault opens the document it recorded', () => {
     mockApi(cabinetTree([head]), cabinetTree([head], [uploaded]), state);
     stubIngest([{ status: 201, body: {
       success: true,
-      document: { id: NEW_ID, version: '1.0', documentTitle: 'analytical-procedures' },
+      document: { id: NEW_ID, programId: PID, version: '1.0', documentTitle: 'analytical-procedures' },
       filing: { folderId: null, folderLabel: null, needsReview: true, placementStatus: 'unfiled' },
     } }], state);
     await uploadWhileReading(HEAD, new File(['%PDF-1.7 v1'], 'analytical-procedures.pdf'));
@@ -106,7 +106,8 @@ describe('after an upload, the Vault opens the document it recorded', () => {
     mockApi(cabinetTree([other, head]), cabinetTree([other, headV2]), state);
     stubIngest([
       { status: 409, body: { error: { code: 'VERSION_CONTENT_CONFLICT', message: `A different document is already recorded at code "${HEAD}.pdf".` } } },
-      { status: 201, body: { success: true, document: { id: V2_ID, version: '2.0', documentTitle: HEAD } } },
+      { status: 201, body: { success: true, document: { id: V2_ID, programId: PID, version: '2.0', documentTitle: HEAD },
+        filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed', needsReview: false } } },
     ], state);
     await uploadWhileReading(HEAD, new File(['%PDF-1.7 v2'], `${HEAD}.pdf`));
     fireEvent.click(await screen.findByText(`Upload as a new version of ${HEAD}`));
@@ -121,12 +122,15 @@ describe('after an upload, the Vault opens the document it recorded', () => {
   it('a response that names no document opens nothing: the document is not guessed', async () => {
     const state = { recorded: false };
     mockApi(cabinetTree([head]), cabinetTree([head], [uploaded]), state);
-    stubIngest([{ status: 201, body: { success: true, document: { version: '1.0' } } }], state);
+    stubIngest([{ status: 201, body: { success: true,
+      document: { programId: PID, version: '1.0', documentTitle: 'analytical-procedures' },
+      filing: { folderId: null, folderLabel: null, placementStatus: 'unfiled', needsReview: true },
+    } }], state);
     await uploadWhileReading(HEAD, new File(['%PDF-1.7 v1'], 'analytical-procedures.pdf'));
 
-    await screen.findByText(/Recorded as v1\.0/);
-    await waitFor(() => expect(rowFor('analytical-procedures')).toBeTruthy());
-    // Nothing is looked for after the re-read, so nothing is said to be missing and nothing opens.
+    await screen.findByText(/Not known whether it was recorded:/);
+    expect(rowFor('analytical-procedures')).toBeUndefined();
+    // An unconfirmed receipt neither refreshes the tree nor looks for a guessed document.
     await expect(screen.findByTestId('vault-target-missing', undefined, { timeout: 300 })).rejects.toThrow();
     expect(openTitle()).toContain(HEAD);
   });
@@ -134,7 +138,10 @@ describe('after an upload, the Vault opens the document it recorded', () => {
   it('a recorded document the re-read does not hold is said, not silently ignored', async () => {
     const state = { recorded: false };
     mockApi(cabinetTree([head]), cabinetTree([head]), state);
-    stubIngest([{ status: 201, body: { success: true, document: { id: NEW_ID, version: '1.0' } } }], state);
+    stubIngest([{ status: 201, body: { success: true,
+      document: { id: NEW_ID, programId: PID, version: '1.0', documentTitle: 'analytical-procedures' },
+      filing: { folderId: null, folderLabel: null, placementStatus: 'unfiled', needsReview: true },
+    } }], state);
     await uploadWhileReading(HEAD, new File(['%PDF-1.7 v1'], 'analytical-procedures.pdf'));
 
     expect((await screen.findByTestId('vault-target-missing')).textContent).toContain('you just uploaded is not in this list');

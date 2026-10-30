@@ -1,0 +1,6 @@
+{
+  "client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx": "fa96a5c20ed6065c261642559ff8eb7728d8eff68f9c4dc1698610ad607d5642",
+  "server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts": "f18e31b3d36f54a6ce9648f05e2f866579caea626722a73f5610d14e907e32e0",
+  "server/services/csr/__tests__/csr-scope-active-write.pglite.test.ts": "dd63d48878efea6ca3bea5b1f268eb14ae7950b1bb5b2f5c5b5ffc2e36864b35",
+  "server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts": "c561f88ca7f3cd2b763dc3489474ec8af8b8c18ae6148777e4e3dfd4312a31cb"
+}

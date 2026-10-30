@@ -133,7 +133,10 @@ describe('a document with versions in the Vault (VR-09)', () => {
 describe('adding and finding a version in the Vault (VR-09)', () => {
   it("'Upload new version' names the document and sends no document code", async () => {
     mockApi();
-    const sent = stubIngest([{ status: 201, body: { success: true, document: { version: '3.0', documentTitle: 'Stability summary' } } }]);
+    const sent = stubIngest([{ status: 201, body: { success: true,
+      document: { id: '44444444-4444-4444-8444-444444444444', programId: PID, version: '3.0', documentTitle: 'Stability summary' },
+      filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed', needsReview: false },
+    } }]);
     render(<Vault {...props()} />);
     await screen.findByTestId('vault-versions');
     fireEvent.change(screen.getByLabelText('File to add as a new version of stability-summary-24m'), {
@@ -150,7 +153,10 @@ describe('adding and finding a version in the Vault (VR-09)', () => {
     mockApi();
     const sent = stubIngest([
       { status: 409, body: { error: { code: 'VERSION_CONTENT_CONFLICT', message: 'A different document is already recorded at code "stability-summary-24m.pdf".' } } },
-      { status: 201, body: { success: true, document: { version: '3.0' } } },
+      { status: 201, body: { success: true,
+        document: { id: '44444444-4444-4444-8444-444444444444', programId: PID, version: '3.0', documentTitle: 'Stability summary' },
+        filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed', needsReview: false },
+      } },
     ]);
     render(<Vault {...props()} />);
     await screen.findByTestId('vault-versions');

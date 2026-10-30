@@ -1,0 +1,868 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'an array instead of a record' (HTTP 201) 30ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'success false' (HTTP 201) 5ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'success omitted' (HTTP 201) 4ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'document ID omitted' (HTTP 201) 3ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'document ID is not a UUID' (HTTP 201) 4ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'program omitted' (HTTP 201) 3ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a different program recorded the file' (HTTP 201) 3ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'assigned version omitted' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'assigned version is blank' (HTTP 201) 4ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'stored title omitted' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'stored title is blank' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'filing omitted' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'folder ID is blank' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'folder label is not text or null' (HTTP 201) 4ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'placement omitted' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'placement is unknown' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unfiled claims a folder' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'placed claims no folder' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'review flag is not boolean' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unfiled claims no review needed' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'extraction is unknown' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unexpected accepted status' (HTTP 202) 3ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for '200 without reupload acknowledgement' (HTTP 200) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for '201 contradicts a reupload marker' (HTTP 201) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a change has a nontext before value' (HTTP 200) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'differs is not an array' (HTTP 200) 2ms
+   → differs.some is not a function
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a difference is null' (HTTP 200) 1ms
+   → Cannot read properties of null (reading 'field')
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a difference has an unknown field' (HTTP 200) 3ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a difference has no requested value' (HTTP 200) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unchanged contradicts an actual repair' (HTTP 200) 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > settles an undecodable successful raw response "" without retry 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > settles an undecodable successful raw response "<html>upstream response</html>" without retry 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > settles an undecodable successful raw response "{\"success\":" without retry 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > continues a mixed batch after missing and malformed reupload receipts, with no second POST for either 2ms
+   → Cannot read properties of null (reading 'field')
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a real 201 receipt: 'absent extraction and extra future fi…' 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a real 201 receipt: 'extracted with null label and opaque …' 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a real 201 receipt: 'pending with empty label' 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a real 201 receipt: 'failed extraction stored unfiled' 1ms
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a 200 already-recorded receipt with unchanged=true and truthful repair copy 5ms
+   → expected 'Already in the Vault, nothing changed…' not to match /nothing changed/i
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a 200 already-recorded receipt with unchanged=false and truthful repair copy 3ms
+   → expected 'Already in the Vault, nothing changed…' not to match /nothing changed/i
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > retains the actual server-assigned check-in version and never sends a client version or document code 2ms
+ × client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not turn an unconfirmed check-in into a successful new-version receipt 2ms
+   → expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 37 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'an array instead of a record' (HTTP 201)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": null,
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": true,
++       "placement": "unfiled",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+    "recorded": [],
+-   "succeeded": [],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'success false' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'success omitted' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'program omitted' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a different program recorded the file' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'assigned version omitted' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'assigned version is blank' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'stored title omitted' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'stored title is blank' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'folder ID is blank' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'extraction is unknown' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unexpected accepted status' (HTTP 202)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for '200 without reupload acknowledgement' (HTTP 200)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": "Quality",
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": false,
++       "placement": "confirmed",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'document ID omitted' (HTTP 201)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": "Quality",
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": false,
++       "placement": "confirmed",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+    "recorded": [],
+-   "succeeded": [],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'document ID is not a UUID' (HTTP 201)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": "Quality",
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": false,
++       "placement": "confirmed",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "not-a-recorded-id",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'filing omitted' (HTTP 201)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": null,
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": true,
++       "placement": "unfiled",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'folder label is not text or null' (HTTP 201)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": {},
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": false,
++       "placement": "confirmed",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'placement omitted' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'placement is unknown' (HTTP 201)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": "Quality",
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": false,
++       "placement": "suggested",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unfiled claims a folder' (HTTP 201)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": "Quality",
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": true,
++       "placement": "suggested",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'placed claims no folder' (HTTP 201)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": null,
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": false,
++       "placement": "confirmed",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'review flag is not boolean' (HTTP 201)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": "Quality",
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": true,
++       "placement": "confirmed",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unfiled claims no review needed' (HTTP 201)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": null,
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": false,
++       "placement": "unfiled",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for '201 contradicts a reupload marker' (HTTP 201)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a change has a nontext before value' (HTTP 200)
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'unchanged contradicts an actual repair' (HTTP 200)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+-   "alreadyRecorded": [],
+-   "conflicts": [],
+-   "failed": [
++   "alreadyRecorded": [
+      {
++       "differs": false,
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "title": "Stored protocol",
+      },
+    ],
++   "conflicts": [],
++   "failed": [],
+    "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'differs is not an array' (HTTP 200)
+TypeError: differs.some is not a function
+ ❯ alreadyRecordedOf client/src/concept2cure/v2/useVaultUpload.ts:141:26
+    139| /** A re-upload the Vault already held: which of its asks were not app…
+    140| function alreadyRecordedOf(differs: Array<{ field?: unknown }>, title:…
+    141|   const filing = differs.some((d) => FILING_FIELDS.has(String(d.field)…
+       |                          ^
+    142|   return { title, differs: differs.some((d) => !FILING_FIELDS.has(Stri…
+    143| }
+ ❯ uploadOne client/src/concept2cure/v2/useVaultUpload.ts:257:33
+ ❯ Object.upload client/src/concept2cure/v2/useVaultUpload.ts:380:21
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:77:37
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a difference is null' (HTTP 200)
+TypeError: Cannot read properties of null (reading 'field')
+ ❯ client/src/concept2cure/v2/useVaultUpload.ts:141:65
+    139| /** A re-upload the Vault already held: which of its asks were not app…
+    140| function alreadyRecordedOf(differs: Array<{ field?: unknown }>, title:…
+    141|   const filing = differs.some((d) => FILING_FIELDS.has(String(d.field)…
+       |                                                                 ^
+    142|   return { title, differs: differs.some((d) => !FILING_FIELDS.has(Stri…
+    143| }
+ ❯ alreadyRecordedOf client/src/concept2cure/v2/useVaultUpload.ts:141:26
+ ❯ uploadOne client/src/concept2cure/v2/useVaultUpload.ts:257:33
+ ❯ Object.upload client/src/concept2cure/v2/useVaultUpload.ts:380:21
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:77:37
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a difference has an unknown field' (HTTP 200)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+-   "alreadyRecorded": [],
+-   "conflicts": [],
+-   "failed": [
++   "alreadyRecorded": [
+      {
++       "differs": true,
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "title": "Stored protocol",
+      },
+    ],
++   "conflicts": [],
++   "failed": [],
+    "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not report storage for 'a difference has no requested value' (HTTP 200)
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+-   "alreadyRecorded": [],
+-   "conflicts": [],
+-   "failed": [
++   "alreadyRecorded": [
+      {
++       "differs": false,
++       "filingDiffers": true,
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "title": "Stored protocol",
+      },
+    ],
++   "conflicts": [],
++   "failed": [],
+    "filings": [],
+    "newVersions": [],
+-   "recorded": [],
+-   "succeeded": [],
++   "recorded": [
++     "22222222-2222-4222-8222-222222222222",
++   ],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:78:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > settles an undecodable successful raw response "" without retry
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > settles an undecodable successful raw response "<html>upstream response</html>" without retry
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > settles an undecodable successful raw response "{\"success\":" without retry
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [
+      {
++       "folderLabel": null,
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "needsReview": true,
++       "placement": "unfiled",
+      },
+    ],
+-   "filings": [],
+    "newVersions": [],
+    "recorded": [],
+-   "succeeded": [],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:108:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > continues a mixed batch after missing and malformed reupload receipts, with no second POST for either
+TypeError: Cannot read properties of null (reading 'field')
+ ❯ client/src/concept2cure/v2/useVaultUpload.ts:141:65
+    139| /** A re-upload the Vault already held: which of its asks were not app…
+    140| function alreadyRecordedOf(differs: Array<{ field?: unknown }>, title:…
+    141|   const filing = differs.some((d) => FILING_FIELDS.has(String(d.field)…
+       |                                                                 ^
+    142|   return { title, differs: differs.some((d) => !FILING_FIELDS.has(Stri…
+    143| }
+ ❯ alreadyRecordedOf client/src/concept2cure/v2/useVaultUpload.ts:141:26
+ ❯ uploadOne client/src/concept2cure/v2/useVaultUpload.ts:257:33
+ ❯ Object.upload client/src/concept2cure/v2/useVaultUpload.ts:380:21
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:126:37
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a 200 already-recorded receipt with unchanged=true and truthful repair copy
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > accepts a 200 already-recorded receipt with unchanged=false and truthful repair copy
+AssertionError: expected 'Already in the Vault, nothing changed…' not to match /nothing changed/i
+
+- Expected:
+/nothing changed/i
+
++ Received:
+"Already in the Vault, nothing changed: protocol.pdf (as \"Stored protocol\"). Its title, type or classification is changed with Edit details, not by uploading it again. Its folder, kind or CTD section is changed with Move in its filing, not by uploading it again."
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:202:46
+    200|   expect(view.result.current.note?.text).toMatch(/Edit details/);
+    201|   expect(view.result.current.note?.text).toMatch(/Move in its filing/);
+    202|   expect(view.result.current.note?.text).not.toMatch(/nothing changed/…
+       |                                              ^
+    203|   expect(view.result.current.uploading).toBe(false);
+    204| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/37]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx > does not turn an unconfirmed check-in into a successful new-version receipt
+AssertionError: expected { succeeded: [ 'protocol.pdf' ], …(6) } to deeply equal { succeeded: [], recorded: [], …(5) }
+
+- Expected
++ Received
+
+  {
+    "alreadyRecorded": [],
+    "conflicts": [],
+-   "failed": [
++   "failed": [],
++   "filings": [],
++   "newVersions": [
+      {
++       "folderLabel": "Quality",
+        "name": "protocol.pdf",
+-       "reason": Any<String>,
+-       "unknown": true,
++       "title": "Stored protocol",
++       "version": "2.0",
+      },
+    ],
+-   "filings": [],
+-   "newVersions": [],
+    "recorded": [],
+-   "succeeded": [],
++   "succeeded": [
++     "protocol.pdf",
++   ],
+  }
+
+ ❯ expectUnconfirmed client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:66:19
+     64|
+     65| function expectUnconfirmed(outcome: VaultUploadOutcome, name = FILE) {
+     66|   expect(outcome).toEqual({ succeeded: [], recorded: [], filings: [], …
+       |                   ^
+     67|     failed: [{ name, reason: expect.any(String), unknown: true }] });
+     68|   expect(outcome.failed[0].reason).not.toMatch(/nothing.*recorded|no r…
+ ❯ client/src/concept2cure/v2/__tests__/vaultUploadReceipt.test.tsx:238:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/37]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  37 failed | 5 passed (42)
+   Start at  17:21:28
+   Duration  1.05s (transform 179ms, setup 146ms, import 190ms, tests 131ms, environment 445ms)
+

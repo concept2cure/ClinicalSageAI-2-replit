@@ -13,8 +13,14 @@ import { useVaultUpload, type VaultUploadFileStatus, type VaultUploadState } fro
 import { setAuthToken, clearAuthToken } from '@/utils/authToken';
 import { FAKE_BODY_BYTES, stubIngestXhr, type IngestInit } from './_ingest-xhr-fake';
 
+const PID = '11111111-1111-4111-8111-111111111111';
+const NEW_ID = '22222222-2222-4222-8222-222222222222';
+const HELD_ID = '33333333-3333-4333-8333-333333333333';
+const DOCUMENT = { id: NEW_ID, programId: PID, documentTitle: 'Stored upload', version: '1.0' };
+const UNFILED = { folderId: null, folderLabel: null, placementStatus: 'unfiled', needsReview: true };
+
 function HookHost({ onState }: { onState: (s: VaultUploadState) => void }) {
-  const state = useVaultUpload('11111111-1111-4111-8111-111111111111');
+  const state = useVaultUpload(PID);
   onState(state);
   return null;
 }
@@ -22,11 +28,11 @@ function HookHost({ onState }: { onState: (s: VaultUploadState) => void }) {
 /** An uploading status's bytes sent, as "sent of total", or undefined before any are. */
 const sentOf = (st: VaultUploadFileStatus) => (st.state === 'uploading' && st.sent !== undefined ? `${st.sent} of ${st.total}` : undefined);
 
-function ingestResponse(filing: unknown) {
+function ingestResponse(filing: unknown = UNFILED) {
   return {
     ok: true,
     status: 201,
-    json: async () => ({ success: true, document: {}, filing }),
+    json: async () => ({ success: true, document: DOCUMENT, filing }),
   } as Response;
 }
 
@@ -79,7 +85,7 @@ describe('useVaultUpload — filing-aware outcome copy', () => {
       status: 200,
       json: async () => ({
         success: true,
-        document: { documentTitle: 'Protocol' },
+        document: { ...DOCUMENT, documentTitle: 'Protocol' },
         filing: { folderId: 'module-5', folderLabel: 'Module 5 · Clinical', placementStatus: 'suggested', needsReview: false },
         reupload: {
           unchanged: true,
@@ -96,7 +102,7 @@ describe('useVaultUpload — filing-aware outcome copy', () => {
     expect(outcome.filings).toEqual([]);
     expect(outcome.alreadyRecorded).toEqual([{ name: 'protocol.pdf', title: 'Protocol', differs: true }]);
     await waitFor(() => expect(latest!.note).toBeTruthy());
-    expect(latest!.note!.text).toMatch(/Already in the Vault, nothing changed: protocol\.pdf \(as "Protocol"\)/);
+    expect(latest!.note!.text).toMatch(/Already in the Vault with these bytes: protocol\.pdf \(as "Protocol"\)/);
     expect(latest!.note!.text).toMatch(/Edit details/);
     expect(latest!.note!.text).not.toMatch(/Auto-filed|suggested until confirmed/i);
   });
@@ -132,18 +138,22 @@ describe('useVaultUpload — the document each file was recorded as', () => {
   it('lists the ids the server returned, in the order sent, and invents none', async () => {
     const answer = (status: number, body: unknown) => ({ ok: status < 300, status, json: async () => body }) as Response;
     stubIngestXhr(vi.fn()
-      .mockResolvedValueOnce(answer(201, { success: true, document: { id: 'doc-new' }, filing: {} }))
+      .mockResolvedValueOnce(answer(201, { success: true, document: DOCUMENT, filing: UNFILED }))
       .mockResolvedValueOnce(answer(415, { error: { message: 'File type .exe is not allowed' } }))
-      .mockResolvedValueOnce(ingestResponse({}))
-      .mockResolvedValueOnce(answer(200, { success: true, document: { id: 'doc-held', documentTitle: 'Protocol' }, reupload: { differs: [] } })));
+      .mockResolvedValueOnce(answer(201, { success: true,
+        document: { programId: PID, documentTitle: 'No identity returned', version: '1.0' }, filing: UNFILED }))
+      .mockResolvedValueOnce(answer(200, { success: true,
+        document: { ...DOCUMENT, id: HELD_ID, documentTitle: 'Protocol' }, filing: UNFILED,
+        reupload: { unchanged: true, changes: [], differs: [] } })));
     let latest: VaultUploadState | null = null;
     render(<HookHost onState={(s) => { latest = s; }} />);
 
     const outcome = await latest!.upload(['a.pdf', 'tool.exe', 'no-id.pdf', 'protocol.pdf'].map((n) => new File(['x'], n)));
 
     // The refused file and the response that names no document add nothing.
-    expect(outcome.succeeded).toEqual(['a.pdf', 'no-id.pdf', 'protocol.pdf']);
-    expect(outcome.recorded).toEqual(['doc-new', 'doc-held']);
+    expect(outcome.succeeded).toEqual(['a.pdf', 'protocol.pdf']);
+    expect(outcome.recorded).toEqual([NEW_ID, HELD_ID]);
+    expect(outcome.failed).toContainEqual(expect.objectContaining({ name: 'no-id.pdf', unknown: true }));
   });
 });
 
@@ -161,7 +171,7 @@ describe('useVaultUpload — the request actually authenticates', () => {
    */
   it('sends the Authorization bearer header the ingest route requires', async () => {
     setAuthToken('a-real-access-token');
-    const fetchMock = vi.fn(async (_url: string, _init: IngestInit) => ingestResponse(null));
+    const fetchMock = vi.fn(async (_url: string, _init: IngestInit) => ingestResponse());
     stubIngestXhr(fetchMock);
     let latest: VaultUploadState | null = null;
     render(<HookHost onState={(s) => { latest = s; }} />);
@@ -176,7 +186,7 @@ describe('useVaultUpload — the request actually authenticates', () => {
 
   it('still sends the multipart body and credentials', async () => {
     setAuthToken('a-real-access-token');
-    const fetchMock = vi.fn(async (_url: string, _init: IngestInit) => ingestResponse(null));
+    const fetchMock = vi.fn(async (_url: string, _init: IngestInit) => ingestResponse());
     stubIngestXhr(fetchMock);
     let latest: VaultUploadState | null = null;
     render(<HookHost onState={(s) => { latest = s; }} />);
@@ -249,7 +259,8 @@ describe('useVaultUpload — each file carries the fields its row gave (gap 7.1)
   it('tells the caller where each file stands as it starts, as its bytes go out, and as it settles', async () => {
     let n = 0;
     stubIngestXhr(vi.fn(async () => (++n === 1
-      ? { ok: true, status: 201, json: async () => ({ success: true, document: { version: '1.0' }, filing: { folderId: 'eng', folderLabel: 'Engineering', needsReview: false } }) }
+      ? { ok: true, status: 201, json: async () => ({ success: true, document: DOCUMENT,
+        filing: { folderId: 'eng', folderLabel: 'Engineering', placementStatus: 'confirmed', needsReview: false } }) }
       : { ok: false, status: 422, json: async () => ({ error: { message: 'The file failed the malware scan' } }) }) as Response));
     let latest: VaultUploadState | null = null;
     render(<HookHost onState={(s) => { latest = s; }} />);
@@ -273,7 +284,7 @@ describe('useVaultUpload — a re-upload whose filing was not applied (Part 11 r
       status: 200,
       json: async () => ({
         success: true,
-        document: { documentTitle: 'Protocol' },
+        document: { ...DOCUMENT, documentTitle: 'Protocol' },
         filing: { folderId: 'module-5', folderLabel: 'Module 5 · Clinical', placementStatus: 'confirmed', needsReview: false },
         reupload: {
           unchanged: true,
@@ -289,7 +300,7 @@ describe('useVaultUpload — a re-upload whose filing was not applied (Part 11 r
 
     expect(outcome.alreadyRecorded).toEqual([{ name: 'protocol.pdf', title: 'Protocol', differs: false, filingDiffers: true }]);
     await waitFor(() => expect(latest!.note).toBeTruthy());
-    expect(latest!.note!.text).toMatch(/Already in the Vault, nothing changed: protocol\.pdf/);
+    expect(latest!.note!.text).toMatch(/Already in the Vault with these bytes: protocol\.pdf/);
     expect(latest!.note!.text).toMatch(/folder, kind or CTD section is changed with Move/);
     expect(latest!.note!.text).not.toMatch(/Edit details/);
   });
@@ -297,7 +308,7 @@ describe('useVaultUpload — a re-upload whose filing was not applied (Part 11 r
 
 describe('useVaultUpload — how far a file has got (MR-08 Stage 6 step 2)', () => {
   it('tells the row once per whole percent, not once per packet', async () => {
-    stubIngestXhr(vi.fn(async () => ingestResponse(null)), [0.501, 0.502, 0.509, 0.75, 1]);
+    stubIngestXhr(vi.fn(async () => ingestResponse()), [0.501, 0.502, 0.509, 0.75, 1]);
     let latest: VaultUploadState | null = null;
     render(<HookHost onState={(s) => { latest = s; }} />);
     const sent: Array<string | undefined> = [];

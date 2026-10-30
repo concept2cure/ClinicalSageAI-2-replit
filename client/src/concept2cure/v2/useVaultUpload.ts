@@ -21,8 +21,8 @@
  * rejected file: a partial batch is the normal case (one file over the size
  * limit, one refused by the virus scan) and the caller has to be able to tell
  * the user which ones landed. What it must NOT do is report success it did not
- * observe — `succeeded` counts only 2xx responses, so a surface that refreshes
- * on `succeeded > 0` refreshes on real rows.
+ * observe — `succeeded` counts only verified ingest receipts, so a surface
+ * refreshes or attaches only when the reply identifies a recorded document.
  *
  * The server owns every decision that matters: the SHA-256, the storage key,
  * the audit entry, the tenant check. This function's whole job is to hand it
@@ -30,6 +30,7 @@
  */
 
 import * as React from 'react';
+import { z } from 'zod';
 import { redactInternals } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { VaultClassification, VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
@@ -41,9 +42,8 @@ export interface VaultUploadOutcome {
   /** Files the server accepted and recorded. */
   succeeded: string[];
   /** The documents those files were recorded as, by the id the server returned
-   *  (`document.id`), in the order sent. A response that names none adds none,
-   *  so a surface that opens the document just uploaded opens one the server
-   *  named, never one it guessed. */
+   *  (`document.id`), in the order sent. An unconfirmed receipt adds neither
+   *  an identity nor a success, so a caller never opens a guessed document. */
   recorded: string[];
   /** Files without a confirmed receipt: a refusal, or an unknown result after a complete send. */
   failed: Array<{ name: string; reason: string; unknown?: true }>;
@@ -51,7 +51,7 @@ export interface VaultUploadOutcome {
    *  suggested dossier folder, or unfiled (visible review queue). */
   filings: Array<{ name: string; folderLabel: string | null; needsReview: boolean; placement: VaultPlacement }>;
   /** Files whose exact bytes the Vault already recorded at that code and
-   *  version: nothing was changed, and `differs` says the upload asked for a
+   *  version: `differs` says the upload asked for a
    *  title, type or classification other than the recorded one (VR-05);
    *  `filingDiffers`, present only when true, a folder, kind or CTD section
    *  (Part 11 review F3). */
@@ -136,14 +136,42 @@ const DEFAULT_DOCUMENT_TYPE: VaultIngestDocumentType = 'OTHER';
 /** The ingest's filing fields; any other field a re-upload reports is a detail. */
 const FILING_FIELDS = new Set(['folder_id', 'evidence_kind', 'ctd_section']);
 
+// Validate only the producer fields the caller interprets. Extra fields remain compatible.
+const receiptText = z.string().refine(value => value.trim().length > 0);
+const ingestReceipt = z.object({
+  success: z.literal(true),
+  document: z.object({ id: z.string().uuid(), programId: z.string().uuid(),
+    documentTitle: receiptText, version: receiptText,
+    extraction: z.enum(['extracted', 'pending', 'failed']).optional() }),
+  filing: z.object({ folderId: receiptText.nullable(), folderLabel: z.string().nullable(),
+    placementStatus: z.enum(['confirmed', 'suggested', 'unfiled']), needsReview: z.boolean() })
+    .refine(filing => filing.placementStatus === 'unfiled'
+      ? filing.folderId === null && filing.needsReview
+      : filing.folderId !== null && !filing.needsReview),
+  reupload: z.object({ unchanged: z.boolean(),
+    changes: z.array(z.object({ field: receiptText, from: z.string().nullable(), to: z.string().nullable() })),
+    differs: z.array(z.object({ field: z.enum(['document_title', 'document_type', 'classification', 'folder_id', 'evidence_kind', 'ctd_section']),
+      recorded: z.string().nullable(), requested: z.string() })) })
+    .refine(reupload => reupload.unchanged === (reupload.changes.length === 0)).optional(),
+});
+
+/** A successful transport can still leave the governed write unconfirmed. */
+async function readIngestReceipt(response: IngestReply, programId: string) {
+  if (response.status !== 200 && response.status !== 201) return null;
+  const parsed = ingestReceipt.safeParse(await response.json().catch(() => null));
+  if (!parsed.success || parsed.data.document.programId !== programId) return null;
+  const receipt = parsed.data;
+  if (response.status === 200 ? !receipt.reupload : receipt.reupload !== undefined) return null;
+  return receipt;
+}
+
 /** A re-upload the Vault already held: which of its asks were not applied, details or filing. */
 function alreadyRecordedOf(differs: Array<{ field?: unknown }>, title: string): { title: string; differs: boolean; filingDiffers?: true } {
   const filing = differs.some((d) => FILING_FIELDS.has(String(d.field)));
   return { title, differs: differs.some((d) => !FILING_FIELDS.has(String(d.field))), ...(filing ? { filingDiffers: true as const } : {}) };
 }
 
-/** What the user is told about files the Vault already held: nothing changed,
- *  and where a title, type, classification or filing differs, how to change it. */
+/** What the Vault already held, and how to change details or filing the retry did not apply. */
 function alreadyRecordedText(list: VaultUploadOutcome['alreadyRecorded']): string {
   if (list.length === 0) return '';
   const named = list.map((a) => `${a.name} (as "${a.title}")`).join('; ');
@@ -153,7 +181,7 @@ function alreadyRecordedText(list: VaultUploadOutcome['alreadyRecorded']): strin
   const filing = list.some((a) => a.filingDiffers)
     ? ' Its folder, kind or CTD section is changed with Move in its filing, not by uploading it again.'
     : '';
-  return `Already in the Vault, nothing changed: ${named}.${details}${filing}`;
+  return `Already in the Vault with these bytes: ${named}.${details}${filing}`;
 }
 
 /** The person's fields, as form entries: only what was given, and the filing details only with a folder. */
@@ -181,8 +209,9 @@ async function uploadOne(
       needsReview: boolean;
       placement: VaultPlacement;
       already: { title: string; differs: boolean; filingDiffers?: true } | null;
-      version: string | null;
-      documentId: string | null;
+      version: string;
+      documentId: string;
+      documentTitle: string;
       readingText: boolean;
     }
   | { ok: false; reason: string; code: string | null; unknown?: true }
@@ -236,28 +265,19 @@ async function uploadOne(
   }
 
   if (res.ok) {
-    /* The ingest response reports the filing outcome the server stored — the
-       suggested dossier folder (auto-filed, awaiting confirmation) or unfiled.
-       Read, never assumed: a missing block reads as no placement reported. */
-    const body = (await res.json().catch(() => null)) as
-      | {
-          filing?: { folderLabel?: string; folderId?: string | null; needsReview?: boolean; placementStatus?: string };
-          document?: { id?: unknown; documentTitle?: string; version?: string; extraction?: unknown };
-          reupload?: { differs?: Array<{ field?: unknown }> };
-        }
-      | null;
-    const filing = body?.filing;
+    const body = await readIngestReceipt(res, programId);
+    if (!body) return { ok: false, reason: 'the reply did not confirm a verifiable Vault record', code: null, unknown: true };
+    const filing = body.filing;
     return {
       ok: true,
-      folderLabel: filing?.folderId ? filing.folderLabel || filing.folderId : null,
-      needsReview: Boolean(filing?.needsReview ?? !filing?.folderId),
-      /* The server's own word for the placement. A body that predates it reads
-         as the classifier's: a suggestion when a folder is named, else unfiled. */
-      placement: filing?.placementStatus === 'confirmed' ? 'confirmed' : filing?.folderId ? 'suggested' : 'unfiled',
-      already: body?.reupload ? alreadyRecordedOf(body.reupload.differs ?? [], body.document?.documentTitle || file.name) : null,
-      version: body?.document?.version ?? null,
-      documentId: typeof body?.document?.id === 'string' && body.document.id ? body.document.id : null,
-      readingText: body?.document?.extraction === 'pending',
+      folderLabel: filing.folderId ? filing.folderLabel || filing.folderId : null,
+      needsReview: filing.needsReview,
+      placement: filing.placementStatus,
+      already: body.reupload ? alreadyRecordedOf(body.reupload.differs, body.document.documentTitle) : null,
+      version: body.document.version,
+      documentId: body.document.id,
+      documentTitle: body.document.documentTitle,
+      readingText: body.document.extraction === 'pending',
     };
   }
 
@@ -394,8 +414,8 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
             outcome.succeeded.push(file.name);
             outcome.newVersions.push({
               name: file.name,
-              version: r.version ?? '',
-              title: opts.newVersionOf.title,
+              version: r.version,
+              title: r.documentTitle,
               folderLabel: r.folderLabel,
             });
           } else if (r.ok) {

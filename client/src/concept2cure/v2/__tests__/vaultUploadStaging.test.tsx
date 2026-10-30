@@ -29,6 +29,10 @@ import { statusText } from '../surfaces/VaultUploadStaging';
 import { FAKE_BODY_BYTES, stubIngestXhr } from './_ingest-xhr-fake';
 import { PID, ok, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
 
+const RECEIPT = { success: true,
+  document: { id: '22222222-2222-4222-8222-222222222222', programId: PID, documentTitle: 'Stored upload', version: '1.0' },
+  filing: { folderId: null, folderLabel: null, placementStatus: 'unfiled', needsReview: true } };
+
 function mockApi() {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
@@ -41,7 +45,7 @@ function stubIngest(answers: Array<{ status: number; body: unknown }>) {
   const sent: FormData[] = [];
   stubIngestXhr(vi.fn(async (_url: string, init: { body?: unknown }) => {
     sent.push(init.body as FormData);
-    const a = answers.shift() ?? { status: 201, body: { success: true, document: { version: '1.0' } } };
+    const a = answers.shift() ?? { status: 201, body: RECEIPT };
     return { ok: a.status < 300, status: a.status, json: async () => a.body } as Response;
   }));
   return sent;
@@ -71,7 +75,7 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
   });
 
   it("sends each row's title, type, classification and the folder chosen, with its kind and section, and no version", async () => {
-    const sent = stubIngest([{ status: 201, body: { success: true, document: { version: '1.0' }, filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed', needsReview: false } } }]);
+    const sent = stubIngest([{ status: 201, body: { ...RECEIPT, filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed', needsReview: false } } }]);
     const panel = await choose([new File(['a'], 'stability-24m.pdf')]);
     const row = within(panel).getByTestId('vault-stage-row');
     fireEvent.change(within(row).getByLabelText('Title'), { target: { value: 'Stability summary, 24 months' } });
@@ -106,9 +110,9 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
 
   it('says what the Vault refused, row by row, and tries only that one again', async () => {
     const sent = stubIngest([
-      { status: 201, body: { success: true, document: { version: '1.0' } } },
+      { status: 201, body: RECEIPT },
       { status: 422, body: { error: { message: 'The file failed the malware scan' } } },
-      { status: 201, body: { success: true, document: { version: '1.0' } } },
+      { status: 201, body: RECEIPT },
     ]);
     const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
@@ -125,7 +129,7 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
   });
 
   it('says when a recorded file’s text is still being read (MR-08 Stage 3)', async () => {
-    stubIngest([{ status: 201, body: { success: true, document: { version: '1.0', extraction: 'pending' } } }]);
+    stubIngest([{ status: 201, body: { ...RECEIPT, document: { ...RECEIPT.document, extraction: 'pending' } } }]);
     const panel = await choose([new File(['%PDF scanned'], 'scan.pdf')]);
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
     const [row] = within(panel).getAllByTestId('vault-stage-row');
@@ -188,7 +192,7 @@ describe('each row says how far its file has got (MR-08 Stage 6 step 2)', () => 
     const held = new Promise<void>((r) => { release = r; });
     stubIngestXhr(vi.fn(async () => {
       await held;
-      return { ok: true, status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+      return { ok: true, status: 201, json: async () => RECEIPT };
     }), [0.5]);
     const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
@@ -221,7 +225,7 @@ describe('retry queue and current upload failures remain distinct', () => {
       requests += 1;
       if (requests <= 2) return { status: 422, json: async () => ({ error: { message: 'Earlier refusal' } }) };
       if (requests === 3) await held;
-      return { status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+      return { status: 201, json: async () => RECEIPT };
     }), [0.5]);
     const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
@@ -247,7 +251,7 @@ describe('retry queue and current upload failures remain distinct', () => {
         return { status: 422, json: async () => ({ error: { message: 'Current refusal' } }) };
       }
       await held;
-      return { status: 201, json: async () => ({ success: true, document: { version: '1.0' } }) };
+      return { status: 201, json: async () => RECEIPT };
     }), [1]);
     const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
