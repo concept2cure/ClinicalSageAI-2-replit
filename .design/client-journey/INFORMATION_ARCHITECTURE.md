@@ -77,6 +77,11 @@ workspace, not separate apps. CMC retains its composition boundary; this placeme
 does not admit RBM or Biostatistics to launch. The existing AnA document generator,
 `editor/DocumentCanvas.tsx`, `DocumentWorkbench.tsx` and `RichSectionEditor.tsx`
 serve every use case. No workflow gets another canvas, generator or editor.
+The existing workspace also offers a suggested order through its same tabs:
+Study design → Statistics → Write protocol → Run checks → Review protocol.
+The guide reports recorded design-link/findings states, not completion. Pending
+section edits protect guide, tab, outline and protocol/scope changes through the
+existing shared leave-guard registry; no approval or write is triggered by a step.
 The implementation inventory and verification boundary are recorded in
 `docs/design/STUDY_PROTOCOL_PROJECT_INITIATION.md` and
 `docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/README.md`.
