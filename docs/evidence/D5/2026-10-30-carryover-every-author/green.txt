@@ -1,0 +1,27 @@
+# Green: the fixed carry-over
+$ npx vitest run server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+  reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file 980ms
+  a working draft: nothing carries, the editor is told why, and the version is not reviewed 209ms
+  frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed 183ms
+  approved with no review: nothing carries, the editor is told why, and the version is not reviewed 213ms
+  reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed 211ms
+  reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed 215ms
+  approved by its author: nothing carries, the editor is told why, and the version is not reviewed 228ms
+  reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed 212ms
+  a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed 197ms
+  an approval of other content: nothing carries, the editor is told why, and the version is not reviewed 199ms
+  reviewed by a member who wrote one of its sections: nothing carries, and the version is not reviewed 216ms
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+
+# The nine suites that reach the carry-over or file-to-vault
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 8 passed (9)
+      Tests  9 failed | 158 passed (167)
+  failed: tests/lineage/founder-path-lineage.pglite.test.ts, 9 cases. The same 9 fail on the committed carry-over (below). The first, hop 6, is INGEST_FAILED (500), before the carry-over runs.
+
+# The same founder path on the committed carry-over
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  9 failed | 6 passed (15)
+  → {"success":false,"error":{"code":"INGEST_FAILED","message":"The document could not be recorded in the vault. Nothing was saved."}}: expected 500 to be 201 // Object.is equality

@@ -3,7 +3,7 @@
  * meaning, validate a statistical method, or certify that a model found every
  * claim. The assigned human reviewer explicitly attests coverage and meaning.
  */
-import { stableStringify } from '../../../shared/canonical-json';
+import { stableStringify } from '../../../shared/canonical-json.js';
 import { createHash } from 'node:crypto';
 
 /* The format, the table keys, the shapes and the exact numerical-display rule

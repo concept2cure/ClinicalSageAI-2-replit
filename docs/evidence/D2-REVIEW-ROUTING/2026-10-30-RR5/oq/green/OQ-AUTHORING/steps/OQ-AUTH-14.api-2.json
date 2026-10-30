@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5241/api/authoring/docs/5bdf2248-39a4-404b-9b5c-4689aed1bf16/e-sign",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "mfaToken": "[REDACTED]",
+      "meaning": "REVIEWER",
+      "intent": "OQ-003 step 14: reviewed for validation"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 398,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "signatureId": "d4432389-00ef-4fdd-8701-beef62c9d3b2",
+      "documentHash": "c2f09ccb3ab88796c1142308f5a9ea4a83015442b4eeb2d6d3542c38424e1ccf",
+      "digest": "b5488776fcf06fd686c1fe9487e9a45bd3fe99cd9652734a932215b2fa99d8df",
+      "covers": {
+        "version": "1.0",
+        "contentHash": "06caab5d754482969cea6fef92ab5d4f5f56ae4f2162338d4087e95e48782abd"
+      },
+      "workflowSourceAdoption": null,
+      "signedAt": "2026-10-30T15:05:13.910Z",
+      "filingApproval": null
+    }
+  }
+}

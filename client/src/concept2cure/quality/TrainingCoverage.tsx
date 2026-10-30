@@ -204,6 +204,23 @@ function JobRoleActForm({ act, people, onDone, onCancel }: {
 
 type AssignAct = { kind: 'role' | 'person' } | { kind: 'withdraw'; assignment: TrainingAssignment };
 
+function approvalReach(ta: ReturnType<typeof useTrainingAssignments>, effectiveFrom: string, today: string): string {
+  if (ta.failed) return 'Who is assigned to train on this document could not be read.';
+  if (!ta.listing) return 'Reading who is assigned to train on this document…';
+  const { peopleCount, assignments } = ta.listing;
+  if (peopleCount === 0) return assignments.length ? 'No one assigned to train on this document is an active member.' : 'No one is assigned to train on this document.';
+  const people = `${peopleCount === 1 ? '1 person is' : `${peopleCount} people are`} assigned to train on this document.`;
+  return effectiveFrom > today
+    ? `${people} They can read and acknowledge it from approval until it takes effect on ${effectiveFrom}.`
+    : `${people} Effective today leaves them no training period: it is in force when you sign.`;
+}
+
+/** Who an approval reaches (P-49): the people assigned, and whether the day chosen leaves them a training period. */
+export function ApprovalTrainingReach({ documentId, effectiveFrom, today }: { documentId: number; effectiveFrom: string; today: string }) {
+  const ta = useTrainingAssignments(documentId);
+  return <p className="qms-effective-reach" role="status">{approvalReach(ta, effectiveFrom, today)}</p>;
+}
+
 /** Who must read and acknowledge one controlled document: by job role and by name (P-49). */
 export function TrainingAssignmentsPanel({ doc, onClose }: { doc: QmsDoc; onClose: () => void }) {
   const ta = useTrainingAssignments(doc.id);

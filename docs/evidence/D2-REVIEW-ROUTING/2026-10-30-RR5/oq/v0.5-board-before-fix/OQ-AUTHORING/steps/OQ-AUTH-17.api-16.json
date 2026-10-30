@@ -1,0 +1,35 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5242/api/authoring/docs/9a6313a3-6018-40e1-b7f7-478b05f5b231/submit",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "workflow_steps": [
+        {
+          "role": "QA",
+          "approver_email": "oq-runner@validation.local"
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 34,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "reviewSubmitted": true,
+      "message": "Document submitted for review",
+      "workflowId": "78737f45-ebb6-42af-a668-1c82ac430960",
+      "steps": 1,
+      "reviewRecord": {
+        "store": "authoring_workflow_steps",
+        "documentStatus": "IN_REVIEW",
+        "workflowId": "78737f45-ebb6-42af-a668-1c82ac430960",
+        "steps": 1
+      }
+    }
+  }
+}

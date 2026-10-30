@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { canGovernedWrite } from '@shared/constants/permissions';
-import { QMS_TRAINING_DECLARATION, type QmsTrainingAcknowledgement } from '@shared/qms/training';
+import { QMS_TRAINING_DECLARATION, type QmsTrainingAcknowledgement, type QmsTrainingContext } from '@shared/qms/training';
 import { useAuthUser } from '@/services/portal/authService';
 import { GovernedTimestamp } from '../_shared/components/GovernedTimestamp';
 import { useDialog } from '../v2/useDialog';
@@ -72,11 +72,12 @@ function ReaderSession(props: ReaderSessionProps) {
     <div className="qms-training-dialog" role="dialog" aria-modal="true" aria-labelledby="qms-personal-training-title" tabIndex={-1} ref={dialogRef}>
       <header className="qms-training-head">
         <div><h2 id="qms-personal-training-title">{editing ? 'Edit controlled text' : 'Read and acknowledge'}</h2>
-          {record.context && <p>{record.context.docNumber} · {record.context.title} · Revision {record.context.documentVersion} · {STATUS_LABEL[record.context.status]}</p>}
+          {record.context && record.selected && <p>{record.context.docNumber} · {record.context.title} · Revision {record.selected.documentVersion} · {versionStatus(record.selected)}</p>}
         </div>
         <button type="button" className="qms-btn ghost" disabled={busy} onClick={() => { void close(); }}>Close</button>
       </header>
       <ReaderMessages record={record} />
+      {!record.loading && !editing && <SuccessorChoice record={record} busy={busy} />}
       {!record.loading && (editing ?
         <ControlledTextPane props={props} record={record} editable={editable} registerBeforeClose={registerBeforeClose} onSaved={controlledTextSaved} onReload={reloadEditor} /> :
         <TrainingReadContent record={record} busy={busy} acknowledge={acknowledge} />)}
@@ -97,6 +98,32 @@ function ReaderMessages({ record }: { record: PersonalTrainingRecord }) {
   </>;
 }
 
+/** The day a version approved for a later day counts from, when the context says so. */
+function countsFrom(context: QmsTrainingContext): string | null {
+  return context.inForce === false ? context.effectiveDate ?? null : null;
+}
+
+function versionStatus(context: QmsTrainingContext): string {
+  const day = countsFrom(context);
+  return day ? `Approved · takes effect ${day}` : STATUS_LABEL[context.status];
+}
+
+/** The version approved for a later day is read beside the version in force, never instead of it (P-49). */
+function SuccessorChoice({ record, busy }: { record: PersonalTrainingRecord; busy: boolean }) {
+  const context = record.context;
+  const successor = context?.successor;
+  if (!context || !successor) return null;
+  const day = countsFrom(successor);
+  const later = day ? `Takes effect ${day}` : 'Takes effect later';
+  return <fieldset className="qms-training-successor">
+    <legend>v{successor.documentVersion} is approved and takes effect {day ? `on ${day}` : 'on a later day'}.</legend>
+    <label><input type="radio" name="qms-training-version" checked={record.reading === 'in-force'} disabled={busy}
+      onChange={() => record.setReading('in-force')} />In force: v{context.documentVersion}</label>
+    <label><input type="radio" name="qms-training-version" checked={record.reading === 'successor'} disabled={busy}
+      onChange={() => record.setReading('successor')} />{later}: v{successor.documentVersion}</label>
+  </fieldset>;
+}
+
 function ControlledTextPane({ props, record, editable, registerBeforeClose, onSaved, onReload }: {
   props: ReaderSessionProps; record: PersonalTrainingRecord; editable: boolean;
   registerBeforeClose: (guard: (() => Promise<boolean>) | null) => void;
@@ -114,7 +141,7 @@ function ControlledTextPane({ props, record, editable, registerBeforeClose, onSa
 function TrainingReadContent({ record, busy, acknowledge }: {
   record: PersonalTrainingRecord; busy: boolean; acknowledge: () => Promise<void>;
 }) {
-  const context = record.context;
+  const context = record.selected;
   if (!context) return null;
   return <>
     {context.sections.length > 0 && <div className="qms-training-content" aria-label={`${context.eligible ? 'Released revision' : 'Recorded controlled text for revision'} ${context.documentVersion}`}>
@@ -122,29 +149,31 @@ function TrainingReadContent({ record, busy, acknowledge }: {
       {context.sections.map((section, index) => <section key={`${section.key}:${index}`}><h3>{section.label}</h3><p>{section.body}</p></section>)}
     </div>}
     {!context.eligible && <p className="qms-training-unavailable">{context.unavailableReason ?? 'Verified readable released text is unavailable. A document owner must save and release the controlled section text before you can acknowledge it.'}</p>}
-    {record.receipt && <TrainingReceipt receipt={record.receipt} />}
-    {context.eligible && !record.receipt && <TrainingDeclaration record={record} busy={busy} acknowledge={acknowledge} />}
+    {record.receipt && <TrainingReceipt receipt={record.receipt} countsFrom={countsFrom(context)} />}
+    {context.eligible && !record.receipt && <TrainingDeclaration record={record} busy={busy} acknowledge={acknowledge} countsFrom={countsFrom(context)} />}
   </>;
 }
 
-function TrainingReceipt({ receipt }: { receipt: QmsTrainingAcknowledgement }) {
+function TrainingReceipt({ receipt, countsFrom: day }: { receipt: QmsTrainingAcknowledgement; countsFrom: string | null }) {
   return <section className="qms-training-receipt" aria-label="My acknowledgement">
     <h3>My acknowledgement</h3>
     <p>You acknowledged revision {receipt.documentVersion}. This personal attestation records reading and understanding; it does not assess competency.</p>
     <dl>
       <div><dt>Receipt</dt><dd>{receipt.id}</dd></div>
       <div><dt>Acknowledged</dt><dd><GovernedTimestamp value={receipt.acknowledgedAt} /></dd></div>
+      {day && <div><dt>Counts from</dt><dd>{day}</dd></div>}
       <div><dt>Refresh due</dt><dd>{receipt.expiresAt ? <GovernedTimestamp value={receipt.expiresAt} /> : 'No refresh date recorded'}</dd></div>
     </dl>
   </section>;
 }
 
-function TrainingDeclaration({ record, busy, acknowledge }: {
-  record: PersonalTrainingRecord; busy: boolean; acknowledge: () => Promise<void>;
+function TrainingDeclaration({ record, busy, acknowledge, countsFrom: day }: {
+  record: PersonalTrainingRecord; busy: boolean; acknowledge: () => Promise<void>; countsFrom: string | null;
 }) {
   return <div className="qms-training-declaration">
     <label><input type="checkbox" checked={record.understood} disabled={busy || record.blocked} onChange={(event) => record.setUnderstood(event.target.checked)} />{QMS_TRAINING_DECLARATION}</label>
     <p>For your signed-in account only. This is a personal attestation, not an electronic signature.</p>
+    {day && <p>Your acknowledgement is recorded now and counts from {day}.</p>}
     <button type="button" className="qms-btn primary" disabled={!record.understood || busy || record.blocked} onClick={() => { void acknowledge(); }}>{busy ? 'Recording…' : 'Acknowledge this revision'}</button>
   </div>;
 }
