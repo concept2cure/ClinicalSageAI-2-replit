@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — a review signed on its route > shows the reviewer as signed, by whom it was asked, and offers no review decision 41ms
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — a review signed on its route > a queue whose every reviewer signed reads "Reviewers signed, sign-off pending" 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 15 passed (17)
