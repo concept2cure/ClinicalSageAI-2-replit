@@ -5,29 +5,29 @@ accepted=json.loads((p/'code-push-exit.json').read_text());proof=json.loads((p/'
 assert accepted['processExit']==0 and accepted['unchangedInputs']
 assert hashlib.sha256((p/'code-push.txt').read_bytes()).hexdigest()==accepted['transcriptSha256']==proof['codePushTranscriptSha256']
 assert accepted['pushedCommit']==proof['localCommit']==proof['freshRemoteCommit']==subprocess.check_output(['git','rev-parse','HEAD'],cwd=r,text=True).strip()
-assert proof['acceptedCodeCommit']==accepted['pushedCommit'] and proof['sourcePinsMatchingLocalAndRemote']==310
+assert proof['acceptedCodeCommit']==accepted['pushedCommit'] and proof['sourcePinsMatchingLocalAndRemote']==328
 assert '[ci:typecheck-no-regression] OK — error count 0 matches baseline.' in log
 assert 'tsc --noEmit --incremental' in log
 sha=accepted['pushedCommit'];short=sha[:9]
 f=e/'README.md';s=f.read_text()
 a='write rolls them all back. Current-source whole TypeScript, normal push gates and\nfresh remote/source verification remain pending; publication is not yet claimed.'
-b=f'write rolls them all back. Whole TypeScript passed with zero errors, every normal\npush gate passed, and source `{short}` was accepted on `concept2cure-v2`.\nFresh remote proof matched all 310 selected inputs; see [PUBLICATION.md](PUBLICATION.md).'
+b=f'write rolls them all back. Whole TypeScript passed with zero errors, every normal\npush gate passed, and source `{short}` was accepted on `concept2cure-v2`.\nFresh remote proof matched all 328 selected inputs; see [PUBLICATION.md](PUBLICATION.md).'
 assert a in s;s=s.replace(a,b)
 a='Whole TypeScript, normal push gates and fresh remote proof remain pending.'
 assert a in s;s=s.replace(a,'Whole TypeScript, normal push gates and fresh remote/source proof are now\nrecorded in [PUBLICATION.md](PUBLICATION.md).')
-a='Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and\nexplicitly synthetic browser behavior only at the named sources. It does not\nestablish native PostgreSQL RLS, an authenticated hosted deployment, clinical\nvalidation or agency acceptance. Whole TypeScript and all normal gates passed at\n`498403dc3`, `59d0bd6eb`, `dd53c5a5f`, `624cd9285`, `3e8840459` and\n`5d7568304`; remote advancement then refused those updates. The current 310-input\nintegration still requires its own\ncompiler/gated-push retry\nand fresh remote/source verification before publication can be claimed.'
-b=f'Source publication is verified on `concept2cure-v2` at `{short}`, including\na zero-error whole TypeScript check, all normal push gates and a fresh match of\n310 selected source inputs. The exact receipts are linked in [PUBLICATION.md](PUBLICATION.md).\nLocal mounted HTTP, SQL/PGlite and explicitly synthetic browser behavior remain\nbounded to their named sources and collaborators. They do not establish native\nPostgreSQL RLS, an authenticated hosted deployment, clinical validation or agency\nacceptance.'
+a='Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and\nexplicitly synthetic browser behavior only at the named sources. It does not\nestablish native PostgreSQL RLS, an authenticated hosted deployment, clinical\nvalidation or agency acceptance. Whole TypeScript and all normal gates passed at\n`498403dc3`, `59d0bd6eb`, `dd53c5a5f`, `624cd9285`, `3e8840459`,\n`5d7568304` and `7f5af0e27`; remote advancement then refused those updates. The current 328-input\nintegration still requires its own\ncompiler/gated-push retry\nand fresh remote/source verification before publication can be claimed.'
+b=f'Source publication is verified on `concept2cure-v2` at `{short}`, including\na zero-error whole TypeScript check, all normal push gates and a fresh match of\n328 selected source inputs. The exact receipts are linked in [PUBLICATION.md](PUBLICATION.md).\nLocal mounted HTTP, SQL/PGlite and explicitly synthetic browser behavior remain\nbounded to their named sources and collaborators. They do not establish native\nPostgreSQL RLS, an authenticated hosted deployment, clinical validation or agency\nacceptance.'
 assert a in s;s=s.replace(a,b)
 for old, new in [
  ('Current-source whole TypeScript, all normal push\n  gates and fresh remote proof remain pending.',
   'Current-source whole TypeScript passed with zero errors; all normal push\n  gates and fresh remote/source proof are recorded in [PUBLICATION.md](PUBLICATION.md).'),
- ('the current IND/AnA integration still requires all normal push gates.',
-  'the current IND/AnA integration has passed all normal push gates; see [PUBLICATION.md](PUBLICATION.md).'),
+ ('the current eCTD outcome integration still requires all normal push gates.',
+  'the current eCTD outcome integration has passed all normal push gates; see [PUBLICATION.md](PUBLICATION.md).'),
 ]:
  assert old in s, old
  s=s.replace(old,new)
 f.write_text(s)
-f=e/'qualified-source.json';q=json.loads(f.read_text());q['publication']={'acceptedCodeCommit':sha,'observedAt':proof['observedAt'],'normalPushExit':0,'wholeTypeScriptErrors':0,'baseline':0,'selectedSourcePinsMatchingLocalAndFreshRemote':310,'proof':'qualification/publication-code-proof.json','transcript':'qualification/code-push.txt','transcriptSha256':accepted['transcriptSha256'],'priorRefusalsRetained':['qualification/push-refusal-01-summary.json','qualification/push-refusal-02-summary.json','qualification/push-refusal-03-summary.json','qualification/push-refusal-04-summary.json','qualification/push-refusal-05-summary.json','qualification/push-refusal-06-summary.json','qualification/push-refusal-07-summary.json','qualification/push-refusal-08-summary.json']};f.write_text(json.dumps(q,indent=2)+'\n')
+f=e/'qualified-source.json';q=json.loads(f.read_text());q['publication']={'acceptedCodeCommit':sha,'observedAt':proof['observedAt'],'normalPushExit':0,'wholeTypeScriptErrors':0,'baseline':0,'selectedSourcePinsMatchingLocalAndFreshRemote':328,'proof':'qualification/publication-code-proof.json','transcript':'qualification/code-push.txt','transcriptSha256':accepted['transcriptSha256'],'priorRefusalsRetained':['qualification/push-refusal-01-summary.json','qualification/push-refusal-02-summary.json','qualification/push-refusal-03-summary.json','qualification/push-refusal-04-summary.json','qualification/push-refusal-05-summary.json','qualification/push-refusal-06-summary.json','qualification/push-refusal-07-summary.json','qualification/push-refusal-08-summary.json','qualification/push-refusal-09-summary.json']};f.write_text(json.dumps(q,indent=2)+'\n')
 (e/'PUBLICATION.md').write_text(f'''# RBM source publication
 
 Accepted code commit: [`{sha}`](https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/{sha}) on `concept2cure-v2`.
@@ -44,14 +44,16 @@ run reported **0 errors against baseline 0**; every other pre-push gate passed.
 No hook, compiler, SQL scanner or baseline was bypassed or widened. The SQL gate refusal, 27-error compiler refusal and later Git concurrent-update
 refusal are retained with their corrected successors.
 
-Fresh Git remote proof matched local HEAD and all **310 selected source/test/
+Fresh Git remote proof matched local HEAD and all **328 selected source/test/
 configuration inputs**, with a clean worktree and no unresolved conflicts. See
 [the proof](qualification/publication-code-proof.json),
 [the normal push transcript](qualification/code-push.txt), and
 [the exit receipt](qualification/code-push-exit.json).
 Transcript SHA-256: `{accepted['transcriptSha256']}`.
 
-Current affected qualification: **223/223 across 9 files** for shared assistant
+Current affected qualification: **57/57 across 4 files** for existing eCTD
+qualification outcome/CLI compatibility, after **79/79 across 7 files** for
+Live Drive/RBM navigation and **223/223 across 9 files** for shared assistant
 SQL-client and recorded project context integration with RBM admission/signing
 refusals, after **119/119 across 12 files** for Vault ownership,
 attachment delivery and RBM compatibility, after **178/178 across 11 files** for catalog/taskboard
@@ -75,7 +77,7 @@ receipt and does not change the qualified source inputs.
 f=r/'docs/work-orders/README.md';lines=f.read_text().splitlines();counts=[0,0]
 for i,line in enumerate(lines):
  if line.startswith('| **W1 / D2 — reach existing Risk-Based Monitoring from the main rail and project setup.'):
-  cols=line.split('|');cols[3]=f' **delivered on canonical `{short}`** 2026-10-30 — RBM rail after CMC, persisted project choice/context, current-project access and draft ownership, atomic content-bound approval signatures. Current affected223/9 (shared assistant path) with prior119/12 (Vault),178/11 (recovery) and318/15 (settings), build/focused gates/lint, whole TypeScript0 and normal push pass; fresh310source-pin remote proof in the evidence PUBLICATION.md. Hosted/native PostgreSQL RLS and clinical acceptance remain unverified. ';lines[i]='|'.join(cols);counts[0]+=1
+  cols=line.split('|');cols[3]=f' **delivered on canonical `{short}`** 2026-10-30 — RBM rail after CMC, persisted project choice/context, current-project access and draft ownership, atomic content-bound approval signatures. Current affected57/4 (eCTD outcomes), with prior79/7 (LiveDrive),223/9 (shared assistant path),119/12 (Vault),178/11 (recovery) and318/15 (settings), build/focused gates/lint, whole TypeScript0 and normal push pass; fresh328source-pin remote proof in the evidence PUBLICATION.md. Hosted/native PostgreSQL RLS and clinical acceptance remain unverified. ';lines[i]='|'.join(cols);counts[0]+=1
  if line.startswith('| **W1 / D2 — complete existing filing-correspondence form ownership.'):
   cols=line.split('|');cols[3]=f' **form-ownership source included in canonical `{short}`; follow-ups paused for founder RBM priority** 2026-10-30 — retained correspondence source is published with the RBM release and full TypeScript0. Historical395/28 and intake265/16 cohorts remain in their dated evidence; earlier combined1082/54 at09c83267b includes the four correspondence files. Inbox/handoff legal links remain deferred. ';lines[i]='|'.join(cols);counts[1]+=1
 assert counts==[1,1],counts;f.write_text('\n'.join(lines)+'\n')

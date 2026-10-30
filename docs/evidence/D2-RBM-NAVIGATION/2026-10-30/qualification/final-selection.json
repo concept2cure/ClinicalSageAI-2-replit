@@ -92,6 +92,9 @@
     "server/services/ectd/__tests__/stf-agency-source.test.ts",
     "server/services/ectd/__tests__/stf-csr-source-values.test.ts",
     "server/services/ectd/__tests__/stf-generator.test.ts",
+    "server/services/ectd/external-validator/__tests__/external-validator.test.ts",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts",
+    "server/services/ectd/qualification/__tests__/qualification.test.ts",
     "server/services/entitlements/__tests__/launch-scope.test.ts",
     "server/services/entitlements/__tests__/rbm-launch-claim.test.ts",
     "server/services/part11/__tests__/governed-sign-meaning.test.ts",
@@ -111,7 +114,8 @@
     "server/services/unified-work/__tests__/unified-work-view.test.ts",
     "server/services/vault/__tests__/vault-archive-delivery.test.ts",
     "shared/__tests__/project-recorded-context.test.ts",
-    "shared/__tests__/project-settings.test.ts"
+    "shared/__tests__/project-settings.test.ts",
+    "tests/regulatory/ectd-qualification-cli.test.ts"
   ],
   "inputs": [
     "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
@@ -267,6 +271,7 @@
     "scripts/ci/launch-scope-fixture-allowlist.json",
     "scripts/ci/sign-ceremony-baseline.json",
     "scripts/ci/sql-interpolation-baseline.json",
+    "scripts/ectd/qualify-ectd.ts",
     "server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts",
     "server/__tests__/routes/risk-acceptance-locked.pglite.test.ts",
     "server/bootstrap/register-clinical-intel-routes.ts",
@@ -378,6 +383,12 @@
     "server/services/ectd/__tests__/stf-csr-source-values.test.ts",
     "server/services/ectd/__tests__/stf-generator.test.ts",
     "server/services/ectd/dtd-bundler.ts",
+    "server/services/ectd/external-validator/__tests__/external-validator.test.ts",
+    "server/services/ectd/external-validator/index.ts",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts",
+    "server/services/ectd/qualification/__tests__/qualification.test.ts",
+    "server/services/ectd/qualification/outcome.ts",
+    "server/services/ectd/qualification/qualify.ts",
     "server/services/ectd/stf-generator.ts",
     "server/services/entitlements/__tests__/launch-scope.test.ts",
     "server/services/entitlements/__tests__/rbm-launch-claim.test.ts",
@@ -431,6 +442,7 @@
     "shared/project-recorded-context.ts",
     "shared/project-settings.ts",
     "shared/schema.ts",
+    "tests/regulatory/ectd-qualification-cli.test.ts",
     "tsconfig.json",
     "vite.config.ts",
     "vitest.config.ts"

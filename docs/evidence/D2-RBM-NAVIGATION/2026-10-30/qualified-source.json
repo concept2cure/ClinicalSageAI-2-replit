@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-30T19:22:36.822999+00:00",
-  "sourceCommit": "3ca00722e9a5370e731ebc0f6b79050505d38754",
-  "scope": "320 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
+  "observedAt": "2026-10-30T19:24:24.031452+00:00",
+  "sourceCommit": "54d53bd5aef2c8dd9b1df20862ae219def8f6db7",
+  "scope": "328 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
   "qualification": [
     {
       "receipt": "qualification/final-03-summary.json",
@@ -172,8 +172,20 @@
       "result": "build0 at3ca00722e;320inputs unchanged"
     },
     {
-      "receipt": "qualification/lint-final.json.gz",
+      "receipt": "qualification/final-live-lint.json.gz",
       "result": "55changedTypeScriptfiles,0errors,190before/190afterwarnings against4f92b4364"
+    },
+    {
+      "receipt": "qualification/final-qualification-summary.json",
+      "result": "57/57 across4files at54d53bd5a;328inputs unchanged. Existing eCTD qualification outcomes, validator selection and real missing-prerequisite CLI refusal. All320 preceding selected inputs identical; no agency-corpus or hosted qualification claim."
+    },
+    {
+      "receipt": "qualification/build-qualification-exit.json",
+      "result": "build0 at54d53bd5a;328inputs unchanged"
+    },
+    {
+      "receipt": "qualification/lint-final.json.gz",
+      "result": "55changedTypeScriptfiles,0errors,190before/190afterwarnings against61fe4fd81"
     }
   ],
   "priorWholeTypeScript": {
@@ -338,6 +350,7 @@
     "scripts/ci/launch-scope-fixture-allowlist.json": "a805bd6cf090ed93d6869b678444a32d1040b2e8c074a29e14677695d6016a2c",
     "scripts/ci/sign-ceremony-baseline.json": "fc61fb2a80e62d9c6f1f608aeb0048df1640421a3e54526e3528641963d357e8",
     "scripts/ci/sql-interpolation-baseline.json": "341c17baddc1ca3025d51a52041f95c10f4bd102a14e4f887dd6a04ddf1f95a2",
+    "scripts/ectd/qualify-ectd.ts": "503170738a1a882c6733cbc8cf582bfa78e692c412e57f236a35d7c8b59a3d12",
     "server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts": "b821e9cc0732db9b12c310574cb2c3cad74d2f4b82746559d3a0dbcb8ad4b51e",
     "server/__tests__/routes/risk-acceptance-locked.pglite.test.ts": "84b54bf5a3d4f22e559bc91f5fcc245e8edfc450444f4fa0494948adc8b6ed10",
     "server/bootstrap/register-clinical-intel-routes.ts": "f747d24e89f7a9474815e537e2718d65515a92f711d7b9d1be96d3fc19eb29fc",
@@ -449,6 +462,12 @@
     "server/services/ectd/__tests__/stf-csr-source-values.test.ts": "3d236aac59c5b29b531f7cfbd614e7540c24e49b6ee8bd3ee009df6bf1d8d4f8",
     "server/services/ectd/__tests__/stf-generator.test.ts": "cfc9d77bda19a11cd446816e771d67665d24efa95a0eae349523952589457c70",
     "server/services/ectd/dtd-bundler.ts": "87849d63455d8eb05291a327586382747531223a4284a7ca7bbe8ef850b0901f",
+    "server/services/ectd/external-validator/__tests__/external-validator.test.ts": "b0c542b9b06b8f90ff8d37c3bd9d31511643329d611afe45e7e4afce0512784f",
+    "server/services/ectd/external-validator/index.ts": "12b4c254c7450f99cd617437bcfbdff89529005cd47c907525762a23fe80cc92",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts": "3fde5465dbf376fae18180729393188ad9d5702c965be864ab24f2407b1e7c5b",
+    "server/services/ectd/qualification/__tests__/qualification.test.ts": "59a14071c4ba53b8ade435d357787353856184b98d0f215e126201a840eb2485",
+    "server/services/ectd/qualification/outcome.ts": "aa0d27d12037193a177f459f8050dd3a501843e1a50587445d90e3994d0234a9",
+    "server/services/ectd/qualification/qualify.ts": "cbf5cfadbd7c7e9c32c752af19960cd50afbaca4ecba13fdf01d4a4c3b555937",
     "server/services/ectd/stf-generator.ts": "c77399a62aa963ef77f9a309af0dd2b40b6050ca4b50341cdbf276dc1c0586e8",
     "server/services/entitlements/__tests__/launch-scope.test.ts": "c4e57837544428966da947deed7b2fc834aa590c9475c2edf0a4936c0360de7d",
     "server/services/entitlements/__tests__/rbm-launch-claim.test.ts": "681c5b8c6f9a9d7d3af901102c3fb2865237340bc568f204811c061c189102e9",
@@ -502,9 +521,10 @@
     "shared/project-recorded-context.ts": "784809d73bfb7a2d4a2cc5213952fd60faa525c29b520c9d75069e8899a0ff89",
     "shared/project-settings.ts": "71a10d819b3458fd7d4188ebdfe5e6e4aa85cc2915733f9190fd94ec5fb37757",
     "shared/schema.ts": "f5dcde2abbcbc409989c4d3d6690f5cb0edce1f4117dcc5ecd1f155a04db9cba",
+    "tests/regulatory/ectd-qualification-cli.test.ts": "27bc4aaffc1b4901f16e3e8f591f976f5e53aa2230e323468d10486935ad0221",
     "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
     "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
     "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
   },
-  "publication": "Pending actual normal push/fresh remote proof for latest320inputs. Earlier gate and remote-advancement refusals retained; no force/bypass/baseline growth."
+  "publication": "Pending actual normal push/fresh remote proof for latest328inputs. Earlier gate and remote-advancement refusals retained; no force/bypass/baseline growth."
 }

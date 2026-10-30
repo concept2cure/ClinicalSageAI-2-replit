@@ -375,7 +375,20 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   190→190 with zero errors. An initial receipt helper used `.ts` for an existing
   `.tsx` test; its path assertion stopped preparation before execution. The
   failed bootstrap launchers are retained, and the corrected seven-file cohort
-  is the executed result above. Current-source whole TypeScript, all normal push
+  is the executed result above. Its lint is retained as `final-live-lint.json`.
+- eCTD outcome integration: incoming `61fe4fd81` merged normally into
+  `54d53bd5a`; the work-order conflict retained both owned rows and the incoming
+  qualification row. The eight source/test inputs stay inside the existing
+  qualification harness, validator resolver and CLI. Independent review found
+  no RBM, launch, actor, shared-project or signing change, and all 320 preceding
+  selected inputs remain identical. Root's affected cohort
+  (`final-qualification-*`) at `54d53bd5a` passed **57/57 across 4 actual files**,
+  exit 0, zero skipped and all **328 selected inputs unchanged**. Its production
+  build passed **exit 0** on those inputs; changed-file lint across 55 TypeScript
+  files remained 190→190 with zero errors. The CLI check executes an explicitly
+  unconfigured local command and verifies a blocked outcome; it does not prove
+  agency-corpus, external-engine or human-witnessed qualification.
+  Current-source whole TypeScript, all normal push
   gates and fresh remote proof remain pending.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
@@ -412,7 +425,7 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   launch scope, launch API scope, signature ceremony and SQL-interpolation CI
   checks all pass **exit 0**, with **210 selected inputs unchanged** through
   those checks (`final-settings-ci-summary.json`). These are prior-epoch focused
-  receipts; the current Live Drive integration still requires all normal push gates.
+  receipts; the current eCTD outcome integration still requires all normal push gates.
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
   Review found the missing-signature gap and checked its final closure; review
@@ -432,7 +445,7 @@ explicitly synthetic browser behavior only at the named sources. It does not
 establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
 validation or agency acceptance. Whole TypeScript and all normal gates passed at
 `498403dc3`, `59d0bd6eb`, `dd53c5a5f`, `624cd9285`, `3e8840459`,
-`5d7568304` and `7f5af0e27`; remote advancement then refused those updates. The current 320-input
+`5d7568304` and `7f5af0e27`; remote advancement then refused those updates. The current 328-input
 integration still requires its own
 compiler/gated-push retry
 and fresh remote/source verification before publication can be claimed.

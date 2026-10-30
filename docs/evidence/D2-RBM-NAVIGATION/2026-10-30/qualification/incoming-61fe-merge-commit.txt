@@ -1,0 +1,17 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/services/ectd/qualification/__tests__/qualification.test.ts (597 lines)
+  server/services/ectd/qualification/qualify.ts (527 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3561 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 54d53bd5a] Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
