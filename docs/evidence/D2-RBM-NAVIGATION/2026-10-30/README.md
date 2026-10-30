@@ -66,7 +66,7 @@ Deleted history finds 3 historical retirements/rewrites, not an absent module.
 The full signature successor at `09c83267b` passed the root combined cohort,
 build and zero-regression lint below. Canonical integration, the later SQL gate
 successor and the latest unrelated CSR/STF merge have their own named checks and
-source-preservation links. The current packet selects 174 source/test/configuration
+source-preservation links. The current packet selects 175 source/test/configuration
 inputs; it does not relabel earlier executions as a full rerun of current source.
 Whole TypeScript, normal push gates and fresh remote proof remain pending.
 
@@ -236,6 +236,27 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   build at that commit passed **exit 0**, with those same 174 inputs
   unchanged; all four selected CI checks passed and lint remained at 190→190
   warnings with zero errors. Upstream historical totals are not borrowed.
+- Fourth normal push (`push-refusal-04-*`) at `59d0bd6eb` again passed
+  **whole TypeScript with 0 errors against baseline 0** and all normal gates,
+  with 174 selected inputs unchanged. The remote then advanced to `c3f16c8a2`,
+  and Git refused the update. No remote changes were overwritten, nothing was
+  published by this attempt, and no force push or bypass was used. Both this
+  successful compiler result and the earlier one at `498403dc3` retain their
+  exact source epochs.
+- Device attachment integration: incoming `c3f16c8a2` merged normally into
+  `bbaffa1f7`, with no production conflicts. The work-order documentation
+  conflict retained the distinct incoming attachment row and both owned rows.
+  Read-only review found only the indexed file-selection snapshot in
+  `PathwayPanes.tsx` and two DossierDrawer tests: the selected file is captured
+  before asynchronous attachment work, while programme/section identity and
+  validated receipt handling are preserved. No RBM, shared actor/policy,
+  signature or CSS contract changed. Root's affected cohort
+  (`final-attachments-*`) at `bbaffa1f7` passed **38/38 across 4 actual files**,
+  exit 0, zero skipped and all **175 selected inputs unchanged**. Its production
+  build passed **exit 0**, with those 175 inputs stable; all four selected CI
+  checks passed, and lint remained 190→190 with zero errors. The earlier
+  334-case/153-input and 237-case/174-input results remain prior source epochs;
+  their totals are not borrowed or added to this new affected cohort.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
   changed-file selection. The initial lint harness exceeded its historical text
@@ -267,8 +288,8 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   passed 590 named paths before the latest integration; the current API check
   passes **591 named paths** with none refused. Current launch scope, launch API
   scope, signature ceremony and SQL-interpolation CI checks all pass **exit 0**,
-  with **174 selected
-  inputs unchanged** through those checks (`final-ci-summary.json`).
+  with **175 selected inputs unchanged** through those checks
+  (`final-ci-summary.json`).
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
   Review found the missing-signature gap and checked its final closure; review
@@ -287,6 +308,6 @@ Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and
 explicitly synthetic browser behavior only at the named sources. It does not
 establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
 validation or agency acceptance. Whole TypeScript and all normal gates passed at
-`498403dc3`, followed by a Git compare-and-swap refusal. The current 174-input
-integration still requires its own compiler/gated-push retry and fresh
-remote/source verification before publication can be claimed.
+`498403dc3` and `59d0bd6eb`; remote advancement then refused both updates. The
+current 175-input integration still requires its own compiler/gated-push retry
+and fresh remote/source verification before publication can be claimed.

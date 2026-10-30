@@ -75,7 +75,8 @@
     "client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx",
     "client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx",
     "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx",
-    "client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx"
+    "client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx"
   ],
   "inputs": [
     "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
@@ -83,6 +84,7 @@
     "client/src/concept2cure/mdx/app.css",
     "client/src/concept2cure/mdx/store/dossierStore.ts",
     "client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx",
     "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx",
     "client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx",
     "client/src/concept2cure/mdx/surfaces/engineeringPanelTarget.ts",
