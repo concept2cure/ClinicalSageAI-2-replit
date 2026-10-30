@@ -147,9 +147,9 @@ None for drafting. Widening CMC composition is a separate, later decision (P-73,
    - a region recorded on the section's template governs;
    - otherwise the person's chosen region names the writing region, and a mismatch with the application on
      record is stated, not silently resolved.
-   - **2b (S, open):** the panel opens on the recorded application's agency, and offers only what the server
+   - **2b (S, delivered in the audit increment below):** the panel opens on the recorded application's agency, and offers only what the server
      maps.
-   - **2c (S, open):** assembly drafting and `/api/claude/draft` move onto the same context.
+   - **2c (S, delivered in the audit increment below):** assembly drafting and `/api/claude/draft` move onto the same context.
 3. **Project the recorded product facts into drafting (M).** These are the charter's therapeutic area and
    development stage, the program's product type → modality (`modalityOf`), and the indication. Each is labelled
    recorded, and a declared label still cannot override a recorded fact silently.
@@ -172,3 +172,37 @@ None for drafting. Widening CMC composition is a separate, later decision (P-73,
   reaches some agency sites and not others; where a source cannot be read, the region stays "not indexed".
 - **A wrong application resolved silently is worse than UNASSESSED.** Slice 1 refuses ambiguous pairs.
 - **The editor route is shared by every document type.** Slice 2 must not change US IND drafting output.
+
+## Audit implementation increment (2026-10-30)
+
+The founder explicitly requested development after the IND expertise audit.
+The implementation extends slices 2b/2c/3/6 using the existing owners above:
+recorded product context with current project admission, one advisory renderer,
+clinical section relevance and reference-currency limits, plus exact section
+region defaults in the existing editor. Charter ambiguity remains undetermined;
+recorded context is not scientific qualification. The detailed software contract,
+red/green evidence and residual content/SME requirements are under
+`docs/evidence/D4/2026-10-30-ind-development/`. Other regional/content/applicability
+slices remain separately measurable, not blanket-complete.
+
+Delivered software now projects the admitted program and sole charter into the
+editor/shared drafting service, retains per-field origins and conflicts, and
+rechecks access, product and filing facts at dispatch/response and before editor
+parking. Recorded-context streams release only after those checks. The existing
+generator JSON retains the context audit; this does not add product-fact
+revalidation at acceptance. Existing Vault/assembly acceptance reservations stay
+authoritative.
+
+The section read projects its effective saved template's agency without exposing
+parent provenance. Editor, assembly queue and legacy HTTP/tool doors use the same
+context owners. All 12 canonical writing labels are available; GLOBAL/unknown
+scope has no FDA default. Writing labels do not expand the four concrete regional
+values of the saved-template source schema or add regional requirements.
+
+Automatic editor evidence uses exact bounded windows rather than a 600-character
+prefix, with offsets, hashes and omitted-character counts. Quotation checks use
+individual shown spans, preserving omissions; model paraphrases remain assertions.
+These changes extend the existing source selector and attribution primitive.
+Clinical guidance selection/currency is improved, but regional Module 1 source
+content, indexed disease/phase/population conditions, nonclinical source binding
+and independent scientific qualification remain open work under slices 4–7.

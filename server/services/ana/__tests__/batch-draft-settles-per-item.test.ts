@@ -22,6 +22,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { AnaDocumentDraftingService, type DocumentDraftRequest, type DocumentDraftResponse } from '../AnaDocumentDraftingService';
 import { GatewayContextWindowError, fitsContextWindow } from '../../ai-gateway/context-budget';
+import { AnaProjectScopeError } from '../project-scope-admission';
 
 const drafted = (sectionType: string): DocumentDraftResponse => ({
   content: `<p>${sectionType}</p>`,
@@ -52,6 +53,16 @@ const req = (sectionType: string): DocumentDraftRequest => ({
 });
 
 describe('AnaDocumentDraftingService.batchDraft', () => {
+  it('keeps the actionable project-context refusal on its own slot', async () => {
+    const service = new AnaDocumentDraftingService();
+    vi.spyOn(service, 'draftDocument').mockImplementation(async r => {
+      if (r.sectionType === 'changed') throw new AnaProjectScopeError(409, 'DRAFT_PRODUCT_CONTEXT_CHANGED', 'Reload and draft again.');
+      return drafted(r.sectionType);
+    });
+    const results = await service.batchDraft({ requests: [req('fine'), req('changed')] });
+    expect(results[0]).toMatchObject({ content: '<p>fine</p>' });
+    expect(results[1]).toEqual({ error: 'DRAFT_PRODUCT_CONTEXT_CHANGED', message: 'Reload and draft again.', sectionType: 'changed' });
+  });
   it('returns a result for every section, keeping the successful drafts when one section cannot be drafted', async () => {
     const service = new (AnaDocumentDraftingService as unknown as new () => AnaDocumentDraftingService)();
     vi.spyOn(service, 'draftDocument').mockImplementation(async (r: DocumentDraftRequest) => {

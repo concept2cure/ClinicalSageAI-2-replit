@@ -67,6 +67,8 @@ import { NO_ALTERNATIVES, alternativeWording, type DraftProposalTarget } from '.
 import { PassageAlternatives } from '../editor/DraftPassage';
 import type { PassageRequest } from '../editor/draftPassage';
 import type { AcceptedAttribution, AiDraftGenerationInputs, AiDraftMetadata, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
+import { WRITING_AGENCIES } from '@shared/authoring/writing-regions';
+import { writingAgencyPresentation, type RecordedWritingFiling } from '../editor/writingAgencyPresentation';
 export { failureOf, createEmptyAiDraftReviewState } from '../editor/authoringDraftTransport';
 export type { AcceptedAttribution, AiDraftGenerationInputs, AiDraftMetadata, AiDraftReviewState, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
 
@@ -79,8 +81,10 @@ export interface AuthoringAiDraftProps {
   reviewSession?: AiDraftReviewSession;
   sectionCode: string;
   sectionTitle: string;
-  /** Region passed to the generator. The endpoint defaults to 'FDA'. */
+  /** Explicit writing preference for callers without a recorded filing. */
   region?: string;
+  /** Display/default context from the existing guarded reads; the server re-reads authority. */
+  recordedFiling?: RecordedWritingFiling;
   /** A frozen document cannot be edited, so it cannot be drafted into either. */
   docSealed: boolean;
   /** The editor has unsaved changes. Accepting replaces the section content
@@ -106,7 +110,6 @@ export interface AuthoringAiDraftProps {
 }
 
 const TONES = ['professional', 'concise', 'detailed'] as const;
-const REGIONS = ['FDA', 'EMA', 'PMDA', 'MHRA', 'Health Canada'] as const;
 
 /**
  * The grounding statement for a draft, in the words a reviewer needs.
@@ -291,6 +294,7 @@ export function AuthoringAiDraft({
   sectionCode,
   sectionTitle,
   region: initialRegion,
+  recordedFiling,
   docSealed,
   editorDirty,
   onAccepted,
@@ -304,15 +308,17 @@ export function AuthoringAiDraft({
 }: AuthoringAiDraftProps) {
   const review = useAuthoringDraftReview({ sectionId, docId, programId, reviewSession, docSealed, editorDirty,
     onAccepted, onClose, fireToast, describeAcceptFailure });
-  const defaults: AiDraftGenerationInputs = { tone: 'professional', region: initialRegion || 'FDA', context: '', requirements: '' };
+  const { defaultRegion, generationHold, regionNote } = writingAgencyPresentation({ filing: recordedFiling,
+    initialRegion, retainedRegion: review.state.generationInputs?.region });
+  const defaults: AiDraftGenerationInputs = { tone: 'professional', region: defaultRegion, context: '', requirements: '' };
   const { tone, region, context, requirements } = { ...defaults, ...review.state.generationInputs };
   const setInputs = (next: Partial<AiDraftGenerationInputs>) => review.setGenerationInputs(next, defaults);
   const { draft, body, changeReason, refusal, acceptUnknown, baseChanged, checkedContent } = review.state;
   const { generating, generatingSince, accepting, checking, phase } = review;
-  const generateAlternatives = () => review.generateAlternatives({ tone, region, context, requirements });
+  const generateAlternatives = () => { if (!generationHold) return review.generateAlternatives({ tone, region, context, requirements }); };
   const setBody = (value: string) => review.patch({ body: value });
   const setChangeReason = (value: string) => review.patch({ changeReason: value });
-  const generate = () => review.generate({ tone, region, context, requirements });
+  const generate = () => { if (!generationHold) return review.generate({ tone, region, context, requirements }); };
   const accept = review.accept;
   const edited = draft != null && body !== draft.generated;
   const wording = alternativeWording(review.state, edited);
@@ -324,9 +330,10 @@ export function AuthoringAiDraft({
   const grounding = draft ? describeGrounding(draft) : null;
   const busy = generating || accepting || checking;
   if (passage && passageShown) {
-    return <PassageAlternatives key={passage.requestId} passage={passage} docId={docId} programId={programId} sectionCode={sectionCode}
+    return <>{regionNote && !generationHold && <p role="status" data-testid="ai-draft-region-note">{regionNote}</p>}
+      <PassageAlternatives key={passage.requestId} passage={passage} docId={docId} programId={programId} sectionCode={sectionCode}
       region={region} docSealed={docSealed} editorDirty={editorDirty} savedUpdatedAt={savedUpdatedAt} target={proposals}
-      sources={reviewSession?.sources} fireToast={fireToast} onBack={() => onPassageClose?.()} onClose={onClose} renderFacts={d => <DraftFacts draft={d} edited={false} />} />;
+      generationHold={generationHold ?? undefined} sources={reviewSession?.sources} fireToast={fireToast} onBack={() => onPassageClose?.()} onClose={onClose} renderFacts={d => <DraftFacts draft={d} edited={false} />} /></>;
   }
 
   return (
@@ -350,6 +357,8 @@ export function AuthoringAiDraft({
           Close
         </button>
       </div>
+
+      {regionNote && <p role="status" data-testid="ai-draft-region-note" style={{ fontSize: 12, margin: 0 }}>{regionNote}</p>}
 
       {/* Rendered OUTSIDE the draft block on purpose. A 410 clears the draft —
           the candidate is single-use and was already claimed — and an earlier
@@ -424,7 +433,8 @@ export function AuthoringAiDraft({
                 disabled={busy}
                 style={{ height: 28 }}
               >
-                {REGIONS.map(r => (
+                <option value="">Choose writing region</option>
+                {WRITING_AGENCIES.map(r => (
                   <option key={r} value={r}>
                     {r}
                   </option>
@@ -457,7 +467,7 @@ export function AuthoringAiDraft({
               className="btn primary"
               style={{ height: 30 }}
               onClick={() => void generate()}
-              disabled={busy || docSealed || !!acceptUnknown}
+              disabled={busy || docSealed || !!acceptUnknown || !!generationHold}
               data-testid="ai-draft-generate"
               title={
                 docSealed
@@ -468,7 +478,7 @@ export function AuthoringAiDraft({
               {generating ? 'Drafting…' : 'Draft section'}
             </button>{' '}
             <button className="btn ghost" style={{ height: 30 }} onClick={() => void generateAlternatives()}
-              disabled={busy || docSealed || !!acceptUnknown} data-testid="ai-draft-alternatives"
+              disabled={busy || docSealed || !!acceptUnknown || !!generationHold} data-testid="ai-draft-alternatives"
               title={docSealed ? 'This document is frozen — its content cannot be edited.' : undefined}>
               Draft three alternatives
             </button>
@@ -486,7 +496,7 @@ export function AuthoringAiDraft({
           <DraftFacts draft={draft} edited={edited} />
           <AlternativeReview state={review.state} draft={draft} label={wording.paragraphLabel} edited={edited} savedContent={savedContent}
             savedUpdatedAt={savedUpdatedAt} target={proposals} busy={busy} docSealed={docSealed}
-            onRevise={instruction => void review.revise(instruction, { tone, region, context, requirements })} />
+            onRevise={generationHold ? undefined : instruction => void review.revise(instruction, { tone, region, context, requirements })} />
 
           {/* A model draft the server could not park cannot reach the accept
               endpoint at all. Say what adopting it would actually record. */}
@@ -585,7 +595,7 @@ export function AuthoringAiDraft({
               className="btn ghost"
               style={{ height: 30 }}
               onClick={() => void (wording.set ? generateAlternatives() : generate())}
-              disabled={busy || docSealed || !!acceptUnknown}
+              disabled={busy || docSealed || !!acceptUnknown || !!generationHold}
               data-testid="ai-draft-regenerate"
               title={wording.againTitle}
             >

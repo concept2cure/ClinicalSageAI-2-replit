@@ -54,6 +54,23 @@ export type TherapeuticAreaId =
 
 export type ProfileSeverity = 'critical' | 'major' | 'minor' | 'info';
 
+/** Supplied labels select advisory knowledge; even recorded labels are not qualified evidence. */
+export interface ProfileProductContext {
+  phase?: string | null;
+  modality?: string | null;
+  population?: string | null;
+  source?: 'recorded' | 'declared';
+}
+
+/** Only explicitly indexed conditions are evaluated. Missing facts remain undetermined. */
+export interface ProfileApplicabilityConditions {
+  phases?: readonly string[];
+  modalities?: readonly string[];
+  populations?: readonly string[];
+}
+
+export type ProfileDocumentKind = 'ctd' | 'protocol' | 'csr';
+
 export interface ContextRule {
   id: string;
   /** When this rule applies — module/section scope or 'always'. */
@@ -65,6 +82,8 @@ export interface ContextRule {
   instruction: string;
   severity: ProfileSeverity;
   guidanceRef?: string;
+  /** Optional curated conditions, not an inferred waiver or proof of legal necessity. */
+  applicability?: ProfileApplicabilityConditions;
 }
 
 export interface CommonGap {

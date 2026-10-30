@@ -78,7 +78,9 @@ beforeEach(async () => {
     if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [priorDoc, targetDoc].map(doc => ({ ...doc, program_id: PROGRAM, readScope: 'document' })) });
     if (pathname === `/api/authoring/docs/${PRIOR}` || pathname === `/api/authoring/docs/${TARGET}`) return ok({ success: true, document: { ...(pathname.endsWith(PRIOR) ? priorDoc : targetDoc), client_program_id: PROGRAM } });
     if (pathname === `/api/authoring/docs/${PRIOR}/sections`) return ok({ success: true, sections: [priorSection] });
-    if (pathname === `/api/authoring/docs/${TARGET}/sections`) return ok({ success: true, sections: targetSections });
+    if (pathname === `/api/authoring/docs/${TARGET}/sections`) return ok({ success: true, sections: targetSections.map(section => ({
+      ...section, draftingRegion: draftRegion, draftingRegionState: draftRegion ? 'recorded' : 'unavailable',
+    })) });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true, sources: [], revisions: [], events: [], comments: [] });
   });
