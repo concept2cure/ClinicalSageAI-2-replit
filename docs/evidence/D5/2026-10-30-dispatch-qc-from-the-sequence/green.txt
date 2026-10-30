@@ -1,0 +1,9 @@
+# Green
+ ✓ server/services/ana/__tests__/dispatch-qc-from-the-sequence.test.ts > dispatch_qc_check > gives no verdict from typed counts: without a sequence it refuses 5ms
+ ✓ server/services/ana/__tests__/dispatch-qc-from-the-sequence.test.ts > dispatch_qc_check > reads the stored sequence, and typed counts that say "clear" change nothing 47ms
+ ✓ server/services/ana/__tests__/dispatch-qc-from-the-sequence.test.ts > dispatch_qc_check > asks for the sequence, not the counts, before AnA calls it 2ms
+      Tests  3 passed (3)
+
+# Every suite reading the tool definitions, the authorization register, the launch inventory or the dispatch QC (25 files)
+      1       Tests  370 passed (370)
+      1  Test Files  25 passed (25)
