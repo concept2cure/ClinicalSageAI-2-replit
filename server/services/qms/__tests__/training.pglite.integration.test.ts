@@ -4,7 +4,7 @@
  * mock writes a real row on the supplied client, so transaction rollback is real.
  */
 import { readFileSync } from 'node:fs';
-import { QMS_APPROVAL_FIXTURE_DDL, seedQmsApprovalFixture } from './_release-approval-fixture';
+import { QMS_APPROVAL_FIXTURE_DDL, assignToEveryone, seedQmsApprovalFixture } from './_release-approval-fixture';
 import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -96,7 +96,7 @@ beforeAll(async () => {
       status text NOT NULL DEFAULT 'active',
       payment_status text NOT NULL DEFAULT 'active'
     );
-    CREATE TABLE users (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    CREATE TABLE users (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active', name text, email text);
     CREATE TABLE organization_users (
       organization_id integer NOT NULL REFERENCES organizations(id),
       user_id integer NOT NULL REFERENCES users(id),
@@ -114,8 +114,10 @@ beforeAll(async () => {
       resource_type text,
       resource_id text,
       details jsonb
-    );
+    ); CREATE UNIQUE INDEX qms_documents_id_org_uq ON qms_documents (id, organization_id);
   `);
+  // The assignment store (P-49): compliance counts the people assigned to each document.
+  await database.exec(readFileSync('migrations/20261029g_qms_job_roles_and_training_assignments.sql', 'utf8'));
 }, 60_000);
 
 beforeEach(async () => {
@@ -138,6 +140,9 @@ beforeEach(async () => {
 
 afterAll(async () => { await database?.close(); });
 
+/** Compliance counts the people assigned (P-49); these cases are about receipts, so the document is assigned everyone (CASCADE clears it). */
+const rosterCompliance = async () => { await assignToEveryone(client, ORG, releasedDocument.id, VIEWER); return readQmsTrainingCompliance(client, ORG, NOW); };
+
 describe('actual retained approval controls current training', () => {
   it.each([
     "verification_status='revoked'",
@@ -156,7 +161,7 @@ describe('actual retained approval controls current training', () => {
     expect((await trainingRows()).map(row => row.id)).toEqual([first.acknowledgement.id]);
     expect((await database.query('SELECT * FROM qms_training_audit_proof')).rows).toHaveLength(1);
     expect((await database.query('SELECT signature_manifest,signature_hash FROM electronic_signatures ORDER BY id')).rows).toEqual(signatures);
-    expect((await readQmsTrainingCompliance(client, ORG, NOW))[0]).toMatchObject({ eligible: false, current: 0 });
+    expect((await rosterCompliance())[0]).toMatchObject({ eligible: false, current: 0 });
   });
 
   it('refuses an ambiguous exact approval identity without choosing the latest duplicate', async () => {
@@ -522,7 +527,7 @@ describe('current roster coverage from real training history', () => {
         acknowledgment_method, expires_at, metadata FROM qms_training_records WHERE id = $3`,
     [OTHER_ORG, FOREIGN_MEMBER, receipts.get(VIEWER)]);
 
-    const rows = await readQmsTrainingCompliance(client, ORG, NOW);
+    const rows = await rosterCompliance();
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       id: releasedDocument.id, doc_number: 'SOP-001', title: releasedDocument.title,
@@ -540,7 +545,7 @@ describe('current roster coverage from real training history', () => {
     const metadata = { ...changed.metadata, approval: approvalFor(changed) };
     await database.query('UPDATE qms_documents SET metadata = $1 WHERE id = $2', [JSON.stringify(metadata), changed.id]);
     await seedQmsApprovalFixture(client, await documentById());
-    const rows = await readQmsTrainingCompliance(client, ORG, NOW);
+    const rows = await rosterCompliance();
     expect(rows[0]).toMatchObject({ document_version: '2.0', content_digest: computeQmsDocumentContentDigest(changed), current: 0, of: 2 });
     expect(await trainingRows()).toHaveLength(1);
   });

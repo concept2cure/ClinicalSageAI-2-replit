@@ -12,7 +12,10 @@ import { verifiedTrainingReceipt } from './training-content';
 import { readQmsTrainingReleaseContext, type CurrentQmsReleaseApproval } from './current-release-approval';
 import { resolveInForceRelease } from './in-force-release';
 
-export { readQmsTrainingCompliance, readQmsTrainingExpiring, type QmsTrainingExpiry } from './training-compliance';
+export {
+  readQmsTrainingCompliance, readQmsTrainingExpiring, summarizeQmsTrainingCompliance,
+  type QmsTrainingComplianceRow, type QmsTrainingExpiry,
+} from './training-compliance';
 export interface TrainingSqlClient {
   query(sql: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
   discard?(reason: Error): Promise<void>;
