@@ -10,6 +10,11 @@ vi.mock('../hooks/useMdxPrograms', () => ({ useMdxPrograms: () => state }));
 vi.mock('../surfaces/K510Surface', () => ({ K510Surface: ({ program }: { program: Program }) => <div data-testid="selected-program">{program.id}</div> }));
 vi.mock('../surfaces/SoftwareSurface', () => ({ SoftwareSurface: ({ program }: { program: Program }) => <div data-testid="selected-program">{program.id}</div> }));
 vi.mock('../surfaces/PostmarketSurface', () => ({ PostmarketSurface: ({ program }: { program: Program }) => <div data-testid="selected-program">{program.id}</div> }));
+vi.mock('../surfaces/EngineeringSurface', () => ({ EngineeringSurface: ({ program }: { program: Program }) => {
+  const [note, setNote] = React.useState('');
+  const [owner] = React.useState(program.id);
+  return <><div data-testid="engineering-owner">{owner}</div><input aria-label="Engineering working note" value={note} onChange={event => setNote(event.target.value)} /></>;
+} }));
 vi.mock('../surfaces/CerSurface', () => ({ CerSurface: ({ program, onOpenEditor }: { program: Program; onOpenEditor: (section: { code: string; label: string }) => void }) => <div data-testid="selected-program">{program.id}<button onClick={() => onOpenEditor({ code: '4', label: 'Clinical evaluation' })}>Open clinical section</button></div> }));
 vi.mock('../surfaces/IvdSurface', () => ({ IvdSurface: ({ onOpenEditor }: { onOpenEditor: (section: { code: string; label: string }) => void }) => <button onClick={() => onOpenEditor({ code: 'II.6.2', label: 'Performance evaluation' })}>Open performance section</button> }));
 import { MdxSurfaceHost } from '../MdxSurfaceHost';
@@ -25,6 +30,18 @@ beforeEach(() => { state.programs = [row(A), row(B)]; state.loading = false; sta
 afterEach(() => { cleanup(); __resetSurfaceActionBus(); clearShellProject(); consumeEditorTarget(); sessionStorage.clear(); });
 
 describe('MDX project context isolation', () => {
+  it('retires engineering working state when the selected project changes', () => {
+    publishShellProject({ id: A });
+    render(<MdxSurfaceHost {...props()} nav="device-engineering" />);
+    fireEvent.change(screen.getByLabelText('Engineering working note'), { target: { value: 'Work for A' } });
+    act(() => publishShellProject({ id: B }));
+    expect(screen.getByTestId('engineering-owner').textContent).toBe(B);
+    expect((screen.getByLabelText('Engineering working note') as HTMLInputElement).value).toBe('');
+    act(() => publishShellProject({ id: A }));
+    expect(screen.getByTestId('engineering-owner').textContent).toBe(A);
+    expect((screen.getByLabelText('Engineering working note') as HTMLInputElement).value).toBe('');
+  });
+
   it.each([/^New (program|project)$/, /^Create your first (program|project)$/])('the %s creation door opens the Projects wizard instead of asking AnA', (name) => {
     state.programs = [];
     const p = props();
