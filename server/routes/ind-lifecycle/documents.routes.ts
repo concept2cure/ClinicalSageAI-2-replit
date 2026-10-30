@@ -33,7 +33,8 @@ import {
   renderRightOfReferenceStatementPdf,
   renderAuthorizedPersonsListPdf,
 } from '../../services/ind-lifecycle/ind-document-renderer';
-import { getSubmission } from '../../services/submission-service/submission-service';
+import { getSubmission, listLeaves, listSequences } from '../../services/submission-service/submission-service';
+import { informationAmendmentFromLeaves } from '../../services/ind-lifecycle/ind-amendment-service';
 import { getSponsor } from '../../services/ind-master-data/ind-master-data-service';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, sendRecordedFile, coerceEventDates, type Ctx } from './shared';
 
@@ -44,10 +45,15 @@ function coverLetterValid(b: any): boolean {
 }
 
 /**
- * The letter's submission type: the one stated; else, when submissionId names
+ * The letter's submission type: the one stated; else, when the letter names the
+ * filed sequence it accompanies, what that sequence's stored leaves make it (an
+ * information amendment and its 312.31(b) titles); else, when submissionId names
  * the submission, the one its recorded lifecycle stage names (tenant-scoped);
  * else none, and assembleCoverLetter reports the gap. 2026-10-15: a type was
  * required here, and the IND screen sent 'original' for every letter.
+ * 2026-10-30: the lifecycle stage names only original and annual, and nothing
+ * advances it, so no screen could produce a letter that identifies an
+ * information amendment, a CSR's included.
  */
 async function withRecordedSubmissionType(b: any, ctx: Ctx | null): Promise<CoverLetterInput> {
   if (b.submissionType || b.submissionId === undefined || b.submissionId === null) return b;
@@ -56,8 +62,22 @@ async function withRecordedSubmissionType(b: any, ctx: Ctx | null): Promise<Cove
     throw new Error('VALIDATION: submissionId must be a positive integer.');
   }
   if (!ctx) throw Object.assign(new Error('Authentication required to read the submission record.'), { code: 'FORBIDDEN' });
+  const filed = await filedAmendmentIdentity(b.sequenceNumber, submissionId, ctx);
+  if (filed) return { ...b, ...filed, ...(Array.isArray(b.informationAmendmentTitles) ? { informationAmendmentTitles: b.informationAmendmentTitles } : {}) };
   const submission = await getSubmission(submissionId, ctx);
   return { ...b, submissionType: lifecycleStageToSubmissionType(submission.lifecycleStage) ?? undefined };
+}
+
+/** The named sequence of this submission, as its stored leaves identify it; null when none is named or it identifies nothing. */
+async function filedAmendmentIdentity(raw: unknown, submissionId: number, ctx: Ctx) {
+  if (raw === undefined || raw === null || raw === '') return null;
+  const sequenceNumber = String(raw).trim();
+  if (!/^\d{4}$/.test(sequenceNumber)) throw new Error('VALIDATION: sequenceNumber must be the 4-digit eCTD sequence number.');
+  const sequence = (await listSequences(submissionId, ctx)).find((s) => s.sequenceNumber === sequenceNumber);
+  if (!sequence) {
+    throw Object.assign(new Error(`Sequence ${sequenceNumber} is not filed in this submission.`), { code: 'NOT_FOUND' });
+  }
+  return informationAmendmentFromLeaves(sequence.type, await listLeaves(sequence.id, ctx));
 }
 
 function loaValid(b: any): boolean {

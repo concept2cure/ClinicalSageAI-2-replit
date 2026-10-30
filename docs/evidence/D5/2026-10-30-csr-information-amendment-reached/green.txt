@@ -1,0 +1,26 @@
+# Green: the fixed code
+
+$ npx vitest run (the two new test files)
+  ✓ IND forms: a CSR as an information amendment > offers the clinical study report category, sends it, and shows the 312.31(b) identification the plan gives 413ms
+  ✓ IND forms: a CSR as an information amendment > a filing whose leaves await their documents says so, and does not call them placed 194ms
+  ✓ IND forms: a CSR as an information amendment > a revision filed with no leaf to revise says it is not attached to one 174ms
+  ✓ IND forms: the cover letter names the sequence it accompanies > sends the sequence number entered, so the server reads what that sequence contains 78ms
+  ✓ IND forms: the cover letter names the sequence it accompanies > sends no sequence when none is entered (control) 70ms
+  ✓ POST /cover-letter for a filed sequence > a CSR information amendment says "Information Amendment: Clinical", with no type gap 36ms
+  ✓ POST /cover-letter for a filed sequence > a protocol amendment is not called an information amendment: its type stays a gap (control) 6ms
+  ✓ POST /cover-letter for a filed sequence > a sequence this submission has not filed is 404 naming it, and no letter is assembled 5ms
+  ✓ POST /cover-letter for a filed sequence > a sequence number that is not four digits is 400 naming it 4ms
+  ✓ POST /cover-letter for a filed sequence > a type the caller states still wins, and no sequence is read (control) 5ms
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+
+# Every IND forms and IND lifecycle suite (client and server), and the launch-scope tests naming these routes
+ Test Files  82 passed (82)
+      Tests  807 passed (807)
+  Not in this run: dispatch-verdict-parity.pglite.test.ts and routes.contract.integration.test.ts. Their 11 dispatch-gate cases fail identically on the committed code (below); the next change fixes their fixture.
+
+# Those two files on the committed code, this change reverted
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  11 failed | 87 passed (98)
+    "err": "Failed query: SELECT settings FROM organizations WHERE id=$1\nparams: 1"
