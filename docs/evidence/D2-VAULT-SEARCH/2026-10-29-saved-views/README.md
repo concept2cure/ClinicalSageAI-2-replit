@@ -102,3 +102,55 @@ router (`GET /:id/saved-views`, `POST /saved-views`, `PATCH` and `DELETE /saved-
 **Gates:** these are green: typecheck (`tsc --noEmit`, exit 0), the ESLint warning ratchet, `ci:sql-interpolation`, `ci:server-error-leaks` and `ci:fabricated-identity`. The c2c route and Vault service suites pass: 140 files, 2,361 tests. The schema-contract suite passes: 117 files, 1,656 tests.
 
 **Next:** the find view's "Saved views" control in `Vault.tsx`. It reads lazily, keeps honest states, and offers apply, save, rename, share and delete (T9).
+
+---
+
+# Release 2, client: the "Saved views" control (2026-10-30)
+
+**What already exists** (re-checked at trunk `54b2929c54`): the server half above; the find view's filter row,
+breadcrumb, "Include earlier versions" and "Accessible projects" (`Vault.tsx`); the library search
+(`VaultLibraryResults.tsx`). No client called the saved-view routes, and no other session has a saved-view control
+(`grep -rn "saved-views\|SavedVaultView" client/src` found none). This is a completion of the find view, in the two
+files the design names; no new UI file.
+
+**What changed** (design §3.9 (a)–(l)):
+
+- `VaultLibraryResults.tsx`: `VaultFindFilters.folderId`; the `SavedVaultView` and `SavedViewsShape` types with a
+  guard (`isSavedViewsShape`), so a malformed body is a failed read, never an empty list; `savedViewState` and
+  `savedViewKey`, the one comparison behind "(changed)" (text trimmed, values sorted).
+- `Vault.tsx`:
+  - a "Saved views" button in the breadcrumb (`aria-expanded`, `aria-controls`); the list is read only while it is
+    open (`useSavedViews`, `GET /:id/saved-views`);
+  - a select grouped "Mine" and "Organisation", saying "· all projects" for a library view and "· by <name>" (or
+    "a former member") for someone else's; a view that no longer applies reads "(no longer applies)";
+  - Apply, separate from choosing: the whole view or, when it no longer applies, nothing, with the server's reason;
+  - Rename, Share with organisation / Make personal, Update view and Delete, each offered only where the server's
+    flags allow it; Update view is disabled with its reason until the applied view's search has changed, and in the
+    other scope;
+  - "Save current search…", only while searching, with an inline form (no dialog): name, "Only me" or "Everyone in
+    the organisation" (disabled with its reason for a role without `governed:write`). The POST body is the find
+    view's state;
+  - a Delete confirmation that says who loses the view and that documents are not affected;
+  - honest states: loading, a failed read ("Saved views could not be loaded. This is not an empty list." with Try
+    again), a verified empty list, and a refused change in the server's own words, kept until the next act;
+  - the breadcrumb says `View "<label>"`, with " (changed)" once the search moves off it; leaving the find view, a
+    filed or uploaded document's hand-off, and deleting the applied view all forget it;
+  - a held folder disables "Accessible projects" with its reason, and "Also filtering by:" shows, removably, what the
+    selects cannot: a folder, several values in one dimension, a review set no choice names (`hiddenFindFilters`);
+  - AnA's context names the applied view, its visibility and scope, and whether the search has changed
+    (`savedView`). No new AnA action.
+
+**Deviation:** the save form's name is prefilled from the search text ("stability, filtered"), or "Filtered
+documents", not from `findSubject`, which carries quotation marks meant for AnA's sentences.
+
+**Verified by making it fail:** T9 (`client/src/concept2cure/v2/__tests__/vaultSavedViews.test.tsx`), 21 cases from
+the design's T9 list. `red-T9.txt`: **21 of 21** fail against trunk `54b2929c54` (no control; `savedViewKey` not
+exported). `green-T9.txt`: 21 of 21 pass, and the seven neighbouring Vault suites with them (81 tests, 8 files).
+
+**Gates:** ESLint adds no warning to either file (Vault.tsx keeps its four existing ones; the new component was split
+until it was under the complexity limit); `ci:undefined-css-classes`, `ci:unauthenticated-fetch` and
+`ci:fabricated-identity` pass. Only classes already defined are used, and every call goes through `apiRequest`.
+
+**Review:** a four-lens adversarial review (honest states, correctness against §3.9 and the server, copy and
+accessibility, authority and boundary), each serious finding put to a skeptic (`wf_f7a04af9-2a7`), was running when
+this was committed; its confirmed findings follow in their own commit.

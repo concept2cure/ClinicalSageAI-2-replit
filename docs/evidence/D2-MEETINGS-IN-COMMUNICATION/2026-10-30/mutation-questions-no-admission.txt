@@ -1,0 +1,3 @@
+ × server/routes/__tests__/ha-interactions-meeting-admission.test.ts > a meeting's questions and readiness > refuses a question on a meeting whose project the person may not change, with nothing recorded 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
