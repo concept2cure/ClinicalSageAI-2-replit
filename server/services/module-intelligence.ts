@@ -85,6 +85,13 @@ export interface EvidenceRequirement {
   criticalityLevel: 'critical' | 'important' | 'supporting';
 }
 
+/** A deficiency family is shared knowledge, not evidence of FDA jurisdiction. */
+function usFdaDeficiencyType(rawType: string | null) {
+  const context = rawType ? getSubmissionTypeContext(rawType) : null;
+  return rawType && context?.region === 'US' && context.agency === 'FDA'
+    ? resolveToDeficiencyType(rawType) : null;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. MEDICAL DEVICE & DIAGNOSTICS INTELLIGENCE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -92,7 +99,7 @@ export interface EvidenceRequirement {
 function getMedicalDeviceIntelligence(project: ProjectSummary | null): ModuleIntelligence {
   // 2026-10-15: an unrecorded type was read as '510k' and given the 510(k) block below.
   const recordedType = project?.submissionType || null;
-  const defType = recordedType ? resolveToDeficiencyType(recordedType) : null;
+  const defType = usFdaDeficiencyType(recordedType);
   const is510k = defType === '510k', isPMA = defType === 'pma', isDeNovo = defType === 'de_novo';
 
   const basePrompt = `
@@ -378,7 +385,7 @@ When the user asks me to analyze or draft, I will:
 function getEctdCoauthorIntelligence(project: ProjectSummary | null): ModuleIntelligence {
   // 2026-10-15: an unrecorded type and phase were read as 'ind' and 'Phase 1'.
   const rawType = project?.submissionType || null;
-  const defType = rawType ? resolveToDeficiencyType(rawType) : null;
+  const defType = usFdaDeficiencyType(rawType);
   const submissionType = rawType
     ? getSubmissionTypeContext(rawType)?.displayName ?? rawType.toUpperCase()
     : 'not recorded — do not assume one';
@@ -1365,11 +1372,26 @@ function getSafetyIntelligencePrompt(): string {
 // MAIN EXPORT — Get intelligence for a specific module
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Get the deep domain intelligence for a specific module.
- * Returns system prompt additions, capabilities, and workflow guidance.
- */
-export function getModuleIntelligence(
+const CANONICAL_INTELLIGENCE_OWNERS = new Map([
+  ['device-510k', getMedicalDeviceIntelligence],
+  ['device-pma', getMedicalDeviceIntelligence],
+  ['device-cer', getMedicalDeviceIntelligence],
+  ['device-submission', getMedicalDeviceIntelligence],
+  ['ind-checklist', getEctdCoauthorIntelligence],
+  ['submission-center', getEctdCoauthorIntelligence],
+  ['cmc', getCmcWizardIntelligence],
+  ['document-authoring', getDocCanvasIntelligence],
+  ['protocol-dev', getDocCanvasIntelligence],
+]);
+
+/** Canonical callers reuse the complete body under their own owner ID. */
+export function getModuleIntelligence(moduleId: string, project: ProjectSummary | null): ModuleIntelligence | null {
+  const owner = CANONICAL_INTELLIGENCE_OWNERS.get(moduleId);
+  return owner ? { ...owner(project), moduleId } : legacyModuleIntelligence(moduleId, project);
+}
+
+/** Explicit legacy callers retain the original objects and separate workflows. */
+function legacyModuleIntelligence(
   moduleId: string,
   project: ProjectSummary | null
 ): ModuleIntelligence | null {
@@ -1426,18 +1448,41 @@ export function getCrossCuttingIntelligence(enabledModules: string[]): string {
   return parts.join('\n');
 }
 
-/**
- * Determine the active module from project context and user session.
- */
+function recordedIntelligenceOwner(rawSubType: string | null | undefined): string | null {
+  if (!rawSubType) return null;
+  const context = getSubmissionTypeContext(rawSubType);
+  if (context?.registryId === 'ICH_CSR') return 'document-authoring';
+  if (context?.registryId === 'ICH_PROTOCOL') return 'protocol-dev';
+  const moduleByType: Record<string, string> = {
+    '510k': 'device-510k', pma: 'device-pma', de_novo: 'device-510k',
+    ind: 'ind-checklist', nda: 'submission-center', bla: 'submission-center',
+    cer: 'device-cer', ectd: 'submission-center',
+  };
+  const module = moduleByType[resolveToDeficiencyType(rawSubType)] ?? null;
+  if (context && context.region !== 'US') {
+    if (context.segment === 'medical_devices' || context.segment === 'diagnostics_ivd') {
+      return module === 'device-cer' ? 'device-cer' : 'device-submission';
+    }
+    if (module === 'ind-checklist') return 'submission-center';
+  }
+  return module;
+}
+
+/** Determine the existing intelligence owner from recorded project/session facts. */
 export function detectActiveModule(intelligence: UserIntelligence): string | null {
+  // A device session retains a known pathway instead of overriding it with 510(k).
+  const recordedModule = recordedIntelligenceOwner(intelligence.activeProject?.submissionType);
+
   // If user has an active session with a context type, map it to a module
   const sessionContext = intelligence.currentSession?.contextType;
   if (sessionContext) {
+    if (sessionContext === 'device_submission') {
+      return recordedModule?.startsWith('device-') ? recordedModule : 'device-510k';
+    }
     const contextModuleMap: Record<string, string> = {
-      section_drafting: 'ectd-coauthor',
-      cmc_authoring: 'cmc-wizard',
-      document_creation: 'doc-canvas',
-      device_submission: '510k-submission',
+      section_drafting: 'submission-center',
+      cmc_authoring: 'cmc',
+      document_creation: 'document-authoring',
       document_review: 'vault',
       data_analysis: 'evidence-engine',
       safety_review: 'safety-signal',
@@ -1445,20 +1490,14 @@ export function detectActiveModule(intelligence: UserIntelligence): string | nul
     if (contextModuleMap[sessionContext]) return contextModuleMap[sessionContext];
   }
 
-  // Infer from a RECORDED submission type via the canonical bridge
-  const rawSubType = intelligence.activeProject?.submissionType;
-  if (rawSubType) {
-    const moduleByType: Record<string, string> = { '510k': '510k-submission', pma: '510k-submission', de_novo: '510k-submission', ind: 'ind-filing', nda: 'nda-bla', bla: 'nda-bla', cer: 'ce-marking', ectd: 'ectd-coauthor' };
-    const hit = moduleByType[resolveToDeficiencyType(rawSubType)];
-    if (hit) return hit;
-  }
+  if (recordedModule) return recordedModule;
 
   // Infer from industry mode — the organization profile is null when it could not be read
   const industryMode = intelligence.organization?.industryMode ?? null;
-  if (industryMode === 'medtech') return '510k-submission';
-  if (industryMode === 'medical_writing') return 'doc-canvas';
+  if (industryMode === 'medtech') return 'device-510k';
+  if (industryMode === 'medical_writing') return 'document-authoring';
 
   // Default for a recorded biotech/pharma-side industry. 2026-10-15: this was
   // also the answer for an industry nobody recorded (read as 'biotech').
-  return industryMode ? 'ectd-coauthor' : null;
+  return industryMode ? 'submission-center' : null;
 }
