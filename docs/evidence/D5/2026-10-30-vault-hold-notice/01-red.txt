@@ -1,0 +1,10 @@
+# MR-08 Stage 5 step 5, red: on HEAD (30d18c79e), real PostgreSQL 16, app_service under RLS, as a viewer
+# The Vault read carries no holds. The client component does not exist (its test cannot import it).
+
+ × the Vault read says what is on legal hold > lists a project hold and a document hold to a viewer, with reference and date, and no reason
+   → Cannot read properties of undefined (reading 'map')
+ × the Vault read says what is on legal hold > says nothing is held where nothing is
+   → expected undefined to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
