@@ -1,6 +1,6 @@
 # D1 — the production image boots in a container: blocked by this environment
 
-**Row:** D1. **Date:** 2026-10-01. **Status:** moved to CI (see _Resumed_ below); done when the `production-image-boot` job is green.
+**Row:** D1. **Date:** 2026-10-01. **Status: done** (2026-10-30): green in CI from its first run; see _CI result_ below.
 
 ## What was attempted
 
@@ -77,3 +77,20 @@ deployment does not allow. Both were refused.
 answers `500 AUTH_010` at `/api/auth/mfa/verify`, not a 401. It is reachable
 only after a key rotation that missed a secret, so it is a key-management
 defect, not a sign-in bypass.
+
+## CI result, read 2026-10-30
+
+- **Green from the first run.** The run that added the job, 36930467294, built both images and
+  provisioned an empty database with the provision image. It then started the production image as
+  `appuser` under `RLS_ENFORCE=on`, got `/readyz` and `/healthz` 200 after 7 s, and signed a person in
+  with the second factor, a wrong code refused (`ci/first-green-run.txt`).
+- **Since then:** 847 green, 119 red and 105 cancelled out of 1,071 runs
+  (`ci/outcomes-2026-10-02-to-2026-10-30.txt`). The cancellations are jobs that waited 24 h for a
+  runner.
+- **Red now, on old commits, for a fixed cause.** Since 2026-10-29 17:51 every run that reached the
+  job has failed at the provision step. All of them are on commits from 27–28 October that carry a CDI
+  reference seed which raised on a fresh install. Trunk fixed it in `cc123a784` (2026-10-29 04:44).
+  Run against an empty database, the old version fails (exit 3) and trunk's version skips with a
+  notice (exit 0) (`ci/seed-replay-empty-db.txt`). This is the job failing on a real defect, as it
+  exists to.
+- **Not yet observed:** a run of a post-fix commit. CI was about 36 h behind when this was read.
