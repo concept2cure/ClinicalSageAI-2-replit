@@ -1,0 +1,9 @@
+{
+  "tool": "xmllint",
+  "versionOutput": "/tmp/csr-stf-xml-tools/runtime/usr/bin/xmllint: using libxml version 20914\n   compiled with: Threads Tree Output Push Reader Patterns Writer SAXv1 FTP HTTP DTDValid HTML Legacy C14N Catalog XPath XPointer XInclude Iconv ISO8859X Unicode Regexps Automata Schemas Schematron Modules Debug Zlib Lzma",
+  "binarySha256": "865786391db69e1b71ff18c2e4ec2673f7418c642eca992e5bfabbb43edf9b88",
+  "debianPackage": "libxml2-utils_2.9.14+dfsg-1.3~deb12u6_amd64.deb",
+  "packageSha256": "84a26b289dd6075b8334f252bc445023dc64102e557645284fdbc1bebed21a1a",
+  "setup": "Unprivileged extraction from Debian package fetched with signed apt metadata into /tmp; existing libxml2 runtime. No repository dependency, root install or DTD vendoring.",
+  "qualificationScope": "Actual XML well-formed checks; not official DTD or agency acceptance."
+}
