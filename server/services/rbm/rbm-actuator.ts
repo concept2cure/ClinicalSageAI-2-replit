@@ -66,8 +66,10 @@ export class RbmAssessmentEditError extends Error {
   constructor(readonly status: 404 | 409, readonly code: string, message: string) { super(message); this.name = 'RbmAssessmentEditError'; }
 }
 export async function requireDraftAssessment(exec: Exec, organizationId: number, assessmentId: number, programId?: string, lock: 'share' | 'update' = 'share') {
-  const { rows } = await exec.query(`SELECT id,program_id,status,version FROM rbm_risk_assessments
-    WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL ${lock === 'update' ? 'FOR UPDATE' : 'FOR SHARE'}`, [assessmentId, organizationId]);
+  const statement = lock === 'update'
+    ? 'SELECT id,program_id,status,version FROM rbm_risk_assessments WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL FOR UPDATE'
+    : 'SELECT id,program_id,status,version FROM rbm_risk_assessments WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL FOR SHARE';
+  const { rows } = await exec.query(statement, [assessmentId, organizationId]);
   const row = rows[0];
   if (!row) throw new RbmAssessmentEditError(404, 'RBM_ASSESSMENT_NOT_FOUND', 'Risk assessment not found.');
   if (programId && String(row.program_id).toLowerCase() !== programId.toLowerCase()) throw new RbmAssessmentEditError(409, 'RBM_PROJECT_MISMATCH', 'The factor and assessment do not belong to the same project.');

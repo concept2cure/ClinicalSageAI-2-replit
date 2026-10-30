@@ -304,6 +304,16 @@ describe('incoherent monitoring relationships cannot acquire a signature', () =>
 });
 
 describe('a plan approved after an editor read stays immutable', () => {
+  it('updates draft title, strategy and status with the bound retirement flag before field values', async () => {
+    const out = await request(app()).patch('/api/mdx/rbm-monitoring-plans/22')
+      .send({ title: 'Revised draft strategy', strategy: 'hybrid', status: 'draft' });
+    expect(out.status).toBe(200);
+    expect(await row(KINDS[1])).toMatchObject({ id: 22, organization_id: 7,
+      title: 'Revised draft strategy', strategy: 'hybrid', status: 'draft' });
+    expect(await row(KINDS[1], 20)).toMatchObject({ title: 'Prior plan', status: 'active' });
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+  });
+
   it('refuses a stale draft edit when activation wins before the content UPDATE', async () => {
     h.activateAfterPlanRead = true;
     const out = await request(app()).patch('/api/mdx/rbm-monitoring-plans/22').send({ title: 'Stale editor overwrote signed content' });

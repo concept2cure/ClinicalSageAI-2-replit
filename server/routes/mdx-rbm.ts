@@ -131,9 +131,10 @@ const ACTION_STATUS = ['open', 'in_progress', 'done'] as const;
 function buildPatch(
   data: Record<string, unknown>,
   colMap: Record<string, string>,
+  initialArgs: unknown[] = [],
 ): { setSql: string; args: unknown[] } | null {
   const setFrags: string[] = [];
-  const args: unknown[] = [];
+  const args: unknown[] = [...initialArgs];
   for (const [k, v] of Object.entries(data)) {
     if (v === undefined) continue;
     const col = colMap[k];
@@ -1398,7 +1399,9 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
   if (id === null) return clientError(res, 422, 'id must be numeric');
   const parsed = patchPlanBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const patch = buildPatch(parsed.data, PLAN_COL);
+  const statusOnly = Object.entries(parsed.data).every(([k, v]) => k === 'status' || v === undefined);
+  const retiring = statusOnly && parsed.data.status === 'archived';
+  const patch = buildPatch(parsed.data, PLAN_COL, [retiring]);
   if (!patch) return clientError(res, 422, 'No updatable fields in body');
   try {
     const cur = await pool.query(
@@ -1415,8 +1418,6 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
     // 'archived' stays allowed so a plan can be retired without amending it;
     // moving a non-draft BACK to draft is not, since that would reopen a signed
     // record for editing with its approval fields still attached.
-    const statusOnly = Object.entries(parsed.data).every(([k, v]) => k === 'status' || v === undefined);
-    const retiring = statusOnly && parsed.data.status === 'archived';
     if (curStatus !== 'draft' && !retiring) {
       return clientError(res, 409,
         `Monitoring plan v${curVersion ?? '?'} is ${curStatus} and cannot be edited. `
@@ -1426,7 +1427,7 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
     const { rows } = await pool.query(
       `UPDATE rbm_monitoring_plans SET ${patch.setSql}, updated_at = NOW()
         WHERE id = $${patch.args.length - 1} AND organization_id = $${patch.args.length} AND deleted_at IS NULL
-          ${retiring ? '' : "AND status = 'draft'"}
+          AND ($1::boolean OR status = 'draft')
         RETURNING *`,
       patch.args,
     );
