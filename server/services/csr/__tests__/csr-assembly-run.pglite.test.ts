@@ -31,6 +31,8 @@ import { enqueueCsrAssembly, parseDeclarations, readLatestCsrAssembly, runCsrAss
 import { placeCsrAssembly, type CsrPlacementDeps, type PlacementSequence } from '../csr-assembly-placement';
 import { assemblyInput, minimalPdf, SECTIONS } from './support/csr-assembly-fixture';
 import type { StoreRenderedLeafFileInput } from '../../ectd/rendered-leaf-files';
+import { sqlNarrativeStore } from '../csr-narrative-store';
+import { landLmn201Narratives } from './support/csr-narratives-fixture';
 
 const SQL = readFileSync(path.resolve(__dirname, '../../../../migrations/20260628_csr_job_state.sql'), 'utf8');
 const PROGRAM = '11111111-2222-4333-8444-000000000011';
@@ -260,3 +262,34 @@ it('lets a placement claim left by a stopped worker expire: shown as interrupted
   await expect(place(placementDeps({}), id)).resolves.toMatchObject({ state: 'placed', sequenceId: 90 });
   expect((await readLatestCsrAssembly(q, 7, 41))!.placement).toMatchObject({ state: 'placed' });
 }, 180_000);
+
+it('D18: files a landed §14.3.3 checked against csr_narrative_outputs, places it, and refuses one edited in the table after landing (SYNTHETIC)', async () => {
+  writes.length = 0;
+  const landed = await landLmn201Narratives();
+  const store = sqlNarrativeStore(q, { organizationId: 7, jobId: 41, projectId: 11 });
+  for (const row of landed.store.rows.values()) expect(await store.save(row)).toBe(true);
+  const base = await reads.source.getMockImplementation()!();
+  reads.source.mockResolvedValue({ ...base, sections: [...SECTIONS, ...landed.sections] });
+  try {
+    const previous = (await readLatestCsrAssembly(q, 7, 41))!;
+    const notApplicable = Object.fromEntries(Object.entries(previous.notApplicable).filter(([n]) => n !== '14.3.3').map(([n, d]) => [n, d.reason]));
+    const id = await assembled({ supplied: previous.supplied, notApplicable });
+    const run = (await readLatestCsrAssembly(q, 7, 41))!.result!;
+    expect(run.narratives).toMatchObject({ verified: true, subjects: landed.store.rows.size, findings: [] });
+    expect(run.unresolvedReferences).toEqual([]);
+    expect(run.missing.filter(m => m.blocking)).toEqual([]);
+    const narratives = run.leaves.find(l => l.appendix === '14.3.3')!;
+    expect(narratives).toMatchObject({ fileName: 'csr-14-3-3-narratives.pdf', fileTag: 'study-report', origin: 'generated', ctdSection: '5.3.5.1' });
+    await expect(place(placementDeps({}), id)).resolves.toMatchObject({ state: 'placed' });
+    expect(writes.find(w => w.documentId === narratives.renderedLeafFileId)).toMatchObject({ sectionCode: 'm5.3.5.1', stfFileTag: 'study-report', studyId: 'SYN-LMN201-B' });
+    // A narrative edited in the table after §14.3.3 landed: §14.3.3 is a blocking gap, and no leaf is filed for it.
+    await pg.query(`UPDATE csr_narrative_outputs SET content = content || ' Edited.' WHERE job_id = 41 AND sequence = 0`);
+    await assembled({ supplied: previous.supplied, notApplicable });
+    const edited = (await readLatestCsrAssembly(q, 7, 41))!.result!;
+    expect(edited.leaves.some(l => l.appendix === '14.3.3')).toBe(false);
+    expect(edited.missing.find(m => m.number === '14.3.3')).toMatchObject({ blocking: true, reason: expect.stringMatching(/does not match the stored narratives/) });
+  } finally {
+    await pg.query('DELETE FROM csr_narrative_outputs WHERE job_id = 41');
+    reads.source.mockResolvedValue(base);
+  }
+}, 240_000);
