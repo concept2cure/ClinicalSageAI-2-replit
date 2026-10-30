@@ -1,0 +1,15 @@
+# RED, slice 3b, at trunk 42aa4a849b (2026-10-30): tests/db/qms-training-pending-version.dbtest.ts, PostgreSQL 16 as app_service, RLS on.
+# No successor is offered; v2.0 cannot be acknowledged (409 stale); a bystander sees no v2.0 line; and revising the pending v2.0 succeeded (200), replacing it with a v3.0 draft, so the approved version would never take effect.
+ × qms-training-pending-version.dbtest.ts > during the training period > the training read opens on v1.0, in force, and offers v2.0 beside it with its effective date 35ms
+ × qms-training-pending-version.dbtest.ts > during the training period > v2.0 can be acknowledged ahead of its day, bound to its own digest and signature, and does not count yet 18ms
+ ✓ qms-training-pending-version.dbtest.ts > during the training period > v1.0 can still be acknowledged, and counts 65ms
+ × qms-training-pending-version.dbtest.ts > during the training period > a version that is neither in force nor pending is refused as stale 25ms
+ × qms-training-pending-version.dbtest.ts > being assigned lets a person read the version they must train on (D3, P-50 Q2) > someone neither assigned nor shared onto v2.0 reads v1.0 and is told they cannot read v2.0; nothing of it is sent 23ms
+ × qms-training-pending-version.dbtest.ts > a version approved for a later day cannot be revised (D6) > revise is refused with QMS_REVISION_PENDING_EFFECT, and the pending version is untouched 90ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { documentId: 866, …(10) } to match object { documentVersion: '1.0', …(2) }
+TypeError: Cannot read properties of undefined (reading 'documentVersion')
+AssertionError: expected 'The released revision changed. Reload…' to match /QMS_TRAINING_STALE/
+AssertionError: expected undefined to match object { documentVersion: '2.0', …(2) }
+AssertionError: {"data":{"id":866,"organization_id":307,"doc_number":"qms-pending-b5bb1cdd-SOP","title":"qms-pending-b5bb1cdd invented controlled procedure","doc_type":"sop","category":null,"version":"3.0","status":"draft","effective_date":null,"next_review_date":null,"author_id":1741,"approver_id":null,"approved_at":null,"superseded_by_id":null,"artifact_id":null,"metadata":{"sections":[{"key":"p
+      Tests  5 failed | 1 passed (6)

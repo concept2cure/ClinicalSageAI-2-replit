@@ -1,0 +1,84 @@
+# GREEN, slice 3b (2026-10-30), working tree over 42aa4a849b, PostgreSQL 16 as app_service, RLS on:
+ ✓ qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > uses an actual non-owner NOSUPERUSER/NOBYPASSRLS runtime connection under tenant RLS 7ms
+ ✓ qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > binds a genuine independently signed release to a personal receipt and its canonical chained audit 212ms
+ ✓ qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > withdraws current training after actual post-release revocation while retaining the old personal receipt and signature history 199ms
+ ✓ qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses approve after actual target wait and signer demotion without domain/audit/signature writes 60ms
+ × qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses retire after actual target wait and signer demotion without domain/audit/signature writes 20031ms
+ ✓ qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses change after actual target wait and signer demotion without domain/audit/signature writes 52ms
+ ✓ qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses an actor disabled during the actual target wait 53ms
+ ✓ qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > allows a genuinely authorized signer through the same actual target wait 52ms
+ ✓ qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > honors an actual strict resource denial added during the target wait 50ms
+ ✓ qms-training-compliance-assigned.dbtest.ts > compliance counts the people assigned (P-49) > a document assigned to nobody has no figure; one assigned by role and by name counts those people, with the reader's own line 458ms
+ ✓ qms-training-compliance-assigned.dbtest.ts > training person by person is for administrators and QMS approvers (P-50 Q3) > the training records: an administrator and the Approver-role stand-in see every member's; anyone else only their own 165ms
+ ✓ qms-training-compliance-assigned.dbtest.ts > training person by person is for administrators and QMS approvers (P-50 Q3) > training due to lapse: the people assigned only; every one for an administrator, only their own for anyone else 210ms
+ ✓ qms-periodic-review-reminders.dbtest.ts > approval puts the next periodic review on the owner’s task list > writes one Quality task to the author, due on the next review, 30 days’ notice; approving the same date again writes nothing 156ms
+ ✓ qms-periodic-review-reminders.dbtest.ts > a signed periodic review moves the task on > "remains current" completes the task and writes the next one, for the date the reviewer set 117ms
+ ✓ qms-periodic-review-reminders.dbtest.ts > a signed periodic review moves the task on > "revision required" makes it a task to revise, due when the document is due 103ms
+ × qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > retirement cancels the open task 71ms
+ ✓ qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > a new version’s approval completes the old task and writes one for the new version 321ms
+ ✓ qms-periodic-review-reminders.dbtest.ts > the due-date sweep reads the lead the task carries > notifies a review task due in 20 days once, and not a task without a lead 76ms
+ ✓ qms-training-pending-version.dbtest.ts > during the training period > the training read opens on v1.0, in force, and offers v2.0 beside it with its effective date 44ms
+ ✓ qms-training-pending-version.dbtest.ts > during the training period > v2.0 can be acknowledged ahead of its day, bound to its own digest and signature, and does not count yet 101ms
+ ✓ qms-training-pending-version.dbtest.ts > during the training period > v1.0 can still be acknowledged, and counts 74ms
+ ✓ qms-training-pending-version.dbtest.ts > during the training period > a version that is neither in force nor pending is refused as stale 14ms
+ ✓ qms-training-pending-version.dbtest.ts > being assigned lets a person read the version they must train on (D3, P-50 Q2) > someone neither assigned nor shared onto v2.0 reads v1.0 and is told they cannot read v2.0; nothing of it is sent 81ms
+ ✓ qms-training-pending-version.dbtest.ts > a version approved for a later day cannot be revised (D6) > revise is refused with QMS_REVISION_PENDING_EFFECT, and the pending version is untouched 16ms
+ ✓ qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > an administrator assigns a role and a person: one row and one ledger pair each, committed together 207ms
+ ✓ qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > the Approver role stands in while nobody is designated; once someone is, the designee assigns and the Approver role alone does not 117ms
+ ✓ qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > a member and a manager are refused by the authority rule, a viewer by the editor gate, on assigning and on removing; nothing is written 124ms
+ ✓ qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > an approver who cannot read the authored document is refused with QMS_DOCUMENT_VIEW_DENIED; shared onto it, the same approver may assign 245ms
+ ✓ qms-training-assignments.dbtest.ts > the authority is read on the write's own transaction > a demotion committed while the write waits on the membership row is seen: 403, nothing written 1516ms
+ ✓ qms-training-assignments.dbtest.ts > the authority is read on the write's own transaction > an organization pending deletion takes no assignment, though the lifecycle guard still holds it as active 88ms
+ ✓ qms-training-assignments.dbtest.ts > the refusals, each with nothing written > the same role or person twice is 409 QMS_ALREADY_ASSIGNED 108ms
+ ✓ qms-training-assignments.dbtest.ts > the refusals, each with nothing written > another organization's document is 404 on the read, the assignment and the removal 62ms
+ ✓ qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a role that is not live in this organization is 422 QMS_JOB_ROLE_NOT_FOUND; a person who is not an active member is 422 QMS_NOT_A_MEMBER 167ms
+ ✓ qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a form or a specification is 409 QMS_NOT_TRAINABLE_TYPE; a retired document is 409 QMS_DOCUMENT_RETIRED 109ms
+ ✓ qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a body naming both subjects, neither, or an unknown field is 422; a seven-character reason is 400; a bad id is 422 70ms
+ ✓ qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a ledger that cannot be written is 500 AUDIT_WRITE_FAILED, and the assignment was not made 25ms
+ ✓ qms-training-assignments.dbtest.ts > removing an assignment > is soft and audited; the same subject can be assigned again, and both rows stay 109ms
+ ✓ qms-training-assignments.dbtest.ts > removing an assignment > an assignment of another document is 404 on this one 37ms
+ ✓ qms-training-assignments.dbtest.ts > removing an assignment > nobody removes an assignment that covers themselves, by name or by a role they hold: 403 QMS_TRAINING_SELF_UNASSIGN; another administrator may 129ms
+ ✓ qms-training-assignments.dbtest.ts > who is assigned: the one resolver > the read lists the assignments and resolves the people: active only, each once, with every path 314ms
+ ✓ qms-training-assignments.dbtest.ts > who is assigned: the one resolver > the resolver tells "assigned to nobody" from "assigned, but nobody active", and answers whether one person is assigned 110ms
+ ✓ qms-training-assignments-review.dbtest.ts > review round 1: the designee's role is part of the authority, read on the write's transaction > a designated QMS approver whose role is viewer is offered nothing and refused; nothing is written 147ms
+ ✓ qms-training-assignments-review.dbtest.ts > review round 1: the designee's role is part of the authority, read on the write's transaction > canAssign is unknown (null), never "may not", when whether the reader can read the document could not be checked 49ms
+ ✓ qms-training-assignments-review.dbtest.ts > review round 1: the designee's role is part of the authority, read on the write's transaction > a designee demoted to viewer while the write waits on the membership row is seen: 403, nothing written 1522ms
+ ✓ qms-training-assignments-review.dbtest.ts > review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > administrators and designated QMS approvers see every person assigned; anyone else sees their own line and the count 251ms
+ ✓ qms-training-assignments-review.dbtest.ts > review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > a first version approved for a later day is pending, with nothing yet in force 84ms
+ ✓ qms-training-assignments-review.dbtest.ts > review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > an administrator who has left a role may withdraw that role's assignment; while they held it, they could not 119ms
+ ✓ qms-training-assignments-review.dbtest.ts > review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > a person is covered from the later of the assignment and their joining the role: the instant a late assignment's grace runs from 1191ms
+ ✓ qms-training-assignments-review.dbtest.ts > review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > a named person who leaves keeps the assignment row, shown as not active, and is no longer among the people 47ms
+ ✓ qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > creates a role: one row, one ledger pair, committed together 103ms
+ ✓ qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > renames a role, recording before and after; deletes it softly, so the name can be used again 115ms
+ ✓ qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > adds and removes a member softly; the member can be added again and both history rows stay 98ms
+ ✓ qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > lists the roles with their members, to every member, and says who may administer them 100ms
+ ✓ qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > a member who was suspended, or whose membership ended, stays listed, is marked inactive, and is never a bare number 117ms
+ ✓ qms-job-roles.dbtest.ts > the authority is read on the write's own transaction > a demotion committed while the write waits on the membership row is seen: 403 QMS_JOB_ROLE_AUTHORITY, nothing written 1514ms
+ ✓ qms-job-roles.dbtest.ts > the authority is read on the write's own transaction > an organization pending deletion takes no change, though the lifecycle guard still holds it as active 59ms
+ ✓ qms-job-roles.dbtest.ts > only an administrator, with a reason, and nothing is written otherwise > a viewer is refused by the editor gate; a member, a manager and an approver by the administrator rule 141ms
+ ✓ qms-job-roles.dbtest.ts > only an administrator, with a reason, and nothing is written otherwise > a seven-character reason is 400 REASON_REQUIRED; an unknown field or a bad id is 422 37ms
+ ✓ qms-job-roles.dbtest.ts > the refusals > a name already live, in any case, is 409 QMS_JOB_ROLE_EXISTS, on create and on rename 77ms
+ ✓ qms-job-roles.dbtest.ts > the refusals > a person who is not an active member of this organization is 422 QMS_NOT_A_MEMBER; a live member twice is 409 114ms
+ ✓ qms-job-roles.dbtest.ts > the refusals > another organization's role is not listed and every change to it is 404 114ms
+ ✓ qms-job-roles.dbtest.ts > the refusals > an administrator does not remove themselves from a role: 403 QMS_TRAINING_SELF_UNASSIGN; another administrator may 103ms
+ ✓ qms-job-roles.dbtest.ts > the refusals > a role a document is assigned to is not deleted: 409 QMS_JOB_ROLE_IN_USE naming the document 66ms
+ ✓ qms-job-roles.dbtest.ts > the refusals > an assignment on a deleted document does not hold the role in use 54ms
+ ✓ qms-job-roles.dbtest.ts > the refusals > a ledger that cannot be written is 500 AUDIT_WRITE_FAILED, and the role was not created 21ms
+ ✓ qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is still the release a member reads for training: v1.0, eligible 32ms
+ ✓ qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is counted in training coverage with its standing receipt 37ms
+ ✓ qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > can still be acknowledged by a member who has not yet read it 56ms
+ ✓ qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is named on the register beside the draft, and counted as effective by readiness 59ms
+ ✓ qms-in-force-during-revision.dbtest.ts > the controlled document register report while the revision is open > names the version in force and the signature that approved it, beside the draft 201ms
+ ✓ qms-in-force-during-revision.dbtest.ts > when the successor is signed > v2.0 is in force and v1.0 receipts no longer count 312ms
+ ✓ qms-in-force-during-revision.dbtest.ts > a periodic review date set when the document is created > is stored, signed with the version, and lists the document as due once it is effective 332ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 6 passed (8)
+      Tests  2 failed | 70 passed (72)
+
+# The two failures above are red at trunk with or without this change (each run on trunk's code: slice3b-mutations.txt notes it). qms-periodic-review-reminders' was then fixed here (retire signs 'retirement', P-51): 6/6.
+
+# Server QMS unit and PGlite suites, the QMS route tests and every Quality client test:
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 44 passed (45)
+      Tests  1 failed | 481 passed (482)

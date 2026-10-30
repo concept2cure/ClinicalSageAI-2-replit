@@ -43,16 +43,24 @@ export function qmsTrainingSections(document: QmsDocumentRow): QmsTrainingSectio
   }).filter(section => section.body));
 }
 
-/** Only recorded, digest-bound text is a readable released procedure. */
-export function describeQmsTrainingDocument(document: QmsDocumentRow, now = new Date()): QmsTrainingContext {
+/**
+ * Only recorded, digest-bound text is a readable released procedure. A version
+ * approved for a later day is not in force; only the training paths, which ask
+ * with `ahead`, may open it for reading and acknowledgement before that day
+ * (P-49). Every other reader (the controlled copy among them) is refused it.
+ */
+export function describeQmsTrainingDocument(document: QmsDocumentRow, now = new Date(), options: { ahead?: boolean } = {}): QmsTrainingContext {
   const metadata = trainingObject(document.metadata);
   const sections = qmsTrainingSections(document);
   const approval = trainingObject(metadata.approval);
   const digest = computeQmsDocumentContentDigest(document);
+  const effectiveDate = document.effective_date
+    ? String(document.effective_date instanceof Date ? document.effective_date.toISOString() : document.effective_date).slice(0, 10) : null;
+  const later = effectiveDate !== null && effectiveDate > now.toISOString().slice(0, 10);
   let reason: string | null = null;
   if (document.deleted_at || document.status !== 'effective') reason = 'Only an effective controlled document can be acknowledged.';
   else if (!(QMS_TRAINABLE_DOCUMENT_TYPES as readonly string[]).includes(document.doc_type)) reason = 'This document type is not controlled read-and-understood training.';
-  else if (document.effective_date && String(document.effective_date instanceof Date ? document.effective_date.toISOString() : document.effective_date).slice(0, 10) > now.toISOString().slice(0, 10)) reason = 'This revision is not effective yet.';
+  else if (later && !options.ahead) reason = 'This revision is not effective yet.';
   else if (!sections.length) reason = 'Released procedure text is unavailable. An outline, hint or artifact link cannot be acknowledged.';
   else if (!verifiedApproval(document, approval, now)) reason = 'The released revision does not carry a verifiable approval record.';
   else if (approval.contentDigest !== digest) reason = 'The released content could not be verified against its approval.';
@@ -60,6 +68,7 @@ export function describeQmsTrainingDocument(document: QmsDocumentRow, now = new 
     documentId: document.id, docNumber: document.doc_number, title: document.title,
     documentVersion: document.version, status: document.status, contentDigest: digest,
     eligible: reason === null, unavailableReason: reason, sections, acknowledgement: null,
+    inForce: !later, effectiveDate,
   });
 }
 
@@ -73,7 +82,8 @@ export function verifiedTrainingReceipt(row: Record<string, unknown>, now = new 
   const snapshot = receiptSnapshot(row, metadata);
   if (!snapshot) return null;
   try {
-    const context = describeQmsTrainingDocument(snapshot as QmsDocumentRow, now);
+    // A receipt of a version acknowledged ahead of its day is a receipt; whether it counts is the in-force match (training-compliance.ts).
+    const context = describeQmsTrainingDocument(snapshot as QmsDocumentRow, now, { ahead: true });
     if (!context.eligible || context.contentDigest !== metadata.contentDigest) return null;
     const result = qmsTrainingAcknowledgementSchema.safeParse({
       id: row.id, documentId: row.document_id, userId: row.user_id,

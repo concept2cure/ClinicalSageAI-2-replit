@@ -69,7 +69,7 @@ import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText } from '../c2c/section-content';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { documentTableKeyKind, isPlaceableDocumentTable } from './leaf-document-tables';
-import { notFinalizedStatus } from './leaf-source-resolver';
+import { notFinalizedStatus, renderedLeafNotTransmittable } from './leaf-source-resolver';
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
 import type { LegalDocumentContext } from '../../../shared/company-documents';
 import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
@@ -162,12 +162,14 @@ const INTEGER_LOOKUPS: Record<string, IntegerLookup> = {
 
   rendered_leaf_files: async (documentId, organizationId) => {
     const [row] = await db
-      .select({ sha256: renderedLeafFiles.sha256 })
+      .select({ sha256: renderedLeafFiles.sha256, renderedFrom: renderedLeafFiles.renderedFrom })
       .from(renderedLeafFiles)
       .where(and(eq(renderedLeafFiles.id, documentId), eq(renderedLeafFiles.organizationId, organizationId)))
       .limit(1);
     if (!row) return NOT_FOUND('rendered_leaf_files');
-    return { found: true, storedSha256: row.sha256 ?? null, reason: row.sha256 ? null : 'no digest was recorded at render time' };
+    return { found: true, storedSha256: row.sha256 ?? null, reason: row.sha256 ? null : 'no digest was recorded at render time',
+      // 2026-10-30: an assembled CSR file is not approved (renderedLeafNotTransmittable).
+      notTransmittable: renderedLeafNotTransmittable(row.renderedFrom) };
   },
 
   unified_documents: async (documentId, organizationId) => {

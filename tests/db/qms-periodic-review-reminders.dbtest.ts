@@ -147,7 +147,8 @@ describe('a signed periodic review moves the task on', () => {
 describe('the task ends with the version it was for', () => {
   it('retirement cancels the open task', async () => {
     const id = await effectiveDocument('RET', day(90));
-    const res = await post(signer, `/api/mdx/qms/documents/${id}/retire`, { password: PASSWORD, meaning: 'APPROVED', reason: 'The invented procedure is withdrawn from use.' });
+    // Retirement is signed with its own meaning (P-51); 'APPROVED' is refused for it.
+    const res = await post(signer, `/api/mdx/qms/documents/${id}/retire`, { password: PASSWORD, meaning: 'retirement', reason: 'The invented procedure is withdrawn from use.' });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(await open(id)).toHaveLength(0);
     expect((await tasks(id)).map((t) => t.status)).toEqual(['cancelled']);
