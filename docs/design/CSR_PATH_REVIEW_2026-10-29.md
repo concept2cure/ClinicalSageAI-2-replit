@@ -108,7 +108,7 @@ Fixed during this review, each shown failing first (evidence under
 |---|---|---|
 | Approval independence | `authoring.router.ts` `signingRefused` | **Fixed** (`265ea2c5b`): an author could approve their own CSR. |
 | Release gate order | `csr-scientific-review.ts` `assertCsrScientificRelease` | **Fixed** (`eefcaf2c8`, `b84f297ca`): the gate framed every document as a CSR before checking whether it was one. A malformed row on any document made signing, freezing, export and filing to Vault return 500, and since 2026-10-28 those routes had no passing test. 17 suites are green again. |
-| Named signer set | — | **Gap:** no required set of named signers (sponsor's responsible medical officer, biostatistician). |
+| Named signer set | the review route (`server/services/review/review-route.ts`, `docs/design/REVIEW_ROUTING_2026-10-23.md`) | **Gap:** no required set of named signers (sponsor's responsible medical officer, biostatistician). **What already exists** (2026-10-30): the review route names reviewers and approvers, and every named approver signs. QMS documents and the Vault are on it (RR1a, RR1b, RR2, RR4). Authoring, where a CSR is approved, joins it in RR5 and RR6, which have not landed. A CSR's named signers belong on that route once RR6 lands; no second signer mechanism is built beside it. |
 | Investigator signature (16.1.5) | — | **Gap:** not captured. |
 | Export history | `DELETE /api/authoring/export-history/:id` | **Fixed** (`239bf4214`): it refuses; the record is kept. |
 | Signing reason | `/sign`, `/e-sign` | **Fixed** (`56504daea`): a trimmed meaning of at least 8 characters, as the signing dialog asks. |
@@ -129,7 +129,7 @@ Fixed during this review, each shown failing first (evidence under
 | Dispatch readiness, release signature, pre-transmit checks | the submission gateways | Work, offline, against local mTLS fixtures. 567 tests pass. |
 | FDA ESG | ESG REST, SFTP and AS2 clients | **Gap:** never run against FDA. ACK2 and ACK3 are not ingested. |
 | Archive | the guarded transmit, `submission-gateways/sent-package-archive.ts` | **Fixed** (D7, `docs/evidence/D7/2026-10-29-sent-package-kept/`): the guard stores the package's exact bytes before the wire and refuses to send when it cannot. Every transmittal row, the `ECTD_TRANSMITTED` row and the sign record name the copy. The **Package** action in Gateway transmittals downloads it, under project access and recorded (`docs/evidence/D7/2026-10-29-sent-package-download/`). **Gap:** packages above the 25 MiB download limit are refused (413), though kept. |
-| The amendment itself | the amendment planner, the cover letter, Form 1571 | **Fixed** (`b9dbaeff4`): a CSR is an information amendment; the plan and the letter say "Information Amendment: Clinical" (21 CFR 312.31(b)), or name the gap. **Open:** the 1571's contents box (item 11) is not in its unverified field registry, and filling it needs the official form, which is not readable from here. |
+| The amendment itself | the amendment planner, the cover letter, Form 1571 | **Fixed** (`b9dbaeff4`): a CSR is an information amendment; the plan and the letter say "Information Amendment: Clinical" (21 CFR 312.31(b)), or name the gap. **Open:** the 1571's contents box (item 11) is not in its unverified field registry, and filling it needs the official form, which is not readable from here (2026-10-30: `www.fda.gov` is outside this environment's allowed domains). |
 | ClinicalTrials.gov results | — | **Gap:** no path to post results for NCT05330182 under 42 CFR Part 11. |
 
 ## What AnA can learn from
@@ -161,17 +161,33 @@ and are not used.
      each figure or fact is as given, and name the sourced path. The binding
      itself is the scientific review's, before approval.
 3. The study facts the draft states: enrolled vs planned N and the phase are
-   done (`9b0a63be0`, `cb14dfc51`), and the NCT number (D5). Open: a Fast Track field,
-   and whether a Phase 2/3 study counts as pivotal: **decided** 2026-10-29,
+   done (`9b0a63be0`, `cb14dfc51`), and the NCT number (D5). A Fast Track field:
+   **not built** (2026-10-30). FDA's guidance *Expedited Programs for Serious
+   Conditions* ties Fast Track to the designation request (a cover letter
+   labelled REQUEST FOR FAST TRACK DESIGNATION) and to rolling review of the
+   marketing application. A CSR information amendment carries nothing that
+   depends on it. Read through a search excerpt of the guidance; the page
+   itself is outside this environment's allowed domains. And whether a Phase 2/3 study counts as pivotal: **decided** 2026-10-29,
    the sponsor declares it per study, and Module 2 reads only the declaration
    (`docs/evidence/D5/2026-10-29-pivotal-is-declared/`).
 4. ~~The amendment's Clinical identification~~: done (`b9dbaeff4`). Open:
    the 1571 contents box, and whether `study-report-body` is an STF file tag
-   at all; both need the official specification, not recall.
+   at all; both need the official specification, not recall. On 2026-10-30
+   `www.fda.gov` was refused by this environment's network policy (DNS), so
+   the form's instructions could not be read. A search excerpt says a later
+   submission checks every box that applies and that an information amendment
+   names its review discipline, which the plan and the letter already do.
 5. ~~Signing: the whitespace reason and the protected export history~~: done
    (`56504daea`, `239bf4214`).
 6. Transmission: ~~archive the package sent, and download it~~: done (D7).
    Open: ingesting the acknowledgments, and a streamed download above 25 MiB.
+   Scope of the 25 MiB limit, checked 2026-10-30: the eCTD export of a project
+   with a registry anchor, the normal case, is not capped
+   (`registerExportGovernanceQuick` records size and hash). The limit
+   (`GOVERNED_EXPORT_MAX_BYTES`, set by no in-repo deployment config) applies
+   to the kept sent-package download and to an export with no anchor
+   (`createAuditedUnplacedExport`, which also builds a base64 copy of the
+   whole file).
    ~~An amendment's submission-id~~ and ~~the sequences filed outside the
    platform~~: done (D7).
 7. Then the larger items: TLF ingest, the named signer set and the 16.1.5
