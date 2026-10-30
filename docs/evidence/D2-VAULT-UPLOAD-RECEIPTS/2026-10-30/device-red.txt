@@ -1,0 +1,69 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > does not add an attachment or activity from an affirmative response with no document receipt 198ms
+   → expected [ { …(7) } ] to deeply equal []
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds the selected file after a full producer receipt and keeps activity server-owned 58ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds only confirmed files from a mixed batch of unique filenames 39ms
+   → expected <div class="dd-att-name"></div> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > does not add an attachment or activity from an affirmative response with no document receipt
+AssertionError: expected [ { …(7) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "unconfirmed-performance.pdf",
++     "size": 8,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T17:20:42.154Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:80:82
+     78|
+     79|     expect(transport.answer).toHaveBeenCalledTimes(1);
+     80|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+       |                                                                                  ^
+     81|     expect(screen.queryByText('unconfirmed-performance.pdf')).toBeNull…
+     82|     expect(screen.getByText('No attachments yet.')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds only confirmed files from a mixed batch of unique filenames
+AssertionError: expected <div class="dd-att-name"></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="dd-att-name"
+>
+  unconfirmed-bench.pdf
+</div>
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:106:57
+    104|     await screen.findByText('confirmed-bench.pdf');
+    105|     expect(transport.answer).toHaveBeenCalledTimes(2);
+    106|     expect(screen.queryByText('unconfirmed-bench.pdf')).toBeNull();
+       |                                                         ^
+    107|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+    108|     await expectNoLocalActivity();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  17:20:40
+   Duration  1.70s (transform 472ms, setup 165ms, import 570ms, tests 298ms, environment 474ms)
+
