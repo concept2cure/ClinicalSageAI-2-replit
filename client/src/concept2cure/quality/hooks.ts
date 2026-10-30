@@ -12,7 +12,7 @@
 
 import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
-import type { QmsDoc, DocStatus, SopTemplate, ReviewDueRow, TrainingRow } from './data';
+import type { QmsDoc, DocStatus, SopTemplate, ReviewDueRow, TrainingRow, TrainingSummary } from './data';
 import {adaptDoc,adaptPeriodicReview,nextReviewDueOf,type ServerDoc} from './qmsDocumentRecord';
 import { listOf } from './qmsList';
 
@@ -68,36 +68,54 @@ interface ServerTraining {
   id: number;
   doc_number: string;
   title: string;
-  current: number;
-  of: number;
+  current: number | null;
+  of: number | null;
   last_cycle: string | null;
   document_version?: string;
   eligible?: boolean;
   unavailable_reason?: string | null;
+  assignment?: string;
+  me?: { assigned?: unknown; countsNow?: unknown } | null;
+}
+
+const ASSIGNMENT_STATES = new Set(['assigned', 'not_assigned', 'no_active_assignees']);
+const countOrNull = (v: unknown) => (typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : null);
+const SUMMARY_KEYS = ['documents', 'assigned', 'notAssigned', 'noActiveAssignees', 'unavailable'] as const;
+const summaryOf = (data: unknown): TrainingSummary | null => {
+  const s = (data as { meta?: { summary?: Record<string, unknown> } } | null)?.meta?.summary;
+  if (!s || !SUMMARY_KEYS.every(k => countOrNull(s[k]) !== null)) return null;
+  const pct = s.averageCurrentPct;
+  return pct === null || countOrNull(pct) !== null ? (s as unknown as TrainingSummary) : null;
+};
+
+function trainingRowOf(r: ServerTraining): TrainingRow {
+  return {
+    ...(Number.isInteger(r.id) && r.id > 0 ? { documentId: r.id } : {}),
+    ...(typeof r.document_version === 'string' ? { documentVersion: r.document_version } : {}),
+    ...(typeof r.eligible === 'boolean' ? { eligible: r.eligible } : {}),
+    ...(typeof r.unavailable_reason === 'string' || r.unavailable_reason === null ? { unavailableReason: r.unavailable_reason } : {}),
+    ...(ASSIGNMENT_STATES.has(String(r.assignment)) ? { assignment: r.assignment as TrainingRow['assignment'] } : {}),
+    ...(r.me && typeof r.me === 'object' ? { me: { assigned: r.me.assigned === true, countsNow: r.me.countsNow === true } } : {}),
+    doc: `${r.doc_number} ${r.title}`,
+    // An absent count is not zero: a document assigned to nobody has no figure (P-49).
+    current: countOrNull(r.current),
+    of: countOrNull(r.of),
+    lastCycle: r.last_cycle ? String(r.last_cycle).slice(0, 10) : '—',
+  };
 }
 
 /** Read-and-understood compliance per controlled procedure —
- *  GET /api/mdx/qms/training/compliance. Numerator is distinct current
- *  acknowledgments; denominator is the org roster. */
+ *  GET /api/mdx/qms/training/compliance. Numerator: the people assigned with a
+ *  current acknowledgement of the version in force; denominator: the people
+ *  assigned (P-49). `summary` is the server's register figure, or null when the
+ *  body carries none: the client computes no percentage. */
 const TRAINING_PATH = '/api/mdx/qms/training/compliance';
 export function useTrainingCompliance() {
   const { data, loading, error, refresh } = useFetchJson<unknown>(TRAINING_PATH);
   const raw = useMemo(() => listOf<ServerTraining>(data), [data]);
-  const rows = useMemo<TrainingRow[] | null>(
-    () =>
-      raw?.map((r) => ({
-        ...(Number.isInteger(r.id) && r.id > 0 ? { documentId: r.id } : {}),
-        ...(typeof r.document_version === 'string' ? { documentVersion: r.document_version } : {}),
-        ...(typeof r.eligible === 'boolean' ? { eligible: r.eligible } : {}),
-        ...(typeof r.unavailable_reason === 'string' || r.unavailable_reason === null ? { unavailableReason: r.unavailable_reason } : {}),
-        doc: `${r.doc_number} ${r.title}`,
-        current: r.current ?? 0,
-        of: r.of ?? 0,
-        lastCycle: r.last_cycle ? String(r.last_cycle).slice(0, 10) : '—',
-      })) ?? null,
-    [raw],
-  );
-  return { rows, loading, error: error ?? shapeError(TRAINING_PATH, data, raw), refresh };
+  const rows = useMemo<TrainingRow[] | null>(() => raw?.map(trainingRowOf) ?? null, [raw]);
+  const summary = useMemo(() => summaryOf(data), [data]);
+  return { rows, summary, loading, error: error ?? shapeError(TRAINING_PATH, data, raw), refresh };
 }
 
 export interface TrainingExpiryRow {

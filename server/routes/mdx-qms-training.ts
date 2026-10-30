@@ -55,7 +55,8 @@ import {
   type GovernedQmsCommand, type GovernedQmsSubject,
 } from '../services/qms/governed-qms-write';
 import {
-  currentStanding, QmsTrainingRefused, readQmsTrainingCompliance, readQmsTrainingExpiring, type TrainingSqlClient,
+  currentStanding, QmsTrainingRefused, readQmsTrainingCompliance, readQmsTrainingExpiring, summarizeQmsTrainingCompliance,
+  type TrainingSqlClient,
 } from '../services/qms/training';
 import {
   addQmsJobRoleMember, addQmsTrainingAssignment, createQmsJobRole, deleteQmsJobRole, readQmsJobRoles, readQmsTrainingAssignments,
@@ -190,10 +191,10 @@ async function canAssignTraining(client: TrainingSqlClient, orgId: number, userI
 }
 
 /**
- * P-50 Q3: who must train, person by person, is for administrators and
- * designated QMS approvers (with the Approver-role stand-in); every other
- * member sees their own line and the count. The person a line names is the
- * input to their due date and, from slice 3, carries their training status.
+ * P-50 Q3: training person by person (who must train, their receipts, their
+ * lapses) is for administrators and designated QMS approvers (with the
+ * Approver-role stand-in); every other member sees their own and the counts.
+ * The assignment listing, the training records and the expiry read all ask this.
  */
 async function seesEveryAssignee(client: TrainingSqlClient, orgId: number, userId: number | null): Promise<boolean> {
   if (userId === null) return false;
@@ -258,15 +259,20 @@ const assignmentWrite = <T>(req: Request, res: Response, spec: StoreWrite<T>) =>
 
 /* ─── Training records, expiry and compliance (moved unchanged from mdx-qms.ts) ─── */
 
+/* Training records, person by person: every member's for an administrator or a
+   designated QMS approver, otherwise the reader's own (P-50 Q3). */
 router.get('/qms/training', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   try {
-    const { rows } = await qmsClient(req).query(`SELECT * FROM qms_training_records WHERE organization_id = $1
-        ORDER BY acknowledged_at DESC LIMIT 500`,
-      [orgId],
-    );
-    return ok(res, rows, { count: rows.length });
+    const userId = getUserId(req);
+    const everyone = await seesEveryAssignee(requestPgClient(req), orgId, userId);
+    const { rows } = everyone
+      ? await qmsClient(req).query(`SELECT * FROM qms_training_records WHERE organization_id = $1
+          ORDER BY acknowledged_at DESC LIMIT 500`, [orgId])
+      : await qmsClient(req).query(`SELECT * FROM qms_training_records WHERE organization_id = $1 AND user_id = $2
+          ORDER BY acknowledged_at DESC LIMIT 500`, [orgId, userId ?? 0]);
+    return ok(res, rows, { count: rows.length, scope: everyone ? 'everyone' : 'own' });
   } catch (err) { return serverError(res, log, 'training-list', err); }
 });
 
@@ -274,26 +280,34 @@ router.get('/qms/training/expiring', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const withinDays = Math.max(1, Math.min(365, Number(req.query.within) || 60));
-  /* G10 (2026-10-29). Each active member whose current training on a release in
+  /* G10 (2026-10-29). Each person assigned whose current training on a release in
      force lapses within the window, read as coverage reads it. This listed every
      record with an expiry inside the window: a superseded version, a receipt
-     its member had renewed, a departed member's. No client called it. */
+     its member had renewed, a departed member's. No client called it. Person by
+     person, it is for administrators and designated QMS approvers; anyone else
+     gets their own rows (P-50 Q3). */
   try {
-    const rows = await readQmsTrainingExpiring(requestPgClient(req), orgId, withinDays);
-    return ok(res, rows, { count: rows.length, withinDays });
+    const client = requestPgClient(req);
+    const userId = getUserId(req);
+    const everyone = await seesEveryAssignee(client, orgId, userId);
+    const rows = (await readQmsTrainingExpiring(client, orgId, withinDays)).filter(r => everyone || r.userId === userId);
+    return ok(res, rows, { count: rows.length, withinDays, scope: everyone ? 'everyone' : 'own' });
   } catch (err) { return serverError(res, log, 'training-expiring', err); }
 });
 
-/* Read-and-understood compliance per controlled procedure. The denominator is
-   the org roster (organization_users); the numerator is the distinct users with
-   a current (non-expired) acknowledgment. Only effective, trainable doc types
-   are counted — forms and specifications don't carry read-and-understood. */
+/* Read-and-understood compliance per controlled procedure (P-49). The
+   denominator is the distinct active people assigned to the document; the
+   numerator, those of them with a current acknowledgment of the release in
+   force. A document assigned to nobody has no figure. Each row carries the
+   reader's own line, and meta.summary is the register's one training figure.
+   Counts only, so every member may read it (P-50 Q3). Only trainable doc types
+   are counted: forms and specifications carry no read-and-understood. */
 router.get('/qms/training/compliance', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   try {
-    const rows = await readQmsTrainingCompliance(requestPgClient(req), orgId);
-    return ok(res, rows, { count: rows.length });
+    const rows = await readQmsTrainingCompliance(requestPgClient(req), orgId, new Date(), getUserId(req));
+    return ok(res, rows, { count: rows.length, summary: summarizeQmsTrainingCompliance(rows) });
   } catch (err) { return serverError(res, log, 'training-compliance', err); }
 });
 

@@ -1,0 +1,12 @@
+# RED at trunk 8659f31539 + slice 3a's server (2026-10-30): client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx with the coverage states. The register still shows the roster fraction and computes its own percentage; no 'Not assigned', no reader's line, no summary.
+ ✓ SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > lets an active viewer read the actual release instead of delegating a team acknowledgement to AnA 393ms
+ ✓ SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > opens the same personal reader from a real training row 98ms
+ ✓ SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > qualifies unavailable releases instead of presenting them as assessed roster coverage 27ms
+ × SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > distinguishes a document whose assigned people are none active from an empty controlled-document list 28ms
+ × SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > a document assigned to nobody says so, with no bar and no fraction; the KPI says nothing is assigned 25ms
+ × SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > an assigned document shows how many of the people assigned are current, and the reader's own line; the KPI is the server's average 19ms
+ × SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > a reader who is not assigned has no line of their own; one who is current is told so 37ms
+ × SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > rows without a summary from the server show no figure, and say so 17ms
+ ✓ SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > closes the selected reader immediately when the authenticated organization changes 96ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 4 passed (9)
