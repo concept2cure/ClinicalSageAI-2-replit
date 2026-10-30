@@ -101,6 +101,15 @@ clinical-study record, regulatory filing type or clinical-ops convergence.
    signature write must roll back approval; AnA still cannot sign. Preserve a
    failing-first mounted-route check and verify both approval kinds and refusal
    paths. Update the obsolete baseline reason only after that proof exists.
+   The approved bounded file extension is
+   `server/services/rbm/rbm-signature-content.ts` for one deterministic content
+   recipe, two RBM binding bases in `part11/signature-persistence.ts`, and two
+   target handlers in `part11/governed-target-binders.ts`. Assessment signatures
+   bind the immutable version and coherent CtQ content; plan signatures bind the
+   immutable plan version rather than mutable execution actions. Canonical
+   re-derivation must use the same recipe and fail closed without its required
+   basis. Existing modal-declared approval meaning and server-verified MFA
+   evidence are retained. No new signature policy or parallel persistence path.
 6. Workers first preserve meaningful failing checks on unchanged production,
    then implement within their files. Tests cover actual rail navigation and
    existing peers, API/AnA admission with unchanged grants, real wizard review/
