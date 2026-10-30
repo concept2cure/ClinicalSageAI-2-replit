@@ -1,0 +1,21 @@
+# RED at trunk 95e6800740 (2026-10-30), before the panels exist: client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx (jsdom).
+# Every case fails because JobRolesPanel and TrainingAssignmentsPanel are not exported by TrainingCoverage.tsx.
+      Tests  15 failed (15)
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × TrainingAssignments.test.tsx > Job roles > a failed read says so, never "No job roles yet" 23ms
+ × TrainingAssignments.test.tsx > Job roles > a refused change shows the server's sentence and keeps the form 3ms
+ × TrainingAssignments.test.tsx > Job roles > a role assigned to a document cannot be deleted, and says why; removing a holder sends a DELETE with its reason 2ms
+ × TrainingAssignments.test.tsx > Job roles > a verified empty list says there are none; while loading it says so 4ms
+ × TrainingAssignments.test.tsx > Job roles > an administrator creates a role with its reason, through the governed route, and the list is read again 2ms
+ × TrainingAssignments.test.tsx > Job roles > lists each role and its holders; someone who is not an administrator is offered no change 3ms
+ × TrainingAssignments.test.tsx > Who must train on a document > a verified empty list says nobody is assigned, and that training opens with the version in force 2ms
+ × TrainingAssignments.test.tsx > Who must train on a document > a version approved for a later day is named 2ms
+ × TrainingAssignments.test.tsx > Who must train on a document > an assigner sees every person and how each is covered 3ms
+ × TrainingAssignments.test.tsx > Who must train on a document > anyone else sees the count and their own line, not the names (P-50) 2ms
+ × TrainingAssignments.test.tsx > Who must train on a document > assigns a job role not yet assigned, with its reason; the role already assigned is not offered 1ms
+ × TrainingAssignments.test.tsx > Who must train on a document > reads this document's assignments; a failed read says so, never "Nobody is assigned" 2ms
+ × TrainingAssignments.test.tsx > Who must train on a document > when the roles and people cannot be read, nothing can be assigned, and it says so 1ms
+ × TrainingAssignments.test.tsx > Who must train on a document > when whether you may change them could not be checked, it says so and offers nothing 2ms
+ × TrainingAssignments.test.tsx > Who must train on a document > withdraws an assignment with its reason; a refusal is shown in the server's words 2ms
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯

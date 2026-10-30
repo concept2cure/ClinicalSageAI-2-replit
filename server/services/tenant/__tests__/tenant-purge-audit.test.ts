@@ -39,6 +39,10 @@ function orgRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** The offboarding certificate (P-58): the table is present, and the row is written. */
+const certificateResponse = (text: string) =>
+  /tenant_offboarding_certificates/.test(text) ? { rows: /INSERT/.test(text) ? [{ id: 'certificate-1' }] : [{ present: true }] } : null;
+
 function makePool(opts: { refuseAudit?: boolean; deleteError?: Error } = {}) {
   const statements: Statement[] = [];
   const respond = (via: Statement['via']) => async (text: string, params?: unknown[]) => {
@@ -51,12 +55,14 @@ function makePool(opts: { refuseAudit?: boolean; deleteError?: Error } = {}) {
     if (/FROM tenant_export_receipts/.test(text)) {
       return {
         rows: [
-          { organization_id: ORG, digest: DIGEST, table_count: 12, row_count: 340, created_at: EXPORTED_AT, created_by: 3 },
+          { organization_id: ORG, digest: DIGEST, table_count: 12, row_count: 340, created_at: EXPORTED_AT, created_by: 3, export_scope: 'organization' },
         ],
       };
     }
     if (/SELECT id, name, status/.test(text)) return { rows: [orgRow()] };
     if (/SELECT id, status, purged_at FROM organizations/.test(text)) return { rows: [orgRow()] };
+    const certificate = certificateResponse(text);
+    if (certificate) return certificate;
     if (/to_regclass\('public.qms_document_versions'\)/.test(text)) return { rows: [{ qms_versions: true, frozen_inputs: true }] };
     if (/SELECT EXISTS \(SELECT 1 FROM public.qms_document_versions/.test(text)) return { rows: [{ qms_versions: false, frozen_inputs: false }] };
     if (/^DELETE FROM projects/.test(text)) return { rows: [], rowCount: 4 };

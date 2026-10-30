@@ -838,6 +838,26 @@ const TIER_LABELS = {
 
 // ── Core Engine ──────────────────────────────────────────────
 
+/**
+ * The seal-event chain's link check (verifyReportIntegrity step 3): in the
+ * order given, each event's stored previous_event_hash must equal the prior
+ * event's stored chain_hash (null for the first). Returns the id of every event
+ * where the link breaks; no hash is re-derived. The one copy: verifyEventChain
+ * below and the tenant export's integrity section, which walks each report
+ * with it (services/tenant-export/held-record-integrity.ts, P-58), call it.
+ */
+export function sealChainBreaks(
+  events: ReadonlyArray<{ id: number; previousEventHash: string | null; chainHash: string | null }>,
+): number[] {
+  const broken: number[] = [];
+  let prevHash: string | null = null;
+  for (const event of events) {
+    if ((event.previousEventHash ?? null) !== prevHash) broken.push(event.id);
+    prevHash = event.chainHash ?? null;
+  }
+  return broken;
+}
+
 export class IntelligentReportEngine {
   // ── Cryptographic Utilities ──────────────────────────────
 
@@ -1249,15 +1269,9 @@ export class IntelligentReportEngine {
       .where(eq(reportSealEvents.reportId, reportId))
       .orderBy(reportSealEvents.createdAt);
 
-    let chainIntact = true;
-    let prevHash: string | null = null;
-    for (const event of sealEvents) {
-      if (event.previousEventHash !== prevHash) {
-        chainIntact = false;
-        details.push(`Seal event chain broken at event ${event.id}`);
-      }
-      prevHash = event.chainHash;
-    }
+    const broken = sealChainBreaks(sealEvents);
+    const chainIntact = broken.length === 0;
+    for (const id of broken) details.push(`Seal event chain broken at event ${id}`);
 
     // 4. Check provenance drift
     const provenanceRows = await db
@@ -1925,12 +1939,7 @@ export class IntelligentReportEngine {
       .where(eq(reportSealEvents.reportId, reportId))
       .orderBy(reportSealEvents.createdAt);
 
-    let prevHash: string | null = null;
-    for (const event of events) {
-      if (event.previousEventHash !== prevHash) return false;
-      prevHash = event.chainHash;
-    }
-    return true;
+    return sealChainBreaks(events).length === 0;
   }
 
   // ── Private Helpers — Real Data Assemblers ─────────────────

@@ -1,0 +1,89 @@
+-- P-72 slice 0: P-70's live-catalog inventory, extended (proconfig, role/database defaults, role comparisons,
+-- platform-only policies, FORCE, definer owners). Run as the owner on a database install-fresh + deploy-migrate built.
+SET search_path = pg_catalog;
+\pset footer off
+\echo '== server'
+SELECT version();
+\echo '== policies in the catalog'
+SELECT count(*) FROM pg_policy;
+\echo '== custom settings read directly in policy expressions: setting | policies'
+WITH p AS (SELECT coalesce(pg_get_expr(polqual, polrelid),'') || ' ' || coalesce(pg_get_expr(polwithcheck, polrelid),'') AS e FROM pg_policy)
+SELECT s, count(*) FROM p, LATERAL (SELECT DISTINCT (regexp_matches(e, 'current_setting\(''([a-z0-9_]+\.[a-z0-9_]+)''', 'g'))[1] s) m GROUP BY s ORDER BY 2 DESC, 1;
+\echo '== values app.current_user_role is compared to in policies | policies'
+SELECT m[1], count(DISTINCT pol.oid) FROM pg_policy pol, LATERAL regexp_matches(coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') || coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),''), 'app\.current_user_role''::text, true\)\)? = ''([a-z_]+)''', 'g') m GROUP BY 1;
+\echo '== S (shadow) arm forms: admit-everything NULLIF form | COALESCE form | any rls_enforce reader'
+WITH p AS (SELECT coalesce(pg_get_expr(polqual, polrelid),'') || ' ' || coalesce(pg_get_expr(polwithcheck, polrelid),'') e FROM pg_policy)
+SELECT count(*) FILTER (WHERE e ~ 'NULLIF\(current_setting\(''app\.rls_enforce''::text, true\), ''''::text\) IS DISTINCT FROM ''on''::text') AS nullif_form,
+       count(*) FILTER (WHERE e ~ 'COALESCE\(current_setting\(''app\.rls_enforce''::text, true\), ''off''::text\) <> ''on''::text') AS coalesce_form,
+       count(*) FILTER (WHERE e ~ 'app\.rls_enforce') AS any_reader FROM p;
+\echo '== P (platform) arm, exact form (current_setting(''app.current_user_role''::text, true) = ''app_super_admin''::text)'
+WITH p AS (SELECT coalesce(pg_get_expr(polqual, polrelid),'') || ' ' || coalesce(pg_get_expr(polwithcheck, polrelid),'') e FROM pg_policy)
+SELECT count(*) FILTER (WHERE strpos(e, '(current_setting(''app.current_user_role''::text, true) = ''app_super_admin''::text)') > 0) AS exact_p,
+       count(*) FILTER (WHERE e ~ 'app\.current_user_role') AS any_role_reader,
+       count(*) FILTER (WHERE e ~ 'app\.current_user_role' AND e ~ 'app\.rls_enforce') AS both,
+       count(*) FILTER (WHERE e ~ 'app\.rls_enforce' AND e !~ 'app\.current_user_role') AS s_only,
+       count(*) FILTER (WHERE e ~ 'app\.current_user_role' AND e !~ 'app\.rls_enforce') AS p_only FROM p;
+\echo '== platform-only policies: once S and P are struck, nothing in the expression reads a scope (no current_setting, no can_* or current_org_id() helper, no parent EXISTS, no current_user/session_user) | count'
+WITH p AS (SELECT pol.oid, pol.polrelid::regclass::text t, pol.polname, pol.polcmd, pol.polpermissive,
+                  coalesce(pg_get_expr(polqual, polrelid),'') || ' ' || coalesce(pg_get_expr(polwithcheck, polrelid),'') e FROM pg_policy pol),
+     s AS (SELECT *, regexp_replace(regexp_replace(e, '\(current_setting\(''app\.current_user_role''::text, true\) = ''[a-z_]+''::text\)', 'false', 'g'),
+                  '\(NULLIF\(current_setting\(''app\.rls_enforce''::text, true\), ''''::text\) IS DISTINCT FROM ''on''::text\)', 'false', 'g') AS rest FROM p
+           WHERE e ~ 'app\.(rls_enforce|current_user_role)')
+SELECT count(*) FROM s WHERE rest !~ '(current_setting|can_(access|write)|current_org_id\(|current_user|session_user|EXISTS|\(true\)|\mtrue\M)';
+\echo '-- those policies: table | policy | cmd | struck expression'
+WITH p AS (SELECT pol.oid, pol.polrelid::regclass::text t, pol.polname, pol.polcmd,
+                  coalesce(pg_get_expr(polqual, polrelid),'') || ' ' || coalesce(pg_get_expr(polwithcheck, polrelid),'') e FROM pg_policy pol),
+     s AS (SELECT *, regexp_replace(regexp_replace(e, '\(current_setting\(''app\.current_user_role''::text, true\) = ''[a-z_]+''::text\)', 'false', 'g'),
+                  '\(NULLIF\(current_setting\(''app\.rls_enforce''::text, true\), ''''::text\) IS DISTINCT FROM ''on''::text\)', 'false', 'g') AS rest FROM p
+           WHERE e ~ 'app\.(rls_enforce|current_user_role)')
+SELECT t, polname, polcmd, left(regexp_replace(rest, '\s+', ' ', 'g'), 160) FROM s WHERE rest !~ '(current_setting|can_(access|write)|current_org_id\(|current_user|session_user|EXISTS|\(true\)|\mtrue\M)' ORDER BY 1, 2;
+\echo '== RLS posture of relations: rls enabled | forced | enabled with a P-arm policy | forced with a P-arm policy'
+WITH pt AS (SELECT DISTINCT polrelid FROM pg_policy pol WHERE coalesce(pg_get_expr(polqual, polrelid),'') || coalesce(pg_get_expr(polwithcheck, polrelid),'') ~ 'app_super_admin')
+SELECT count(*) FILTER (WHERE c.relrowsecurity), count(*) FILTER (WHERE c.relforcerowsecurity),
+       count(*) FILTER (WHERE c.relrowsecurity AND c.oid IN (SELECT polrelid FROM pt)),
+       count(*) FILTER (WHERE c.relforcerowsecurity AND c.oid IN (SELECT polrelid FROM pt))
+  FROM pg_class c WHERE c.relkind IN ('r','p');
+\echo '== FORCEd tables, by schema: schema | forced | of which carry a P-arm policy'
+WITH pt AS (SELECT DISTINCT polrelid FROM pg_policy pol WHERE coalesce(pg_get_expr(polqual, polrelid),'') || coalesce(pg_get_expr(polwithcheck, polrelid),'') ~ 'app_super_admin')
+SELECT n.nspname, count(*), count(*) FILTER (WHERE c.oid IN (SELECT polrelid FROM pt)) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+ WHERE c.relkind IN ('r','p') AND c.relforcerowsecurity GROUP BY ROLLUP(1) ORDER BY 1 NULLS LAST;
+\echo '== functions (outside pg_catalog/information_schema) whose BODY reads app.rls_enforce or app.current_user_role: function | definer | owner | reads'
+SELECT n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')', p.prosecdef, pg_get_userbyid(p.proowner),
+       concat_ws(',', CASE WHEN p.prosrc ~ 'app\.rls_enforce' THEN 'rls_enforce' END, CASE WHEN p.prosrc ~ 'app\.current_user_role' THEN 'current_user_role' END)
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+ WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND p.prolang <> (SELECT oid FROM pg_language WHERE lanname = 'c')
+   AND p.prosrc ~ 'app\.(rls_enforce|current_user_role)' ORDER BY 1;
+\echo '== functions whose SET clause (proconfig) names either setting (missed by P-70''s prosrc-only query): function | definer | owner | proconfig'
+SELECT n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')', p.prosecdef, pg_get_userbyid(p.proowner), array_to_string(p.proconfig, ',')
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+ WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND array_to_string(p.proconfig, ',') ~ 'app\.(rls_enforce|current_user_role)' ORDER BY 1;
+\echo '== every function SET clause naming any app.* setting: setting=value | functions'
+SELECT c, count(*) FROM pg_proc p, unnest(p.proconfig) c WHERE c ~ '^app\.' GROUP BY 1 ORDER BY 1;
+\echo '== role and database defaults (pg_db_role_setting): role | database | settings'
+SELECT coalesce(pg_get_userbyid(setrole), '(all)'), coalesce((SELECT datname FROM pg_database WHERE oid = setdatabase), '(all)'), array_to_string(setconfig, ',') FROM pg_db_role_setting;
+\echo '-- rows naming either setting'
+SELECT count(*) FROM pg_db_role_setting WHERE array_to_string(setconfig, ',') ~ 'app\.(rls_enforce|current_user_role)';
+\echo '== SECURITY DEFINER functions outside pg_catalog/information_schema, by owner: owner | super | bypassrls | functions'
+SELECT pg_get_userbyid(p.proowner), r.rolsuper, r.rolbypassrls, count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace JOIN pg_roles r ON r.oid = p.proowner
+ WHERE p.prosecdef AND n.nspname NOT IN ('pg_catalog','information_schema') GROUP BY 1, 2, 3 ORDER BY 4 DESC;
+\echo '== runtime role and NOLOGIN roles: role | login | super | bypassrls | inherit | member of'
+SELECT r.rolname, r.rolcanlogin, r.rolsuper, r.rolbypassrls, r.rolinherit,
+       (SELECT string_agg(g.rolname, ',' ORDER BY g.rolname) FROM pg_auth_members m JOIN pg_roles g ON g.oid = m.roleid WHERE m.member = r.oid)
+  FROM pg_roles r WHERE r.rolname IN ('app_service','postgres','ana_record_purger','artifact_record_purger','ana_run_events_purger','audit_archiver',
+                                      'review_route_writer','tenant_record_purger','c2c_platform_scope','c2c_rls_exempt_login') ORDER BY 1;
+\echo '-- members of the purger/door roles: role | members'
+SELECT g.rolname, string_agg(r.rolname, ',' ORDER BY r.rolname) FROM pg_auth_members m JOIN pg_roles g ON g.oid = m.roleid JOIN pg_roles r ON r.oid = m.member
+ WHERE g.rolname IN ('ana_record_purger','artifact_record_purger','ana_run_events_purger','audit_archiver','review_route_writer','tenant_record_purger') GROUP BY 1 ORDER BY 1;
+\echo '== the platform-scope roles P-72 names exist?'
+SELECT count(*) FROM pg_roles WHERE rolname IN ('c2c_platform_scope','c2c_rls_exempt_login');
+\echo '== the 46 allowlisted definers (scripts/db/security-definer-allowlist.json, working tree) by owner: owner | super | functions'
+CREATE TEMP TABLE allow(k text);
+\copy allow FROM 'out/allowlist-keys.txt'
+WITH f AS (SELECT n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' k, p.proowner, p.prosecdef FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace)
+SELECT coalesce(pg_get_userbyid(f.proowner), '(not in catalog)'), r.rolsuper, count(*) FROM allow a LEFT JOIN f ON f.k = a.k LEFT JOIN pg_roles r ON r.oid = f.proowner GROUP BY 1, 2 ORDER BY 3 DESC;
+\echo '-- owner-owned (not a purger/door role) allowlisted definers: function'
+WITH f AS (SELECT n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' k, p.proowner FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace)
+SELECT a.k FROM allow a JOIN f ON f.k = a.k JOIN pg_roles r ON r.oid = f.proowner WHERE r.rolcanlogin ORDER BY 1;
+\echo '-- allowlist keys with no catalog function: key'
+WITH f AS (SELECT n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' k FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace)
+SELECT a.k FROM allow a WHERE NOT EXISTS (SELECT 1 FROM f WHERE f.k = a.k) ORDER BY 1;

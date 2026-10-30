@@ -64,7 +64,7 @@ describe('Human review standing keeps saved-content history honest', () => {
     const closedTask = {
       ...task(), status: 'completed', createdAt: '2026-10-12T10:00:00Z',
       priority: null, assigneeName: 'Dana', dueDate: null, description: null,
-      approvalRequired: false, approvalStatus: null,
+      approvalRequired: false, approvalStatus: null, reviewRouteId: null,
     };
     const state = taskReviewState(closedTask, { state: 'ready', rows });
     expect(state.kind).toBe('earlier');
@@ -101,6 +101,8 @@ describe('Document task reads retire the previous target', () => {
     let taskReads = 0;
     apiRequest.mockImplementation(async (_method: string, url: string) => {
       if (url.includes('/reviews')) return ok({ success: true, reviews: [] });
+      // RR5: the panel also reads the document's review route; it is not a task read.
+      if (url.includes('/review-route')) return ok({ success: true, round: null });
       taskReads++;
       return taskReads === 1 ? oldRead : ok({ success: true, data: [task(OTHER_DOC)] });
     });

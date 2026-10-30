@@ -1,0 +1,3 @@
+-- P-72 slice 0, §3.4: one platform role grant (to A's admin) and one licence request, for the console probes (owner).
+INSERT INTO platform_role_grants (user_id, role, granted_by, reason) SELECT id, 'platform_admin', 'p72-probe', 'p72 slice 0 probe' FROM users WHERE email = 'p72-a-admin@example.invalid';
+INSERT INTO license_requests (name, email, organization) VALUES ('p72 probe', 'p72-probe@example.invalid', 'p72 probe org');

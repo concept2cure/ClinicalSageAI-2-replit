@@ -1,0 +1,116 @@
+/**
+ * P-72 slice 0 / F5, the whole export gap. For EVERY table the tenant export reads, run the export's own SQL
+ * as the runtime role (app_service) inside the transaction companyExportSnapshot opens, under
+ *   SYS: the route's scope today (/api/tenant-export is in SYSTEM_SCOPE_PREFIXES: tenant '0', org '', role app_super_admin)
+ *   OWN: the organization's own scope (tenant id AND org uuid, no role)
+ * with exactly the LOCAL settings poolInstrumentation.ts writes after BEGIN (tenantSetConfigSql + switchPinTerms(true),
+ * RLS_ENFORCE=on), against the rows the same SQL returns as the superuser owner. LEAK: under X's own scope, the
+ * export SQL for the OTHER organization's id. Then the export functions themselves through the instrumented pool.
+ *
+ * Tables read: discoverTenantTables (public + vault, tenant key or EXPORT_SCOPED_PREDICATES = PURGE_PARENT_SCOPED
+ * minus EXPORT_DERIVED_TABLES), the organization row, and company-document-envelope.ts's six reads (copied verbatim).
+ */
+const REPO = '/home/user/ClinicalSageAI-2-replit';
+const pg = (await import(`${REPO}/node_modules/pg/lib/index.js`)).default;
+const { discoverTenantTables } = await import(`${REPO}/server/services/tenant-export/tenant-full-export.service.ts`);
+const { PURGE_PARENT_SCOPED, EXPORT_DERIVED_TABLES } = await import(`${REPO}/server/services/tenant/purge-parent-scope.ts`);
+const SCOPED: Record<string, string> = Object.fromEntries(Object.entries(PURGE_PARENT_SCOPED).filter(([t]) => !EXPORT_DERIVED_TABLES.includes(t)));
+const MAX = 50_000;
+
+const owner = new pg.Pool({ connectionString: process.env.DATABASE_OWNER_URL, max: 2 });
+const app = new pg.Pool({ connectionString: process.env.APP_DATABASE_URL, max: 2 });
+const orgs = (await owner.query(`SELECT id, uuid::text AS uuid, slug FROM organizations WHERE slug IN ('p72-a','p72-b') ORDER BY slug`)).rows;
+const [A, B] = orgs;
+const who = (await app.query('SELECT current_user u, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user')).rows[0];
+console.log(`# runtime role: ${who.u} super=${who.rolsuper} bypassrls=${who.rolbypassrls}; owner: superuser postgres`);
+console.log(`# organizations: ${orgs.map((o: any) => `${o.slug}=${o.id}/${o.uuid}`).join('  ')}`);
+
+type Read = { label: string; sql: string; param: (o: any) => unknown; tenantColumn: string };
+const reads: Read[] = [];
+reads.push({ label: 'public.organizations (readCompanyExportOrganization)', tenantColumn: 'id', param: (o) => o.id,
+  sql: `SELECT o.id, o.slug, o.name, o.status FROM organizations o WHERE o.id = $1 LIMIT 1` });
+for (const [t, sql] of Object.entries({
+  company_document_revisions: 'SELECT to_jsonb(t) AS row FROM public.company_document_revisions t WHERE organization_id=$1',
+  company_document_grants: 'SELECT to_jsonb(t) AS row FROM public.company_document_grants t WHERE organization_id=$1',
+  company_document_identity_reviews: 'SELECT to_jsonb(t) AS row FROM public.company_document_identity_reviews t WHERE organization_id=$1',
+  company_document_designs: 'SELECT to_jsonb(t) AS row FROM public.company_document_designs t WHERE organization_id=$1',
+  company_legal_registry: 'SELECT to_jsonb(t) AS row FROM public.company_legal_registry t WHERE organization_id=$1',
+})) reads.push({ label: `public.${t} (company envelope)`, tenantColumn: 'organization_id', param: (o) => o.id, sql });
+reads.push({ label: 'public.c2c_template_specs (company envelope)', tenantColumn: 'org_id', param: (o) => o.id,
+  sql: `SELECT to_jsonb(t) AS row FROM public.c2c_template_specs t WHERE t.org_id=$1 AND EXISTS(SELECT 1 FROM public.company_document_designs d WHERE d.organization_id=$1 AND d.template_id=t.id)` });
+const discovered = await discoverTenantTables(owner);
+for (const { schema, table, tenantColumn } of discovered) {
+  const label = schema === 'public' ? table : `${schema}.${table}`;
+  const scoped = Object.prototype.hasOwnProperty.call(SCOPED, label) ? SCOPED[label] : null;
+  reads.push(scoped
+    ? { label: `${schema}.${table}`, tenantColumn: 'parent', param: (o) => o.id, sql: `SELECT * FROM "${schema}"."${table}" WHERE ${scoped} LIMIT ${MAX + 1}` }
+    : { label: `${schema}.${table}`, tenantColumn, param: (o) => String(o.id), sql: `SELECT * FROM "${schema}"."${table}" WHERE "${tenantColumn}"::text = $1 LIMIT ${MAX + 1}` });
+}
+console.log(`# reads: ${reads.length} (discovered tables ${discovered.length}, scoped by parent ${discovered.filter((d: any) => d.tenantColumn === 'parent').length})`);
+
+const SET_LOCAL = "SELECT set_config('app.current_tenant_id', $1, true), set_config('app.current_org_id', $2, true), " +
+  "set_config('app.current_user_role', $3, true), set_config('app.current_account_id', $4, true), " +
+  "set_config('app.rls_enforce', 'on', true), set_config('app.bypass_rls', '', true), set_config('app.is_admin', '', true)";
+async function runAll(pool: any, scope: string[] | null, pick: (o: any) => any) {
+  const c = await pool.connect();
+  const out = new Map<string, number | string>();
+  try {
+    await c.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+    await c.query("SET LOCAL TIME ZONE 'UTC'");
+    if (scope) await c.query(SET_LOCAL, scope);
+    for (const r of reads) {
+      await c.query('SAVEPOINT s');
+      try { const { rows } = await c.query(r.sql, [r.param(pick)]); out.set(r.label, rows.length); await c.query('RELEASE SAVEPOINT s'); }
+      catch (e: any) { out.set(r.label, `ERR ${String(e.message).slice(0, 60)}`); await c.query('ROLLBACK TO SAVEPOINT s'); }
+    }
+    await c.query('ROLLBACK');
+  } finally { c.release(); }
+  return out;
+}
+const SYS = ['0', '', 'app_super_admin', ''];
+const own = (o: any) => [String(o.id), o.uuid, '', ''];
+const res: Record<string, Map<string, number | string>> = {
+  ownerA: await runAll(owner, null, A), ownerB: await runAll(owner, null, B),
+  sysA: await runAll(app, SYS, A), sysB: await runAll(app, SYS, B),
+  ownA: await runAll(app, own(A), A), ownB: await runAll(app, own(B), B),
+  leakAB: await runAll(app, own(A), B), leakBA: await runAll(app, own(B), A),
+};
+// Table posture, for the reading of an unseeded table.
+const posture = new Map((await owner.query(`
+  SELECT n.nspname || '.' || c.relname t, c.relrowsecurity rls, c.relforcerowsecurity force,
+         bool_or(pol.polcmd IN ('r','*') AND pol.polpermissive AND coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') ~ 'app_super_admin') sel_p
+    FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace LEFT JOIN pg_policy pol ON pol.polrelid = c.oid
+   WHERE c.relkind IN ('r','p') AND n.nspname IN ('public','vault') GROUP BY 1, 2, 3`)).rows.map((r: any) => [r.t, r]));
+
+const n = (v: any) => (typeof v === 'number' ? v : NaN);
+const lines: string[] = [];
+const lose: string[] = [], lossByVerdict: string[] = [], errors: string[] = [], leaks: string[] = [], unseeded: string[] = [], ownLoses: string[] = [];
+for (const r of reads) {
+  const g = (k: string) => res[k].get(r.label);
+  const tname = r.label.split(' ')[0];
+  const p: any = posture.get(tname) ?? {};
+  const row = [r.label, r.tenantColumn, p.rls ? (p.force ? 'rls+force' : 'rls') : 'no-rls', p.sel_p ? 'P' : '-',
+    g('ownerA'), g('sysA'), g('ownA'), g('ownerB'), g('sysB'), g('ownB'), g('leakAB'), g('leakBA')];
+  lines.push(row.join(' | '));
+  const seeded = n(g('ownerA')) > 0 || n(g('ownerB')) > 0;
+  if ([g('sysA'), g('sysB'), g('ownA'), g('ownB')].some((v) => typeof v === 'string')) errors.push(r.label);
+  if (!seeded) { unseeded.push(`${r.label} (select policy with P arm: ${p.sel_p ? 'yes' : 'no'}; ${p.rls ? 'rls' : 'no rls'})`); continue; }
+  if (n(g('sysA')) < n(g('ownerA')) || n(g('sysB')) < n(g('ownerB')))
+    lose.push(`${r.label} | owner A/B ${g('ownerA')}/${g('ownerB')} | system ${g('sysA')}/${g('sysB')} | own ${g('ownA')}/${g('ownB')}`);
+  if (n(g('ownA')) < n(g('ownerA')) || n(g('ownB')) < n(g('ownerB')))
+    ownLoses.push(`${r.label} | owner A/B ${g('ownerA')}/${g('ownerB')} | own ${g('ownA')}/${g('ownB')}`);
+  if (n(g('leakAB')) > 0 || n(g('leakBA')) > 0) leaks.push(`${r.label} | A's scope reads B: ${g('leakAB')} | B's scope reads A: ${g('leakBA')}`);
+}
+console.log('\n## Per table: read | tenant column | rls | SELECT policy carries P | ownerA | systemA | ownA | ownerB | systemB | ownB | A-scope reads B | B-scope reads A');
+for (const l of lines) console.log(l);
+console.log(`\n## TABLES THAT LOSE ROWS TODAY (system scope returns fewer than exist): ${lose.length}`);
+for (const l of lose) console.log(l);
+console.log(`\n## Tables whose OWN scope (tenant id + org uuid) returns fewer than exist: ${ownLoses.length}`);
+for (const l of ownLoses) console.log(l);
+console.log(`\n## Own scope admits another organization's row: ${leaks.length}`);
+for (const l of leaks) console.log(l);
+console.log(`\n## Reads that raised an error under a runtime scope (the export records these in coverage.tablesFailed): ${errors.length}`);
+for (const l of errors) console.log(l);
+console.log(`\n## Not seeded (no row for A or B, so not measured by rows; posture shown): ${unseeded.length}`);
+for (const l of unseeded) console.log(l);
+await owner.end(); await app.end();

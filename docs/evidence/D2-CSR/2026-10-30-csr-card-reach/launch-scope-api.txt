@@ -1,0 +1,16 @@
+
+> concept2cure-riai@1.0.0 ci:launch-scope-api
+> npx tsx scripts/ci/check-launch-scope-api.ts
+
+ci:launch-scope-api: 569 API paths named by launch and shell screens; none refused. {"launch":519,"infrastructure":2,"never-gated":48}
+--- --list, /api/csr/jobs paths:
+launch       /api/csr-workflow/pivotal  [ectd-compile]
+launch       /api/csr/jobs  [project-home, communication-center, device-510k, device-pma, device-cer, device-diagnostics, vault, document-authoring, review, protocol-dev, submission-center, ectd-compile, ind-checklist, dispatch-readiness, quality, cmc, insights, conversation-thread, admin-console, onboarding, (shell chrome)]
+launch       /api/csr/jobs/:p/assembly  [ectd-compile]
+launch       /api/csr/jobs/:p/assembly/supply-candidates  [ectd-compile]
+launch       /api/csr/jobs/:p/narratives  [project-home, communication-center, device-510k, device-pma, device-cer, device-diagnostics, vault, document-authoring, review, protocol-dev, submission-center, ind-checklist, dispatch-readiness, quality, cmc, insights, conversation-thread, admin-console, onboarding, (shell chrome)]
+launch       /api/csr/jobs/:p/narratives/text  [project-home, communication-center, device-510k, device-pma, device-cer, device-diagnostics, vault, document-authoring, review, protocol-dev, submission-center, ind-checklist, dispatch-readiness, quality, cmc, insights, conversation-thread, admin-console, onboarding, (shell chrome)]
+  ✓ keeps unrelated optional workbench imports outside that feature graph
+  ✓ an MDX feature with no component mapping fails closed
+
+selftest PASSED — the gate flags a launch screen that production would refuse.

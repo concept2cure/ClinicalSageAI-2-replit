@@ -1,0 +1,5 @@
+ × server/routes/__tests__/ha-interactions-meeting-admission.test.ts > POST /api/ha-interactions/interactions > is refused, with nothing recorded, when the person may not change the submission's project 28ms
+ ✓ server/routes/__tests__/ha-interactions-meeting-admission.test.ts > POST /api/ha-interactions/interactions > records it when the project admits the write 5ms
+ × server/routes/__tests__/ha-interactions-meeting-admission.test.ts > POST /api/ha-interactions/interactions > refuses a submission that is not one of a project here, and a date that is not a date 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)

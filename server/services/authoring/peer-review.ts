@@ -26,6 +26,8 @@ export interface PeerReviewTaskInput {
 export interface PeerReviewTaskClosure {
   completed: string[]; leftOpen: Array<{ taskId: string; why: string }>;
   notices: TaskEventNotice[]; record: () => Promise<void>;
+  /** RR5: the review route a negative verdict returned, when it returned one. */
+  returnedRouteId?: string | null;
 }
 export class AuthoringPeerReviewRefused extends Error {
   constructor(readonly status: 400 | 401 | 403 | 404 | 409 | 503, readonly code: string, message: string) { super(message); }
@@ -302,6 +304,19 @@ export async function submitAuthoringPeerReview(connection: RequestConnectable, 
   });
 }
 
+/** One reviewer's pending request: a new row, or their earlier verdict reopened (the verdict stays in its own audit row). */
+async function openReviewRequest(client: RequestSqlClient, input: PeerReviewInput, member: Record<string, unknown>, current: AdmittedReview) {
+  const result = await client.query(`INSERT INTO authoring_reviews
+    (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, requested_by, tenant_id, created_at)
+    VALUES (gen_random_uuid(), $1, $2, $3, $4, 'pending', $5, $6, NOW())
+    ON CONFLICT (doc_id, reviewer_id, tenant_id) DO UPDATE SET id=EXCLUDED.id, requested_at=clock_timestamp(),
+      requested_by=$5, reviewer_name=$3, reviewer_email=$4, review_status='pending', reviewed_at=NULL,
+      review_comments=NULL, reviewed_snapshot=NULL, reviewed_snapshot_hash=NULL, review_binding_basis=NULL,
+      updated_at=NOW() RETURNING *`,
+  [input.documentId, member.id, member.name, member.email, current.actor.id, input.tenantId]);
+  return serializedReview(result.rows[0], current.snapshotHash);
+}
+
 function reviewerIds(value: unknown): string[] {
   if (!Array.isArray(value) || !value.length || value.length > 100) throw new AuthoringPeerReviewRefused(400, 'REVIEWERS_REQUIRED', 'Choose between one and 100 current reviewers.');
   const ids = value.map(row => row && typeof row === 'object' && 'id' in row ? String(row.id).trim() : '');
@@ -324,37 +339,43 @@ async function requestedMembers(client: RequestSqlClient, input: PeerReviewInput
   return members;
 }
 
-export async function requestAuthoringPeerReviews(connection: RequestConnectable, input: PeerReviewInput & { reviewers: unknown; reason: string | null }, deps: {
+/**
+ * The review route a request writes on its own transaction (RR5,
+ * docs/design/REVIEW_ROUTING_2026-10-23.md; authoring-review-route.ts):
+ * `prepare` reads nothing and refuses a route the request cannot name before
+ * anything is written; `write` runs after the request's rows and before the
+ * grants, so the document's row lock, the route's rows and the audit chain are
+ * taken in that order. Its refusal rolls the whole request back.
+ */
+export interface ReviewRequestRoute<P, R> {
+  prepare: (reviewerIds: string[]) => P;
+  write: (client: RequestSqlClient, current: { actor: ReviewActor; prepared: P }) => Promise<R>;
+}
+
+export async function requestAuthoringPeerReviews<P, R>(connection: RequestConnectable, input: PeerReviewInput & { reviewers: unknown; reason: string | null }, deps: {
   audit: AuditFacts;
   grant: (client: RequestSqlClient, current: {
     actor: ReviewActor; scope: AuthoringObjectScope; reviews: ReturnType<typeof serializedReview>[]; reason: string | null;
   }) => Promise<unknown[]>;
+  route: ReviewRequestRoute<P, R>;
 }) {
   const ids = reviewerIds(input.reviewers);
   const stated = optionalGovernedReason(input.reason);
   if (!stated.ok) throw new AuthoringPeerReviewRefused(400, 'REVIEW_REASON_INVALID', stated.error);
+  const prepared = deps.route.prepare(ids);
   return transaction(connection, async client => {
     const current = await admit(client, input, 'edit', true);
     const members = await requestedMembers(client, input, ids);
     const before = await client.query('SELECT * FROM authoring_reviews WHERE doc_id=$1 AND tenant_id=$2 AND reviewer_id=ANY($3::text[]) FOR UPDATE',
       [input.documentId, input.tenantId, ids]);
     const reviews = [];
-    for (const member of members) {
-      const result = await client.query(`INSERT INTO authoring_reviews
-        (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, requested_by, tenant_id, created_at)
-        VALUES (gen_random_uuid(), $1, $2, $3, $4, 'pending', $5, $6, NOW())
-        ON CONFLICT (doc_id, reviewer_id, tenant_id) DO UPDATE SET id=EXCLUDED.id, requested_at=clock_timestamp(),
-          requested_by=$5, reviewer_name=$3, reviewer_email=$4, review_status='pending', reviewed_at=NULL,
-          review_comments=NULL, reviewed_snapshot=NULL, reviewed_snapshot_hash=NULL, review_binding_basis=NULL,
-          updated_at=NOW() RETURNING *`,
-      [input.documentId, member.id, member.name, member.email, current.actor.id, input.tenantId]);
-      reviews.push(serializedReview(result.rows[0], current.snapshotHash));
-    }
+    for (const member of members) reviews.push(await openReviewRequest(client, input, member, current));
+    const route = await deps.route.write(client, { actor: current.actor, prepared });
     const grants = await deps.grant(client, { actor: current.actor, scope: current.scope, reviews, reason: input.reason });
     await writeAuthoringAuditTrail(auditContext(connection, input, current.actor, deps.audit), {
       docId: input.documentId, sectionId: null, operationType: 'review_requested', beforeContent: null, afterContent: null,
       changeReason: input.reason, executor: client,
-      metadata: { reviewerIds: ids, reviewIds: reviews.map(row => row.id), grants,
+      metadata: { reviewerIds: ids, reviewIds: reviews.map(row => row.id), grants, route,
         beforeReviews: before.rows, afterReviews: reviews,
         reopenedVerdicts: before.rows.filter(row => row.review_status !== 'pending').map(row => ({
           reviewId: row.id, reviewerId: row.reviewer_id, verdict: row.review_status, reviewedAt: timestamp(row.reviewed_at),
@@ -364,7 +385,50 @@ export async function requestAuthoringPeerReviews(connection: RequestConnectable
     });
     await recheckAdmission(client, input, current, 'edit', true);
     await requestedMembers(client, input, ids);
-    return { reviews, grants, auditTrail: { persisted: true as const, chained: true as const } };
+    return { reviews, grants, route, auditTrail: { persisted: true as const, chained: true as const } };
+  });
+}
+
+/** What the route's reassignment did (RR5): whose assignment moved to whom. */
+export interface RouteReassignment { routeId: string; taskId: string; fromUserId: number; toUserId: number }
+
+/**
+ * RR5 (docs/design/REVIEW_ROUTING_2026-10-23.md §2.10): a reviewer's
+ * assignment on the document's review route moves to another person, and
+ * their review request moves with it, on one transaction. `deps.route` does the
+ * route's part (reassignMember: the one validator, the task kept, the
+ * reminders reset, review-route.reassign) and says who it moved from and to.
+ * Then the new reviewer's request is opened (an earlier verdict of theirs is
+ * reopened, as a request does), the old reviewer's pending request is removed
+ * (it stays, whole, in the audit row), the new reviewer is granted what
+ * reviewing needs, and one review_requested audit row names both.
+ */
+export async function reassignAuthoringReviewRequest<R extends RouteReassignment>(connection: RequestConnectable, input: PeerReviewInput & { reason: string }, deps: {
+  audit: AuditFacts;
+  route: (client: RequestSqlClient, current: { actor: ReviewActor }) => Promise<R>;
+  grant: (client: RequestSqlClient, current: {
+    actor: ReviewActor; scope: AuthoringObjectScope; reviews: ReturnType<typeof serializedReview>[]; reason: string | null;
+  }) => Promise<unknown[]>;
+}) {
+  return transaction(connection, async client => {
+    const current = await admit(client, input, 'view', true);
+    const moved = await deps.route(client, { actor: current.actor });
+    const [member] = await requestedMembers(client, input, [String(moved.toUserId)]);
+    const removed = await client.query(`DELETE FROM authoring_reviews WHERE doc_id=$1 AND tenant_id=$2 AND reviewer_id=$3 AND review_status='pending' RETURNING *`,
+      [input.documentId, input.tenantId, String(moved.fromUserId)]);
+    const before = await client.query('SELECT * FROM authoring_reviews WHERE doc_id=$1 AND tenant_id=$2 AND reviewer_id=$3 FOR UPDATE',
+      [input.documentId, input.tenantId, String(moved.toUserId)]);
+    const review = await openReviewRequest(client, input, member, current);
+    const grants = await deps.grant(client, { actor: current.actor, scope: current.scope, reviews: [review], reason: input.reason });
+    await writeAuthoringAuditTrail(auditContext(connection, input, current.actor, deps.audit), {
+      docId: input.documentId, sectionId: null, operationType: 'review_requested', beforeContent: null, afterContent: null,
+      changeReason: input.reason, executor: client,
+      metadata: { reassigned: moved, reviewerIds: [String(moved.toUserId)], reviewIds: [review.id], grants,
+        removedRequests: removed.rows, beforeReviews: [...removed.rows, ...before.rows], afterReviews: [review],
+        reopenedVerdicts: before.rows.filter(row => row.review_status !== 'pending').map(row => ({ reviewId: row.id, reviewerId: row.reviewer_id, verdict: row.review_status })) },
+    });
+    await recheckAdmission(client, input, current, 'view', true);
+    return { review, grants, route: moved, auditTrail: { persisted: true as const, chained: true as const } };
   });
 }
 

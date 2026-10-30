@@ -1,0 +1,83 @@
+/**
+ * P-72 slice 0, seeding pass 2: the tables pass 1 could not seed. A value each named CHECK admits, the existing
+ * membership row reused, and the tables whose triggers refuse every INSERT laid down past their triggers
+ * (session_replication_role = replica; the custody fixture's method for reg_questions). Two Vault tables by hand.
+ */
+import { createHash } from 'node:crypto';
+const REPO = '/home/user/ClinicalSageAI-2-replit';
+const pg = (await import(`${REPO}/node_modules/pg/lib/index.js`)).default;
+const { TenantRowSeeder } = await import(`${REPO}/tests/db/tenant-purge-row-seeder.ts`);
+const sha = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex');
+const owner = new pg.Pool({ connectionString: process.env.DATABASE_OWNER_URL, max: 3 });
+const orgs = (await owner.query(`SELECT o.id, o.uuid::text AS uuid, o.slug, u.id AS user_id FROM organizations o
+  JOIN organization_users ou ON ou.organization_id = o.id JOIN users u ON u.id = ou.user_id
+  WHERE o.slug IN ('p72-a','p72-b') ORDER BY o.slug`)).rows;
+
+const OVERRIDE: Record<string, Record<string, unknown>> = {
+  'public.ana_turn_records': { record_text: 'p72', record_sha256: sha('p72') },
+  'public.ana_record_blobs': { text: 'p72', sha256: sha('p72') },
+  'public.ana_source_read_receipts': { checkpoint: 'host_budget_admitted' },
+  'public.authoring_tracked_change_decisions': { decision: 'accept' },
+  'public.company_document_designs': { sha256: 'a'.repeat(64) },
+  'public.company_document_revisions': { sha256: 'a'.repeat(64) },
+  'public.company_document_identity_reviews': { filing_sha256: 'a'.repeat(64) },
+  'public.csr_narrative_outputs': { status: 'refused', content: null, content_hash: null },
+  'public.organization_retention_settings': { retention_years: 25 },
+  'public.submission_filed_baselines': { last_filed_sequence: '0001' },
+  'public.qms_document_versions': { record_kind: 'draft' },
+};
+const TRIGGER_REFUSED = ['public.c2c_commitments', 'public.reg_questions', 'public.reg_responses', 'public.document_data_dispositions',
+  'public.vault_version_annotations', 'public.mcp_oauth_authorization_codes', 'public.mcp_oauth_refresh_tokens', 'public.protocol_budget_params'];
+const TENANT = ['organization_id', 'org_id', 'tenant_id'];
+const proto = (TenantRowSeeder as any).prototype;
+const origColumnValues = proto.columnValues, origKeyValues = proto.keyValues, origWrite = proto.write;
+proto.write = function (t: string, ...rest: any[]) { this.__table = t; return origWrite.call(this, t, ...rest); };
+proto.columnValues = async function (row: Record<string, unknown>, shape: any) {
+  Object.assign(row, OVERRIDE[this.__table] ?? {});
+  for (const c of shape.columns) {
+    if (row[c.name] !== undefined || c.generated || !TENANT.includes(c.name)) continue;
+    if (c.type === 'uuid') row[c.name] = this.__uuid;
+    else if (/^(text|character varying)/.test(c.type)) row[c.name] = String(this.organizationId);
+  }
+  return origColumnValues.call(this, row, shape);
+};
+proto.keyValues = async function (t: string, shape: any, depth: number, optionalKeys: boolean) {
+  const row = await origKeyValues.call(this, t, shape, depth, optionalKeys);
+  for (const fk of shape.fks) if (fk.parent === 'public.organizations') fk.cols.forEach((c: string, i: number) => {
+    if (row[c] !== undefined && fk.pcols[i] === 'uuid') row[c] = this.__uuid;
+  });
+  return row;
+};
+const failures: string[] = [];
+const reference = new Map();
+for (const o of orgs) {
+  const membership = (await owner.query('SELECT * FROM organization_users WHERE organization_id = $1 AND user_id = $2', [o.id, o.user_id])).rows[0];
+  const mk = (db: any) => {
+    const s = new TenantRowSeeder({ db, organizationId: o.id, userId: o.user_id, exercised: new Set(), reference, tag: `p72${o.slug.slice(-1)}` });
+    (s as any).__uuid = o.uuid; (s as any).mine.set('public.organization_users', membership); return s;
+  };
+  const plain = mk(owner);
+  for (const t of Object.keys(OVERRIDE)) {
+    try { await plain.seed(t); } catch (e: any) { failures.push(`${o.slug} | ${t} | ${String(e.message).slice(0, 140)}`); }
+  }
+  const client = await owner.connect();
+  await client.query("SET session_replication_role = 'replica'");
+  const replica = mk(client);
+  for (const t of TRIGGER_REFUSED) {
+    try { await replica.seed(t); } catch (e: any) { failures.push(`${o.slug} | ${t} (replica) | ${String(e.message).slice(0, 140)}`); }
+  }
+  await client.query("SET session_replication_role = 'origin'"); client.release();
+  // Two Vault tables by hand: a program-scoped legal hold, and a relationship between two of the organization's documents.
+  try {
+    await owner.query(`INSERT INTO vault.legal_holds (organization_id, reference, reason, scope, program_id)
+      SELECT $1, 'p72-hold-'||$1, 'p72 slice 0 probe hold', 'program', rp.id FROM regulatory_programs rp WHERE rp.organization_id = $1 LIMIT 1`, [o.id]);
+  } catch (e: any) { failures.push(`${o.slug} | vault.legal_holds (hand) | ${String(e.message).slice(0, 140)}`); }
+  try {
+    const shape = (await owner.query(`SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='vault_document_relationships' AND is_nullable='NO' AND column_default IS NULL`)).rows.map((r: any) => r.column_name);
+    console.log(`vault_document_relationships required columns: ${shape.join(',')}`);
+  } catch (e: any) { failures.push(String(e.message)); }
+  console.log(`${o.slug}: pass-2 rows written ${plain.rows.length + replica.rows.length}`);
+}
+console.log(`pass-2 failures ${failures.length}`);
+for (const f of failures) console.log(`FAIL | ${f}`);
+await owner.end();

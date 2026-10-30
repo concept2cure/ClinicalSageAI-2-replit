@@ -340,6 +340,7 @@ Attribution: CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01, Clinical Data In
 - Run 2: `pilot-run-v2.json`, `engine-vs-oracle-v2.json`, `engine-vs-published.json`, `reader-vs-pandas-v2.json`, `reader-memory-synthetic.txt` and `measure-reader-memory.mts` (synthetic data only), `fix-red.txt`, `fix-green.txt`.
 - `oracle-vs-published.json`: counts by table, the 12 mismatching cells, the narrative-set sizes and the latent-issue counts.
 - D18: `d18-pilot.json` (counts, times, memory, the independent leaf check and the red at HEAD), `d18-fix-red.txt`, `d18-fix-green.txt`, `contract-rules-red.txt`, `contract-rules-green.txt`.
+- §14.3.3 by reference: `ref-red.txt`, `ref-green.txt`, `ref-mutation-facts-digest.txt`, `ref-mutation-walk.txt`, `ref-scale-1500.json`, `ref-scale-5000.json`, `ref-measure.mts` (synthetic data only).
 
 ## Run 3 (2026-10-30): D10, D11 and D12 fixed
 
@@ -661,7 +662,7 @@ Status is still `incomplete`, for run 2's reasons only:
 
 ### Not done, and why
 
-- **The import holds §14.3.3 as one string.** `materializeCsrAssemblySource` reads every section whole, and so does the import into Authoring. That includes the landed §14.3.3, which the leaf is checked against. The narratives themselves are read 50 at a time. The pilot's §14.3.3 is 143 KB. The import refuses more than 2,000,000 characters across all sections (`WORKFLOW_SOURCE_LIMIT`). That is roughly 1,300 pilot-length narratives, and a larger build fails closed at the import before assembly. Making that read stream would change the import's fingerprint and the Authoring import, which is a separate change.
+- **The import holds §14.3.3 as one string.** (Fixed later: see [§14.3.3 by reference](#1433-by-reference-2026-10-30-the-import-holds-the-narratives-as-a-reference-to-the-store).) `materializeCsrAssemblySource` reads every section whole, and so does the import into Authoring. That includes the landed §14.3.3, which the leaf is checked against. The narratives themselves are read 50 at a time. The pilot's §14.3.3 is 143 KB. The import refuses more than 2,000,000 characters across all sections (`WORKFLOW_SOURCE_LIMIT`). That is roughly 1,300 pilot-length narratives, and a larger build fails closed at the import before assembly. Making that read stream would change the import's fingerprint and the Authoring import, which is a separate change.
 - **The STF role** is `study-report`, chosen from the reviewed recall list. It is unverified against the ICH STF specification (see above).
 - **The pilot ran through `assembleCsr`, not the queued `assembleCsrJob`.** The pilot has no database build. The SQL read path (`sqlNarrativeStore.page` over `csr_narrative_outputs`) is proven on synthetic data in `csr-assembly-run.pglite.test.ts`.
 
@@ -719,3 +720,111 @@ git archive HEAD server shared package.json tsconfig.json | tar -x -C <scratch>/
 ```
 
 The harness, the narrative dump (`stored-narratives.json`) and the assembled leaves stay in the scratch directory, because they hold pilot narratives. The evidence files hold counts only. Attribution: CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01, Clinical Data Interchange Standards Consortium (CDISC), <https://github.com/cdisc-org/sdtm-adam-pilot-project>, used under its terms.
+
+## §14.3.3 by reference (2026-10-30): the import holds the narratives as a reference to the store
+
+Launch rows D2 / D4, workstream W1. Closes the first "Not done" item of D18. The import into Authoring and the assembly source read every saved section whole, including the landed §14.3.3, and refused more than 2,000,000 characters across all sections (`WORKFLOW_SOURCE_LIMIT`). That is about 1,300 narratives. The design's target is 1,000 narratives per build, and real studies exceed it.
+
+**Outcome (SYNTHETIC):** a build with 1,500 landed narratives (2,327,062 characters) was refused at import. It now imports, and the Authoring section holds 579 characters in all. The editor shows §14.3.3 read-only, with the reference's count, a paged view of the stored narratives and the QC list. Assembly files all 1,500, each checked against its stored SHA-256. After import, a stored narrative edited in the table makes the import, the assembly and the placement refuse, and the refusal names the subject. At 5,000 narratives (7,755,952 characters) the import takes 4.7 s and the assembly of §14.3.3 takes 21.6 s. Peak heap is 171 MiB (table below).
+
+### What already exists
+
+Searched before any change, across `server/`, `shared/` and `client/src`. Names searched: `WORKFLOW_SOURCE_LIMIT`, `materializeCsrAssemblySource`, `materializeWorkflowSource`, `verifySavedWorkflowImport`, `sectionOrigins`, `csrEvidence`, `narrativesSectionHead`, `narrativeSectionBlock`, `renderNarrativesLeaf`, `sqlNarrativeStore`, `readCsrNarrativeQc`, `NarrativeQcItem`, `ImportSourceNotice`, `contentReadOnly`, `Pagination`, `nextCursor`, `reference`. `git log --all --diff-filter=D` was also run on `*narrative*`, `*Narrative*` and `*NarrativeReference*`. It found `SafetyNarrativeQcPanel.tsx`, `SafetyNarrativeAffordance.tsx` and `safetyNarrativeBatch.ts`, deleted 2026-08-04 in `2895218b8b`. That is the single-subject AnA batch UI, whose QC list the slice-7 build board already restored (`CsrBuildProgress.tsx`), and this change reuses that list. It also found the CER and IND narrative scripts and Module 2 narratives. None of them held a §14.3.3 reference or a viewer of stored narratives.
+
+No reference form of a section existed. Each piece below is **extended in place**:
+
+| Piece | Path | What it did | What it does now |
+|---|---|---|---|
+| Import / assembly source | `server/services/authoring/workflow-source-import.ts` | Selected §14.3.3's text with every other section; the 2,000,000 limit counted it | Never selects §14.3.3's text (`CASE … THEN NULL`). §14.3.3 becomes the landed opening plus a reference on its section origin. `facts` carries the reference too, so the fingerprint covers it. `materializeCsrAssemblySource` returns the inline sections and `narratives` (the reference). The limit is unchanged and counts the inline sections only |
+| Reference section | `server/services/authoring/csr-narrative-reference-import.ts` (new, 56 lines) | — | Makes the reference, or refuses with the importer's own codes: `WORKFLOW_CSR_NARRATIVE_MISMATCH` naming the subject, or `WORKFLOW_CSR_HASH_MISMATCH` |
+| Landed text and walk | `server/services/csr/csr-narrative-landed.ts` (new, 166 lines) | The match was inside the leaf renderer, over a string | `sqlLandedNarratives` reads the landed row as its database-checked hash, its length, its opening and slices, never whole. `walkLandedNarratives` is the D18 match, unchanged in rule. It reads one slice of landed text per page of 50 stored narratives. `readCsrNarrativeReference` reads the store digest before and after the walk |
+| Reference type | `shared/csr-narrative-reference.ts` (new); `WorkflowSectionOrigin.narrativeReference` in `shared/authoring/source-import.ts` | — | `{ jobId, narratives, storeDigest, landedSha256, landedLength, openingSha256 }`, parsed field by field |
+| Leaf | `server/services/csr/csr-assembly-narratives.ts` | Matched over `section.content` | Draws through `walkLandedNarratives`. The checks are the same: landed equals stored, recorded hashes, `toWinAnsiSafe`, destinations read back |
+| Assembler | `csr-assembly.ts`, `csr-assembly-source.ts` | §14.3.3 came only through `sections` | It also takes `landedNarratives`. The production source passes the database reader and refuses `CSR_ASSEMBLY_SOURCE_CHANGED` if the landed hash or length differs from the reference |
+| Store read for the viewer | `csr-narrative-store.ts` `readCsrNarrativeTextPage`; route `GET /api/csr/jobs/:jobId/narratives/text` in `server/routes/csr-jobs-narratives.ts` | The QC list only (no text) | Returns one page of composed narratives (at most 50), keyset-paged, each with the database's own hash verdict. Access is the job's project, read as the signed-in user, as for the QC list |
+| Editor | `client/src/concept2cure/v2/editor/CsrNarrativeReferenceView.tsx` (new); `DocumentWorkbench.tsx` (+5 lines); `ImportSourceNotice.tsx` | §14.3.3 was editable inline text | The section is read-only (`contentReadOnly`). Above it, the view shows the count, the build, both digests, the stored narratives 20 at a time with Previous and Next, a failed hash as an alert, and the QC list |
+| QC list | `client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx` | `NarrativeQcItem` list inline in the board | Exported as `NarrativeQcList` and reused in the editor. There is one copy |
+
+No schema changed (RULE 1 does not apply). The D5 gates are not changed: release, review, approval and `csr-scientific-review.ts`. Release governance (`workflow-import-governance.ts`) already re-materializes through `verifySavedWorkflowImport`. Through that existing call, an edited store now refuses release with `WORKFLOW_SOURCE_UNAVAILABLE`.
+
+### What the reference binds, and what fails closed
+
+- **Import fingerprint.** The reference sits on §14.3.3's section origin and in `facts`. Both are inside the fingerprint, and `verifySavedWorkflowImport` deep-compares the origins.
+- **Store digest.** SHA-256 over every row of `csr_narrative_outputs` for the build. Each row contributes its subject, sequence, status, recorded hash, the database's SHA-256 of its text, its facts digest and its QC record. Any edit to any row changes it, including one the landed text cannot show. Case tested: a facts digest edit makes an earlier assembly `CSR_PLACEMENT_ASSEMBLY_STALE`.
+- **Narrative edited after import.** This was tested twice: with the text and its hash both changed, and with the text alone. In both cases the import is refused, `WORKFLOW_CSR_NARRATIVE_MISMATCH`, and the message names "the narrative of subject SYN-00738 in the section". Assembly is refused with the same message. Placement of an assembly made before the edit is refused as `CSR_PLACEMENT_SOURCE_UNVERIFIED`, with the same subject named. A control assembly of the build as imported is placed.
+- **Landed §14.3.3 edited under its recorded hash.** Refused with `WORKFLOW_CSR_HASH_MISMATCH`. The database computes the check; the text is not read into the server.
+- **Unchanged from D18.** A narrative that has not landed is a blocking gap.
+- **Existing imports.** An Authoring copy imported before this change, of a build with a landed §14.3.3, no longer verifies, because its fingerprint was computed over the inline text. Its release is refused, fail closed. To proceed, import it again.
+
+### Red, then green (SYNTHETIC)
+
+The tests are `server/services/csr/__tests__/csr-narrative-reference.pglite.test.ts` (8 cases). They use the real migration, the real SQL store, the real import, assembly and placement, and real access checks. Only the retained run's tables are a fixture. The fixture is `support/narrative-reference-fixture.ts`. It saves the narratives and streams §14.3.3 through `sqlNarrativeStore`, as the narrative job does. Every subject and sentence in it is invented.
+
+| Check | Result |
+|---|---|
+| Red (`ref-red.txt`, at the code before the change) | 4 of 7 failed. The 1,500-narrative import and the assembly both failed `WORKFLOW_SOURCE_LIMIT`. Neither tamper case found a reference. 3 passed: the size check, the inline limit, and the landed-hash refusal. Those 3 hold before and after |
+| Green (`ref-green.txt`: this suite with the D18 narratives, assembly-run and import suites, the route and the editor view; 6 files, 68 passed) | 8 of 8. The import holds the opening (579 inline characters) and `narratives: 1500`. Assembly verifies 1,500 of 1,500, the receipt's stored hash equals each row's, and the drawn hash equals the stored one. The fingerprint equals the import's. The inline limit still refuses 2,000,001 characters. Each tamper is refused naming SYN-00738, at import, at assembly and at placement. The facts-digest edit is stale at placement |
+| Shown failing (`ref-mutation-facts-digest.txt`) | With the facts digest left out of the store digest, the facts-digest case fails: the digest is unchanged |
+| Shown failing (`ref-mutation-walk.txt`) | With the walk's mismatch finding removed, both tamper cases fail: the import resolved instead of refusing |
+| Route | `csr-jobs-narratives.pglite.test.ts`: the text page, the keyset cursor, and `CSR_NARRATIVE_PAGE_INVALID` |
+| Editor | `client/src/concept2cure/v2/__tests__/csrNarrativeReferenceView.test.tsx` (3 cases). It covers the count (1,500), pages 1–20 and 21–40 and back, the request's cursor, a failed hash shown as an alert, the QC list, a refused read shown as stated, and that a malformed reference is not shown. The 5 lines that mount the view in `DocumentWorkbench.tsx` are covered by the typecheck only; no workbench-level test renders an imported CSR |
+
+### Scale (`ref-scale-1500.json`, `ref-scale-5000.json`; `ref-measure.mts`)
+
+Synthetic narratives average about 1,400 characters. One process per size, with `--expose-gc`. PGlite runs in the same process, so RSS includes the database. "Assembly" is `assembleCsr` with the database reader for §14.3.3, plus the slice-8 fixture's tables and listings. The production `assembleCsrJob` also runs the import first (the "Import" row).
+
+| | 1,500 narratives | 5,000 narratives |
+|---|---|---|
+| Landed §14.3.3 | 2,327,062 characters | 7,755,952 characters |
+| Import (`materializeWorkflowSource`) | 0.74 s; heap 105.7 → peak 115.1 MiB | 4.70 s; heap 105.9 → peak 112.4 MiB |
+| Inline characters imported | 579 | 579 |
+| Assembly | 6.05 s; heap 107.7 → peak 142.6 MiB; peak RSS 783 MiB | 21.6 s; heap 107.9 → peak 170.8 MiB; peak RSS 822 MiB |
+| §14.3.3 leaf | 563 pages, 1,096,049 bytes, 1,500 verified, 0 findings | 1,876 pages, 3,656,767 bytes, 5,000 verified, 0 findings |
+| Store pages read (50 each) | 31 | 101 |
+
+Heap stays flat as the narratives grow, because the text is never held whole. The import time grows faster than the narrative count: 3.3 times the narratives took 6.3 times as long. Each page's slice is a separate `substr` of the landed row; this has not been profiled. The assembly time grows about linearly.
+
+### Not done, and why
+
+- ~~**The server does not refuse a save to the §14.3.3 section.**~~ **Fixed, 2026-10-30 (follow-up below).**
+- **The AnA saved-document critique** (`server/services/ana/csr-saved-evidence.ts`) does not re-read the store for a reference. Release governance does, through `verifySavedWorkflowImport`.
+- **Import time is superlinear** (above). It is under 5 s at 5,000 narratives, 5 times the design's target.
+- **The measurement is PGlite in-process,** not a production Postgres.
+
+### Gates
+
+| Gate | Result |
+|---|---|
+| `npx vitest run server/services/csr shared server/services/authoring` | 201 files; 3,139 passed, 1 failed. The failure is `cross-sector-builtin-authoring-templates.test.ts` (446 against an expected 392 builtin templates). It fails identically at HEAD `e0c7cad3c0` (a `git archive` in scratch). This change does not touch it |
+| Touched suites: `server/routes/__tests__/csr-jobs-{assembly,narratives,build-and-review}.pglite.test.ts`, `client/src/concept2cure/v2/__tests__/csr*`, `client/src/concept2cure/v2/editor/__tests__` | 82 files; 1,225 passed, 3 failed. The 3 are `authoringConversationScopeLive.test.tsx` 5 s timeouts, and they fail identically at HEAD |
+| ESLint `--max-warnings 0` on every changed file except `DocumentWorkbench.tsx` | clean |
+| `DocumentWorkbench.tsx` (6,612 lines; 6,608 before this change, already over the limit) | the same 12 warnings as at HEAD; none new |
+| Largest changed file otherwise | `csr-assembly.ts`, 361 lines |
+| `ci:sql-interpolation` | OK |
+| `ci:tenant-isolation:no-regression` | OK, 0 findings |
+| `ci:launch-scope-api` | 567 paths, none refused |
+| `ci:migration-drop-safety` | OK (no migration changed) |
+| `NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p .` | exit 0, no error (on the final tree) |
+
+### Follow-up (2026-10-30): the server refuses a save over the reference
+
+**What already exists.** The shared write gate `reserveWritableSection` (`server/services/authoring/document-lock.ts`) is called by the content-changing section paths: `PATCH /api/authoring/sections/:id`, revert and accept-AI-draft (`authoring.router.ts`), and the filing-only refile. The authority for a section's import origin is its immutable creation receipt (`authoring_audit_trail` CREATE row written by `insertSectionSeedTx`), as `workflow-import-governance.ts` `retainedOrigin` already reads it, not the document's editable provenance.
+
+**Change.** `refuseNarrativeReferenceContentWrite` (document-lock.ts) refuses, with 409 `CSR_NARRATIVE_REFERENCE_READ_ONLY`, a write to a section whose CSR creation receipt carries a `narrativeReference` for that section's code. It is called after `reserveWritableSection` on the save (when content is sent), revert and accept paths. The filing-only refile does not change the text and is not refused. Renaming the section does not lift it, because the receipt decides.
+
+| Check | Result |
+|---|---|
+| `narrative-reference-write.pglite.test.ts` with the throw disabled (`ref-write-guard-red.txt`) | 3 failed (the three refusals), 2 passed (the allowed cases) |
+| Same, restored (`ref-write-guard-green.txt`) | 5 passed |
+| `authoring-save-governed-write.pglite.test.ts`, PATCH call removed (`ref-write-route-red.txt`) | the refusal case fails: expected 200 to be 409 |
+| Same, restored (`ref-write-route-green.txt`) | 21 passed |
+
+**Not covered by a route test:** the revert and accept call sites (each is the same one-line call after the same gate).
+
+### Commands (§14.3.3 by reference)
+
+```
+npx vitest run server/services/csr/__tests__/csr-narrative-reference.pglite.test.ts     # ref-red.txt / ref-green.txt
+npx vitest run client/src/concept2cure/v2/__tests__/csrNarrativeReferenceView.test.tsx server/routes/__tests__/csr-jobs-narratives.pglite.test.ts
+NODE_OPTIONS="--expose-gc --max-old-space-size=8192" npx tsx docs/evidence/D2-CSR/2026-10-30-cdisc-pilot-e2e/ref-measure.mts 1500 <out.json>   # and 5000
+```

@@ -13,7 +13,11 @@
  *     and counted as cleared on the Overview while still under review;
  *   - useWorkbenchValidation: every program showed 0 errors and the summary
  *     said "All programs filing-ready", because the blocker→program join
- *     could never match (c2c_blockers references projects, not programs);
+ *     could never match (c2c_blockers references projects, not programs).
+ *     Its screen retired with the organization-wide blocker list (D2, fold F5
+ *     item 2, 2026-10-29; decision P-61 item 2), and its case with it: a
+ *     filing's blockers are its own readiness's (EstarFilingPanel), whose
+ *     verdict the engine computes (estar-filing-readiness.test.ts);
  *   - PostmarketSurface: "MDRs due ≤72h", "CAPAs in flight" and "PSURs · N
  *     signed" were counted from a document list with no feed — always 0.
  */
@@ -23,7 +27,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useK510SeMatrix } from '../hooks/useK510';
 import { adaptClassification } from '../hooks/useIvd';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
-import { useWorkbenchValidation } from '../hooks/useWorkbench';
 import { PostmarketSurface } from '../surfaces/PostmarketSurface';
 import type { Program } from '../data/programs';
 
@@ -67,17 +70,6 @@ describe('no favourable default for a missing regulatory value', () => {
     expect(byId.submitted.status).not.toBe('complete');
     expect(byId.submitted.stageIdx).toBe(6);
     expect(byId.approved.status).toBe('complete');
-  });
-
-  it('states no per-program blocker count, and does not call the portfolio filing-ready', async () => {
-    serve(() => ({ data: [{ blockerId: 'B1', severity: 'critical', description: 'Missing biocompat report', blockerType: 'evidence' }] }));
-    const programs = [{ id: 'p1', code: 'Class II · 510(k)', title: 'Device', pathway: 'k510', status: 'active', readiness: 40 }] as never;
-    const { result } = renderHook(() => useWorkbenchValidation(programs));
-    await waitFor(() => expect(result.current.summary).not.toBeNull());
-    expect(result.current.programs![0].errs).toBeNull();
-    const text = JSON.stringify(result.current.summary);
-    expect(text).not.toContain('All programs filing-ready');
-    expect(result.current.summary!.find((m) => m.label === 'Open errors')!.metric).toBe('1');
   });
 });
 

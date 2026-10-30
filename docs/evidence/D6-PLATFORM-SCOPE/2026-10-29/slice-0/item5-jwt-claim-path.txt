@@ -1,0 +1,76 @@
+P-72 slice 0, item 5: can a request carry 'app_super_admin' to app.current_user_role?
+Read at 86c90e66f plus the working tree, 2026-10-30. The database part is in item5-role-claim-db.txt.
+
+A. Where the role a request scope sends is decided
+
+The setting is written by the pool from TenantScope.role:
+  poolInstrumentation.ts tenantSetConfigSql
+  sessionScope.ts applySessionScope
+
+No layer filters the value 'app_super_admin':
+  server/middleware/establishRequestTenantScope.ts  role = String(req.user.role), passed to tenantSessionVars and runWithTenantScope
+  server/db/sessionScope.ts  applySessionScope writes scope.role verbatim
+  server/db/poolInstrumentation.ts  scopeParams writes scope.role verbatim
+
+Where req.user.role comes from, by authenticator:
+  1. server/auth.ts:296 (the global /api gate, authMiddleware)
+       organization_users.role, read on this request for (userId, organizationId).
+       Filtered by the database row, not by the token.
+  2. server/middleware/auth.ts:254 admitLiveSession (authenticateToken)
+       Starts as decoded.role || 'user' (the token's claim).
+       applyOrganizationRole (:320) replaces it with the membership role before establishRequestTenantScope runs (:295).
+  3. server/middleware/tenantContext.ts:333 (requireTenantContext)
+       organization_users.role (resolvedRole).
+  4. server/middleware/auth.ts:644 optionalAuth
+       decoded.role. It opens no scope itself.
+  5. server/routes/authoring.router.ts:234-238
+       role: decoded.role, the token's claim, VERBATIM.
+       enforceOrgMembership (server/middleware/orgMembership.ts:351) sets req.user.organizationRole, not req.user.role.
+       So req.user.role stays the claim, and :8276 (the image upload) re-enters
+         runWithTenantScope({ role: req.user.role })
+       which sends the claim to app.current_user_role for that upload's statements.
+       The ONLY verbatim claim-to-database path found.
+  6. vault-ingest.ts:229, moduleIntegrationRoutes.ts:493
+       req.userRole ?? req.user.role. req.userRole is the gate's database role.
+
+B. Who mints a role claim (all 12 jwt.sign sites that carry a role)
+  auth.ts:612, :832      jwtRole = membership.role || 'user' (:574, :805)
+  auth.ts:1179           'admin' (organisation creation)
+  auth.ts:1637           refreshMembershipRole.role (membership)
+  auth.ts:1928           challenge.role, from the MFA challenge minted from the membership
+  authEnterprise.ts:683  mfaActualRole (membership)
+  authEnterprise.ts:947  selectOrgRole = membership[0].role
+  authEnterprise.ts:1051 refreshRole = membershipRoleOf(...)
+  setup.ts:221           'admin' (first administrator)
+  sso.ts:793             'client_user'
+  mcp/auth/platform-token.ts:278  m.role (the membership row)
+  mfaService.ts:669      challenge token; its role is the caller's (membership)
+Every claim is a copy of a membership row's role at sign-in time, or a constant.
+A token with a different role needs the signing secret.
+
+C. Which roles can be assigned to organization_users.role (no CHECK on the column)
+  tenant-users POST/PATCH  z.enum(ASSIGNABLE_ORG_ROLES) = admin, approver, manager, reviewer, member, viewer
+                           (shared/constants/org-roles.ts:33)
+  invitations              role from createUserSchema (the same enum), through atomicQuotaService.atomicAcceptInvitation
+  SCIM groups              VALID_ROLES = admin, manager, member, viewer (routes/scim.ts:75, isValidRole at :1203, :1215)
+  SCIM provisioning        'member' (scim.ts:860)
+  SSO JIT                  'member' (sso.ts:913)
+  setup / signup           'admin' (setup.ts:192, auth.ts:1056)
+  seed-default-org         'admin'
+None is 'app_super_admin'.
+
+D. The database's own guard
+  organization_users_staff_role_platform_only refuses a staff role (super_admin, superadmin, platform_admin,
+  app_super_admin) outside the platform scope. It decides by reading app.rls_enforce and app.current_user_role.
+  Measured (item5-role-claim-db.txt):
+  - An ordinary admin scope is refused.
+  - A scope whose role string is 'app_super_admin' writes it onto its own membership. This works WITH the P arm and
+    also with it removed, because the trigger reads the setting in its body.
+  - So a session that carries the string once can make it durable, and every later sign-in mints it (B).
+
+E. Conclusion
+- No assignable role and no minting route produces 'app_super_admin' today.
+- One route (authoring.router.ts:238 / :8276) carries the token's claim, not the current membership, to the database.
+  A claim is a stale copy of the role at sign-in.
+- Nothing between the request and the database refuses the literal. The trigger that stops minting it is itself
+  switched by the setting.

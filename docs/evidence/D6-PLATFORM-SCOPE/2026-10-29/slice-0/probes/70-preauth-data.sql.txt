@@ -1,0 +1,10 @@
+-- P-72 slice 0: data for the pre-auth, role-claim and hold probes (owner, past triggers, a scratch copy only).
+-- B's admin has a reset token; each tenant's invitation names its admin; B is pending deletion WITH its legal hold active.
+\set ON_ERROR_STOP on
+SET session_replication_role = 'replica';
+UPDATE users SET reset_token = 'p72-reset-hash', reset_token_expires_at = now() + interval '1 hour' WHERE email = 'p72-b-admin@example.invalid';
+UPDATE organization_invitations i SET user_id = ou.user_id FROM organization_users ou
+ WHERE ou.organization_id = i.organization_id AND i.organization_id IN (SELECT id FROM organizations WHERE slug LIKE 'p72-%');
+UPDATE organizations SET status = 'pending_deletion' WHERE slug = 'p72-b';
+SET session_replication_role = 'origin';
+SELECT o.slug, o.status, (SELECT count(*) FROM vault.legal_holds h WHERE h.organization_id = o.id AND h.lifted_at IS NULL) active_holds FROM organizations o WHERE o.slug LIKE 'p72-%' ORDER BY 1;

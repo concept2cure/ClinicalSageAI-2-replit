@@ -56,6 +56,16 @@ beforeAll(async () => {
   await pg.exec(readFileSync(path.resolve(__dirname, '../../../migrations/20260628_csr_job_state.sql'), 'utf8'));
   await pg.query(`INSERT INTO csr_build_jobs (id, organization_id, project_id, study_id, status, study_info_snapshot, requested_by)
     VALUES (1, 7, 11, 'NCT05330182', 'complete', $1, 5)`, [JSON.stringify({ studyInfo, evidenceSource: { programId: PROGRAM, runId: RUN, studyId: 'LMN-201-201' } })]);
+  // A build bound to another run, and one in another organization bound to this run: neither is this run's build.
+  await pg.query(`INSERT INTO organizations VALUES (8)`);
+  await pg.query(`INSERT INTO csr_build_jobs (id, organization_id, project_id, study_id, status, study_info_snapshot, requested_by)
+    VALUES (2, 7, 11, 'NCT05330182', 'queued', $1, 5), (3, 8, 11, 'NCT05330182', 'complete', $2, 5)`, [
+    JSON.stringify({ studyInfo, evidenceSource: { programId: PROGRAM, runId: '0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b99', studyId: 'LMN-201-201' } }),
+    JSON.stringify({ studyInfo, evidenceSource: { programId: PROGRAM, runId: RUN, studyId: 'LMN-201-201' } })]);
+  // A later build of the same run in this organization: the list reads newest first, and the card falls back to builds[0].
+  await pg.query(`INSERT INTO csr_build_jobs (id, organization_id, project_id, study_id, status, study_info_snapshot, requested_by, updated_at)
+    VALUES (4, 7, 11, 'NCT05330182', 'drafting', $1, 5, now() + interval '1 day')`, [
+    JSON.stringify({ studyInfo, evidenceSource: { programId: PROGRAM, runId: RUN, studyId: 'LMN-201-201' } })]);
   await pg.query(`INSERT INTO csr_section_outputs (organization_id, project_id, job_id, section_number, content, content_hash)
     VALUES (7, 11, 1, '11.4.1', $1, $2)`, [TEXT, sha(TEXT)]);
 });
@@ -119,5 +129,22 @@ describe('POST /api/csr/jobs/:jobId/sections/:sectionNumber/review', () => {
   it('refuses a send-back without a reason and a malformed section number', async () => {
     expect((await review(6, { decision: 'send_back' })).body.code).toBe('CSR_REVIEW_REASON_REQUIRED');
     expect((await request(app).post('/api/csr/jobs/1/sections/x/review').send({ decision: 'submit' })).status).toBe(400);
+  });
+});
+
+describe('GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30)', () => {
+  it('lists only this organization\'s builds bound to the run, newest first', async () => {
+    const res = await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}`);
+    expect(res.status).toBe(200);
+    expect(res.body.jobs.map((j: { jobId: number }) => j.jobId)).toEqual([4, 1]);
+    expect(res.body.jobs).toEqual([expect.objectContaining({ jobId: 4, status: 'drafting' }),
+      expect.objectContaining({ jobId: 1, studyId: 'NCT05330182', status: 'complete' })]);
+    expect(typeof res.body.jobs[0].updatedAt).toBe('string');
+  });
+
+  it('refuses a missing or malformed run and a missing program, never an empty list', async () => {
+    expect((await request(app).get(`/api/csr/jobs?programId=${PROGRAM}`)).body.code).toBe('CSR_RUN_REQUIRED');
+    expect((await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=x`)).status).toBe(400);
+    expect((await request(app).get(`/api/csr/jobs?runId=${RUN}`)).body.code).toBe('CSR_PROJECT_REQUIRED');
   });
 });

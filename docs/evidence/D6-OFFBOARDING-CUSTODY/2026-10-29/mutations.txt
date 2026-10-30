@@ -1,0 +1,414 @@
+# Mutations: each check made to fail on the case it exists to catch (D6, P-58 and P-59, 2026-10-29)
+# Each mutation is applied to the tree, its test is run, and the file is restored byte for byte (sha256 checked).
+# Database: c2c_custody_new7_tpl (install-fresh + deploy-migrate of 455 files at 86c90e66f plus this change). A migration
+# mutation is applied, then deploy-migrate is replayed over a copy of the template (Rule 1), then the test runs.
+# The runner and its specs are in the lane's scratch (run-mutations.sh, mutate.py, mut/M*.json); not in docs/.
+
+| # | File | Mutation | Test | Exit | Restored |
+|---|---|---|---|---|---|
+| M01-export-predicate | server/services/tenant/purge-parent-scope.ts | an IVDR history read by another organization ( negated) | tenant-offboarding-custody.dbtest | 1 | True |
+| M02-integrity-verdict | server/services/tenant-export/held-record-integrity.ts | every signature reported VERIFIED | tenant-offboarding-custody.dbtest | 1 | True |
+| M03-custody-check | server/services/tenant/tenant-offboarding.ts | the purge ignores the custody refusal | tenant-offboarding-custody.dbtest | 1 | True |
+| M04-stale-check | server/services/tenant/offboarding-custody.ts | custody never stale | tenant-offboarding-custody.dbtest | 1 | True |
+| M05-isCustodyAct-filter | server/services/part11/custody-signature.ts | any act may ask for a pending-deletion signer | governed-signed-act-pending-org.pglite | 1 | True |
+| M06-door-custody | migrations/20261029k (replayed) | the doors skip the custody check | tenant-offboarding-custody.dbtest | 1 | True |
+| M07-guard-reads-setting | migrations/20261023 (replayed) | the guard admits the session setting again | review-route-guard.dbtest + route-writer-setting.gate | 1 | True |
+| M08-certificate-guard | migrations/20261029k (replayed) | the certificate accepts UPDATE and DELETE | tenant-offboarding-custody.dbtest | 1 | True |
+| M09-gate-platform | scripts/ci/check-purge-coverage.mjs | platform records read as residue | ci:purge-coverage + selftest | 1 | True |
+| M10-labeling-order | server/services/tenant/purge-referrers.ts | labeling documents before their translations and symbols | tenant-purge-blocking-keys.dbtest, on a copy whose cascade triggers sort after the NO ACTION ones | 1 | True |
+| M11-route-signer | migrations/20261023 (replayed) | a route signature need not be the assignee's | review-route-guard.dbtest | 1 | True |
+| M12-type-check | server/services/tenant/offboarding-certificate.ts | a type error | scoped tsc (60 files) | 2 | True |
+| M13-seal-walk | server/services/intelligent-report-engine.ts | sealChainBreaks never reports a break | tenant-offboarding-custody.dbtest | 1 | True |
+| M14-qc-deviations-held | server/services/tenant/held-records.ts | qc_deviations not a held store | tenant-offboarding-custody.dbtest | 1 | True |
+| M15-receipts-platform | server/services/tenant/purge-referrers.ts | the purge list names tenant_export_receipts | tenant-purge-referrers.test + ci:purge-coverage | 1 | True |
+| M16-rr2-setting | tests/db/review-route-qms-rr2.dbtest.ts | the fixture writes through the retired setting | review-route-qms-rr2.dbtest | 1 | True |
+| M17-export-platform-scope | server/routes/tenant-export.ts | both exports back in the platform scope | tenant-offboarding-custody.dbtest | 1 | True |
+| M18-purge-platform-scope | server/services/tenant/tenant-offboarding.ts | the purge without the organization's tenant id and uuid | tenant-offboarding-custody.dbtest | 1 | True |
+| M19-export-scope-no-uuid | server/services/tenant-export/company-export-snapshot.ts | the export scope without the org uuid | tenant-purge-blocking-keys.dbtest | 1 | True |
+| M20-receipt-any-scope | server/services/tenant-export/tenant-full-export.service.ts | a restricted scope records a receipt | tenant-offboarding-custody.dbtest | 1 | True |
+| M21-purge-any-scope | server/services/tenant/tenant-offboarding.ts | the purge accepts a receipt with no scope | tenant-offboarding-custody.dbtest | 1 | True |
+| M22-door-any-scope | migrations/20261029k (replayed) | the doors accept custody on a receipt with no scope | tenant-offboarding-custody.dbtest | 1 | True |
+| M23-certificate-any-scope | migrations/20261029k (replayed) | the certificate guard accepts a receipt with no scope | tenant-offboarding-custody.dbtest | 1 | True |
+| M24-custody-any-scope | server/services/tenant/offboarding-custody.ts | custody attests a receipt with no scope | tenant-offboarding-custody.dbtest | 1 | True |
+| M25-graph-not-purged | server/services/tenant/purge-referrers.ts | the knowledge graph off the purge list | tenant-offboarding-custody.dbtest | 1 | True |
+
+25 of 25 mutations turned their test red; every file restored byte for byte.
+
+## Each mutation's run (verdict lines)
+
+### M01-export-predicate
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > D's export holds D's row of every held table and none of E's 6ms
+   → expected [ { …(2) }, { …(2) }, { …(2) }, …(13) ] to deeply equal []
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > holds D's row of every table the platform scope returned none of, the Vault's among them, and none of E's 4ms
+   → D's rows missing from D's export: expected [ 'vault.document_catalog', …(2) ] to deeply equal []
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > walks each of D's report seal chains with the report engine's own link check, and names the event where a link breaks 1ms
+   → expected 'UNAVAILABLE' to be 'INTACT' // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries each of D's signatures with its manifest and the §11.200 hash verdict, and none of E's 1ms
+   → signature 2 is not in the export's integrity section: expected undefined to be defined
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > the purge of a tenant holding a held record is refused without it, and nothing is touched 3ms
+   → expected 'EXPORT_EVIDENCE_UNVERIFIED' to be 'CUSTODY_ATTESTATION_REQUIRED' // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > an export made the old way, in the platform scope, records no receipt, and a receipt from before opens neither custody nor the purge 267ms
+   → expected [ { …(2) }, { …(2) }, { …(2) }, …(10) ] to deeply equal []
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator reads what they will sign: every held record, and those inside the retention period 22ms
+   → {"error":{"code":"CUSTODY_RECEIPT_NOT_FOUND","message":"No complete export of this organization has that digest. Produce a full export, then sign custody of it. Nothing was signed."}}: expected 404 to be 200 // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > nobody else signs it: a member, the other tenant, a digest that is not this tenant's, a changed attestation 1ms
+   → Cannot read properties of undefined (reading 'attestationSha256')
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator signs custody through the ceremony: one signature on the export's digest, its manifest the attestation 1ms
+   → Cannot read properties of undefined (reading 'attestationSha256')
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > with custody signed, the purge's custody check passes on that receipt and no other 21ms
+   → operator is not unique: - unknown
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > a held record added after custody was signed makes it stale, and the purge is refused 22ms
+   → operator is not unique: - unknown
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > purges D 1ms
+   → EXPORT_EVIDENCE_UNVERIFIED No export receipt matches that digest for this organization. Produce a full export (GET /api/tenant-export/full) and purge with the digest it returns.: expected OffboardingStateError: No export receipt … { code: '…' } to be null
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > writes one certificate: the digest, the counts, the custody signature, the purge; no customer content 2ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the certificate is a platform record: it cannot be changed or removed 2ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the database refuses a certificate of an export whose receipt states no scope 6ms
+   → promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+
+### M02-integrity-verdict
+files: server/services/tenant-export/held-record-integrity.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries each of D's signatures with its manifest and the §11.200 hash verdict, and none of E's 7ms
+   → expected 'VERIFIED' to be 'COMPROMISED' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > carries each of D's signatures with its manifest and the §11.200 hash verdict, and none of E's
+AssertionError: expected 'VERIFIED' to be 'COMPROMISED' // Object.is equality
+
+### M03-custody-check
+files: server/services/tenant/tenant-offboarding.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > the purge of a tenant holding a held record is refused without it, and nothing is touched 134ms
+   → expected 'P0001' to be 'CUSTODY_ATTESTATION_REQUIRED' // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > a held record added after custody was signed makes it stale, and the purge is refused 172ms
+   → expected undefined to be 'CUSTODY_ATTESTATION_STALE' // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > purges D 1ms
+   → TENANT_ALREADY_PURGED This organization is already purged: expected OffboardingStateError: This organization … { code: '…' } to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > the purge of a tenant holding a held record is refused without it, and nothing is touched
+AssertionError: expected 'P0001' to be 'CUSTODY_ATTESTATION_REQUIRED' // Object.is equality
+Expected: "CUSTODY_ATTESTATION_REQUIRED"
+Received: "P0001"
+    205|     expect(failure?.code).toBe('CUSTODY_ATTESTATION_REQUIRED');
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > a held record added after custody was signed makes it stale, and the purge is refused
+AssertionError: expected undefined to be 'CUSTODY_ATTESTATION_STALE' // Object.is equality
+"CUSTODY_ATTESTATION_STALE"
+    315|       expect(failure?.code).toBe('CUSTODY_ATTESTATION_STALE');
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > purges D
+AssertionError: TENANT_ALREADY_PURGED This organization is already purged: expected OffboardingStateError: This organization … { code: '…' } to be null
+
+### M04-stale-check
+files: server/services/tenant/offboarding-custody.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > a held record added after custody was signed makes it stale, and the purge is refused 9ms
+   → expected undefined to be 'CUSTODY_ATTESTATION_STALE' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > a held record added after custody was signed makes it stale, and the purge is refused
+AssertionError: expected undefined to be 'CUSTODY_ATTESTATION_STALE' // Object.is equality
+"CUSTODY_ATTESTATION_STALE"
+    315|       expect(failure?.code).toBe('CUSTODY_ATTESTATION_STALE');
+
+### M05-isCustodyAct-filter
+files: server/services/part11/custody-signature.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × server/routes/__tests__/governed-signed-act-pending-org.pglite.test.ts > an organization pending deletion signs only the custody act > an approval that asks for pending_deletion: 403 before the password, nothing run 31ms
+   → {"error":{"code":"STOP","message":"Stopped after the authority and the credential."}}: expected 418 to be 403 // Object.is equality
+ × server/routes/__tests__/governed-signed-act-pending-org.pglite.test.ts > an organization pending deletion signs only the custody act > a custody target under another domain: 403 before the password, nothing run 5ms
+   → {"error":{"code":"STOP","message":"Stopped after the authority and the credential."}}: expected 418 to be 403 // Object.is equality
+ × server/routes/__tests__/governed-signed-act-pending-org.pglite.test.ts > an organization pending deletion signs only the custody act > a custody target with an approval meaning beside it: 403 before the password, nothing run 5ms
+   → {"error":{"code":"STOP","message":"Stopped after the authority and the credential."}}: expected 418 to be 403 // Object.is equality
+ × server/routes/__tests__/governed-signed-act-pending-org.pglite.test.ts > an organization pending deletion signs only the custody act > the custody meaning and domain on another target: 403 before the password, nothing run 5ms
+   → {"error":{"code":"STOP","message":"Stopped after the authority and the credential."}}: expected 418 to be 403 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/governed-signed-act-pending-org.pglite.test.ts > an organization pending deletion signs only the custody act > an approval that asks for pending_deletion: 403 before the password, nothing run
+ FAIL  server/routes/__tests__/governed-signed-act-pending-org.pglite.test.ts > an organization pending deletion signs only the custody act > a custody target under another domain: 403 before the password, nothing run
+ FAIL  server/routes/__tests__/governed-signed-act-pending-org.pglite.test.ts > an organization pending deletion signs only the custody act > a custody target with an approval meaning beside it: 403 before the password, nothing run
+ FAIL  server/routes/__tests__/governed-signed-act-pending-org.pglite.test.ts > an organization pending deletion signs only the custody act > the custody meaning and domain on another target: 403 before the password, nothing run
+AssertionError: {"error":{"code":"STOP","message":"Stopped after the authority and the credential."}}: expected 418 to be 403 // Object.is equality
+
+### M06-door-custody
+files: migrations/20261029k_tenant_offboarding_custody.sql
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2b. the doors hold the database to it, and the runtime role has no way around them > each door refuses the other tenant's held records without custody, in the platform scope 26ms
+   → promise resolved "Result{ command: 'SELECT', …(9) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 2b. the doors hold the database to it, and the runtime role has no way around them > each door refuses the other tenant's held records without custody, in the platform scope
+AssertionError: promise resolved "Result{ command: 'SELECT', …(9) }" instead of rejecting
+
+### M07-guard-reads-setting
+files: migrations/20261023_review_routes.sql
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > the setting the guard used to read is still settable by the runtime role, and admits nothing 11ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × server/services/review/__tests__/route-writer-setting.gate.test.ts > the route writer is a role, never a setting (P-59) > the guard admits the role alone, through seven reviewed doors the server calls 7ms
+   → expected [ 'GUARD_READS_A_SETTING', …(1) ] to deeply equal []
+ × server/services/review/__tests__/route-writer-setting.gate.test.ts > the route writer is a role, never a setting (P-59) > fails on a guard that reads the setting again (the gate seen failing) 2ms
+   → expected '-- ==================================…' not to be '-- ==================================…' // Object.is equality
+ × server/services/review/__tests__/route-writer-setting.gate.test.ts > the route writer is a role, never a setting (P-59) > fails on a guard that also admits the setting (the gate seen failing) 1ms
+   → expected '-- ==================================…' not to be '-- ==================================…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > the setting the guard used to read is still settable by the runtime role, and admits nothing
+AssertionError: promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/review/__tests__/route-writer-setting.gate.test.ts > the route writer is a role, never a setting (P-59) > the guard admits the role alone, through seven reviewed doors the server calls
+AssertionError: expected [ 'GUARD_READS_A_SETTING', …(1) ] to deeply equal []
+ FAIL  server/services/review/__tests__/route-writer-setting.gate.test.ts > the route writer is a role, never a setting (P-59) > fails on a guard that reads the setting again (the gate seen failing)
+ FAIL  server/services/review/__tests__/route-writer-setting.gate.test.ts > the route writer is a role, never a setting (P-59) > fails on a guard that also admits the setting (the gate seen failing)
+AssertionError: expected '-- ==================================…' not to be '-- ==================================…' // Object.is equality
+
+### M08-certificate-guard
+files: migrations/20261029k_tenant_offboarding_custody.sql
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the certificate is a platform record: it cannot be changed or removed 8ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the certificate is a platform record: it cannot be changed or removed
+AssertionError: promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+
+### M09-gate-platform
+files: scripts/ci/check-purge-coverage.mjs
+command exit: 1
+restored byte for byte (sha256): True
+  ✓ FAILS on an immutable receipt that has no explicit retained-record policy
+  ✓ FAILS on unrelated content even beside explicitly retained evidence
+  ✓ FAILS when a retained record has no meaningful reason
+  ✓ FAILS when retained evidence is explicitly listed for erasure
+  ✓ FAILS when retained evidence has a cascade path from a purged table
+  ✓ FAILS closed when the explicit retention policy cannot be parsed
+  ✓ FAILS on an unclassified receipt despite a commented-out fake retention declaration
+  ✓ FAILS on a new org-keyed table nothing reaches — and a commented-out entry does not count as listed
+  ✓ FAILS on a foreign key to a purged table that does not cascade (SET NULL, NO ACTION)
+  ✓ FAILS on an unlisted parent of a purged table — a purged child does not reach its parent
+  ✓ FAILS on a table that cascades only from organizations — a purge UPDATEs that row, never deletes it
+  ✓ FAILS on a cascade from a parent the purge never reaches (cascade is followed only from reached tables)
+  ✓ FAILS on NO ACTION into a listed table from a table the list deletes LATER (23503, the purge rolls back)
+  ✓ FAILS on RESTRICT into a table a listed delete CASCADES to
+  ✓ FAILS on ON DELETE SET NULL on a NOT NULL column, from a table the purge never deletes
+  ✓ FAILS on a listed table with no organization_id and no PURGE_PARENT_SCOPED predicate — the purge skips it
+  ✓ FAILS closed when PURGE_PARENT_SCOPED is declared but no key can be read from it
+  ✓ FAILS on a referrer in another schema
+  ✓ FAILS on that referrer once it is not named (its residue baselined, so only the order fails)
+  ✓ FAILS on that table when it is not named
+  ✓ FAILS when PURGE_REFERRERS_NOT_ERASED names a table the list erases
+  ✓ FAILS when a PURGE_REFERRERS_NOT_ERASED table is reached by a cascade from a purged table
+  ✓ FAILS closed when a PURGE_REFERRERS_NOT_ERASED entry has no meaningful reason
+  ✓ FAILS when one table is named in both PURGE_RETAINED_RECORDS and PURGE_REFERRERS_NOT_ERASED
+  ✗ quiet — a platform record named in PURGE_PLATFORM_RECORDS is reported as one, and is not residue
+  ✓ FAILS on that table when it is not named
+  ✓ FAILS when the purge list names a platform record
+  ✗ FAILS when a platform record is reached by a cascade from a purged table
+  ✓ FAILS when a platform record is also named in PURGE_REFERRERS_NOT_ERASED
+  ✓ FAILS closed when a PURGE_PLATFORM_RECORDS entry has no meaningful reason
+
+### M10-labeling-order
+files: server/services/tenant/purge-referrers.ts
+command exit: 1
+restored byte for byte (sha256): True
+  public.unified_tasks: ROUTE_TASK_OWNED_BY_ROUTE: review route columns are written only by the review route.
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner 1036ms
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it, once custody of its export is signed 307ms
+   → update or delete on table "labeling_documents" violates foreign key constraint "labeling_translations_document_same_org_fk" on table "labeling_translations"
+  unified_tasks on a review route: CUSTODY_ATTESTATION_REQUIRED This organization holds 2 regulated records (signatures, audit trails, sealed reports, ledgers). One of its administrators signs custody of the export the purge runs on (POST /api/tenant-export/custody) before they are e
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table 123ms
+   → A's rows the purge left: expected [ 'client_workspaces', …(218) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it, once custody of its export is signed
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+AssertionError: A's rows the purge left: expected [ 'client_workspaces', …(218) ] to deeply equal []
+    364|     expect(lost, "B's rows the purge of A took").toEqual([]);
+    365|     expect(kept, "A's rows the purge left").toEqual([]);
+
+### M11-route-signer
+files: migrations/20261023_review_routes.sql
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > a signature closes a member’s task only when it is the member’s own, with the role’s meaning, over the route’s content 13ms
+   → promise resolved "Result{ command: 'SELECT', …(9) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > a signature closes a member’s task only when it is the member’s own, with the role’s meaning, over the route’s content
+AssertionError: promise resolved "Result{ command: 'SELECT', …(9) }" instead of rejecting
+
+### M12-type-check
+files: server/services/tenant/offboarding-certificate.ts
+command exit: 2
+restored byte for byte (sha256): True
+
+### M13-seal-walk
+files: server/services/intelligent-report-engine.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > walks each of D's report seal chains with the report engine's own link check, and names the event where a link breaks 11ms
+   → expected 'INTACT' to be 'BROKEN' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > walks each of D's report seal chains with the report engine's own link check, and names the event where a link breaks
+AssertionError: expected 'INTACT' to be 'BROKEN' // Object.is equality
+
+### M14-qc-deviations-held
+files: server/services/tenant/held-records.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator reads what they will sign: every held record, and those inside the retention period 42ms
+   → actual value must be number or bigint, received "undefined"
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > writes one certificate: the digest, the counts, the custody signature, the purge; no customer content 2ms
+   → actual value must be number or bigint, received "undefined"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator reads what they will sign: every held record, and those inside the retention period
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > writes one certificate: the digest, the counts, the custody signature, the purge; no customer content
+
+### M15-receipts-platform
+files: server/services/tenant/purge-referrers.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × server/services/tenant/__tests__/tenant-purge-referrers.test.ts > the platform's record of a purge > is never on the list, nor retained or held twice 3ms
+   → tenant_export_receipts: expected [ 'company_document_designs', …(245) ] to not include 'tenant_export_receipts'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/tenant/__tests__/tenant-purge-referrers.test.ts > the platform's record of a purge > is never on the list, nor retained or held twice
+AssertionError: tenant_export_receipts: expected [ 'company_document_designs', …(245) ] to not include 'tenant_export_receipts'
+❌ purge-coverage: the purge list names a platform record it must never erase: tenant_export_receipts
+
+### M16-rr2-setting
+files: tests/db/review-route-qms-rr2.dbtest.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route 62ms
+   → ROUTE_TASK_OWNED_BY_ROUTE: review route columns of task ROUTE-04a15b6b-5 are written only by the review route.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route
+error: ROUTE_TASK_OWNED_BY_ROUTE: review route columns of task ROUTE-04a15b6b-5 are written only by the review route.
+Serialized Error: { length: 241, severity: 'ERROR', code: 'P0001', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'PL/pgSQL function unified_tasks_route_rows_guard() line 68 at RAISE', schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'pl_exec.c', routine: 'exec_stmt_raise' }
+
+### M17-export-platform-scope
+files: server/routes/tenant-export.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > holds D's row of every table the platform scope returned none of, the Vault's among them, and none of E's 6ms
+   → D's rows missing from D's export: expected [ 'vault.documents', …(7) ] to deeply equal []
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > the purge of a tenant holding a held record is refused without it, and nothing is touched 4ms
+   → expected 'EXPORT_EVIDENCE_UNVERIFIED' to be 'CUSTODY_ATTESTATION_REQUIRED' // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator reads what they will sign: every held record, and those inside the retention period 13ms
+   → {"error":{"code":"CUSTODY_RECEIPT_NOT_FOUND","message":"No complete export of this organization has that digest. Produce a full export, then sign custody of it. Nothing was signed."}}: expected 404 to be 200 // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > nobody else signs it: a member, the other tenant, a digest that is not this tenant's, a changed attestation 1ms
+   → Cannot read properties of undefined (reading 'attestationSha256')
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > D's administrator signs custody through the ceremony: one signature on the export's digest, its manifest the attestation 1ms
+   → Cannot read properties of undefined (reading 'attestationSha256')
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > with custody signed, the purge's custody check passes on that receipt and no other 14ms
+   → expected { …(2) } to be undefined
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > a held record added after custody was signed makes it stale, and the purge is refused 14ms
+   → expected 'CUSTODY_ATTESTATION_REQUIRED' to be 'CUSTODY_ATTESTATION_STALE' // Object.is equality
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > purges D 1ms
+   → EXPORT_EVIDENCE_UNVERIFIED No export receipt matches that digest for this organization. Produce a full export (GET /api/tenant-export/full) and purge with the digest it returns.: expected OffboardingStateError: No export receipt … { code: '…' } to be null
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > writes one certificate: the digest, the counts, the custody signature, the purge; no customer content 2ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the certificate is a platform record: it cannot be changed or removed 2ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the database refuses a certificate of an export whose receipt states no scope 2ms
+   → promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows 26ms
+   → D's held rows the purge left: expected [ …(33) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 1. export first: every held record is in the tenant export > holds D's row of every table the platform scope returned none of, the Vault's among them, and none of E's
+AssertionError: D's rows missing from D's export: expected [ 'vault.documents', …(7) ] to deeply equal []
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > the purge of a tenant holding a held record is refused without it, and nothing is touched
+AssertionError: expected 'EXPORT_EVIDENCE_UNVERIFIED' to be 'CUSTODY_ATTESTATION_REQUIRED' // Object.is equality
+Expected: "CUSTODY_ATTESTATION_REQUIRED"
+
+### M18-purge-platform-scope
+files: server/services/tenant/tenant-offboarding.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows 35ms
+   → D's held rows the purge left: expected [ 'public.citation_chains', …(3) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows
+AssertionError: D's held rows the purge left: expected [ 'public.citation_chains', …(3) ] to deeply equal []
+
+### M19-export-scope-no-uuid
+files: server/services/tenant-export/company-export-snapshot.ts
+command exit: 1
+restored byte for byte (sha256): True
+  public.unified_tasks: ROUTE_TASK_OWNED_BY_ROUTE: review route columns are written only by the review route.
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner 832ms
+   → A's rows the purge erases, missing from A's export: expected [ 'scoped: vault.documents', …(3) ] to deeply equal []
+  unified_tasks on a review route: CUSTODY_ATTESTATION_REQUIRED This organization holds 2 regulated records (signatures, audit trails, sealed reports, ledgers). One of its administrators signs custody of the export the purge runs on (POST /api/tenant-export/custody) before they are e
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table 53ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: A's rows the purge erases, missing from A's export: expected [ 'scoped: vault.documents', …(3) ] to deeply equal []
+    339|     expect(leaked, "B's rows in A's export").toEqual([]);
+    340|     expect(missing, "A's rows the purge erases, missing from A's expor…
+
+### M20-receipt-any-scope
+files: server/services/tenant-export/tenant-full-export.service.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > an export made the old way, in the platform scope, records no receipt, and a receipt from before opens neither custody nor the purge 386ms
+   → expected { recorded: false, inserted: false } to match object { recorded: false, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > an export made the old way, in the platform scope, records no receipt, and a receipt from before opens neither custody nor the purge
+AssertionError: expected { recorded: false, inserted: false } to match object { recorded: false, …(1) }
+
+### M21-purge-any-scope
+files: server/services/tenant/tenant-offboarding.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > an export made the old way, in the platform scope, records no receipt, and a receipt from before opens neither custody nor the purge 420ms
+   → expected 'CUSTODY_ATTESTATION_REQUIRED' to be 'EXPORT_SCOPE_UNVERIFIED' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > an export made the old way, in the platform scope, records no receipt, and a receipt from before opens neither custody nor the purge
+AssertionError: expected 'CUSTODY_ATTESTATION_REQUIRED' to be 'EXPORT_SCOPE_UNVERIFIED' // Object.is equality
+Received: "CUSTODY_ATTESTATION_REQUIRED"
+    210|     expect(res.body.error?.code).toBe('CUSTODY_EXPORT_SCOPE_UNVERIFIED…
+
+### M22-door-any-scope
+files: migrations/20261029k_tenant_offboarding_custody.sql
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > an export made the old way, in the platform scope, records no receipt, and a receipt from before opens neither custody nor the purge 393ms
+   → the doors accept custody of an export with no scope: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > an export made the old way, in the platform scope, records no receipt, and a receipt from before opens neither custody nor the purge
+AssertionError: the doors accept custody of an export with no scope: expected true to be false // Object.is equality
+
+### M23-certificate-any-scope
+files: migrations/20261029k_tenant_offboarding_custody.sql
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the database refuses a certificate of an export whose receipt states no scope 23ms
+   → expected [Function] to throw error matching /OFFBOARDING_CERTIFICATE_REFUSED: the …/ but got 'duplicate key value violates unique c…'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > the database refuses a certificate of an export whose receipt states no scope
+AssertionError: expected [Function] to throw error matching /OFFBOARDING_CERTIFICATE_REFUSED: the …/ but got 'duplicate key value violates unique c…'
+
+### M24-custody-any-scope
+files: server/services/tenant/offboarding-custody.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > an export made the old way, in the platform scope, records no receipt, and a receipt from before opens neither custody nor the purge 456ms
+   → {"attestation":{"kind":"tenant-export-custody","version":1,"organizationId":90871,"organizationName":"obc-custody-90871","exportDigest":"sha256:0000000000000000000000000000000000000000000000000000000000000001","exportedAt":"2026-10-30","exportTableCount":1,"exportRowCount":1,"exportScope":"null","retention":{"years":1,"isDefault":false,"governingRule":"21 CFR 312.62(c)","reason":"Short-lived pilot records, kept for the sponsor's own period."},"heldRecords":{"account_canon_resolution_log":1,"account_events":1,"ana_outcome_log":1,"bundle_execution_receipts":1,"cer_approvals":1,"data_lineage_records":1,"document_audit_trail":1,"electronic_signatures":3,"evidence_chain_records":1,"gate_approvals":1,"governance_boundary_transitions":1,"immutable_report_records":1,"ivdr_cdx_status_history":1,"ivdr_evidence_result_history":1,"ivdr_validation_parameter_history":1,"reg_questions":1,"review_routes":1,"review_route_tasks":1,"rule_execution_log":1,"compliance_review_records":1,"indemnification_attestations":1,"report_atom_provenance":1,"report_seal_events":1,"reg_responses":1,"qc_deviations":1},"heldRecordTotal":27,"withinRetention":[{"table":"account_events","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"ana_outcome_log","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"bundle_execution_receipts","count":1,"ids":["6a247a5e-5438-4b4e-81d3-0a900bad7ff4"],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"cer_approvals","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"data_lineage_records","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"document_audit_trail","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"electronic_signatures","count":3,"ids":[[1,3]],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"evidence_chain_records","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"gate_approvals","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"governance_boundary_transitions","count":1,"ids":["459795d6-099b-4f6a-bf7c-4bd4f76084a7"],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"immutable_report_records","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"ivdr_cdx_status_history","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"ivdr_evidence_result_history","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"ivdr_validation_parameter_history","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"reg_questions","count":1,"ids":[3],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"review_routes","count":1,"ids":["0fb06fdc-ade8-440e-a264-392987f2da5a"],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"review_route_tasks","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"rule_execution_log","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"compliance_review_records","count":1,"ids":[2],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"indemnification_attestations","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"report_atom_provenance","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"report_seal_events","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"reg_responses","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"qc_deviations","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0}],"withinRetentionTotal":26,"statement":"The undersigned, an administrator of obc-custody-90871, has received the complete export of obc-custody-90871's data with digest sha256:0000000000000000000000000000000000000000000000000000000000000001, produced on 2026-10-30, and has taken custody of it on obc-custody-90871's behalf. It holds 27 regulated records that the platform erases with the tenant once this is signed. 26 of them, listed in this attestation, are inside obc-custody-90871's retention period of 1 year and have not reached its end; obc-custody-90871 accepts the obligation to retain them, from this copy, until the end of each one's period (the last on 2027-10-30)."},"attestationSha256":"70cbbdd064b11bc672cd8e4da9a8fb3614e73dfb6102d4e6b76ec56253354f35"}: expected 200 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 2. custody is a signed act > an export made the old way, in the platform scope, records no receipt, and a receipt from before opens neither custody nor the purge
+AssertionError: {"attestation":{"kind":"tenant-export-custody","version":1,"organizationId":90871,"organizationName":"obc-custody-90871","exportDigest":"sha256:0000000000000000000000000000000000000000000000000000000000000001","exportedAt":"2026-10-30","exportTableCount":1,"exportRowCount":1,"exportScope":"null","retention":{"years":1,"isDefault":false,"governingRule":"21 CFR 312.62(c)","reason":"Short-lived pilot records, kept for the sponsor's own period."},"heldRecords":{"account_canon_resolution_log":1,"account_events":1,"ana_outcome_log":1,"bundle_execution_receipts":1,"cer_approvals":1,"data_lineage_records":1,"document_audit_trail":1,"electronic_signatures":3,"evidence_chain_records":1,"gate_approvals":1,"governance_boundary_transitions":1,"immutable_report_records":1,"ivdr_cdx_status_history":1,"ivdr_evidence_result_history":1,"ivdr_validation_parameter_history":1,"reg_questions":1,"review_routes":1,"review_route_tasks":1,"rule_execution_log":1,"compliance_review_records":1,"indemnification_attestations":1,"report_atom_provenance":1,"report_seal_events":1,"reg_responses":1,"qc_deviations":1},"heldRecordTotal":27,"withinRetention":[{"table":"account_events","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"ana_outcome_log","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"bundle_execution_receipts","count":1,"ids":["6a247a5e-5438-4b4e-81d3-0a900bad7ff4"],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"cer_approvals","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"data_lineage_records","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"document_audit_trail","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"electronic_signatures","count":3,"ids":[[1,3]],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"evidence_chain_records","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"gate_approvals","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"governance_boundary_transitions","count":1,"ids":["459795d6-099b-4f6a-bf7c-4bd4f76084a7"],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"immutable_report_records","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"ivdr_cdx_status_history","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"ivdr_evidence_result_history","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"ivdr_validation_parameter_history","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"reg_questions","count":1,"ids":[3],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"review_routes","count":1,"ids":["0fb06fdc-ade8-440e-a264-392987f2da5a"],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"review_route_tasks","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"rule_execution_log","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"compliance_review_records","count":1,"ids":[2],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"indemnification_attestations","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"report_atom_provenance","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"report_seal_events","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"reg_responses","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0},{"table":"qc_deviations","count":1,"ids":[1],"retainUntil":{"first":"2027-10-30","last":"2027-10-30"},"undated":0}],"withinRetentionTotal":26,"statement":"The undersigned, an administrator of obc-custody-90871, has received the complete export of obc-custody-90871's data with digest sha256:0000000000000000000000000000000000000000000000000000000000000001, produced on 2026-10-30, and has taken custody of it on obc-custody-90871's behalf. It holds 27 regulated records that the platform erases with the tenant once this is signed. 26 of them, listed in this attestation, are inside obc-custody-90871's retention period of 1 year and have not reached its end; obc-custody-90871 accepts the obligation to retain them, from this copy, until the end of each one's period (the last on 2027-10-30)."},"attestationSha256":"70cbbdd064b11bc672cd8e4da9a8fb3614e73dfb6102d4e6b76ec56253354f35"}: expected 200 to be 409 // Object.is equality
+    232|       expect(res.body.error?.code).toBe('CUSTODY_EXPORT_SCOPE_UNVERIFI…
+
+### M25-graph-not-purged
+files: server/services/tenant/purge-referrers.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows 104ms
+   → D's held rows the purge left: expected [ Array(3) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-offboarding-custody.dbtest.ts > 3 and 4. the purge erases the held records and keeps one certificate > D's row of every held table is gone, and E keeps every one of its rows
+AssertionError: D's held rows the purge left: expected [ Array(3) ] to deeply equal []
+

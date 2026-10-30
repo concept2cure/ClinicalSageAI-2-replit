@@ -87,6 +87,7 @@ import { captureAssemblySourceIntent, captureSourceDocumentStartIntent, type Ass
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, workbenchNavigationRefusal, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
 import { ImportSourceNotice } from './ImportSourceNotice';
+import { CsrNarrativeReferenceView, narrativeReferenceFor } from './CsrNarrativeReferenceView';
 import { authoringCurrentReadPath, authoringReadRefused, useAuthoringReadSession } from './authoringCurrentRead';
 import { TemplateGuidance } from './TemplateGuidance';
 import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
@@ -1613,7 +1614,9 @@ export function DocumentWorkbench({
   const docSealed =
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
   const editRefusal = actRefusal(docAccess.edit ?? null);
-  const contentReadOnly = docSealed || !!editRefusal;
+  /* §14.3.3 of an imported CSR is held by reference to the build's narrative store, not as text: read-only here (2026-10-30). */
+  const narrativeReference = narrativeReferenceFor(docProvenance?.importSource, activeSection?.code);
+  const contentReadOnly = docSealed || !!editRefusal || !!narrativeReference;
   const dirty = activeSection != null && editorDirty && !docSealed;
   const docScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -4502,6 +4505,8 @@ export function DocumentWorkbench({
                 onChanged={() => {
                   void loadDocs();
                   if (activeDocId) void loadSections(activeDocId);
+                  /* RR5: a review signature closes its signer's task on the document's review route; the Tasks rail and its round are read again. */
+                  setTasksEpoch(e => e + 1);
                 }}
                 fireToast={fireToast}
                 signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
@@ -5353,6 +5358,7 @@ export function DocumentWorkbench({
                     proposals={draftProposals}
                   />
                 )}
+                {narrativeReference && <CsrNarrativeReferenceView reference={narrativeReference} />}
                 <div
                   style={{
                     minHeight: 460,
@@ -6121,6 +6127,8 @@ export function DocumentWorkbench({
             onOpenBoard={() => onNav('review')}
             onClose={closeRail}
             fireToast={fireToast}
+            meId={user?.id && /^\d+$/.test(String(user.id)) ? Number(user.id) : null}
+            admin={((user as { roles?: string[] } | null)?.roles ?? []).some((r) => String(r).toLowerCase() === 'admin')}
           />
         </aside>
       )}

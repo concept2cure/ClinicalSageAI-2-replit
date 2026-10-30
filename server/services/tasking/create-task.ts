@@ -7,17 +7,20 @@
  * of a second copy (docs/design/REVIEW_ROUTING_2026-10-23.md §2.3, RR1a).
  *
  * The route columns are not in `values`' type: a generic caller cannot name
- * them. Only `route` sets them, and only review-route.ts passes it, on a
- * transaction that has set the route-writer setting — without it the database
- * refuses the insert (unified_tasks_route_rows_guard).
+ * them. Only `route` sets them, and only review-route.ts passes it. The row is
+ * inserted without them, and then joins its route through the route writer's
+ * door, public.review_route_enlist_member (migrations/20261023_review_routes.sql,
+ * P-59): the database refuses a route column from any other writer
+ * (unified_tasks_route_rows_guard), and admits this one only for a new member
+ * task of an open route of the same organization.
  *
  * @module server/services/tasking/create-task
  */
 import { unifiedTasks } from '../../../shared/schema';
 import { auditTaskActionInTx } from './task-audit';
-import type { DrizzleRunner } from '../../db/drizzle-queryable';
+import { queryableFromDrizzle, type DrizzleRunner } from '../../db/drizzle-queryable';
 
-type RouteColumn = 'reviewRouteId' | 'reviewRole' | 'reviewStep' | 'routeSignatureId' | 'routeActId';
+type RouteColumn = 'reviewRouteId' | 'reviewRole' | 'reviewStep' | 'routeSignatureId' | 'routeActId' | 'routeAuthoringSignatureId';
 type InsertTask = typeof unifiedTasks.$inferInsert;
 
 /** The Drizzle handle a task write runs on: a transaction. */
@@ -53,15 +56,13 @@ export async function createTaskInTx(
       taskId: input.taskId,
       organizationId: input.organizationId,
       createdById: input.actorUserId,
-      ...(input.route
-        ? {
-            reviewRouteId: input.route.reviewRouteId,
-            reviewRole: input.route.reviewRole,
-            reviewStep: input.route.reviewStep,
-          }
-        : {}),
     })
     .returning();
+  if (input.route) {
+    await queryableFromDrizzle(tx).query('SELECT public.review_route_enlist_member($1, $2::uuid, $3, $4, $5)', [
+      input.organizationId, input.route.reviewRouteId, input.taskId, input.route.reviewRole, input.route.reviewStep,
+    ]);
+  }
   await auditTaskActionInTx(tx, {
     orgId: input.organizationId,
     userId: input.actorUserId,

@@ -47,6 +47,7 @@ import {
   listingDestination, planTfls, tflHeadings, type CsrAppendixNumber, type CsrCtdSection, type CsrDeclarable, type CsrTable, type PlannedTfl,
 } from './csr-assembly-plan.js';
 import { renderNarrativesLeaf, type CsrNarrativesSource, type NarrativesVerification } from './csr-assembly-narratives.js';
+import { inlineLandedNarratives, type LandedNarratives } from './csr-narrative-landed.js';
 import { CsrPdfWriter } from './csr-pdf-writer.js';
 import { toWinAnsiSafe } from '../ectd/leaf-pdf-renderer.js';
 import { planListings, type CsrListingSource, type ListingDefinition } from './csr-listings.js';
@@ -83,6 +84,13 @@ export interface CsrAssemblyInput {
    * Without it a landed §14.3.3 cannot be checked, and is not filed.
    */
   narratives?: CsrNarrativesSource;
+  /**
+   * The landed §14.3.3 when it is not in `sections`: the build's row, read a
+   * slice at a time (csr-narrative-landed.ts sqlLandedNarratives). This is how
+   * the production assembly reads it (csr-assembly-source.ts), since the import
+   * holds §14.3.3 by reference, not as text (2026-10-30).
+   */
+  landedNarratives?: LandedNarratives;
   outDir: string;
   /** Content-derived timestamp for the PDFs, never the wall clock. */
   contentModifiedAt: Date;
@@ -247,7 +255,7 @@ async function settleNarratives(input: CsrAssemblyInput, built: Built): Promise<
   const section = input.sections.find(s => s.code === number);
   const declared = input.notApplicable?.[number];
   if (declared) {
-    if (section) throw new CsrAssemblyError('CSR_ASSEMBLY_APPENDIX_AMBIGUOUS', 'Section 14.3.3 has been landed by the narrative job, so it cannot be declared not applicable.');
+    if (section || input.landedNarratives) throw new CsrAssemblyError('CSR_ASSEMBLY_APPENDIX_AMBIGUOUS', 'Section 14.3.3 has been landed by the narrative job, so it cannot be declared not applicable.');
     const saved = input.narratives?.savedNarratives ?? 0;
     if (saved > 0) {
       throw new CsrAssemblyError('CSR_ASSEMBLY_APPENDIX_AMBIGUOUS', `The narrative job has saved ${saved} narrative(s) for this build, so subjects were selected and Section 14.3.3 applies; it cannot be declared not applicable. Run the narratives to completion.`);
@@ -256,7 +264,8 @@ async function settleNarratives(input: CsrAssemblyInput, built: Built): Promise<
     built.appendices.set(number, { state: 'not-applicable', reason: declared.trim() });
     return { subjects: [] };
   }
-  const outcome = await renderNarrativesLeaf({ section, source: input.narratives, outDir: input.outDir, studyId: input.studyId, stamp: input.contentModifiedAt });
+  const landed = section ? inlineLandedNarratives(section.content) : input.landedNarratives;
+  const outcome = await renderNarrativesLeaf({ section: landed, source: input.narratives, outDir: input.outDir, studyId: input.studyId, stamp: input.contentModifiedAt });
   if (outcome.state === 'missing') {
     built.missing.unshift({ number, title: e3Title(number), fileTag: CSR_NARRATIVES_FILE_TAG, blocking: true, reason: outcome.reason });
     built.appendices.set(number, { state: 'missing', reason: `${outcome.reason} It must be landed and verified, or declared not applicable with a reason, before filing.` });

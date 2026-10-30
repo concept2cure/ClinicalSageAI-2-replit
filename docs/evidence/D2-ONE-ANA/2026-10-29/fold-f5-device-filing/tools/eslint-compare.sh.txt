@@ -1,0 +1,12 @@
+#!/bin/sh
+# Usage: eslint-compare.sh file... ; prints file, head warnings/errors, now warnings/errors
+cd /home/user/ClinicalSageAI-2-replit
+for f in "$@"; do
+  if git cat-file -e HEAD:"$f" 2>/dev/null; then
+    h=$(git show HEAD:"$f" | npx eslint --no-ignore --stdin --stdin-filename "$f" -f json 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const r=JSON.parse(s);console.log(r.reduce((a,x)=>a+x.warningCount,0)+"w/"+r.reduce((a,x)=>a+x.errorCount,0)+"e")}catch(e){console.log("?")}})')
+  else h="new"; fi
+  if [ -f "$f" ]; then
+    n=$(npx eslint --no-ignore "$f" -f json 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const r=JSON.parse(s);console.log(r.reduce((a,x)=>a+x.warningCount,0)+"w/"+r.reduce((a,x)=>a+x.errorCount,0)+"e")}catch(e){console.log("?")}})')
+  else n="deleted"; fi
+  echo "$f  head=$h  now=$n"
+done

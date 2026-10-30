@@ -30,6 +30,7 @@ import {
   concept2cureArtifacts,
   concept2cureNotifications,
   concept2cureProvenanceEvents,
+  concept2cureReviewAssignments,
   concept2cureReviewTasks,
   concept2cureReviewThreads,
   concept2cureThreadComments,
@@ -2303,5 +2304,68 @@ async function suppressNotificationsForSource(params: {
     logger.warn('Failed to suppress notifications', { error: (err as Error).message });
   }
 }
+
+/* Moved verbatim from routes/c2c/haq-sessions.ts (P-39 step 4, 2026-10-30), which is
+   deleted: the HAQ session store converged onto the project inbox
+   (docs/design/HAQ_SIGNED_ANSWERS_2026-10-15.md §3). */
+/**
+ * GET /api/concept2cure/reviews/pending
+ * Reviewer dashboard: list all pending review assignments for the current user.
+ */
+router.get('/reviews/pending', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+
+    const pendingAssignments = await db
+      .select({
+        assignmentId: concept2cureReviewAssignments.assignmentId,
+        artifactId: concept2cureArtifacts.artifactId,
+        artifactTitle: concept2cureArtifacts.title,
+        artifactStatus: concept2cureArtifacts.status,
+        artifactVersion: concept2cureArtifacts.version,
+        reviewRound: concept2cureReviewAssignments.reviewRound,
+        status: concept2cureReviewAssignments.status,
+        dueDate: concept2cureReviewAssignments.dueDate,
+        notes: concept2cureReviewAssignments.notes,
+        createdAt: concept2cureReviewAssignments.createdAt,
+        projectId: concept2cureArtifacts.projectId,
+      })
+      .from(concept2cureReviewAssignments)
+      .innerJoin(
+        concept2cureArtifacts,
+        eq(concept2cureArtifacts.id, concept2cureReviewAssignments.artifactId)
+      )
+      .where(
+        and(
+          eq(concept2cureReviewAssignments.reviewerId, userId),
+          eq(concept2cureReviewAssignments.organizationId, organizationId),
+          inArray(concept2cureReviewAssignments.status, ['pending', 'in_progress']),
+          eq(concept2cureArtifacts.status, 'review')
+        )
+      )
+      .orderBy(concept2cureReviewAssignments.dueDate, concept2cureReviewAssignments.createdAt);
+
+    return sendSuccess(res, {
+      totalPending: pendingAssignments.length,
+      assignments: pendingAssignments.map(a => ({
+        assignmentId: a.assignmentId,
+        artifactId: a.artifactId,
+        artifactTitle: a.artifactTitle,
+        artifactStatus: a.artifactStatus,
+        artifactVersion: a.artifactVersion,
+        projectId: a.projectId,
+        reviewRound: a.reviewRound,
+        status: a.status,
+        dueDate: a.dueDate,
+        notes: a.notes,
+        createdAt: a.createdAt,
+      })),
+    });
+  } catch (error: any) {
+    logConcept2cureError('pending reviews', error);
+    return sendError(res, 500, 'Failed to fetch pending reviews');
+  }
+});
 
 export default router;
