@@ -61,12 +61,15 @@ import {
   type VaultDocFiling,
   type VaultFolder,
 } from '../fixtures/vault-data';
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { VaultSeals } from './VaultSeals';
 import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
-import { VaultLibraryResults, facetCounts, isVaultSearchShape, pendingSearchNote, searchHitToDoc, vaultFilterParams, type VaultFindFilters, type VaultSearchShape } from './VaultLibraryResults';
+import {
+  VaultLibraryResults, facetCounts, isSavedViewsShape, isVaultSearchShape, pendingSearchNote, savedViewKey, savedViewState, searchHitToDoc,
+  vaultFilterParams, type SavedVaultView, type SavedViewState, type SavedViewsShape, type VaultFindFilters, type VaultSearchShape,
+} from './VaultLibraryResults';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { VaultFixityCheck } from './VaultFixityCheck';
 import { VaultRelationships } from './VaultRelationships';
@@ -714,6 +717,32 @@ const CLASSIFICATION_OPTIONS: FilterOption[] = VAULT_CLASSIFICATIONS.map((c) => 
 const KIND_OPTIONS: FilterOption[] = VAULT_DOC_KINDS.map((k) => ({ value: k.value, label: k.one }));
 const STAGE_OPTIONS: FilterOption[] = VAULT_STAGE_CHOICES.map((c) => ({ value: c.value, label: c.label, covers: c.stages }));
 
+/** The dimensions a select shows one value of, with the words for their values. */
+const SINGLE_VALUE_SELECTS: ReadonlyArray<[keyof VaultFindFilters, string, readonly FilterOption[] | null]> = [
+  ['documentType', 'Type', TYPE_OPTIONS], ['placementStatus', 'Filing', FILING_OPTIONS],
+  ['classification', 'Classification', CLASSIFICATION_OPTIONS], ['evidenceKind', 'Evidence kind', KIND_OPTIONS],
+  ['ctdSection', 'CTD section', null],
+];
+
+/**
+ * What the filters hold that the selects cannot show: a folder, several values
+ * in one dimension, or a review set that no choice names. A saved view can hold
+ * any of these, and a filter that narrows the list is never out of sight.
+ */
+export function hiddenFindFilters(value: VaultFindFilters, folderLabel: (id: string) => string): Array<{ key: keyof VaultFindFilters; text: string }> {
+  const out: Array<{ key: keyof VaultFindFilters; text: string }> = [];
+  if (value.folderId?.length) out.push({ key: 'folderId', text: `Folder: ${value.folderId.map(folderLabel).join(', ')}` });
+  for (const [key, label, options] of SINGLE_VALUE_SELECTS) {
+    const values = value[key] ?? [];
+    const words = values.map((v) => options?.find((o) => o.value === v)?.label ?? v);
+    if (values.length > 1) out.push({ key, text: `${label}: ${words.join(', ')}` });
+  }
+  const stages = value.lifecycleStage ?? [];
+  const named = VAULT_STAGE_CHOICES.some((c) => c.stages.length === stages.length && c.stages.every((s) => stages.includes(s)));
+  if (stages.length > 0 && !named) out.push({ key: 'lifecycleStage', text: `Review: ${stages.map(stageLabel).join(', ')}` });
+  return out;
+}
+
 /**
  * The find view's metadata filters (VR-18): type, filing status,
  * classification, evidence kind, review stage and CTD section, each sent to the
@@ -721,11 +750,14 @@ const STAGE_OPTIONS: FilterOption[] = VAULT_STAGE_CHOICES.map((c) => ({ value: c
  * field is left, and only once it reads as a section code; until then the row
  * says it is not applied, rather than filtering by something else.
  */
-function VaultFindFilterRow({ value, onChange, onClear, facets }: {
+function VaultFindFilterRow({ value, onChange, onClear, facets, folderLabel = (id) => id }: {
   value: VaultFindFilters; onChange: (next: VaultFindFilters) => void; onClear: () => void;
   /** The verified read's facet counts, or null when there are none to show. */
   facets?: unknown;
+  /** A cabinet folder's words, for a folder the filters hold. */
+  folderLabel?: (id: string) => string;
 }) {
+  const hidden = hiddenFindFilters(value, folderLabel);
   const counts = (key: keyof VaultFindFilters) => (facets ? facetCounts(facets, key) : null);
   const [ctd, setCtd] = useState(value.ctdSection?.[0] ?? '');
   const [ctdRefused, setCtdRefused] = useState<string | null>(null);
@@ -775,12 +807,300 @@ function VaultFindFilterRow({ value, onChange, onClear, facets }: {
           Clear filters
         </button>
       )}
+      {hidden.length > 0 && <span className="vd-filter-note">Also filtering by:</span>}
+      {hidden.map((h) => (
+        <button key={h.key} type="button" className="vd-crumb" aria-label={`Remove the filter ${h.text}`} onClick={() => set(h.key, null)}>
+          {h.text} &times;
+        </button>
+      ))}
       {ctdRefused && (
         <span id="vd-filter-ctd-note" className="vd-filter-note" role="status">
           &ldquo;{ctdRefused}&rdquo; is not a CTD section code (for example 3.2.P or 2.7.3), so it is not applied.
         </span>
       )}
     </div>
+  );
+}
+
+/* ── Saved views (D2, P-46; docs/design/VAULT_SAVED_VIEWS_2026-10-29.md §3.9) ──
+   A view is a search remembered: the text, the filters, earlier versions, and
+   this project or the accessible ones. Applying one sets the find view's state
+   and the existing search runs it under the reader's current access; nothing
+   here runs a view or keeps its results. The list is read only while the
+   control is open, and a failed read is said, never shown as no views. */
+
+const SAVED_VIEWS_PATH = '/api/c2c/project-vault/saved-views';
+const FORMER_MEMBER = 'a former member';
+
+/** One saved-view change. A refusal comes back as the server's own sentence. */
+async function sendViewChange(
+  method: 'POST' | 'PATCH' | 'DELETE', url: string, body: unknown, failed: string,
+): Promise<{ data: SavedVaultView | null } | { error: string }> {
+  try {
+    const res = await apiRequest(method, url, body);
+    const json = (await res.json().catch(() => null)) as { data?: SavedVaultView } | null;
+    if (!res.ok) return { error: redactInternals(serverMessage(json), failed) };
+    return { data: json?.data ?? null };
+  } catch (e) {
+    return { error: redactInternals(e instanceof ApiRequestError ? serverMessage(e.payload) : null, failed) };
+  }
+}
+
+function savedViewOptionText(v: SavedVaultView): string {
+  const label = v.applies ? v.label : `${v.label} (no longer applies)`;
+  const scope = v.programId === null ? ' · all projects' : '';
+  if (!v.mine) return `${label}${scope} · by ${v.createdBy.name ?? FORMER_MEMBER}`;
+  return `${label}${scope}${v.visibility === 'org_public' ? ' · shared' : ''}`;
+}
+
+/** Why "Update view" cannot run now, or null when it can. */
+function updateViewBlocker(v: SavedVaultView, applied: SavedVaultView | null, current: SavedViewState): string | null {
+  const library = v.programId === null;
+  if (library !== current.library) {
+    return library
+      ? 'This view searches accessible projects; save a new view to search this project.'
+      : 'This view searches one project; save a new view to search accessible projects.';
+  }
+  if (!applied || applied.id !== v.id) return 'Apply this view and change the search to update it.';
+  if (savedViewKey(current) === savedViewKey(savedViewState(applied))) return 'The search has not changed since this view was applied.';
+  return null;
+}
+
+/** Who shared an organisation view someone else made, and who renamed it. */
+function sharedByNote(v: SavedVaultView | null): string | null {
+  if (!v || v.mine) return null;
+  const renamed = v.updatedBy && v.updatedBy.userId !== v.createdBy.userId
+    ? ` Renamed by ${v.updatedBy.name ?? FORMER_MEMBER}.` : '';
+  return `Shared by ${v.createdBy.name ?? FORMER_MEMBER}.${renamed}`;
+}
+
+function SavedViewOptions({ views, loading }: { views: SavedVaultView[] | null; loading: boolean }) {
+  if (!views) return <option value="">{loading ? 'Loading saved views…' : 'Saved views could not be loaded'}</option>;
+  if (views.length === 0) return <option value="" disabled>No saved views yet.</option>;
+  const mine = views.filter((v) => v.mine);
+  const others = views.filter((v) => !v.mine);
+  const option = (v: SavedVaultView) => <option key={v.id} value={String(v.id)}>{savedViewOptionText(v)}</option>;
+  return (
+    <>
+      <option value="">Choose a view</option>
+      {mine.length > 0 && <optgroup label="Mine">{mine.map(option)}</optgroup>}
+      {others.length > 0 && <optgroup label="Organisation">{others.map(option)}</optgroup>}
+    </>
+  );
+}
+
+/** Save the current search: a name, and who sees it. No dialog; nothing changes until Save. */
+function SaveViewForm({ defaultName, canWrite, busy, onSave, onCancel }: {
+  defaultName: string; canWrite: boolean; busy: boolean;
+  onSave: (label: string, visibility: SavedVaultView['visibility']) => void; onCancel: () => void;
+}) {
+  const [label, setLabel] = useState(defaultName.slice(0, 120));
+  const [visibility, setVisibility] = useState<SavedVaultView['visibility']>('private');
+  const name = useId();
+  const reasonId = useId();
+  return (
+    <div className="vd-filters" role="group" aria-label="Save current search">
+      <label className="vd-filter">
+        <span className="vd-filter-l">Name</span>
+        <input className="c2c-input" value={label} maxLength={120} onChange={(e) => setLabel(e.target.value)} />
+      </label>
+      <label className="vd-filter">
+        <input type="radio" name={name} checked={visibility === 'private'} onChange={() => setVisibility('private')} /> Only me
+      </label>
+      <label className="vd-filter">
+        <input
+          type="radio" name={name} checked={visibility === 'org_public'} disabled={!canWrite} aria-describedby={reasonId}
+          onChange={() => setVisibility('org_public')}
+        /> Everyone in the organisation
+      </label>
+      <span id={reasonId} className="vd-filter-note">
+        {canWrite ? 'Everyone in the organisation sees this view\'s name.' : 'Your role can save views for yourself only.'}
+      </span>
+      <button type="button" className="vd-crumb" disabled={busy || !label.trim()} onClick={() => onSave(label.trim(), visibility)}>Save</button>
+      <button type="button" className="vd-crumb" onClick={onCancel}>Cancel</button>
+    </div>
+  );
+}
+
+function RenameViewForm({ view, busy, onRename, onCancel }: {
+  view: SavedVaultView; busy: boolean; onRename: (label: string) => void; onCancel: () => void;
+}) {
+  const [label, setLabel] = useState(view.label);
+  return (
+    <div className="vd-filters" role="group" aria-label="Rename view">
+      <label className="vd-filter">
+        <span className="vd-filter-l">New name</span>
+        <input className="c2c-input" value={label} maxLength={120} onChange={(e) => setLabel(e.target.value)} />
+      </label>
+      <button type="button" className="vd-crumb" disabled={busy || !label.trim()} onClick={() => onRename(label.trim())}>Save name</button>
+      <button type="button" className="vd-crumb" onClick={onCancel}>Cancel</button>
+    </div>
+  );
+}
+
+function DeleteViewConfirm({ view, busy, onDelete, onCancel }: {
+  view: SavedVaultView; busy: boolean; onDelete: () => void; onCancel: () => void;
+}) {
+  const question = view.visibility === 'org_public'
+    ? `Delete “${view.label}” for everyone in the organisation? Documents are not affected.`
+    : `Delete your view “${view.label}”? Documents are not affected.`;
+  return (
+    <div className="vd-filters" role="group" aria-label="Delete view">
+      <span className="vd-filter-note">{question}</span>
+      <button type="button" className="vd-crumb" disabled={busy} onClick={onDelete}>Delete view</button>
+      <button type="button" className="vd-crumb" onClick={onCancel}>Cancel</button>
+    </div>
+  );
+}
+
+/** What the selected view lets this reader do: only the acts its flags allow are offered. */
+function SavedViewActs({ view, applied, current, busy, onMode, onShare, onUpdate }: {
+  view: SavedVaultView; applied: SavedVaultView | null; current: SavedViewState; busy: boolean;
+  onMode: (mode: 'rename' | 'delete') => void; onShare: () => void; onUpdate: () => void;
+}) {
+  const blockerId = useId();
+  const blocker = view.canEdit ? updateViewBlocker(view, applied, current) : null;
+  return (
+    <>
+      {view.canRename && <button type="button" className="vd-crumb" disabled={busy} onClick={() => onMode('rename')}>Rename</button>}
+      {view.canShare && (
+        <button type="button" className="vd-crumb" disabled={busy} onClick={onShare}>
+          {view.visibility === 'private' ? 'Share with organisation' : 'Make personal'}
+        </button>
+      )}
+      {view.canEdit && (
+        <button type="button" className="vd-crumb" disabled={busy || blocker !== null} aria-describedby={blocker ? blockerId : undefined} onClick={onUpdate}>
+          Update view
+        </button>
+      )}
+      {blocker && <span id={blockerId} className="vd-filter-note">{blocker}</span>}
+      {view.canDelete && <button type="button" className="vd-crumb" disabled={busy} onClick={() => onMode('delete')}>Delete</button>}
+    </>
+  );
+}
+
+type ViewMode = 'idle' | 'save' | 'rename' | 'delete';
+type ViewNote = { text: string; tone: 'status' | 'alert' };
+
+/** The list, and one change at a time against it; each success re-reads the list. */
+function useSavedViews(projectId: string) {
+  const [epoch, setEpoch] = useState(0);
+  const path = `/api/c2c/project-vault/${encodeURIComponent(projectId)}/saved-views`;
+  const read = useLiveData<SavedViewsShape>(path, [path, epoch], isSavedViewsShape);
+  const failed = Boolean(read.error) || (!read.loading && !read.data);
+  const [mode, setMode] = useState<ViewMode>('idle');
+  const [note, setNote] = useState<ViewNote | null>(null);
+  const [busy, setBusy] = useState(false);
+  const change = async (method: 'POST' | 'PATCH' | 'DELETE', url: string, body: unknown, failedText: string, done: (v: SavedVaultView | null) => string) => {
+    setBusy(true);
+    setNote(null);
+    const r = await sendViewChange(method, url, body, failedText);
+    setBusy(false);
+    if ('error' in r) return setNote({ text: r.error, tone: 'alert' });
+    setEpoch((n) => n + 1);
+    setMode('idle');
+    setNote({ text: done(r.data), tone: 'status' });
+  };
+  return {
+    views: failed ? null : read.data?.views ?? null, loading: read.loading, failed,
+    retry: () => setEpoch((n) => n + 1), mode, setMode, note, setNote, busy, change,
+  };
+}
+
+function VaultSavedViews({ projectId, canWrite, current, searching, defaultName, applied, onApply, onChanged, onDeleted }: {
+  projectId: string; canWrite: boolean; current: SavedViewState; searching: boolean; defaultName: string;
+  applied: SavedVaultView | null;
+  onApply: (v: SavedVaultView) => void;
+  /** A view saved or changed; `adopt` when it is new and so is now the applied one. */
+  onChanged: (v: SavedVaultView, adopt: boolean) => void;
+  onDeleted: (id: number) => void;
+}) {
+  const sv = useSavedViews(projectId);
+  const [selectedId, setSelectedId] = useState<number | null>(applied?.id ?? null);
+  const selected = sv.views?.find((v) => v.id === selectedId) ?? null;
+  const saveReasonId = useId();
+  const one = (id: number) => `${SAVED_VIEWS_PATH}/${id}`;
+  const keep = (v: SavedVaultView | null, adopt = false) => { if (v) onChanged(v, adopt); };
+  const apply = () => {
+    if (!selected) return;
+    sv.setMode('idle');
+    if (selected.applies) { sv.setNote(null); onApply(selected); return; }
+    const why = redactInternals(selected.refusal?.message, 'the search would refuse what it holds.');
+    sv.setNote({ text: `“${selected.label}” no longer applies: ${why} Nothing was changed.`, tone: 'status' });
+  };
+  const save = (label: string, visibility: SavedVaultView['visibility']) => void sv.change('POST', SAVED_VIEWS_PATH,
+    { label, visibility, programId: current.library ? null : projectId, q: current.q, filters: current.filters, includeSuperseded: current.includeSuperseded },
+    'The view was not saved. Nothing was changed.', (v) => { if (v) setSelectedId(v.id); keep(v, true); return `Saved “${label}”.`; });
+  const rename = (view: SavedVaultView, label: string) => void sv.change('PATCH', one(view.id), { label },
+    'The view was not renamed. Nothing was changed.', (v) => { keep(v); return `Renamed to “${label}”.`; });
+  const share = (view: SavedVaultView) => {
+    const visibility = view.visibility === 'private' ? 'org_public' : 'private';
+    void sv.change('PATCH', one(view.id), { visibility }, 'Who sees the view was not changed.', (v) => {
+      keep(v);
+      return visibility === 'org_public' ? `“${view.label}” is now shared with the organisation.` : `“${view.label}” is now yours only.`;
+    });
+  };
+  const update = (view: SavedVaultView) => void sv.change('PATCH', one(view.id),
+    { q: current.q, filters: current.filters, includeSuperseded: current.includeSuperseded },
+    'The view was not updated. Nothing was changed.', (v) => { keep(v); return `Updated “${view.label}”.`; });
+  const remove = (view: SavedVaultView) => void sv.change('DELETE', one(view.id), undefined,
+    'The view was not deleted. Nothing was changed.', () => { onDeleted(view.id); setSelectedId(null); return `Deleted “${view.label}”.`; });
+  const sharedNote = sharedByNote(selected);
+  return (
+    <div id="vd-saved-views" role="group" aria-label="Saved views">
+      <div className="vd-filters">
+        <label className="vd-filter">
+          <span className="vd-filter-l">Saved view</span>
+          <select
+            className="c2c-input" value={selected ? String(selected.id) : ''} disabled={!sv.views?.length}
+            onChange={(e) => { setSelectedId(Number(e.target.value) || null); sv.setMode('idle'); sv.setNote(null); }}
+          >
+            <SavedViewOptions views={sv.views} loading={sv.loading} />
+          </select>
+        </label>
+        <button type="button" className="vd-crumb" disabled={!selected || sv.busy} onClick={apply}>Apply</button>
+        {selected && (
+          <SavedViewActs
+            view={selected} applied={applied} current={current} busy={sv.busy}
+            onMode={(m) => { sv.setNote(null); sv.setMode(m); }} onShare={() => share(selected)} onUpdate={() => update(selected)}
+          />
+        )}
+        <button
+          type="button" className="vd-crumb" disabled={!searching || !sv.views || sv.busy}
+          aria-describedby={searching ? undefined : saveReasonId}
+          onClick={() => { sv.setNote(null); sv.setMode('save'); }}
+        >
+          Save current search…
+        </button>
+        {!searching && <span id={saveReasonId} className="vd-filter-note">Type a search or choose a filter, then save it as a view.</span>}
+        {sharedNote && <span className="vd-filter-note">{sharedNote}</span>}
+      </div>
+      <SavedViewPanels sv={sv} selected={selected} defaultName={defaultName} canWrite={canWrite} onSave={save} onRename={rename} onDelete={remove} />
+    </div>
+  );
+}
+
+/** Under the row: a failed read, the one open form, and what the last act did. */
+function SavedViewPanels({ sv, selected, defaultName, canWrite, onSave, onRename, onDelete }: {
+  sv: ReturnType<typeof useSavedViews>; selected: SavedVaultView | null; defaultName: string; canWrite: boolean;
+  onSave: (label: string, visibility: SavedVaultView['visibility']) => void;
+  onRename: (view: SavedVaultView, label: string) => void;
+  onDelete: (view: SavedVaultView) => void;
+}) {
+  const close = () => sv.setMode('idle');
+  return (
+    <>
+      {sv.failed && (
+        <div className="vd-dr-err" role="alert">
+          {I.alertTriangle} Saved views could not be loaded. This is not an empty list.{' '}
+          <button type="button" className="vd-crumb" onClick={sv.retry}>Try again</button>
+        </div>
+      )}
+      {sv.mode === 'save' && <SaveViewForm defaultName={defaultName} canWrite={canWrite} busy={sv.busy} onSave={onSave} onCancel={close} />}
+      {sv.mode === 'rename' && selected && <RenameViewForm view={selected} busy={sv.busy} onRename={(l) => onRename(selected, l)} onCancel={close} />}
+      {sv.mode === 'delete' && selected && <DeleteViewConfirm view={selected} busy={sv.busy} onDelete={() => onDelete(selected)} onCancel={close} />}
+      {sv.note && <div className="vd-filter-note" role={sv.note.tone}>{sv.note.text}</div>}
+    </>
   );
 }
 
@@ -1165,8 +1485,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      with them. */
   const [findFilters, setFindFilters] = useState<VaultFindFilters>({});
   const [filterReset, setFilterReset] = useState(0);
-  /** Leave the find view for the tree: the text and the filters go together. */
-  const leaveFind = () => { setQ(''); setFindFilters({}); setFilterReset((n) => n + 1); };
+  /* Saved views (P-46): the control is read only while open, and the view last
+     applied is held so the breadcrumb can say when the search has moved off it. */
+  const [viewsOpen, setViewsOpen] = useState(false);
+  const [appliedView, setAppliedView] = useState<SavedVaultView | null>(null);
+  /** Leave the find view for the tree: the text, the filters and the applied view go together. */
+  const leaveFind = () => { setQ(''); setFindFilters({}); setFilterReset((n) => n + 1); setAppliedView(null); };
   const [selId, setSel] = useState<string | null>(null);
   const toggle = (id: string) =>
     setExpanded((e) => ({ ...e, [id]: e[id] === false ? true : false }));
@@ -1228,6 +1552,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         setQ('');
         setFindFilters({});
         setFilterReset((n) => n + 1);
+        setAppliedView(null);
         setActiveFolder(at.folderId);
         setExpanded((e) => ({ ...e, cabinet: true, [at.folderId]: true }));
         setSel(at.rowId);
@@ -1439,6 +1764,20 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   /** What is narrowing the list, in words, for AnA: "filtered to N by …" and "the search for …". */
   const findLabel = trimmedQ ? `the search "${trimmedQ}"${filtering ? ' and the filters' : ''}` : 'the filters';
   const findSubject = trimmedQ ? `"${trimmedQ}"${filtering ? ' with the filters' : ''}` : 'the filters';
+  /* The find view's state as a saved view holds it, and whether it has moved
+     off the view last applied (one comparison, savedViewKey). */
+  const findState: SavedViewState = { q: trimmedQ, filters: findFilters, includeSuperseded: includeEarlier, library: allProjects };
+  const viewChanged = appliedView !== null && savedViewKey(findState) !== savedViewKey(savedViewState(appliedView));
+  const folderHeld = (findFilters.folderId?.length ?? 0) > 0;
+  /** Apply a saved view: the whole of it, or (when it no longer applies) nothing. */
+  const applySavedView = (v: SavedVaultView) => {
+    setAllProjects(v.programId === null);
+    setQ(v.q);
+    setFindFilters(v.filters);
+    setIncludeEarlier(v.includeSuperseded);
+    setFilterReset((n) => n + 1);
+    setAppliedView(v);
+  };
   const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath], isVaultSearchShape);
   const verifiedSearch = !searchState.loading && !searchState.error && searchState.data !== null;
   const searchUnavailable = searching && !libraryMode && !searchState.loading && !verifiedSearch;
@@ -1488,6 +1827,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     [orgRows, orgLoading, orgError, orgMeta, orgActive],
   );
   const orgFocused = orgFocusId ? orgRead.rows.find((r) => r.id === orgFocusId) ?? null : null;
+  const savedViewFact = useMemo(() => (appliedView
+    ? { label: appliedView.label, visibility: appliedView.visibility, scope: appliedView.programId ? 'project' : 'library', changed: viewChanged }
+    : null), [appliedView, viewChanged]);
   const anaContext = useMemo(() => {
     /* No project open: no tree, and the organization view is what is on screen
        (fold F3 slice C). Its failure is published as a failure, never as zero. */
@@ -1505,19 +1847,19 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     if (libraryMode) {
       return {
         summary: `An accessible-project search for ${findSubject} is open. Its separate library panel must be read before describing matches; this context does not verify its result count.`,
-        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, requestedSearchScope: 'accessible-projects' },
+        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, savedView: savedViewFact, requestedSearchScope: 'accessible-projects' },
       };
     }
     if (searching && searchState.loading) {
       return {
         summary: `The vault search is still loading for ${findSubject}; no match count or selection is verified.`,
-        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, searchState: 'loading' },
+        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, savedView: savedViewFact, searchState: 'loading' },
       };
     }
     if (searchUnavailable) {
       return {
         summary: `The vault search for ${findSubject} could not be verified; this is a failed read, not a result of zero matches.`,
-        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, searchState: 'unavailable' },
+        facts: { searchQuery: trimmedQ || null, filters: filtering ? findFilters : null, savedView: savedViewFact, searchState: 'unavailable' },
         availableActions: ['Retry the vault search'],
       };
     }
@@ -1560,6 +1902,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         shownInList: shown,
         searchQuery: trimmedQ || null,
         filters: filtering ? findFilters : null,
+        // The saved view last applied (P-46), and whether the search has moved off it.
+        savedView: savedViewFact,
         openFolder: folder ? { id: folder.id, code: folder.code, label: folder.label } : null,
         selected: sel
           ? {
@@ -1590,7 +1934,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         'Select a named document in the tree, so its detail is shown',
       ],
     };
-  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, sel, vault, projectId, orgLoading, orgError, organizationArtifacts, orgFocused]);
+  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, organizationArtifacts, orgFocused]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -2045,6 +2389,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 <>
                   <span className="vd-crumb-sep" aria-hidden="true">&rsaquo;</span>
                   <span className="vd-crumb cur">
+                    {appliedView ? <>View &ldquo;{appliedView.label}&rdquo;{viewChanged ? ' (changed)' : ''} · </> : null}
                     {trimmedQ ? <>Search &quot;{q}&quot;{filtering ? ', filtered' : ''}</> : 'Filtered'}
                     {!libraryMode && verifiedSearch && searchState.data && searchState.data.total > results.length
                       ? ` — ${results.length} of ${searchState.data.total}`
@@ -2079,17 +2424,49 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 <input
                   type="checkbox"
                   checked={allProjects}
+                  disabled={folderHeld}
+                  aria-describedby={folderHeld ? 'vd-folder-held' : undefined}
                   onChange={(e) => setAllProjects(e.target.checked)}
                 />{' '}
                 Accessible projects
               </label>
+              {folderHeld && (
+                <span id="vd-folder-held" className="vd-filter-note">
+                  A folder is one project&rsquo;s cabinet. Remove the folder filter to search accessible projects.
+                </span>
+              )}
+              {projectId && (
+                <button
+                  type="button"
+                  className="vd-crumb"
+                  aria-expanded={viewsOpen}
+                  aria-controls={viewsOpen ? 'vd-saved-views' : undefined}
+                  onClick={() => setViewsOpen((open) => !open)}
+                >
+                  Saved views
+                </button>
+              )}
             </div>
+            {viewsOpen && projectId && (
+              <VaultSavedViews
+                projectId={projectId}
+                canWrite={canWrite}
+                current={findState}
+                searching={searching}
+                defaultName={trimmedQ ? (filtering ? `${trimmedQ}, filtered` : trimmedQ) : 'Filtered documents'}
+                applied={appliedView}
+                onApply={applySavedView}
+                onChanged={(v, adopt) => { if (adopt || appliedView?.id === v.id) setAppliedView(v); }}
+                onDeleted={(id) => { if (appliedView?.id === id) setAppliedView(null); }}
+              />
+            )}
             <VaultFindFilterRow
               key={filterReset}
               value={findFilters}
               onChange={setFindFilters}
               onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
               facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
+              folderLabel={(id) => (findFolder(tree, `cab-${id}`) ?? findFolder(tree, id))?.label ?? `the folder ${id}`}
             />
             {searchUnavailable && (
               /* An error is not an empty result. Without this the screen reads
