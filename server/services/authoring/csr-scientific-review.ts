@@ -39,15 +39,19 @@ async function productionDependencies(): Promise<CsrScientificReviewDependencies
         import('./authoring-program-access.js'), import('./authoring-permissions.js'),
         import('../governance/separation-of-duties.js'),
       ]);
-      const authorized = await authorizeAuthoringProgram(q, { tenantId: input.tenantId,
-        actor: { id: reviewerId, email: reviewerEmail }, programId: scope(input).programId, forWrite: false });
-      const documentScope = await resolveAuthoringDocumentScope(q, input.tenantId, input.snapshot.id);
-      if (!documentScope || !(await decideAuthoringPermission({ pool: q, principal: authorized.principal,
-        scope: documentScope, action: 'review' })).allowed) {
-        refusal('CSR_EVIDENCE_REVIEWER_UNAVAILABLE', 'Current independent scientific reviewer authority could not be verified.');
+      try {
+        const authorized = await authorizeAuthoringProgram(q, { tenantId: input.tenantId,
+          actor: { id: reviewerId, email: reviewerEmail }, programId: scope(input).programId, forWrite: false });
+        const documentScope = await resolveAuthoringDocumentScope(q, input.tenantId, input.snapshot.id);
+        if (!documentScope || !(await decideAuthoringPermission({ pool: q, principal: authorized.principal,
+          scope: documentScope, action: 'review' })).allowed) {
+          refusal('CSR_EVIDENCE_REVIEWER_UNAVAILABLE', REVIEWER_NO_ACCESS);
+        }
+        await assertSignerIsNotAuthor(`authoring-document:${input.snapshot.id}`, input.tenantId, Number(reviewerId),
+          { client: q, meaning: 'review' });
+      } catch (error) {
+        reviewerStandingRefusal(error);
       }
-      await assertSignerIsNotAuthor(`authoring-document:${input.snapshot.id}`, input.tenantId, Number(reviewerId),
-        { client: q, meaning: 'review' });
     },
     verifyAudit: row => {
       const verdict = verifyAuthoringTrailRow({
@@ -61,6 +65,76 @@ async function productionDependencies(): Promise<CsrScientificReviewDependencies
   };
 }
 const refusal = (code: string, message: string): never => { throw new CsrScientificReviewError(code, message); };
+
+const REVIEWER_NO_ACCESS = 'The scientific reviewer of this CSR no longer has access to this project, and release requires the reviewer’s current access. Nothing was signed or released. An administrator can restore that access.';
+
+/**
+ * Why the reviewer of a retained receipt no longer stands, as a refusal the
+ * release boundary answers in the reviewer's terms: what changed about the
+ * reviewer, never "no receipt" and never a 500. A check that could not run is
+ * not an answer about the reviewer, so it is rethrown, and the boundary says
+ * it could not be checked (workflow-import-governance.ts).
+ */
+function reviewerStandingRefusal(error: unknown): never {
+  const failed = error as { name?: unknown; code?: unknown; status?: unknown } | null;
+  if (failed?.code === 'SEPARATION_OF_DUTIES') {
+    return refusal('CSR_EVIDENCE_REVIEWER_NOT_INDEPENDENT', 'The scientific reviewer is now recorded as an author of this CSR, so the review is not independent. Nothing was signed or released. An independent reviewer reviews it again.');
+  }
+  if (failed?.code === 'SEPARATION_OF_DUTIES_AUTHOR_UNRESOLVED') {
+    return refusal('CSR_EVIDENCE_REVIEWER_INDEPENDENCE_UNRESOLVED', 'Who wrote this CSR could not be established, so its scientific review cannot be shown to be independent. Nothing was signed or released.');
+  }
+  if (failed?.name === 'AuthoringProgramAccessError' && failed.status === 403) {
+    return refusal('CSR_EVIDENCE_REVIEWER_UNAVAILABLE', REVIEWER_NO_ACCESS);
+  }
+  if (failed?.name === 'AuthoringProgramAccessError' && (failed.status === 404 || failed.status === 409) && error instanceof Error) {
+    // The project's own state, not the reviewer's: said as it is.
+    return refusal('CSR_EVIDENCE_REVIEWER_UNAVAILABLE', `${error.message} The scientific review cannot be relied on for release until it is resolved. Nothing was signed or released.`);
+  }
+  throw error;
+}
+
+/**
+ * The latest retained receipt for this snapshot whose reviewer is still an
+ * active member, with that member's rows locked against a concurrent
+ * deactivation; otherwise the refusal that is true. A receipt is evidence of a
+ * review that happened, so a reviewer's account changing never reads as "no
+ * receipt": it reads as the reviewer no longer standing.
+ */
+async function currentReceiptRow(q: Queryable, input: CsrScientificReviewContext): Promise<Record<string, unknown>> {
+  const receipts = await q.query(`SELECT r.id::text AS review_id, r.reviewer_id, r.reviewed_snapshot,
+      r.reviewed_snapshot_hash, r.review_binding_basis, r.requested_at, r.reviewed_at, r.requested_by,
+      t.id::text AS trail_id, t.operation_type, t.before_content, t.after_content,
+      t.content_hash_before, t.content_hash_after, t.change_reason, t.metadata, t.actor_id,
+      a.new_values AS chain_details, a.payload_hash AS chain_payload_hash
+    FROM authoring_reviews r
+    JOIN authoring_audit_trail t ON t.doc_id::text=r.doc_id::text AND t.tenant_id=r.tenant_id
+      AND t.operation_type='document_reviewed' AND t.metadata->>'review_status'='approved'
+      AND t.metadata->'csrScientificEvidence'->>'reviewId'=r.id::text
+    JOIN audit_logs a ON a.tenant_id=t.tenant_id AND a.record_id=t.doc_id::text
+      AND a.action='authoring.section.document_reviewed' AND a.new_values->>'trailId'=t.id::text
+    WHERE r.doc_id::text=$1 AND r.tenant_id=$2 AND r.review_status='approved'
+      AND r.reviewed_snapshot_hash=$3 AND r.review_binding_basis='authoring-full-visible-v1'
+      AND r.requested_by IS NOT NULL AND r.requested_at<=r.reviewed_at
+      AND t.actor_id::text=r.reviewer_id
+    ORDER BY t.created_at DESC, t.id DESC FOR SHARE OF r`,
+  [input.snapshot.id, input.tenantId, input.snapshotHash]);
+  const asked = new Set<string>();
+  for (const row of receipts.rows as Array<Record<string, unknown>>) {
+    const reviewerId = String(row.reviewer_id);
+    if (asked.has(reviewerId)) continue;
+    asked.add(reviewerId);
+    const member = await q.query(`SELECT u.email FROM users u
+        JOIN organization_users ou ON ou.user_id=u.id AND ou.organization_id=$2
+        JOIN organizations o ON o.id=ou.organization_id AND o.status='active'
+      WHERE u.id::text=$1 AND u.status='active'
+      LIMIT 1 FOR SHARE OF u, ou, o`, [reviewerId, input.tenantId]);
+    if (member.rows.length === 1) return { ...row, reviewer_email: member.rows[0].email };
+  }
+  if (receipts.rows.length > 0) {
+    return refusal('CSR_SCIENTIFIC_REVIEWER_NOT_CURRENT', 'The scientific review of this CSR was recorded by a reviewer who is no longer an active member of this organization, and release requires the reviewer’s current access. Nothing was signed or released. An administrator can restore that access.');
+  }
+  return refusal('CSR_SCIENTIFIC_REVIEW_REQUIRED', 'No current assigned scientific-review receipt covers this saved CSR. Nothing was signed or released.');
+}
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 function scope(input: CsrScientificReviewContext) {
@@ -169,28 +243,7 @@ async function currentCsrScientificApproval(q: Queryable, input: CsrScientificRe
   if (deps.snapshotHash(input.snapshot) !== input.snapshotHash) {
     return refusal('CSR_EVIDENCE_SNAPSHOT_INVALID', 'The current document snapshot could not be verified.');
   }
-  const result = await q.query(`SELECT r.id::text AS review_id, r.reviewer_id, r.reviewed_snapshot,
-      r.reviewed_snapshot_hash, r.review_binding_basis, r.requested_at, r.reviewed_at, r.requested_by, u.email AS reviewer_email,
-      t.id::text AS trail_id, t.operation_type, t.before_content, t.after_content,
-      t.content_hash_before, t.content_hash_after, t.change_reason, t.metadata, t.actor_id,
-      a.new_values AS chain_details, a.payload_hash AS chain_payload_hash
-    FROM authoring_reviews r
-    JOIN authoring_audit_trail t ON t.doc_id::text=r.doc_id::text AND t.tenant_id=r.tenant_id
-      AND t.operation_type='document_reviewed' AND t.metadata->>'review_status'='approved'
-      AND t.metadata->'csrScientificEvidence'->>'reviewId'=r.id::text
-    JOIN audit_logs a ON a.tenant_id=t.tenant_id AND a.record_id=t.doc_id::text
-      AND a.action='authoring.section.document_reviewed' AND a.new_values->>'trailId'=t.id::text
-    JOIN users u ON u.id::text=r.reviewer_id AND u.status='active'
-    JOIN organization_users ou ON ou.user_id=u.id AND ou.organization_id=r.tenant_id
-    JOIN organizations o ON o.id=ou.organization_id AND o.status='active'
-    WHERE r.doc_id::text=$1 AND r.tenant_id=$2 AND r.review_status='approved'
-      AND r.reviewed_snapshot_hash=$3 AND r.review_binding_basis='authoring-full-visible-v1'
-      AND r.requested_by IS NOT NULL AND r.requested_at<=r.reviewed_at
-      AND t.actor_id::text=r.reviewer_id
-    ORDER BY t.created_at DESC, t.id DESC LIMIT 1 FOR SHARE OF r, u, ou, o`,
-  [input.snapshot.id, input.tenantId, input.snapshotHash]);
-  if (result.rows.length !== 1) return refusal('CSR_SCIENTIFIC_REVIEW_REQUIRED', 'No current assigned scientific-review receipt covers this saved CSR. Nothing was signed or released.');
-  const row = result.rows[0];
+  const row = await currentReceiptRow(q, input);
   await deps.verifyReviewer(q, input, String(row.reviewer_id), String(row.reviewer_email ?? ''));
   if (!deps.verifyAudit(row) || deps.snapshotHash(row.reviewed_snapshot as AuthoringSavedSnapshot) !== input.snapshotHash) {
     return refusal('CSR_EVIDENCE_RECEIPT_INVALID', 'The scientific review audit or saved-content binding did not verify.');

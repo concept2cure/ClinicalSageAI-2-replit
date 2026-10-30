@@ -168,7 +168,9 @@ function harness() {
   const state={row,auditValid:true,required:false,authorityValid:true,loadError:null};
   const q={query:async(sql,params)=>{calls.push({sql,params});
     if(sql.includes('AS required')) return {rows:[{required:state.required}]};
-    if(sql.includes('FROM authoring_reviews')) return {rows:state.row?[state.row]:[]};
+    const inactive=state.reviewerActive===false&&sql.includes("u.status='active'");
+    if(sql.includes('FROM authoring_reviews')) return {rows:state.row&&!inactive?[state.row]:[]};
+    if(sql.includes('FROM users u')) return {rows:inactive?[]:[{email:'reviewer@example.test'}]};
     throw new Error('Unexpected SQL in adapter test');}};
   const deps={loadTables:async(client,scope,runId,options)=>{
     assert.equal(client,q);assert.deepEqual(scope,{organizationId:7,programId:uid(2),userId:21});
@@ -190,11 +192,17 @@ test('adapter: release re-reads source tables and returns the retained current r
  const h=harness();const r=await service.requireCurrentCsrScientificApproval(h.q,h.context,h.deps);assert.deepEqual(r,h.receipt);
  const statement=h.calls.find(c=>c.sql.includes('FROM authoring_reviews'));
  assert.deepEqual(statement.params,[uid(1),7,h.context.snapshotHash]);
- assert.match(statement.sql,/r\.tenant_id=\$2/);assert.match(statement.sql,/FOR SHARE OF r, u, ou, o/);
+ assert.match(statement.sql,/r\.tenant_id=\$2/);assert.match(statement.sql,/FOR SHARE OF r\b/);
  assert.match(statement.sql,/authoring\.section\.document_reviewed/);
+ // The reviewer's account, membership and organization stay locked against a concurrent deactivation.
+ const member=h.calls.find(c=>c.sql.includes('FROM users u'));
+ assert.deepEqual(member.params,['21',7]);assert.match(member.sql,/u\.status='active'/);assert.match(member.sql,/FOR SHARE OF u, ou, o/);
 });
 test('adapter: no current approved review prevents signing',async()=>{
  const h=harness();h.state.row=null;await assert.rejects(service.requireCurrentCsrScientificApproval(h.q,h.context,h.deps),e=>e.code==='CSR_SCIENTIFIC_REVIEW_REQUIRED');
+});
+test('adapter: a retained receipt whose reviewer is no longer active says so, not that there is no receipt',async()=>{
+ const h=harness();h.state.reviewerActive=false;await assert.rejects(service.requireCurrentCsrScientificApproval(h.q,h.context,h.deps),e=>e.code==='CSR_SCIENTIFIC_REVIEWER_NOT_CURRENT');
 });
 test('adapter: forged audit metadata is refused',async()=>{
  const h=harness();h.state.auditValid=false;await assert.rejects(service.requireCurrentCsrScientificApproval(h.q,h.context,h.deps),e=>e.code==='CSR_EVIDENCE_RECEIPT_INVALID');
