@@ -1,5 +1,6 @@
-/** Actual loader/service; synthetic catalog authority and gateway boundaries.
- * No provider, database or registry-membership bypass is used. */
+/** Actual source loader/service; synthetic catalog authority and gateway boundaries.
+ * Product admission is explicitly unassessed here and qualified separately by
+ * real-PGlite tests; the actual private source issuer/checkpoints remain in use. */
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GatewayRequest } from '../../ai-gateway/types';
@@ -14,6 +15,8 @@ vi.mock('../catalog-scope', async () => ({ catalogScope: seam.scope,
   sourceReadInput: (await import('./support/source-read-tool-fixture.js')).syntheticInput }));
 vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForActor: seam.load, revalidateActorSourceScope: seam.actor }));
 vi.mock('../../c2c/current-program-access', () => ({ requireProgramScopeStillCurrent: seam.program }));
+vi.mock('../draft-product-context', async () => ({ loadRecordedDraftProductContext:
+  (await import('./support/unassessed-product-context-fixture.js')).unassessedProductContextFixture }));
 vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: seam.route }),
   GatewayPolicyError: class extends Error {}, GatewayNoProviderError: class extends Error {},
   GatewayAllProvidersFailedError: class extends Error {}, ModelNotApprovedError: class extends Error {},

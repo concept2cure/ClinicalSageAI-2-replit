@@ -8,6 +8,10 @@ const gatewayRoute = vi.hoisted(() => vi.fn(async (_request: unknown) => ({
   latencyMs: 1, finishReason: 'end_turn',
 })));
 vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: gatewayRoute }) }));
+// Isolate catalogue fidelity/gateway wiring from independent product admission,
+// which is exercised with real PGlite in the recorded-product service suite.
+vi.mock('../draft-product-context', async () => ({ loadRecordedDraftProductContext:
+  (await import('./support/unassessed-product-context-fixture.js')).unassessedProductContextFixture }));
 
 import { AnaDocumentDraftingService, resolveDraftingRequirements } from '../AnaDocumentDraftingService';
 import { CTD_AUTHORING_GUIDANCE } from '../../ind/ctd/authoring-guidance';
