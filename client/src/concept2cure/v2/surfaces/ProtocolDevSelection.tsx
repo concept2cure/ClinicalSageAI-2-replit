@@ -4,6 +4,7 @@ import type { PdevDoc } from '../fixtures/protocol-data';
 import * as PG from './ProtocolGov';
 import { ProtocolDevForm } from './ProtocolDevForms';
 import { FileProtocolProgramDrawer } from './ProtocolDevFileProgram';
+import { APP_REGISTRY } from '@shared/regulatory/app-registry';
 
 interface ProtocolIndexRow { id: string; title: string; shortTitle?: string; status?: string; programId?: string | null }
 const isIndex = (value: unknown): value is ProtocolIndexRow[] => Array.isArray(value) && value.every((row) =>
@@ -56,6 +57,9 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
   const [filing, setFiling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   return <div className="pde-note" style={{ margin: 16 }}>
+    <h2 className="pde-work-heading">{APP_REGISTRY.study_protocol_design.label}</h2>
+    <p>Start or select a protocol, create or bind its study design, then use its statistics, assessments, design checks and review tools.
+      {' '}Ask AnA to draft from project evidence and continue in the shared document canvas and editor.</p>
     {/* pde-picker styles these two selects (protocol-dev-editing.css). The bar
         that replaced the old picker on 2026-10-17 dropped the class, so they
         fell to the shell reset — no border, no background — and read as plain
