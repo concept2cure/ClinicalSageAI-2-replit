@@ -26,5 +26,9 @@
     "failed": 0,
     "emittedJavaScriptIdentical": true,
     "reason": "Fix test-driver static result type mismatch; no production or runtime test change."
-  }
+  },
+  "acceptedSourceHead": "84853e7bc5c3a81e1b0634703e0585954dac8b9c",
+  "normalPushGates": "all passed",
+  "typeScriptErrors": 0,
+  "committedFrozenInputsVerified": 64
 }

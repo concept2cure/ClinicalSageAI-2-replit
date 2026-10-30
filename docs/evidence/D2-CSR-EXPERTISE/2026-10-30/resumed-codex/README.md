@@ -57,3 +57,11 @@ Merged Vite client, server and audit-chain-verifier build: passed (`csr-merged-b
 ## Compiler gate correction
 
 The first normal push was refused by the compiler gate: 14 TS2345 diagnostics, all from the new PGlite fixture's driver-specific result generics. The test now declares the existing select/execute scope seam, matching the established PGlite fixture pattern. No production API or baseline changed. `fixture-type-fix.json` proves the before/after fixture emits byte-identical JavaScript; its 23 actual SQL controls pass again and its lint remains clean. This is a repeat of tests within the 436-test set, not an extra 23 distinct tests. The original 436-run freeze remains intact; `published-source-freeze.json` pins the sole type-only difference and all other unchanged inputs. The failed push log is retained as a rejected attempt, not publication.
+
+## Accepted canonical publication
+
+Source accepted at `84853e7bc5c3a81e1b0634703e0585954dac8b9c` on `concept2cure-v2`, through the normal push with **all gates passed, TypeScript zero errors, no new lint warnings and no baseline change**. `publication.json` pins the source, scope and results; `csr-push-retry.log.gz` is the accepted raw log. All 64 published frozen inputs were verified against Git's committed blobs, not only the working tree.
+
+The later incoming Vault/archive and lint-source-version work was preserved through merge `84853e7bc`. Its eight affected suites pass 66 tests; its native Node tool checks pass six tests; the merged client/server/audit-verifier build passes. Their logs are kept separately and are not represented as additional CSR tests or native DB qualification. The earlier ownership/action merge separately passed its two suites/22 tests.
+
+The CSR slice's 436-test qualification, runtime-identical fixture typing correction and 23-test repeat remain attributed above. Existing review/signature/release controls still apply; no provider, agency, deployment or human clinical acceptance occurred. Earlier paused filing and A3 source stays recoverable and is not declared complete.
