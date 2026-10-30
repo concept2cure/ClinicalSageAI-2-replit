@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-30T19:13:39.860009+00:00",
-  "sourceCommit": "30bacbc37b761fa545c773cd5039ff6f56ee5561",
-  "scope": "310 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
+  "observedAt": "2026-10-30T19:22:36.822999+00:00",
+  "sourceCommit": "3ca00722e9a5370e731ebc0f6b79050505d38754",
+  "scope": "320 selected source, test, SQL, schema, gate and configuration inputs; not a complete dependency closure.",
   "qualification": [
     {
       "receipt": "qualification/final-03-summary.json",
@@ -160,17 +160,29 @@
       "result": "build0 at30bacbc37;310inputs unchanged"
     },
     {
-      "receipt": "qualification/lint-final.json.gz",
+      "receipt": "qualification/final-ana-lint.json.gz",
       "result": "55changedTypeScriptfiles,0errors,190before/190afterwarnings against3ab7b7220"
+    },
+    {
+      "receipt": "qualification/final-live-summary.json",
+      "result": "79/79 across7files at3ca00722e;320inputs unchanged. LiveDrive pending protocol guard, queued navigation/surface actions and RBM rail/project-context compatibility. All310 preceding selected inputs are identical."
+    },
+    {
+      "receipt": "qualification/build-live-exit.json",
+      "result": "build0 at3ca00722e;320inputs unchanged"
+    },
+    {
+      "receipt": "qualification/lint-final.json.gz",
+      "result": "55changedTypeScriptfiles,0errors,190before/190afterwarnings against4f92b4364"
     }
   ],
   "priorWholeTypeScript": {
-    "commit": "5d756830409b2948c355c574d09e1420d957bee9",
+    "commit": "7f5af0e27643bd3d32f0974e97792dcf86049262",
     "errors": 0,
     "baseline": 0,
     "allNormalGatesPassed": true,
     "remoteUpdate": false,
-    "refusal": "Concurrent remote advance; push-refusal-08. Those245inputs were stable. Current310-input merged source still requires its own normal push."
+    "refusal": "Concurrent remote advance; push-refusal-09. Those310inputs were stable and are identical in the current integration. Current normal push is still pending."
   },
   "files": {
     "client/src/concept2cure/mdx/MdxSurfaceHost.tsx": "3e0506be983f5407732db2b365a9e8565f30abe491d15872be83d87f8ad24c54",
@@ -201,6 +213,7 @@
     "client/src/concept2cure/mdx/surfaces/engineeringPanelTarget.ts": "df13aa1545e1fbd99219afa2cb83faf22563103f65eeb08209afa7561690e455",
     "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx": "c1f0af4f48a26efe096ab9300969cb14b802b5f9686ce394a4f41227bc35a0c7",
     "client/src/concept2cure/v2/Shell.tsx": "1c5777170c14e5f0e1d5d8c5f1a2991019b2aca7ec37fa58fe8107b5f178ff66",
+    "client/src/concept2cure/v2/V2App.tsx": "c2c5f4565c9018752eedbf1c16e36fba1a4deeb2818b5c0e2af1ae50ab51b117",
     "client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx": "485aac7b64e8cc7a6f6a5eb71d90eb4ab6a5c0a6b40743c2234980fedde81801",
     "client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx": "fe68c9b7cbd82c1b0c0156674ac23693d156e45e1193223428727865640f6c53",
     "client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx": "92042eaac2add2d860623da1e785426a4af262768ea51a9b919fc2c91e2feef6",
@@ -220,6 +233,10 @@
     "client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx": "63aa99355a56c769003f52e68a2a599e1fb127c2aca665938351b8ce72cde1f2",
     "client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx": "9ece2df6acaab75190ee5a2e6e44c8f2839fc4d62a6f1a332cc8c66e1bc43b99",
     "client/src/concept2cure/v2/__tests__/dataConnectOwnedRead.test.tsx": "be99f87fc08a702a06d3ce1eb7d7355ab8662f3a820779449e0d311c438ff764",
+    "client/src/concept2cure/v2/__tests__/driveQueue.test.ts": "f7b2f9d552d294ae731bb5df5a0b0cd7a759a73970118d74f0d0cac661060f97",
+    "client/src/concept2cure/v2/__tests__/liveDriveProtocolLeaveGuard.test.tsx": "21011f29b94622cb6e664c11c86d308e08c2001a85aef4d14ba6b459ecb99343",
+    "client/src/concept2cure/v2/__tests__/liveDriveShell.fixtures.tsx": "4784a36df1a757f54bc15ddb80b03e946139d7f0c1668ec6980b1cc084a8729a",
+    "client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx": "d197d38ee3914b9a710cf40a32cdb89d4975c455b40ab524939a7a24894d5b2f",
     "client/src/concept2cure/v2/__tests__/navigationReachability.test.ts": "fc9b0c0752e27edbd9edd471c5c1bfff79bf4455fb8f458fd57f37b766d93906",
     "client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx": "2d4b4f0094928debf9fdb4f2fae292529993a1021293bc4e40c160ca671217e9",
     "client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx": "a82b15d9c399aabe364ce270b3b5416afd66b1e14bf796a8483e664a35cd1b3e",
@@ -240,6 +257,7 @@
     "client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx": "3ab404e3a6872bb1b4fcd28680d4b11607159f4d03bc87f6aaab1165a6263fdc",
     "client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx": "5d9d899af58761bd6703ad23904a4f3e7211661cc6a04d088bd4b42dd12e3ca9",
     "client/src/concept2cure/v2/__tests__/shellNav.test.tsx": "e0b6f1678d3a2b60429b7bb484187e03077b4281a425c716622d2a0c23804531",
+    "client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx": "3202e1320e8a9e78d3d5546e5a7eff94c916bef4f5cde3462247f261e91475b1",
     "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx": "f9fb6e237935ff31c3e56541ee1ef4acba8c332152e16d6853f30feca765304e",
     "client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx": "dd5d4f8afc90335de3e2e7c46ff16df06b2747c7c13f4aca78377bdff4d3030c",
     "client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx": "3de9c5c84ddb8a2393443b66ddf3f08a8982a5d68d81341ae54395f3f72a0102",
@@ -254,7 +272,9 @@
     "client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx": "a97546f715f1e0c200ff6d8c69f600ae02a8702ad85bb546b0743c3baf9576d3",
     "client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx": "8fdb26891dde531eda566ba8660ae77268ba25f11cc4d6808f2d1eccf82570d0",
     "client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx": "532d3c9339d732b160ce64bc8f7766ab267bfd8070894d6f1009d776eb14b49f",
+    "client/src/concept2cure/v2/ceremony.ts": "ef0368d2a486a90ca388c14e761af762f492d7a1a1e1bf0cd6e89ac4fe8d0047",
     "client/src/concept2cure/v2/dataConnect.tsx": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669",
+    "client/src/concept2cure/v2/driveQueue.ts": "721f16a54cfa4f143054732dab6738f5f9cbc45f488c20f2d5c587af6d09f009",
     "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "3123e757dec925152adf5ab8ca5a18ec4adf2a2692d023d77c38c81378b56845",
     "client/src/concept2cure/v2/editor/DraftPassage.tsx": "e8372b2e01d5893ef528ee054638322975637a3cba75bc2f5811549625de5db6",
     "client/src/concept2cure/v2/editor/__tests__/assemblyDraftRegion.test.ts": "6b096a6244a0bae6a04e37ec14e143a7e356f4634ae19d6fc2aaca36c22860a2",
@@ -265,6 +285,7 @@
     "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "c5498cc159d339f59a9a596d977fa8d536c3f21787a058e349b31f75e9f5065c",
     "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts": "6b064da34ec25a184c33a5cc83e6e72b2cf11c7416cc0a5b091f7f1f8440551a",
     "client/src/concept2cure/v2/fixtures/rbm-data.ts": "74a79c73c31fc2bd7642f48ca75f4a3c2e2d29eef3e899c7089d4f6964dfe7db",
+    "client/src/concept2cure/v2/navParams.ts": "1f65cb37fab1713c3de8782d351411fd4df7566edc45ea58b047a87aedd4aa9c",
     "client/src/concept2cure/v2/projectScopedRead.tsx": "9dcd711a081a9fece7b2952216858a421a627d72c5be6861181363a0184d3f99",
     "client/src/concept2cure/v2/registryModel.ts": "192340d35184bd95307631524d900db4e75bd1f97953efc64dd30ec6723a075a",
     "client/src/concept2cure/v2/shellProject.ts": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
@@ -273,6 +294,7 @@
     "client/src/concept2cure/v2/styles/project-settings.css": "8a54240d4d37050fb17900fa554efcde6f30a779ae3659e3187fde2b96cffe85",
     "client/src/concept2cure/v2/styles/protocol-dev-editing.css": "7fd38926c09f86499ad6f629638426926b00cc0e5e880d133c803b6b0ac5bcc9",
     "client/src/concept2cure/v2/styles/workflows-v2.css": "1be535d55d7d6a2be52563097ae7e0c88899eddb10ebd544c31cfae8633d08fe",
+    "client/src/concept2cure/v2/surfaceActions.ts": "2c3fa2b8f6a375af1d7af1192f730438634f35f7224946f8cf444e45d5a8486b",
     "client/src/concept2cure/v2/surfaceViews.ts": "3026a4c2bece76334497b1f7d4694d056545ffa18876da209509d739fff42376",
     "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "2c4c182c33f186eb453d1a27e6eee82f8dceec53d35b76d43a5585b2004e20c0",
     "client/src/concept2cure/v2/surfaces/CompanyCorrespondenceDraft.tsx": "5ef1536bfaf1d17f1b5a78d411a9e039019de96d4faa86e881e318c000a5e4e2",
@@ -484,5 +506,5 @@
     "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
     "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
   },
-  "publication": "Pending actual normal push/fresh remote proof for latest310inputs. Earlier gate and remote-advancement refusals retained; no force/bypass/baseline growth."
+  "publication": "Pending actual normal push/fresh remote proof for latest320inputs. Earlier gate and remote-advancement refusals retained; no force/bypass/baseline growth."
 }

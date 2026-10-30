@@ -357,7 +357,25 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   changed-file lint across 55 TypeScript files remained 190→190 with zero errors.
   The [incoming IND packet](../../D4/2026-10-30-ind-development/README.md) retains
   its separately qualified source and tests; its whole-suite results are not
-  borrowed as a root rerun here. Current-source whole TypeScript, all normal push
+  borrowed as a root rerun here. Its lint is retained as `final-ana-lint.json`.
+- Ninth normal push (`push-refusal-09-*`) at `7f5af0e27` passed **whole
+  TypeScript with 0 errors against baseline 0** and all normal gates, with all
+  310 selected inputs unchanged. Git refused the update after remote advancement
+  to `4f92b4364`. Nothing was published or overwritten by this attempt; no force
+  push or bypass was used. Its actual compiler result retains that source epoch.
+- Live Drive navigation integration: incoming `4f92b4364` merged normally into
+  `3ca00722e` without conflicts. The two source/test inputs add a pending-work
+  guard in `V2App.tsx` before AnA can publish a project or leave the registered
+  screen. Same-owner actions retain their existing handlers. Independent review
+  found no RBM rail, setup, launch, seed or signing change; all 310 preceding
+  selected inputs remain identical. Root's affected cohort (`final-live-*`) at
+  `3ca00722e` passed **79/79 across 7 actual files**, exit 0, zero skipped and all
+  **320 selected inputs unchanged**. The production build passed **exit 0** with
+  those same inputs stable; changed-file lint across 55 TypeScript files remained
+  190→190 with zero errors. An initial receipt helper used `.ts` for an existing
+  `.tsx` test; its path assertion stopped preparation before execution. The
+  failed bootstrap launchers are retained, and the corrected seven-file cohort
+  is the executed result above. Current-source whole TypeScript, all normal push
   gates and fresh remote proof remain pending.
 - In-memory changed-file lint: the current merged-source result is **0 errors,
   190→190 warnings, delta 0**. Earlier pre-signature lint was 189→189 on its own
@@ -394,7 +412,7 @@ Whole TypeScript, normal push gates and fresh remote proof remain pending.
   launch scope, launch API scope, signature ceremony and SQL-interpolation CI
   checks all pass **exit 0**, with **210 selected inputs unchanged** through
   those checks (`final-settings-ci-summary.json`). These are prior-epoch focused
-  receipts; the current IND/AnA integration still requires all normal push gates.
+  receipts; the current Live Drive integration still requires all normal push gates.
 - Independent read-only review cleared the pinned navigation, project/access,
   signature and incoming compatibility boundaries within its stated scopes.
   Review found the missing-signature gap and checked its final closure; review
@@ -413,8 +431,8 @@ Publication is pending. This packet proves local mounted HTTP, SQL/PGlite and
 explicitly synthetic browser behavior only at the named sources. It does not
 establish native PostgreSQL RLS, an authenticated hosted deployment, clinical
 validation or agency acceptance. Whole TypeScript and all normal gates passed at
-`498403dc3`, `59d0bd6eb`, `dd53c5a5f`, `624cd9285`, `3e8840459` and
-`5d7568304`; remote advancement then refused those updates. The current 310-input
+`498403dc3`, `59d0bd6eb`, `dd53c5a5f`, `624cd9285`, `3e8840459`,
+`5d7568304` and `7f5af0e27`; remote advancement then refused those updates. The current 320-input
 integration still requires its own
 compiler/gated-push retry
 and fresh remote/source verification before publication can be claimed.

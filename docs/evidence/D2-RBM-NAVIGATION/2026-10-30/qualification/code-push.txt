@@ -28,7 +28,7 @@ OK: Generated risk code types are up to date.
 [ci:migration-drop-safety] OK — 459 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
    ✅ Replay-safe DROPs passed.
    Validating no class vocabulary is restated...
-[ci:class-vocabulary] OK — 5894 file(s) scanned, no restated class vocabulary.
+[ci:class-vocabulary] OK — 5901 file(s) scanned, no restated class vocabulary.
    ✅ One class vocabulary passed.
    Validating new migrations are on a deploy path...
 [ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
@@ -44,7 +44,7 @@ OK: Generated risk code types are up to date.
 [ci:runtime-ddl] ✅ no new runtime DDL.
    ✅ No runtime DDL.
    Validating jsonb operators are not applied to json columns...
-[ci:json-operator-types] 960 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3546 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] 960 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3551 server file(s) read; 0 finding(s), 0 baselined
 [ci:json-operator-types] ✅ no jsonb operator on a json column.
    ✅ No jsonb operator on a json column.
    Validating the migration manifest tracks db/migrations...
@@ -61,7 +61,7 @@ Manifest is in sync.
    ✅ Client fetch() authentication passed.
    Validating no new session-scoped RLS bypass...
 [ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 0 baselined occurrence(s) remain in 0 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
-[ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (789 migration file(s) and 4368 code file(s) read), and no script writes either (P-70).
+[ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (789 migration file(s) and 4374 code file(s) read), and no script writes either (P-70).
    ✅ No new session-scoped RLS bypass.
    Validating no new value interpolated into SQL text...
 [ci:sql-interpolation] 30 fixed canonical predicate(s) proved separately; no value allowance added:
@@ -158,7 +158,7 @@ Repo health scan written: /tmp/repo-health-ceiling-probe.json
 - content-duplicate groups: 0 (0 files)   [gated]
 - duplicate basenames: 257   [reported, not gated]
 - files over byte threshold: 56
-- files over line threshold: 112
+- files over line threshold: 113
 
 ✅ repo health strict gate passed.
    ✅ No new oversized file.
@@ -172,8 +172,8 @@ Repo health scan written: /tmp/repo-health-ceiling-probe.json
 [ci:pushed-lint-errors] OK — no ESLint errors in 56 changed file(s) against origin/concept2cure-v2.
    ✅ No ESLint errors in the pushed files.
    Checking that the pushed files gained no ESLint warnings...
-[ci:eslint-warning-ratchet] --since af226ae6a5efa16fbd79a3a91234c9bfa5d54277 (af226ae6a) -- 56 lintable file(s) changed; linting both versions of each...
-[ci:eslint-warning-ratchet] no file changed its warning count since af226ae6a5efa16fbd79a3a91234c9bfa5d54277.
+[ci:eslint-warning-ratchet] --since 3ab7b72200a1a7b9d32ecc693136a91f38d8144c (3ab7b7220) -- 56 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since 3ab7b72200a1a7b9d32ecc693136a91f38d8144c.
    ✅ The pushed files gained no ESLint warnings.
    Typechecking (only if this push can change a type)...
 [ci:pushed-typecheck] 56 type-relevant file(s) changed against origin/concept2cure-v2: client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx, client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx, client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx, +51 more
@@ -183,5 +183,5 @@ Repo health scan written: /tmp/repo-health-ceiling-probe.json
    ✅ Typecheck passed (or nothing type-relevant was pushed).
 ✅ Pre-push checks complete — all gates passed.
 To https://github.com/concept2cure/ClinicalSageAI-2-replit.git
- ! [remote rejected]     concept2cure-v2 -> concept2cure-v2 (cannot lock ref 'refs/heads/concept2cure-v2': is at 8f0b6df37269be8ba9cdc0f0f6b4222b57040425 but expected af226ae6a5efa16fbd79a3a91234c9bfa5d54277)
+ ! [remote rejected]     concept2cure-v2 -> concept2cure-v2 (cannot lock ref 'refs/heads/concept2cure-v2': is at 4f92b436430c7881df67b5b72cf3d0db96d39c71 but expected 3ab7b72200a1a7b9d32ecc693136a91f38d8144c)
 error: failed to push some refs to 'https://github.com/concept2cure/ClinicalSageAI-2-replit.git'
