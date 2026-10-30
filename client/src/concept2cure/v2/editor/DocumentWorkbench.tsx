@@ -77,6 +77,7 @@ import { DraftClaimsLine } from './DraftClaimsLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { proposalTargetOf } from './draftAlternatives';
+import type { OfferedPassage, PassageRequest } from './draftPassage';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } from './RichSectionEditor';
 import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
@@ -1372,6 +1373,11 @@ export function DocumentWorkbench({
      draft, because a draft that outlives its own panel is a draft whose
      section scope nobody is enforcing. */
   const [aiDraftOpen, setAiDraftOpen] = useState(false);
+  /* A passage the editor offered for alternatives: the same panel, for that passage alone
+     (CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 4). It belongs to its section. */
+  const [draftPassage, setDraftPassage] = useState<PassageRequest | null>(null);
+  useEffect(() => { setDraftPassage(null); }, [activeSectionId]);
+  useEffect(() => { if (!aiDraftOpen) setDraftPassage(null); }, [aiDraftOpen]);
   const editorRef = useRef<RichSectionEditorHandle | null>(null);
 
   /* ── A comment being anchored to a text range ──
@@ -2053,6 +2059,11 @@ export function DocumentWorkbench({
   const askAnaToDraft = useCallback(() => {
     askAna(askAnaToDraftPrompt(programName(program)));
   }, [askAna, program]);
+  const offerPassageAlternatives = useCallback((passage: OfferedPassage) => {
+    if (!activeSectionId) return;
+    setDraftPassage({ ...passage, sectionId: activeSectionId });
+    setAiDraftOpen(true);
+  }, [activeSectionId]);
 
   /* 2026-09-28, coverage-gap sweep GA-4: six record rails had no close control,
      so the way out of History,
@@ -4786,6 +4797,7 @@ export function DocumentWorkbench({
                    state from here would be a click with no visible effect, so
                    it goes to the section it is about to draft instead. */
                 if (viewMode === 'document') {
+                  setDraftPassage(null);
                   setViewMode('section');
                   setAiDraftOpen(true);
                   return;
@@ -5356,6 +5368,8 @@ export function DocumentWorkbench({
                     savedContent={activeSection.content ?? ''}
                     savedUpdatedAt={activeSection.updated_at ?? null}
                     proposals={draftProposals}
+                    passage={draftPassage}
+                    onPassageClose={() => setDraftPassage(null)}
                   />
                 )}
                 {narrativeReference && <CsrNarrativeReferenceView reference={narrativeReference} />}
@@ -5423,6 +5437,7 @@ export function DocumentWorkbench({
                     storageKey={activeSection.id}
                     ariaLabel={`Section ${activeSection.code} — ${activeSection.title}`}
                     onAsk={askAna}
+                    onOfferAlternatives={selectedSourceReviewMissing ? null : offerPassageAlternatives}
                     /* The text this section's lineage was recorded against —
                        the last SAVED content, not the in-flight draft. With
                        it, "Data Origins" refuses to answer once the canvas

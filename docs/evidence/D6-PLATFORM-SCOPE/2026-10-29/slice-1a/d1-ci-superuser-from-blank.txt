@@ -1,0 +1,38 @@
+CI's real-database lane shape: blank database, install-fresh then deploy-migrate twice, as the superuser postgres, from the repository tree (migrations/db/scripts sha256 of sorted file hashes: 72de13f7c118f18f44878252a09352332e667d401e6340894ea321eb28f0509d).
+
+== install-fresh (tail)
+     step after this one; a local install must run it by hand.)
+   • set RLS_ENFORCE=on and restart to enforce tenant isolation;
+   • point the runtime at the non-superuser role: set APP_DATABASE_URL to the
+     app_service connection string (set APP_SERVICE_DB_PASSWORD here first so
+     the role is provisioned). Migrations keep using DATABASE_URL (the owner).
+     Production boot fails closed under RLS_ENFORCE=on if it connects as a superuser.
+   • leave SEED_DEMO_USER unset in production (no known-password admin).
+install-fresh exit 0
+
+== deploy-migrate (tail)
+  grant audit: 1327/1327 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+  authoring subsystem: 19/19 tables present
+  tenant-parentage FKs: 6/6 present
+  tenant_isolation_policy: 19/19 tables policied
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.
+deploy-migrate exit 0
+
+== deploy-migrate-replay (tail)
+  grant audit: 1327/1327 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+  authoring subsystem: 19/19 tables present
+  tenant-parentage FKs: 6/6 present
+  tenant_isolation_policy: 19/19 tables policied
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.
+deploy-migrate exit 0
+
+== state after: the three lookups (owner, SET clause), the role check, functions whose SET clause names a custom setting
+invitations_for_member(integer)|c2c_platform_scope|{"search_path=pg_catalog, public"}
+user_id_for_email(text)|c2c_platform_scope|{"search_path=pg_catalog, public"}
+user_id_for_reset_token(text)|c2c_platform_scope|{"search_path=pg_catalog, public"}
+organization_users_role_known|t
+0

@@ -319,8 +319,12 @@ function admitLiveSession(
  * the global gate in front of it already served the new one. A membership
  * without a role value (never the case: the column is NOT NULL with a
  * default) leaves the token's claims in place.
+ *
+ * Exported for the authoring router, which builds its own req.user from the
+ * token and so sent the token's role claim to the database (P-72 slice 1a,
+ * authoring.router.ts).
  */
-function applyOrganizationRole(req: Request): void {
+export function applyOrganizationRole(req: Request): void {
   const user = req.user as ({ organizationRole?: unknown } & NonNullable<Request['user']>) | undefined;
   if (!user) return;
   const role = roleReadOnThisRequest(req, user) ?? user.organizationRole;
