@@ -160,7 +160,10 @@ export function classNotSequencedReason(c: FilingDocumentClass, agency?: string)
     return `An FDA supplement is not built as a sequence yet, so this platform sends nothing for the ${c.label}.`;
   }
   if (c.packAgency === 'ich') {
-    return `The ${c.label} is a harmonised (ICH) document placed into an application's sequence; this platform sends nothing for it on its own.`;
+    // 2026-10-29 (CSR path review): the sentence said where the document goes
+    // but not where to build it, and a sponsor who chose the CSR here had no
+    // way to an IND sequence. It is built in the application's own project.
+    return `The ${c.label} is a harmonised (ICH) document filed in an application's sequence. Author it in that application's project (for a US IND, the IND's own project) and place it into the sequence there; a project of this type sends nothing on its own.`;
   }
   return `This platform builds no ${agency ?? c.packAgency.toUpperCase()} sequence for the ${c.label} on its own.`;
 }

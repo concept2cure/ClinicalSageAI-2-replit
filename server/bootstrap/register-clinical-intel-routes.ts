@@ -118,7 +118,11 @@ export async function registerClinicalIntelRoutes({
   // (register-document-routes.ts).
   try {
     const csrBuilderRoutes = await import('../routes/csr-builder-routes');
-    app.use('/api/csr-builder', csrBuilderRoutes.default);
+    // Authenticated at its own mount (2026-10-29), the backstop this file asks of
+    // every mount. Until then only the RTM export's /api-wide mount above
+    // authenticated it, so a failed import of that unrelated module would have
+    // left the builder, which calls a model, open.
+    app.use('/api/csr-builder', authenticateToken, csrBuilderRoutes.default);
     console.log('✅ CSR Builder routes mounted at /api/csr-builder');
   } catch (error) {
     console.error('Failed to mount CSR builder routes:', error);

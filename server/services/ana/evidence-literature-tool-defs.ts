@@ -278,7 +278,9 @@ export const NARRATE_STATISTICAL_RESULT: AnaTool = {
     'values) into correctly-hedged ICH-E3-style prose — determines significance from the confidence ' +
     'interval (preferred) or p-value, distinguishes statistical from clinical significance, and flags ' +
     'exploratory/post-hoc and multiplicity-uncontrolled analyses. Use when writing efficacy/safety ' +
-    'results so the language never overstates beyond the data.',
+    'results so the language never overstates beyond the data. It narrates the figures you pass, ' +
+    'as given: it reads none from a retained analysis run and computes none. For a CSR, read each ' +
+    'figure first from the retained run with get_csr_section_evidence.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1006,7 +1008,9 @@ export const DRAFT_SAFETY_NARRATIVE: AnaTool = {
     'discontinuation): subject → relevant history & concomitant meds → study-drug exposure → event ' +
     '(severity, seriousness, onset) → action taken & treatment → dechallenge/rechallenge → outcome → ' +
     'investigator causality. Drafts ONLY from the supplied facts and reports any missing required ' +
-    'fields for QC — never invents clinical detail.',
+    'fields for QC — never invents clinical detail. The facts are as given in the call: none is ' +
+    'read from the study\'s ADaM data. A CSR\'s patient narratives are composed from the ADaM data ' +
+    'by the CSR build\'s narrative job, which sources every fact.',
   input_schema: {
     type: 'object',
     properties: {

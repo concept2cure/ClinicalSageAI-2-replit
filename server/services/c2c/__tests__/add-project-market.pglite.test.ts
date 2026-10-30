@@ -225,7 +225,7 @@ describe('add a market (F22)', () => {
     ['a supplement market on an NDA project', NDA, 'FDA', 'pas',
       /^A Prior Approval Supplement is authored as its own project, not added to another as a market\. An FDA supplement is not built as a sequence yet, so this platform sends nothing for the Prior Approval Supplement\. Nothing was added\.$/],
     ['a clinical study report market on an NDA project', NDA, 'ICH / Global', 'csr',
-      /^A clinical study report is authored as its own project, not added to another as a market\. The clinical study report is a harmonised \(ICH\) document placed into an application's sequence; this platform sends nothing for it on its own\. Nothing was added\.$/],
+      /^A clinical study report is authored as its own project, not added to another as a market\. The clinical study report is a harmonised \(ICH\) document filed in an application's sequence\. Author it in that application's project \(for a US IND, the IND's own project\) and place it into the sequence there; a project of this type sends nothing on its own\. Nothing was added\.$/],
     // Review finding, 2026-10-18: the project's own class is read, not only the
     // market's — a PAS project asked for an NDA market was given an NDA spine.
     ['an application market on a project that is a document class (a PAS)', PAS, 'FDA', 'nda',
