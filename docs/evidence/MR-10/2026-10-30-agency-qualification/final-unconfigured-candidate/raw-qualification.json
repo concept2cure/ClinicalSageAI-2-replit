@@ -1,0 +1,147 @@
+{
+  "id": "v3.2.2-fda",
+  "version": "v3.2.2",
+  "region": "fda",
+  "specVersions": {
+    "ichBackbone": "ICH eCTD v3.2.2",
+    "fdaRegionalDtd": "FDA US Regional DTD v3.3 (eCTD Backbone Files Specification for Module 1)",
+    "validationCriteria": "FDA Specifications for eCTD Validation Criteria v4.5 (2025-10-01)",
+    "fileFormats": "FDA Specifications for File Format Types v9.3 (2025-08-20)",
+    "transmission": "FDA Transmitting eCTD Submissions v2.0 (2026-07)"
+  },
+  "package": {
+    "path": "/tmp/ectd-agency-qualification-candidate/v3-fda-out/123456-0000-fda.zip",
+    "sha256": "52f813893dc29de5a5b13fb053909c8352c22155a51b6e2971043245e3081ebb",
+    "sizeBytes": 23758
+  },
+  "validators": [
+    {
+      "name": "xmllint well-formed (index.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    },
+    {
+      "name": "backbone DOCTYPE (index.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    },
+    {
+      "name": "xmllint well-formed (m1/us/us-regional.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    },
+    {
+      "name": "backbone DOCTYPE (m1/us/us-regional.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    },
+    {
+      "name": "xmllint well-formed (m5/5-3-5-1/study-001/stf-study-001.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    },
+    {
+      "name": "backbone DOCTYPE (m5/5-3-5-1/study-001/stf-study-001.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    },
+    {
+      "name": "dtd-checksum-manifest",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    },
+    {
+      "name": "stf-cross-linking",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    },
+    {
+      "name": "cross-references",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    },
+    {
+      "name": "0001/xmllint well-formed (m5/5-3-5-1/study-001/stf-study-001.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    },
+    {
+      "name": "0001/backbone DOCTYPE (m5/5-3-5-1/study-001/stf-study-001.xml)",
+      "ran": true,
+      "passed": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "sample": []
+    }
+  ],
+  "checksum": {
+    "manifest": "util/index-md5.txt",
+    "filesChecked": 8,
+    "mismatches": [],
+    "missing": [],
+    "ok": true
+  },
+  "lifecycle": {
+    "priorSequence": "0000",
+    "nextSequence": "0001",
+    "operations": [
+      "append",
+      "delete",
+      "replace"
+    ],
+    "operationsWithModifiedFile": [
+      "append",
+      "delete",
+      "replace"
+    ],
+    "modifiedFileUnresolved": [],
+    "nextPackagePassed": true,
+    "checksum": {
+      "manifest": "util/index-md5.txt",
+      "filesChecked": 7,
+      "mismatches": [],
+      "missing": [],
+      "ok": true
+    }
+  },
+  "passed": true,
+  "ranAt": "(stamped by caller)",
+  "notes": [
+    "No external eValidator configured; xmllint + FDA-criteria subset are the accepted validators for this run.",
+    "STF: 1 study tagging file(s) generated + cross-linked (1 tagged leaves).",
+    "Cross-references: 1 resolved, 0 broken.",
+    "No DTDs vendored (assets/ectd-dtd/*.dtd); DTD *validity* is skipped for 0000/index.xml (needs ich-ectd-3-2.dtd), 0000/m1/us/us-regional.xml (needs us-regional-v3-3.dtd), 0000/m5/5-3-5-1/study-001/stf-study-001.xml (needs ich-stf-v2-2.dtd), 0001/m1/us/us-regional.xml (needs us-regional-v3-3.dtd), 0001/m5/5-3-5-1/study-001/stf-study-001.xml (needs ich-stf-v2-2.dtd) — that DTD is not in the package. See the separate per-file well-formedness results. Drop the licensed DTD(s) into assets/ectd-dtd/ (or $ECTD_DTD_DIR) to enable it.",
+    "Lifecycle backbone operations emitted: append, delete, new, replace; superseding operations carrying a modified-file pointer: append, delete, replace.",
+    "Every modified-file pointer names a leaf ID the 0000 package carries, at the traversal its backbone needs."
+  ]
+}
