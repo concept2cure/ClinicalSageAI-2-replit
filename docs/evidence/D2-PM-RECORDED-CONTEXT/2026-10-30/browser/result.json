@@ -1,0 +1,123 @@
+{
+  "fixture": "Actual recorded-context component/shared guards/session/shell/request helpers and product CSS; synthetic auth, tenant and API.",
+  "results": [
+    {
+      "width": 1280,
+      "recordedSourceAndInstructions": true,
+      "boundedLists": true,
+      "unknownConfidenceHonest": true,
+      "noWriteControls": true,
+      "tokenRefreshRetained": true,
+      "failedAndForeignReadsHidden": true,
+      "explicitRetry": true,
+      "lateActorReplyRetired": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "recordedSourceAndInstructions": true,
+      "boundedLists": true,
+      "unknownConfidenceHonest": true,
+      "noWriteControls": true,
+      "tokenRefreshRetained": true,
+      "failedAndForeignReadsHidden": true,
+      "explicitRetry": true,
+      "lateActorReplyRetired": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    }
+  ],
+  "reads": [
+    {
+      "mode": "normal",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "absent",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "error",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "foreign",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "malformed",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "retry",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "retry",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "late",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "late",
+      "actor": 8,
+      "method": "GET"
+    },
+    {
+      "mode": "normal",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "absent",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "error",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "foreign",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "malformed",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "retry",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "retry",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "late",
+      "actor": 7,
+      "method": "GET"
+    },
+    {
+      "mode": "late",
+      "actor": 8,
+      "method": "GET"
+    }
+  ]
+}

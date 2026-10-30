@@ -56,7 +56,8 @@ import { assembleCsrJob } from '../csr-assembly-source';
 import { enqueueCsrAssembly, readLatestCsrAssembly, runCsrAssembly } from '../csr-assembly-run';
 import { placeCsrAssembly, type CsrPlacementDeps } from '../csr-assembly-placement';
 import { previewCsrPlacementLifecycle } from '../csr-assembly-placement';
-import { readPriorCsrStudyLeaves } from '../csr-placement-lifecycle';
+import { lifecycleRefusal, planCsrLifecycle, readPriorCsrStudyLeaves } from '../csr-placement-lifecycle';
+import type { AssemblyLeafSummary } from '../csr-assembly-run';
 import { withdrawPartialCsrPlacement } from '../csr-placement-withdraw';
 import { storeRenderedLeafFile } from '../../ectd/rendered-leaf-files';
 import { getSequence, removeLeaf, upsertLeaf } from '../../submission-service/submission-service';
@@ -314,3 +315,47 @@ it('honours a withdrawal placed elsewhere by document, and withdraws an earlier 
   const later = await previewCsrPlacementLifecycle(q, realPlacement(), { organizationId: ORG, userId: USER, jobId: 41, assemblyId: (await assembled()).id, sequenceId: await openSequence('0008') });
   expect([...later.undecided, ...later.keptOnFile].map(p => p.leafId)).not.toContain(dropped);
 }, 600_000);
+
+it('reads mixed historical roles without relabelling them and keeps unowned report files undecided (SYNTHETIC)', async () => {
+  const studyId = 'SYN-LEGACY-STF';
+  const beforeSequence = await openSequence('0010');
+  const targetSequence = await openSequence('0011');
+  const specifications = [
+    { appendix: 'body', tag: 'study-report' },
+    { appendix: '14', tag: 'study-report' },
+    { appendix: '14.3.3', tag: 'study-report-body' },
+    { appendix: null, tag: 'study-report' },
+    { appendix: null, tag: 'study-report-body' },
+  ];
+  const previous: Array<{ id: number; appendix: string | null }> = [];
+  for (const [index, spec] of specifications.entries()) {
+    const { rows } = await h.pglite.query<{ id: number }>(`INSERT INTO submission_leaves
+      (sequence_id, section_code, title, lifecycle_op, document_table, document_id, study_id, stf_file_tag, organization_id, created_by)
+      VALUES ($1, 'm5.3.5.1', $2, 'new', 'rendered_leaf_files', $3, $4, $5, ${ORG}, ${USER}) RETURNING id`,
+    [beforeSequence, `Historical ${spec.appendix ?? index}`, 9000 + index, studyId, spec.tag]);
+    previous.push({ id: rows[0].id, appendix: spec.appendix });
+  }
+  // Only these three report parts have a prior recorded placement identity.
+  const placed = previous.filter(leaf => leaf.appendix !== null).map(leaf => ({ leafId: leaf.id, appendix: leaf.appendix }));
+  await h.pglite.query(`INSERT INTO csr_assembly_runs (organization_id, job_id, requested_by, status, progress, result, placement)
+    VALUES (${ORG}, 41, ${USER}, 'assembled', 100, $1::jsonb, $2::jsonb)`,
+  [JSON.stringify({ studyId }), JSON.stringify({ state: 'placed', sequenceId: beforeSequence, leaves: placed })]);
+  const ids = previous.map(leaf => leaf.id);
+  const before = (await h.pglite.query('SELECT * FROM submission_leaves WHERE id=ANY($1::int[]) ORDER BY id', [ids])).rows;
+  const history = await readPriorCsrStudyLeaves(q, { organizationId: ORG, submissionId: 3, sequenceId: targetSequence,
+    sequenceNumber: '0011', studyId, sectionCodes: ['m5.3.5.1'] });
+  expect(history.map(leaf => leaf.leafId).sort()).toEqual([...ids].sort());
+  const current = ['body', '14', '14.3.3'].map(appendix => ({ appendix, title: appendix,
+    fileName: `current-${appendix}.pdf`, fileTag: 'study-report-body' } as AssemblyLeafSummary));
+  const plan = planCsrLifecycle(current, history, { keepOnFile: [] });
+  for (const part of previous.filter(leaf => leaf.appendix !== null)) {
+    expect(plan.leaves.find(leaf => leaf.appendix === part.appendix)).toMatchObject({ operation: 'replace', parent: { leafId: part.id } });
+  }
+  const unowned = previous.filter(leaf => leaf.appendix === null).map(leaf => leaf.id).sort();
+  expect(plan.undecided.map(leaf => leaf.leafId).sort()).toEqual(unowned);
+  expect(lifecycleRefusal(plan, studyId, [])).toMatchObject({ code: 'CSR_PLACEMENT_PREDECESSOR_UNDECIDED' });
+  const explicit = planCsrLifecycle(current, history, { keepOnFile: unowned });
+  expect(lifecycleRefusal(explicit, studyId, unowned)).toBeNull();
+  expect(explicit.keptOnFile.map(leaf => leaf.leafId).sort()).toEqual(unowned);
+  expect((await h.pglite.query('SELECT * FROM submission_leaves WHERE id=ANY($1::int[]) ORDER BY id', [ids])).rows).toEqual(before);
+}, 120_000);

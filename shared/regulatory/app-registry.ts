@@ -10,9 +10,10 @@
  *
  * This registry unifies them: each app is defined once, and its sellable
  * entitlement module id is just a FIELD (`moduleId`). Apps without a moduleId
- * are always available (not separately sold). The module ids here are the REAL
- * ids from the platform module catalog (db/migrations — available_modules /
- * license `enabledModules`), verified, not guessed.
+ * are always available (not separately sold). Module ids name the current core
+ * owner from the platform module catalog. Explicit legacy
+ * keys retain existing configuration projections without rewriting subscription
+ * history or replacing the API/tool entitlement gates.
  *
  * @module shared/regulatory/app-registry
  */
@@ -65,10 +66,12 @@ export interface AppRegistryEntry {
   /**
    * Entitlement module id from the platform module catalog (license
    * `enabledModules`), when this app maps to a separately sold module. Apps with
-   * no moduleId are always available. These are REAL catalog ids, verified
-   * against db/migrations/20260220_user_intelligence_platform.sql.
+   * no moduleId retain their existing always-available configuration projection.
+   * Canonical owners are reconciled by the module catalogue migrations.
    */
   moduleId?: string;
+  /** Historical grants accepted by the existing workspace projection only. */
+  legacyModuleIds?: readonly string[];
   /** Artifact keys this app produces back into the project file tree. */
   produces: string[];
   /** Where those artifacts land in the dossier tree (CTD-ish hint). */
@@ -76,22 +79,22 @@ export interface AppRegistryEntry {
 }
 
 export const APP_REGISTRY: Record<WorkspaceAppId, AppRegistryEntry> = {
-  study_protocol_design: { id: 'study_protocol_design', label: 'Study & Protocol Design', discipline: 'clinical', moduleId: 'protocol-designer', produces: ['protocol', 'schedule_of_activities', 'crf_shells', 'feasibility'], landsAt: 'protocol / M5 (5.3.5)' },
+  study_protocol_design: { id: 'study_protocol_design', label: 'Study & Protocol Design', discipline: 'clinical', moduleId: 'protocol-dev', legacyModuleIds: ['protocol-designer'], produces: ['protocol', 'schedule_of_activities', 'crf_shells', 'feasibility'], landsAt: 'protocol / M5 (5.3.5)' },
   irb:               { id: 'irb', label: 'IRB / Ethics (human subjects)', discipline: 'governance', produces: ['irb_submission', 'informed_consent'], landsAt: 'study governance' },
   iacuc:             { id: 'iacuc', label: 'IACUC (animal care)', discipline: 'governance', produces: ['iacuc_protocol'], landsAt: 'nonclinical governance' },
   ibc:               { id: 'ibc', label: 'IBC (biosafety)', discipline: 'governance', produces: ['ibc_registration'], landsAt: 'study governance' },
-  submission_center: { id: 'submission_center', label: 'Submission Center', discipline: 'submission', moduleId: 'ectd-coauthor', produces: ['assembled_bundle', 'transmittal'], landsAt: 'gateway / transmit' },
-  cmc:               { id: 'cmc', label: 'CMC (Module 3)', discipline: 'quality_cmc', moduleId: 'cmc-wizard', produces: ['quality_overall_summary', 'drug_substance', 'drug_product', 'stability'], landsAt: 'M3' },
+  submission_center: { id: 'submission_center', label: 'Submission Center', discipline: 'submission', moduleId: 'submission-center', legacyModuleIds: ['ectd-coauthor'], produces: ['assembled_bundle', 'transmittal'], landsAt: 'gateway / transmit' },
+  cmc:               { id: 'cmc', label: 'CMC (Module 3)', discipline: 'quality_cmc', moduleId: 'cmc', legacyModuleIds: ['cmc-wizard'], produces: ['quality_overall_summary', 'drug_substance', 'drug_product', 'stability'], landsAt: 'M3' },
   nonclinical:       { id: 'nonclinical', label: 'Nonclinical (Module 4)', discipline: 'nonclinical', produces: ['nonclinical_overview', 'tox_reports'], landsAt: 'M4' },
   biostatistics:     { id: 'biostatistics', label: 'Biostatistics', discipline: 'biostatistics', produces: ['sap', 'power_analysis', 'statistical_methods'], landsAt: 'protocol / M5 (5.3.5)' },
-  clinical_csr:      { id: 'clinical_csr', label: 'Clinical / CSR', discipline: 'clinical', moduleId: 'csr-author', produces: ['clinical_study_report', 'clinical_overview', 'clinical_summary'], landsAt: 'M5 / M2.5 / M2.7' },
+  clinical_csr:      { id: 'clinical_csr', label: 'Clinical / CSR', discipline: 'clinical', moduleId: 'document-authoring', legacyModuleIds: ['csr-author'], produces: ['clinical_study_report', 'clinical_overview', 'clinical_summary'], landsAt: 'M5 / M2.5 / M2.7' },
   risk:              { id: 'risk', label: 'Risk Management (ISO 14971)', discipline: 'device_safety', produces: ['risk_management_file'], landsAt: 'GSPR / design controls' },
   human_factors:     { id: 'human_factors', label: 'Human Factors (IEC 62366-1)', discipline: 'device_safety', produces: ['hf_validation_report'], landsAt: 'device performance' },
   cybersecurity:     { id: 'cybersecurity', label: 'Cybersecurity (§524B)', discipline: 'device_safety', produces: ['sbom', 'cyber_risk_assessment'], landsAt: 'device performance' },
-  substantial_equiv: { id: 'substantial_equiv', label: 'Substantial Equivalence', discipline: 'device_safety', moduleId: '510k-submission', produces: ['se_comparison', 'predicate_analysis'], landsAt: '510(k) SE' },
+  substantial_equiv: { id: 'substantial_equiv', label: 'Substantial Equivalence', discipline: 'device_safety', moduleId: 'device-510k', legacyModuleIds: ['510k-submission'], produces: ['se_comparison', 'predicate_analysis'], landsAt: '510(k) SE' },
   labeling:          { id: 'labeling', label: 'Labeling', discipline: 'labeling', produces: ['draft_labeling', 'spl', 'ifu'], landsAt: 'M1 / labeling' },
   pharmacovigilance: { id: 'pharmacovigilance', label: 'Pharmacovigilance', discipline: 'safety_pv', moduleId: 'safety-signal', produces: ['icsr', 'psur'], landsAt: 'safety / M5.3.6' },
-  cer:               { id: 'cer', label: 'Clinical Evaluation (CER/PER)', discipline: 'clinical', moduleId: 'cer-generator', produces: ['clinical_evaluation_report', 'pmcf_plan'], landsAt: 'EU MDR Annex II / IVDR PER' },
+  cer:               { id: 'cer', label: 'Clinical Evaluation (CER/PER)', discipline: 'clinical', moduleId: 'device-cer', legacyModuleIds: ['cer-generator'], produces: ['clinical_evaluation_report', 'pmcf_plan'], landsAt: 'EU MDR Annex II / IVDR PER' },
   etmf:              { id: 'etmf', label: 'Trial Master File (eTMF)', discipline: 'governance', produces: ['tmf_index', 'essential_documents'], landsAt: 'study governance' },
   market_access:     { id: 'market_access', label: 'Market Access & Coverage', discipline: 'commercial', produces: ['coverage_dossier', 'hcpcs_cpt_strategy'], landsAt: 'commercial / post-approval' },
   analytical_performance: { id: 'analytical_performance', label: 'Analytical Performance (IVD)', discipline: 'diagnostics', produces: ['precision', 'lod_loq', 'linearity', 'interference', 'analytical_performance_report'], landsAt: 'IVD analytical performance' },
@@ -108,4 +111,12 @@ export function appModuleId(id: WorkspaceAppId): string | undefined {
   return APP_REGISTRY[id]?.moduleId;
 }
 
-export default { APP_REGISTRY, getApp, appModuleId };
+/** The existing configuration projection accepts its old grant as well as its
+ * current owner. This does not grant a module or authorize any API/tool call. */
+export function appModuleEnabled(id: WorkspaceAppId, enabled: ReadonlySet<string>): boolean {
+  const entry = APP_REGISTRY[id];
+  return !entry.moduleId || enabled.has(entry.moduleId)
+    || !!entry.legacyModuleIds?.some(moduleId => enabled.has(moduleId));
+}
+
+export default { APP_REGISTRY, getApp, appModuleId, appModuleEnabled };

@@ -1,0 +1,30 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > uses canonical agency names for the existing four-region template contract 15ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary Health Canada 1ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary health_canada 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary HealthCanada 1ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary Health-Canada 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary  CA  0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > accepts existing Health Canada vocabulary ca 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias hc 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias Canada 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias Japan 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > retains the existing assembly writing alias EMEA 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown undefined unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown null unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown  unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown GLOBAL unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown ICH unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown UK unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown MHRA unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown NMPA unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown invented unresolved 0ms
+ ✓ shared/authoring/__tests__/writing-regions.test.ts > authoring writing labels reuse the existing supported region identities > keeps unsupported or unknown 7 unresolved 0ms
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  16:54:45
+   Duration  680ms (transform 167ms, setup 189ms, import 89ms, tests 24ms, environment 0ms)
+

@@ -27,6 +27,7 @@ import {
   detectActiveModule,
 } from './module-intelligence.js';
 import { assembleInstructionEnginePrompt } from './lumen-instruction-engine.js';
+import { assemblePromptBlocks } from './lumen-context/prompt-budget.js';
 import {
   buildClientIntelligenceContext,
   buildProjectIntelligenceContext,
@@ -547,6 +548,8 @@ export async function assembleSystemPrompt(
   if (customSystemPrompt) return customSystemPrompt;
 
   const parts: string[] = [BASE_SYSTEM_PROMPT];
+  const requiredParts = new Set<number>([0]);
+  const pushRequired = (part: string) => { requiredParts.add(parts.length); parts.push(part); };
   const intel = context.userIntelligence;
   // The request's organization, read or not: the profile is null when its read failed.
   const organizationId = intel?.organizationId ?? intel?.organization?.id;
@@ -658,7 +661,7 @@ ${projectList}${
   if (context.project) {
     const p = context.project;
     const stc = p.submissionTypeContext;
-    parts.push(`
+    pushRequired(`
 ## Active Project Context (Currently Working On)
 - **Project**: ${p.name} (ID: ${p.id})
 - **Submission Type**: ${p.submissionType ?? 'not recorded — do not assume one'}${stc ? ` (${stc.registryId})` : ''}${
@@ -819,13 +822,13 @@ Use conversation history to avoid re-asking for information the user has already
     if (activeModuleId) {
       const moduleIntel = getModuleIntelligence(activeModuleId, intel.activeProject || null);
       if (moduleIntel) {
-        parts.push(moduleIntel.systemPromptAddon);
+        pushRequired(moduleIntel.systemPromptAddon);
 
         // Add document type awareness
         if (moduleIntel.documentTypes.length > 0) {
           const draftable = moduleIntel.documentTypes.filter(d => d.aiDraftable);
           if (draftable.length > 0) {
-            parts.push(`
+            pushRequired(`
 ### AI-Draftable Document Types in This Module
 ${draftable
   .slice(0, 8)
@@ -838,7 +841,7 @@ When the user asks to draft any of these document types, you can generate a comp
 
         // Add workflow awareness
         if (moduleIntel.workflowStages.length > 0) {
-          parts.push(`
+          pushRequired(`
 ### Standard Workflow Stages
 ${moduleIntel.workflowStages
   .map((s, i) => `${i + 1}. **${s.name}** (${effortFigure(s.estimatedDays, 'd')}) — ${s.description}`)
@@ -860,7 +863,7 @@ ${moduleIntel.workflowStages
     // Instruction Engine — 5-step workflow, Data Room, Dossier Manager, Editor, Narrative
     const instructionPrompt = assembleInstructionEnginePrompt(enabledModules);
     if (instructionPrompt) {
-      parts.push(instructionPrompt);
+      pushRequired(instructionPrompt);
     }
   }
 
@@ -936,7 +939,7 @@ You can suggest running orchestration workflows: submission_readiness_review, dr
 
   if (subType === 'US_IND') {
     submissionGuidanceEmitted = true;
-    parts.push(`
+    pushRequired(`
 ## IND-Specific Guidance
 You are currently assisting with an IND (Investigational New Drug) application per 21 CFR 312.23.
 - Guide the user through CTD Modules 1-5 systematically
@@ -947,7 +950,7 @@ You are currently assisting with an IND (Investigational New Drug) application p
 - Consider IND Safety Reporting requirements (21 CFR 312.32)`);
   } else if (subType === 'US_510K') {
     submissionGuidanceEmitted = true;
-    parts.push(`
+    pushRequired(`
 ## 510(k) Specific Guidance
 You are currently assisting with a 510(k) premarket notification.
 - Guide through predicate device selection and substantial equivalence arguments
@@ -958,7 +961,7 @@ You are currently assisting with a 510(k) premarket notification.
   } else if (subType === 'US_NDA' || subType === 'US_BLA') {
     submissionGuidanceEmitted = true;
     const label = subType === 'US_NDA' ? 'NDA' : 'BLA';
-    parts.push(`
+    pushRequired(`
 ## ${label} Specific Guidance
 You are assisting with a ${
       subType === 'US_NDA' ? 'New Drug Application' : 'Biologics License Application'
@@ -972,7 +975,7 @@ You are assisting with a ${
 - FDA Prescription Drug User Fee Act (PDUFA) date awareness — plan for Advisory Committee if applicable`);
   } else if (subType === 'US_ANDA') {
     submissionGuidanceEmitted = true;
-    parts.push(`
+    pushRequired(`
 ## ANDA Specific Guidance
 You are assisting with an Abbreviated New Drug Application (generic drug).
 - Bioequivalence data is the primary clinical requirement — BE study design per FDA guidance
@@ -985,7 +988,7 @@ You are assisting with an Abbreviated New Drug Application (generic drug).
 - Flag any exclusivity blocks (NCE, ODE, pediatric, CGT)`);
   } else if (subType === 'US_505B2') {
     submissionGuidanceEmitted = true;
-    parts.push(`
+    pushRequired(`
 ## 505(b)(2) Specific Guidance
 You are assisting with a 505(b)(2) application — the hybrid pathway.
 - Right to reference: identify which data comes from the RLD/published literature vs. new studies
@@ -997,7 +1000,7 @@ You are assisting with a 505(b)(2) application — the hybrid pathway.
 - Patent considerations: same Paragraph certification requirements as ANDA`);
   } else if (subType === 'US_PMA') {
     submissionGuidanceEmitted = true;
-    parts.push(`
+    pushRequired(`
 ## PMA Specific Guidance
 You are assisting with a Premarket Approval application for a Class III medical device.
 - Full clinical trial data typically required — pivotal study with adequate sample size and endpoints
@@ -1010,7 +1013,7 @@ You are assisting with a Premarket Approval application for a Class III medical 
 - Panel track vs. traditional PMA — assess which review pathway applies`);
   } else if (subType === 'US_DE_NOVO') {
     submissionGuidanceEmitted = true;
-    parts.push(`
+    pushRequired(`
 ## De Novo Specific Guidance
 You are assisting with a De Novo classification request for a novel device.
 - No predicate device — must demonstrate reasonable assurance of safety and effectiveness
@@ -1023,7 +1026,7 @@ You are assisting with a De Novo classification request for a novel device.
 - Post-De Novo: device becomes predicate for future 510(k) submissions`);
   } else if (subType === 'EU_MAA') {
     submissionGuidanceEmitted = true;
-    parts.push(`
+    pushRequired(`
 ## MAA Specific Guidance
 You are assisting with a Marketing Authorisation Application for the EMA.
 - CTD Modules 1-5 required — Module 1 is region-specific (EU administrative forms)
@@ -1060,7 +1063,7 @@ You are assisting with a Marketing Authorisation Application for the EMA.
     }
     lines.push('');
     lines.push('Provide guidance consistent with this regulatory pathway, its regional requirements, and the applicable dossier standard.');
-    parts.push(lines.join('\n'));
+    pushRequired(lines.join('\n'));
   }
 
   // ── Artifact Awareness ────────────────────────────────────────────────────
@@ -1114,33 +1117,14 @@ You have access to tools. Use them proactively when appropriate:
 11. **Adapt to expertise**: Match response depth to the user's expertise level and communication preference.
 12. **Handle updates across sections**: When data changes, identify all affected sections and propagate updates.`);
 
-  // ── Context Budget Enforcement ───────────────────────────────────────────
-  // Keep the system prompt under ~3,000 tokens (~12,000 chars) to preserve
-  // reasoning quality. The BASE_SYSTEM_PROMPT (parts[0]) is always included.
-  // Dynamic sections are trimmed from lowest-priority first.
-  const MAX_PROMPT_CHARS = 12_000;
-  // The notice joins parts[0] because the trim below keeps only parts[0] and
-  // the last two parts; anywhere else it would be cut and AnA would again take
-  // an unread source for an absent one.
+  // Base policy, recorded scope, selected intelligence/instructions and the
+  // final tool/instruction tail are required. The 12k allowance applies only
+  // to optional dynamic context; actual model admission remains downstream.
+  requiredParts.add(parts.length - 2);
+  requiredParts.add(parts.length - 1);
+  // Keep the unread-source notice beside the base policy on every turn.
   if (unread.length > 0) parts[0] = `${parts[0]}\n${unreadContextNotice(unread)}`;
-  let assembled = parts.join('\n');
-  if (assembled.length > MAX_PROMPT_CHARS && parts.length > 1) {
-    // Trim from the end (lowest-priority dynamic sections) until under budget.
-    // parts[0] = base prompt (always kept), last 2 = tool guidance + instructions (kept)
-    const keepHead = parts[0];
-    const keepTail = parts.slice(-2).join('\n');
-    const middle = parts.slice(1, -2);
-    let running = keepHead.length + keepTail.length + 2; // 2 for join newlines
-    const kept: string[] = [];
-    for (const section of middle) {
-      if (running + section.length + 1 > MAX_PROMPT_CHARS) break;
-      kept.push(section);
-      running += section.length + 1;
-    }
-    assembled = [keepHead, ...kept, keepTail].join('\n');
-  }
-
-  return assembled;
+  return assemblePromptBlocks(parts, requiredParts);
 }
 
 /**

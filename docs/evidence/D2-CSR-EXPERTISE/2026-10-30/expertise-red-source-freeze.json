@@ -1,0 +1,12 @@
+{
+  "scope": "Owned expertise and actual-message/flow tests; final integration will freeze full static inputs.",
+  "files": {
+    "server/services/__tests__/csr-builder-writing-expertise.test.ts": "dfabd2a49f443f669246e97fc04d5bfaf0be4fb8b8096fa85e8ec21387b14791",
+    "server/services/ana/intelligence-questions/__tests__/csr-scientific-reasoning.test.ts": "b32c4b8427e13cd5ebd532274b33861942aede7cc99edbe553cc48c894ace41d",
+    "server/services/csr-builder.ts": "0c0fb440e70c02380b64cfe437bb6b5f71637331cce6e95d551b98a05a1eb54a",
+    "server/services/ind/ctd/csr-e3-sections-plan.ts": "5bff74da523faaf117a633eeff5ab40753841538eed804ad074712e5924b0b79",
+    "server/services/ind/ctd/csr-e3-writing.ts": "5ac0500cd39ff6b441eac3c91a0cd06efe217b33363ab281b1b772c477fa4b37",
+    "server/services/ana/intelligence-questions/flows/csr-report.ts": "0294b7813c005d764c1348708f886d7d198a14af4a99ecb53b967525bb91438c",
+    "server/services/ana/medical-writing-csr.ts": "114149bf22b81602f9814f1e737c5ace563870b1981c8baa59f593f08779075a"
+  }
+}

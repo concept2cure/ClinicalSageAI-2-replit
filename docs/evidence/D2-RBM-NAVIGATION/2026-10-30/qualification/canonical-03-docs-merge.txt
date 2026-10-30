@@ -1,0 +1,18 @@
+Merge made by the 'ort' strategy.
+ .../design/ECTD_AGENCY_QUALIFICATION_2026-10-30.md |    5 +
+ .../2026-10-30-agency-qualification/README.md      |   12 +-
+ .../ectd-agency-attachment-receipt-sync.log.gz     |  Bin 0 -> 376 bytes
+ .../ectd-agency-attachment-sync.log.gz             |  Bin 0 -> 776 bytes
+ .../ectd-agency-candidate-metadata-review.json     | 1485 ++++++++++++++++++++
+ .../ectd-agency-candidate-metadata-review.py.txt   |  144 ++
+ .../ectd-agency-commit.log.gz                      |  Bin 0 -> 1072 bytes
+ .../ectd-agency-push.log.gz                        |  Bin 0 -> 4625 bytes
+ .../publication-receipt.json                       |  108 ++
+ 9 files changed, 1753 insertions(+), 1 deletion(-)
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-attachment-receipt-sync.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-attachment-sync.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-candidate-metadata-review.json
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-candidate-metadata-review.py.txt
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-commit.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/ectd-agency-push.log.gz
+ create mode 100644 docs/evidence/MR-10/2026-10-30-agency-qualification/publication-receipt.json

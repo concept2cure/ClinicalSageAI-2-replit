@@ -1,0 +1,523 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:21:48.845Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:21:50.816Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:21:50.817Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-10-30T16:21:50.817Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > returns the same client-aware card projection as GET
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > returns the same client-aware card projection as GET 88ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > requires an explicit choice even when several workspaces include a marked default
+{
+  "timestamp": "2026-10-30T16:21:52.368Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "8befb427-198b-48ea-9a28-cadbe11f960f",
+    "orgId": 3,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'mdr' keeps its stated class on the regional column with the anchored creation and audit record 32ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'ivdr' keeps its stated class on the regional column with the anchored creation and audit record 23ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a created program resolves, strict, to its own projects row with intake's values 23ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > requires an explicit choice even when several workspaces include a marked default 17ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > places the actual saved anchor and audit in the explicitly selected client instead of the default 20ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection null without falling back 6ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 999 without falling back
+{
+  "timestamp": "2026-10-30T16:21:52.433Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "bf927082-f177-4ddc-8892-f43a2b124c6c",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1 without falling back
+{
+  "timestamp": "2026-10-30T16:21:52.449Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "0abbfd46-7243-46cf-b0c5-10a3a706e8e7",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > accepts each explicit sponsor and never treats a header alone as the choice
+{
+  "timestamp": "2026-10-30T16:21:52.508Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "31e5d6d1-a868-4c9a-bde0-660896cf9074",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 0 without falling back 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection -1 without falling back 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1.5 without falling back 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 4 without falling back 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 999 without falling back 16ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1 without falling back 15ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 2147483648 without falling back 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 9007199254740991 without falling back 5ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving
+{
+  "timestamp": "2026-10-30T16:21:52.553Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "0da15dc5-1c67-48d3-a2e2-b97572dcf770",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving
+{
+  "timestamp": "2026-10-30T16:21:52.563Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "57dff1d6-a0a7-4f10-b8cd-1047c33604fb",
+    "orgId": 3,
+    "reason": "CLIENT_WORKSPACE_MISMATCH",
+    "detail": "The supplied request claim contradicts the selected workspace."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind
+{
+  "timestamp": "2026-10-30T16:21:52.579Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "1be53048-cbc0-4cbe-a02f-e8e1a7e9e8f9",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > an organisation with no workspace: refused, nothing left behind
+{
+  "timestamp": "2026-10-30T16:21:52.591Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "8cf5fe31-4865-4188-a64b-42d0d4884b83",
+    "orgId": 4,
+    "reason": "NO_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > a failure writing the project record rolls the program back with it
+{
+  "timestamp": "2026-10-30T16:21:52.604Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "p19: anchor write refused",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > accepts each explicit sponsor and never treats a header alone as the choice 50ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > omitted legacy intake uses the sole active workspace even beside an archived one 16ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses out-of-range and malformed request claims before business SQL 14ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving 25ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind 16ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > an organisation with no workspace: refused, nothing left behind 11ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > a failure writing the project record rolls the program back with it 14ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > rolls back program and anchor if the actual creation audit write fails
+{
+  "timestamp": "2026-10-30T16:21:52.634Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "audit refused",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports an uncertain commit honestly and discards its owned connection exactly once
+{
+  "timestamp": "2026-10-30T16:21:52.652Z",
+  "level": "error",
+  "message": "[c2c-projects] Project creation commit outcome unknown",
+  "context": {
+    "correlationId": "54c491d3-ef50-4e5d-aa97-12157101e9a9",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > discards an unacknowledged rollback and does not claim nothing was saved
+{
+  "timestamp": "2026-10-30T16:21:52.668Z",
+  "level": "error",
+  "message": "[c2c-projects] Project creation commit outcome unknown",
+  "context": {
+    "correlationId": "598d737e-56aa-42e4-8d4a-3ddb0905025d",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports confirmed creation when its post-commit details cannot be read
+{
+  "timestamp": "2026-10-30T16:21:52.681Z",
+  "level": "error",
+  "message": "[c2c-projects] Project committed but details unavailable",
+  "context": {
+    "correlationId": "ba74d804-c6b4-4ff6-a650-ab2a7204a1b1",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > preserves legacy default-marker ensure behavior and refuses contradictory explicit re-invocation 14ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > rolls back program and anchor if the actual creation audit write fails 16ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports an uncertain commit honestly and discards its owned connection exactly once 19ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > discards an unacknowledged rollback and does not claim nothing was saved 15ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports confirmed creation when its post-commit details cannot be read 13ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > every program the route created is anchored in its own organisation 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > supplies only active same-organization IDs and names with the current actor receipt 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > distinguishes an honestly empty active list from unavailable options 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses a current viewer regardless of its stale request role 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses unverified stores instead of returning a fabricated empty list 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses inactive actors while the canonical store prevents duplicate membership 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > rechecks the current creator after reading options and suppresses a revoked result 5ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > writes only the fields the patch named 4ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > leaves a clearable field absent rather than writing NULL 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > drops a key a CALLER passed as undefined, not only one zod omitted 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > clears one that was explicitly cleared 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > records the submission date as a date, and clears it when it is no longer planned 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > takes the agencies beyond the primary one, which the create never writes 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > records a team member’s name and role and NOT a user id 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it sets > is org-scoped and program-scoped on the UPDATE itself 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the record says about it afterwards > names the fields an inspector would ask about 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the record says about it afterwards > names WHICH predicate was claimed, and that a claim was withdrawn 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the record says about it afterwards > records the action the caller names, so two callers are told apart 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > reports a lost audit row instead of answering as though it wrote one 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > carries the value each field held BEFORE, which the chain does not 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > refuses a programme this organization does not hold, before writing 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what the §11.10(e) row says, and whether it landed > refuses a zero-row UPDATE rather than auditing a change that did not happen 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses a patch that names nothing 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses every column on the refusal list, each of which is a real column 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > keeps the lifecycle and the two phases out of a profile write 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > every settable field is a real column too 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses a column outside the allowlist in the WRITE, not only at the caller 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > refuses a date that is not on the calendar 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > keeps the US class US, because the form it is printed on is US 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > takes each European class on its own column, for its own regulation 1ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > lets a European class be withdrawn, because "no EU filing planned" is an answer 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > what it refuses > accepts the regulatory paths the platform’s own mapping produces 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the device-profile endpoint’s reach > is exactly what it was, and not the whole shape 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > refuses the bare string array the create route used to write 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > refuses a predicate with a number and no trade name 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > takes the complete claim, keyed by the submission number 0ms
+ ✓ server/services/c2c/__tests__/programme-profile-write.test.ts > the json columns a second writer must shape alike > takes an empty list, because a programme with no predicate states none 0ms
+stdout | server/services/c2c/__tests__/project-setup-projection.test.ts
+{
+  "timestamp": "2026-10-30T16:21:54.244Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:21:54.245Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/c2c/__tests__/project-setup-projection.test.ts
+{
+  "timestamp": "2026-10-30T16:21:54.245Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/project-setup-projection.test.ts
+[database] Database connection successful
+
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > carries the facts the record has columns for 2ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > is a patch the write accepts, which is the only thing that makes it a record 4ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > reads the class through the governed reader rather than the answer’s spelling 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > names the agencies as the record names them, not as the question stores them 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > maps the interview’s priority onto the column’s, which has no "standard" 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > takes the US premarket path from the position the person took 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what reaches the programme record > refuses to guess a US path for a route that is not one 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > reports every answered field no column took, with a reason 2ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > says nothing about a field nobody answered 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > says the PRIMARY agency was recorded as a target and not applied as primary 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > distinguishes a refused column from a column that does not exist 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > files the predicate of record from the two facts the eSTAR prints 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > refuses a submission number that is not one, rather than printing it on a form 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > files neither half alone, and says which half is missing 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > what it says about the answers it cannot carry > keeps the development phase away from the workflow phase 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the European classifications, which had no column until 2026-10-12 > records the class the sponsor DECLARED, not the one the rules yield 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the European classifications, which had no column until 2026-10-12 > clears the column where no EU filing is planned, rather than standing a class in it 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the European classifications, which had no column until 2026-10-12 > records the IVDR class on its own column, for its own regulation 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the European classifications, which had no column until 2026-10-12 > keeps a class in the person’s own words off the record as a class 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the European classifications, which had no column until 2026-10-12 > never puts a European class in the US column, which is printed on a US form 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the two lists, in both directions > every field the interview can answer is projected or has a written reason 1203ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the two lists, in both directions > writes no reason, and reads no field, the interview does not ask 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the two lists, in both directions > projects nothing the write cannot set 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the commit plan the interview produces > is one entry, naming the programme record and the fields it sets 1ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the commit plan the interview produces > is NO entry where the answers set nothing, so an empty update is never called a configuration 0ms
+ ✓ server/services/c2c/__tests__/project-setup-projection.test.ts > the commit plan the interview produces > is what the launch-scope gate now admits 0ms
+stdout | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+{
+  "timestamp": "2026-10-30T16:21:56.214Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:21:56.215Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+{
+  "timestamp": "2026-10-30T16:21:56.215Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+[database] Database connection successful
+
+stderr | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+{
+  "timestamp": "2026-10-30T16:21:56.272Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project parent admission uses the actual request SQL executor > reads current actor, exact anchor and sharing through the pinned client 5ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project parent admission uses the actual request SQL executor > retains an explicitly supplied transaction executor instead of substituting the request client 1ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project parent admission uses the actual request SQL executor > refuses missing request context before any parent SQL without a pool fallback 1ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > answers 200 for recorded document organization 7 34ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > answers 409 for recorded document organization null 5ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > answers 404 for recorded document organization 8 4ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > returns honest unavailability and no document when request context is absent 8ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > opens one transaction, locks current membership, writes and audits before commit without releasing the request client 3ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > rolls back instead of committing when the actual chained audit writer fails 2ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > refuses a current viewer despite a stale member principal before operation or audit 1ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > refuses a writer with no pinned request context before BEGIN or callback 0ms
+ ✓ server/routes/__tests__/510k-device-profile-estar-fields.test.ts > GET /profile — the five eSTAR facts are read and returned > selects the five columns from regulatory_programs and returns them on `profile` 6ms
+ ✓ server/routes/__tests__/510k-device-profile-estar-fields.test.ts > PUT /profile — the five eSTAR facts are written, trimmed, and clearable > writes all five, trimmed, and answers { profile } 5ms
+ ✓ server/routes/__tests__/510k-device-profile-estar-fields.test.ts > PUT /profile — the five eSTAR facts are written, trimmed, and clearable > '' and null CLEAR a fact (written as null); an absent fact is not touched 2ms
+ ✓ server/routes/__tests__/510k-device-profile-estar-fields.test.ts > PUT /profile — the five eSTAR facts are written, trimmed, and clearable > a body that only clears one fact still counts as a change 1ms
+ ✓ server/routes/__tests__/510k-device-profile-estar-fields.test.ts > PUT /profile — the five eSTAR facts are written, trimmed, and clearable > commonName over its limit is refused 400 and nothing is written 1ms
+ ✓ server/routes/__tests__/510k-device-profile-estar-fields.test.ts > PUT /profile — the five eSTAR facts are written, trimmed, and clearable > classificationName over its limit is refused 400 and nothing is written 0ms
+ ✓ server/routes/__tests__/510k-device-profile-estar-fields.test.ts > PUT /profile — the five eSTAR facts are written, trimmed, and clearable > regulationNumber over its limit is refused 400 and nothing is written 0ms
+ ✓ server/routes/__tests__/510k-device-profile-estar-fields.test.ts > PUT /profile — the five eSTAR facts are written, trimmed, and clearable > associatedProductCodes over its limit is refused 400 and nothing is written 0ms
+ ✓ server/routes/__tests__/510k-device-profile-estar-fields.test.ts > PUT /profile — the five eSTAR facts are written, trimmed, and clearable > indicationsForUseCitation over its limit is refused 400 and nothing is written 1ms
+ ✓ server/routes/__tests__/510k-device-profile-estar-fields.test.ts > PUT /profile — the five eSTAR facts are written, trimmed, and clearable > a program outside the caller org is 404 and nothing is written 1ms
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+{
+  "timestamp": "2026-10-30T16:21:57.720Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the store is missing (42P01)
+{
+  "timestamp": "2026-10-30T16:21:58.392Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42P01",
+    "detail": "relation \"projects\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when a column is missing (42703)
+{
+  "timestamp": "2026-10-30T16:21:58.393Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42703",
+    "detail": "column \"owner_id\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when permission is refused (42501)
+{
+  "timestamp": "2026-10-30T16:21:58.394Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42501",
+    "detail": "permission denied for table projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the connection drops (08006)
+{
+  "timestamp": "2026-10-30T16:21:58.395Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "08006",
+    "detail": "connection failure"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the statement is cancelled (57014)
+{
+  "timestamp": "2026-10-30T16:21:58.395Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "57014",
+    "detail": "canceling statement due to statement timeout"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > denies on a genuine no-match, with no error 3ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > denies an unparseable project id 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the store is missing (42P01) 2ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when a column is missing (42703) 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when permission is refused (42501) 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the connection drops (08006) 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the statement is cancelled (57014) 1ms
+stdout | server/routes/__tests__/rim-date-validation.test.ts
+{
+  "timestamp": "2026-10-30T16:21:59.354Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T16:21:59.355Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/rim-date-validation.test.ts
+{
+  "timestamp": "2026-10-30T16:21:59.355Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/rim-date-validation.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/rim-date-validation.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/rim-date-validation.test.ts
+{
+  "timestamp": "2026-10-30T16:21:59.520Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/rim-date-validation.test.ts > PUT /api/rim/products/:id/registrations — date validation > accepts a yyyy-mm-dd date — the guard must not block a real one
+{
+  "timestamp": "2026-10-30T16:21:59.592Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/routes/rim.ts:98:29",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/routes/__tests__/rim-date-validation.test.ts > PUT /api/rim/products/:id/registrations — date validation > refuses a free-text renewal date with a 400 that names the format 25ms
+ ✓ server/routes/__tests__/rim-date-validation.test.ts > PUT /api/rim/products/:id/registrations — date validation > refuses a malformed approval date the same way 4ms
+ ✓ server/routes/__tests__/rim-date-validation.test.ts > PUT /api/rim/products/:id/registrations — date validation > accepts a yyyy-mm-dd date — the guard must not block a real one 6ms
+ ✓ server/routes/__tests__/rim-date-validation.test.ts > PUT /api/rim/products/:id/registrations — date validation > still refuses a missing reason — governed writes keep their reason 3ms
+
+ Test Files  7 passed (7)
+      Tests  122 passed (122)
+   Start at  16:21:43
+   Duration  16.28s (transform 4.91s, setup 203ms, import 5.61s, tests 9.20s, environment 1ms)

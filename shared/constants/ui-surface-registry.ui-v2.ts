@@ -704,22 +704,13 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     compliance: [PART11, A11Y, TONE],
     notes: 'EU Summary of Product Characteristics — QRD template section tree (1–10) with per-section authoring status + submission-readiness over the required sections. EU companion to labeling-pi (USPI).',
   },
-  {
-    id: 'agency-meetings',
-    label: 'Agency meetings',
-    navTier: 'project',
-    layoutMode: 'agency-meetings',
-    group: 'lifecycle',
-    icon: 'users',
-    uiKit: 'mdx',
-    apiPrefixes: ['/api/ha-interactions', '/api/rim'],
-    anaToolFamilies: ['draft_briefing_book', 'prepare_meeting_request'],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Agency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice. Briefing book document + questions, minutes + commitments back to the dossier.',
-  },
+  // No agency-meetings. It retired into Communication (P-39 step 4, 2026-10-30;
+  // docs/evidence/D2-AGENCY-MEETINGS-RETIRED/2026-10-30/): a meeting is recorded,
+  // moved and given its minutes letter on Communication's Meetings tab, and its
+  // briefing book is the meeting package in the editor. 'agency-meetings' is a
+  // deep-link alias to communication-center (registryModel.ts). The AnA tools the
+  // launch inventory files under it stay withheld: it was never a launch surface.
+
   {
     id: 'communication-center',
     label: 'Communication',
@@ -745,8 +736,8 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'clinical',
     icon: 'shieldCheck',
     uiKit: 'risk',
-    apiPrefixes: ['/api/mdx/rbm-assessments', '/api/mdx/rbm-kris', '/api/mdx/rbm-qtls', '/api/mdx/rbm-signals', '/api/mdx/rbm-site-risk', '/api/mdx/rbm-monitoring-plans', '/api/mdx/rbm-summary', '/api/mdx/rbm-report', '/api/mdx/rbm-attention'],
-    anaToolFamilies: ['run_rbm_assessment', 'assess_site_risk', 'evaluate_kris_qtls', 'generate_rbm_plan', 'prioritize_monitoring_queries', 'run_central_monitoring', 'scan_patient_profiles', 'generate_rbm_report', 'get_rbm_attention'],
+    apiPrefixes: ['/api/mdx/rbm-assessments', '/api/mdx/rbm-kris', '/api/mdx/rbm-qtls', '/api/mdx/rbm-signals', '/api/mdx/rbm-site-risk', '/api/mdx/rbm-monitoring-plans', '/api/mdx/rbm-summary', '/api/mdx/rbm-report', '/api/mdx/rbm-attention', '/api/mdx-rbm/rbm-board', '/api/mdx-rbm/rbm-programs', '/api/mdx/rbm-risk-items', '/api/mdx/rbm-monitoring-actions', '/api/mdx/rbm-metric-ingest', '/api/mdx/rbm-central-monitoring/run', '/api/mdx/rbm-patient-profiles/score'],
+    anaToolFamilies: ['run_rbm_assessment', 'assess_site_risk', 'evaluate_kris_qtls', 'generate_rbm_plan', 'prioritize_monitoring_queries', 'run_central_monitoring', 'scan_patient_profiles', 'generate_rbm_report', 'get_rbm_attention', 'add_ctq_factor', 'approve_rbm_assessment', 'approve_rbm_plan', 'create_monitoring_action', 'define_kri', 'draft_monitoring_plan', 'raise_monitoring_signal', 'record_kri_reading', 'set_qtl', 'triage_signal', 'update_monitoring_action'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
@@ -1132,7 +1123,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes:
-      'Chronological FDA touchpoint stream for one IND program (q_submissions family + fda_communications) via GET /api/pdev/programs/:id/fda-interactions, with AnA-derived feedback proposals and a governed apply (POST .../fda-feedback/apply). Program-scoped and IND-specific; `agency-meetings` is the cross-program meeting manager.',
+      'Chronological FDA touchpoint stream for one IND program (q_submissions family + fda_communications) via GET /api/pdev/programs/:id/fda-interactions, with AnA-derived feedback proposals and a governed apply (POST .../fda-feedback/apply). Program-scoped and IND-specific; meetings across programs are recorded in Communication (ha_interactions) since agency-meetings retired (2026-10-30).',
   },
 
   // ─── ui-v2 additions: specialist ─────────────────────────────────────────────

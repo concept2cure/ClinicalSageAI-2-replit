@@ -1,0 +1,161 @@
+{
+  "fixture": "Actual settings component, shell guards, request helpers, confirmation and product CSS; synthetic auth/tenant/API",
+  "results": [
+    {
+      "width": 1280,
+      "recordedScopeAndReason": true,
+      "savedValues": true,
+      "pendingCloseAndEscapeBlocked": true,
+      "unknownStaleAndForeignReceiptRequireExplicitReload": true,
+      "collapseDoesNotReplay": true,
+      "readOnlyAndUnavailableHonest": true,
+      "lateActorReplyRetired": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "recordedScopeAndReason": true,
+      "savedValues": true,
+      "pendingCloseAndEscapeBlocked": true,
+      "unknownStaleAndForeignReceiptRequireExplicitReload": true,
+      "collapseDoesNotReplay": true,
+      "readOnlyAndUnavailableHonest": true,
+      "lateActorReplyRetired": true,
+      "horizontalOverflow": false,
+      "pageErrors": []
+    }
+  ],
+  "writes": [
+    {
+      "mode": "pending",
+      "body": {
+        "revision": "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Agreed revised delivery baseline",
+        "patch": {
+          "description": "Reviewed project description",
+          "priority": "high",
+          "targetSubmissionDate": "2028-02-29"
+        }
+      },
+      "actorBound": true
+    },
+    {
+      "mode": "unknown",
+      "body": {
+        "revision": "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Agreed revised delivery baseline",
+        "patch": {
+          "description": "Reviewed project description",
+          "priority": "high",
+          "targetSubmissionDate": "2028-02-29"
+        }
+      },
+      "actorBound": true
+    },
+    {
+      "mode": "bad-receipt",
+      "body": {
+        "revision": "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Agreed revised delivery baseline",
+        "patch": {
+          "description": "Reviewed project description",
+          "priority": "high",
+          "targetSubmissionDate": "2028-02-29"
+        }
+      },
+      "actorBound": true
+    },
+    {
+      "mode": "stale",
+      "body": {
+        "revision": "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Agreed revised delivery baseline",
+        "patch": {
+          "description": "Reviewed project description",
+          "priority": "high",
+          "targetSubmissionDate": "2028-02-29"
+        }
+      },
+      "actorBound": true
+    },
+    {
+      "mode": "retired",
+      "body": {
+        "revision": "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Agreed revised delivery baseline",
+        "patch": {
+          "description": "Reviewed project description",
+          "priority": "high",
+          "targetSubmissionDate": "2028-02-29"
+        }
+      },
+      "actorBound": true
+    },
+    {
+      "mode": "pending",
+      "body": {
+        "revision": "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Agreed revised delivery baseline",
+        "patch": {
+          "description": "Reviewed project description",
+          "priority": "high",
+          "targetSubmissionDate": "2028-02-29"
+        }
+      },
+      "actorBound": true
+    },
+    {
+      "mode": "unknown",
+      "body": {
+        "revision": "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Agreed revised delivery baseline",
+        "patch": {
+          "description": "Reviewed project description",
+          "priority": "high",
+          "targetSubmissionDate": "2028-02-29"
+        }
+      },
+      "actorBound": true
+    },
+    {
+      "mode": "bad-receipt",
+      "body": {
+        "revision": "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Agreed revised delivery baseline",
+        "patch": {
+          "description": "Reviewed project description",
+          "priority": "high",
+          "targetSubmissionDate": "2028-02-29"
+        }
+      },
+      "actorBound": true
+    },
+    {
+      "mode": "stale",
+      "body": {
+        "revision": "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Agreed revised delivery baseline",
+        "patch": {
+          "description": "Reviewed project description",
+          "priority": "high",
+          "targetSubmissionDate": "2028-02-29"
+        }
+      },
+      "actorBound": true
+    },
+    {
+      "mode": "retired",
+      "body": {
+        "revision": "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": "Agreed revised delivery baseline",
+        "patch": {
+          "description": "Reviewed project description",
+          "priority": "high",
+          "targetSubmissionDate": "2028-02-29"
+        }
+      },
+      "actorBound": true
+    }
+  ]
+}

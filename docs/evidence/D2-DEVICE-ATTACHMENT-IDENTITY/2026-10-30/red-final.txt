@@ -1,0 +1,421 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > does not add an attachment or activity from an affirmative response with no document receipt 215ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds the selected file after a full producer receipt and keeps activity server-owned 65ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds only confirmed files from a mixed batch of unique filenames 47ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a '409 version refusal' 32ms
+   → expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a '409 version refusal' 27ms
+   → expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'malformed successful reply' 25ms
+   → expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'malformed successful reply' 23ms
+   → expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'explicit uncertain commit' 25ms
+   → expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'explicit uncertain commit' 28ms
+   → expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'lost complete-send reply' 24ms
+   → expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'lost complete-send reply' 21ms
+   → expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches neither same-name selection when one is refused and the other is unconfirmed 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > keeps both confirmed selections for a valid create followed by an unchanged same-bytes receipt 35ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment selection lifetime > uses the original sent File when a live selection is replaced before its receipt arrives 19ms
+   → expected [ { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > attaches only the confirmed same-name dropped file when its sibling is refused 210ms
+   → expected [ …(2) ] to deeply equal [ ObjectContaining{…} ]
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > keeps repeated references to one File independent when only the second selection is confirmed 45ms
+   → expected [ …(2) ] to deeply equal [ ObjectContaining{…} ]
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > keeps both confirmed dropped selections for a new receipt and a valid same-bytes reupload 73ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > attaches only the confirmed same-name dropped file when its sibling is refused
+AssertionError: expected [ …(2) ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
++     "kind": "pdf",
+      "live": true,
+      "name": "performance.pdf",
++     "size": 30,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:07.102Z",
++     "who": "You",
++   },
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "performance.pdf",
+      "size": 17,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:07.102Z",
++     "who": "You",
+    },
+  ]
+
+ ❯ expectConfirmed client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx:88:80
+     86|
+     87| function expectConfirmed(files: File[]) {
+     88|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+     89|     [...files].reverse().map(file => expect.objectContaining({ name: f…
+     90|   );
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx:119:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > keeps repeated references to one File independent when only the second selection is confirmed
+AssertionError: expected [ …(2) ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+@@ -6,6 +6,15 @@
+      "size": 29,
+      "source": "Sources/uploads/",
+      "when": "2026-10-30T18:05:07.164Z",
+      "who": "You",
+    },
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "performance.pdf",
++     "size": 29,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:07.164Z",
++     "who": "You",
++   },
+  ]
+
+ ❯ expectConfirmed client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx:88:80
+     86|
+     87| function expectConfirmed(files: File[]) {
+     88|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+     89|     [...files].reverse().map(file => expect.objectContaining({ name: f…
+     90|   );
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx:130:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a '409 version refusal'
+AssertionError: expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
++     "kind": "pdf",
+      "live": true,
+      "name": "diagnostic-performance.pdf",
++     "size": 49,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.721Z",
++     "who": "You",
++   },
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "diagnostic-performance.pdf",
+      "size": 5,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.721Z",
++     "who": "You",
+    },
+  ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:193:82
+    191|
+    192|     expectPostedFiles(transport, files);
+    193|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+       |                                                                                  ^
+    194|       expect.objectContaining({ name: SAME_NAME, size: files[storedInd…
+    195|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a '409 version refusal'
+AssertionError: expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+@@ -6,6 +6,15 @@
+      "size": 49,
+      "source": "Sources/uploads/",
+      "when": "2026-10-30T18:05:05.753Z",
+      "who": "You",
+    },
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "diagnostic-performance.pdf",
++     "size": 5,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.753Z",
++     "who": "You",
++   },
+  ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:193:82
+    191|
+    192|     expectPostedFiles(transport, files);
+    193|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+       |                                                                                  ^
+    194|       expect.objectContaining({ name: SAME_NAME, size: files[storedInd…
+    195|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'malformed successful reply'
+AssertionError: expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
++     "kind": "pdf",
+      "live": true,
+      "name": "diagnostic-performance.pdf",
++     "size": 49,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.779Z",
++     "who": "You",
++   },
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "diagnostic-performance.pdf",
+      "size": 5,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.779Z",
++     "who": "You",
+    },
+  ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:193:82
+    191|
+    192|     expectPostedFiles(transport, files);
+    193|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+       |                                                                                  ^
+    194|       expect.objectContaining({ name: SAME_NAME, size: files[storedInd…
+    195|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'malformed successful reply'
+AssertionError: expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+@@ -6,6 +6,15 @@
+      "size": 49,
+      "source": "Sources/uploads/",
+      "when": "2026-10-30T18:05:05.802Z",
+      "who": "You",
+    },
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "diagnostic-performance.pdf",
++     "size": 5,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.802Z",
++     "who": "You",
++   },
+  ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:193:82
+    191|
+    192|     expectPostedFiles(transport, files);
+    193|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+       |                                                                                  ^
+    194|       expect.objectContaining({ name: SAME_NAME, size: files[storedInd…
+    195|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'explicit uncertain commit'
+AssertionError: expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
++     "kind": "pdf",
+      "live": true,
+      "name": "diagnostic-performance.pdf",
++     "size": 49,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.825Z",
++     "who": "You",
++   },
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "diagnostic-performance.pdf",
+      "size": 5,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.825Z",
++     "who": "You",
+    },
+  ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:193:82
+    191|
+    192|     expectPostedFiles(transport, files);
+    193|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+       |                                                                                  ^
+    194|       expect.objectContaining({ name: SAME_NAME, size: files[storedInd…
+    195|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'explicit uncertain commit'
+AssertionError: expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+@@ -6,6 +6,15 @@
+      "size": 49,
+      "source": "Sources/uploads/",
+      "when": "2026-10-30T18:05:05.855Z",
+      "who": "You",
+    },
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "diagnostic-performance.pdf",
++     "size": 5,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.855Z",
++     "who": "You",
++   },
+  ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:193:82
+    191|
+    192|     expectPostedFiles(transport, files);
+    193|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+       |                                                                                  ^
+    194|       expect.objectContaining({ name: SAME_NAME, size: files[storedInd…
+    195|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'lost complete-send reply'
+AssertionError: expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
++     "kind": "pdf",
+      "live": true,
+      "name": "diagnostic-performance.pdf",
++     "size": 49,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.880Z",
++     "who": "You",
++   },
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "diagnostic-performance.pdf",
+      "size": 5,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.880Z",
++     "who": "You",
+    },
+  ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:193:82
+    191|
+    192|     expectPostedFiles(transport, files);
+    193|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+       |                                                                                  ^
+    194|       expect.objectContaining({ name: SAME_NAME, size: files[storedInd…
+    195|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'lost complete-send reply'
+AssertionError: expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+@@ -6,6 +6,15 @@
+      "size": 49,
+      "source": "Sources/uploads/",
+      "when": "2026-10-30T18:05:05.902Z",
+      "who": "You",
+    },
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "diagnostic-performance.pdf",
++     "size": 5,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.902Z",
++     "who": "You",
++   },
+  ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:193:82
+    191|
+    192|     expectPostedFiles(transport, files);
+    193|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+       |                                                                                  ^
+    194|       expect.objectContaining({ name: SAME_NAME, size: files[storedInd…
+    195|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment selection lifetime > uses the original sent File when a live selection is replaced before its receipt arrives
+AssertionError: expected [ { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
++     "kind": "pdf",
+      "live": true,
+      "name": "diagnostic-performance.pdf",
+-     "size": 23,
++     "size": 11,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:05:05.982Z",
++     "who": "You",
+    },
+  ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx:255:82
+    253|     expect(selected[0]).toBe(replacement);
+    254|     expectPostedFiles(transport, [original]);
+    255|     expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARG…
+       |                                                                                  ^
+    256|       expect.objectContaining({ name: SAME_NAME, size: original.size, …
+    257|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  11 failed | 6 passed (17)
+   Start at  18:05:03
+   Duration  3.33s (transform 531ms, setup 249ms, import 871ms, tests 947ms, environment 970ms)
+

@@ -1,3 +1,5 @@
+import { rbmToolAdmissionRefusal } from '../rbm/rbm-access';
+import { seedRbmAssessment, seedRbmAssessmentFromPool, type RbmSeedPool } from '../rbm/rbm-assessment-seed';
 import { statedInputEnvelope, statedInputResult, STATED_DOSE_NOTE } from './stated-input-result.js';
 import { splitLetterQuestions } from '../../../shared/agency/letter-questions.js';
 import { readOnlyToolRefusal } from './read-only-turn.js';
@@ -587,15 +589,19 @@ async function writeRoleRefusal(
   return refusal ? { code: 'WRITE_ROLE_REQUIRED', result: refusal } : null;
 }
 
+async function handlerAdmissionRefusal(name: string, input: Record<string, any>, ctx?: ToolContext) {
+  return preHandlerRefusal(name, input, ctx) ??
+    (await writeRoleRefusal(name, input, ctx)) ??
+    (await rbmToolAdmissionRefusal(name, input, ctx)) ??
+    // A program or record the model names must be the caller's (tool-record-scope.ts).
+    (await foreignProgramRefusal(input, ctx?.organizationId)) ??
+    (await foreignRecordRefusal(name, input, ctx?.organizationId));
+}
+
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
     const orgId = ctx?.organizationId ?? undefined;
-    const refusal =
-      preHandlerRefusal(name, input, ctx) ??
-      (await writeRoleRefusal(name, input, ctx)) ??
-      // A program or record the model names must be the caller's (tool-record-scope.ts).
-      (await foreignProgramRefusal(input, ctx?.organizationId)) ??
-      (await foreignRecordRefusal(name, input, ctx?.organizationId));
+    const refusal = await handlerAdmissionRefusal(name, input, ctx);
     if (refusal) {
       recordToolOutcome(name, 'failure', 0, refusal.code, orgId);
       return refusal.result;
@@ -3263,6 +3269,21 @@ registerToolHandler('advise_risk_management', async (input) => {
 // ── Risk-Based Monitoring (RBM / RBQM) — ICH E6(R3)/E8(R1) ──────────────────
 const RBM_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+async function seedRbmWithDispatchClient(
+  client: RequestSqlClient,
+  canonicalPool: RequestSqlClient & RbmSeedPool,
+  programId: string,
+  organizationId: number,
+  ctx?: ToolContext,
+) {
+  const actor = { organizationId, userId: Number(ctx?.userId) };
+  // Realtime/deep-investigation pass this exact singleton pool. HTTP/stream
+  // pass a pinned, currently idle request client; never infer its ownership
+  // from connect(), which a connected PoolClient also exposes.
+  if (client === canonicalPool) await seedRbmAssessmentFromPool(canonicalPool, actor, { programId });
+  else await seedRbmAssessment(client, actor, { programId }, 'owned');
+}
+
 // Seed or summarize a study Risk Assessment (RACT) for a program.
 registerToolHandler('run_rbm_assessment', async (input, ctx) => {
   const programId = typeof input.programId === 'string' ? input.programId : undefined;
@@ -3274,8 +3295,8 @@ registerToolHandler('run_rbm_assessment', async (input, ctx) => {
     return JSON.stringify({ source: 'AnA RBM', error: 'Organization context required.' });
   }
   const { getPool } = await import('../../db.js');
-  const pool = getPool();
-  const { scoreRisk, overallRiskFromScores, DEFAULT_CTQ_FACTORS } = await import('../rbm/rbm-engine.js');
+  const canonicalPool = getPool();
+  const pool = ctx?.sqlClient ?? canonicalPool;
 
   const existing = await pool.query(
     `SELECT * FROM rbm_risk_assessments WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1`,
@@ -3283,22 +3304,7 @@ registerToolHandler('run_rbm_assessment', async (input, ctx) => {
   );
 
   if (existing.rows.length === 0 && input.seed === true) {
-    const scores = DEFAULT_CTQ_FACTORS.map((f) => scoreRisk(f.likelihood, f.impact).score);
-    const overall = overallRiskFromScores(scores);
-    const a = await pool.query(
-      `INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status)
-       VALUES ($1,$2,'Risk assessment (RACT)','ich_e6r3',$3,'active') RETURNING *`,
-      [orgId, programId, overall],
-    );
-    const assessment = a.rows[0];
-    for (const f of DEFAULT_CTQ_FACTORS) {
-      const { score } = scoreRisk(f.likelihood, f.impact);
-      await pool.query(
-        `INSERT INTO rbm_risk_items (organization_id, assessment_id, program_id, category, ctq_factor, risk_description, likelihood, impact, risk_score, is_critical, mitigation, status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'open')`,
-        [orgId, assessment.id, programId, f.category, f.ctqFactor, f.riskDescription, f.likelihood, f.impact, score, f.isCritical, f.mitigation],
-      );
-    }
+    await seedRbmWithDispatchClient(pool, canonicalPool, programId, orgId, ctx);
   }
 
   const items = await pool.query(
@@ -16030,6 +16036,7 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
         organizationId: ctx?.organizationId ?? undefined,
         userId: ctx?.userId ?? undefined,
         projectId: ctx?.projectRef ?? ctx?.projectId ?? undefined,
+        contextSqlClient: ctx?.sqlClient,
         sourceContext: undefined as import('./draft-project-sources.js').DraftSourceContext | undefined,
       };
     })

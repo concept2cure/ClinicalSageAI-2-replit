@@ -1,0 +1,24 @@
+{
+  "incomingCommit": "4f92b436430c7881df67b5b72cf3d0db96d39c71",
+  "mergedCommit": "3ca00722e9a5370e731ebc0f6b79050505d38754",
+  "finding": "Only14lineV2Appchange andguardtests: canonical pending-work refusal before LiveDrive publishes shared project, parameters or cross-owner navigation; same-owner handlers retained. Saved-artifact blocked focus consumed once. RBM rail/setup/admission unchanged, all preceding310selectedinputs unchanged.",
+  "productionFixNeeded": false,
+  "checks": [
+    "client/src/concept2cure/v2/__tests__/liveDriveProtocolLeaveGuard.test.tsx",
+    "client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx",
+    "client/src/concept2cure/v2/__tests__/surfaceActions-commit.test.tsx",
+    "client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx",
+    "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/driveQueue.test.ts",
+    "client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx"
+  ],
+  "additionalInputs": [
+    "client/src/concept2cure/v2/V2App.tsx",
+    "client/src/concept2cure/v2/surfaceActions.ts",
+    "client/src/concept2cure/v2/navParams.ts",
+    "client/src/concept2cure/v2/driveQueue.ts",
+    "client/src/concept2cure/v2/ceremony.ts",
+    "client/src/concept2cure/v2/__tests__/liveDriveShell.fixtures.tsx"
+  ],
+  "bootstrapCorrection": "Initial helper selected nonexistent surfaceActions-commit.test.ts instead of actual .tsx; assertion stopped selection preparation, initial launchers failed without tests/build. Failed launchers retained as bootstrap; corrected selection checks every path before running."
+}

@@ -1,0 +1,31 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 f7596cc41] Qualify RBM navigation with pending-work leave protection
+ 39 files changed, 3390 insertions(+), 78 deletions(-)
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-live-bootstrap-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-live-exit.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-live-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-live-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-live-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-live.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-ana-commit.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-ana-lint.json.gz
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-live-bootstrap-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-live-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-live-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-live-results.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-live-selection.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-live-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-live-summary.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-live-tests.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-qualify-live.py.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-4f92-live-review.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-4f92-merge.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/lint-live-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-09-exit.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-09-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-09-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-09-summary.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/push-refusal-09-transcript.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/run-build-live.sh.txt

@@ -1,0 +1,18 @@
+{
+  "base": "1ba873279c038c0e8c7c41e2aa17d5e7e0d63a10",
+  "kind": "focused implementation green verification inputs",
+  "files": {
+    "scripts/ectd/qualify-ectd.ts": "503170738a1a882c6733cbc8cf582bfa78e692c412e57f236a35d7c8b59a3d12",
+    "server/services/ectd/qualification/qualify.ts": "cbf5cfadbd7c7e9c32c752af19960cd50afbaca4ecba13fdf01d4a4c3b555937",
+    "server/services/ectd/qualification/outcome.ts": "635e3f6f11452eb9ac63f5e3aa519d5276144f736b905c77eccd95b2b64aae37",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts": "1638eb1001be2a3167d6ca94e31ecef67c24d555026cc04fbb8347ae1ae41fa1",
+    "server/services/ectd/qualification/__tests__/qualification.test.ts": "59a14071c4ba53b8ade435d357787353856184b98d0f215e126201a840eb2485",
+    "server/services/ectd/external-validator/index.ts": "12b4c254c7450f99cd617437bcfbdff89529005cd47c907525762a23fe80cc92",
+    "server/services/ectd/external-validator/__tests__/external-validator.test.ts": "b0c542b9b06b8f90ff8d37c3bd9d31511643329d611afe45e7e4afce0512784f",
+    "tests/regulatory/ectd-qualification-cli.test.ts": "27bc4aaffc1b4901f16e3e8f591f976f5e53aa2230e323468d10486935ad0221",
+    "package.json": "d5237fb405d77f3fb5aba77245c8ba832be7c88d65114822e5b2bfe221757fc6",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26"
+  }
+}

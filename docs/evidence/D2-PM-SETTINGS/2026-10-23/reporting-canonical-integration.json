@@ -1,0 +1,14 @@
+{
+  "recordedAtUtc": "2026-10-23T20:59:28.152459+00:00",
+  "incomingRemote": "36a390c47c9a2a167a38726577a726f6f48fe991",
+  "mergedHead": "8b5fae9dabb3d9d35a9efd6fdaf224d1baa4f59d",
+  "incomingCommits": 9,
+  "boundSourceOverlap": [],
+  "allBoundInputsUnchanged": 88,
+  "runtimePaths": [
+    "client/src/concept2cure/v2/surfaces/InsightsLegalPackage.tsx",
+    "client/src/concept2cure/v2/surfaces/InsightsPackageStationery.tsx",
+    "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx"
+  ],
+  "qualification": "Previous normal push passed every gate (TS0, warning delta0) but remote ref advanced before transfer. Retain unchanged PM06 proof; requalify combined production build and whole-program incremental TypeScript before retry."
+}

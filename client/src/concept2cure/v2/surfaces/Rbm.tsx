@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { authService, useAuthUser } from '@/services/portal/authService';
+import { getAuthToken } from '@/utils/authToken';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
-import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveData, EmptyState, type DataReadOwner } from '../dataConnect';
+import { captureShellProjectGuard, publishShellProject, shellProgramId, useShellProject, type ShellProject } from '../shellProject';
+import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmProgram } from './rbmBoard';
-import { rbmBoardHasData } from './rbmBoard';
+import { isRbmProgramRows, rbmBoardHasData } from './rbmBoard';
 import {
   SeedEmpty,
   RbmAnaDock,
@@ -98,34 +102,65 @@ const LINK_ICONS: Record<string, string> = {
  */
 const ATTENTION_CONTEXT_CAP = 8;
 
-export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
-  const [study, setStudy] = useState<string | null>(null);
+export function Rbm(props: OwnedSurfaceViewProps) {
+  const project = useShellProject();
+  const session = useAuthoringReadSession(useAuthUser());
+  const projectId = shellProgramId(project);
+  const visit = useRef({ guard: captureShellProjectGuard(), revision: 1 });
+  if (!visit.current.guard()) visit.current = { guard: captureShellProjectGuard(), revision: visit.current.revision + 1 };
+  const captured = visit.current;
+  const owner = useMemo(() => {
+    return { key: JSON.stringify([session.actor, session.key, projectId, captured.revision]), current: () => {
+      const bearer = getAuthToken();
+      return visit.current === captured && captured.guard() && session.sameRevision() && Boolean(authService.getUser())
+        && Boolean(bearer) && authService.captureSessionReadGuard(bearer ?? undefined).current();
+    } };
+  }, [session, projectId, captured]);
+  return <RbmWorkspace key={owner.key} {...props} project={project} owner={owner} />;
+}
+
+function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProps & { project: ShellProject | null; owner: DataReadOwner }) {
   const [tab, setTab] = useState('overview');
   const [anaOpen, setAnaOpen] = useState(true);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const current = () => mounted.current && owner.current();
+  const readOwner = useMemo(() => ({ key: owner.key, current: () => mounted.current && owner.current() }), [owner]);
   // Bumped after a persisted write so the board re-fetches and the surface
   // re-derives from server truth (never optimistic local state).
   const [reloadKey, setReloadKey] = useState(0);
-  const reload = () => setReloadKey(k => k + 1);
+  const [rosterEpoch, setRosterEpoch] = useState(0);
+  const reload = () => { if (current()) setReloadKey(k => k + 1); };
+  const retryRoster = () => { if (current()) setRosterEpoch(epoch => epoch + 1); };
 
-  // Real studies (programs with RBM data) + the live board for the selected one.
-  const programs = useLiveRows<RbmProgram>('/api/mdx-rbm/rbm-programs');
-  useEffect(() => {
-    if (!study && programs.rows.length) setStudy(programs.rows[0].id);
-  }, [programs.rows, study]);
+  // The server admits real projects with RBM selected or existing monitoring records.
+  const roster = useLiveData<RbmProgram[]>('/api/mdx-rbm/rbm-programs', [owner.key, rosterEpoch], isRbmProgramRows, readOwner);
+  const programs = { ...roster, rows: roster.loading || roster.error ? [] : roster.data ?? [] };
+  const reconciliationRequired = programs.meta?.reconciliationRequired === true;
+  const requestedProject = shellProgramId(project);
+  const selProgram = programs.rows.find(p => p.id.toLowerCase() === requestedProject) ?? null;
+  const study = selProgram?.id ?? null;
   const boardPath = study ? '/api/mdx-rbm/rbm-board/' + study : null;
-  const board = useLiveData<RbmBoard>(boardPath, [boardPath, reloadKey]);
+  const board = useLiveData<RbmBoard>(boardPath, [boardPath, reloadKey], undefined, readOwner);
   const bd = board.data;
   // useLiveData keeps the previous study's board while the next request is in
   // flight, so `bd` can still belong to the old program right after a study
   // switch. Only treat the board as ready when it actually matches the selected
   // study — otherwise the prior study's risk data would render (and be
   // interactive) under the new selection until the fetch resolves.
-  const boardReady = !!bd && bd.programId === study;
+  const boardReady = current() && !board.loading && !board.error && !!bd && bd.programId === study;
   const hasData = boardReady && rbmBoardHasData(bd);
 
-  const selProgram = programs.rows.find(p => p.id === study) || null;
   const studyLabel = selProgram?.label ?? 'the study';
   const nav = RBM_NAV.find(n => n.id === tab)!;
+  const selectProject = (id: string) => {
+    if (!current() || programs.loading || programs.error) return;
+    const selected = programs.rows.find(row => row.id === id);
+    if (!selected) return;
+    publishShellProject({ id: selected.id, title: selected.label, code: selected.code ?? undefined,
+      productType: selected.productType ?? undefined });
+  };
+  const navigate = (target: string) => { if (current() && study) onNav?.(target); };
 
   /* AnA — the REAL streaming assistant (/api/ana-ri/stream), grounded to the
      selected RBM program. The former rbmAnaResolve() heuristic that fabricated
@@ -156,15 +191,6 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         note: 'No study is selected, so no RBM board is on screen.',
       };
     }
-    if (board.loading || !boardReady) {
-      return {
-        surface: 'rbm',
-        studyId: study,
-        studyLabel,
-        boardReady: false,
-        note: 'The RBM board for this study is still loading.',
-      };
-    }
     if (board.error) {
       return {
         surface: 'rbm',
@@ -172,6 +198,15 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         studyLabel,
         boardReady: false,
         note: 'The RBM board could not be read, so no risk readings are on screen — a failure, not a clean board.',
+      };
+    }
+    if (board.loading || !boardReady) {
+      return {
+        surface: 'rbm',
+        studyId: study,
+        studyLabel,
+        boardReady: false,
+        note: 'The RBM board for this study is still loading.',
       };
     }
     if (!hasData || !bd) {
@@ -237,12 +272,13 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     };
   });
   const askAna = (text: string) => {
-    if (!text) return;
+    if (!text || !current() || !study) return;
     if (!anaOpen) setAnaOpen(true);
     void anaChat.send(text);
   };
 
   const Body = SURFACES[tab];
+  if (!current()) return <EmptyState title="Risk-based monitoring is unavailable for this session" hint="Reopen monitoring after selecting your account and project." />;
 
   return (
     <div data-screen-label={`RBM — ${nav.label}`}>
@@ -257,23 +293,20 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           </p>
         </div>
         <div className="rbm-study">
-          <span className="rbm-study-l">Study</span>
+          <span className="rbm-study-l">Project</span>
           <select
             className="rbm-study-sel"
             value={study ?? ''}
-            onChange={e => setStudy(e.target.value)}
-            aria-label="Select a study"
-            disabled={programs.rows.length === 0}
+            onChange={e => selectProject(e.target.value)}
+            aria-label="Select a project for risk-based monitoring"
+            disabled={programs.loading || Boolean(programs.error) || programs.rows.length === 0}
           >
-            {programs.rows.length === 0 ? (
-              <option value="">No RBM studies</option>
-            ) : (
-              programs.rows.map(s => (
+            <option value="">{programs.rows.length ? 'Choose a project' : 'No monitoring projects'}</option>
+            {programs.rows.map(s => (
                 <option key={s.id} value={s.id}>
                   {s.label}
                 </option>
-              ))
-            )}
+              ))}
           </select>
           <span className="rbm-study-m">
             {bd && bd.programId === study
@@ -291,7 +324,9 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             <button
               key={k}
               className="rbm-link"
-              onClick={() => onNav && onNav(L.surface)}
+              aria-label={`${L.label} ${L.value}`}
+              onClick={() => navigate(k === 'project' ? 'project-home' : L.surface)}
+              disabled={!study}
               title={L.note}
             >
               <span className="rbm-link-ico">
@@ -307,6 +342,8 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         })}
       </div>
 
+      {reconciliationRequired && <p className="rbm-note" role="status">Some project relationships need repair before monitoring can be shown. No unavailable project details are supplied.</p>}
+
       <div className="reg-tabs rbm-tabs" role="tablist">
         {RBM_NAV.map(n => (
           <button
@@ -314,7 +351,7 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             role="tab"
             aria-selected={tab === n.id}
             className={`reg-tab${tab === n.id ? ' on' : ''}`}
-            onClick={() => setTab(n.id)}
+            onClick={() => { if (current()) setTab(n.id); }}
           >
             {n.label}
           </button>
@@ -334,16 +371,21 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 icon={I.alertTriangle}
                 title="Couldn't load RBM studies"
                 hint="The risk-based monitoring service didn't respond. Nothing is shown from a cached sample."
+                retry={retryRoster}
               />
             </div>
           ) : programs.rows.length === 0 ? (
             <div style={{ padding: 24 }}>
               <EmptyState
                 icon={I.clipboardList}
-                title="No RBM studies yet"
-                hint="No study in this organization has a risk-based monitoring assessment yet. Once an RBM assessment exists for a study it appears here with its live risk, KRIs, QTLs and monitoring plan — nothing is simulated."
+                title={reconciliationRequired ? 'Monitoring project relationships need repair' : 'No monitoring projects yet'}
+                hint={reconciliationRequired ? 'Ask your project administrator to repair the project relationships before opening monitoring.' : 'Select risk-based monitoring when setting up a project. Existing projects with recorded monitoring data also appear here; no risk assessment or score is invented.'}
               />
             </div>
+          ) : !study ? (
+            <div style={{ padding: 24 }}><EmptyState icon={I.folder}
+              title={project ? 'This project is not available for risk-based monitoring' : 'Choose a project for risk-based monitoring'}
+              hint="Choose an accessible monitoring project from the project selector. Another project is never opened automatically." /></div>
           ) : board.error ? (
             <div style={{ padding: 24 }}>
               <EmptyState
@@ -351,9 +393,10 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 icon={I.alertTriangle}
                 title="Couldn't load the RBM board"
                 hint="The board didn't respond for this study. Nothing is shown from a cached sample."
+                retry={reload}
               />
             </div>
-          ) : !bd || bd.programId !== study ? (
+          ) : board.loading || !bd || bd.programId !== study ? (
             <div style={{ padding: 24 }}>
               <EmptyState title="Loading the RBM board…" icon={I.clock} />
             </div>
@@ -361,9 +404,9 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             <Body
               key={bd.programId + '@' + bd.asOf}
               board={bd}
-              onTab={setTab}
+              onTab={next => { if (current()) setTab(next); }}
               onAsk={askAna}
-              onNav={onNav}
+              onNav={navigate}
               onReload={reload}
             />
           ) : (
@@ -381,8 +424,8 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             study={studyLabel.split(' --')[0]}
             msgs={anaMsgs}
             onAsk={askAna}
-            onClose={() => setAnaOpen(false)}
-            onNav={onNav}
+            onClose={() => { if (current()) setAnaOpen(false); }}
+            onNav={navigate}
             onStartDemo={liveDrive?.onStartDemo}
             /* The live work dock reads the raw turns: phases, tool timings,
                pending steers and outputs the pane's message shape does not carry. */
@@ -394,7 +437,7 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             }}
           />
         ) : (
-          <button className="rbm-ana-seam" onClick={() => setAnaOpen(true)} title="Open AnA">
+          <button className="rbm-ana-seam" onClick={() => { if (current()) setAnaOpen(true); }} title="Open AnA">
             <span className="mk">{'✻'}</span>AnA
           </button>
         )}

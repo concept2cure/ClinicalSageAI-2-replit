@@ -1,0 +1,10 @@
+{
+  "command": "source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx server/services/vault/__tests__/vault-archive-delivery.test.ts --reporter=json --outputFile=/workspace/.cloud-setup/rbm-navigation/final-vault-results.json",
+  "exitCode": 0,
+  "passed": 119,
+  "failed": 0,
+  "skipped": 0,
+  "files": 12,
+  "unchangedInputs": true,
+  "failures": []
+}

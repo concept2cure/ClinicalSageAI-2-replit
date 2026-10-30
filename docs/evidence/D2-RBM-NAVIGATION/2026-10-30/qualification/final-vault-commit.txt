@@ -1,0 +1,24 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 3e8840459] Qualify RBM project handoffs with current Vault session safeguards
+ 27 files changed, 1947 insertions(+), 43 deletions(-)
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-vault-exit.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-vault-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-vault-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-vault-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/build-vault.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-recovery-commit.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-recovery-lint.json.gz
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-vault-finish.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-vault-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-vault-results.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-vault-selection.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-vault-start.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-vault-summary.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/final-vault-tests.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-d79-merge-commit.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-d79-merge.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/incoming-d79-vault-review.json
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/lint-vault-launcher.txt
+ create mode 100644 docs/evidence/D2-RBM-NAVIGATION/2026-10-30/qualification/run-build-vault.sh.txt

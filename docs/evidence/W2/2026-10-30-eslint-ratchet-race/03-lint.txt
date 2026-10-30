@@ -1,0 +1,3 @@
+Node syntax checks: check-eslint-warning-ratchet.mjs, lint-source-versions.mjs and eslint-ratchet-source-versions.test.mjs all exit 0.
+ESLint --no-warn-ignored on those three paths exits 0 with no output. The root ESLint configuration ignores scripts/ci; this is not a lint examination of those script bodies.
+The 19 Node tests include six controls using the actual ESLint engine against a synthetic fixture configuration.

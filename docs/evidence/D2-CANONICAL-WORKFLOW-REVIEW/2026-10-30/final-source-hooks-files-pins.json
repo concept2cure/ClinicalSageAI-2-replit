@@ -1,0 +1,100 @@
+{
+  "reviewer": "action_order_contract",
+  "date": "2026-10-30",
+  "approved": true,
+  "executionByReviewer": false,
+  "frozenTestsMatchRedInputs": true,
+  "dataConnectOnlyApprovedTwoExports": true,
+  "lintQualification": "reviewed subset zero error/warning growth; initial ProjectFiles complexity 20 corrected without suppression; root whole changed-set gates remain pending",
+  "pins": {
+    "client/src/concept2cure/v2/dataConnect.tsx": {
+      "sha256": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669",
+      "bytes": 33034
+    },
+    "client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts": {
+      "sha256": "c47955252bde36f14c714e36b05f07bc3d90ab6091b2237b7fd2b502c253d581",
+      "bytes": 4963
+    },
+    "client/src/concept2cure/v2/editor/citationAdmission.ts": {
+      "sha256": "6b071684f6839bfa673eaaea68f15c17a148b0e75fefc783c34a4a54937f0464",
+      "bytes": 6896
+    },
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": {
+      "sha256": "9e8902274471789e36ba952e47e4ac51a5b88679f2b300c290b76db4dc35e132",
+      "bytes": 30859
+    },
+    "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx": {
+      "sha256": "167df31292a807b81979808985812a0ddbd55288038a9267218da87bcf3e566f",
+      "bytes": 11023
+    },
+    "client/src/concept2cure/v2/editor/vaultPdfViewer.tsx": {
+      "sha256": "8d54497ba729c6a7874b05668154b99c752ade3ec4968af97d47435406b3af04",
+      "bytes": 7460
+    },
+    "client/src/concept2cure/v2/editor/ProjectFileActions.tsx": {
+      "sha256": "0168c4be4c6ff9677399bc8fe45c933de925f56509fdf9c46696419f9be0f7d6",
+      "bytes": 4599
+    },
+    "client/src/concept2cure/v2/editor/__tests__/sourceMetadataVisitOwnership.test.tsx": {
+      "sha256": "d5197f69e1808c8f71ba819fa5bc8d78f38e96e34a902eac63cf421c91cbf730",
+      "bytes": 16158
+    },
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx": {
+      "sha256": "48e54568f7cb9e0bfcf8ada3758510614e4268aed83175c9d0296605ff151a15",
+      "bytes": 13317
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-scope-contract.md": {
+      "sha256": "c4da2556f33b78163890c4860726c7e1fdfa56e5bbcf8a86ccf6806c1c1af1ca",
+      "bytes": 14499
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-contract-review.md": {
+      "sha256": "324ad2deb65fb50c683b252ff6baae75457467b4e3d72102044cd7b5988e8ea0",
+      "bytes": 8622
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/metadata-red-inputs.json": {
+      "sha256": "aafaf5473dabebc8a5b64538fd561f38ef70be36f5119b61a520495595307104",
+      "bytes": 536
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/metadata-session-red.txt": {
+      "sha256": "6043b3fb7c94b82fd7bcc0cc6f751c17ef5a113b9c3afa5066617aaf5fc55812",
+      "bytes": 15233
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/files-red-inputs.json": {
+      "sha256": "4db0b2f7c6e00c85e440e6d9d492b19bc68a15e2596ecf72441ebdadd09b0a86",
+      "bytes": 419
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/files-session-red.txt": {
+      "sha256": "1bc475db467f96da2269115582e6c1b960d6c117fd65326c706b97288d0d6272",
+      "bytes": 16983
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-hooks-files-green-first.txt": {
+      "sha256": "737dbb914e88077229cecfc0a562df2ae75133e8ba68ae6ff5c2737aa431696a",
+      "bytes": 14299
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/files-baseline-lint.json": {
+      "sha256": "295aa5db0f7159849b5b2b99ec6a779692f4c07d1f355dff7ed9f8a152078334",
+      "bytes": 174
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/source-lint-first.json": {
+      "sha256": "e917731e73554018189976684c78f53370ccea21e99972b2c3b73e09e9a72fe9",
+      "bytes": 1947
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/workbench-files-lint-first.json": {
+      "sha256": "e389f8a09602faadaab447cbcdbf705571191d6d556439b4cca22f0d47560148",
+      "bytes": 4555
+    },
+    "docs/evidence/D2-CANONICAL-WORKFLOW-REVIEW/2026-10-30/workbench-files-green-first.txt": {
+      "sha256": "7153e07de4d8d08fe3eb486204d6a0115aa573d72e1801df993c32aeba7e9e51",
+      "bytes": 4110
+    }
+  },
+  "status": "final approved at refreshed source and evidence pins",
+  "hookAndDataRoomSourceReview": "no blocking issue at pinned inputs",
+  "supersededProjectFilesPin": {
+    "sha256": "b98423abd4f95a3d4d77f79309e0b03314c1f775ec09185b2a004414542017e6",
+    "bytes": 30685,
+    "status": "source reviewed, then provisional because complexity warning 20; replaced by memo-only lint correction"
+  },
+  "fileMemoOnlyDeltaVerifiedAgainstPreviousPin": true,
+  "postRefactorRootEvidence": "18 passed / 3 suites; includes all nine files ownership cases"
+}

@@ -67,7 +67,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { EngineeringRiskPanel, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
+import { EngineeringRiskPanel, PANEL_PROGRAM_ID, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
 
 /**
  * A real `risk_items` row. severity 3 x probability 3 = 9, and with no residual
@@ -78,6 +78,7 @@ import { EngineeringRiskPanel, RISK_READ, keyedToPanelProject } from './engineer
  */
 const row = (n: number, over: Record<string, unknown> = {}) => ({
   id: n,
+  program_id: PANEL_PROGRAM_ID,
   ref_code: 'HZ-0' + n,
   hazard: 'Inaccurate glucose reading ' + n,
   hazardous_situation: 'Sensor drifts during a 14-day wear period',
@@ -166,7 +167,7 @@ describe('Risk (ISO 14971) — an unexamined register is not a controlled one', 
     expect(text()).toMatch(/ISO 14971 section 8/);
   });
 
-  it('does not claim a hazard has no risk controls when it never read them', async () => {
+  it('does not claim a hazard has no controls when its detail could not be read', async () => {
     // The hazard-register read carries no control lists at all, so the previous
     // copy — "No controls yet — add the first risk control." — was rendered
     // against every server-read hazard regardless of what it carries.
@@ -178,7 +179,7 @@ describe('Risk (ISO 14971) — an unexamined register is not a controlled one', 
       /No controls yet/i.test(text()),
       'must not assert an absence of risk controls it never read',
     ).toBe(false);
-    expect(text()).toMatch(/not a record that none exist/i);
+    await waitFor(() => expect(text()).toMatch(/not a record that none exist/i));
     // Same class, same read: verification evidence is not carried either.
     expect(text()).toMatch(/Not read on this screen/i);
   });

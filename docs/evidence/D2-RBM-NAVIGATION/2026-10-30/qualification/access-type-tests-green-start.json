@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-10-30T18:01:45.343519+00:00",
+  "scope": "Four owned test files and Vitest config only; root owns final merged-source qualification.",
+  "files": {
+    "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts": "8d479d67059716eb5726a9be31edd9ddbd5684377016d4a2f1096a6242616a1e",
+    "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts": "aae63c3c0207d6186dc06a9a1bc986e7c93f80f02d64595998b963cae2c9b607",
+    "server/routes/__tests__/mdx-rbm-signed-records.test.ts": "42f8caff0caa0837d36dcc99cabd418244e3629f92e7c50ac8c21f297f52ede9",
+    "server/routes/__tests__/rbm-board-current-project.test.ts": "28d1d285967033058f087b0e33b97dbfcc4ba7c335c430eaa09503d0bae81e9c",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  }
+}

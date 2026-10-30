@@ -1,0 +1,6 @@
+{
+  "exitCode": 1,
+  "stage": "Lint harness before full result was produced",
+  "reason": "execFileSync default stdout buffer exhausted on historical AnaToolExecutor.ts (>1 MiB), ENOBUFS. No production lint verdict obtained.",
+  "correction": "Increase private historical-source read buffer to32MiB; source remains in memory and no temporary TypeScript files are created."
+}

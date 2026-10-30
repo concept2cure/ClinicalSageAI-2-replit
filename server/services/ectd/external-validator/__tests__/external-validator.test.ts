@@ -1,11 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import {
   tallyFindings,
   evaluateExternalValidationGate,
   resolveExternalValidator,
+  runExternalValidation,
   evalidatorRequiredFromEnv,
   NoopExternalValidator,
   LorenzEValidatorAdapter,
+  FdaCriteriaValidatorAdapter,
+  type ExternalValidator,
+  type ValidateArgs,
   type ExternalValidationReport,
   type ExternalValidationFinding,
 } from '..';
@@ -63,6 +67,7 @@ describe('NoopExternalValidator', () => {
 describe('LorenzEValidatorAdapter', () => {
   it('is not configured without EVALIDATOR_BINARY and fails closed when validated', async () => {
     const prior = process.env.EVALIDATOR_BINARY;
+    const priorEndpoint = process.env.EVALIDATOR_ENDPOINT;
     delete process.env.EVALIDATOR_BINARY;
     delete process.env.EVALIDATOR_ENDPOINT;
     try {
@@ -70,7 +75,10 @@ describe('LorenzEValidatorAdapter', () => {
       expect(await v.isConfigured()).toBe(false);
       await expect(v.validate({ packageDir: '/tmp/x', region: 'fda' })).rejects.toThrow(/not configured/i);
     } finally {
-      if (prior !== undefined) process.env.EVALIDATOR_BINARY = prior;
+      if (prior === undefined) delete process.env.EVALIDATOR_BINARY;
+      else process.env.EVALIDATOR_BINARY = prior;
+      if (priorEndpoint === undefined) delete process.env.EVALIDATOR_ENDPOINT;
+      else process.env.EVALIDATOR_ENDPOINT = priorEndpoint;
     }
   });
 });
@@ -88,6 +96,66 @@ describe('resolveExternalValidator', () => {
       if (prior !== undefined) process.env.EVALIDATOR_BINARY = prior;
       if (priorEp !== undefined) process.env.EVALIDATOR_ENDPOINT = priorEp;
     }
+  });
+});
+
+describe('runExternalValidation with an existing server selection', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  function unavailableResolver() {
+    return {
+      external: vi.spyOn(LorenzEValidatorAdapter.prototype, 'isConfigured').mockResolvedValue(false),
+      subset: vi.spyOn(FdaCriteriaValidatorAdapter.prototype, 'isConfigured').mockResolvedValue(false),
+    };
+  }
+
+  it('uses the supplied adapter once without resolving again and forwards the same arguments', async () => {
+    const resolver = unavailableResolver();
+    const args: ValidateArgs = { packageDir: '/tmp/synthetic-selected-package', region: 'fda', profile: 'synthetic-fda-profile' };
+    const expected = report({ validator: 'synthetic-external', profile: args.profile });
+    const selected: ExternalValidator = {
+      name: 'synthetic-external', kind: 'external_engine',
+      isConfigured: vi.fn().mockResolvedValue(true), validate: vi.fn().mockResolvedValue(expected),
+    };
+
+    await expect(runExternalValidation(args, selected)).resolves.toBe(expected);
+    expect(selected.validate).toHaveBeenCalledExactlyOnceWith(args);
+    expect(vi.mocked(selected.validate).mock.calls[0][0]).toBe(args);
+    expect(selected.isConfigured).not.toHaveBeenCalled();
+    expect(resolver.external).not.toHaveBeenCalled();
+    expect(resolver.subset).not.toHaveBeenCalled();
+  });
+
+  it('preserves the canonical unrun failure report for a supplied adapter that throws', async () => {
+    const resolver = unavailableResolver();
+    const args: ValidateArgs = { packageDir: '/tmp/synthetic-selected-package', region: 'fda', profile: 'synthetic-fda-profile' };
+    const selected: ExternalValidator = {
+      name: 'synthetic-external', kind: 'external_engine', isConfigured: vi.fn().mockResolvedValue(true),
+      validate: vi.fn().mockRejectedValue(new Error('Synthetic selected-adapter failure')),
+    };
+
+    const result = await runExternalValidation(args, selected);
+    expect(result).toMatchObject({ validator: selected.name, profile: args.profile,
+      ran: false, passed: false, errorCount: 0, warningCount: 0,
+      findings: [{ ruleId: 'EVALIDATOR-RUN-FAILED', severity: 'error',
+        message: 'External validator "synthetic-external" failed to run: Synthetic selected-adapter failure' }],
+    });
+    expect(result.ranAt).toBeInstanceOf(Date);
+    const assessment = evaluateExternalValidationGate({ report: result, selectedValidator: selected,
+      configured: true, requireEvalidator: true, environment: 'production' });
+    expect(assessment).toMatchObject({ ran: false, qualifyingRun: false,
+      errorCountKnown: false, externalErrorCount: 0, assessmentStatus: 'not_assessed', cleared: false });
+    expect(selected.validate).toHaveBeenCalledExactlyOnceWith(args);
+    expect(resolver.external).not.toHaveBeenCalled();
+    expect(resolver.subset).not.toHaveBeenCalled();
+  });
+
+  it('preserves default resolution when no selection is supplied', async () => {
+    const resolver = unavailableResolver();
+    const result = await runExternalValidation({ packageDir: '/tmp/synthetic-unconfigured-package', region: 'fda' });
+    expect(result).toMatchObject({ validator: 'noop', profile: 'fda', ran: false, passed: false, findings: [] });
+    expect(resolver.external).toHaveBeenCalledOnce();
+    expect(resolver.subset).toHaveBeenCalledOnce();
   });
 });
 

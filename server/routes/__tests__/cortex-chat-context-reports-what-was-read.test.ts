@@ -11,8 +11,12 @@
 import express from 'express';
 import request from 'supertest';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { assembleSystemPrompt, type AnAContext } from '../../services/lumen-context-builder';
+import { BASE_SYSTEM_PROMPT } from '../../services/lumen-context/base-system-prompt';
+import { getSubmissionTypeContext } from '../../../shared/regulatory/submission-type-bridge';
+import type { UserIntelligence } from '../../services/user-intelligence';
 
-const H = vi.hoisted(() => ({ build: vi.fn() }));
+const H = vi.hoisted(() => ({ build: vi.fn(), requests: [] as Array<{ messages: Array<{ role: string; content: string }> }> }));
 
 vi.mock('../../db.js', () => {
   const pool = { query: async () => ({ rows: [] }) };
@@ -40,12 +44,15 @@ vi.mock('../../services/chat-thread-helpers.js', () => ({
 vi.mock('../../services/ai-gateway/index.js', () => ({
   getGateway: () => ({
     getEnabledProviders: () => ['stub'],
-    route: async () => ({
+    route: async (request: { messages: Array<{ role: string; content: string }> }) => {
+      H.requests.push(request);
+      return {
       content: 'An answer.',
       provider: 'stub',
       model: 'stub-1',
       usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
-    }),
+      };
+    },
   }),
 }));
 vi.mock('../../services/ana-ri/orchestrator.js', () => ({
@@ -129,9 +136,37 @@ const chat = async (context: Record<string, unknown>) => {
   return res.body.context as Record<string, unknown>;
 };
 
-beforeEach(() => H.build.mockReset());
+beforeEach(() => { H.build.mockReset(); H.requests.length = 0; });
 
 describe('POST /api/cortex/chat — the response context is what was read', () => {
+  it('passes real-base canonical intelligence and recorded filing scope to the gateway without a provider call', async () => {
+    const selected = { id: 7, name: 'Recorded PMA', submissionType: 'US_PMA', phase: null,
+      therapeuticArea: null, progress: 0, status: 'active', role: 'owner', lastAccessedAt: null };
+    const context: AnAContext = {
+      project: { ...project(0), name: selected.name, submissionType: selected.submissionType,
+        submissionTypeContext: getSubmissionTypeContext('US_PMA') },
+      userIntelligence: { organizationId: 3, organization: { id: 3, name: 'Recorded org', industryMode: null,
+        enabledModules: ['submission-center', 'document-authoring'] }, activeProject: selected,
+      } as unknown as UserIntelligence,
+      documents: null, workflow: null, conversation: null, userName: null, userRole: null,
+      organizationName: null, accountCanon: null, clientIntelligence: 'x'.repeat(12_001),
+      projectIntelligence: null, anaIntelligenceContext: null,
+      unreadContext: ['project documents'], timestamp: '2026-10-27',
+    };
+    const systemPrompt = await assembleSystemPrompt(context);
+    H.build.mockResolvedValue({ systemPrompt, context });
+    const response = await request(app).post('/api/cortex/chat').send({ message: 'Explain this filing.', project_id: 7 });
+    expect(response.status).toBe(200);
+    expect(H.requests).toHaveLength(1);
+    const sent = H.requests[0].messages[0].content;
+    for (const block of [BASE_SYSTEM_PROMPT, '## Active Project Context', '(US_PMA)',
+      '## Medical Device & Diagnostics Intelligence', '## Dossier Assembly Workflow',
+      '## Dossier Project Manager', '## Document Editor Intelligence', '## PMA Specific Guidance',
+      '## Context Not Read', '## Optional Context Omitted', '## Tool Usage Guidance']) {
+      expect(sent).toContain(block);
+    }
+  });
+
   it('reports a recorded 0% as 0, not as unrecorded', async () => {
     const ctx = await chat({ project: project(0), documents: documents(4, 1) });
     expect(ctx.progress).toBe(0);

@@ -1,0 +1,9 @@
+{
+  "exitCode": 1,
+  "failure": "Static launch API gate treats shared /api/mdx base literal as a call; actual RBM endpoints remain narrowly claimed. Do not widen MDX claim or weaken gate.",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/rbmWrites.tsx": "ad68b313a1b3cfaf08ce8c72730384d86e4fff7b1315e22f5e463b0589a7ced7",
+    "scripts/ci/check-launch-scope-api.ts": "53014ab50f022f23ed74598a03e274f2e9a9415100ed8752470d73f3d22a90a4",
+    "shared/constants/ui-surface-registry.ui-v2.ts": "3037f59fde53562e7d0cecf35180235603642a82bc85b9c7425aff251d7386d1"
+  }
+}

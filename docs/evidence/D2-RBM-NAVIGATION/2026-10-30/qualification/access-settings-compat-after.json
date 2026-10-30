@@ -1,0 +1,7 @@
+{
+  "observedAt": "2026-10-30T18:50:14.491706+00:00",
+  "files": {
+    "server/routes/c2c/__tests__/project-settings.pglite.test.ts": "3f24778668e4965a5773762aa32f1e2450308b9b960a91c65fc5a858115b721c"
+  },
+  "oldSourceExactlyPreservedWhenAddedCaseRemoved": true
+}

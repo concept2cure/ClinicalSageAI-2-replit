@@ -1,0 +1,19 @@
+{
+  "observedAt": "2026-10-30T17:40:30.632208+00:00",
+  "commit": "b4edc78bc909ec06e72f7689759e3a7b95625a27",
+  "files": {
+    "migrations/20260629_rbm_surfaces.sql": "2125d652a5ceb596ded19224a55e0d9cb0e47e1b39bb5ebd0d53ddffe187ec24",
+    "migrations/20260918_rbm_author_attribution.sql": "6ee2214b0fe86211c1a7452b71231478308bb7fcb585f102d3cd654810d11dfd",
+    "migrations/20260930_rbm_plan_versioning.sql": "1725fedbe3f8f7e344b4ab625a17d24336b2ebd183811d166c97c8ec7a07102e",
+    "server/db/requestDb.ts": "d92072739d96ec6b875fbe0cb5ed16c1ad5e2dc06656772f4809b96d350e3fdd",
+    "server/routes/__tests__/rbm-approval-signature.pglite.test.ts": "df4ab43b2d83ce76ec19bacf9c1344637f9129d5bee2064cc2424377a3d41fef",
+    "server/routes/mdx-rbm.ts": "f77063659340cf498f278184165bcb3d17b0aa3875d58ced264a062867293625",
+    "server/services/part11/governed-target-binders.ts": "253e1e5b01ce16a6dfbe37846c6573b8a7bb629d791e6e7b67185a2288150bcb",
+    "server/services/part11/resolve-signer-identity.ts": "de8774ee5bf459834d36c8b0d77289359725549a86b9956e710596255f101e37",
+    "server/services/part11/signature-persistence.ts": "1dafa1e30adee13a46b6a4217338da6ea22fd18b1dce437651e90756588da522",
+    "server/services/rbm/rbm-access.ts": "09726bf718a82198dafbb697bd1c830e94b5df8d357a36225c1e20ce18c97441",
+    "server/services/rbm/rbm-actuator.ts": "806c7d4ffc544b801f4029848ce5d1782186958f8ed11ecf4661339191cfd5d0",
+    "server/services/rbm/rbm-signature-content.ts": "24b96c9b4709f50d7ac4df34633622e01a533497305026d7daa304615b04bf99",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  }
+}

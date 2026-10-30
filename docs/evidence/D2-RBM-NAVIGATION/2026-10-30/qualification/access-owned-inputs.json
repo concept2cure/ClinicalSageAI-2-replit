@@ -1,0 +1,26 @@
+{
+  "files": [
+    "server/services/rbm/rbm-access.ts",
+    "server/services/rbm/rbm-assessment-seed.ts",
+    "server/routes/mdx-rbm.ts",
+    "server/routes/mdx-rbm-data.ts",
+    "server/routes/mdx-rbm-board.ts",
+    "server/services/ana/AnaToolExecutor.ts",
+    "server/services/ana/evidence-literature-tool-defs.ts",
+    "server/bootstrap/register-inline-routes.ts",
+    "server/bootstrap/register-clinical-intel-routes.ts",
+    "server/services/rbm/__tests__/rbm-access.test.ts",
+    "server/services/rbm/__tests__/rbm-assessment-seed.test.ts",
+    "server/routes/__tests__/rbm-current-project-admission.test.ts",
+    "server/routes/__tests__/rbm-board-current-project.test.ts",
+    "server/services/ana/__tests__/rbm-launch-admission.test.ts",
+    "server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts",
+    "server/routes/__tests__/mdx-rbm-signed-records.test.ts",
+    "server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts",
+    "server/services/ana/__tests__/ana-cannot-sign.test.ts",
+    "server/services/rbm/rbm-actuator.ts",
+    "server/routes/__tests__/rbm-assessment-integrity.test.ts",
+    "server/services/rbm/__tests__/rbm-actuator.test.ts",
+    "migrations/20260629_rbm_surfaces.sql"
+  ]
+}

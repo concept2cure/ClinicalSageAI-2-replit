@@ -1,0 +1,19 @@
+# Red: the committed carry-over (HEAD e96bca905), with the new case
+$ npx vitest run server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+  reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file 829ms
+  a working draft: nothing carries, the editor is told why, and the version is not reviewed 199ms
+  frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed 239ms
+  approved with no review: nothing carries, the editor is told why, and the version is not reviewed 163ms
+  reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed 181ms
+  reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed 198ms
+  approved by its author: nothing carries, the editor is told why, and the version is not reviewed 191ms
+  reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed 192ms
+  a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed 193ms
+  an approval of other content: nothing carries, the editor is told why, and the version is not reviewed 184ms
+  reviewed by a member who wrote one of its sections: nothing carries, and the version is not reviewed 225ms
+   → expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  reviewed by a member who wrote one of its sections: nothing carries, and the version is not reviewed
+AssertionError: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)

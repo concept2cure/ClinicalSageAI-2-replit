@@ -148,14 +148,23 @@ describe('generateCSRSections — section status', () => {
 
   it('marks a section with fully-resolved content "drafted"', async () => {
     completeMock.mockResolvedValue(
-      'The study was conducted in accordance with the Declaration of Helsinki and ICH GCP.'
+      'This report describes the study in the development programme.'
     );
     const sections = getICHE3Structure();
     const generated = await generateCSRSections(sections, makeRequest());
 
-    const s5 = flattenICHE3Sections(generated).find(s => s.number === '5.2')!;
-    expect(s5.status).toBe('drafted');
-    expect(s5.needsData).toBeFalsy();
+    const introduction = flattenICHE3Sections(generated).find(s => s.number === '7')!;
+    expect(introduction.status).toBe('drafted');
+    expect(introduction.needsData).toBeFalsy();
+  });
+
+  it('refuses a source-less compliance assurance instead of declaring ethics drafted', async () => {
+    completeMock.mockResolvedValue('The study was conducted in accordance with the Declaration of Helsinki and ICH GCP.');
+    const generated = await generateCSRSections(getICHE3Structure(), makeRequest());
+    const ethics = flattenICHE3Sections(generated).find(s => s.number === '5.2')!;
+    expect(ethics.status).toBe('needs_data');
+    expect(ethics.needsData).toBe(true);
+    expect(ethics.content).toContain('[DATA TO BE INSERTED FROM ETHICS SOURCE RECORDS]');
   });
 
   // Until 2026-10-05 this file asserted that a §12.3 model draft reading "312

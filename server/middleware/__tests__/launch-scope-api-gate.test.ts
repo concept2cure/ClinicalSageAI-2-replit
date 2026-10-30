@@ -182,12 +182,12 @@ describe('the real registry, launch scope on', () => {
     for (const p of [
       '/API/mdx/imports', '/Api/Orchestration/execute', '/API/governed-intelligence/contradictions/scan/1',
       '/api/mdx/qms/Readiness', '/api/chat/Actions/run', '/api/chat/STREAM', '/api/regulatory/tasks/Sync',
-      '/api/concept2cure/projects/ALL', '/api/mdx/Gateways/FDA/esg/transmit', '/api/mdx/Rbm-Kris',
+      '/api/concept2cure/projects/ALL', '/api/mdx/Gateways/FDA/esg/transmit', '/api/mdx/Ldt',
     ]) {
       expect(await refused(p), p).toBe(true);
     }
-    // And a launch path is still served in any case: suppliers are Quality's (P-48), the risk file a Projects feature (62a8d5e7).
-    for (const p of ['/API/mdx/qms/Documents', '/api/mdx/qms/Suppliers', '/API/mdx/risk-items/1', '/api/mdx/Risk-Items/1']) expect(await refused(p), p).toBe(false);
+    // Launch paths are served in any case: Quality (P-48), project risk files (62a8d5e7), and RBM (P-76).
+    for (const p of ['/API/mdx/qms/Documents', '/api/mdx/qms/Suppliers', '/API/mdx/risk-items/1', '/api/mdx/Risk-Items/1', '/api/mdx/Rbm-Kris']) expect(await refused(p), p).toBe(false);
   });
 
   it('refuses the device kit under /api/mdx, and passes the launch apps that live there', async () => {
@@ -200,10 +200,11 @@ describe('the real registry, launch scope on', () => {
        device vault was one too until it folded into the Vault the same day (fold
        F3): its router is gone and nothing claims its prefix, so it is refused
        with the kit's other routes, which no launch screen calls. */
-    for (const p of ['/api/mdx/rbm-kris', '/api/mdx/imports', '/api/mdx/ldt', '/api/mdx/ivd', '/api/mdx/risk-summary', '/api/mdx/work-packages', '/api/mdx/vault', '/api/mdx/vault/7/versions']) {
+    for (const p of ['/api/mdx/imports', '/api/mdx/ldt', '/api/mdx/ivd', '/api/mdx/risk-summary', '/api/mdx/work-packages', '/api/mdx/vault', '/api/mdx/vault/7/versions']) {
       expect(await refused(p), p).toBe(true);
     }
     for (const p of [
+      '/api/mdx/rbm-kris', // existing RBM service admitted by founder P-76
       '/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents',
       '/api/mdx/gateways/transmittals',
       '/api/mdx/qms/documents',

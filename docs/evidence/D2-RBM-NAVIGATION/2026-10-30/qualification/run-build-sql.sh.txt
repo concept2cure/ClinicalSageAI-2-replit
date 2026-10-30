@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+source /workspace/.cloud-setup/activate.sh
+cd /workspace/ClinicalSageAI-2-replit || exit 99
+python3 /workspace/.cloud-setup/rbm-navigation/capture.py build-sql-start.json
+npm run build > /workspace/.cloud-setup/rbm-navigation/build-sql.txt 2>&1
+c2c_rbm_build_exit=$?
+python3 /workspace/.cloud-setup/rbm-navigation/capture.py build-sql-finish.json
+python3 - "$c2c_rbm_build_exit" <<'PYPROOF'
+from pathlib import Path
+import datetime,hashlib,json,sys
+p=Path('/workspace/.cloud-setup/rbm-navigation')
+start=json.loads((p/'build-sql-start.json').read_text()); end=json.loads((p/'build-sql-finish.json').read_text())
+r={'processExit':int(sys.argv[1]),'finishedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'sourceCommitAtStart':start['commit'],'sourceCommitAtFinish':end['commit'],'unchangedInputs':start['files']==end['files'],'transcriptSha256':hashlib.sha256((p/'build-sql.txt').read_bytes()).hexdigest()}
+(p/'build-sql-exit.json').write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r,indent=2))
+PYPROOF
+exit "$c2c_rbm_build_exit"

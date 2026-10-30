@@ -1,0 +1,14 @@
+from pathlib import Path
+import datetime,hashlib,json,shlex,subprocess,sys
+r=Path('/workspace/ClinicalSageAI-2-replit');p=Path('/workspace/.cloud-setup/rbm-navigation')
+s=json.loads((p/'access-type-tests-selection.json').read_text());paths=sorted(set(s['files'])|set(s['inputs']))
+def capture(phase):
+ x={'observedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'scope':'Four owned test files and Vitest config only; root owns final merged-source qualification.','files':{f:hashlib.sha256((r/f).read_bytes()).hexdigest() for f in paths}}
+ (p/('access-type-tests-green-'+phase+'.json')).write_text(json.dumps(x,indent=2)+'\n');return x
+start=capture('start')
+args=['npx','vitest','run','--config','vitest.config.ts',*s['files'],'--reporter=json','--outputFile='+str(p/'access-type-tests-green-results.json')]
+command='source /workspace/.cloud-setup/activate.sh && NODE_OPTIONS=--max-old-space-size=4096 '+shlex.join(args)
+with (p/'access-type-tests-green-tests.txt').open('wb') as out:code=subprocess.run(['bash','-c',command],cwd=r,stdout=out,stderr=subprocess.STDOUT).returncode
+end=capture('finish');x=json.loads((p/'access-type-tests-green-results.json').read_text())
+summary={'command':command,'exitCode':code,'passed':x['numPassedTests'],'failed':x['numFailedTests'],'skipped':x['numPendingTests'],'files':len(x['testResults']),'unchangedInputs':start['files']==end['files'],'failures':[{'file':f['name'],'cases':[a['fullName'] for a in f['assertionResults'] if a['status']=='failed']} for f in x['testResults'] if f['status']!='passed']}
+(p/'access-type-tests-green-summary.json').write_text(json.dumps(summary,indent=2)+'\n');print(json.dumps(summary,indent=2));sys.exit(code or (0 if summary['unchangedInputs'] else 98))

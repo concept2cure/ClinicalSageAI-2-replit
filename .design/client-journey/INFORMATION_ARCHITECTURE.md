@@ -36,6 +36,19 @@ features apps." This document applies it as follows:
   clients by the founder's decision once it works. Section 8 gives the order, and names a slice for every item that is
   not live now.
 
+### Implementation update: recorded project context (2026-10-30)
+
+Author's existing Memory and Instructions cards are now reached by
+`surfaces/ProjectRecordedContext.tsx` from `ProjectSide.tsx`, through the existing
+profile reader and the UUID Projects router's current actor/anchor/client scope.
+This supersedes the historical inventory remarks below saying those cards read
+nothing: they now distinguish recorded profile notes, authoritative absence and
+failed reads. Profile instructions remain separate from authored project instructions
+and ProjectSkills; no writer, context source or navigation entry is added.
+The existing AnA profile formatter is corrected to carry recorded risk/decision
+fields without inventing severity or decision status. Qualification and its limits:
+[`D2-PM-RECORDED-CONTEXT`](../../docs/evidence/D2-PM-RECORDED-CONTEXT/2026-10-30/README.md).
+
 ### Accepted direction and implementation boundary (2026-10-26)
 
 **Accepted founder direction:** move specialized former "apps" into the core product's project workflow screens.
@@ -51,6 +64,18 @@ the recommendation is to use their existing owners across workflows. It does not
 commercial grants or scope expansion. Reporting and Authoring retain their earlier recorded launch decisions.
 Communication and Quality also retain their existing homes and safeguards; their absence from the latest examples
 does not retire them. The founder's examples identify a central-service boundary, not an exhaustive replacement menu.
+
+#### Founder priority, 2026-10-30: reach RBM now
+
+The founder explicitly requests the existing Risk-Based Monitoring service in the
+main left rail alongside CMC, Projects, Tasking, Communication and Vault, and an
+optional choice in project setup (P-76). This supersedes the queued rail timing
+for RBM below. The existing owner is retained; real project context, access,
+licensing and signed approval safeguards must travel with it. The bounded
+completion is `docs/design/RBM_NAVIGATION_PROJECT_SETUP_2026-10-30.md`, with proof
+under `docs/evidence/D2-RBM-NAVIGATION/2026-10-30/`. Clinical-ops and study/deviation
+store convergence remain separate work; this request does not approve fabricated
+study data, automatic commercial grants or unsigned active assessments.
 
 #### Existing central-service owners
 
@@ -68,6 +93,23 @@ every service is admitted, complete, entitled or shown on the rail.
 | Study and Protocol Design | `surfaces/ProtocolDev.tsx`, `surfaces/ProtocolDevDesign.tsx`, `surfaces/ProtocolDevWorkspace.tsx` | Plan/Author use the existing protocol and study-design workspace. Its current `protocol-dev` ownership under Authoring does not require a parallel app, study store or editor; section 7's protocol convergence still applies. |
 
 #### Tailoring inside a project
+
+Project initiation also reaches the existing **Study & Protocol Design** identity
+(`study_protocol_design` → `protocol-dev`, `shared/regulatory/app-registry.ts`)
+from Plan's core-work selection, alongside CMC, RBM and Biostatistics where each
+is available. Study design and protocol design are one selection and one existing
+workspace, not separate apps. CMC retains its composition boundary; this placement
+does not admit RBM or Biostatistics to launch. The existing AnA document generator,
+`editor/DocumentCanvas.tsx`, `DocumentWorkbench.tsx` and `RichSectionEditor.tsx`
+serve every use case. No workflow gets another canvas, generator or editor.
+The existing workspace also offers a suggested order through its same tabs:
+Study design → Statistics → Write protocol → Run checks → Review protocol.
+The guide reports recorded design-link/findings states, not completion. Pending
+section edits protect guide, tab, outline and protocol/scope changes through the
+existing shared leave-guard registry; no approval or write is triggered by a step.
+The implementation inventory and verification boundary are recorded in
+`docs/design/STUDY_PROTOCOL_PROJECT_INITIATION.md` and
+`docs/evidence/D2-STUDY-PROTOCOL-INITIATION/2026-10-30/README.md`.
 
 The same workflow screens reveal the work that applies to the selected project, using:
 
@@ -1808,3 +1850,17 @@ No new visual component. Every placement reuses one of these.
 - **Administration** keeps its ids (`admin-console`, `apps`, `licensing`, `usage`, `billing`, `access-requests`,
   `audit-trail`, `onboarding`, `master-licensing`); Subscription & billing is one surface with tabs, and the other ids
   open it on their tab.
+
+
+## A3 source convergence, qualified 2026-10-30
+
+The legacy prompt-key carry is complete in its actual mounted Cortex owner and
+six workspace configuration mappings. Canonical keys reuse existing intelligence;
+explicit legacy callers/history remain compatible. Required recorded scope and
+selected blocks now survive real-base assembly, while empty/unread module lists
+stay generic. Non-US and missing facts acquire no FDA application by default.
+Current streaming AnA uses a separate context builder and is unchanged. No
+remaining screen, stored record, clinical feature or CMC composition boundary is
+retired or admitted by this change. `SLICE_A3_PLAN.md` and
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-27/slice-A3/README.md` record the precise
+scope and engineering evidence; they confer no formal OQ/model qualification.

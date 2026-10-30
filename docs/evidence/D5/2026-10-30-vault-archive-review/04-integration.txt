@@ -1,0 +1,20 @@
+Resumed Claude handoff, 2026-10-30
+Original progress and CSV commits already present on origin: 0bf201133, 26bd6cacc.
+Later handoff fixes were absent from this checkout and origin; this continuation implements and verifies them against canonical source.
+Source implementation: 1d4bc939d. Combined with incoming documentation at 38127a220.
+
+Broad regression command:
+npx vitest run client/src/concept2cure/v2/__tests__/{vault*,etmf*,useVaultUpload,documentIntakeFormats,fileDropZone,projectDocumentDisposition,filingPathNoDeadEnds,anaDrivesScreens,authoringVaultPlacementFlow} client/src/concept2cure/mdx client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx server/services/vault server/routes/c2c/__tests__/*vault* server/routes/__tests__/*vault*
+Result: 2620/2620 tests, 256/256 files, exit 0.
+The 51 focused upload tests and 45 focused archive/filing unit tests overlap this broader cohort; do not add them again.
+
+Separate native PostgreSQL16 + pgvector, disposable platform_ci_vault_fixture_20261030, canonical install-fresh then deploy-migrate; app_service NOSUPERUSER/NOBYPASSRLS and RLS_ENFORCE=on: 28/28 tests, 2/2 files.
+Separate Node lint-ratchet controls: 19/19, exit 0.
+Nine intentional archive-security mutations caught using in-memory test transforms; no live source mutation during compiler/gates.
+Production client/server/audit-verifier build: exit 0.
+Full-program incremental TypeScript: zero errors, exit 0, baseline unchanged at zero.
+ESLint errors: zero on all24 changed script/source/test files; changed-file warning ratchet: no growth.
+Browser: 24 component checks, 1440/390px, light/dark; 8 screenshots; no page errors or horizontal overflow. Synthetic files/status props; no hosted authenticated workflow claim.
+
+Normal push-hook output and exact publication SHA are recorded outside git in /workspace/shared/vault-handoff-push.txt and /workspace/shared/vault-handoff-release.json after publication.
+No deployment is performed by this continuation. Unrelated unfinished invitation recovery is preserved in a named git stash.

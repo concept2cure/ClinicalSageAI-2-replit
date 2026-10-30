@@ -1,0 +1,5 @@
+{
+  "attempt01": "Actual wizard mounted and RBM unchecked check passed; driver then timed out at an overly exact accessible label selector. No unexpected requests/browser errors.",
+  "correction": "Use the real Project name/Product type accessible-label prefix, which includes the existing help text. Production source unchanged.",
+  "retained": "browser-wizard-attempt-01/ contains exact earlier harness, output, failure JSON and screenshot."
+}

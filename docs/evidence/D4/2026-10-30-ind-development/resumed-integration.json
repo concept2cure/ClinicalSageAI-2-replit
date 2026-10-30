@@ -1,0 +1,40 @@
+{
+  "source": "8a6958b7764a175978b8ca23274abfe6ec6645e7",
+  "integrated_remote": "89b67685e582ff7a6f91487fa0877527f5ab6ea8",
+  "ind_source_hashes": {
+    "checked": 66,
+    "mismatches": []
+  },
+  "focused_regressions": [
+    {
+      "suites": 21,
+      "passed": 376,
+      "log": "resumed-integration-tests.txt.gz"
+    },
+    {
+      "suites": 2,
+      "passed": 52,
+      "log": "resumed-retained-tests.txt.gz"
+    }
+  ],
+  "production_build": "passed",
+  "publication": "accepted normal push",
+  "limits": [
+    "Project intelligence profile and program/charter facts remain separate records",
+    "Focused checks do not establish scientific/regulatory/model qualification",
+    "Regional Module 1 content, nonclinical source binding and populated applicability remain open"
+  ],
+  "subsequent_merge": {
+    "source": "cf8f59ad18c523dfa72c67600bbf4ce3f260e213",
+    "integrated_remote": "d79abdf9f4dd1a30091247bce2fdab2081a1e188",
+    "focused_suites": 27,
+    "focused_passed": 250,
+    "log": "resumed-recovery-tests.txt.gz",
+    "ind_source_hashes_unchanged": 66,
+    "native_database_suite": "not rerun: no disposable PostgreSQL URL configured; incoming owner native receipts retained separately",
+    "production_build": "passed",
+    "build_log": "resumed-recovery-build.txt.gz"
+  },
+  "publication_receipt": "publication-receipt.json",
+  "published_source": "8f0b6df37269be8ba9cdc0f0f6b4222b57040425"
+}

@@ -1,0 +1,161 @@
+// @vitest-environment jsdom
+/** Real RBM reads, canonical sessions and the existing shell-project channel. */
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { seedCompanySession, endCompanySession, rotateCompanyBearer } from './_company-session-fixture';
+
+const h = vi.hoisted(() => ({ request: vi.fn(), send: vi.fn(), projects: [] as Array<string | undefined> }));
+vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: h.request }));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuthUser: () => actual.authService.getUser() };
+});
+vi.mock('../../components/ana/useAnaChat', () => ({ useAnaChat: ({ projectId }: { projectId?: string }) => {
+  h.projects.push(projectId);
+  return { messages: [], isStreaming: false, isLoadingThread: false, threadId: null, runStatus: null, pendingSteers: [], send: h.send,
+    reset: vi.fn(), pause: vi.fn(), resume: vi.fn(), interject: vi.fn(), stop: vi.fn(), loadThread: vi.fn() };
+} }));
+vi.mock('../surfaces/RbmSurfaces', async original => ({ ...(await original<typeof import('../surfaces/RbmSurfaces')>()),
+  RbmAnaDock: () => <aside>Separate monitoring conversation</aside>,
+  RbmOverview: ({ onReload }: { onReload: () => void }) => <button onClick={onReload}>Persisted monitoring record — reload</button>,
+}));
+
+import { Rbm } from '../surfaces/Rbm';
+import { clearShellProject, publishShellProject, readShellProject } from '../shellProject';
+import { setAuthToken } from '@/utils/authToken';
+
+const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222', C = '33333333-3333-4333-8333-333333333333';
+const rows = [{ id: A, label: 'Actual project A', code: 'A-1', productType: 'drug' }, { id: B, label: 'Actual project B', code: 'B-1', productType: 'device' }];
+const envelope = (data: unknown, status = 200) => new Response(JSON.stringify({ success: status < 400, data }), { status, headers: { 'Content-Type': 'application/json' } });
+const emptyBoard = (id: string) => ({ programId: id, asOf: '2026-10-30T00:00:00.000Z',
+  summary: { overallRisk: null, asOf: '2026-10-30T00:00:00.000Z', riskItems: { total: 0, critical: 0, open: 0, high: 0 }, kris: { total: 0, red: 0, amber: 0, notEvaluated: 0 },
+    qtls: { total: 0, breached: 0, approaching: 0, notEvaluated: 0 }, signals: { total: 0, open: 0, high: 0 }, sites: { total: 0, enhanced: 0 }, patients: { scored: 0, flagged: 0, review: 0 } },
+  attention: [], report: null, reportMarkdown: null, assessment: null, items: [], kris: [], qtls: [], signals: [], patients: [], sites: [], oversight: {}, plan: null, governingPlanId: null, actions: [], freshness: [] });
+const boardReads = () => h.request.mock.calls.filter(([method, path]) => method === 'GET' && String(path).includes('/rbm-board/'));
+const picker = () => screen.getByRole('combobox', { name: 'Select a project for risk-based monitoring' });
+function retained(node: Element, event: string): (value?: unknown) => void {
+  const key = Object.keys(node).find(name => name.startsWith('__reactProps$'))!;
+  return (node as unknown as Record<string, Record<string, (value?: unknown) => void>>)[key][event];
+}
+function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(done => { resolve = done; }); return { promise, resolve }; }
+beforeEach(() => {
+  clearShellProject(); seedCompanySession({ organizationId: '7' });
+  h.projects.length = 0; h.send.mockReset(); h.request.mockReset().mockImplementation(async (method: string, path: string) => {
+    if (method === 'GET' && path === '/api/mdx-rbm/rbm-programs') return envelope(rows);
+    if (method === 'GET' && path.startsWith('/api/mdx-rbm/rbm-board/')) return envelope(emptyBoard(path.split('/').at(-1)!));
+    throw new Error(`Unexpected RBM request ${method} ${path}`);
+  });
+});
+afterEach(() => { cleanup(); endCompanySession(); clearShellProject(); vi.unstubAllGlobals(); });
+
+describe('RBM project context', () => {
+  it('opens the selected empty project instead of the first roster row and does not seed data', async () => {
+    publishShellProject({ id: B, title: 'Unverified shell label' });
+    render(<Rbm onNav={vi.fn()} />);
+    expect(await screen.findByText('No RBM data for Actual project B yet')).toBeTruthy();
+    expect(picker()).toHaveProperty('value', B);
+    expect(boardReads().map(([, path]) => path)).toEqual([`/api/mdx-rbm/rbm-board/${B}`]);
+    expect(h.request.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+    expect(h.send).not.toHaveBeenCalled();
+  });
+  it('requires a choice without a shell project and carries an admitted choice to Vault and Tasks', async () => {
+    const onNav = vi.fn(); render(<Rbm onNav={onNav} />);
+    await screen.findByText('Choose a project for risk-based monitoring');
+    expect(boardReads()).toHaveLength(0);
+    fireEvent.change(picker(), { target: { value: B } });
+    await screen.findByText('No RBM data for Actual project B yet');
+    expect(readShellProject()).toMatchObject({ id: B, title: 'Actual project B', code: 'B-1', productType: 'device' });
+    fireEvent.click(screen.getByRole('button', { name: /Vault Monitoring reports/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Tasking Unified task board/ }));
+    expect(onNav.mock.calls).toEqual([['vault'], ['tasks']]);
+    expect(readShellProject()?.id).toBe(B);
+  });
+  it('does not replace an unavailable explicit project with another project', async () => {
+    publishShellProject({ id: C, title: 'Unavailable project' });
+    render(<Rbm onNav={vi.fn()} />);
+    await screen.findByText('This project is not available for risk-based monitoring');
+    expect(boardReads()).toHaveLength(0); expect(readShellProject()?.id).toBe(C);
+    expect(screen.getByRole('button', { name: /Vault Monitoring reports/ })).toHaveProperty('disabled', true);
+  });
+  it('withdraws the old project while the next board is pending', async () => {
+    publishShellProject({ id: A }); render(<Rbm onNav={vi.fn()} />);
+    await screen.findByText('No RBM data for Actual project A yet');
+    const waiting = deferred<Response>(), normal = h.request.getMockImplementation()!;
+    h.request.mockImplementation((method: string, path: string) => path.endsWith(`/rbm-board/${B}`) ? waiting.promise : normal(method, path));
+    fireEvent.change(picker(), { target: { value: B } });
+    await waitFor(() => expect(boardReads().some(([, path]) => path.endsWith(B))).toBe(true));
+    expect(screen.queryByText('No RBM data for Actual project A yet')).toBeNull();
+    await act(async () => { waiting.resolve(envelope(emptyBoard(B))); });
+    expect(await screen.findByText('No RBM data for Actual project B yet')).toBeTruthy();
+  });
+  it('retires retained project selection after account replacement and project A to B to A', async () => {
+    publishShellProject({ id: A }); render(<Rbm onNav={vi.fn()} />);
+    await screen.findByText('No RBM data for Actual project A yet');
+    const oldSelection = retained(picker(), 'onChange');
+    await act(async () => { publishShellProject({ id: B }); });
+    await screen.findByText('No RBM data for Actual project B yet');
+    await act(async () => { publishShellProject({ id: A }); });
+    await screen.findByText('No RBM data for Actual project A yet');
+    act(() => oldSelection({ target: { value: B } }));
+    expect(readShellProject()?.id).toBe(A);
+    const currentSelection = retained(picker(), 'onChange');
+    act(() => { seedCompanySession({ id: '99', organizationId: '7' }, 'replacement'); currentSelection({ target: { value: B } }); });
+    expect(readShellProject()?.id).not.toBe(B);
+  });
+  it('retires the old selector and admits a fresh visit after a batched project A to B to A', async () => {
+    publishShellProject({ id: A }); render(<Rbm onNav={vi.fn()} />);
+    await screen.findByText('No RBM data for Actual project A yet');
+    const oldSelection = retained(picker(), 'onChange');
+    await act(async () => { publishShellProject({ id: B }); publishShellProject({ id: A }); });
+    await screen.findByText('No RBM data for Actual project A yet');
+    oldSelection({ target: { value: B } }); expect(readShellProject()?.id).toBe(A);
+    fireEvent.change(picker(), { target: { value: B } });
+    expect(await screen.findByText('No RBM data for Actual project B yet')).toBeTruthy();
+  });
+  it('blocks retained navigation after raw browser bearer drift or unmount', async () => {
+    const onNav = vi.fn(); publishShellProject({ id: B }); const view = render(<Rbm onNav={onNav} />);
+    await screen.findByText('No RBM data for Actual project B yet');
+    const oldNav = retained(screen.getByRole('button', { name: /Vault Monitoring reports/ }), 'onClick');
+    act(() => { setAuthToken('unadopted.browser.bearer'); oldNav(); });
+    expect(onNav).not.toHaveBeenCalled(); view.unmount(); oldNav(); expect(onNav).not.toHaveBeenCalled();
+  });
+  it('preserves the selected project across canonical bearer refresh without extra reads', async () => {
+    publishShellProject({ id: B }); render(<Rbm onNav={vi.fn()} />);
+    await screen.findByText('No RBM data for Actual project B yet');
+    const count = h.request.mock.calls.length;
+    await act(async () => { await rotateCompanyBearer(); });
+    expect(picker()).toHaveProperty('value', B); expect(h.request).toHaveBeenCalledTimes(count);
+  });
+  it('keeps admitted project and conversation scope during the normal persisted-record board reload', async () => {
+    const recordedBoard = { ...emptyBoard(A), assessment: { id: 1, framework: 'ich_e6r3', version: 1, status: 'draft', updated: null, approval: null } };
+    h.request.mockImplementation(async (_method: string, path: string) => path.endsWith('/rbm-programs') ? envelope(rows) : envelope(recordedBoard));
+    publishShellProject({ id: A }); render(<Rbm onNav={vi.fn()} />);
+    await screen.findByRole('button', { name: 'Persisted monitoring record — reload' });
+    const normal = h.request.getMockImplementation()!, waiting = deferred<Response>();
+    h.request.mockImplementation((method: string, path: string) => path.endsWith(`/rbm-board/${A}`) ? waiting.promise : normal(method, path));
+    const rosterReads = h.request.mock.calls.filter(([, path]) => path.endsWith('/rbm-programs')).length;
+    h.projects.length = 0;
+    fireEvent.click(screen.getByRole('button', { name: 'Persisted monitoring record — reload' }));
+    await waitFor(() => expect(boardReads()).toHaveLength(2));
+    expect(picker()).toHaveProperty('value', A);
+    expect(screen.queryByText('No RBM data for Actual project A yet')).toBeNull();
+    expect(h.projects.length).toBeGreaterThan(0);
+    expect(h.projects.every(id => id === A)).toBe(true);
+    expect(h.request.mock.calls.filter(([, path]) => path.endsWith('/rbm-programs'))).toHaveLength(rosterReads);
+    await act(async () => { waiting.resolve(envelope(recordedBoard)); });
+    expect(await screen.findByRole('button', { name: 'Persisted monitoring record — reload' })).toBeTruthy();
+  });
+  it.each(['malformed', 'unavailable'])('reports a %s roster read as failure, with no wrong-project board', async mode => {
+    h.request.mockResolvedValue(mode === 'malformed' ? envelope([{ id: 'invalid', label: 'Rejected private row' }]) : envelope(null, 503));
+    publishShellProject({ id: B }); render(<Rbm onNav={vi.fn()} />);
+    await screen.findByText("Couldn't load RBM studies");
+    expect(boardReads()).toHaveLength(0); expect(screen.queryByText('Rejected private row')).toBeNull();
+  });
+  it('keeps relationship reconciliation distinct from a successful empty roster', async () => {
+    h.request.mockResolvedValue(new Response(JSON.stringify({ success: true, data: [], meta: { reconciliationRequired: true } }), { headers: { 'Content-Type': 'application/json' } }));
+    render(<Rbm onNav={vi.fn()} />);
+    expect(await screen.findByText('Monitoring project relationships need repair')).toBeTruthy();
+    expect(screen.queryByText('No monitoring projects yet')).toBeNull(); expect(boardReads()).toHaveLength(0);
+  });
+});

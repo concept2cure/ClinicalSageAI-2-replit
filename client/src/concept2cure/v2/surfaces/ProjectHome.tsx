@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useId, useCallback } from 'react';
-import { useAuthUser } from '@/services/portal/authService';
+import { authService, useAuthUser } from '@/services/portal/authService';
+import { getAuthToken } from '@/utils/authToken';
 import { I } from '../icons';
 import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -9,7 +10,7 @@ import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL } from '../dossierReadiness';
 import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
-import { projectStepId, readShellProject, shellProgramId, updateShellProject, useShellProject } from '../shellProject';
+import { captureShellProjectGuard, projectStepId, readShellProject, shellProgramId, updateShellProject, useShellProject } from '../shellProject';
 import { consumeNavParams } from '../navParams';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
@@ -47,6 +48,7 @@ import { ProjectPlan } from './ProjectPlan';
 import { biotechPlanEntry } from './ProjectBiotechPlan';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
+import { ProjectSettings } from './ProjectSettings';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -89,6 +91,7 @@ declare global {
 /** GET /api/c2c/projects/:id — regulatory_programs metadata (bare object). */
 interface ProgramRow {
   id: string;
+  riskBasedMonitoring?: boolean;
   registry_id?: string | null;
   code: string | null;
   name: string | null;
@@ -216,14 +219,16 @@ function Anchored<T>(props: {
    and PDF viewer, and the same honest states (a failed read is an error with a
    retry, not an empty vault). Filing, uploads and version history stay in the
    Vault, which the header opens. */
-function ProjectEvidence({ pid, name, onNav, onAsk, available }: {
+function ProjectEvidence({ pid, name, onNav, onAsk, available, monitoring, onMonitoring }: {
   pid: string; name: string | null; onNav: (id: string) => void; onAsk: (text: string) => void; available: (id: string) => boolean;
+  monitoring: boolean; onMonitoring: () => void;
 }) {
   const [toast, fireToast] = useToast();
   return (
     <section className="pj-sec pj-evidence" aria-labelledby="pj-evidence-h">
       <div className="pj-sec-h">
         <h2 id="pj-evidence-h">Project files</h2>
+        {monitoring && available('rbm') && <button type="button" className="btn ghost" onClick={onMonitoring}>Open risk-based monitoring {I.right}</button>}
         {available('vault') && (
           <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('vault')}>
             {STEP_DOORS.vault} {I.right}
@@ -1442,12 +1447,33 @@ function ProjectReportsDoor({ onNav }: { onNav: (id: string) => void }) {
 
 /* ════ ProjectHome — the full workspace surface ════ */
 
-export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
+export function ProjectHome(props: SurfaceViewProps) {
+  const selection = useShellProject();
+  const actor = useAuthUser();
+  const session = useAuthoringReadSession(actor);
+  const owner = JSON.stringify([selection?.id ?? null, session.actor, session.key]);
+  const pinOwner = useRef(owner);
+  useEffect(() => {
+    if (pinOwner.current === owner) return;
+    pinOwner.current = owner;
+    window.C2C_SOURCE_PINS = [];
+  }, [owner]);
+  return <ProjectWorkspace key={owner} {...props} selection={selection} actor={actor} session={session} />;
+}
+
+type ProjectWorkspaceProps = SurfaceViewProps & {
+  selection: ReturnType<typeof useShellProject>;
+  actor: ReturnType<typeof useAuthUser>;
+  session: ReturnType<typeof useAuthoringReadSession>;
+};
+
+/** One project's local drafts and reads belong to one account/session visit.
+ * Step and title changes retain this workspace; ownership changes retire it. */
+function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, session: projectSession }: ProjectWorkspaceProps) {
   // Other v2 surfaces treat onAsk as optional; keep that contract so ProjectHome
   // renders standalone (and in tests) without a host wired up.
   const ask = onAsk || (() => {});
   const available = useSurfaceAvailable();
-  const sel = useShellProject();
 
   // Selected-project identity handed off from the Projects surface. Its `id` is
   // the C2C regulatory_programs UUID, which keys the /api/c2c/projects/:id
@@ -1468,23 +1494,21 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   // it is why this resolves to null instead: no project is a state the surface
   // renders honestly, whereas the wrong project is not.
   const pid = typeof sel?.id === 'string' && sel.id !== 'new' ? sel.id : null;
-  const pinProgram = useRef(pid);
-  useEffect(() => {
-    if (pinProgram.current === pid) return;
-    pinProgram.current = pid;
-    window.C2C_SOURCE_PINS = [];
-  }, [pid]);
+  const monitoringVisit = useRef(captureShellProjectGuard());
+  const monitoringMounted = useRef(true);
+  useEffect(() => { monitoringMounted.current = true; return () => { monitoringMounted.current = false; }; }, []);
+  if (!monitoringVisit.current()) monitoringVisit.current = captureShellProjectGuard();
+  const monitoringCurrent = monitoringVisit.current;
 
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
-  const teamActor = useAuthUser();
-  const projectSession = useAuthoringReadSession(teamActor);
+  const [metadataEpoch, setMetadataEpoch] = useState(0);
   const projectPath = pid ? `/api/c2c/projects/${pid}` : null;
-  const progState = useLiveData<ProgramRow>(projectPath, [projectPath], undefined,
-    { key: JSON.stringify([pid, projectSession.actor, projectSession.key]), current: projectSession.sameRevision });
+  const progState = useLiveData<ProgramRow>(projectPath, [projectPath, metadataEpoch], undefined,
+    { key: JSON.stringify([pid, projectSession.actor, projectSession.key, metadataEpoch]), current: projectSession.sameRevision });
   const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
   const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
-  const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
+  const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null, [pid, metadataEpoch]);
   /* The dossier (FILING_SPINE F23): the readiness card, the module rows and
      what AnA is told, from one read. */
   const dossier = useProjectDossier(pid);
@@ -1802,6 +1826,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           )}
           <ProjectReportsDoor onNav={onNav} />
         </div>
+        {pid && <ProjectSettings programId={pid} onSaved={() => setMetadataEpoch(value => value + 1)} />}
       </div>
 
       {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict
@@ -1867,7 +1892,9 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               room sat under Author. */}
           {stage === 'evidence' && pid && (
             <div className="pj-stagebody">
-              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} />
+              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available}
+                monitoring={prog?.id === pid && prog.riskBasedMonitoring === true && !progState.loading && !progState.error}
+                onMonitoring={() => { const bearer = getAuthToken(); if (bearer && monitoringMounted.current && monitoringCurrent() && projectSession.sameRevision() && authService.captureSessionReadGuard(bearer).current()) onNav('rbm'); }} />
               <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
               <ComingLater stage="evidence" device={deviceFiling} />
             </div>
