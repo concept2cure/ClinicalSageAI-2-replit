@@ -23,7 +23,11 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { firstName: 'Dana' } }) }));
+// The real module's other exports (authService, …) stay real; only the signed-in person is stood in.
+vi.mock('@/services/portal/authService', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useAuth: () => ({ user: { firstName: 'Dana' } }),
+}));
 vi.mock('@/hooks/useGlobalRiCatalog', () => ({
   useGlobalRiCatalog: () => ({ catalog: null, loading: false, error: undefined }),
 }));

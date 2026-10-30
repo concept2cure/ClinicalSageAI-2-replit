@@ -65,7 +65,9 @@ const PREREQ = `
   INSERT INTO users (id, name, email) VALUES (42, '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 42, 'member');
   INSERT INTO users (id, name, email) VALUES (43, '${APPROVER.name}', '${APPROVER.email}');
-  INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 43, 'member');
+  -- The approver's role is read from this row, not the token's roles claim (IAM-10; the authoring router since
+  -- P-72 slice 1a): an approval signature decides a workflow step only for an approver.
+  INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 43, 'approver');
   INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROJECT}', 1);
 `;
 
@@ -90,6 +92,8 @@ const MIGRATIONS = [
   'migrations/20260728_c2c_document_sections_timestamps.sql',
   'migrations/20260728_c2c_section_version_author_kind.sql',
   'migrations/20260728_authoring_document_governed_binding.sql',
+  // A signature reads the record's review-route standing (RR1a, 20261023).
+  'migrations/20261023_review_routes.sql',
 ];
 
 export async function signToken(claims: Record<string, unknown> = {}): Promise<string> {
