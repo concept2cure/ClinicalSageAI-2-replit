@@ -1,0 +1,20 @@
+# GREEN on the slice-2 working tree over 54b2929c54: tests/db/qms-training-assignments.dbtest.ts, 17 cases. Real PostgreSQL 16, RLS_ENFORCE=on, app_service, database c2c_mr12_trn_dbtest (2026-10-30T01:47:22Z)
+ ✓ tests/db/qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > an administrator assigns a role and a person: one row and one ledger pair each, committed together 187ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > the Approver role stands in while nobody is designated; once someone is, the designee assigns and the Approver role alone does not 145ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > a member and a manager are refused by the authority rule, a viewer by the editor gate, on assigning and on removing; nothing is written 145ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > an approver who cannot read the authored document is refused with QMS_DOCUMENT_VIEW_DENIED; shared onto it, the same approver may assign 191ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > the authority is read on the write's own transaction > a demotion committed while the write waits on the membership row is seen: 403, nothing written 1513ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > the authority is read on the write's own transaction > an organization pending deletion takes no assignment, though the lifecycle guard still holds it as active 79ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > the same role or person twice is 409 QMS_ALREADY_ASSIGNED 99ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > another organization's document is 404 on the read, the assignment and the removal 56ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a role that is not live in this organization is 422 QMS_JOB_ROLE_NOT_FOUND; a person who is not an active member is 422 QMS_NOT_A_MEMBER 148ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a form or a specification is 409 QMS_NOT_TRAINABLE_TYPE; a retired document is 409 QMS_DOCUMENT_RETIRED 98ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a body naming both subjects, neither, or an unknown field is 422; a seven-character reason is 400; a bad id is 422 89ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a ledger that cannot be written is 500 AUDIT_WRITE_FAILED, and the assignment was not made 20ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > removing an assignment > is soft and audited; the same subject can be assigned again, and both rows stay 114ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > removing an assignment > an assignment of another document is 404 on this one 34ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > removing an assignment > nobody removes an assignment that covers themselves, by name or by a role they hold: 403 QMS_TRAINING_SELF_UNASSIGN; another administrator may 144ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > who is assigned: the one resolver > the read lists the assignments and resolves the people: active only, each once, with every path 369ms
+ ✓ tests/db/qms-training-assignments.dbtest.ts > who is assigned: the one resolver > the resolver tells "assigned to nobody" from "assigned, but nobody active", and answers whether one person is assigned 154ms
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
