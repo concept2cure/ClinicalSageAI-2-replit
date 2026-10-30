@@ -1,0 +1,439 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts
+{
+  "timestamp": "2026-10-30T19:49:59.681Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-document-approval-signature.test.ts
+{
+  "timestamp": "2026-10-30T19:50:02.308Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T19:50:02.309Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts
+{
+  "timestamp": "2026-10-30T19:50:02.309Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > QMS approval rechecks on the reserved request connection > returns safe unavailable when current authority cannot be read on the actual signing client
+[signing-authority] signer role lookup failed: Private database diagnostic for this fixture
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > QMS approval rechecks on the reserved request connection > has no pooled fallback when the request-owned database context is missing
+{
+  "timestamp": "2026-10-30T19:50:02.489Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-route failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > permits an uninvolved signer and records enforced two-person attribution when contributors exist without an original author
+{
+  "timestamp": "2026-10-30T19:50:02.538Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 9,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:11"
+    },
+    "err": "[vitest] No \"db\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > is effective from the approval day when no date is given, never the prior date, and the manifest binds it
+{
+  "timestamp": "2026-10-30T19:50:02.541Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 9,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:11"
+    },
+    "err": "[vitest] No \"db\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > QMS approval rechecks on the reserved request connection > refuses an actor now demoted after an earlier allowed authority read without writing or signing 37ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > QMS approval rechecks on the reserved request connection > returns safe unavailable when current authority cannot be read on the actual signing client 6ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > QMS approval rechecks on the reserved request connection > has no pooled fallback when the request-owned database context is missing 4ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an empty body with 400 naming the missing signature components, and writes nothing 4ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a meaning other than APPROVED — an approval means one thing 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a signer whose org role carries no signing authority with 403, before checking the password 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a wrong password with 401, counts it against the account, and writes nothing 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a locked account with 423 before its password is compared (F-27) 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an account that is not active before its password is compared (F-28) 5ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the password alone from a signer with an authenticator enrolled 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the author approving their own document with 403 and rolls back 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a document that is not in_review with 409 2ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a draft that was never sent for review with 409, writing no signature 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > 404s a document outside the tenant 5ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — controlled-text authorship > refuses a protected controlled-text contributor regardless of original author 3 2ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — controlled-text authorship > refuses a protected controlled-text contributor regardless of original author null 2ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — controlled-text authorship > fails closed on malformed protected authorship without signing or mutation 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > permits an uninvolved signer and records enforced two-person attribution when contributors exist without an original author 6ms
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT
+{
+  "timestamp": "2026-10-30T19:50:02.547Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 9,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:11"
+    },
+    "err": "[vitest] No \"db\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > records password+totp only when the verifier actually verified a second factor
+{
+  "timestamp": "2026-10-30T19:50:02.551Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 9,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:11"
+    },
+    "err": "[vitest] No \"db\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature
+{
+  "timestamp": "2026-10-30T19:50:02.556Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve failed",
+  "context": {
+    "err": "electronic_signatures insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > is effective from the approval day when no date is given, never the prior date, and the manifest binds it 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > refuses an effective date before the database day with 422, and signs nothing 2ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT 4ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > records password+totp only when the verifier actually verified a second factor 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > returns explicit recovery and discards the request connection when the COMMIT reply is lost 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature 2ms
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts
+{
+  "timestamp": "2026-10-30T19:50:03.662Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-qms-retire.test.ts
+{
+  "timestamp": "2026-10-30T19:50:04.608Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T19:50:04.609Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts
+{
+  "timestamp": "2026-10-30T19:50:04.610Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning retirement, then COMMIT
+{
+  "timestamp": "2026-10-30T19:50:04.726Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:5"
+    },
+    "err": "[vitest] No \"db\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > keeps today's admissibility: a draft can be retired too, and the ledger says where it came from
+{
+  "timestamp": "2026-10-30T19:50:04.733Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:5"
+    },
+    "err": "[vitest] No \"db\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > records password+totp only when the verifier actually verified a second factor
+{
+  "timestamp": "2026-10-30T19:50:04.738Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:5"
+    },
+    "err": "[vitest] No \"db\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text
+{
+  "timestamp": "2026-10-30T19:50:04.741Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire failed",
+  "context": {
+    "err": "electronic_signatures insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a viewer before touching the database or the signer (403) 24ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > a reason alone does not retire: 400 ESIGNATURE_COMPONENT_MISSING naming password and meaning; nothing verified, nothing written 6ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > an empty body names every missing component 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a reason shorter than the floor (8) before verifying anything 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the meaning APPROVED: a retirement is signed as a retirement (P-51) 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the meaning approval: a retirement is signed as a retirement (P-51) 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the meaning REVIEWED: a retirement is signed as a retirement (P-51) 4ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses an editor whose org role carries no signing authority with 403, before the password is looked at 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a wrong password with 401, counts it against the account, and writes nothing 6ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a locked account with 423 before its password is compared 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the password alone from a signer with an authenticator enrolled 2ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a document that is already retired with 409 and rolls back 5ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > 404s a document outside the tenant 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning retirement, then COMMIT 7ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > keeps today's admissibility: a draft can be retired too, and the ledger says where it came from 5ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > records password+totp only when the verifier actually verified a second factor 4ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text 3ms
+stdout | server/routes/__tests__/qms-personal-training.test.ts
+{
+  "timestamp": "2026-10-30T19:50:05.763Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T19:50:05.765Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/qms-personal-training.test.ts
+{
+  "timestamp": "2026-10-30T19:50:05.765Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > rolls the record back if the chained audit refuses
+{
+  "timestamp": "2026-10-30T19:50:07.007Z",
+  "level": "error",
+  "message": "[mdx-qms] training-ack failed",
+  "context": {
+    "err": "Audit refused",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > fails closed without the request-pinned context
+{
+  "timestamp": "2026-10-30T19:50:07.025Z",
+  "level": "error",
+  "message": "[mdx-qms] training-ack failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > refuses fictional server-owned contributor metadata during native creation 22ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > keeps document data and exposes actual release text through the pinned client 14ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > allows a viewer to record only their own explicit attestation with atomic audit 12ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > refuses fabricated claims before a transaction: {"userId":99} 5ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > refuses fabricated claims before a transaction: {"understood":false} 4ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > refuses fabricated claims before a transaction: {"method":"e-signature"} 3ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > refuses fabricated claims before a transaction: {"quizScore":100} 3ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > refuses a stale digest without recording or claiming an acknowledgement 4ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > rolls the record back if the chained audit refuses 6ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > returns the same current receipt on a retry without a second record or audit 9ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > does not claim rollback when the COMMIT response is uncertain; rereading shows the persisted receipt 6ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native personal QMS training request contract > fails closed without the request-pinned context 3ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native controlled QMS text request contract > saves controlled draft text through the same request client without a pooled fallback 4ms
+stderr | server/routes/__tests__/qms-personal-training.test.ts > native controlled QMS text request contract > rolls the controlled text back when its chained audit refuses
+{
+  "timestamp": "2026-10-30T19:50:07.041Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-controlled-text failed",
+  "context": {
+    "err": "Audit refused",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/qms-personal-training.test.ts > native controlled QMS text request contract > requires the pinned request client for a controlled save
+{
+  "timestamp": "2026-10-30T19:50:07.044Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-controlled-text failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native controlled QMS text request contract > refuses a stale controlled save and mixing legacy fields before any mutation 6ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native controlled QMS text request contract > rechecks actual viewer membership even when the session still claims editor access 3ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native controlled QMS text request contract > rolls the controlled text back when its chained audit refuses 3ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native controlled QMS text request contract > requires the pinned request client for a controlled save 2ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native controlled QMS text request contract > reports uncertain controlled-text COMMIT without a false success and supports rereading 5ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > native controlled QMS text request contract > does not expose training content from a mismatched tenant row 2ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > uncertain QMS writes expose safe recovery information > does not reflect a custom acknowledgement COMMIT error message or code 3ms
+ ✓ server/routes/__tests__/qms-personal-training.test.ts > uncertain QMS writes expose safe recovery information > does not reflect a custom controlled-text COMMIT error message or code 2ms
+stderr | server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > reports a failure and never throws into the act it follows
+{
+  "timestamp": "2026-10-30T19:50:07.806Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 3,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:x"
+    },
+    "err": "db down"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > reports a failure part way and never throws
+{
+  "timestamp": "2026-10-30T19:50:07.810Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 3,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:1:user:5"
+    },
+    "err": "db down"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > leaves the open task when it already records the same thing 3ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > closes the open task, then writes the next under the organisation, the source and the actor 3ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > closes the open task as the act says and writes none when nothing is owed 1ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > reports a failure and never throws into the act it follows 2ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > keeps what is wanted, closes the rest as the act says, and writes what is missing 2ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > never treats document 10 as under the prefix of document 1 1ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > reports a failure part way and never throws 1ms
+stdout | server/services/qms/__tests__/training-task.test.ts
+{
+  "timestamp": "2026-10-30T19:50:08.676Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-30T19:50:08.677Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/training-task.test.ts
+{
+  "timestamp": "2026-10-30T19:50:08.680Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/training-task.test.ts
+[database] Database connection successful
+
+stderr | server/services/qms/__tests__/training-task.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/training-task.test.ts
+{
+  "timestamp": "2026-10-30T19:50:08.791Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > is 14 days, the grace P-50 decided 1ms
+ ✓ server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > is due the day a version approved for a later day takes effect, and counts from then once acknowledged 1ms
+ ✓ server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > is due the day it took effect for someone covered before, so overdue once that day has come 0ms
+ ✓ server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > gives someone covered after it was in force 14 days from the day they were covered 0ms
+ ✓ server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > compares moments, not days: covered after a same-day approval is late, covered before it is not 0ms
+ ✓ server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > gives the grace when the version records no effective moment 0ms
+ ✓ server/services/qms/__tests__/training-task.test.ts > trainingTaskOf > has nothing to do once acknowledged 0ms
+
+ Test Files  5 passed (5)
+      Tests  76 passed (76)
+   Start at  19:49:54
+   Duration  14.00s (transform 4.96s, setup 121ms, import 12.72s, tests 357ms, environment 0ms)
+

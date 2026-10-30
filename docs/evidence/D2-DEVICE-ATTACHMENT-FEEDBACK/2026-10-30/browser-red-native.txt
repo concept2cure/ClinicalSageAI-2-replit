@@ -1,0 +1,1 @@
+{"checks":0,"expectedChecks":8,"failure":"locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Choose files', exact: true }) to be visible\u001b[22m\n","output":"/workspace/Concept2Cure/docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-red-native"}
