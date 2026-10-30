@@ -120,7 +120,7 @@ describe('after an upload, the Vault opens the document it recorded', () => {
   it('a response that names no document opens nothing: the document is not guessed', async () => {
     const state = { recorded: false };
     mockApi(cabinetTree([head]), cabinetTree([head], [uploaded]), state);
-    stubIngest([{ status: 201, body: { success: true, document: { version: '1.0' } } }], state);
+    stubIngest([{ status: 201, body: (form: FormData) => ingestReceipt(form, { document: { id: undefined } }) }], state);
     await uploadWhileReading(HEAD, new File(['%PDF-1.7 v1'], 'analytical-procedures.pdf'));
 
     await screen.findByText(/Not known whether it was recorded/);
@@ -129,6 +129,7 @@ describe('after an upload, the Vault opens the document it recorded', () => {
     // An unconfirmed reply triggers no success refresh or guessed target; the current detail remains open.
     await expect(screen.findByTestId('vault-target-missing', undefined, { timeout: 300 })).rejects.toThrow();
     expect(openTitle()).toContain(HEAD);
+    expect(apiRequest.mock.calls.filter(([method, path]) => method === 'GET' && path === `/api/c2c/project-vault/${PID}`)).toHaveLength(1);
   });
 
   it('a recorded document the re-read does not hold is said, not silently ignored', async () => {

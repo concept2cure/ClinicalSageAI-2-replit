@@ -134,7 +134,7 @@ describe('useVaultUpload — the document each file was recorded as', () => {
     const bodies: Array<{ status: number; body: unknown }> = [
       { status: 201, body: (form: FormData) => ingestReceipt(form, { document: { id: freshId } }) },
       { status: 415, body: { error: { message: 'File type .exe is not allowed' } } },
-      { status: 201, body: { success: true, document: {}, filing: {} } },
+      { status: 201, body: (form: FormData) => ingestReceipt(form, { document: { id: undefined } }) },
       { status: 200, body: (form: FormData) => ingestReceipt(form, { document: { id: heldId, documentTitle: 'Protocol' },
         reupload: { unchanged: true, changes: [], differs: [] } }) },
     ];
