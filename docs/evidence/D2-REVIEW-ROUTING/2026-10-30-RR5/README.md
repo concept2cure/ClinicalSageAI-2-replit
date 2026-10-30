@@ -219,6 +219,60 @@ Run on the commit (`acceptance/phone-gates.txt`), all exit 0:
 - `ci:check-css-selector-shadowing`
 - `ci:check-shell-css-collisions`
 
+## The Review board read a signed reviewer as still awaiting (fixed)
+
+The phone run's desktop re-check found it (`desktop-after-fixes/06`). After Rae signed REVIEWER,
+the Review board still listed the document for her as "Awaiting your review", with Record
+review decision. The project Review tab and the Tasks tray read the same board, so they said
+the same.
+
+**Cause.** The board read only `authoring_reviews`. On a route, the reviewer's REVIEWER
+signature is their review (§2.8): it closes their route task, and it leaves their review request
+`pending`. So the store the board read and the route disagreed, and the board believed the store.
+
+**What already existed (Rule 3).**
+- `readRouteRounds` (`server/services/review/review-route-standing.ts:386`) already reads each
+  subject's latest route in bulk. It verifies every member's signature: the signer, the
+  document, the meaning and the digest. The Vault queue (`vault-review-queue.ts:183`), the QMS
+  list and `GET /documents/:id/review-route` already use it.
+- The board (`server/services/review/authoring-review-board.ts`) already decides each row's
+  state, its open work and who it waits on, through `authoring-review-board-standing.ts`.
+
+Nothing new was built. The board now calls the existing reader.
+
+**Fix.**
+- The board reads each document's latest route with `readRouteRounds`, on the same request
+  client. A failed read fails the board; it is never shown as "nobody signed".
+- A reviewer counts as having reviewed when that route names them, their signature verifies,
+  and the route is about the sections the document has today. The rule lives in one place,
+  `signedOnRoute` in `shared/authoring/peer-review.ts`, which the server and the client both
+  use. A signature over earlier content is not a review of today's text: that reviewer is
+  awaiting again. A later change request or rejection still governs.
+- The fields returned per request are `routeSignedAt` and `requestedByName`; per row,
+  `myReviewSignedAt`.
+- `awaitingMyReview` excludes a signed reviewer. The row now waits on the next reviewer who has
+  not signed. A document whose every reviewer signed is no longer open work, and its requester
+  still sees it.
+- The detail shows the reviewer as "Signed" with the date. The caller sees "Your review
+  signature recorded" and is offered no review decision. A queue whose reviewers all signed
+  reads "Reviewers signed, sign-off pending".
+
+**"requested by 1" (Open item 2, second half), fixed in the same read.** The request row and the
+provenance line now name the requester. The name is read from `users` through the
+organisation's membership. With no name they say "requested", never an id.
+
+**Red, then green.**
+- `board-signed/red.txt`, on `ffe938a93`'s code: after r1 signs, the board returns
+  `awaitingMyReview: true, mine: true` for r1.
+- `board-signed/red-client.txt`: the two client tests fail on `ffe938a93`'s client code. A third
+  test checks that a later change request is not hidden by an earlier signature; it passes on
+  both.
+- `board-signed/green-db.txt`: the RR5 PostgreSQL suite, 18 of 18 pass with RLS on as
+  `app_service`. Its two new tests drive the real board route through the real signing ceremony.
+- `board-signed/green-unit.txt`: 64 related test files, 677 tests pass. The suite
+  `authoring-review-board-access.pglite.test.ts` builds its own schema. It now includes the
+  route migration, since production always has those tables.
+
 ## Open
 
 1. **The shell's top bar at phone width.** It is 344 px wide in a 334 px column, so Get help
@@ -226,14 +280,9 @@ Run on the commit (`acceptance/phone-gates.txt`), all exit 0:
    trigger, which this run taps. The run records this and does not assert it. Fitting 44 px
    targets there needs a decision on what the bar holds at a phone's width. That is shell
    design, not RR5.
-2. **Two things seen in passing at every width and not investigated:**
-   - The Review board's project switch names the project by its id when the board is opened
-     from a link (`?program=`). The desktop screenshot 06 shows it.
-   - Its request rows read "requested by 1", a user id, not a name.
-3. **Seen in the desktop re-check, not investigated.** After Rae's REVIEWER signature, the
-   Review board still lists that document for her as "Awaiting your review"
-   (`desktop-after-fixes/06`). The signature closes her route task, but her review request
-   stays pending.
-4. **The Authoring OQ protocol** has not been run on RR5.
-5. **RR6:** Authoring approvers on the route, and deleting `POST /docs/:docId/submit` and
+2. **Seen in passing at every width and not investigated:** the Review board's project switch
+   names the project by its id when the board is opened from a link (`?program=`). The desktop
+   screenshot 06 shows it.
+3. **The Authoring OQ protocol** has not been run on RR5.
+4. **RR6:** Authoring approvers on the route, and deleting `POST /docs/:docId/submit` and
    `/docs/:docId/sign`, with `/e-sign` named as the replacement.

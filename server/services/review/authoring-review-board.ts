@@ -21,7 +21,10 @@
  * `requested` is the exception: it lists everything the caller asked for,
  * decided or not, so a requester sees the verdict rather than a vanished row.
  * Ownership is decided here, per row, from the store:
- *   awaitingMyReview — a pending authoring_reviews row names the caller
+ *   awaitingMyReview — a pending authoring_reviews row names the caller, and
+ *                      the caller has not signed REVIEWER on the document's
+ *                      review route over today's sections (RR5: on a route
+ *                      that signature is the review; readRouteRounds reads it)
  *   requestedByMe    — the caller asked for a review on it
  *   atMySignOff      — the CURRENT pending step's approver_email is the caller
  *                      (the signature itself is applied in the authoring
@@ -48,7 +51,8 @@ import type { AuthoringReviewStanding } from '../../../shared/authoring/peer-rev
 import { fullVisibleAuthoringSnapshot, authoringSnapshotHash } from '../authoring/authoring-content-digests';
 import { authoringReviewStanding } from '../authoring/peer-review';
 import { AuthoringReadScopeError, getCurrentAuthoringReadScope, requireAuthoringReadScopeStillCurrent } from '../authoring/authoring-read-scope';
-import { boardActorId, deriveState, isOpenWork } from './authoring-review-board-standing';
+import { boardActorId, deriveState, isOpenWork, mySignedReviewAt, pickReviewerAndRole, reviewerLabel, routeSignaturesOf } from './authoring-review-board-standing';
+import { readRouteRounds, type RouteQueryable } from './review-route-standing';
 import { relTime, excerpt } from './authoring-review-board-formatting';
 export { deriveState, isOpenWork } from './authoring-review-board-standing';
 export { relTime, excerpt } from './authoring-review-board-formatting';
@@ -65,8 +69,11 @@ export interface ReviewRequestView {
   standing: AuthoringReviewStanding;
   comments: string | null;
   requestedBy: string | null;
+  requestedByName: string | null;
   requestedAt: string | null;
   reviewedAt: string | null;
+  /** Their REVIEWER signature on the route, over today's sections (RR5). */
+  routeSignedAt: string | null;
 }
 
 export interface ReviewItemView {
@@ -84,6 +91,7 @@ export interface ReviewItemView {
   myReviewId: string | null;
   myReviewStatus: string | null;
   myReviewStanding: AuthoringReviewStanding | null;
+  myReviewSignedAt: string | null;
   awaitingMyReview: boolean;
   requestedByMe: boolean;
   atMySignOff: boolean;
@@ -195,6 +203,7 @@ interface ReviewRow extends Record<string, unknown> {
   reviewed_at: string | Date | null;
   requested_at: string | Date | null;
   requested_by: string | null;
+  requested_by_name: string | null;
   reviewed_snapshot: unknown;
   reviewed_snapshot_hash: string | null;
   review_binding_basis: string | null;
@@ -290,12 +299,15 @@ async function loadRelatedRowsByDoc(
 ): Promise<RelatedRowsByDoc> {
   const [reviewRows, stepRows, countRows, sectionRows] = await Promise.all([
     sql.query(
-      `SELECT id::text AS id, doc_id::text AS doc_id, reviewer_id, reviewer_name, reviewer_email,
-              review_status, review_comments, reviewed_at, requested_at, requested_by,
-              reviewed_snapshot, reviewed_snapshot_hash, review_binding_basis
-         FROM authoring_reviews
-        WHERE tenant_id = $1 AND doc_id::text = ANY($2::text[])
-        ORDER BY requested_at DESC NULLS LAST, created_at DESC`,
+      `SELECT r.id::text AS id, r.doc_id::text AS doc_id, r.reviewer_id, r.reviewer_name, r.reviewer_email,
+              r.review_status, r.review_comments, r.reviewed_at, r.requested_at, r.requested_by,
+              COALESCE(NULLIF(TRIM(ru.name), ''), ru.email) AS requested_by_name,
+              r.reviewed_snapshot, r.reviewed_snapshot_hash, r.review_binding_basis
+         FROM authoring_reviews r
+         LEFT JOIN organization_users rou ON rou.organization_id = r.tenant_id AND rou.user_id::text = r.requested_by
+         LEFT JOIN users ru ON ru.id = rou.user_id
+        WHERE r.tenant_id = $1 AND r.doc_id::text = ANY($2::text[])
+        ORDER BY r.requested_at DESC NULLS LAST, r.created_at DESC`,
       [orgId, docIds],
     ).then((r) => r.rows as unknown as ReviewRow[]),
     sql.query(
@@ -366,14 +378,6 @@ async function loadCommentThread(
 // ─── Per-row derivation ──────────────────────────────────────────────────────
 
 /**
- * How a reviewer is named on screen. One place, because the queue row, the
- * request list and the "waiting on" line must agree on the fallback order.
- */
-function reviewerLabel(r: ReviewRow): string {
-  return r.reviewer_name || r.reviewer_email || String(r.reviewer_id);
-}
-
-/**
  * A predicate for "this id or email is the calling user" — the single place
  * the caller's two identities (user id, email) are compared against a row.
  */
@@ -390,7 +394,7 @@ function stepsForCurrentWorkflow(doc: DocRow, all: StepRow[]): StepRow[] {
 }
 
 /** The review requests on a document, in the API's shape. */
-function toReviewRequestViews(rows: ReviewRow[], currentSnapshotHash: string): ReviewRequestView[] {
+function toReviewRequestViews(rows: ReviewRow[], currentSnapshotHash: string, routeSigned: Map<string, string>): ReviewRequestView[] {
   return rows.map((r) => ({
     id: r.id,
     reviewerId: String(r.reviewer_id),
@@ -400,8 +404,10 @@ function toReviewRequestViews(rows: ReviewRow[], currentSnapshotHash: string): R
     standing: authoringReviewStanding(r, currentSnapshotHash),
     comments: r.review_comments ?? null,
     requestedBy: r.requested_by ?? null,
+    requestedByName: r.requested_by_name ?? null,
     requestedAt: iso(r.requested_at),
     reviewedAt: iso(r.reviewed_at),
+    routeSignedAt: routeSigned.get(String(r.reviewer_id)) ?? null,
   }));
 }
 
@@ -410,6 +416,7 @@ interface ScopeFlags {
   myReviewId: string | null;
   myReviewStatus: string | null;
   myReviewStanding: AuthoringReviewStanding | null;
+  myReviewSignedAt: string | null;
   awaitingMyReview: boolean;
   requestedByMe: boolean;
   atMySignOff: boolean;
@@ -431,8 +438,10 @@ function deriveScopeFlags(
 ): ScopeFlags {
   const {actorId,isMe}=identity;
   const myReview = reviews.find((r) => String(r.reviewer_id) === actorId) ?? null;
-  const myReviewStanding = reviewViews.find((r) => r.id === myReview?.id)?.standing ?? null;
-  const awaitingMyReview = isAssignedReviewWork(myReview,myReviewStanding);
+  const myView = reviewViews.find((r) => r.id === myReview?.id);
+  const myReviewStanding = myView?.standing ?? null;
+  const myReviewSignedAt = mySignedReviewAt(myView);
+  const awaitingMyReview = isAssignedReviewWork(myReview,myReviewStanding) && myReviewSignedAt === null;
   // The submitter of the approval chain is not recorded on the steps; the
   // document's creator is the closest attributable stand-in for "asked for
   // this sign-off" when no review request names a requester.
@@ -445,6 +454,7 @@ function deriveScopeFlags(
     myReviewId: myReview?.id ?? null,
     myReviewStatus: myReview?.review_status ?? null,
     myReviewStanding,
+    myReviewSignedAt,
     awaitingMyReview,
     requestedByMe,
     atMySignOff,
@@ -464,19 +474,6 @@ function isInScope(scope: ReviewScope, open: boolean, flags: ScopeFlags): boolea
 }
 
 /**
- * Who the row is waiting on, and in what capacity: the pending reviewer, else
- * the current signer, else the last reviewer on record. Its own function
- * because the fallback order is the rule, not an accident of statement order.
- */
-function pickReviewerAndRole(reviews: ReviewRow[], currentStep: StepRow | null): { reviewer: string; role: string } {
-  const pendingReview = reviews.find((r) => r.review_status === 'pending') ?? null;
-  if (pendingReview) return { reviewer: reviewerLabel(pendingReview), role: 'Reviewer' };
-  if (currentStep) return { reviewer: currentStep.approver_email ?? '', role: `${currentStep.role} sign-off` };
-  if (reviews[0]) return { reviewer: reviewerLabel(reviews[0]), role: 'Reviewer' };
-  return { reviewer: '', role: '' };
-}
-
-/**
  * The provenance line under a queue row — version, status, requester. Named so
  * that "what the board claims about where this row came from" has one author.
  */
@@ -484,7 +481,7 @@ function buildProvenance(doc: DocRow, reviews: ReviewRow[]): string | null {
   const provBits: string[] = [];
   if (doc.version) provBits.push(`v${doc.version}`);
   provBits.push(String(doc.status).toLowerCase().replace(/_/g, ' '));
-  const requester = reviews[0]?.requested_by;
+  const requester = reviews[0]?.requested_by_name;
   if (requester) provBits.push(`review requested by ${requester}`);
   return provBits.length ? provBits.join(' · ') : null;
 }
@@ -513,7 +510,7 @@ interface QueueItemContext {
  */
 function buildQueueItem(ctx: QueueItemContext): ReviewItemView {
   const { doc, reviews, reviewViews, steps, flags, firstSection, openComments } = ctx;
-  const { reviewer, role } = pickReviewerAndRole(reviews, flags.currentStep);
+  const { reviewer, role } = pickReviewerAndRole(reviews, reviewViews, flags.currentStep);
   return {
     id: doc.id,
     doc: doc.title || 'Untitled document',
@@ -527,6 +524,7 @@ function buildQueueItem(ctx: QueueItemContext): ReviewItemView {
     myReviewId: flags.myReviewId,
     myReviewStatus: flags.myReviewStatus,
     myReviewStanding: flags.myReviewStanding,
+    myReviewSignedAt: flags.myReviewSignedAt,
     awaitingMyReview: flags.awaitingMyReview,
     requestedByMe: flags.requestedByMe,
     atMySignOff: flags.atMySignOff,
@@ -628,6 +626,9 @@ export async function buildAuthoringReviewBoard(input: BuildReviewBoardInput): P
 
   const { reviewsByDoc, stepsByDoc, openCommentsByDoc, sectionsByDoc } =
     await loadRelatedRowsByDoc(sql, orgId, docs.map((d) => d.id));
+  // Each document's latest review route (RR5). A failed read fails the board.
+  const routeRead = { organizationId: orgId, subjectType: 'authoring_document' as const, subjectIds: docs.map((d) => d.id) };
+  const rounds = await readRouteRounds(sql as unknown as RouteQueryable, routeRead);
   const isMe = makeIsMe(String(readScope.actor.userId), readScope.actor.email);
 
   const queue: ReviewItemView[] = [];
@@ -636,7 +637,7 @@ export async function buildAuthoringReviewBoard(input: BuildReviewBoardInput): P
     const reviews = reviewsByDoc.get(doc.id) ?? [];
     const steps = stepsForCurrentWorkflow(doc, stepsByDoc.get(doc.id) ?? []);
     const sections = sectionsByDoc.get(doc.id) ?? [];
-    const reviewViews = toReviewRequestViews(reviews, currentSnapshotHash(doc,sections));
+    const reviewViews = toReviewRequestViews(reviews, currentSnapshotHash(doc,sections), routeSignaturesOf(rounds.get(doc.id), sections));
     const flags = deriveScopeFlags(doc, reviews, reviewViews, steps, {actorId:String(readScope.actor.userId),isMe});
     if (!isInScope(scope, isOpenWork(doc.status, reviewViews, steps), flags)) continue;
 

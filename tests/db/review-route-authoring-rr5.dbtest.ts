@@ -76,6 +76,7 @@ async function appFor(who: Who): Promise<express.Express> {
   a.use(establishRequestTenantScope);
   a.use('/api', authoringObjectAuthorization);
   a.use('/api/authoring', router);
+  a.use('/api/review', (await import('../../server/routes/review-board-routes')).default());
   return a;
 }
 
@@ -430,6 +431,47 @@ describe('a negative verdict returns the route and opens nobody’s step (RR5, �
     expect(res.body.route).toBeNull();
     expect(await memberOf(docId, 'r1')).toMatchObject({ status: 'pending' });
     expect((await routes(docId))[0].status).toBe('open');
+  });
+});
+
+describe('the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item)', () => {
+  type BoardReview = { reviewerId: string; status: string; routeSignedAt: string | null; requestedByName: string | null };
+  async function boardRow(who: Who, docId: string, scope = 'all') {
+    const res = await request(apps[who].app).get(`/api/review/board?scope=${scope}&limit=100`).set('Authorization', apps[who].auth);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    return res.body.data.queue.find((r: { id: string }) => r.id === docId);
+  }
+  const reviewOf = (row: { reviews: BoardReview[] }, who: Who) => row.reviews.find((r) => r.reviewerId === String(users[who]))!;
+
+  it('a reviewer who signed is no longer awaiting review; one who has not is; the request names who asked', async () => {
+    const docId = await draft('board');
+    expect((await ask(docId, ['r1', 'r2'])).status).toBe(200);
+    expect(await boardRow('r1', docId)).toMatchObject({ awaitingMyReview: true, mine: true, myReviewSignedAt: null });
+
+    const signed = await reviewSign('r1', docId);
+    expect(signed.status, JSON.stringify(signed.body)).toBe(200);
+    const r1 = await boardRow('r1', docId);
+    expect(r1).toMatchObject({ awaitingMyReview: false, mine: false, state: 'in-review', myReviewSignedAt: expect.any(String) });
+    expect(reviewOf(r1, 'r1')).toMatchObject({ status: 'pending', routeSignedAt: expect.any(String), requestedByName: names.author });
+    expect(reviewOf(r1, 'r2')).toMatchObject({ status: 'pending', routeSignedAt: null });
+    expect(r1.prov).toContain(`review requested by ${names.author}`);
+    expect(await boardRow('r1', docId, 'mine')).toBeUndefined();
+    expect(await boardRow('r2', docId)).toMatchObject({ awaitingMyReview: true, mine: true });
+
+    // Every reviewer signed: the review is done, so it is no longer open work; its requester still sees it.
+    expect((await reviewSign('r2', docId)).status).toBe(200);
+    expect(await boardRow('author', docId)).toBeUndefined();
+    expect(await boardRow('author', docId, 'requested')).toMatchObject({ state: 'approved', awaitingMyReview: false });
+  });
+
+  it('a signature over content the document no longer has is not a review of it: the reviewer is awaiting again', async () => {
+    const docId = await draft('board-changed');
+    expect((await ask(docId, ['r1', 'r2'])).status).toBe(200);
+    expect((await reviewSign('r1', docId)).status).toBe(200);
+    await owner.query(`UPDATE authoring_sections SET content = '<p>Changed after the signature.</p>' WHERE doc_id = $1 AND code = '2.5.2'`, [docId]);
+    const r1 = await boardRow('r1', docId);
+    expect(r1).toMatchObject({ awaitingMyReview: true, myReviewSignedAt: null });
+    expect(reviewOf(r1, 'r1')).toMatchObject({ routeSignedAt: null });
   });
 });
 
