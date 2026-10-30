@@ -1,0 +1,20 @@
+# Green
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > the built-in CSR templates > are exactly the IND 5.3.5.1 and 5.3.5.2 sections, the registry CSR and the E3 component, by the ids the library resolves 167ms
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > a CSR is recognised by its stored template, not its title > a document made from the IND 5.3.5.1 template is a CSR 4ms
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > a CSR is recognised by its stored template, not its title > a document made from the IND 5.3.5.2 template and renamed is a CSR, read from its stored row when the caller does not pass the template 6ms
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > a CSR is recognised by its stored template, not its title > a document made from the E3 template and renamed is a CSR 3ms
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > a CSR is recognised by its stored template, not its title > another Module 5 template is not (control) 3ms
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > a CSR is recognised by its stored template, not its title > the release gate refuses a template-made CSR with no scientific-review receipt 2559ms
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > the label > names a CSR in the singular or the plural 1ms
+ ✓ server/services/authoring/__tests__/csr-template-identity.pglite.test.ts > the label > does not name a nonclinical study report, a protocol or a clinical overview 0ms
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > asks for the scientific review before an approval, and sends the completed map with it 448ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the label does not name is caught by the server's refusal, and the panel opens instead of a reload 89ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the server names (made from a CSR template, or renamed) opens the scientific review before any approval is sent 51ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a document that is not a CSR approves as before, with no map 43ms
+      Tests  4 passed (4)
+
+# Every suite reaching the review context, the critique, the CSR rule, /sign or the workflow steps, and the new test (68 files)
+      1       Tests  1293 passed (1293)
+      1  Test Files  68 passed (68)
