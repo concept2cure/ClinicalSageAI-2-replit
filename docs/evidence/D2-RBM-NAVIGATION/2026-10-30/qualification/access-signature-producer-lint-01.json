@@ -1,0 +1,30 @@
+[
+  {
+    "file": "server/routes/mdx-rbm.ts",
+    "before": 7,
+    "after": 9,
+    "errors": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/rbm/rbm-signature-content.ts",
+    "before": 0,
+    "after": 0,
+    "errors": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/part11/signature-persistence.ts",
+    "before": 1,
+    "after": 1,
+    "errors": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/part11/governed-target-binders.ts",
+    "before": 0,
+    "after": 0,
+    "errors": 0,
+    "messages": []
+  }
+]
