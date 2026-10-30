@@ -37,13 +37,21 @@ vi.mock('../../db', () => ({ pool: { query: vi.fn(async () => ({ rows: [] })) },
 
 import { buildMemoryContextForChat } from '../memory-context-assembler';
 
+// Since cc1607c3a3 (isolated project recall) an open project reads its own memory only; the
+// organization's client memory is read when no project is open. Each layer is held to the rule here.
 describe('memory block', () => {
-  it('cites each atom without a confidence percentage', async () => {
+  it('cites a project atom without a confidence percentage, and leaves the organization layer out', async () => {
     const { memoryBlock } = await buildMemoryContextForChat({
       threadId: 't1', organizationId: 9, projectId: 4, query: 'deck',
     });
-    expect(memoryBlock).toContain('"Ingested: deck.pdf"');
     expect(memoryBlock).toContain('"Study 001 Risk/Safety Signals"');
+    expect(memoryBlock, 'an open project read the organization-wide memory').not.toContain('"Ingested: deck.pdf"');
+    expect(memoryBlock, 'a stored rule constant was presented as a probability').not.toMatch(/confidence/i);
+  });
+
+  it('cites an organization atom without a confidence percentage when no project is open', async () => {
+    const { memoryBlock } = await buildMemoryContextForChat({ threadId: 't1', organizationId: 9, query: 'deck' });
+    expect(memoryBlock).toContain('"Ingested: deck.pdf"');
     expect(memoryBlock, 'a stored rule constant was presented as a probability').not.toMatch(/confidence/i);
   });
 });
