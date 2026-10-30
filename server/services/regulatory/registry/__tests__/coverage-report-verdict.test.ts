@@ -70,7 +70,7 @@ describe('regulatory coverage report — the closing verdict', () => {
     for (const id of ['US_EUA', 'US_RFD']) {
       expect(json.usBiotechAuthoring?.filings.find(row => row.registryId === id)?.scopeConcerns.length).toBeGreaterThan(0);
     }
-    expect(json.usBiotechAuthoring?.unrepresentedNeeds.some(row => /expanded access/i.test(row.need) && row.existingOwners.length > 0)).toBe(true);
+    expect(json.usBiotechAuthoring?.unrepresentedNeeds.some(row => /expanded[- ]access/i.test(row.need) && row.existingOwners.length > 0)).toBe(true);
   });
 
   it('accounts for usable core and exact lifecycle documents without labelling them fully qualified', () => {

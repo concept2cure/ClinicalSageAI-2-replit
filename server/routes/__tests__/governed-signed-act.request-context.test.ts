@@ -38,7 +38,7 @@ describe('signed acts use the request context before any authority or credential
   it('keeps authority, signer verification and governed writes on the same pinned client', async () => {
     const res = await request(app()).post('/sign').send(body);
     expect(res.status, JSON.stringify(res.body)).toBe(201);
-    expect(h.authority).toHaveBeenCalledWith(42, 7, client);
+    expect(h.authority).toHaveBeenCalledWith(42, 7, client, { organizationStatuses: ['active'] });
     expect(h.deps).toHaveBeenCalledWith(client);
     expect(h.run).toHaveBeenCalledWith(client, 7, 42);
     expect(h.audit.mock.calls[0][0]).toBe(client);
@@ -58,7 +58,7 @@ describe('signed acts use the request context before any authority or credential
   it('keeps an authority refusal ahead of credential verification and the domain transaction', async () => {
     h.authority.mockResolvedValue({ status: 403, code: 'ESIGNATURE_NO_AUTHORITY', message: 'Nothing was signed.' });
     const res = await request(app()).post('/sign').send(body);
-    expect(res.status).toBe(403); expect(h.authority).toHaveBeenCalledWith(42, 7, client);
+    expect(res.status).toBe(403); expect(h.authority).toHaveBeenCalledWith(42, 7, client, { organizationStatuses: ['active'] });
     expect(h.reverify).not.toHaveBeenCalled(); expect(h.query).not.toHaveBeenCalled(); expect(h.run).not.toHaveBeenCalled();
   });
   it('keeps failed credential accounting outside the domain transaction and leaves the act unsigned', async () => {
