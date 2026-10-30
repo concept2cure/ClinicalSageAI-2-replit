@@ -33,6 +33,9 @@ jobs:
   # ═══════════════════════════════════════════════════════════════════════════
   setup:
     runs-on: ubuntu-latest
+    # Its only step with an effect creates a Neon branch for a pull request,
+    # and no job needs its outputs; on a push it held a runner to do nothing.
+    if: github.event_name == 'pull_request'
     outputs:
       neon_branch: ${{ steps.neon.outputs.branch_id }}
       db_url: ${{ steps.neon.outputs.db_url }}
@@ -65,31 +68,11 @@ jobs:
           branch_name: preview-${{ github.head_ref }}
           parent: ${{ secrets.NEON_PROD_BRANCH }}
 
-  # ═══════════════════════════════════════════════════════════════════════════
-  # 2. TYPE CHECK + LINT
-  # ═══════════════════════════════════════════════════════════════════════════
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - run: npm ci
-
-      - name: TypeScript type check (baseline-gated)
-        # Use the no-regression gate rather than bare `tsc` — the codebase
-        # carries a tracked typecheck-baseline (see .typecheck-baseline.json)
-        # because the strict result is ~2,600 latent errors that predate the
-        # RLS rollout. The gate fails on PRs that grow the count, ratchets
-        # down PRs that reduce it. Bare `tsc` would always fail here.
-        run: npm run ci:typecheck:no-regression
-
-      - name: ESLint
-        run: npm run lint || true
+  # 2. TYPE CHECK + LINT — removed 2026-10-30 (MR-02 Stage 3, OPS-25). It ran
+  # on every push and duplicated ci.yml's Lint job, steps "Run TypeScript check
+  # (no regression vs baseline)" (npm run ci:typecheck:no-regression) and "Run
+  # ESLint"; its own ESLint result was discarded (`|| true`). 7 runner-minutes
+  # a push for a verdict ci.yml already gives.
 
   # ═══════════════════════════════════════════════════════════════════════════
   # 3. REGULATORY VALIDATION
