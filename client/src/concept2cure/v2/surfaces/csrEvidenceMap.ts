@@ -16,7 +16,7 @@
  * reviewer's attestations. The server re-verifies every byte.
  */
 import {
-  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, isExactNumericalDisplayAt,
+  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, markupRanges, reportedDisplayAt,
   type CsrTableKey, type RetainedScientificRun, type ScientificCellClaim, type ScientificReviewSubmission,
 } from '@shared/authoring/csr-scientific-review';
 
@@ -55,13 +55,6 @@ export function claimableCells(runs: readonly RetainedScientificRun[]): CellRef[
   return cells;
 }
 
-/** Character ranges inside HTML tags and entities: a digit there is markup, not a reported result. */
-function markupRanges(content: string): Array<[number, number]> {
-  const ranges: Array<[number, number]> = [];
-  for (const m of content.matchAll(/<[^>]*>|&#?[a-zA-Z0-9]+;/g)) ranges.push([m.index ?? 0, (m.index ?? 0) + m[0].length]);
-  return ranges;
-}
-
 /**
  * Each place a retained cell's exact value appears in a section's saved text,
  * outside markup, on the shared number boundaries ("190" is not found inside
@@ -74,19 +67,14 @@ export function figureOccurrences(section: SavedSection, cells: readonly CellRef
   const content = section.content ?? '';
   if (!content.trim()) return [];
   const markup = markupRanges(content);
-  const inMarkup = (start: number, end: number) => markup.some(([a, b]) => start < b && end > a);
   const byDisplay = new Map<string, CellRef[]>();
   for (const cell of cells) byDisplay.set(cell.value, [...(byDisplay.get(cell.value) ?? []), cell]);
   const found = new Map<string, FigureOccurrence>();
   for (const [display, candidates] of byDisplay) {
     for (let at = content.indexOf(display); at !== -1; at = content.indexOf(display, at + 1)) {
       const end = at + display.length;
-      if (inMarkup(at, end)) continue;
-      let possible = candidates;
-      if (!isExactNumericalDisplayAt(content, at, display)) {
-        const percentOfCell = content[end] === '%' && isExactNumericalDisplayAt(content.slice(0, end), at, display);
-        possible = percentOfCell ? candidates.filter((c) => c.header.includes('%')) : [];
-      }
+      // The shared rule the server verifies a claim by (reportedDisplayAt).
+      const possible = candidates.filter((c) => reportedDisplayAt(content, at, display, c.header, markup));
       if (!possible.length) continue;
       const key = `${section.id}:${at}:${end}`;
       found.set(key, { key, sectionId: section.id, start: at, end, display, candidates: possible });

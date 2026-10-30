@@ -1,0 +1,9 @@
+# RED, slice 3a route test, against trunk 8659f31539's route and service (the three source files checked out from HEAD for the run, then restored; cmp clean):
+ × qms-training-compliance-assigned.dbtest.ts > compliance counts the people assigned (P-49) > a document assigned to nobody has no figure; one assigned by role and by name counts those people, with the reader's own line 533ms
+ × qms-training-compliance-assigned.dbtest.ts > training person by person is for administrators and QMS approvers (P-50 Q3) > the training records: an administrator and the Approver-role stand-in see every member's; anyone else only their own 127ms
+ × qms-training-compliance-assigned.dbtest.ts > training person by person is for administrators and QMS approvers (P-50 Q3) > training due to lapse: the people assigned only; every one for an administrator, only their own for anyone else 232ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { id: 784, …(9) } to match object { assignment: 'not_assigned', …(2) }
+AssertionError: expected undefined to be 'everyone' // Object.is equality
+AssertionError: expected undefined to be 'everyone' // Object.is equality
+      Tests  3 failed (3)

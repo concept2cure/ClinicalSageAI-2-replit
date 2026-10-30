@@ -1,0 +1,8 @@
+# Red: the committed tool (HEAD 813424f12)
+ × server/services/ana/__tests__/dispatch-qc-from-the-sequence.test.ts > dispatch_qc_check > gives no verdict from typed counts: without a sequence it refuses 46ms
+   → expected true to be undefined
+ × server/services/ana/__tests__/dispatch-qc-from-the-sequence.test.ts > dispatch_qc_check > reads the stored sequence, and typed counts that say "clear" change nothing 2ms
+   → expected "vi.fn()" to be called with arguments: [ { sequenceId: 12, …(1) } ]
+ × server/services/ana/__tests__/dispatch-qc-from-the-sequence.test.ts > dispatch_qc_check > asks for the sequence, not the counts, before AnA calls it 4ms
+   → expected [ 'region', 'validation_errors', …(2) ] to deeply equal [ 'sequence_id' ]
+      Tests  3 failed (3)

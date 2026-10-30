@@ -17,6 +17,8 @@ const modules = [
   'server/services/clinical-regulatory-evidence/csr-index-batch',
   'server/services/csr/cortex-authoring-context',
   'server/services/csr/cortex-authoring-reader',
+  // Imported by cortex-authoring-context since the scientific-review receipts.
+  'shared/authoring/csr-scientific-review',
 ];
 for (const path of modules) {
   const source = readFileSync(resolve(root, `${path}.ts`), 'utf8');
@@ -132,8 +134,13 @@ test('authoring selects efficacy evidence without unrelated safety facts', () =>
   assert.equal(r.status, 'available'); assert.equal(r.approvalRequired, true); assert.equal(r.clinicalVerification, 'not-established');
   assert.equal(r.releaseEligibilityVerified, false); assert.equal(r.source.dataCutDate, '2026-10-01');
 });
-test('synopsis efficacy section maps to its efficacy evidence', () => {
-  assert.equal(context(retained(), { ...selection, sectionNumber: '2.8' }).tables.length, 3);
+// 2026-10-30: this file had matched no runner, so it never ran. On 2026-10-29 the CSR lane deleted
+// csr-builder's invented synopsis children ('2.8' among them); E3's synopsis is one heading, section 2,
+// which reads every retained table (cortex-authoring-context.ts SECTIONS).
+test('the synopsis, E3 section 2, reads the efficacy evidence; the invented 2.8 is no section', () => {
+  const keys = context(retained(), { ...selection, sectionNumber: '2' }).tables.map(t => t.key);
+  for (const key of ['analysisPopulations', 'primaryEfficacy', 'secondaryEfficacy']) assert.ok(keys.includes(key), key);
+  assert.equal(context(retained(), { ...selection, sectionNumber: '2.8' }).tables.length, 0);
 });
 test('unsupported vital-sign section does not borrow general safety tables', () => {
   const r = context(retained(), { ...selection, sectionNumber: '12.5' }); assert.equal(r.status, 'unavailable'); assert.equal(r.tables.length, 0);

@@ -378,6 +378,24 @@ export async function isQmsTrainingAssignee(client: JobRoleSqlClient, orgId: num
   return (entry?.assignees.length ?? 0) > 0;
 }
 
+/**
+ * Who may read a version for training (D3, confirmed by P-50 Q2). Inline
+ * register text is the organization's to read, as before. Authored text is read
+ * by whoever its authored copy is shared with (authorizeQmsContentRead) and, in
+ * the training reader only, by the people assigned to train on the document:
+ * being assigned is the reason to read it, so it grants reading the released
+ * version, and nothing else (not the editor, not the version history). The
+ * bound authored document must still exist in this organization.
+ */
+export async function authorizeQmsTrainingRead(client: JobRoleSqlClient, orgId: number, userId: number, release: QmsDocumentRow): Promise<void> {
+  if (!release.authoring_document_id) return;
+  if (!(await isQmsTrainingAssignee(client, orgId, Number(release.id), userId))) {
+    return authorizeQmsContentRead(client as Parameters<typeof authorizeQmsContentRead>[0], orgId, userId, release);
+  }
+  const { rows } = await client.query('SELECT client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2', [release.authoring_document_id, orgId]);
+  if (!rows[0]?.client_program_id) throw new QmsContentRefusedError(409, 'QMS_CONTENT_REQUIRED', 'The bound authored document is unavailable.');
+}
+
 /* ─── Each controlled document's assignments (design §3.8, D4) ─── */
 
 const documentTarget = (documentId: number) => `qms-document:${documentId}`;

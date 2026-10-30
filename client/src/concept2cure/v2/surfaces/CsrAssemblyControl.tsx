@@ -21,6 +21,7 @@
  *   to be withdrawn in this sequence; and, after a placement refused part-way,
  *   "Withdraw the partly placed CSR files".
  */
+import { redactInternals } from '@/lib/queryClient';
 import React, { useCallback, useEffect, useState } from 'react';
 import { apiCall, apiErrorText } from '../apiCall';
 import { I } from '../icons';
@@ -227,7 +228,7 @@ function Declarations({ declarations }: { declarations: Record<string, Declarati
 function placementText(p: Placement): string {
   const files = p.leaves?.length ?? 0;
   if (p.state === 'placed') return `Placed in sequence ${p.sequenceNumber}: ${files} file(s).`;
-  if (p.state === 'partial') return `Partly placed in sequence ${p.sequenceNumber}: ${files} file(s) before ${p.error ?? 'a refusal'}. Place again into sequence ${p.sequenceNumber} to finish.`;
+  if (p.state === 'partial') return `Partly placed in sequence ${p.sequenceNumber}: ${files} file(s) before ${redactInternals(p.error, 'a refusal')}. Place again into sequence ${p.sequenceNumber} to finish.`;
   if (p.state === 'interrupted') return `Placement in sequence ${p.sequenceNumber} stopped before it finished: ${files} file(s) placed. Place again into sequence ${p.sequenceNumber} to finish.`;
   if (p.state === 'withdrawn' && p.withdrawal) {
     const w = p.withdrawal;

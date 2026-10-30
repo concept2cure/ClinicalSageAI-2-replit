@@ -16,6 +16,18 @@ import type { RequestSqlClient } from '../../db/requestDb';
 import { parseRouteRequest } from '../review/review-route';
 import type { TaskEventNotice } from '../tasking/task-side-effects';
 import { QMS_ROUTE_RULES, routeOpenEditRefusal, sendQmsRoute } from './qms-review-route';
+import { dayOrNull, isPendingEffective } from './in-force-release';
+
+/**
+ * D6 (MR-12 Stage 4, P-49): a version approved for a later day cannot be
+ * revised before it takes effect. Revising replaces the register row, so it
+ * would discard the approved version before it ever governed anything.
+ */
+function pendingRevisionRefusal(row: QmsDocumentRow): QmsContentRefusedError | null {
+  if (!isPendingEffective(row)) return null;
+  return new QmsContentRefusedError(409, 'QMS_REVISION_PENDING_EFFECT',
+    `Version ${row.version} is approved and takes effect on ${dayOrNull(row.effective_date)}. It cannot be revised before then, because revising would discard it. Nothing was revised.`);
+}
 
 type QmsReadContext = Pick<CreateContext, 'tenantId' | 'actor'> & { pool: RequestSqlClient };
 
@@ -231,6 +243,8 @@ export async function reviseControlledQmsDocument(ctx: CreateContext, id: number
   const current = await ctx.pool.query(`SELECT * FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [id, ctx.tenantId]);
   const row = current.rows[0];
   if (!row) throw new QmsContentRefusedError(404, 'QMS_DOCUMENT_NOT_FOUND', 'Document not found.');
+  const pending = pendingRevisionRefusal(row as QmsDocumentRow);
+  if (pending) throw pending;
   if (!row.authoring_document_id) return reviseLegacyRegistryDocument(ctx, row, reason, legacyBinding);
   await requireContentAccess(ctx, row.authoring_document_id, 'view');
   const client = await ctx.pool.connect();
@@ -264,6 +278,8 @@ export async function reviseControlledQmsDocument(ctx: CreateContext, id: number
     // RR4 (§2.9): a revision of a document on an open review route would leave review under it.
     const routeOpen = await routeOpenEditRefusal(tx, live as QmsDocumentRow);
     if (routeOpen) throw new QmsContentRefusedError(409, 'QMS_ROUTE_OPEN', `${routeOpen} Nothing was revised.`);
+    const pendingUnderLock = pendingRevisionRefusal(live as QmsDocumentRow);
+    if (pendingUnderLock) throw pendingUnderLock;
     // Re-read under the governing lock so a concurrent review edit cannot be copied from an earlier state.
     const latest = await captureQmsAuthoringContent(tx, live, false);
     if (JSON.stringify(latest) !== JSON.stringify(copy)) throw new QmsContentRefusedError(409, 'QMS_CONTENT_CHANGED', 'The saved content changed. Reopen this document before revising.');
@@ -296,6 +312,8 @@ async function reviseLegacyRegistryDocument(ctx: CreateContext, previous: Record
       throw new QmsContentRefusedError(409,'QMS_INVALID_STATE','This registry entry changed or is already a draft. Reopen it before revising.');
     const routeOpen = await routeOpenEditRefusal(client, row as QmsDocumentRow);
     if (routeOpen) throw new QmsContentRefusedError(409, 'QMS_ROUTE_OPEN', `${routeOpen} Nothing was revised.`);
+    const pendingUnderLock = pendingRevisionRefusal(row as QmsDocumentRow);
+    if (pendingUnderLock) throw pendingUnderLock;
     await client.query(`INSERT INTO qms_document_versions (organization_id,document_id,version,record_kind,controlled_document,sections,content_digest,approved_at)
       VALUES ($1,$2,$3,'legacy-registry',$4::jsonb,'[]'::jsonb,$5,$6)`,
       [ctx.tenantId,row.id,row.version,JSON.stringify(row),computeQmsDocumentContentDigest(row as QmsDocumentRow),row.approved_at ?? null]);

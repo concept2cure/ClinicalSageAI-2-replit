@@ -1,0 +1,26 @@
+# Mutations of slice 3b: each rule broken, tests/db/qms-training-pending-version.dbtest.ts run, the file restored (cmp clean after each).
+== B1: a version approved for a later day is never opened ahead of its day (server/services/qms/training-content.ts)
+ × qms-training-pending-version.dbtest.ts > during the training period > the training read opens on v1.0, in force, and offers v2.0 beside it with its effective date 48ms
+ × qms-training-pending-version.dbtest.ts > during the training period > v2.0 can be acknowledged ahead of its day, bound to its own digest and signature, and does not count yet 46ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 4 passed (6)
+== B2: being assigned grants no reading (D3) (server/services/qms/training-assignment.ts)
+ × qms-training-pending-version.dbtest.ts > during the training period > the training read opens on v1.0, in force, and offers v2.0 beside it with its effective date 62ms
+ × qms-training-pending-version.dbtest.ts > during the training period > v2.0 can be acknowledged ahead of its day, bound to its own digest and signature, and does not count yet 47ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 4 passed (6)
+== B3: a version approved for a later day can be revised (D6) (server/services/qms/controlled-document-service.ts)
+ × qms-training-pending-version.dbtest.ts > a version approved for a later day cannot be revised (D6) > revise is refused with QMS_REVISION_PENDING_EFFECT, and the pending version is untouched 85ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+== B4: only the version in force can be acknowledged (server/services/qms/training.ts)
+ × qms-training-pending-version.dbtest.ts > during the training period > v2.0 can be acknowledged ahead of its day, bound to its own digest and signature, and does not count yet 56ms
+ × qms-training-pending-version.dbtest.ts > being assigned lets a person read the version they must train on (D3, P-50 Q2) > someone neither assigned nor shared onto v2.0 reads v1.0 and is told they cannot read v2.0; nothing of it is sent 90ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 4 passed (6)
+== B5: a refused successor still sends its text (server/services/qms/training.ts)
+ × qms-training-pending-version.dbtest.ts > being assigned lets a person read the version they must train on (D3, P-50 Q2) > someone neither assigned nor shared onto v2.0 reads v1.0 and is told they cannot read v2.0; nothing of it is sent 53ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+
+# Red at trunk, not this change's, each confirmed by running it on trunk's six source files: qms-document-content-access 'keeps a genuine empty version history distinct from a denied authored history' (since 4ba9c2b045); qms-periodic-review-reminders 'retirement cancels the open task' (retired with meaning APPROVED, refused since P-51; fixed here); qms-current-signing-and-training-admission 'refuses retire after actual target wait' (lock-wait timeout).
