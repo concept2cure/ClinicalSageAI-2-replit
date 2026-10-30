@@ -221,9 +221,12 @@ describe('QMS current native signing and released training admission', () => {
     expect(await retainedCounts(target)).toEqual(before);
     const read = await http(viewer, 'get', `/api/mdx/qms/documents/${target.id}`);
     expect(read.status).toBe(200); expect(read.body.meta.training.eligible).toBe(false);
+    // The viewer is assigned by name (P-49: compliance counts the people assigned); their receipt of the withdrawn release no longer counts.
+    await owner.query('INSERT INTO qms_training_assignments (organization_id, document_id, user_id, assigned_by) VALUES ($1, $2, $3, $4)',
+      [orgId, target.id, viewer.id, signer.id]);
     const coverage = await http(viewer, 'get', '/api/mdx/qms/training/compliance');
     expect(coverage.status).toBe(200);
-    expect(coverage.body.data.find((row: { id: number }) => row.id === target.id)).toMatchObject({ eligible: false, current: 0 });
+    expect(coverage.body.data.find((row: { id: number }) => row.id === target.id)).toMatchObject({ eligible: false, assignment: 'assigned', current: 0, of: 1 });
     expect(before.receipts).toBe(1); expect(before.signatures).toBe(2);
   });
 
