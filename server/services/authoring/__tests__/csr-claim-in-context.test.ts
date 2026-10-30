@@ -51,7 +51,7 @@ function receiptFor(content: string, display: string, from: number, cell: { tabl
   return () => prepareScientificReviewReceipt({
     organizationId: 3, programId: PROGRAM, documentId: DOC, snapshotHash: 'b'.repeat(64),
     reviewId: '1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f', reviewerId: '9',
-    snapshot: { id: DOC, sections: [{ id: SECTION, code: '10.1', title: 'Disposition', content }] }, submission, runs,
+    snapshot: { id: DOC, sections: [{ id: SECTION, content }] }, submission, runs,
   });
 }
 
