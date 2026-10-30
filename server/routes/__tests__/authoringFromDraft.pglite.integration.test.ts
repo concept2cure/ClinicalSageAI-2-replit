@@ -70,7 +70,7 @@ beforeAll(async () => {
   author = asToken(await mint(AUTHOR));
   tenantless = asToken(await mint(TENANTLESS));
   const { default: router } = await import('../authoring.router');
-  app = makeApp(router);
+  app = makeApp(router, { dbClient: jdb.pool });
 }, T);
 
 afterAll(async () => {
@@ -267,7 +267,8 @@ describe('POST /docs/from-draft', () => {
   it('refuses 400 without a programId', async () => {
     const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(draftBody({ programId: undefined }));
     expect(res.status).toBe(400);
-    expect(String(res.body.error)).toMatch(/programId/);
+    // The message names a project (slice A.1, 4626be1f9a: the names a client reads).
+    expect(String(res.body.error)).toBe('A project is required — an AnA-built document is filed in a project');
   });
 
   it('refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id\'s shape only)', async () => {
@@ -362,7 +363,11 @@ describe('a program holds many documents (control tower, 2026-09-21)', () => {
 
     // Another program's documents stay out of it.
     const other = await author(request(app).get('/api/authoring/docs').query({ programId: OTHER_PROGRAM }));
-    expect(other.body.documents.map((d: { title: string }) => d.title)).not.toContain('Protocol synopsis');
+    // Another organization's project is refused outright, not listed empty
+    // (the current read scope, authoringCurrentRead: a project the caller cannot see is not found).
+    expect(other.status).toBe(404);
+    expect(other.body).toMatchObject({ success: false, code: 'PROJECT_NOT_FOUND' });
+    expect(other.body.documents).toBeUndefined();
   });
 });
 

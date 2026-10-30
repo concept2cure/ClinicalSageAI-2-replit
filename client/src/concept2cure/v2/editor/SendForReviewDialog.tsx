@@ -1,26 +1,29 @@
 /**
- * Send for review — the review request, and each reviewer's task, as one act.
+ * Send for review — the review request, its review route and each reviewer's
+ * task, as ONE act on ONE server transaction.
  *
- * ── What it writes, in order ─────────────────────────────────────────────────
- * 1. POST /api/authoring/documents/:id/request-review
- *      { reviewers: [{ id, name }], reason }
- *    (server/routes/authoring.router.ts). In one transaction the server writes
- *    one authoring_reviews row per reviewer, status pending, and one audited
- *    `review_requested` row carrying the reason. The Review board reads those
- *    rows (server/services/review/authoring-review-board.ts), so this is what
- *    puts the document in front of its reviewers there. Before this dialog,
- *    nothing in the client called the route and the board was empty for every
- *    new organisation.
- * 2. Only once the server has confirmed the request: one review task per
- *    reviewer the request actually asked (their row came back pending),
- *    POST /api/tasks/tasks, through AssignReviewDialog's create and its
- *    confirmation, so the request also appears in each reviewer's tasks (Tasks).
- *    The reviewer's verdict on the Review board completes that task on the
- *    server, on the verdict's own transaction (POST /documents/:id/review,
- *    wave 2D), so the verdict and the task do not disagree.
- *    A task that was refused is reported as not created; a task whose answer
- *    was lost is reported as unknown, never as absent. The request stands
- *    either way, and the dialog says which is which.
+ * ── What it writes ───────────────────────────────────────────────────────────
+ * POST /api/authoring/documents/:id/request-review
+ *   { reviewers: [{ id, name }], reason, route: { reviewDueDate }, instructions, priority }
+ * (server/routes/authoring.router.ts). In one transaction the server writes one
+ * authoring_reviews row per reviewer, status pending, the Reviewer grants, an
+ * audited `review_requested` row carrying the reason, the review route's header
+ * and one route task per reviewer in their Tasks
+ * (docs/design/REVIEW_ROUTING_2026-10-23.md, RR5). They commit together or not
+ * at all, so there is no second write to fail or to lose.
+ *
+ * Until RR5 the dialog made that second write itself: one POST /api/tasks/tasks
+ * per reviewer once the request was confirmed, and a task could be refused or
+ * lost after the request stood. That write is removed; the receipt names the
+ * tasks the server wrote, from its answer (`route.tasks`).
+ *
+ * The reviewer closes their route task with the review signature (the
+ * document's E-sign, meaning Review). "Changes requested" on the Review board
+ * returns the route to the sender. The due date is the end of that day in the
+ * sender's notification time zone, which the form names. Who may be chosen is
+ * the route's one member validator's answer (GET …/route-candidates): a member
+ * it would refuse (no signing authority, no access to the project, an author)
+ * is shown disabled with its reason, never left out silently.
  *
  * ── Who has already been asked ───────────────────────────────────────────────
  * The dialog reads the document's review requests first (useDocumentReviews,
@@ -71,15 +74,15 @@ import type { FireToast } from '../toast';
 import {
   PRIORITIES,
   ReviewerChecklist,
-  buildReviewTaskBody,
-  createReviewTask,
   alreadyAsked,
-  isSubmittableReviewer,
   useReviewerRoster,
   type AssignOutcome,
   type Assignee,
   type Priority,
 } from './AssignReviewDialog';
+import { routeTaskOutcomes, routeTasksOf, useRouteRefusals, type RouteTaskReceipt } from './reviewRequestRoute';
+
+export { routeTaskOutcomes, routeTasksOf, type RouteTaskReceipt };
 import { reviewStatusLabel, useDocumentReviews } from './ReviewTasksPanel';
 import { reviewStandingOf } from './reviewTaskState';
 import { DueDateField, ReasonField, reviewReasonProblem } from './reviewFields';
@@ -135,30 +138,35 @@ export interface SendForReviewDialogProps {
 }
 
 type RequestOutcome =
-  | { ok: true; reviews: ReviewRequestReceipt[] }
+  | { ok: true; reviews: ReviewRequestReceipt[]; routeTasks: RouteTaskReceipt[] }
   | { ok: false; message: string; unconfirmed: boolean };
 
-type Phase = 'form' | 'requesting' | 'tasks' | 'done';
+type Phase = 'form' | 'requesting' | 'done';
 
 const REFUSED = 'The review request was refused: ';
 const UNKNOWN = 'Whether the review request was recorded is unknown: ';
 const RECONCILE = ' Check the Review board before sending again.';
 
 /**
- * Added to every review task, so the task never reads as the place a verdict is
- * recorded. The verdict completes the task (POST /documents/:id/review closes
- * the reviewer's review task on this document since wave 2D).
+ * Added to every review task, so the task says how it closes (RR5): the review
+ * signature closes it; a change request is a verdict on the Review board, and
+ * returns the route.
  */
-export const VERDICT_ON_THE_BOARD = 'Record your verdict on the Review board; recording it completes this task. Completing the task does not record a verdict.';
+export const VERDICT_ON_THE_BOARD = 'Sign the review on the document (E-sign, meaning Review) to close this task. To ask for changes, record “changes requested” on the Review board, which returns the route to its sender.';
 
 const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
-/** The request body. Separate so the identity sent can be read and tested without a server. */
-export function buildReviewRequestBody(reviewers: Assignee[], reason: string): {
+/** The request body. Separate so the identity sent can be read and tested without a server. RR5: the route's due date, and what each task carries. */
+export function buildReviewRequestBody(reviewers: Assignee[], reason: string, task?: { due: string; instructions: string; priority: Priority }): {
   reviewers: Array<{ id: string; name: string }>;
   reason: string;
+  route?: { reviewDueDate: string };
+  instructions?: string;
+  priority?: Priority;
 } {
-  return { reviewers: reviewers.map(a => ({ id: a.id, name: a.name })), reason: reason.trim() };
+  const body = { reviewers: reviewers.map(a => ({ id: a.id, name: a.name })), reason: reason.trim() };
+  if (!task) return body;
+  return { ...body, route: { reviewDueDate: task.due }, instructions: task.instructions, priority: task.priority };
 }
 
 /** Each reviewer's task description: the instructions, the reason the request gave, and where the verdict goes. */
@@ -249,34 +257,10 @@ async function requestReview(docId: string, body: ReturnType<typeof buildReviewR
     if (!res.ok) return answeredFailure(res.status, json);
     const reviews = confirmedReviews(json, docId, body.reviewers.map(r => r.id));
     if (!reviews) return { ok: false, unconfirmed: true, message: 'The response did not confirm a review request on this document.' + RECONCILE };
-    return { ok: true, reviews };
+    return { ok: true, reviews, routeTasks: routeTasksOf(json) };
   } catch (e) {
     return thrownFailure(e);
   }
-}
-
-interface TaskForm {
-  docId: string;
-  docTitle: string;
-  programId: string | null;
-  sectionCode: string | null;
-  due: string;
-  priority: Priority;
-  instructions: string;
-}
-
-/** One task per reviewer, in turn. Null when the dialog went away part-way. */
-async function createTasksFor(reviewers: Assignee[], form: TaskForm, alive: () => boolean): Promise<ReviewTaskOutcome[] | null> {
-  const out: ReviewTaskOutcome[] = [];
-  for (const a of reviewers) {
-    if (!alive()) return null;
-    const outcome: AssignOutcome = isSubmittableReviewer(a.id)
-      ? await createReviewTask(buildReviewTaskBody({ ...form, assignee: a.id }))
-      : { ok: false, unconfirmed: false, message: 'This member’s id is not one the task ledger takes.' };
-    if (!alive()) return null;
-    out.push({ reviewerId: a.id, reviewer: a.label ?? a.name, outcome });
-  }
-  return out;
 }
 
 /**
@@ -346,14 +330,15 @@ function RequestReasonField({ value, onChange }: { value: string; onChange: (v: 
   );
 }
 
-/** The task half of the form: what each reviewer's task in Tasks carries. */
-function TaskFields({ instructions, onInstructions, due, onDue, priority, onPriority }: {
+/** The task half of the form: what each reviewer's task in Tasks carries, and when the review is due (RR5: required, the route's date). */
+function TaskFields({ instructions, onInstructions, due, onDue, priority, onPriority, timeZone }: {
   instructions: string;
   onInstructions: (v: string) => void;
   due: string;
   onDue: (v: string) => void;
   priority: Priority;
   onPriority: (p: Priority) => void;
+  timeZone: string | null;
 }) {
   return (
     <fieldset className="de-field">
@@ -370,7 +355,8 @@ function TaskFields({ instructions, onInstructions, due, onDue, priority, onPrio
           data-testid="sfr-instructions"
         />
       </div>
-      <DueDateField id="sfr-due" label="Due date" value={due} onChange={onDue} half testId="sfr-due" />
+      <DueDateField id="sfr-due" label="Review due" value={due} onChange={onDue} half required min={new Date().toISOString().slice(0, 10)} testId="sfr-due"
+        note={`The end of that day in your time zone (${timeZone ?? 'as your notification settings give it, else UTC'}). Each reviewer is reminded before it.`} />
       <div className="de-field half">
         <label className="de-label" htmlFor="sfr-priority">Priority</label>
         <select id="sfr-priority" className="c2c-input" value={priority} onChange={e => onPriority(e.target.value as Priority)}>
@@ -452,7 +438,7 @@ function SentReceipt({ result }: { result: SendForReviewResult }) {
 /** The dialog's state and its one act. Its own hook so the dialog body is markup. */
 function useSendForReview(props: SendForReviewDialogProps) {
   const [owner] = useState(captureAuthoringSession);
-  const { docId, docTitle, programId, sectionCode, authorId, fireToast, onSent } = props;
+  const { docId, authorId, fireToast, onSent } = props;
   const generation = useRef(0);
   const pending = useRef(false);
   const refusalRef = useRef(props.refusal);
@@ -460,6 +446,7 @@ function useSendForReview(props: SendForReviewDialogProps) {
   useEffect(() => () => { generation.current++; }, []);
   const { roster, rosterState, reload: reloadRoster, authorWithheld } = useReviewerRoster(authorId);
   const standing = useDocumentReviews(docId);
+  const route = useRouteRefusals(docId);
   const [selected, setSelected] = useState<string[]>([]);
   const [reason, setReason] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -474,10 +461,10 @@ function useSendForReview(props: SendForReviewDialogProps) {
      checklist offers no other, and this holds even if the read changed after a
      box was ticked. A member whose verdict is recorded is asked again. */
   const chosen = standing.state === 'ready'
-    ? roster.filter(a => selected.includes(a.id) && !alreadyAsked(standing.rows.find(r => r.reviewerId === a.id)))
+    ? roster.filter(a => selected.includes(a.id) && !alreadyAsked(standing.rows.find(r => r.reviewerId === a.id)) && !route.refusals[a.id])
     : [];
   const reasonProblem = reviewReasonProblem(reason);
-  const canSend = !props.refusal && phase === 'form' && !needsReconciliation && chosen.length > 0 && !reasonProblem;
+  const canSend = !props.refusal && phase === 'form' && !needsReconciliation && chosen.length > 0 && !reasonProblem && due !== '';
   const toggle = (id: string) => setSelected(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]));
 
   const send = async () => {
@@ -489,7 +476,8 @@ function useSendForReview(props: SendForReviewDialogProps) {
     setPhase('requesting');
     setError(null);
     try {
-      const request = await requestReview(docId, buildReviewRequestBody(chosen, reason));
+      const body = buildReviewRequestBody(chosen, reason, { due, priority, instructions: reviewTaskDescription(reason, instructions) });
+      const request = await requestReview(docId, body);
       if (!alive()) return;
       if (!request.ok) {
         setError(request.message);
@@ -497,14 +485,10 @@ function useSendForReview(props: SendForReviewDialogProps) {
         setPhase('form');
         return;
       }
-      setPhase('tasks');
-      const form = { docId, docTitle, programId, sectionCode, due, priority, instructions: reviewTaskDescription(reason, instructions) };
-      /* A task only for a review the request actually opened: a row that came
-         back with a verdict was not reopened, and its reviewer could not
-         finish a task with one. */
+      /* The tasks the server wrote on the route, with the request (RR5): only
+         for a review the request actually opened. */
       const asked = new Set(askedReviews(request.reviews).map(r => r.reviewerId));
-      const tasks = await createTasksFor(chosen.filter(a => asked.has(a.id)), form, alive);
-      if (!tasks) return;
+      const tasks = routeTaskOutcomes(chosen.filter(a => asked.has(a.id)), request.routeTasks);
       const sent = { reviews: request.reviews, tasks };
       setResult(sent);
       setPhase('done');
@@ -519,19 +503,22 @@ function useSendForReview(props: SendForReviewDialogProps) {
   return {
     roster, rosterState, reloadRoster, authorWithheld, standing, chosenCount: chosen.length, toggle, selected, reason, setReason,
     instructions, setInstructions, due, setDue, priority, setPriority, phase, error, needsReconciliation, result,
-    reasonProblem, canSend, send,
+    reasonProblem, canSend, send, route,
   };
 }
 
 /** What the disabled Send button is waiting for, as visible text it is described by. */
-function sendNote(chosenCount: number, reasonProblem: string | null): string | null {
-  if (chosenCount === 0) return reasonProblem ? `Choose at least one reviewer. ${reasonProblem}` : 'Choose at least one reviewer.';
-  return reasonProblem;
+function sendNote(chosenCount: number, reasonProblem: string | null, due: string): string | null {
+  const missing = [
+    chosenCount === 0 ? 'Choose at least one reviewer.' : null,
+    due === '' ? 'Choose the review due date.' : null,
+    reasonProblem,
+  ].filter(Boolean);
+  return missing.length ? missing.join(' ') : null;
 }
 
 function submitLabel(phase: Phase): string {
   if (phase === 'requesting') return 'Sending…';
-  if (phase === 'tasks') return 'Creating tasks…';
   return 'Send for review';
 }
 
@@ -584,12 +571,12 @@ function DialogNotes({ waitingFor, error, checkBoard, checkTasks }: {
 function SendForReviewDialogForSource(props: SendForReviewDialogProps) {
   const { docTitle, onClose, onCheckTasks, onOpenBoard } = props;
   const s = useSendForReview(props);
-  const busy = s.phase === 'requesting' || s.phase === 'tasks';
+  const busy = s.phase === 'requesting';
   const ref = useDialog(() => {
     if (!busy) onClose();
   });
   const unconfirmedTask = s.result?.tasks.some(t => !t.outcome.ok && t.outcome.unconfirmed) ?? false;
-  const waitingFor = s.phase === 'form' && !s.needsReconciliation ? sendNote(s.chosenCount, s.reasonProblem) : null;
+  const waitingFor = s.phase === 'form' && !s.needsReconciliation ? sendNote(s.chosenCount, s.reasonProblem, s.due) : null;
   const sent = s.result !== null;
 
   return (
@@ -610,16 +597,22 @@ function SendForReviewDialogForSource(props: SendForReviewDialogProps) {
               <ReviewerChecklist
                 roster={s.roster} rosterState={s.rosterState} onReloadRoster={s.reloadRoster}
                 standing={s.standing} selected={s.selected} onToggle={s.toggle} authorWithheld={s.authorWithheld}
+                refusals={s.route.refusals}
               />
+              {s.route.unread ? (
+                <div className="de-desc" role="status" data-testid="sfr-candidates-unread">
+                  Who the review route admits could not be read, so no member is marked here; the server still checks each reviewer when you send.
+                </div>
+              ) : null}
               <RequestReasonField value={s.reason} onChange={s.setReason} />
               <TaskFields
                 instructions={s.instructions} onInstructions={s.setInstructions}
-                due={s.due} onDue={s.setDue} priority={s.priority} onPriority={s.setPriority}
+                due={s.due} onDue={s.setDue} priority={s.priority} onPriority={s.setPriority} timeZone={s.route.timeZone}
               />
               <div className="de-gov">
                 <span className="ico">{I.lock}</span>
                 <span className="de-gov-t">
-                  One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. When you own the document (or are an administrator), each reviewer is granted the Reviewer role on it, which lets them comment and sign the review. Then each reviewer is given a review task in Tasks. Reviewers record their verdicts on the Review board, which completes their task; a binding §11.50 signature is applied on the document.
+                  One act, one record. In one step, a review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it; a review route names the reviewers, and each gets a review task in Tasks with its due date. When you own the document (or are an administrator), each reviewer is granted the Reviewer role on it, which lets them comment and sign the review. A reviewer’s §11.50 review signature on the document closes their task; “changes requested” on the Review board returns the route to you. Nothing is recorded unless all of it is.
                 </span>
               </div>
             </>

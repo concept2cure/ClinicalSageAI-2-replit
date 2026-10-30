@@ -51,6 +51,12 @@ import { createJourneyDb, extractTableDdl, assertNoSchemaGaps, type JourneyDb } 
 import { AUDIT_LOGS_PGLITE_DDL } from '../../server/db/pglite-harness';
 import { stripComments } from '../ui/_strip-comments';
 import { AUTHORING_ACCESS_DDL } from '../../server/routes/__tests__/_authoring-canvas-fixture';
+import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from '../../server/services/ana-ri/__tests__/governed-action-ledger.fixture';
+
+/** RR5: a request names its review route's due date and a reason (a governed act). */
+const REVIEW_DUE = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+const asked = (reviewers: Array<Record<string, unknown>>) =>
+  ({ reviewers, reason: 'Ready for an independent review of the saved draft.', route: { reviewDueDate: REVIEW_DUE } });
 import { authoringReviewReadSchema, authoringReviewResponseSchema } from '@shared/authoring/peer-review';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -109,9 +115,25 @@ const PREREQ = `
     ('${REVIEWER.id}', '${REVIEWER.name}', '${REVIEWER.email}'),
     ('${OUTSIDER.id}', '${OUTSIDER.name}', '${OUTSIDER.email}');
   INSERT INTO organization_users (organization_id, user_id, role) VALUES
-    (1, ${AUTHOR.id}, 'member'), (1, ${REVIEWER.id}, 'member'), (2, ${OUTSIDER.id}, 'member');
+    (1, ${AUTHOR.id}, 'member'), (1, ${REVIEWER.id}, 'reviewer'), (2, ${OUTSIDER.id}, 'member');
   INSERT INTO projects (id, organization_id, name, regulatory_program_id) VALUES (42, 1, 'Contract project', '${PROJECT_ID}');
   ${AUTHORING_ACCESS_DDL}
+  -- RR5: a review request writes its review route (the route header, each reviewer's task, the naming row on
+  -- the governed ledger), reads the sender's time zone, and admits each reviewer through the route's member
+  -- validator: signing authority (REVIEWER is a 'reviewer' member) and access to the program's project.
+  ${GOVERNED_ACTION_LEDGER_PGLITE_DDL}
+  CREATE TABLE notification_preferences (id SERIAL PRIMARY KEY, user_id INTEGER, timezone TEXT);
+  ${extractTableDdl('migrations/20260510_notifications_and_clinical.sql', ['mdx_notifications'])}
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_workspace_id integer;
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'planning';
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS owner_id integer;
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_by_id integer;
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS settings jsonb NOT NULL DEFAULT '{}';
+  CREATE TABLE IF NOT EXISTS project_visibility_settings (project_id integer, organization_id integer, visibility text);
+  CREATE TABLE IF NOT EXISTS project_members (project_id integer, organization_id integer, user_id integer, role text, status text);
+  CREATE TABLE IF NOT EXISTS concept2cure_artifacts (id integer PRIMARY KEY, organization_id integer, project_id integer);
+  CREATE TABLE IF NOT EXISTS concept2cure_review_assignments (id serial PRIMARY KEY, artifact_id integer, organization_id integer, reviewer_id integer, status text);
+  INSERT INTO project_members (project_id, organization_id, user_id, role, status) VALUES (42, 1, ${REVIEWER.id}, 'edit', 'active');
 `;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
@@ -260,10 +282,17 @@ async function capturedReviewExpected() {
     snapshotHash: context.snapshotHash, bindingBasis: context.bindingBasis };
 }
 
+/** The reviewer's "changes requested" verdict, which returns the document's open review route (RR5). */
+async function returnTheRoute() {
+  const res = await as(REVIEWER)(request(app).post(`/api/authoring/documents/${docId}/review`))
+    .send({ review_status: 'changes_requested', review_comments: 'Clarify the clinical rationale in 2.5.', expected: await capturedReviewExpected() });
+  expect(res.status, JSON.stringify(res.body)).toBe(200);
+}
+
 describe('document review', () => {
   it('request → list → submit → list, all 200 rather than 42P01', async () => {
     const req1 = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docId}/request-review`))
-      .send({ reviewers: [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }] });
+      .send(asked([{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }]));
     expect(req1.status).toBe(200);
     expect(req1.body.reviews).toHaveLength(1);
 
@@ -298,9 +327,12 @@ describe('document review', () => {
     expect(before.status).toBe(200);
     const prior = authoringReviewReadSchema.parse(before.body);
     const n = prior.reviews.length;
+    // RR5: the reviewer is named on the open review route, so asking again needs the route closed first;
+    // their "changes requested" verdict returns it (the loop a re-request exists for).
+    await returnTheRoute();
 
     const again = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docId}/request-review`))
-      .send({ reviewers: [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }] });
+      .send(asked([{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }]));
     expect(again.status).toBe(200);
 
     const after = await as(AUTHOR)(request(app).get(`/api/authoring/documents/${docId}/reviews`));
@@ -314,9 +346,10 @@ describe('document review', () => {
   it('who requested the review comes from the JWT, not from x-user-name', async () => {
     // The header was trusted here while the sibling submit handler had already
     // been hardened. It only stayed harmless because the table did not exist.
+    await returnTheRoute();
     const res = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docId}/request-review`))
       .set('x-user-name', 'Someone Else Entirely')
-      .send({ reviewers: [{ id: REVIEWER.id, name: 'Named', email: 'named@x.example' }] });
+      .send(asked([{ id: REVIEWER.id, name: 'Named', email: 'named@x.example' }]));
     expect(res.status).toBe(200);
 
     const row = res.body.reviews[0];
@@ -328,7 +361,7 @@ describe('document review', () => {
   it('a foreign reviewer cannot be assigned or granted access by supplied labels', async () => {
     const before = await reviewRead(AUTHOR);
     const res = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docId}/request-review`))
-      .send({ reviewers: [{ id: OUTSIDER.id, name: REVIEWER.name, email: REVIEWER.email }] });
+      .send(asked([{ id: OUTSIDER.id, name: REVIEWER.name, email: REVIEWER.email }]));
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('REVIEWER_MEMBERSHIP_REQUIRED');
     expect((await reviewRead(AUTHOR)).reviews).toEqual(before.reviews);

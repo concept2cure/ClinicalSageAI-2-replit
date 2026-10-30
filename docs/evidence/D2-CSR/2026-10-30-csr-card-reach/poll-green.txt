@@ -1,0 +1,6 @@
+# GREEN: CsrRunBuilds.tsx as committed — re-reads every BUILD_POLL_MS while a build has not ended, then stops
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > carries the narrative build and the assembly for a build of the saved run, on the card 363ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > a newly queued build is selected on the card; nothing navigates to the board 122ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states that no build exists for the run, and a refused build list as an alert, never an empty list 53ms
+ ✓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > follows a drafting build until it ends, then stops re-reading the list 66ms
+      Tests  4 passed (4)

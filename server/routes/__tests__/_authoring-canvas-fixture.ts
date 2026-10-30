@@ -164,9 +164,16 @@ export async function mint(u: { id: string; organizationId?: number; email: stri
     .sign(new TextEncoder().encode(JWT_SECRET));
 }
 
-export function makeApp(router: express.Router, opts: { role?: string } = {}): express.Express {
+export function makeApp(router: express.Router, opts: { role?: string; dbClient?: { query: (...args: never[]) => unknown } } = {}): express.Express {
   const app = express();
   app.use(express.json({ limit: '5mb' }));
+  /* The request's database client, as production binds it (requestDbLease.ts
+     bindRequestDbClient). Routes that read through requestPgClient refuse
+     without one, so a test that reaches them passes its database here. */
+  if (opts.dbClient) {
+    const dbClient = opts.dbClient;
+    app.use((req, _res, next) => { (req as unknown as { dbClient: unknown }).dbClient = dbClient; next(); });
+  }
   /* The request's tenant scope, as production opens it: the global /api gate
      (server/bootstrap/register-platform-routes.ts) runs authMiddleware ahead of
      this router, which scopes the request with the caller's organization_users

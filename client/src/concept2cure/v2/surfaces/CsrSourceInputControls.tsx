@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { CsrSourceReceipt, CsrSourceSelection } from '@shared/csr-source-input';
 import { apiCall, apiErrorText } from '../apiCall';
 import { CsrBuildDraftControl } from './CsrBuildProgress';
+import { CsrRunBuilds } from './CsrRunBuilds';
 import { StudyPivotalDeclarations } from './StudyPivotalDeclarations';
 
 const FORMAT = 'concept2cure.csr-source.v1';
@@ -171,7 +172,7 @@ export function CsrSourceInputControls({ programId, runId, interactionBusy, onSe
     <ClinicalSourcePicker activeSources={activeSources} blocked={blocked} documentId={documentId} choose={choose} choice={choice} prepare={prepare} previewBusy={previewBusy} />
     {previewError && <p role="alert">{previewError}</p>}
     <ClinicalSourcePreview activePreview={activePreview} blocked={blocked} included={included} setIncluded={setIncluded} onSelectionChange={selectionHandler.current} />
-    <FrozenClinicalTables runId={runId} activeSaved={activeSaved} blocked={blocked} onRetry={() => setSavedRefresh(value => value + 1)} onNav={onNav} />
+    <FrozenClinicalTables runId={runId} activeSaved={activeSaved} blocked={blocked} onRetry={() => setSavedRefresh(value => value + 1)} />
     {/* Pivotal declarations (D5, 2026-10-29) on the CSR card a launch screen shows; the
         CSR workflow board, where they also appear, is not a launch surface. */}
     <StudyPivotalDeclarations scope={{ programId }} />
@@ -206,9 +207,11 @@ function ClinicalSourcePreview({ activePreview, blocked, included, setIncluded, 
       }} /> Include these source tables in the next package run</label>
     </div>}
   </>; }
-function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry, onNav }: {
-  runId: string | null; activeSaved: SavedState | null; blocked: boolean; onRetry: () => void; onNav?: (surface: string) => void;
-}) { return <>
+function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry }: {
+  runId: string | null; activeSaved: SavedState | null; blocked: boolean; onRetry: () => void;
+}) {
+  const [queued, setQueued] = useState<number | null>(null);
+  return <>
     {runId && <div aria-label="Frozen run clinical tables">
       <h4>Frozen clinical tables for {runId}</h4>
       {!activeSaved && <p role="status">Loading frozen clinical tables…</p>}
@@ -217,10 +220,14 @@ function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry, onNav }: {
         <p>Historical source versions are retained with this run. They can differ from the current Vault version.</p>
         {activeSaved.data.studies.length === 0 && <p>This run has no linked clinical source tables.</p>}
         {activeSaved.data.studies.map(study => <SourceTables key={`${study.source.documentId}:${study.source.sha256}`} source={study.source} tables={study.tables} />)}
-        <CsrBuildDraftControl programId={activeSaved.programId} runId={activeSaved.runId} studies={activeSaved.data.studies} blocked={blocked} onNav={onNav} />
+        <CsrBuildDraftControl programId={activeSaved.programId} runId={activeSaved.runId} studies={activeSaved.data.studies} blocked={blocked} onQueued={setQueued} />
+        {/* The build's narratives, assembly and placement (D2/W1, 2026-10-30): on this launch card,
+            not the csr-workflow board, which production refuses. */}
+        {activeSaved.data.studies.length > 0 && <CsrRunBuilds programId={activeSaved.programId} runId={activeSaved.runId} focus={queued} />}
       </>}
     </div>}
-  </>; }
+  </>;
+}
 
 function savedTablesForRun(saved: SavedState | null, programId: string | null, runId: string | null): SavedState | null {
   return saved?.programId === programId && saved.runId === runId ? saved : null;
