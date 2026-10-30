@@ -1,0 +1,14 @@
+ × server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > cta filed with HEALTH_CANADA is CA_CTA 5ms
+ × server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > cta filed with Health Canada is CA_CTA 1ms
+ × server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > cta filed with MHRA is UK_CTA 1ms
+ × server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > cta filed with PMDA is JP_CTN 1ms
+ × server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > ind filed with NMPA is CN_CTA 1ms
+ × server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > cta filed with NMPA is CN_CTA 0ms
+ × server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > ind filed with MFDS is KR_IND 0ms
+ × server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > cta filed with SWISSMEDIC is CH_CTA 0ms
+ ✓ server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > what already resolved is unchanged 1ms
+ ✓ server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > an agency with more than one trial application resolves to nothing, rather than a guess 0ms
+ ✓ server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > a marketing filing is not read as a trial application 0ms
+ ✓ server/services/c2c/__tests__/program-registry-trial-applications.test.ts > a trial program resolves to its region’s trial application > a wizard choice still wins over the record 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 4 passed (12)
