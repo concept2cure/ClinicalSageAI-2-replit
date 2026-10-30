@@ -1,0 +1,6 @@
+ × server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a Health Canada CTA section is drafted with its recorded application and requirements 123ms
+ × server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a UK CTA section asked for as FDA content says the application on record differs, and that its Module 1 has no entry 16ms
+ × server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a project whose application cannot be resolved is told so, and no jurisdiction is assumed 10ms
+ × server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a US IND section is drafted for FDA with the US IND record, as before 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)

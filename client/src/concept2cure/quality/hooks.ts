@@ -123,3 +123,65 @@ export function useTrainingExpiring(withinDays: number) {
   const failed = !loading && (error != null || unreadable != null);
   return { rows: loading || failed ? null : rows, failed, error: error ?? unreadable, refresh };
 }
+
+/* ── Job roles and training assignments (P-49; design §3.12) ──
+   Each read is the envelope's `data` object, checked: a body that is not the
+   shape is a failed read, never an empty one. */
+
+export interface JobRole {
+  id: number; name: string; description: string | null; documentCount: number;
+  members: Array<{ userId: number; label: string; addedAt: string; active: boolean }>;
+}
+export interface JobRoleListing { roles: JobRole[]; people: Array<{ userId: number; label: string }>; canAdminister: boolean }
+
+export interface TrainingAssignment {
+  id: number; kind: 'role' | 'person'; jobRoleId: number | null; jobRoleName: string | null;
+  userId: number | null; userLabel: string | null; active: boolean | null;
+  assignedBy: number; assignedByLabel: string; assignedAt: string;
+}
+export interface TrainingAssignmentListing {
+  assignments: TrainingAssignment[];
+  trainable: { inForce: { version: string; effectiveDate: string | null } | null; pending: { version: string; effectiveDate: string | null } | null };
+  /** Every person assigned (`peopleScope: 'everyone'`), or only the reader's own line (`'own'`, P-50 Q3). */
+  people: Array<{ userId: number; label: string; via: string[]; coveredSince: string }>;
+  peopleCount: number;
+  peopleScope: 'everyone' | 'own';
+  /** null: whether the reader may change them could not be checked. */
+  canAssign: boolean | null;
+}
+
+const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+const isPerson = (p: unknown) => isObj(p) && Number.isInteger(p.userId) && typeof p.label === 'string';
+const isJobRole = (r: unknown) => isObj(r) && Number.isInteger(r.id) && typeof r.name === 'string' &&
+  Number.isInteger(r.documentCount) && Array.isArray(r.members) && r.members.every(m => isPerson(m) && typeof (m as { active?: unknown }).active === 'boolean');
+const isJobRoleListing = (v: unknown): v is JobRoleListing =>
+  isObj(v) && Array.isArray(v.roles) && v.roles.every(isJobRole) && Array.isArray(v.people) && v.people.every(isPerson) && typeof v.canAdminister === 'boolean';
+const isAssignment = (a: unknown) => isObj(a) && Number.isInteger(a.id) && (a.kind === 'role' || a.kind === 'person') &&
+  typeof a.assignedByLabel === 'string' && typeof a.assignedAt === 'string';
+const isTrainable = (t: unknown) => isObj(t) && 'inForce' in t && 'pending' in t;
+const isAssignmentListing = (v: unknown): v is TrainingAssignmentListing =>
+  isObj(v) && Array.isArray(v.assignments) && v.assignments.every(isAssignment) && isTrainable(v.trainable) &&
+  Array.isArray(v.people) && v.people.every(isPerson) && Number.isInteger(v.peopleCount) &&
+  (v.peopleScope === 'everyone' || v.peopleScope === 'own') && (v.canAssign === null || typeof v.canAssign === 'boolean');
+
+/** One envelope read, checked by `guard`: loading, failed (an error or a body of the wrong shape), or the value. */
+function useCheckedRead<T>(path: string | null, guard: (v: unknown) => v is T) {
+  const { data, loading, error, refresh } = useFetchJson<unknown>(path);
+  const body = isObj(data) ? data.data : undefined;
+  const value = useMemo(() => (guard(body) ? body : null), [body, guard]);
+  const unreadable = data != null && value === null ? `unexpected response shape for ${path}` : null;
+  const failed = !loading && (error != null || unreadable != null);
+  return { value: loading || failed ? null : value, failed, error: error ?? unreadable, refresh };
+}
+
+/** The organization's job roles, who holds them and the active roster — GET /api/mdx/qms/job-roles. */
+export function useJobRoles() {
+  const r = useCheckedRead('/api/mdx/qms/job-roles', isJobRoleListing);
+  return { listing: r.value, failed: r.failed, error: r.error, refresh: r.refresh };
+}
+
+/** Who must train on one controlled document — GET /api/mdx/qms/documents/:id/training-assignments. */
+export function useTrainingAssignments(documentId: number) {
+  const r = useCheckedRead(`/api/mdx/qms/documents/${documentId}/training-assignments`, isAssignmentListing);
+  return { listing: r.value, failed: r.failed, error: r.error, refresh: r.refresh };
+}
