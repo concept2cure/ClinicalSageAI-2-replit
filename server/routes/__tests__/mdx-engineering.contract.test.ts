@@ -27,7 +27,22 @@ const PROGRAM = '11111111-2222-3333-4444-555555555555';
 function appWith(org: number | null) {
   const app = express();
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org };
+    if (org !== null) (req as unknown as { user: unknown }).user = { id: 5, organizationId: org, role: 'viewer' };
+    // The first queued result is still the ownership answer. Additional
+    // current actor/sharing reads never consume a queued domain panel answer.
+    let ownership: Promise<{ rows: Record<string, unknown>[] }> | undefined;
+    Object.assign(req, { dbClient: { query: (sql: string, params?: unknown[]) => {
+      if (/FROM regulatory_programs/.test(sql)) {
+        ownership ??= query(sql, params);
+        return ownership;
+      }
+      if (/SELECT ou\.role/.test(sql)) return Promise.resolve({ rows: [{ role: 'viewer' }] });
+      if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return Promise.resolve({ rows: [{
+        id: 11, owner_id: 9, created_by_id: 9, settings: {}, visibility: 'org_public', members: [], review_assigned: false,
+      }] });
+      if (/client_workspace_id AS "clientWorkspaceId" FROM projects/.test(sql)) return Promise.resolve({ rows: [{ id: 11, clientWorkspaceId: 71 }] });
+      return query(sql, params);
+    } } });
     next();
   });
   app.use('/api/mdx', engineeringRouter);
@@ -329,26 +344,22 @@ describe('GET /api/mdx/engineering/:programId', () => {
   });
 });
 
-/* ── The project ownership refusal is the shared one (D2, 2026-10-29;
-      docs/evidence/D2-ONE-ANA/2026-10-29/small-honest-state-fixes/).
-      q-sub, mdx-udi, mdx-labeling and human-factors refuse through
-      server/lib/admit-project.ts: 404 "Project not found" when the
-      organization does not own the project, 503 VERIFICATION_UNAVAILABLE when
-      the check could not run. This route asked programInOrganization inline,
-      so a lookup that could not run fell to its catch and answered 500, as if
-      the route had crashed rather than a check not having run. Either refusal
-      reads nothing. ───────────────────────────────────────────────────────── */
+/* ── Current project admission keeps ownership failure distinct from absence.
+      It now uses current-program-access on the request client: 404
+      PROJECT_NOT_FOUND for a foreign/missing project, 503
+      PROJECT_ACCESS_UNAVAILABLE when admission could not run. Both refuse
+      before any panel is read. ───────────────────────────────────────────── */
 describe('GET /api/mdx/engineering/:programId — the project ownership refusal', () => {
   /** Every query after the ownership check: the panels a refusal must not read. */
   const panelReads = () => query.mock.calls.filter(([sql]) => !/FROM regulatory_programs/.test(String(sql)));
 
-  it('answers 503 VERIFICATION_UNAVAILABLE when the ownership check cannot run, and reads nothing', async () => {
+  it('answers 503 PROJECT_ACCESS_UNAVAILABLE when current admission cannot run, and reads nothing', async () => {
     query.mockRejectedValueOnce(Object.assign(new Error('connection terminated'), { code: '57P01' })); // ownership
     query.mockResolvedValue({ rows: [] });
     const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
     expect(res.status).toBe(503);
-    expect(res.body).toMatchObject({ success: false, error: 'VERIFICATION_UNAVAILABLE' });
-    expect(res.body.message).toMatch(/^The project ownership check could not be run\. This is not a verdict/);
+    expect(res.body).toMatchObject({ error: 'PROJECT_ACCESS_UNAVAILABLE' });
+    expect(res.body.message).toMatch(/Current project access could not be verified/);
     // The store's own words go to the log, never to the client.
     expect(JSON.stringify(res.body)).not.toMatch(/connection terminated|57P01/);
     expect(panelReads()).toHaveLength(0);
@@ -359,7 +370,7 @@ describe('GET /api/mdx/engineering/:programId — the project ownership refusal'
     query.mockResolvedValue({ rows: [] });
     const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe('Project not found');
+    expect(res.body).toMatchObject({ error: 'PROJECT_NOT_FOUND', message: 'Project not found.' });
     expect(panelReads()).toHaveLength(0);
   });
 });
