@@ -306,7 +306,7 @@ describe('useVaultUpload — how far a file has got (MR-08 Stage 6 step 2)', () 
   });
 
   it('a connection that drops is a refusal the person can retry, and nothing was filed', async () => {
-    stubIngestXhr(vi.fn(async () => { throw new Error('offline'); }));
+    stubIngestXhr(vi.fn(async () => { throw new Error('offline'); }), [0.5]);
     let latest: VaultUploadState | null = null;
     render(<HookHost onState={(s) => { latest = s; }} />);
     const outcome = await latest!.upload([new File(['x'], 'csr.pdf')]);

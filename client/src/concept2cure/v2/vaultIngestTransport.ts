@@ -14,6 +14,14 @@ export interface IngestReply {
   json: () => Promise<unknown>;
 }
 
+/** A complete send without a reply cannot establish whether the server recorded it. */
+export class IngestUnconfirmedError extends Error {
+  constructor() {
+    super('all bytes were sent, but no reply arrived');
+    this.name = 'IngestUnconfirmedError';
+  }
+}
+
 /** Bytes of the request body sent, of its total, as the browser counts them. */
 export type IngestProgress = (sent: number, total: number) => void;
 
@@ -34,11 +42,14 @@ export function sendIngest(form: FormData, headers: Record<string, string>, onPr
     /* Authorization and x-organization-id only. Never a Content-Type: the
        browser must write the multipart boundary itself. */
     for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
-    if (onProgress) {
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) onProgress(e.loaded, e.total);
-      };
-    }
+    let sentAll = false;
+    xhr.upload.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      if (e.total > 0 && e.loaded >= e.total) sentAll = true;
+      onProgress?.(e.loaded, e.total);
+    };
+    // Upload completion also covers browsers whose progress total was not available.
+    xhr.upload.onload = () => { sentAll = true; };
     xhr.onload = () => {
       const text = xhr.responseText;
       resolve({
@@ -47,7 +58,7 @@ export function sendIngest(form: FormData, headers: Record<string, string>, onPr
         json: async () => JSON.parse(text),
       });
     };
-    const dropped = () => reject(new Error('the connection dropped before the file was sent'));
+    const dropped = () => reject(sentAll ? new IngestUnconfirmedError() : new Error('the connection dropped before the file was sent'));
     xhr.onerror = dropped;
     xhr.onabort = dropped;
     xhr.ontimeout = dropped;

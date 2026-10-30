@@ -1237,6 +1237,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const uploadStaged = async () => {
     if (!staging) return;
     const pending = staging.rows.filter((r) => !r.status || r.status.state === 'refused');
+    // A new attempt starts its selected rows afresh; later refusals belong to this attempt.
+    const keys = new Set(pending.map((r) => r.key));
+    setStaging((st) => st && { ...st, rows: st.rows.map((r) => keys.has(r.key) ? { ...r, status: null } : r) });
     const outcome = await upload(pending.map((r) => r.file), {
       documentType: docType,
       fields: pending.map(fieldsOf),

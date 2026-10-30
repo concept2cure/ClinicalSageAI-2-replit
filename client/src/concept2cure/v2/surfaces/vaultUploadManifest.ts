@@ -131,10 +131,16 @@ function patchOf(
     patch.evidenceKind = k;
   }
   if (v.ctdSection) patch.ctdSection = v.ctdSection;
+  return patchProblem(patch, row) ?? patch;
+}
+
+/** Refuse a line that sets nothing, or filing detail without a folder. */
+function patchProblem(patch: Partial<StagedFile>, row: StagedFile): string | null {
+  if (Object.keys(patch).length === 0) return 'it gives no fields to apply; blank cells keep their current values';
   if ((patch.evidenceKind || patch.ctdSection) && !(patch.folderId ?? row.folderId)) {
     return 'an evidence kind or CTD section is recorded only with a folder, and this line gives none';
   }
-  return patch;
+  return null;
 }
 
 /** What a manifest does to the list: the fields each named row takes, and every line it does not apply. */
@@ -179,20 +185,25 @@ export function manifestOf(rows: StagedFile[], folders: ReadonlyArray<{ id: stri
     r.evidenceKind ? kindName(r.evidenceKind) : '',
     r.ctdSection,
   ]);
-  return [COLUMNS.map((c) => c.heading), ...lines].map((l) => l.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  return '\ufeff' + [COLUMNS.map((c) => c.heading), ...lines].map((l) => l.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
 
 /** What applying a manifest did, in one paragraph. */
-export function manifestNote(outcome: ManifestOutcome): string {
+export function manifestNote(outcome: ManifestOutcome, filename = 'Manifest'): string {
   const n = (k: number, one: string) => `${k} ${one}${k === 1 ? '' : 's'}`;
-  const parts = [`Manifest applied to ${n(outcome.patches.size, 'file')}. Nothing has been uploaded; check the rows, then upload.`];
+  const parts = [`${filename}: fields applied to ${n(outcome.patches.size, 'file')}. Nothing has been uploaded; check the rows, then upload.`];
   if (outcome.refused.length) {
-    parts.push(`${n(outcome.refused.length, 'line')} not applied: ${outcome.refused
-      .map((r) => `line ${r.line}${r.file ? ` (${r.file})` : ''}: ${r.reason}`).join('; ')}.`);
+    parts.push(`${n(outcome.refused.length, 'line')} not applied: ${limitedList(outcome.refused.map((r) => `line ${r.line}${r.file ? ` (${r.file})` : ''}: ${r.reason}`), '; ')}.`);
   }
   if (outcome.unnamed.length) {
     const one = outcome.unnamed.length === 1;
-    parts.push(`${n(outcome.unnamed.length, 'file')} in the list ${one ? 'is' : 'are'} not in the manifest and ${one ? 'keeps its' : 'keep their'} fields: ${outcome.unnamed.join(', ')}.`);
+    parts.push(`${n(outcome.unnamed.length, 'file')} in the list ${one ? 'is' : 'are'} not in the manifest and ${one ? 'keeps its' : 'keep their'} fields: ${limitedList(outcome.unnamed, ', ')}.`);
   }
   return parts.join(' ');
+}
+
+/** Keep a large import's announcement readable while stating every total. */
+function limitedList(items: string[], separator: string): string {
+  const limit = 10;
+  return items.slice(0, limit).join(separator) + (items.length > limit ? `${separator}and ${items.length - limit} more` : '');
 }
