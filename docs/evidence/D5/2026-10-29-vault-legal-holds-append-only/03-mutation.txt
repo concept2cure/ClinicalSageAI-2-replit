@@ -1,0 +1,33 @@
+# MR-08 Stage 5 step 4, mutations: each applied alone to the database (or the registry), then the suite; undone by re-applying the migration
+
+=== mutation: any-update (an UPDATE always passes)
+ × a legal hold is a record > refuses a rewrite of what a hold says, as the runtime role
+   → reason rewritten: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × a legal hold is a record > admits the lift once, with its author and reason, and nothing after it
+   → lift undone: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × a legal hold is a record > refuses a lift that also changes the hold
+   → lift with a rewrite: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+      Tests  3 failed | 3 passed (6)
+=== mutation: un-lift (a lifted hold may be lifted again or un-lifted)
+ × a legal hold is a record > admits the lift once, with its author and reason, and nothing after it
+   → lift reason replaced: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+      Tests  1 failed | 5 passed (6)
+=== mutation: lift-with-rewrite (the other columns need not be unchanged)
+ × a legal hold is a record > refuses a lift that also changes the hold
+   → lift with a rewrite: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+      Tests  1 failed | 5 passed (6)
+=== mutation: delete-by-anyone
+ × a legal hold is a record > refuses a delete, as the runtime role
+   → hold deleted: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+      Tests  1 failed | 5 passed (6)
+=== mutation: no-truncate-guard
+ × a legal hold is a record > refuses a TRUNCATE, even as the owner
+   → truncated: expected 'applied (0 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × a legal hold is a record > the guards are on the boot list, so production refuses to start without them
+   → expected [ 'vault_legal_holds_record_guard' ] to deeply equal ArrayContaining{…}
+      Tests  2 failed | 4 passed (6)
+=== mutation: not-on-the-boot-list
+ × a legal hold is a record > the guards are on the boot list, so production refuses to start without them
+   → expected [ 'vault_legal_holds_truncate_guard' ] to deeply equal [ …(2) ]
+      Tests  1 failed | 5 passed (6)
+=== restored: vault_legal_holds_record_guard,vault_legal_holds_truncate_guard
