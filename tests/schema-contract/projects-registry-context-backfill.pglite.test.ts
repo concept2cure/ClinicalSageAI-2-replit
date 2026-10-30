@@ -29,6 +29,7 @@ import { C2C_MIGRATION_FILES, UUID_TENANT_ISOLATION_NONPUBLIC } from '../../scri
 import { extractTableDdl } from '../golden-journeys/harness';
 import {
   PROGRAM_TYPE_REGISTRY,
+  TRIAL_APPLICATION_REGISTRY,
   registryContextForProgram,
 } from '../../server/services/c2c/program-registry-context';
 import { resolveRegistryId } from '../../server/services/regulatory/registry/legacySubmissionTypeMapper';
@@ -62,9 +63,14 @@ const FIXTURES: Fixture[] = [
   ...Object.entries(PROGRAM_TYPE_REGISTRY).map(([type, { agency }]) => ({
     id: uuid(++seq), org: 1, programType: type, agency, metadata: null,
   })),
-  // Names no entry: the same filing type with another agency, and filing types
+  // A trial application filed with an agency outside the US and the EU, as an IND and as a CTA (P-73).
+  ...Object.keys(TRIAL_APPLICATION_REGISTRY).flatMap((agency) => ['ind', 'cta'].map((programType) => ({
+    id: uuid(++seq), org: 1, programType, agency, metadata: null,
+  }))),
+  { id: uuid(++seq), org: 1, programType: 'cta', agency: 'Health Canada', metadata: null },
+  // Names no entry: an agency with more than one trial application, and filing types
   // the bridge would misread or that have no single entry.
-  { id: uuid(++seq), org: 1, programType: 'ind', agency: 'MFDS', metadata: null },
+  { id: uuid(++seq), org: 1, programType: 'cta', agency: 'TGA', metadata: null },
   { id: uuid(++seq), org: 1, programType: 'CER', agency: 'EMA', metadata: null },
   { id: uuid(++seq), org: 1, programType: 'mdr', agency: 'EMA', metadata: null },
   { id: uuid(++seq), org: 1, programType: 'device', agency: 'FDA', metadata: null },
@@ -82,6 +88,8 @@ const F = {
   seededJnda: FIXTURES[3],
   seeded510k: FIXTURES[4],
   indMfds: FIXTURES.find((f) => f.programType === 'ind' && f.agency === 'MFDS')!,
+  ctaTga: FIXTURES.find((f) => f.programType === 'cta' && f.agency === 'TGA')!,
+  ctaHealthCanada: FIXTURES.find((f) => f.agency === 'Health Canada')!,
   cer: FIXTURES.find((f) => f.programType === 'CER')!,
   mdr: FIXTURES.find((f) => f.programType === 'mdr')!,
   device: FIXTURES.find((f) => f.programType === 'device')!,
@@ -185,9 +193,16 @@ describe('the SQL and intake’s rule agree, pair by pair', () => {
   );
 });
 
+describe('a trial program outside the US and the EU (P-73)', () => {
+  it('records its own region’s trial application', async () => {
+    expect(digestRegistry(await metaOf(F.indMfds.id))).toBe('KR_IND');
+    expect(digestRegistry(await metaOf(F.ctaHealthCanada.id))).toBe('CA_CTA');
+  });
+});
+
 describe('what it leaves alone', () => {
   it('a program that names no entry gets none', async () => {
-    for (const f of [F.indMfds, F.cer, F.mdr, F.device]) {
+    for (const f of [F.ctaTga, F.cer, F.mdr, F.device]) {
       expect(await metaOf(f.id), `${f.programType}/${f.agency}`).toBeNull();
     }
   });

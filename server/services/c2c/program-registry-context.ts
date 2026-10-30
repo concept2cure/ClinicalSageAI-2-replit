@@ -24,6 +24,12 @@
  *      listed — 'mdr' resolves to US_MDR_REPORT (a device adverse-event report),
  *      not to an EU MDR technical file — and neither is an IND filed with
  *      another agency ('kr_ind' is the registry's Korean IND).
+ *   2b. With no choice recorded, a trial application, an IND or a CTA, filed
+ *      with an agency outside the US and the EU is that agency's own trial
+ *      application (TRIAL_APPLICATION_REGISTRY, P-73): a CTA filed with Health
+ *      Canada is CA_CTA, an IND filed with the MFDS is the Korean IND. An agency
+ *      with more than one trial application (TGA's CTN and CTA, ANVISA's DDCM
+ *      and DEEC, CDSCO's forms) is not listed: the record cannot say which.
  *   3. Otherwise none, and the digest goes on saying readiness was not computed
  *      and why. Nothing here picks an entry for a program that does not name one.
  *
@@ -54,6 +60,20 @@ export const PROGRAM_TYPE_REGISTRY: Readonly<Record<string, { agency: string; re
   jnda: { agency: 'PMDA', registryId: 'JP_MKT_APPROVAL' },
 };
 
+/**
+ * The trial application of each agency outside the US and the EU that has exactly one, keyed by the
+ * agency as the wizard records it. An IND or a CTA filed with the agency is that application (P-73,
+ * docs/design/TRIAL_APPLICATION_DRAFTING_2026-10-30.md slice 1).
+ */
+export const TRIAL_APPLICATION_REGISTRY: Readonly<Record<string, string>> = {
+  HEALTH_CANADA: 'CA_CTA',
+  MHRA: 'UK_CTA',
+  PMDA: 'JP_CTN',
+  NMPA: 'CN_CTA',
+  MFDS: 'KR_IND',
+  SWISSMEDIC: 'CH_CTA',
+};
+
 /** What `projects.metadata` records for the readiness engine. */
 export type ProgramRegistryContext = {
   /** The canonical registry id, when one resolves. */
@@ -77,9 +97,12 @@ export function registryContextForProgram(program: {
   const fixed = Object.prototype.hasOwnProperty.call(PROGRAM_TYPE_REGISTRY, type)
     ? PROGRAM_TYPE_REGISTRY[type]
     : undefined;
-  const agency = String(program.primaryAgency ?? '').trim().toUpperCase();
+  const agency = String(program.primaryAgency ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_');
   if (fixed && agency === fixed.agency) {
     return { registryId: fixed.registryId, submissionType: fixed.registryId };
   }
-  return null;
+  const trial = (type === 'ind' || type === 'cta') && Object.prototype.hasOwnProperty.call(TRIAL_APPLICATION_REGISTRY, agency)
+    ? TRIAL_APPLICATION_REGISTRY[agency]
+    : undefined;
+  return trial ? { registryId: trial, submissionType: trial } : null;
 }
