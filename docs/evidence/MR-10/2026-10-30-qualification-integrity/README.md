@@ -20,7 +20,7 @@ Root owns source/evidence contracts, all jobs and Git on concept2cure-v2. Up to 
 
 ## Status
 
-Software integration implemented and verified; normal publication gates pending. Actual agency qualification remains blocked on the preceding asset/validator prerequisites.
+Software integration published: implementation `c53e8fa5a`, accepted canonical source `8a1c1448c`. Every normal source-push gate passed, including full TypeScript0. Actual agency qualification remains blocked on the preceding asset/validator prerequisites.
 
 ## Approved bounded interfaces and ownership
 
@@ -48,4 +48,10 @@ Root serialized every job. Workers wrote disjoint tests and reviewed source, wit
 
 The per-DTD counsel-signoff prerequisite in [the existing vendoring runbook](../../../runbooks/ectd-dtd-vendoring.md) and exact unsigned [asset/validator packet](../2026-10-30-agency-qualification/ASSET_REVIEW.md) remain open. No DTD/XSL/archive was acquired; no external validator/profile or current-criteria coverage, human witnessing, agency acceptance or deployment completion is claimed. RPS retains its explicit captured/confined schema qualification blocker. This software slice does not close MR-10 Stage3/CAT2-01.
 
-Complete client/server/audit-chain-verifier production build passed on the pinned inputs. Publication and normal full compiler proof pending.
+Complete client/server/audit-chain-verifier production build passed on the pinned inputs. Accepted-source/compiler proof is in [publication.json](publication.json).
+
+## Accepted source
+
+[publication.json](publication.json) binds implementation `c53e8fa5a821694e143666f1335a6331b8c035cc` to accepted canonical source `8a1c1448cac417697e33e49368ae9aff88674df8`. All335 pinned inputs match accepted Git blobs, not just working-tree files. Complete application build and every normal gate passed, including TypeScript exit0/errors0, tracked imports and no lint warning growth (one fewer warning). No hook, baseline or branch bypass.
+
+Three earlier pushes passed every gate/whole compiler but lost the remote-ref race. Full logs and subsequent merges are preserved. Disjoint attachment, narrative and protocol work stayed intact. Work-order conflicts preserved this claim and the other lane’s current accepted status. The fourth normal source push was accepted. No remote CI/deployment or agency acceptance is implied. Paused A3/biotech work remains paused, not canceled or declared complete.
