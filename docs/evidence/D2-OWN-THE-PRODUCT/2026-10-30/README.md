@@ -83,8 +83,24 @@ The full vitest suite (about 6,100 files) runs as 8 serial shards. Shard 1 had 1
 - **The founder-path lineage test read a real PDF as text.** Filing renders through the canonical Word converter
   since `34942873db`. The test's extraction stub still read every PDF as the HTML its own engine had written, so
   it passed compressed streams, NULs included, into `vault.documents`. The stub now reads only its own engine's
-  output that way, and a real PDF reaches the real extractor. Hop 6 (file to Vault) passes again. Hops 6b–8 fail
-  for a separate cause, still open.
+  output that way, and a real PDF reaches the real extractor. Hop 6 (file to Vault) passes again.
+- **The walk's database was smaller than the code it walks.** After hop 6, the walk's own last check named the
+  relations the product asked for and the walk lacked. Each is now laid down from the file that creates it:
+  - `notification_preferences` and `unified_tasks`, verbatim from the drizzle baseline. A review route reads
+    the sender's time zone (RR2), and a Vault approval assigns its review task (RR1a). The task's MDx-metadata
+    and soft-delete columns come from their two migrations, ahead of `20261023_review_routes`. Without the
+    table, that file had added its route columns to nothing.
+  - `submission_filed_baselines` (`20261029g`) and `company_legal_registry` (`20261018`): placement reads both.
+  - `mdx_notifications` (`20260510_notifications_and_clinical`). A fresh install lays it down; no deploy
+    applies it, and `migration-deploy-path-baseline.json` already records that.
+  - **Result.** 15 of 15 pass, against 7 of 15 before (`founder-path-lineage-before.txt`,
+    `founder-path-lineage-after.txt`). No baseline entry was added.
+- **Two CSR harnesses broke the ALTER-closure contract.** `csr-template-identity` and
+  `narrative-reference-write` build the authoring loop's tables, but skipped the two files that alter them
+  (`20260730_authoring_comments_router_columns`, `20260817_doc_revisions_immutable_ledger`). Both files are
+  now applied. The contract and both suites pass, 17 of 17.
+- **The NUL fix met the warning ratchet.** The pre-push ratchet refused one new warning, `no-control-regex` on
+  `/\u0000/g`. The extractor now uses `replaceAll('\u0000', …)`, which needs no regex.
 - **`cross-reference-packaging.test.ts`** built its fixture PDFs by hand, and the packager's parse refused them.
   It now builds them with `pdf-lib`. 5 of 5 pass.
 - **`mdx-client-review.ts` (`admitRoom`)** resolved a program's project with its own subquery, beside the
