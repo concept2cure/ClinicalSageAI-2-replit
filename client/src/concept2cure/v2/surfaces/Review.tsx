@@ -43,7 +43,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { useAuthUser } from '@/services/portal/authService';
 import { ceremonyOpen } from '../ceremony';
 import { ReviewDecisionDialog } from './ReviewDecisionDialog';
-import type { AuthoringReviewRow } from '@shared/authoring/peer-review';
+import { signedOnRoute, type AuthoringReviewRow } from '@shared/authoring/peer-review';
 import type { ReviewItem, ReviewComment, ReviewWorkflow, ReviewRequest } from '../fixtures/review-data';
 import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import { publishShellProject, readShellProject } from '../shellProject';
@@ -647,7 +647,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
                     <button className="btn ghost" onClick={() => setDecisionFor(item)}>{I.close} Request changes...</button>
                     <button className="btn primary" onClick={() => setDecisionFor(item)}>{I.shieldCheck} Record review decision</button>
                   </>
-                : item.myReviewStatus && item.myReviewStatus !== 'pending'
+                : hasRecordedReview(item)
                   ? <RecordedReviewStanding item={item} />
                   : item.atMySignOff
                     ? <button className="btn primary" onClick={openEditor} data-testid="rv-open-to-sign">{I.lock} Open the document to sign</button>
@@ -804,7 +804,14 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
   );
 }
 
+/** The caller recorded a decision, or signed the review on its route (RR5). */
+const hasRecordedReview = (item: ReviewItem): boolean =>
+  Boolean(item.myReviewSignedAt) || Boolean(item.myReviewStatus && item.myReviewStatus !== 'pending');
+
 function RecordedReviewStanding({ item }: { item: ReviewItem }) {
+  if (item.myReviewSignedAt) {
+    return <span className="rd-chip tone-ok">Your review signature recorded {new Date(item.myReviewSignedAt).toLocaleDateString()}</span>;
+  }
   const current = item.myReviewStanding === 'current';
   const label = REVIEW_STATUS_LABEL[item.myReviewStatus ?? ''] ?? item.myReviewStatus;
   return <span className={`rd-chip tone-${current ? item.myReviewStatus === 'approved' ? 'ok' : item.myReviewStatus === 'rejected' ? 'err' : 'warn' : 'warn'}`}>
@@ -820,7 +827,8 @@ function recordedNotice(receipt: AuthoringReviewRow): string {
 
 function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: number }) {
   const current = review.standing === 'current';
-  const approved = current && review.status === 'approved';
+  const signed = signedOnRoute(review);
+  const approved = signed || (current && review.status === 'approved');
   const tone = approved ? 'ok' : current && review.status === 'rejected' ? 'err' : 'warn';
   const state = approved ? 'approved' : review.status === 'pending' ? 'current' : 'pending';
   return <div className="rv-wf-step" data-status={state}>
@@ -828,8 +836,10 @@ function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: nu
     <div className="rv-wf-body">
       <div className="rv-wf-nm">{review.reviewer}<span className={`rv-wf-tag tone-${tone}`}>{reviewRequestWords(review)}</span></div>
       <div className="rv-wf-meta mono">
-        {review.requestedBy ? `requested by ${review.requestedBy}` : 'requested'}
-        {review.reviewedAt && ` · decided ${new Date(review.reviewedAt).toLocaleDateString()}`}
+        {review.requestedByName ? `requested by ${review.requestedByName}` : 'requested'}
+        {signed && review.routeSignedAt
+          ? ` · signed ${new Date(review.routeSignedAt).toLocaleDateString()}`
+          : review.reviewedAt && ` · decided ${new Date(review.reviewedAt).toLocaleDateString()}`}
         {review.comments && ` · ${review.comments}`}
       </div>
     </div>
@@ -837,6 +847,7 @@ function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: nu
 }
 
 function reviewRequestWords(review: ReviewRequest): string {
+  if (signedOnRoute(review)) return 'Signed';
   const label = REVIEW_STATUS_LABEL[review.status] ?? review.status;
   if (review.status === 'pending' || review.standing === 'current') return label;
   return `${label} · ${review.standing === 'stale' ? 'Earlier saved content' : 'Content binding unavailable'}`;

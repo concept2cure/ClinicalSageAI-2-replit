@@ -29,6 +29,7 @@ import { I } from '../icons';
 import { CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
 import { CsrAssemblyControl } from './CsrAssemblyControl';
 import { SourceImportDialog, openImportedDocument, type ImportSource } from '../editor/SourceImportDialog';
+import { useShellProject } from '../shellProject';
 
 const JOBS = '/api/csr/jobs';
 /** How often the list is re-read while a build of the run is still running. */
@@ -117,8 +118,16 @@ function useBuildHeadings(jobId: number, updatedAt: string) {
   return { ...state, reload: useCallback(() => { void load(); }, [load]) };
 }
 
+/** The open project's name, only when the open project is this program; otherwise the dialog names it by id. */
+function useProgramName(programId: string): string | undefined {
+  const shell = useShellProject();
+  if (!shell || String(shell.id).trim().toLowerCase() !== programId.toLowerCase()) return undefined;
+  return shell.title?.trim() || undefined;
+}
+
 function BuildOnCard({ build, programId, onNav }: { build: RunBuild; programId: string; onNav?: (surface: string) => void }) {
   const { headings, error, reload } = useBuildHeadings(build.jobId, build.updatedAt);
+  const programName = useProgramName(programId);
   const [importSource, setImportSource] = useState<ImportSource | null>(null);
   return <div style={{ display: 'grid', gap: 4 }}>
     <p role="status">CSR build {build.jobId} · {build.status} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
@@ -128,8 +137,7 @@ function BuildOnCard({ build, programId, onNav }: { build: RunBuild; programId: 
       onImport={sectionNumbers => setImportSource({ kind: 'csr', jobId: build.jobId, sectionNumbers })} />}
     <CsrNarrativeBuild jobId={build.jobId} headings={headings ?? []} onChanged={reload} />
     <CsrAssemblyControl jobId={build.jobId} />
-    {/* The card has no project name in hand; the dialog names the target project by its id. */}
-    {importSource && <SourceImportDialog programId={programId} source={importSource} title={`CSR build ${build.jobId} · ${build.studyId}`}
+    {importSource && <SourceImportDialog programId={programId} programName={programName} source={importSource} title={`CSR build ${build.jobId} · ${build.studyId}`}
       onClose={() => setImportSource(null)}
       onOpenDocument={onNav ? (docId, code) => openImportedDocument(docId, programId, onNav, code) : undefined} />}
   </div>;
