@@ -480,17 +480,6 @@ export function isFolderInView(view: VaultViewId, folderId: string): boolean {
   return foldersForView(view).some(f => f.id === folderId);
 }
 
-/**
- * The folder a Vault row stands in, as the tree places it: its folder when its
- * filing is suggested or confirmed, none when it is unfiled. The tree, its
- * Unfiled queue and a folder's export all read it, so the three agree on what
- * a folder holds.
- */
-export function cabinetFolderOf(row: { folder_id?: unknown; placement_status?: unknown }): string | null {
-  const folder = typeof row.folder_id === 'string' && row.folder_id ? row.folder_id : null;
-  return folder && (row.placement_status || 'unfiled') !== 'unfiled' ? folder : null;
-}
-
 /** Label for a preset folder id in a view ('' when absent — never invented). */
 export function folderLabel(view: VaultViewId, folderId: string | null): string {
   if (!folderId) return '';

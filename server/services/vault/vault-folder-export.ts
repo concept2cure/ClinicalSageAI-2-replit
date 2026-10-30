@@ -12,16 +12,16 @@
  * route stages the bytes; this module describes them.
  */
 import type { Pool } from 'pg';
-import { ACTORS_BY_REFERENCE_NOTE, readArchiveAuditExtract, type ArchiveActors, type WithheldDocument } from './vault-seal-archive.js';
+import { readArchiveAuditExtract, type WithheldDocument } from './vault-seal-archive.js';
 import type { ArchivedFile } from './vault-archive-builder.js';
 import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
-import { cabinetFolderOf, folderLabel, isFolderInView, resolveVaultView } from './vault-filing.service.js';
+import { folderLabel, isFolderInView, resolveVaultView } from './vault-filing.service.js';
 import { readSealDocumentRows, VaultSealError } from './vault-seal.service.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> };
 
-/** A folder export that cannot be made, and why, before any byte is read. */
+/** A folder export that cannot be made, and why, before anything is read. */
 export type FolderExportRefusal = { ok: false; status: 404 | 409; code: string; message: string };
 
 /** What an export of one folder holds, read before a byte is: the tree's rows, and each one's stored file. */
@@ -54,8 +54,7 @@ export async function planFolderExport(
     return { ok: false, status: 404, code: 'FOLDER_NOT_FOUND', message: `There is no such folder in this project's Vault. ${NOTHING}` };
   }
   const label = folderLabel(view, p.folderId) || p.folderId;
-  // What the tree shows in this folder: a suggested or confirmed filing, never a row it lists as Unfiled.
-  const rows = programRows.filter((r) => cabinetFolderOf(r) === p.folderId);
+  const rows = programRows.filter((r) => r.folder_id === p.folderId);
   if (!rows.length) {
     return { ok: false, status: 409, code: 'FOLDER_EMPTY', message: `${label} holds no documents to export. ${NOTHING}` };
   }
@@ -68,15 +67,10 @@ export async function planFolderExport(
     [rows.map((r) => String(r.id)), p.programId, p.organizationId],
   );
   const byId = new Map(files.rows.map((f) => [String(f.id), f]));
-  // A document the folder showed a moment ago and the file read cannot find is
-  // not left out quietly: the export would look whole and not be.
-  if (rows.some((r) => !byId.has(String(r.id)))) {
-    return { ok: false, status: 409, code: 'FOLDER_CHANGED', message: `${label} changed while it was being read. Try again. ${NOTHING}` };
-  }
   const name = await q.query(`SELECT name FROM regulatory_programs WHERE id = $1::uuid AND organization_id = $2`, [p.programId, p.organizationId]);
   return {
     ok: true, view, folder: { id: p.folderId, label }, programName: String(name.rows[0]?.name ?? 'Vault'), programRows,
-    inFolder: rows.map((row) => ({ row, file: byId.get(String(row.id))! })),
+    inFolder: rows.flatMap((row) => (byId.has(String(row.id)) ? [{ row, file: byId.get(String(row.id))! }] : [])),
   };
 }
 
@@ -110,30 +104,23 @@ export async function buildFolderExportContents(
   input: {
     organizationId: number; userId: number | undefined; programId: string; programName: string;
     folder: { id: string; label: string }; documents: FolderExportDocument[]; withheld: WithheldDocument[]; builtAt?: Date;
-    /** Whether the person receiving it may read the audit trail (`canReadAuditTrail`). */
-    namedActors: boolean;
   },
 ): Promise<{ manifest: (files: ArchivedFile[]) => Record<string, unknown>; indexHeader: string[]; attachments: Array<{ path: string; content: string }> }> {
   const { folder, documents, withheld } = input;
   const builtAt = (input.builtAt ?? new Date()).toISOString();
   const ids = [...documents.map((d) => d.id), ...withheld.map((w) => w.id)];
   const history = await readArchiveAuditExtract(pool, input.organizationId, input.userId,
-    { tableName: 'vault_document', recordId: ids }, { of: `the documents in ${folder.label}`, namedActors: input.namedActors });
+    { tableName: 'vault_document', recordId: ids }, `the documents in ${folder.label}`);
   const entries = [...history.data].reverse();
   const auditPath = 'audit/audit-trail.json';
-  const actors: ArchiveActors = input.namedActors ? 'named' : 'by reference';
   const audit = {
     schema: 'vault-folder-export-audit/1',
     readAt: builtAt,
     order: 'oldest first',
     records: { documents: ids },
     chain: history.meta.chain,
-    actors,
-    ...(input.namedActors ? {} : { actorsNote: ACTORS_BY_REFERENCE_NOTE }),
     entries,
   };
-  // The tree shows a suggested filing in its folder; the hand-over says which ones nobody has confirmed.
-  const suggested = documents.filter((d) => d.placementStatus === 'suggested');
   return {
     manifest: (files) => ({
       schema: FOLDER_EXPORT_SCHEMA,
@@ -148,7 +135,7 @@ export async function buildFolderExportContents(
       documents,
       files,
       withheld,
-      auditTrail: { path: auditPath, entries: entries.length, chain: history.meta.chain, actors },
+      auditTrail: { path: auditPath, entries: entries.length, chain: history.meta.chain },
     }),
     indexHeader: [
       `Export of a Vault folder: ${folder.label}`,
@@ -161,11 +148,6 @@ export async function buildFolderExportContents(
       'Every file in this archive is listed in SHA256SUMS; `sha256sum -c SHA256SUMS` checks them all.',
       'manifest.json lists each document with its version, recorded SHA-256 and filing.',
       `${auditPath} holds the chained audit rows of each exported version, oldest first.`,
-      ...(input.namedActors ? [] : [ACTORS_BY_REFERENCE_NOTE]),
-      ...(suggested.length
-        ? ['', `Filed by the Vault's suggestion, not yet confirmed by a person (${suggested.length}):`,
-          ...suggested.map((d) => `  ${d.title ?? d.id}`)]
-        : []),
       ...(withheld.length
         ? ['', `Withheld (${withheld.length}): documents in this folder whose file this export does not hold.`,
           ...withheld.map((w) => `  ${w.title ?? w.id}  ${w.sha256 ?? '-'}  ${w.why}`)]

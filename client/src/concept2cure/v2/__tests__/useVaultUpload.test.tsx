@@ -305,30 +305,14 @@ describe('useVaultUpload — how far a file has got (MR-08 Stage 6 step 2)', () 
     expect(sent).toEqual([undefined, `1002000 of ${FAKE_BODY_BYTES}`, `1500000 of ${FAKE_BODY_BYTES}`, `${FAKE_BODY_BYTES} of ${FAKE_BODY_BYTES}`]);
   });
 
-  it('a connection that drops before the file is sent is a refusal the person can retry, and nothing was filed', async () => {
-    stubIngestXhr(vi.fn(async () => { throw new Error('offline'); }), [0.5]);
+  it('a connection that drops is a refusal the person can retry, and nothing was filed', async () => {
+    stubIngestXhr(vi.fn(async () => { throw new Error('offline'); }));
     let latest: VaultUploadState | null = null;
     render(<HookHost onState={(s) => { latest = s; }} />);
     const outcome = await latest!.upload([new File(['x'], 'csr.pdf')]);
     expect(outcome.succeeded).toEqual([]);
     expect(outcome.recorded).toEqual([]);
     expect(outcome.failed).toEqual([{ name: 'csr.pdf', reason: 'the connection dropped before the file was sent' }]);
-  });
-
-  // Part 11 / copy review, 2026-10-30: the server records before it replies, so
-  // a reply lost after every byte went out is not "nothing was filed".
-  it('no reply after the whole file was sent says whether it was recorded is not known, and that sending again is safe', async () => {
-    stubIngestXhr(vi.fn(async () => { throw new Error('reply lost'); }));
-    const seen: VaultUploadFileStatus[] = [];
-    let latest: VaultUploadState | null = null;
-    render(<HookHost onState={(s) => { latest = s; }} />);
-    const outcome = await latest!.upload([new File(['x'], 'csr.pdf')], { onFileStatus: (_i, st) => seen.push(st) });
-    expect(outcome.failed).toEqual([{ name: 'csr.pdf', unknown: true,
-      reason: 'no reply came after the file was sent, so it may have been recorded. Sending it again is safe: if it was, the Vault says it already holds these bytes' }]);
-    expect(seen.at(-1)).toMatchObject({ state: 'refused', unknown: true });
-    await waitFor(() => expect(latest!.note).toBeTruthy());
-    expect(latest!.note!.text).toBe('Not known whether csr.pdf was recorded: no reply came after sending. Sending again is safe; the Vault reports a file it already holds.');
-    expect(latest!.note!.text).not.toContain('Nothing partial was recorded');
   });
 
   it("a reply that is not JSON is refused with its status, never read as recorded", async () => {

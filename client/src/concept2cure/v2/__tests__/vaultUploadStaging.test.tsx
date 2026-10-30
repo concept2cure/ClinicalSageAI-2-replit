@@ -195,9 +195,9 @@ describe('each row says how far its file has got (MR-08 Stage 6 step 2)', () => 
     const rows = within(panel).getAllByTestId('vault-stage-row');
     expect(await within(rows[0]).findByText('Uploading… 50% of 1.9 MB sent')).toBeTruthy();
     const bar = rows[0].querySelector('progress');
-    expect(bar?.getAttribute('aria-label')).toBe('Upload progress, a.pdf');
+    expect(bar?.getAttribute('aria-label')).toBe('Sending a.pdf');
     expect([bar?.getAttribute('value'), bar?.getAttribute('max')]).toEqual([String(FAKE_BODY_BYTES / 2), String(FAKE_BODY_BYTES)]);
-    expect(within(rows[1]).getByText('Waiting its turn: files are sent one at a time.')).toBeTruthy();
+    expect(within(rows[1]).getByText('Waiting: files are sent one at a time.')).toBeTruthy();
     release();
     expect(await within(rows[1]).findByText('Recorded as v1.0 · Unfiled, needs a folder')).toBeTruthy();
     expect(within(rows[0]).getByText('Recorded as v1.0 · Unfiled, needs a folder')).toBeTruthy();
@@ -205,35 +205,9 @@ describe('each row says how far its file has got (MR-08 Stage 6 step 2)', () => 
   });
 
   it('says the server is scanning and storing a file once all of it is sent, and only "Uploading…" before it knows', () => {
-    expect(statusText({ state: 'uploading', sent: FAKE_BODY_BYTES, total: FAKE_BODY_BYTES })).toBe('Sent. The Vault is scanning it and storing it…');
-    expect(statusText({ state: 'refused', reason: 'no reply came', unknown: true })).toBe('Not known whether it was recorded: no reply came');
+    expect(statusText({ state: 'uploading', sent: FAKE_BODY_BYTES, total: FAKE_BODY_BYTES })).toBe('Sent. The server is scanning it and storing it…');
     expect(statusText({ state: 'uploading', sent: 0, total: FAKE_BODY_BYTES })).toBe('Uploading… 0% of 1.9 MB sent');
     expect(statusText({ state: 'uploading' })).toBe('Uploading…');
   });
 });
 
-describe('refused files tried again (Part 11 / copy review, 2026-10-30)', () => {
-  it("the one behind waits its turn, and its earlier refusal is not shown as this attempt's", async () => {
-    let release!: () => void;
-    const held = new Promise<void>((r) => { release = r; });
-    const refusal = { status: 422, body: { error: { message: 'The file failed the malware scan' } } };
-    const answers = [refusal, refusal];
-    stubIngestXhr(vi.fn(async () => {
-      const a = answers.shift();
-      if (!a) await held;
-      const reply = a ?? { status: 201, body: { success: true, document: { version: '1.0' } } };
-      return { ok: reply.status < 300, status: reply.status, json: async () => reply.body };
-    }), [0.5]);
-    const panel = await choose([new File(['a'], 'a.pdf'), new File(['b'], 'b.pdf')]);
-    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
-    const rows = within(panel).getAllByTestId('vault-stage-row');
-    expect(await within(rows[1]).findByText('Not recorded: The file failed the malware scan')).toBeTruthy();
-    fireEvent.click(within(panel).getByRole('button', { name: 'Try again for 2 files' }));
-    expect(await within(rows[0]).findByText('Uploading… 50% of 1.9 MB sent')).toBeTruthy();
-    expect(within(rows[1]).getByText('Waiting its turn: files are sent one at a time.')).toBeTruthy();
-    expect(within(rows[1]).queryByText(/Not recorded/)).toBeNull();
-    expect(rows[1].querySelector('.vd-dr-err')).toBeNull();
-    release();
-    expect(await within(rows[1]).findByText('Recorded as v1.0 · Unfiled, needs a folder')).toBeTruthy();
-  });
-});

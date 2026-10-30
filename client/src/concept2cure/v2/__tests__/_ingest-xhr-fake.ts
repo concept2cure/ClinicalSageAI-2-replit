@@ -27,10 +27,7 @@ export function stubIngestXhr<A extends IngestAnswer>(answer: A, steps: number[]
     status = 0;
     responseText = '';
     withCredentials = false;
-    upload: {
-      onprogress: ((e: { lengthComputable: boolean; loaded: number; total: number }) => void) | null;
-      onload: (() => void) | null;
-    } = { onprogress: null, onload: null };
+    upload: { onprogress: ((e: { lengthComputable: boolean; loaded: number; total: number }) => void) | null } = { onprogress: null };
     onload: (() => void) | null = null;
     onerror: (() => void) | null = null;
     onabort: (() => void) | null = null;

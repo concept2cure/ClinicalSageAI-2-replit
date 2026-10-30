@@ -51,15 +51,6 @@ Searches run, in client and server: `export`, `bulk export`, `vault_exports`, `e
 - **One file that fails its hash refuses the whole export**, and the refusal names that file. A partial hand-over that looks complete is worse than none.
 - **`assertZipWithinLimits` is not applied.** It guards the inflation of an untrusted archive. This archive is built by the server from verified bytes, and nothing inflates it.
 
-## After review (2026-10-30)
-
-A security review found five problems, fixed in `docs/evidence/D5/2026-10-30-vault-archive-review-fixes/`:
-- a viewer's copy carried people's names and IP addresses, and now names them by account reference;
-- a closed request left its staged files in tmp;
-- builds were unbounded, and now run one at a time per person;
-- each exported document now records in its own history that it left;
-- the export now places rows exactly as the tree does, refuses a row that vanished mid-plan, and names unconfirmed filings in the index.
-
 ## Not done here
 
 - Step 4, previews: it waits on the renditions decision in this work order.

@@ -34,7 +34,7 @@ import { redactInternals } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { VaultClassification, VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
 import { vaultDocumentCodeForFile } from '@shared/constants/domain/vault-document-code';
-import { IngestNoReply, sendIngest, type IngestProgress, type IngestReply } from './vaultIngestTransport';
+import { sendIngest, type IngestProgress, type IngestReply } from './vaultIngestTransport';
 export { VAULT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 
 export interface VaultUploadOutcome {
@@ -46,8 +46,7 @@ export interface VaultUploadOutcome {
    *  named, never one it guessed. */
   recorded: string[];
   /** Files it refused, each with the reason as the server phrased it. */
-  /** Not recorded, and why; `unknown` when the file was sent and no reply came, so it may have been. */
-  failed: Array<{ name: string; reason: string; unknown?: true }>;
+  failed: Array<{ name: string; reason: string }>;
   /** Per-file filing outcome, as the server stored it: the classifier's
    *  suggested dossier folder, or unfiled (visible review queue). */
   filings: Array<{ name: string; folderLabel: string | null; needsReview: boolean; placement: VaultPlacement }>;
@@ -99,8 +98,7 @@ export type VaultUploadFileStatus =
   | { state: 'stored'; version: string | null; folderLabel: string | null; placement: VaultPlacement; already: boolean;
       /** Its text is still being read by the server (a scanned PDF's OCR is off the upload, MR-08 Stage 3). */
       readingText?: true }
-  /** `unknown`: the file was sent and no reply came, so whether it was recorded is not known. */
-  | { state: 'refused'; reason: string; unknown?: true };
+  | { state: 'refused'; reason: string };
 
 export interface VaultUploadOptions {
   /**
@@ -187,7 +185,7 @@ async function uploadOne(
       documentId: string | null;
       readingText: boolean;
     }
-  | { ok: false; reason: string; code: string | null; unknown?: true }
+  | { ok: false; reason: string; code: string | null }
 > {
   const { newVersionOf, fields, onProgress } = how;
   const form = new FormData();
@@ -231,15 +229,9 @@ async function uploadOne(
        server cannot parse. `getAuthHeaders()` sets only Authorization and
        x-organization-id. */
     res = await sendIngest(form, { ...getAuthHeaders() }, onProgress);
-  } catch (e) {
-    /* No reply, not a server refusal. Before every byte went out, nothing was
-       filed. After, the server may have recorded the file before the reply was
-       lost, so it is not called unrecorded: sending it again is safe, because a
-       re-upload of the same bytes is reported as already in the Vault. */
-    if (e instanceof IngestNoReply && e.afterSending) {
-      return { ok: false, unknown: true, code: null,
-        reason: 'no reply came after the file was sent, so it may have been recorded. Sending it again is safe: if it was, the Vault says it already holds these bytes' };
-    }
+  } catch {
+    /* A transport failure, not a server refusal. The distinction matters: the
+       user can retry this one, and nothing was filed. */
     return { ok: false, reason: 'the connection dropped before the file was sent', code: null };
   }
 
@@ -327,18 +319,12 @@ function outcomeNote(outcome: VaultUploadOutcome): NonNullable<VaultUploadState[
       .join(' ');
     return { tone: 'ok', text: `${versionText} ${filedText} ${alreadyRecordedText(outcome.alreadyRecorded)}`.trim() };
   }
-  const refused = outcome.failed.filter((f) => !f.unknown);
-  const unknown = outcome.failed.filter((f) => f.unknown);
   return {
     tone: 'error',
-    text: [
-      outcome.succeeded.length ? `Filed ${outcome.succeeded.length}.` : '',
-      refused.length ? `Not filed: ${refused.map((f) => `${f.name} — ${f.reason}`).join('; ')}. Nothing partial was recorded for those.` : '',
-      unknown.length
-        ? `Not known whether ${unknown.map((f) => f.name).join(', ')} ${unknown.length === 1 ? 'was' : 'were'} recorded: no reply came after sending. `
-          + 'Sending again is safe; the Vault reports a file it already holds.'
-        : '',
-    ].filter(Boolean).join(' '),
+    text:
+      (outcome.succeeded.length ? `Filed ${outcome.succeeded.length}. ` : '') +
+      `Not filed: ${outcome.failed.map((f) => `${f.name} — ${f.reason}`).join('; ')}. ` +
+      'Nothing partial was recorded for those.',
   };
 }
 
@@ -397,7 +383,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
           opts?.onFileStatus?.(index, r.ok
             ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, placement: r.placement, already: Boolean(r.already),
               ...(r.readingText ? { readingText: true as const } : {}) }
-            : { state: 'refused', reason: r.reason, ...(r.unknown ? { unknown: true as const } : {}) });
+            : { state: 'refused', reason: r.reason });
           if (r.ok && r.documentId) outcome.recorded.push(r.documentId);
           if (r.ok && r.already) {
             outcome.succeeded.push(file.name);
@@ -419,7 +405,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
               placement: r.placement,
             });
           } else {
-            outcome.failed.push({ name: file.name, reason: r.reason, ...(r.unknown ? { unknown: true as const } : {}) });
+            outcome.failed.push({ name: file.name, reason: r.reason });
             if (r.code === 'VERSION_CONTENT_CONFLICT') outcome.conflicts.push({ name: file.name, file });
           }
         }

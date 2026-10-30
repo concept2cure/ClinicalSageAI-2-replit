@@ -20,22 +20,10 @@ export type IngestProgress = (sent: number, total: number) => void;
 export const VAULT_INGEST_URL = '/api/vault/ingest';
 
 /**
- * No reply came. `afterSending` says whether every byte had gone out first: if
- * it had, the server may have recorded the file before the reply was lost, so
- * the outcome is not known rather than "not recorded".
- */
-export class IngestNoReply extends Error {
-  constructor(readonly afterSending: boolean) {
-    super(afterSending ? 'no reply came after the file was sent' : 'the connection dropped before the file was sent');
-    this.name = 'IngestNoReply';
-  }
-}
-
-/**
  * POST `form` to the ingest route with `headers`, telling `onProgress` as the
- * body goes out. Rejects with `IngestNoReply` only when the request got no
- * reply (the connection dropped, or the browser refused it); a refusal from
- * the server is a reply, with its status and body.
+ * body goes out. Rejects only when the request never got a reply (the
+ * connection dropped, or the browser refused it); a refusal from the server is
+ * a reply, with its status and body.
  */
 export function sendIngest(form: FormData, headers: Record<string, string>, onProgress?: IngestProgress): Promise<IngestReply> {
   return new Promise((resolve, reject) => {
@@ -46,13 +34,11 @@ export function sendIngest(form: FormData, headers: Record<string, string>, onPr
     /* Authorization and x-organization-id only. Never a Content-Type: the
        browser must write the multipart boundary itself. */
     for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
-    let sentAll = false;
-    xhr.upload.onprogress = (e) => {
-      if (!e.lengthComputable) return;
-      if (e.total > 0 && e.loaded >= e.total) sentAll = true;
-      onProgress?.(e.loaded, e.total);
-    };
-    xhr.upload.onload = () => { sentAll = true; };
+    if (onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(e.loaded, e.total);
+      };
+    }
     xhr.onload = () => {
       const text = xhr.responseText;
       resolve({
@@ -61,7 +47,7 @@ export function sendIngest(form: FormData, headers: Record<string, string>, onPr
         json: async () => JSON.parse(text),
       });
     };
-    const dropped = () => reject(new IngestNoReply(sentAll));
+    const dropped = () => reject(new Error('the connection dropped before the file was sent'));
     xhr.onerror = dropped;
     xhr.onabort = dropped;
     xhr.ontimeout = dropped;

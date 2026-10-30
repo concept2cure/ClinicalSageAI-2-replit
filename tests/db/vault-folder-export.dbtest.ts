@@ -147,13 +147,6 @@ beforeAll(async () => {
   ids.specV2 = await ingest(mine, 'Drug product specification, version 2.', { supersedesDocumentId: ids.specV1, documentTitle: 'Drug product specification' });
   ids.stability = await ingest(mine, 'Stability protocol, 25 C / 60 percent RH.', { documentCode: `${CODE}-STAB`, documentTitle: 'Stability protocol', folderId: 'module-3' });
   ids.csr = await ingest(mine, 'Clinical study report of the pivotal study.', { documentCode: `${CODE}-CSR`, documentTitle: 'Clinical study report', folderId: 'module-5' });
-  // Module 2 as the tree shows it: one filing confirmed, one the Vault suggested
-  // and nobody has confirmed, and one row that carries the folder but is Unfiled.
-  ids.overview = await ingest(mine, 'Quality overall summary.', { documentCode: `${CODE}-QOS`, documentTitle: 'Quality overall summary', folderId: 'module-2' });
-  ids.suggested = await ingest(mine, 'Nonclinical overview.', { documentCode: `${CODE}-NCO`, documentTitle: 'Nonclinical overview', folderId: 'module-2' });
-  ids.stray = await ingest(mine, 'Clinical overview, draft.', { documentCode: `${CODE}-CO`, documentTitle: 'Clinical overview draft', folderId: 'module-2' });
-  await owner.query(`UPDATE vault.documents SET placement_status = 'suggested', placed_by = NULL WHERE id = $1`, [ids.suggested]);
-  await owner.query(`UPDATE vault.documents SET placement_status = 'unfiled' WHERE id = $1`, [ids.stray]);
 }, 90_000);
 
 afterAll(async () => {
@@ -259,77 +252,3 @@ describe("a Vault folder's export", () => {
     await vi.waitFor(() => expect(leftovers()).toEqual([]));
   });
 });
-
-describe('what an export holds, says and records (security review, 2026-10-30)', () => {
-  it("names people in a viewer's copy only by account reference, with no IP address; an audit reader's copy names them", async () => {
-    const asViewer = new AdmZip((await exportFolder(mine, 'module-5', viewer)).body as Buffer);
-    const trail = JSON.parse(asViewer.readAsText('audit/audit-trail.json'));
-    expect(trail.actors).toBe('by reference');
-    expect(trail.entries.length).toBeGreaterThan(0);
-    for (const e of trail.entries as Array<{ actor: string; ip: string }>) {
-      expect(e.actor).toMatch(/^(user:\d+|System|not named in this copy)$/);
-      expect(e.ip).toBe('');
-    }
-    const text = asViewer.readAsText('audit/audit-trail.json') + asViewer.readAsText('manifest.json') + asViewer.readAsText('INDEX.txt');
-    expect(text).not.toContain('@example.test');
-    expect(text).not.toContain('Ezra Exporter');
-    expect(asViewer.readAsText('INDEX.txt')).toContain('People are named by account reference');
-    expect(JSON.parse(asViewer.readAsText('manifest.json')).auditTrail.actors).toBe('by reference');
-
-    const asAdmin = JSON.parse(new AdmZip((await exportFolder(mine, 'module-5')).body as Buffer).readAsText('audit/audit-trail.json'));
-    expect(asAdmin.actors).toBe('named');
-    expect((asAdmin.entries as Array<{ actor: string }>).some((e) => e.actor === 'Ezra Exporter')).toBe(true);
-  });
-
-  // Module 5 here: the case above changed module 3's stability file. Module 5 also holds the withdrawn brochure,
-  // which is withheld and so gets no row.
-  it("records in each exported document's own history that it left in this export, and nothing for one withheld", async () => {
-    const res = await exportFolder(mine, 'module-5');
-    expect(res.status).toBe(200);
-    const archiveSha256 = sha256(res.body as Buffer);
-    const { rows } = await owner.query(
-      `SELECT record_id, new_values FROM audit_logs
-        WHERE tenant_id = $1 AND action = 'vault.document.exported' AND table_name = 'vault_document' AND new_values->>'archiveSha256' = $2`,
-      [mine.orgId, archiveSha256]);
-    expect(rows.map((r) => String(r.record_id))).toEqual([ids.csr]);
-    expect(rows[0].new_values).toMatchObject({ via: 'vault.folder.export', vault_folder: `${mine.programId}:module-5` });
-    expect(String(rows[0].new_values.description)).toMatch(/^Left the Vault in the export of /);
-  });
-
-  it('holds what the tree shows in the folder: a suggested filing, named as unconfirmed, and not a row the tree lists as Unfiled', async () => {
-    const res = await exportFolder(mine, 'module-2');
-    expect(res.status, String(res.body).slice(0, 300)).toBe(200);
-    const zip = new AdmZip(res.body as Buffer);
-    const exported = (JSON.parse(zip.readAsText('manifest.json')).files as Array<{ id: string }>).map((f) => f.id).sort();
-    expect(exported).toEqual([ids.overview, ids.suggested].sort());
-    expect(zip.readAsText('INDEX.txt')).toMatch(/not yet confirmed by a person \(1\):\n {2}Nonclinical overview/);
-  });
-
-  it('refuses, rather than leave out, a document the folder showed and the file read no longer finds', async () => {
-    const { planFolderExport } = await import('../../server/services/vault/vault-folder-export');
-    const losing = {
-      query: async (sql: string, params?: unknown[]) => {
-        const r = await owner.query(sql, params);
-        return sql.includes('binary_available') ? { ...r, rows: r.rows.filter((row) => String(row.id) !== ids.stability) } : r;
-      },
-    };
-    const plan = await planFolderExport(losing, { organizationId: mine.orgId, programId: mine.programId, folderId: 'module-3' });
-    expect(plan).toMatchObject({ ok: false, status: 409, code: 'FOLDER_CHANGED' });
-  });
-
-  it('builds one archive at a time for each person', async () => {
-    const { beginArchiveBuild } = await import('../../server/services/vault/vault-archive-delivery');
-    const end = beginArchiveBuild(mine.orgId, editor.userId);
-    expect(end).not.toBeNull();
-    try {
-      const busy = await exportFolder(mine, 'module-5');
-      expect(busy.status).toBe(429);
-      expect(json(busy.body).error).toBe('ARCHIVE_BUSY');
-      expect((await exportFolder(mine, 'module-5', viewer)).status).toBe(200);
-    } finally {
-      end!();
-    }
-    expect((await exportFolder(mine, 'module-5')).status).toBe(200);
-  });
-});
-
