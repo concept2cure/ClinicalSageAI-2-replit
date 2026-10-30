@@ -1,0 +1,32 @@
+# RED on the slice-2 working tree over 54b2929c54 + trunk at 80492f8dfc, before the review-round-1 fixes: tests/db/qms-training-assignments.dbtest.ts with the review's seven cases. Real PostgreSQL 16, RLS_ENFORCE=on, app_service, database c2c_mr12_trn_dbtest (2026-10-30T02:20:20Z)
+# The designee whose role is viewer is offered canAssign; the designee demoted to viewer mid-write writes the assignment (201); the narrowed roster (peopleScope, peopleCount) does not exist. P3/P4/P5 pass here: they pin existing behaviour, and slice2-fix-mutations.txt shows each one killing its mutant.
+ ✓ who may assign training (D4): an administrator or a designated QMS approver > an administrator assigns a role and a person: one row and one ledger pair each, committed together 227ms
+ ✓ who may assign training (D4): an administrator or a designated QMS approver > the Approver role stands in while nobody is designated; once someone is, the designee assigns and the Approver role alone does not 134ms
+ ✓ who may assign training (D4): an administrator or a designated QMS approver > a member and a manager are refused by the authority rule, a viewer by the editor gate, on assigning and on removing; nothing is written 150ms
+ ✓ who may assign training (D4): an administrator or a designated QMS approver > an approver who cannot read the authored document is refused with QMS_DOCUMENT_VIEW_DENIED; shared onto it, the same approver may assign 262ms
+ ✓ the authority is read on the write's own transaction > a demotion committed while the write waits on the membership row is seen: 403, nothing written 1516ms
+ ✓ the authority is read on the write's own transaction > an organization pending deletion takes no assignment, though the lifecycle guard still holds it as active 118ms
+ ✓ the refusals, each with nothing written > the same role or person twice is 409 QMS_ALREADY_ASSIGNED 116ms
+ ✓ the refusals, each with nothing written > another organization's document is 404 on the read, the assignment and the removal 88ms
+ ✓ the refusals, each with nothing written > a role that is not live in this organization is 422 QMS_JOB_ROLE_NOT_FOUND; a person who is not an active member is 422 QMS_NOT_A_MEMBER 178ms
+ ✓ the refusals, each with nothing written > a form or a specification is 409 QMS_NOT_TRAINABLE_TYPE; a retired document is 409 QMS_DOCUMENT_RETIRED 119ms
+ ✓ the refusals, each with nothing written > a body naming both subjects, neither, or an unknown field is 422; a seven-character reason is 400; a bad id is 422 79ms
+ ✓ the refusals, each with nothing written > a ledger that cannot be written is 500 AUDIT_WRITE_FAILED, and the assignment was not made 17ms
+ ✓ removing an assignment > is soft and audited; the same subject can be assigned again, and both rows stay 132ms
+ ✓ removing an assignment > an assignment of another document is 404 on this one 37ms
+ ✓ removing an assignment > nobody removes an assignment that covers themselves, by name or by a role they hold: 403 QMS_TRAINING_SELF_UNASSIGN; another administrator may 130ms
+ ✓ who is assigned: the one resolver > the read lists the assignments and resolves the people: active only, each once, with every path 383ms
+ ✓ who is assigned: the one resolver > the resolver tells "assigned to nobody" from "assigned, but nobody active", and answers whether one person is assigned 129ms
+ × review round 1: the designee's role is part of the authority, read on the write's transaction > a designated QMS approver whose role is viewer is offered nothing and refused; nothing is written 27ms
+ × review round 1: the designee's role is part of the authority, read on the write's transaction > a designee demoted to viewer while the write waits on the membership row is seen: 403, nothing written 1521ms
+ × review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > administrators and designated QMS approvers see every person assigned; anyone else sees their own line and the count 100ms
+ ✓ review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > a first version approved for a later day is pending, with nothing yet in force 43ms
+ ✓ review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > an administrator who has left a role may withdraw that role's assignment; while they held it, they could not 75ms
+ ✓ review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > a person is covered from the later of the assignment and their joining the role: the instant a late assignment's grace runs from 1194ms
+ × review round 1: who sees the people assigned (P-50 Q3), and the branches later slices build on > a named person who leaves keeps the assignment row, shown as not active, and is no longer among the people 51ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the screen is not offered a change the server refuses: expected true to be false // Object.is equality
+AssertionError: {"data":{"id":346,"documentId":467,"kind":"person","jobRoleId":null,"userId":1163,"assignedAt":"2026-10-30T02:20:09.503Z"}}: expected 201 to be 403 // Object.is equality
+AssertionError: expected { assignments: [ { …(10) } ], …(3) } to match object { peopleScope: 'everyone', …(1) }
+AssertionError: expected { assignments: [ { …(10) } ], …(3) } to match object { people: [], peopleCount: +0 }
+      Tests  4 failed | 20 passed (24)

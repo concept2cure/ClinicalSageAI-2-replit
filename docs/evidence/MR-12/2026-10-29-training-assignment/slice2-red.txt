@@ -1,0 +1,38 @@
+# RED on the pre-change code: tests/db/qms-training-assignments.dbtest.ts (final form, 17 cases) run with this slice's four source files (shared/qms/training.ts, server/services/qms/in-force-release.ts, server/services/qms/training-assignment.ts, server/routes/mdx-qms-training.ts) at HEAD 54b2929c54 (slice 1 committed; git diff empty for those files during the run). Real PostgreSQL 16, RLS_ENFORCE=on, app_service, database c2c_mr12_trn_dbtest brought current by deploy-migrate (2026-10-30T01:41:17Z)
+# Every assignment route answers 404 (not mounted), so every write and read expectation fails and the data later steps read is absent; readQmsTrainingAssignees and isQmsTrainingAssignee do not exist. The fixtures (job roles, the signed approve and retire routes, an authored document) all succeed.
+ × tests/db/qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > an administrator assigns a role and a person: one row and one ledger pair each, committed together 164ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > the Approver role stands in while nobody is designated; once someone is, the designee assigns and the Approver role alone does not 18ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > a member and a manager are refused by the authority rule, a viewer by the editor gate, on assigning and on removing; nothing is written 13ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-training-assignments.dbtest.ts > who may assign training (D4): an administrator or a designated QMS approver > an approver who cannot read the authored document is refused with QMS_DOCUMENT_VIEW_DENIED; shared onto it, the same approver may assign 100ms
+   → {}: expected 404 to be 403 // Object.is equality
+ × tests/db/qms-training-assignments.dbtest.ts > the authority is read on the write's own transaction > a demotion committed while the write waits on the membership row is seen: 403, nothing written 1508ms
+   → the write waits on the membership row the demotion holds (FOR SHARE): expected true to be false // Object.is equality
+ × tests/db/qms-training-assignments.dbtest.ts > the authority is read on the write's own transaction > an organization pending deletion takes no assignment, though the lifecycle guard still holds it as active 83ms
+   → Cannot read properties of undefined (reading 'canAssign')
+ × tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > the same role or person twice is 409 QMS_ALREADY_ASSIGNED 59ms
+   → expected 404 to be 201 // Object.is equality
+ × tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > another organization's document is 404 on the read, the assignment and the removal 18ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a role that is not live in this organization is 422 QMS_JOB_ROLE_NOT_FOUND; a person who is not an active member is 422 QMS_NOT_A_MEMBER 89ms
+   → 316: {}: expected 404 to be 422 // Object.is equality
+ × tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a form or a specification is 409 QMS_NOT_TRAINABLE_TYPE; a retired document is 409 QMS_DOCUMENT_RETIRED 44ms
+   → {}: expected 404 to be 409 // Object.is equality
+ × tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a body naming both subjects, neither, or an unknown field is 422; a seven-character reason is 400; a bad id is 422 24ms
+   → {}: expected 404 to be 422 // Object.is equality
+ × tests/db/qms-training-assignments.dbtest.ts > the refusals, each with nothing written > a ledger that cannot be written is 500 AUDIT_WRITE_FAILED, and the assignment was not made 10ms
+   → the injected failure was reached: expected false to be true // Object.is equality
+ × tests/db/qms-training-assignments.dbtest.ts > removing an assignment > is soft and audited; the same subject can be assigned again, and both rows stay 25ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-training-assignments.dbtest.ts > removing an assignment > an assignment of another document is 404 on this one 9ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-training-assignments.dbtest.ts > removing an assignment > nobody removes an assignment that covers themselves, by name or by a role they hold: 403 QMS_TRAINING_SELF_UNASSIGN; another administrator may 38ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-training-assignments.dbtest.ts > who is assigned: the one resolver > the read lists the assignments and resolves the people: active only, each once, with every path 184ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-training-assignments.dbtest.ts > who is assigned: the one resolver > the resolver tells "assigned to nobody" from "assigned, but nobody active", and answers whether one person is assigned 78ms
+   → expected 404 to be 201 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  17 failed (17)

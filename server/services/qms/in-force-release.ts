@@ -136,7 +136,8 @@ export function compareQmsVersions(a: string, b: string): number {
   return 0;
 }
 
-const dayOrNull = (v: unknown) => (v == null ? null : utcDay(v, '') || null);
+/** A stored date (a pg DATE, or a snapshot's JSON string) as its UTC day, or null. */
+export const dayOrNull = (v: unknown) => (v == null ? null : utcDay(v, '') || null);
 
 /**
  * The standing of each recorded version of `live`, by version. In force is
