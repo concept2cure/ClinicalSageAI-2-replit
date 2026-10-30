@@ -2127,16 +2127,11 @@ router.get('/submissions/:id', authMiddleware, async (req, res) => {
 });
 
 /**
- * GET /api/510k/estar/submissions/:id/readiness — the filing's own gate (D2,
- * fold F5 item 1, 2026-10-30; decision P-61 items 1 and 2).
- *
- * The readiness EstarFilingPanel assesses (assessFilingReadinessFor), for the
- * filing's catalogue key and variant, against its project's own authored
- * content. A blocker belongs to the filing and closes when it is fixed. A
- * filing tracked under no project, or on a project that anchors no program, is
- * not assessed and says which: an assessment with no program would read every
- * device of the organization (the defect EstarFilingPanel's required programId
- * closed). Read-only; the project is admitted before anything is read.
+ * GET /api/510k/estar/submissions/:id/readiness — the filing's own gate (fold
+ * F5, P-61 items 1-2): EstarFilingPanel's assessment for the filing's key and
+ * variant, against its project's content. No project, or no program: not
+ * assessed, and says which (with no program it would read every device of the
+ * organization). Read-only; the project is admitted first.
  */
 router.get('/submissions/:id/readiness', authMiddleware, async (req, res) => {
   const organizationId = resolveOrgId(req);

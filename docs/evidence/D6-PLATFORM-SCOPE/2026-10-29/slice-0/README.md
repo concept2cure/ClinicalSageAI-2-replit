@@ -108,7 +108,7 @@ Files: `f5-export-gap-per-table.txt`, `f5-export-functions.txt`, `f5-export-vaul
 - **Already blind with P:** the 8 export tables, plus `regulatory_intel.crl_trigger_patterns` (9 rows) and `rtf_trigger_patterns` (7 rows).
 - **Tenant A's own scope gives identical counts** with P on the superuser copy and without P on the RDS-shaped copy (0 tables differ). So moving a path to its organization's own scope can be done before P is removed, and widens nothing.
 
-**Paths** (`item1-paths-diff.txt`, with the raw captures `item1-paths-capture-*.jsonl.txt` and the data in `item1-path-data.txt`). Each entry point behind the 57 call sites was run with its own code on the instrumented pool, plus the explicit `app_super_admin` scopes and the startup probes: 41 in all. Every statement was captured, on the RDS-shaped copy with P and without. 17 behave differently; in 15 the outcome itself changes (the last two rows differ only in side statements or timestamps):
+**Paths** (`item1-paths-diff.txt`, with the raw captures `item1-paths-capture-{arm,noarm}.partNN.jsonl.txt` (split under the repository's 100 kB file ceiling; concatenate the parts in order) and the data in `item1-path-data.txt`). Each entry point behind the 57 call sites was run with its own code on the instrumented pool, plus the explicit `app_super_admin` scopes and the startup probes: 41 in all. Every statement was captured, on the RDS-shaped copy with P and without. 17 behave differently; in 15 the outcome itself changes (the last two rows differ only in side statements or timestamps):
 
 | Path (call site) | With P | Without P |
 |---|---|---|
