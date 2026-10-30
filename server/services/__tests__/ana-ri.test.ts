@@ -1108,8 +1108,9 @@ describe('AnA RI Command System', () => {
 
     it('includes all critical workflow commands', () => {
       const names = COMMAND_REGISTRY.map(c => c.name);
-      // Project
-      expect(names).toContain('create_project');
+      // Project. AnA's separate create_project command was retired onto the Projects wizard
+      // (f9c84bdf1f, D2 A2.4): a project is created in one place, and AnA lists and opens it.
+      expect(names).not.toContain('create_project');
       expect(names).toContain('list_projects');
       // Documents
       expect(names).toContain('create_artifact');

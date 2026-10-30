@@ -1,0 +1,50 @@
+# Slice 4 (distribution), green
+
+## bash dbtest.sh tests/db/qms-training-tasks.dbtest.ts tests/db/qms-document-signature-required.dbtest.ts
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > reaches each person assigned with one task due the day it takes effect, and one notice
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes nothing when planned again
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > completes only the task of the person who acknowledged the version
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes a task only for the people an added assignment or role member newly covers
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws a task when its person is no longer covered, and keeps the task of a person still named
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws every open task when the document is retired
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > is due now for someone it reached with no training period, and the sweep does not also say overdue
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > is due 14 days after they were covered for someone assigned after it was in force (P-50 Q1)
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > gives a task due in the future one due-soon notice and one overdue notice from the sweep
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > distributes no release whose text no longer matches its signature: nobody could complete the task
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > never undoes an approval whose tasks could not be written
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > closes nothing when the plan could not be read
+ ✓ tests/db/qms-training-tasks.dbtest.ts > the next version approved for a later day > withdraws the open tasks of the version in force, writes its own, and only its own receipt completes them
+ Test Files  2 passed (2)
+      Tests  26 passed (26)
+
+## Every QMS database suite (11 files), before the retire-meaning test fix
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature
+ × tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses retire after actual target wait and signer demotion without domain/audit/signature writes
+ Test Files  2 failed | 9 passed (11)
+      Tests  2 failed | 107 passed (109)
+(The retire-meaning case is corrected in this change and passes above. The lock-wait case is red at trunk: slice3a-green.txt, slice3b-mutations.txt.)
+
+## npx vitest run server/services/tasking/__tests__/source-task.test.ts server/services/qms/__tests__/training-task.test.ts server/routes/__tests__/qms-personal-training.test.ts
+ Test Files  3 passed (3)
+      Tests  35 passed (35)
+
+## npx vitest run server/services/qms server/services/tasking server/routes/__tests__ (726 files)
+With this change: Tests  47 failed | 7365 passed | 7 skipped (7419); 13 files failing.
+Those 13 files, run alone with this change and then at trunk with it stashed (failures per file, this change / trunk):
+  server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts: 1 / 1
+  server/routes/__tests__/coauthorSnapshotStatus.test.ts: 7 / 7
+  server/routes/__tests__/governed-signed-act.request-context.test.ts: 2 / 2
+  server/routes/__tests__/mdx-qms-retire.test.ts: 1 / 0
+  server/routes/__tests__/protocol-signatures.routes.test.ts: 2 / 2
+  server/routes/__tests__/qms-document-approval-signature.test.ts: 1 / 0
+  server/routes/__tests__/qms-document-content-access.test.ts: 1 / 1
+  server/routes/__tests__/report-os-audit-recording.test.ts: 7 / 7
+  server/routes/__tests__/report-os-finalize-signature.test.ts: 1 / 1
+  server/routes/__tests__/report-os-report-pack-export.test.ts: 16 / 16
+  server/routes/__tests__/report-os-saved-read-access.test.ts: 4 / 4
+  server/routes/__tests__/submissions-request-current-access.pglite.test.ts: 1 / 1
+  server/routes/__tests__/task-management-source-project.test.ts: 3 / 3
+The two that differ, mdx-qms-retire and qms-document-approval-signature, pinned COMMIT as the last statement;
+the route now plans training tasks after it. They mock the planner and assert the call (the intended contract change):
+  npx vitest run server/routes/__tests__/mdx-qms-retire.test.ts server/routes/__tests__/qms-document-approval-signature.test.ts: Tests  41 passed (41)
+Every other failure is identical at trunk and none of those suites imports a module this change touches.

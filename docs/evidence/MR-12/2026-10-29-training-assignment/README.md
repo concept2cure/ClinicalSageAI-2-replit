@@ -547,3 +547,52 @@ Fifteen mutants, all killed (`slice3b-client-mutations.txt`). Two guards were ad
 - Opening the reader on the successor from a training notice (`qmsIntent: 'read'`) is slice 4.
 - The periodic-review refusal on a pending version.
 - Editing the controlled text of a revision draft from this reader: the editor still binds to the context read, which is now the version in force. So "Edit controlled text" is offered only for a first version. That was already true before this change; it was hidden behind the refusal above.
+
+## Slice 4: training reaches the people assigned as tasks (2026-10-30)
+
+Design §3.6 (`trainingTaskOf`), §3.9; P-49 (distribution), P-50 Q1 (14 days for a late assignment). The notice opening the reader (`qmsIntent: 'read'`, the notification target) is **4b, not done here**.
+
+**What already exists** (re-read at `065b8ef70d`):
+- `replaceSourceTask` (`server/services/tasking/source-task.ts`) keeps one open task per source record, best effort.
+- `periodic-review-task.ts` is the pattern: module Quality, `remindDaysBefore`, closed then rewritten.
+- The due-date sweep (`server/jobs/taskDueSweep.ts`) sends one due-soon notice and one overdue notice per task. It honours `dueSoonNotifiedAt` and `overdueNotifiedAt` already in `metadata`.
+- `notifyTaskEvent` (`task-side-effects.ts`) is the per-assignee notice.
+- The approve and retire routes already plan the periodic-review task after COMMIT, before answering.
+
+Nothing wrote a training task. The resolver of who is assigned (`readQmsTrainingAssignees`) and the verified receipt (`verifiedTrainingReceipt`) had no caller in tasking. `governedQmsWrite` answered inside itself, so no assignment write could do work after its COMMIT and before its answer.
+
+**What changed:**
+- **`source-task.ts` `reconcileSourceTasks`.** It makes the open tasks under one key, or under every key that starts with a prefix, exactly the desired set:
+  - an open task that records the same thing is kept;
+  - any other is closed as the act says (done, or withdrawn);
+  - a missing one is written.
+  The prefix is matched literally (`left(...) = $p`, no LIKE), and checked again on the rows read, so `qms-document:1:user:` never reaches document 10. `replaceSourceTask` is now its one-key case, so there is one implementation; its four tests are unchanged and green.
+- **`server/services/qms/training-task.ts` (new).** One Quality task per person per document, keyed `qms-document:<id>:user:<userId>`, for the version they train on next: the version approved for a later day while it waits, otherwise the version in force.
+  - It is due on the day that version takes effect.
+  - Someone covered after it was in force is due 14 days after they were covered (P-50 Q1).
+  - Someone holding a verified, unexpired receipt of that version has no task.
+  - A new task carries the sweep markers its assignment notice already covers, so a task born due is never also told "overdue". Each new task gets one `task_assigned` notice: "Due D, the day it takes effect…", "…is in force; read and acknowledge it now", or "…by D".
+  - A release nobody can read and acknowledge (its text no longer matches its signature) gets no task.
+  - The plan runs in its own read-only transaction with the tenant set. A plan that could not be read applies nothing, so a failed read is never an empty set that closes tasks. Writing is best effort and never undoes the act.
+- **Wiring:**
+  - approval of a version and retirement plan the document (`mdx-qms.ts`), after COMMIT and before the answer;
+  - an acknowledgement plans that person on that document;
+  - `governedQmsWrite` takes an optional `afterCommit` from the write, run after COMMIT and before the answer on the still-held request client. Through it, an assignment added or removed plans the document, and a job-role member added or removed plans that person on each document the role is assigned (`mdx-qms-training.ts`).
+  - The effective date arriving changes nothing and needs no scheduler: the task was already due on it.
+
+**Deviations from the design:**
+- **Lateness compares moments, not days.** The design's `utcDay(coveredSince) > effective day` was written with a grace of 0. With P-50's 14 days, a person assigned an hour after a same-day approval would have been due at once, while one assigned the next day got two weeks. The moment a version took effect is 00:00 UTC on its effective day, or its approval when it was approved later that day.
+- **The late-assignment notice says "by D".** The design said "now"; that was written for a grace of 0.
+- **An assignment change plans the whole document.** The design planned only the people newly covered. The plan is idempotent (`same` keeps every unchanged task), so the only difference is that a task missed earlier, for example while writes were failing, is written by the next change on its document.
+
+**Intended contract change:**
+- `server/routes/__tests__/qms-personal-training.test.ts`, `mdx-qms-retire.test.ts` and `qms-document-approval-signature.test.ts` pinned COMMIT as the act's last statement, and the routes now plan in a read-only transaction after it. Each suite mocks the planner, keeps that assertion, and asserts the call (approval and retirement: the document; a rolled-back retirement: none). The acknowledgement suite adds two:
+  - the planner is asked for exactly this person on this document;
+  - a refused acknowledgement asks nothing.
+- `tests/db/qms-document-signature-required.dbtest.ts` signed retirement as `APPROVED`. That had been red at trunk since P-51 made the meaning `retirement`; corrected, as the periodic-review suite was in slice 3b.
+
+**Not done:**
+- **4b:** the notice opens the training reader on the successor (`qmsIntent: 'read'`), for an assignee without a share onto the authored copy.
+- **Slice 5:** the per-person due and overdue rows in G10 and `TrainingExpiry.tsx`.
+- **A receipt that lapses** (expires) is not a task on the day it lapses: nothing is scheduled. It shows as lapsing in G10. The next act that plans its document writes the task, due at once.
+- **A member who leaves the organization** keeps any open task until the next act that plans their documents.
