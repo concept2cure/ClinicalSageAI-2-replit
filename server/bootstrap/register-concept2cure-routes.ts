@@ -9,7 +9,6 @@ import conversationRoutes from '../routes/c2c/conversations';
 import exportRoutes from '../routes/c2c/exports';
 import artifactRoutes from '../routes/c2c/artifacts';
 import aiEditingRoutes from '../routes/c2c/ai-editing';
-import haqSessionRoutes from '../routes/c2c/haq-sessions';
 import programTwinRoutes from '../routes/c2c/program-twin';
 import contextIntelligenceRoutes from '../routes/c2c/context-intelligence';
 import projectKnowledgeRoutes from '../routes/c2c/project-knowledge';
@@ -35,7 +34,6 @@ export function registerConcept2CureRoutes(app: Express) {
   app.use('/api/concept2cure', authenticateToken, exportRoutes);
   app.use('/api/concept2cure', authenticateToken, artifactRoutes);
   app.use('/api/concept2cure', authenticateToken, aiEditingRoutes);
-  app.use('/api/concept2cure', authenticateToken, haqSessionRoutes);
   app.use('/api/concept2cure', authenticateToken, programTwinRoutes);
   app.use('/api/concept2cure', authenticateToken, contextIntelligenceRoutes);
   app.use('/api/concept2cure', authenticateToken, projectKnowledgeRoutes);

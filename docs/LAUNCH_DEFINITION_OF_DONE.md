@@ -637,6 +637,28 @@ deletion record the working agreement requires:
    parser and response clock as the inbox's.
 4. **`haq_session`**, **`lifecycle_obligations`** and the **`c2c_agency_meetings`** minutes, onto the inbox,
    `regulatory_commitments` and `ha_interactions` respectively.
+   *2026-10-30 (under the founder's delegation; inventory in
+   `docs/evidence/D2-HAQ-SESSION-RETIRED/2026-10-30/`):*
+   - **`haq_session`: converged.** No client has called it since 2026-05-01. Its PUT was reachable in production and
+     rewrote a session in place with no reason and no ledger row. `server/routes/c2c/haq-sessions.ts` is deleted, as
+     `HAQ_SIGNED_ANSWERS_2026-10-15.md` §3 laid out, and `GET /reviews/pending` moved verbatim to `reviews.ts`. The
+     rows stay as history. They are not moved: a session names no letter and the inbox does not invent one, and its
+     model drafts and unsigned "finalized" statuses do not carry over (RULE 2).
+   - **`lifecycle_obligations`: deferred, and the destination corrected.**
+     - Its tables are on no applier, so no deployed database holds a row. Its route and surface are outside launch
+       scope.
+     - `regulatory_commitments` cannot hold a recurrence or its dated occurrences, so converging onto it would lose
+       the capability.
+     - It converges when post-approval lifecycle (variations, periodic reports, renewals) enters the catalog, onto a
+       register that can hold a recurrence.
+     - Owed by the Reporting lane: the `lifecycle.obligation_calendar` report reads these tables, so on a deployed
+       database the run fails (an error, not an empty calendar). Install the tables or withdraw the report type.
+   - **`c2c_agency_meetings` minutes: no data to move, and decided.**
+     - Nothing in a deployed organisation writes them, and the route and surface are outside launch scope.
+     - When Communication records a meeting (`ha_interactions`, whose governed create exists), its minutes are an inbox
+       letter (`source_type` `meeting_minutes`, already in the vocabulary) linked to the interaction. Its agreements
+       and commitments become that letter's questions and `regulatory_commitments` (`meeting_commitment`).
+     - `c2c_agency_meetings` and the Agency Meetings surface retire in that change.
 
 ### P-40 — A sealed editing copy is revisable, and the refusal says so
 
