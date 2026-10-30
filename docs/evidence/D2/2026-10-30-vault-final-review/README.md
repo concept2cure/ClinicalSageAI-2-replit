@@ -32,13 +32,15 @@ The independent native review reproduced two current-access failures after ZIP c
 
 The existing Vault project-body key now also names its canonical session, withdrawing the previous account's staged files and private metadata. Normal admitted bearer refresh preserves the selected File object and field edits. MDX shows the shared outcome in permanent live regions, guards busy dispatch and associates only confirmed request indexes with the existing local attachment list. It does not fabricate persisted attachment or audit records.
 
+Caller qualification enforced MDX's existing shared-failure contract: attachment errors now use the existing inline `ErrorState` component, with explicit dismissal through `clearNote` and no request retry. The busy/success live region remains present. Twelve obsolete full auth-module mocks were completed through partial imports so the canonical header/session helpers remain available at render. One existing De Novo fixture now waits for its actual field-read request, as its PMA sibling already does, rather than assuming the heading means the request has started; its route/pathway assertions are retained.
+
 Uncertain HTTP outcomes use the existing mutation policy, with upload body-size/type refusals retained as definite refusals. Explicit `OUTCOME_UNKNOWN` takes precedence. Gateway fallback copy no longer calls the unknown write a refusal.
 
-Independent source review reported no unresolved blockers in these scoped changes. Archive findings, native evidence and the transaction/delivery boundary are recorded in [the D5 follow-up](../../../D5/2026-10-30-vault-final-access/README.md).
+Independent source review reported no unresolved blockers in these scoped changes. Archive findings, native evidence and the transaction/delivery boundary are recorded in [the D5 follow-up](../../D5/2026-10-30-vault-final-access/README.md).
 
 ## Verification
 
-Independent scratch reproductions caught replacement-account dispatch, old-project note publication, queued dispatch after unmount, and same-turn duplicate POSTs. Permanent focused controls will first run against the unfixed owners, then the implementation. Scope and exact results will be recorded before publication.
+Independent scratch reproductions caught replacement-account dispatch, old-project note publication, queued dispatch after unmount, and same-turn duplicate POSTs. Permanent focused controls ran against the unfixed owners before the implementation.
 
 Original negative logs retain the initial 19 failed/2 passed ownership cases, three additional premount drift failures, eight MDX failures, five staging-session failures with one refresh control passing, and seven final wording/contradictory-status failures with nine definite-refusal controls passing. The initial gateway controls also fail before their fix. These are separate, overlapping executions.
 
@@ -47,3 +49,5 @@ Four client mutation controls independently remove project retirement, duplicate
 `browser-check.json` and `browser-lifecycle.json` record 52 actual-component Chromium flows at 1440/390 pixels in light/dark themes. The real hook, XHR/JSON parser, canonical auth session/refresh, staging UI and CSS run with synthetic files/credentials and intercepted HTTP replies. The lifecycle navigation controls exercise hook ownership, not a hosted full-application login/navigation claim. Eight screenshots capture gateway uncertainty and repaired-record compatibility; mobile dark was inspected for readable wording and overflow.
 
 Combined qualification and exact publication receipts follow in the final evidence record. No hosted CI success, deployment or complete launch acceptance is claimed here.
+
+The first very broad test run was interrupted by a worker restart and has no completion claim. Its one observed unrelated Account fixture timing failure passed all 25 checks on recheck, without any Account source/test change. The two interrupted long logs are preserved outside this evidence at `/workspace/shared/vault-final-regressions.txt` and `/workspace/shared/vault-final-combined-focused.txt`. A bounded 222-file Vault/MDX/service cohort replaces those incomplete runs; each batch saves its own complete JSON result. Original fixture/shared-error failures and their corrected reruns are retained separately.

@@ -898,7 +898,7 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
           {/* Keyed per section: the editor owns its buffer, so a section
               switch must remount it on the new body rather than syncing. */}
           {tab === 'document' && <DDDocumentTab body={body} onOpenEditor={onOpenEditor ? openInEditor : undefined} />}
-          {tab === 'attachments' && <DDAttachmentsTab attachments={attachments} onAttach={onAttach} uploading={attachUpload.uploading} note={attachUpload.note} />}
+          {tab === 'attachments' && <DDAttachmentsTab attachments={attachments} onAttach={onAttach} uploading={attachUpload.uploading} note={attachUpload.note} clearNote={attachUpload.clearNote} />}
           {tab === 'activity' && (
             <DDActivityTab
               events={activity}
@@ -974,9 +974,9 @@ function kindIcon(kind: string | undefined): React.ReactNode {
   }
 }
 
-function DDAttachmentsTab({ attachments, onAttach, uploading, note }: {
+function DDAttachmentsTab({ attachments, onAttach, uploading, note, clearNote }: {
   attachments: DossierAttachment[]; onAttach: (files: FileList) => void;
-  uploading: boolean; note: ReturnType<typeof useVaultUpload>['note'];
+  uploading: boolean; note: ReturnType<typeof useVaultUpload>['note']; clearNote: () => void;
 }) {
   const [over, setOver] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -1019,7 +1019,7 @@ function DDAttachmentsTab({ attachments, onAttach, uploading, note }: {
         />
       </div>
       <p className="dd-att-drop-sub" role="status" aria-live="polite">{uploading ? 'Uploading files…' : note?.tone === 'ok' ? note.text : ''}</p>
-      <p className="dd-att-drop-sub" role="alert">{note?.tone === 'error' ? note.text : ''}</p>
+      {note?.tone === 'error' && <ErrorState variant="inline" title="Check the upload outcome" message={note.text} onDismiss={clearNote} />}
       {attachments.length === 0 ? (
         <div className="dd-att-empty">No attachments yet.</div>
       ) : (

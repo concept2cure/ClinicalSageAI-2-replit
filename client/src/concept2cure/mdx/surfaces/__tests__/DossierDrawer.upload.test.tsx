@@ -2,7 +2,7 @@
 /** Actual drawer, upload hook and canonical session; only the HTTP response is synthetic. */
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DossierDrawer, type DossierDrawerProps } from '../pathway/PathwayPanes';
 import { DossierStore } from '../../store/dossierStore';
@@ -51,7 +51,7 @@ describe('Dossier attachment uploads report the Vault outcome', () => {
   });
 
   it.each(['unknown receipt', 'refused file'] as const)('shows a visible %s instead of silently leaving an empty attachment list', async (kind) => {
-    stubIngestXhr(vi.fn(async () => kind === 'unknown receipt'
+    const request = stubIngestXhr(vi.fn(async () => kind === 'unknown receipt'
       ? { status: 201, json: async () => ({ success: true }) }
       : { status: 422, json: async () => ({ error: { code: 'INVALID_FILE', message: 'This file format was refused.' } }) }));
     mount();
@@ -61,6 +61,9 @@ describe('Dossier attachment uploads report the Vault outcome', () => {
     if (kind === 'unknown receipt') expect(alert.textContent).toMatch(/reload the vault and check/i);
     expect(stored()).toEqual([]);
     expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+    fireEvent.click(within(alert).getByRole('button', { name: 'Dismiss this message' }));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(request).toHaveBeenCalledTimes(1);
   });
 
   it('announces a confirmed upload and keeps its local list distinct from the recorded audit history', async () => {
