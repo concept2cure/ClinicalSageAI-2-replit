@@ -231,6 +231,10 @@ function prerequisites(): string {
     'concept2cure_artifacts', 'audit_events',
     // A draft that kept a signature or a lock snapshot is a record (PF-08).
     'concept2cure_signatures', 'concept2cure_submission_snapshots',
+    // A review route sets a due date in the sender's own time zone (review-route-rules.ts, RR2).
+    'notification_preferences',
+    // The tasks a review route assigns (RR1a); 20261023_review_routes adds its route columns.
+    'unified_tasks',
   ]);
   // extractTableDdl copies a table's body only. The cascade is what PF-08 is
   // about, so the real key comes verbatim from the same file.
