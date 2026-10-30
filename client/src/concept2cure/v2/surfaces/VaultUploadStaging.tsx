@@ -19,6 +19,8 @@
  *     or one over the upload cap is listed as not uploaded, with the reason.
  *   - Two files with the same name are flagged: the Vault identifies a
  *     document by its file name, so only one can be recorded as new.
+ *   - Many files are described at once from a manifest, a CSV the list
+ *     downloads and takes back (`vaultUploadManifest.ts`, Veeva gap 7).
  * Accessibility (review 2026-10-22): each row is a group named by its file;
  * one live region says what was added, what is uploading and what became of
  * it; focus goes to the panel when it opens, stays on a control when a row is
@@ -37,6 +39,7 @@ import {
   type VaultClassification, type VaultIngestDocumentType,
 } from '@shared/constants/domain/vault-taxonomy';
 import type { VaultUploadFileFields, VaultUploadFileStatus } from '../useVaultUpload';
+import { VaultUploadManifestControls } from './VaultUploadManifestControls';
 
 export interface StagedFile {
   key: string;
@@ -303,6 +306,7 @@ export function VaultUploadStaging({ staging, folders, uploading, onChange, onRe
       <p className="vd-d-idx">
         Say what each file is before it is recorded. A blank field takes the Vault&rsquo;s default. A folder chosen here is recorded as filed by you; without one, the Vault suggests a folder for you to confirm, or leaves the file Unfiled.
       </p>
+      {rows.length > 0 && <VaultUploadManifestControls rows={rows} folders={folders} busy={uploading} onChange={onChange} />}
       {rows.length > 0 && <ul className="vd-stage-list" role="list">
         {rows.map((r) => (
           <StagedRow key={r.key} row={r} folders={folders} repeated={repeated.has(r.key)} busy={uploading}
