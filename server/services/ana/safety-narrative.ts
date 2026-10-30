@@ -53,6 +53,78 @@ export interface SafetyNarrativeResult {
 
 const sentence = (s: string) => (s.trim().endsWith('.') ? s.trim() : `${s.trim()}.`);
 const list = (xs?: string[]) => (xs && xs.length ? xs.join(', ') : '');
+const capitalized = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const conjoined = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+const key = (s: string) => s.trim().toLowerCase();
+
+/*
+ * 2026-10-30: the CDISC controlled terms an ADaM row carries, as a medical
+ * writer states them. Each phrase keeps the value's meaning; a value outside
+ * these lists is stated as recorded, never guessed (CSR end-to-end lane).
+ */
+/**
+ * ICH E2A seriousness criteria (ADAE AESDTH … AESMIE, as narrative-subject-facts.ts labels them): what the
+ * event did. Stated without a causal word ("because"), which the CSR's withdrawal rule (D17) keeps out of a
+ * narrative whose withdrawal the data do not attribute.
+ */
+const SERIOUSNESS_PHRASE: Record<string, string> = {
+  death: 'resulted in death',
+  'life-threatening': 'was life-threatening',
+  hospitalization: 'required inpatient hospitalization or prolongation of existing hospitalization',
+  'hospitalization or prolonged hospitalization': 'required inpatient hospitalization or prolongation of existing hospitalization',
+  'persistent or significant disability or incapacity': 'resulted in persistent or significant disability or incapacity',
+  'congenital anomaly or birth defect': 'was a congenital anomaly or birth defect',
+  'other medically important event': 'was considered an important medical event',
+};
+/** CDISC AEACN (action taken with study treatment). */
+const ACTION_PHRASE: Record<string, (drug: string) => string> = {
+  'dose not changed': d => `The dose of ${d} was not changed`,
+  'drug withdrawn': d => `${capitalized(d)} was permanently discontinued`,
+  'dose reduced': d => `The dose of ${d} was reduced`,
+  'dose increased': d => `The dose of ${d} was increased`,
+  'drug interrupted': d => `${capitalized(d)} was temporarily interrupted`,
+  'not applicable': d => `No action with ${d} was applicable`,
+  unknown: d => `The action taken with ${d} is unknown`,
+};
+/** CDISC AEOUT (outcome of the adverse event), with the short forms callers pass. */
+const OUTCOME_PHRASE: Record<string, string> = {
+  'recovered/resolved': 'The event resolved', recovered: 'The event resolved', resolved: 'The event resolved',
+  'recovered/resolved with sequelae': 'The event resolved with sequelae', 'recovered with sequelae': 'The event resolved with sequelae',
+  'recovering/resolving': 'The event was recorded as resolving', recovering: 'The event was recorded as resolving',
+  'not recovered/not resolved': 'The event was recorded as not resolved', 'not recovered': 'The event was recorded as not resolved',
+  fatal: 'The event was fatal',
+  unknown: 'The outcome of the event is unknown',
+};
+/** AEREL categories in words, keeping the investigator's category (no SAP collapse to related / not related). */
+const CAUSALITY_PHRASE: Record<string, string> = {
+  none: 'not related', 'not related': 'not related', unrelated: 'not related', n: 'not related',
+  remote: 'remotely related', unlikely: 'unlikely to be related', possible: 'possibly related',
+  probable: 'probably related', definite: 'definitely related', related: 'related', y: 'related',
+};
+
+/** "an adverse event of X, mild in intensity" / "a serious adverse event of X, grade 3 (severe)". */
+function eventClause(term: string, severity: string | undefined, serious: boolean): string {
+  const intensity = !severity ? '' : /^grade\b/i.test(severity.trim()) ? `, ${severity.trim()}` : `, ${severity.trim()} in intensity`;
+  return `${serious ? 'a serious adverse event' : 'an adverse event'} of ${term}${intensity}`;
+}
+
+function actionSentence(action: string, drug: string | undefined): string {
+  const phrase = ACTION_PHRASE[key(action)];
+  return phrase ? phrase(drug || 'study drug') : `Action taken with study drug: ${action}`;
+}
+
+function outcomeSentence(outcome: string): string {
+  return OUTCOME_PHRASE[key(outcome)] ?? `The outcome was reported as ${outcome}`;
+}
+
+function causalitySentence(causality: string, drug: string | undefined): string {
+  return `The investigator assessed the event as ${CAUSALITY_PHRASE[key(causality)] ?? causality} to ${drug || 'study drug'}`;
+}
+
+function seriousnessSentence(criteria: string[]): string {
+  const phrases = criteria.map(c => SERIOUSNESS_PHRASE[key(c)]);
+  return phrases.every(Boolean) ? `The event was serious: it ${conjoined(phrases)}` : `The event was assessed as serious (criteria: ${list(criteria)})`;
+}
 
 export function composeSafetyNarrative(input: SafetyNarrativeInput): SafetyNarrativeResult {
   const e = input.event ?? ({} as SafetyNarrativeEvent);
@@ -95,23 +167,20 @@ export function composeSafetyNarrative(input: SafetyNarrativeInput): SafetyNarra
       : e.onsetDate
         ? `On ${e.onsetDate}`
         : 'During the study';
-  const sev = e.severity ? ` ${e.severity}` : '';
   if (!e.severity) missing.push('event.severity');
-  parts.push(sentence(`${timing}, the subject experienced${sev} ${e.term || '[event not specified]'}`));
+  const serious = !!(e.seriousnessCriteria && e.seriousnessCriteria.length);
+  parts.push(sentence(`${timing}, the subject experienced ${eventClause(e.term || '[event not specified]', e.severity, serious)}`));
 
   // 5. Seriousness.
-  const serious = !!(e.seriousnessCriteria && e.seriousnessCriteria.length);
   if (serious) {
-    parts.push(
-      sentence(`The event was assessed as serious (criteria: ${list(e.seriousnessCriteria)})`)
-    );
+    parts.push(sentence(seriousnessSentence(e.seriousnessCriteria!)));
   } else {
     missing.push('event.seriousnessCriteria');
   }
 
   // 6. Action taken with study drug + treatment of the event.
   if (e.actionTaken) {
-    parts.push(sentence(`Action taken with study drug: ${e.actionTaken}`));
+    parts.push(sentence(actionSentence(e.actionTaken, input.studyDrug)));
   } else {
     missing.push('event.actionTaken');
   }
@@ -121,14 +190,14 @@ export function composeSafetyNarrative(input: SafetyNarrativeInput): SafetyNarra
   const dr: string[] = [];
   if (e.dechallenge) dr.push(`dechallenge was ${e.dechallenge}`);
   if (e.rechallenge) dr.push(`rechallenge was ${e.rechallenge}`);
-  if (dr.length) parts.push(sentence(`On ${dr.join(' and ')}`));
+  if (dr.length) parts.push(sentence(capitalized(dr.join(' and '))));
 
   // 8. Additional clinical course.
   if (e.notes) parts.push(sentence(e.notes));
 
   // 9. Outcome.
   if (e.outcome) {
-    parts.push(sentence(`The outcome was reported as ${e.outcome}`));
+    parts.push(sentence(outcomeSentence(e.outcome)));
   } else {
     missing.push('event.outcome');
   }
@@ -136,7 +205,7 @@ export function composeSafetyNarrative(input: SafetyNarrativeInput): SafetyNarra
   // 10. Investigator causality assessment (closing).
   if (e.causality) {
     parts.push(
-      sentence(`The investigator assessed the event as ${e.causality} to ${input.studyDrug || 'study drug'}`)
+      sentence(causalitySentence(e.causality, input.studyDrug))
     );
   } else {
     missing.push('event.causality');
