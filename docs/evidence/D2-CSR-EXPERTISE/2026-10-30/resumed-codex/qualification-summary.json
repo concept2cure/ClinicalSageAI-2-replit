@@ -19,5 +19,12 @@
     "passed": 22,
     "failed": 0
   },
-  "mergedBuild": "passed"
+  "mergedBuild": "passed",
+  "postTypeFixQualification": {
+    "files": 1,
+    "passed": 23,
+    "failed": 0,
+    "emittedJavaScriptIdentical": true,
+    "reason": "Fix test-driver static result type mismatch; no production or runtime test change."
+  }
 }

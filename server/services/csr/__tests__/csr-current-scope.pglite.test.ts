@@ -4,11 +4,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readCsrProjectActor, requireCsrJobAccess, resolveCsrScope } from '../project-scope';
 
 let pg: PGlite;
-let db: ReturnType<typeof drizzle>;
+// PGlite supplies the same SQL methods; its driver result generics differ from node-postgres.
+let db: Parameters<typeof resolveCsrScope>[0];
 const sqlClient = { query: async (text: string, params?: unknown[]) => ({ rows: (await pg.query<Record<string, unknown>>(text, params)).rows }) };
 beforeAll(async () => {
   pg = new PGlite();
-  db = drizzle(pg);
+  db = drizzle(pg) as unknown as typeof db;
   await pg.exec(`
     CREATE TABLE users (id integer PRIMARY KEY, status text);
     CREATE TABLE organizations (id integer PRIMARY KEY, status text);
