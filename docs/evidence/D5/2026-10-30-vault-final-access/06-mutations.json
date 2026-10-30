@@ -1,0 +1,30 @@
+[
+  {
+    "mutation": "role",
+    "testFilter": "prepared named-actor archive after",
+    "exitCode": 1,
+    "caught": true,
+    "log": "/tmp/vault-final-access-mutation-role.txt"
+  },
+  {
+    "mutation": "workspace",
+    "testFilter": "client-workspace anchor changed",
+    "exitCode": 1,
+    "caught": true,
+    "log": "/tmp/vault-final-access-mutation-workspace.txt"
+  },
+  {
+    "mutation": "commit",
+    "testFilter": "changes during audit recording",
+    "exitCode": 1,
+    "caught": true,
+    "log": "/tmp/vault-final-access-mutation-commit.txt"
+  },
+  {
+    "mutation": "request",
+    "testFilter": "old admin role",
+    "exitCode": 1,
+    "caught": true,
+    "log": "/tmp/vault-final-access-mutation-request.txt"
+  }
+]

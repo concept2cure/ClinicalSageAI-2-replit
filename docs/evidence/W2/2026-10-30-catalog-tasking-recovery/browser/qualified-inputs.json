@@ -1,0 +1,61 @@
+{
+  "kind": "Actual component browser with synthetic loopback HTTP fixtures; no deployed application/server auth/DB proof",
+  "baseCommit": "80156568ef7e816de42bc87dd71960ea472baf39",
+  "worktreeSuccessor": "Six .tb-scoped mobile CSS lines in app-v2.css, uncommitted at browser qualification; hashes below pin exact inputs",
+  "chromium": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+  "productSha256": {
+    "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx": "563b1f5451649fb9a6f13d5033b563fa2eecf3aeb211dd0413cb0577353750d0",
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "dce2dac454a3f6f3aef27237d2e35a4f024a6bf9d37f9f5d36ae9f278cd9c4ac",
+    "client/src/concept2cure/v2/dataConnect.tsx": "51b03e8cf336df448663742c5b31bb4dc9c93f6879b437cc490420fcc6809815",
+    "client/src/lib/queryClient.ts": "169dd465b658b06756d3dda372bed53ef587052cd9b86702486d3852e4b6da3a",
+    "client/src/utils/authToken.ts": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c",
+    "client/src/services/portal/authService.tsx": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54",
+    "client/src/concept2cure/v2/styles/app-v2.css": "0e4308db0a3f210356afd5db1f9a9bbc5063eada860611d92f8144124102e3b5",
+    "client/src/concept2cure/v2/styles/workflows-v2.css": "1be535d55d7d6a2be52563097ae7e0c88899eddb10ebd544c31cfae8633d08fe",
+    "client/src/concept2cure/v2/styles/surfaces-v2.css": "b45f5b5123e4402f274cd2c3e908e83ff6d9070221dead41ec16e23142809246",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "a9c012ae4b2cc88dd0292a4971288bc4d989e666d9667b5995c1ccd882c55b20",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "d3e22b96944d449e53c43812322754168c9fc822e9c0737876fe92e3cb226bb7",
+    "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
+    "client/src/index.css": "c6f279c1a9c09a86c7087eaf44e4b42ba377011f91ff9859131d145a83d6594b",
+    "client/src/styles/projects-prototype.css": "456457e3a1d5f5240d7ced6416a2bf2f0b1b6e9f0af7894cd253d1a7983ce835"
+  },
+  "harness": {
+    "server.mjs": {
+      "archive": "harness-server.mjs.gz",
+      "bytes": 7811,
+      "sha256": "bcb62756b87ff16906ee9fcba112c43f2777c1954905b7d1a8e7c3e79190bae1",
+      "archiveSha256": "e9e77ee23f4f0bfac1cd87f4c3b9702132c8385bd7260495df6ab85354039bb6"
+    },
+    "browser.mjs": {
+      "archive": "catalog-browser.mjs.gz",
+      "bytes": 6026,
+      "sha256": "a9fb11df6116aab1bba0d8ead2b164c422285235ccf2fc744e07bc2c1ded0d80",
+      "archiveSha256": "1d49d5d5087cfc577f9330375191b12495e258ed1a23d0f92c47178c01df2d1d"
+    },
+    "taskboard-browser.mjs": {
+      "archive": "taskboard-browser.mjs.gz",
+      "bytes": 7153,
+      "sha256": "6bfc370e6cf1f30489e7940f7b8d808d27fa47139de49826ec9be4619cf980d2",
+      "archiveSha256": "0072cf626e3de9e8ca0a87550fa4a84d5d3f0a53fa569e25fce5d108ad2d2211"
+    },
+    "initial-harness-failure.log": {
+      "archive": "initial-harness-failure.log.gz",
+      "bytes": 676,
+      "sha256": "db4dbc3112c8ba91e2fce84cd27a51dae979b55310e3b042d7ab953900fb8570",
+      "archiveSha256": "e0da01c370803ae826f03d188a4c903f366acb23debde0f272837b7a9a914b8d"
+    },
+    "taskboard-warmup-failure.log": {
+      "archive": "taskboard-warmup-failure.log.gz",
+      "bytes": 3342,
+      "sha256": "d24d86e81bd42742998f3d3d5ddf889755daf45c1f97e315d9b9e353cc8e266d",
+      "archiveSha256": "45e5a78f8adf3f52ca97c8c82f990ed8f02b58bd23bfba73bc4c2e4ad0706c27"
+    },
+    "server.log": {
+      "archive": "harness-server.log.gz",
+      "bytes": 175,
+      "sha256": "2a37f33b91181d7721be3c6d553387a0b8e8716a80a16585de7f917e022bfe6a",
+      "archiveSha256": "be55b2cbabfdb1a64940adf20f9062e514c43daa1c06900eb1d1bbb1466bcf34"
+    }
+  },
+  "cleanup": "All Chromium instances closed in finally; final VitePID7401 stopped, exec session59097 exited143."
+}

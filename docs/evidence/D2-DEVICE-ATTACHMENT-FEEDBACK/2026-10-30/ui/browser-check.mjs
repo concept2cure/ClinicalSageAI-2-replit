@@ -16,6 +16,7 @@ const paths = [
   `${area}/mdx/surfaces/pathway/PathwayPanes.tsx`, `${area}/mdx/surfaces/pathway/DossierAttachments.tsx`,
   `${area}/mdx/store/dossierStore.ts`, `${area}/mdx/hooks/useSectionVersions.ts`, `${area}/mdx/hooks/useFetchJson.ts`,
   `${area}/v2/useVaultUpload.ts`, `${area}/v2/vaultIngestTransport.ts`, `${area}/v2/vaultIngestReceipt.ts`,
+  `${area}/v2/vaultUploadVisit.ts`, `${area}/v2/mutationOutcome.ts`, `${area}/v2/dataConnect.tsx`, `${area}/v2/icons.tsx`,
   `${area}/v2/editor/authoringCurrentRead.ts`, `${area}/v2/shellProject.ts`,
   'client/src/services/portal/authService.tsx', 'client/src/utils/authToken.ts', 'client/src/lib/queryClient.ts',
   'shared/constants/domain/vault-document-code.ts', 'shared/constants/document-intake-formats.ts',

@@ -29,3 +29,16 @@ Coverage: known refusal; malformed and explicit uncertain commits with check-bef
 Screenshots cover 1440px desktop and 390px mobile in light/dark themes. Layout checks include drawer/page horizontal fit and wrapping of a long outcome filename. These are actual component captures, not authored screenshots. `result.json` records selected before/after source hashes, every check/request, unexpected requests, browser errors and failure details. The planned extracted component is pinned as `exists:false` on an unchanged pre-correction baseline, so absence cannot masquerade as a missing-input harness failure. A semantic baseline red should reach the actual drawer and fail on the absent native Choose files button/feedback behavior.
 
 This is synthetic browser engineering evidence only. It does not qualify hosted login, real bytes admitted/stored by the server, native storage/RLS, durable dossier linkage, client acceptance, signed OQ, deployed runtime, complete agency compliance or agency acceptance. This author did not start a server, launch Chromium, run checks, mutate Git, or claim a red/green result. The root owns execution and its final evidence attribution.
+
+
+## Canonical owner convergence: pin-only update
+
+The root's later discovery inventory identifies the canonical upload/session owner at `v2/vaultUploadVisit.ts`, the mutation uncertainty classifier at `v2/mutationOutcome.ts`, and the shared error owner used by the extracted drawer. The root retained those owners rather than keeping a second visit/batch/message engine. The browser selection now explicitly pins both new upload dependencies plus `v2/dataConnect.tsx`, which directly implements `ErrorState`, and its `v2/icons.tsx` glyph source. No additional component re-export is involved. The owning `v2/styles/app-v2.css` stylesheet was already imported by the probe and included in the before/after pins; it stays pinned, together with existing MDX styles.
+
+This is a pin-only change from 32 to 36 selected inputs. All eight flow assertions, synthetic network response plans, viewport/theme cases, capture names and layout checks remain unchanged. The prior `ui/browser-result/` artifacts remain untouched and keep their original source attribution; the root will execute the converged cohort into `ui/browser-converged/` after a fresh compatible Vite server is available. No converged red/green or native/server/deployment result is claimed by this update.
+
+`ui/browser-check.mjs` SHA-256 before the pin addition: `fda0890882a6101f5004fec6ff127fdd92c83193a340f108039a7b7d0a8daff1`.
+
+`ui/browser-check.mjs` SHA-256 after the pin addition: `068a6d13b3b14652669b26cde8f1f12a92359a47c1f758201baf2923c4967a5c`.
+
+No qualification command, browser launch, server startup, production/test edit or Git mutation was performed for this convergence update. The script and this plan are frozen again; any further harness change requires coordination before the root's run.

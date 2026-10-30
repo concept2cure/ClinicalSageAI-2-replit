@@ -1,11 +1,11 @@
 /** The existing drawer attachment workflow: one uploader, current-visit feedback and local display. */
 import * as React from 'react';
-import { useAuthUser } from '@/services/portal/authService';
 import { I } from '../../icons';
 import { DossierStore } from '../../store/dossierStore';
 import type { DossierAttachment, PathwayKey, SectionTarget } from '../../types';
 import { useVaultUpload, VAULT_UPLOAD_ACCEPT, type VaultUploadState } from '../../../v2/useVaultUpload';
-import { useAuthoringReadSession } from '../../../v2/editor/authoringCurrentRead';
+import { captureAuthoringSession } from '../../../v2/editor/authoringCurrentRead';
+import { ErrorState } from '../../../v2/dataConnect';
 import { captureShellProjectGuard, useShellProject } from '../../../v2/shellProject';
 
 interface Props {
@@ -18,12 +18,10 @@ interface Props {
   formatTime: (iso: string) => string;
 }
 
-/** Visibility changes keep this owner; a different account, document or section starts a fresh visit. */
+/** The canonical uploader owns sessions/batches; this view only fences its local publication target. */
 export function DossierAttachments(props: Props) {
-  const session = useAuthoringReadSession(useAuthUser());
   useShellProject();
-  const scope = JSON.stringify([session.actor, session.key, props.programId, props.documentId,
-    props.pathway, props.target.id, props.target.label]);
+  const scope = JSON.stringify([props.programId, props.documentId, props.pathway, props.target.id, props.target.label]);
   const visit = React.useRef({ scope, generation: 1, active: true, projectCurrent: captureShellProjectGuard() });
   if (visit.current.scope !== scope || !visit.current.projectCurrent()) {
     visit.current.active = false;
@@ -31,34 +29,29 @@ export function DossierAttachments(props: Props) {
   }
   const captured = visit.current;
   React.useEffect(() => { captured.active = true; return () => { captured.active = false; }; }, [captured]);
-  const current = () => captured.active && visit.current === captured && session.sameRevision() && captured.projectCurrent();
-  return <DossierAttachmentsForVisit key={`${scope}:${captured.generation}`} {...props} current={current} />;
-}
-
-function DossierAttachmentsForVisit({ programId, pathway, target, attachments, visible, formatTime, current }: Props & { current: () => boolean }) {
-  const upload = useVaultUpload(programId);
-  const busy = React.useRef(false);
+  const current = () => captured.active && visit.current === captured && captured.projectCurrent();
+  const upload = useVaultUpload(props.programId, JSON.stringify([scope, captured.generation]));
   const onAttach = async (files: FileList) => {
-    if (!files?.length || busy.current || !current()) return;
-    busy.current = true;
-    try {
-      const selected = Array.from(files);
-      // Names and File objects can repeat; only the corresponding stored index confirms a selection.
-      const accepted = new Set<number>();
-      await upload.upload(selected, {
-        onFileStatus: (index, status) => { if (status.state === 'stored') accepted.add(index); },
-      });
-      if (!current()) return;
-      selected.filter((_file, index) => accepted.has(index)).forEach(file => {
-        // The server owns byte storage and audit. This store only updates the local list.
-        DossierStore.attachFile(pathway, target.id, target.label, {
-          name: file.name, size: file.size, kind: DossierStore.guessKind(file.name),
-        }, { who: 'You', role: 'Reg Lead' });
-      });
-    } finally { busy.current = false; }
+    if (!files?.length || upload.uploading || !current()) return;
+    const session = captureAuthoringSession();
+    const selected = Array.from(files);
+    // Names and File objects can repeat; only the corresponding stored index confirms a selection.
+    const accepted = new Set<number>();
+    const outcome = await upload.upload(selected, {
+      onFileStatus: (index, status) => { if (status.state === 'stored') accepted.add(index); },
+    });
+    // The canonical owner returns no actionable receipt for a retired or partially settled visit.
+    if (!current() || !session.sameRevision() || !outcome.recorded.length) return;
+    selected.filter((_file, index) => accepted.has(index)).forEach(file => {
+      // The server owns byte storage and audit. This store only updates the local list.
+      DossierStore.attachFile(props.pathway, props.target.id, props.target.label, {
+        name: file.name, size: file.size, kind: DossierStore.guessKind(file.name),
+      }, { who: 'You' });
+    });
   };
-  return visible && current() ? <DDAttachmentsTab attachments={attachments} onAttach={onAttach}
-    uploading={upload.uploading} note={upload.note} formatTime={formatTime} /> : null;
+  return props.visible && current() ? <DDAttachmentsTab key={`${scope}:${captured.generation}`}
+    attachments={props.attachments} onAttach={onAttach} uploading={upload.uploading}
+    note={upload.note} clearNote={upload.clearNote} formatTime={props.formatTime} /> : null;
 }
 
 function kindIcon(kind: string | undefined): React.ReactNode {
@@ -78,10 +71,11 @@ interface TabProps {
   onAttach: (files: FileList) => void;
   uploading: boolean;
   note: VaultUploadState['note'];
+  clearNote: VaultUploadState['clearNote'];
   formatTime: (iso: string) => string;
 }
 
-function DDAttachmentsTab({ attachments, onAttach, uploading, note, formatTime }: TabProps) {
+function DDAttachmentsTab({ attachments, onAttach, uploading, note, clearNote, formatTime }: TabProps) {
   const [over, setOver] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const tone = uploading ? 'busy' : note?.tone;
@@ -91,11 +85,12 @@ function DDAttachmentsTab({ attachments, onAttach, uploading, note, formatTime }
     if (!uploading && event.dataTransfer?.files) onAttach(event.dataTransfer.files);
   };
   return (
-    <div className="dd-att-wrap">
-      {(uploading || note) && <p className="dd-att-note" data-tone={tone} role={tone === 'error' ? 'alert' : 'status'} aria-atomic="true">
-        {uploading ? 'Uploading files to the Vault…' : note?.text}
-      </p>}
-      <div className="dd-att-drop" data-over={over && !uploading} data-busy={uploading} aria-busy={uploading}
+    <div className="dd-att-wrap" aria-busy={uploading}>
+      <p className="dd-att-note" data-tone={tone} role="status" aria-live="polite" aria-atomic="true" hidden={!uploading && note?.tone !== 'ok'}>
+        {uploading ? 'Uploading files to the Vault…' : note?.tone === 'ok' ? note.text : ''}
+      </p>
+      {note?.tone === 'error' && <ErrorState variant="inline" title="Check the upload outcome" message={note.text} onDismiss={clearNote} />}
+      <div className="dd-att-drop" data-over={over && !uploading} data-busy={uploading} aria-busy={uploading} aria-disabled={uploading}
         onDragEnter={event => { event.preventDefault(); if (!uploading) setOver(true); }}
         onDragOver={event => { event.preventDefault(); if (!uploading) setOver(true); }}
         onDragLeave={() => setOver(false)} onDrop={onDrop}
