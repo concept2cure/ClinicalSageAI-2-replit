@@ -89,8 +89,8 @@ export function renderSavedSectionTemplateReference(reference: Record<string, un
 
 function renderDraftReference(review: SavedTemplateReview, scope: DraftTemplateScope, requestedRegion: unknown) {
   const { source, sectionManual, reference } = savedSectionTemplateReference(review, scope);
-  const { region } = admitDraftReference(source, requestedRegion, sectionManual);
-  return { region, referenceBlock: renderSavedSectionTemplateReference(reference) };
+  const { region, recordedRegion } = admitDraftReference(source, requestedRegion, sectionManual);
+  return { region, recordedRegion, referenceBlock: renderSavedSectionTemplateReference(reference) };
 }
 
 /** Caller admits this exact section's current edit/project access before reference reads. */
@@ -107,6 +107,50 @@ export async function savedSectionDraftTemplate(q: RequestSqlClient, scope: Draf
   return renderDraftReference(review, scope, requestedRegion);
 }
 
+/** The application a section is drafted for, read from the project record (P-73 slice 2). */
+export interface RecordedFilingDraftContext {
+  /** The writing region the prompt names: the region requested, or the template's recorded one. */
+  region: string;
+  submissionType: string | null;
+  requirementsSource: string;
+  /** Prompt text: the recorded application and its section requirements, or UNASSESSED. Empty with no project. */
+  block: string;
+}
+
+/**
+ * The editor's draft uses the same recorded filing and canonical requirements as AnA's batch drafting
+ * (draft-submission-context.ts, AnaDocumentDraftingService.resolveDraftingRequirements). The region the person
+ * chose still names the writing region; when it differs from the application on record the prompt says so and
+ * asks that the receiving jurisdiction be confirmed, rather than switching either silently. No recorded
+ * application: requirements are UNASSESSED and no jurisdiction is assumed.
+ * A section whose saved template records its own region keeps it: that is the document's jurisdiction, more
+ * specific than the project's (a Japanese section in a global program), and the template path already holds it.
+ * Database failures propagate, so nothing is drafted on an unread record.
+ */
+export async function recordedFilingDraftContext(
+  q: { query(sql: string, args?: unknown[]): Promise<{ rows: Record<string, unknown>[] }> },
+  scope: { tenantId: number; programId: string | null; code: string | null },
+  requestedRegion: string,
+  templateRegion: string | null = null,
+): Promise<RecordedFilingDraftContext> {
+  const none = { region: requestedRegion, submissionType: null, requirementsSource: 'none' };
+  if (!scope.programId || templateRegion) return { ...none, block: '' };
+  const { resolveDraftSubmissionType, UNASSESSED_DRAFT_SUBMISSION_NOTE } = await import('../ana/draft-submission-context.js');
+  const submissionType = await resolveDraftSubmissionType(q, { organizationId: scope.tenantId, projectRef: scope.programId });
+  if (!submissionType) return { ...none, block: UNASSESSED_DRAFT_SUBMISSION_NOTE.trim() };
+  const { resolveToRegistryEntry } = await import('../../../shared/regulatory/submission-type-bridge.js');
+  const { resolveDraftingRequirements } = await import('../ana/AnaDocumentDraftingService.js');
+  const entry = resolveToRegistryEntry(submissionType);
+  const agency = entry ? String(entry.agency).replace(/_/g, ' ') : requestedRegion;
+  const { requirements, requirementsSource } = resolveDraftingRequirements(submissionType, scope.code ?? '');
+  const lines = [`RECEIVING APPLICATION ON RECORD: ${entry?.displayName ?? submissionType} (${submissionType}), filed with ${agency}.`];
+  if (requestedRegion !== agency) {
+    lines.push(`The requested writing region ${requestedRegion} differs from the application on record (${agency}). The section requirements below are the recorded application's; confirm which receiving jurisdiction this document is for, and do not present it as compliant with either.`);
+  }
+  lines.push(requirements ?? 'SECTION REQUIREMENTS: none are recorded for this section in this application. Do not supply them from memory; name the gap.');
+  return { region: requestedRegion, submissionType, requirementsSource, block: lines.join('\n') };
+}
+
 interface SectionDraftPromptInputs {
   section: { module: unknown; code: unknown; title: unknown; product_code: unknown };
   tone: unknown;
@@ -115,11 +159,13 @@ interface SectionDraftPromptInputs {
   requirements?: unknown;
   evidenceBlock: string;
   referenceBlock: string;
+  /** The recorded application and its requirements (recordedFilingDraftContext). */
+  filingBlock?: string;
 }
 
 /** The route's existing one prompt, extracted without changing source attribution. */
 export function buildSectionDraftPrompt(input: SectionDraftPromptInputs): string {
-  const { section, tone, region, context, requirements, evidenceBlock, referenceBlock } = input;
+  const { section, tone, region, context, requirements, evidenceBlock, referenceBlock, filingBlock } = input;
   return `Generate professional ${region} regulatory content for:
 Module: ${section.module}
 Section: ${section.code} - ${section.title}
@@ -127,7 +173,7 @@ Product: ${section.product_code || 'Medical Product'}
 Tone: ${tone}
 ${context ? `Context: ${context}` : ''}
 ${requirements ? `Requirements: ${requirements}` : ''}
-${referenceBlock}
+${filingBlock ? `${filingBlock}\n` : ''}${referenceBlock}
 ${evidenceBlock}
 
 Return ONLY a JSON object of this exact shape:
