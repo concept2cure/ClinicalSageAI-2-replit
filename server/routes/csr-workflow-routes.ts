@@ -67,7 +67,7 @@ import { db } from '../db.js';
 import { csrBuildJobs } from '@shared/schema';
 import { flattenICHE3Sections, getICHE3Structure, type CSRSection } from '../services/csr-builder.js';
 import { getCSRSectionOutputs } from '../services/csr/csr-job-runner.js';
-import { effectiveReviewState, type CsrSectionReviewState } from '../services/csr/csr-section-review';
+import { buildHeadings, type CsrWorkflowHeading } from '../services/csr/csr-headings';
 import { createScopedLogger } from '../utils/logger.js';
 import { CsrScopeError, readCsrProjectActor, resolveCsrScope } from '../services/csr/project-scope';
 import { getAccessibleReportProjectIds } from '../services/report-os/project-access';
@@ -96,24 +96,10 @@ interface CsrWorkflowSection {
   blocker?: boolean;
 }
 
-/** One heading of the canonical ICH E3 tree, with the job's output state for it. */
-interface CsrWorkflowHeading {
-  num: string;
-  label: string;
-  depth: number;
-  /** 'manual' headings (§3, §14–16) are prepared from records, never drafted by a job. */
-  manual: boolean;
-  state: 'not_drafted' | CsrSectionReviewState;
-  staleApproval?: true;
-  contentHash?: string;
-  reviewerId?: number | null;
-  decidedAt?: string | null;
-  reason?: string | null;
-}
-
 interface CsrWorkflowBoard {
   program: CsrWorkflowProgram | null;
   sections: CsrWorkflowSection[];
+  /** server/services/csr/csr-headings.ts, shared with GET /api/csr/jobs/:jobId/headings. */
   headings: CsrWorkflowHeading[];
   meta: Record<string, unknown>;
   generatedAt: string;
@@ -206,38 +192,44 @@ function buildSections(
   });
 }
 
-type SectionOutputRow = Awaited<ReturnType<typeof getCSRSectionOutputs>>[number];
-
-function iso(value: unknown): string | null {
-  if (value instanceof Date) return value.toISOString();
-  return typeof value === 'string' && value ? value : null;
-}
-
-/** Every heading of the canonical tree, with the job's output and review state. */
-function buildHeadings(structure: CSRSection[], outputs: readonly Partial<SectionOutputRow>[]): CsrWorkflowHeading[] {
-  const bySection = new Map(outputs.map((o) => [String(o.sectionNumber), o]));
-  return flattenICHE3Sections(structure).map((node) => {
-    const heading: CsrWorkflowHeading = {
-      num: node.number, label: node.title, depth: node.number.split('.').length,
-      manual: node.draftingMode === 'manual', state: 'not_drafted',
-    };
-    const output = bySection.get(node.number);
-    if (!output) return heading;
-    const { state, staleApproval } = effectiveReviewState(output);
-    return {
-      ...heading, state, ...(staleApproval ? { staleApproval: true as const } : {}),
-      contentHash: typeof output.contentHash === 'string' ? output.contentHash : undefined,
-      reviewerId: output.reviewerId ?? null, decidedAt: iso(output.reviewDecidedAt), reason: output.reviewReason ?? null,
-    };
-  });
-}
-
 /** The retained run the job is bound to, from its snapshot; null when none. */
 function boundSourceRunId(rawSnapshot: unknown): string | null {
   const snapshot = rawSnapshot && typeof rawSnapshot === 'object' ? rawSnapshot as Record<string, unknown> : {};
   const source = snapshot.evidenceSource && typeof snapshot.evidenceSource === 'object'
     ? snapshot.evidenceSource as Record<string, unknown> : {};
   return typeof source.runId === 'string' && source.runId ? source.runId : null;
+}
+
+/** The signed-in user's id, from the auth principal only. */
+function resolveActorUserId(req: Request): number {
+  const user = (req as Request & { user?: { id?: unknown; userId?: unknown } }).user;
+  return Number(user?.id ?? user?.userId);
+}
+
+type BoardDatabase = NonNullable<typeof db>;
+
+/** The project narrowing: the named project, else every project the actor can read plus unassigned jobs. */
+async function projectCondition(database: BoardDatabase, orgId: number, projectId: number | undefined,
+  actor: Awaited<ReturnType<typeof readCsrProjectActor>>) {
+  if (projectId !== undefined) return eq(csrBuildJobs.projectId, projectId);
+  const accessible = await getAccessibleReportProjectIds(orgId, actor, queryableFromDrizzle(database));
+  return accessible.length ? or(isNull(csrBuildJobs.projectId), inArray(csrBuildJobs.projectId, accessible))! : isNull(csrBuildJobs.projectId);
+}
+
+/** No CSR program yet: program null and an all-not-started structure. */
+function emptyBoard(projectId: number | undefined, programId: string | undefined): CsrWorkflowBoard {
+  return {
+    program: null,
+    sections: buildSections(getICHE3Structure(), new Set<string>()),
+    headings: buildHeadings(getICHE3Structure(), []),
+    meta: {
+      hasProgram: false,
+      projectId: projectId ?? null,
+      programId: programId ?? null,
+      computedScope: projectId === undefined ? 'organization' : 'project',
+    },
+    generatedAt: new Date().toISOString(),
+  };
 }
 
 // ─── Router Factory ─────────────────────────────────────────────────────────────
@@ -268,19 +260,13 @@ export default function createCsrWorkflowRoutes(): Router {
         return res.status(503).json({ success: false, error: 'Database not available' });
       }
       const database = db;
-      const actorUserId = Number((req as Request & { user?: { id?: unknown; userId?: unknown } }).user?.id ?? (req as Request & { user?: { userId?: unknown } }).user?.userId);
+      const actorUserId = resolveActorUserId(req);
       const actor = await readCsrProjectActor(database, orgId, actorUserId);
       const scope = await resolveCsrScope(database, orgId, { projectId, programId: req.query.programId, clientWorkspaceId: req.query.clientWorkspaceId }, { forWrite: false, actorUserId });
       projectId = scope.projectId;
 
       // Latest CSR build job for this org (+ optional project), most recent first.
-      const conditions = [eq(csrBuildJobs.organizationId, orgId)];
-      if (projectId !== undefined) {
-        conditions.push(eq(csrBuildJobs.projectId, projectId));
-      } else {
-        const accessible = await getAccessibleReportProjectIds(orgId, actor, queryableFromDrizzle(database));
-        conditions.push(accessible.length ? or(isNull(csrBuildJobs.projectId), inArray(csrBuildJobs.projectId, accessible))! : isNull(csrBuildJobs.projectId));
-      }
+      const conditions = [eq(csrBuildJobs.organizationId, orgId), await projectCondition(database, orgId, projectId, actor)];
 
       const [job] = await database
         .select({
@@ -299,19 +285,7 @@ export default function createCsrWorkflowRoutes(): Router {
 
       // No CSR program yet — honest empty state (program:null, all-not-started).
       if (!job) {
-        const board: CsrWorkflowBoard = {
-          program: null,
-          sections: buildSections(getICHE3Structure(), new Set<string>()),
-          headings: buildHeadings(getICHE3Structure(), []),
-          meta: {
-            hasProgram: false,
-            projectId: projectId ?? null,
-            programId: scope.programId ?? null,
-            computedScope: projectId === undefined ? 'organization' : 'project',
-          },
-          generatedAt: new Date().toISOString(),
-        };
-        return res.json({ success: true, data: board });
+        return res.json({ success: true, data: emptyBoard(projectId, scope.programId) });
       }
 
       // Drafted-section set from persisted outputs (org-scoped read).
