@@ -795,7 +795,7 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
   const safeTarget: SectionTarget = target || { id: '', label: '' };
   const [tab, setTab] = React.useState<'document' | 'attachments' | 'activity'>('document');
   /* Attachments are real uploads now — see onAttach below. */
-  const attachUpload = useVaultUpload(programId);
+  const attachUpload = useVaultUpload(open && target ? programId : null, JSON.stringify([pathway, safeTarget.id]));
 
   const { body, meta, attachments, folder } = useSection(pathway, safeTarget.id, safeTarget.label);
 
@@ -840,16 +840,21 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
    * records who filed it. The local list is updated only for files the server
    * actually accepted. */
   const onAttach = async (files: FileList) => {
-    if (!files || !files.length) return;
-    const outcome = await attachUpload.upload(files);
-    const accepted = new Set(outcome.succeeded);
-    Array.from(files)
-      .filter((f) => accepted.has(f.name))
-      .forEach((f) => {
-        DossierStore.attachFile(pathway, safeTarget.id, safeTarget.label, {
-          name: f.name, size: f.size, kind: DossierStore.guessKind(f.name),
-        }, { who: 'You', role: 'Reg Lead' });
-      });
+    if (!files?.length || attachUpload.uploading) return;
+    const selected = Array.from(files);
+    const accepted = new Set<number>();
+    const outcome = await attachUpload.upload(selected, {
+      onFileStatus: (index, status) => { if (status.state === 'stored') accepted.add(index); },
+    });
+    // A retired visit returns no actionable receipt, even if an earlier row
+    // settled before the drawer closed or changed section. Names are not ids:
+    // two selected files may share a name while only one was recorded.
+    if (!outcome.recorded.length) return;
+    selected.filter((_f, index) => accepted.has(index)).forEach((f) => {
+      DossierStore.attachFile(pathway, safeTarget.id, safeTarget.label, {
+        name: f.name, size: f.size, kind: DossierStore.guessKind(f.name),
+      }, { who: 'You' });
+    });
   };
 
   const labelByPathway = pathway === 'k510' ? '510(k) dossier' : pathway === 'pma' ? 'PMA dossier' : pathway === 'ivd' ? 'IVD dossier' : 'CER dossier';
@@ -893,7 +898,7 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
           {/* Keyed per section: the editor owns its buffer, so a section
               switch must remount it on the new body rather than syncing. */}
           {tab === 'document' && <DDDocumentTab body={body} onOpenEditor={onOpenEditor ? openInEditor : undefined} />}
-          {tab === 'attachments' && <DDAttachmentsTab attachments={attachments} onAttach={onAttach} />}
+          {tab === 'attachments' && <DDAttachmentsTab attachments={attachments} onAttach={onAttach} uploading={attachUpload.uploading} note={attachUpload.note} />}
           {tab === 'activity' && (
             <DDActivityTab
               events={activity}
@@ -969,26 +974,36 @@ function kindIcon(kind: string | undefined): React.ReactNode {
   }
 }
 
-function DDAttachmentsTab({ attachments, onAttach }: { attachments: DossierAttachment[]; onAttach: (files: FileList) => void }) {
+function DDAttachmentsTab({ attachments, onAttach, uploading, note }: {
+  attachments: DossierAttachment[]; onAttach: (files: FileList) => void;
+  uploading: boolean; note: ReturnType<typeof useVaultUpload>['note'];
+}) {
   const [over, setOver] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setOver(false);
-    if (e.dataTransfer?.files) onAttach(e.dataTransfer.files);
+    if (!uploading && e.dataTransfer?.files) onAttach(e.dataTransfer.files);
   };
 
   return (
-    <div className="dd-att-wrap">
+    <div className="dd-att-wrap" aria-busy={uploading}>
       <div
         className="dd-att-drop"
         data-over={over}
+        role="button"
+        tabIndex={uploading ? -1 : 0}
+        aria-label="Attach files"
+        aria-disabled={uploading}
         onDragEnter={(e) => { e.preventDefault(); setOver(true); }}
         onDragOver={(e) => { e.preventDefault(); setOver(true); }}
         onDragLeave={() => setOver(false)}
         onDrop={onDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => { if (!uploading) inputRef.current?.click(); }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!uploading) inputRef.current?.click(); }
+        }}
       >
         {I.paperclip}
         <span>Drop files or click to attach</span>
@@ -997,11 +1012,14 @@ function DDAttachmentsTab({ attachments, onAttach }: { attachments: DossierAttac
           ref={inputRef}
           type="file"
           accept={VAULT_UPLOAD_ACCEPT}
+          disabled={uploading}
           multiple
           style={{ display: 'none' }}
           onChange={(e) => { if (e.target.files) onAttach(e.target.files); e.target.value = ''; }}
         />
       </div>
+      <p className="dd-att-drop-sub" role="status" aria-live="polite">{uploading ? 'Uploading files…' : note?.tone === 'ok' ? note.text : ''}</p>
+      <p className="dd-att-drop-sub" role="alert">{note?.tone === 'error' ? note.text : ''}</p>
       {attachments.length === 0 ? (
         <div className="dd-att-empty">No attachments yet.</div>
       ) : (
