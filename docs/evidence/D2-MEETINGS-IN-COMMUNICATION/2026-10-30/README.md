@@ -69,3 +69,14 @@ health-authority interactions.
 - A meeting's minutes are recorded as an inbox letter (`source_type` `meeting_minutes`) linked to the meeting. Its
   agreements and commitments become that letter's questions and `regulatory_commitments` (`meeting_commitment`).
 - `c2c_agency_meetings` and the Agency Meetings surface then retire.
+
+## Follow-up (same day): the meeting's questions and readiness
+
+`POST /interactions/:id/questions` and `GET /interactions/:id/readiness` were open to the same gap: any org
+editor, or any member for the read, could reach a meeting on a program they cannot open.
+- **Questions** now need write admission to the meeting's submission's project, as the move does.
+- **Readiness** now needs read admission. A refused read is answered as not found, so a meeting the person cannot see
+  is never confirmed.
+- Both go through `admitMeeting`. Two cases were added to `ha-interactions-meeting-admission.test.ts`.
+- `mutation-questions-no-admission.txt`: with the question route's admission removed, its case fails. The file was
+  then restored.
