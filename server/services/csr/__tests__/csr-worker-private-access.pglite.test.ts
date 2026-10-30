@@ -75,6 +75,10 @@ beforeAll(async () => {
     CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, client_workspace_id integer,
       status text, regulatory_program_id uuid, owner_id integer, created_by_id integer, settings jsonb);
     CREATE TABLE client_workspaces (id integer PRIMARY KEY, organization_id integer);
+    CREATE TABLE users (id integer PRIMARY KEY, status text DEFAULT 'active');
+    INSERT INTO users (id) VALUES (5),(6),(7),(8),(9);
+    CREATE TABLE organizations (id integer PRIMARY KEY, status text DEFAULT 'active');
+    INSERT INTO organizations (id) VALUES (7);
     CREATE TABLE organization_users (id serial PRIMARY KEY, organization_id integer, user_id integer, role text,
       persona text, permissions jsonb, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now());
     CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);
@@ -106,8 +110,8 @@ beforeEach(async () => {
     INSERT INTO organization_users (organization_id,user_id,role) VALUES
       (7,5,'member'),(7,6,'member'),(7,7,'member'),(7,8,'member');
     INSERT INTO projects VALUES (11,7,71,'active',NULL,6,5,
-      '{"projectSharing":{"visibility":"private","members":[{"userId":7,"role":"use","status":"active"}]}}');
-    INSERT INTO project_members VALUES (11,7,7,'use','active');
+      '{"projectSharing":{"visibility":"private","members":[{"userId":7,"role":"edit","status":"active"}]}}');
+    INSERT INTO project_members VALUES (11,7,7,'edit','active');
   `);
   state.queries.length = 0;
 });
@@ -147,6 +151,20 @@ it('persists exact partial coverage and resumes only the missing section without
 });
 
 describe('CSR job HTTP reads and cancellation enforce current private-project permission', () => {
+  it('keeps retained work readable after an edit-to-use downgrade but refuses a reader cancelling queued work', async () => {
+    const built = await enqueue(5);
+    await runCSRBuildJob(built.jobId);
+    const queued = await enqueue(5);
+    await database.exec("UPDATE project_members SET role='use' WHERE user_id=7");
+    const app = appForActor(7);
+    expect((await httpRequest(app).get(`/api/csr/jobs/${built.jobId}/sections`)).status).toBe(200);
+    state.queries.length = 0;
+    const response = await httpRequest(app).post(`/api/csr/jobs/${queued.jobId}/cancel`);
+    expect(response.status).toBe(403);
+    expect(response.body).toMatchObject({ code: 'CSR_PROJECT_ACCESS_DENIED' });
+    expect(await readJob(queued.jobId)).toMatchObject({ status: 'queued', progress: 0 });
+    assertNoSectionReads();
+  });
   it.each(['', '/sections'])('refuses unrelated organization member access to retained jobs%s before any section read', async suffix => {
     const { jobId } = await enqueue(5);
     await runCSRBuildJob(jobId);
@@ -228,6 +246,12 @@ describe('CSR job HTTP reads and cancellation enforce current private-project pe
 });
 
 describe('CSR worker rechecks current private-project permission', () => {
+  it('refuses a use-only member starting a new build before any job, quota or model work', async () => {
+    await database.exec("UPDATE project_members SET role='use' WHERE user_id=7");
+    await expect(enqueue(7)).rejects.toMatchObject({ status: 403, code: 'CSR_PROJECT_ACCESS_DENIED' });
+    expect((await database.query('SELECT id FROM csr_build_jobs')).rows).toEqual([]);
+    expect(state.draft).not.toHaveBeenCalled();
+  });
   it('allows a current organization member who created the private project without an explicit share entry', async () => {
     const { jobId } = await enqueue(5);
     await runCSRBuildJob(jobId);
@@ -238,7 +262,7 @@ describe('CSR worker rechecks current private-project permission', () => {
       .toEqual([{ organization_id: 7, project_id: 11, job_id: jobId, section_number: '13' }]);
   });
 
-  it('allows the private project member with current use permission and preserves the requester', async () => {
+  it('allows the private project member with current edit permission and preserves the requester', async () => {
     const { jobId } = await enqueue(7);
     await runCSRBuildJob(jobId);
     expect(await readJob(jobId)).toMatchObject({ status: 'complete', progress: 100 });
