@@ -8,9 +8,16 @@
  * /api/csr-workflow/board. So a CSR built in production could not be given
  * narratives, assembled or placed from a screen. The card now lists the builds
  * bound to the run (GET /api/csr/jobs?programId&runId) and carries those same
- * controls for the selected build. §14.3.3's review state is read from the
- * build's own sections (GET /api/csr/jobs/:jobId/sections), not the board.
- * Every path is under /api/csr/jobs, which eCTD Compile claims at launch.
+ * controls for the selected build. Since 2026-10-30
+ * (docs/evidence/D2-CSR/2026-10-30-csr-card-review/) the card also carries the
+ * board's section review (CsrHeadingReview: send for review, approve, send
+ * back) and its import of the approved sections into Authoring through the
+ * canonical intake (SourceImportDialog, then openImportedDocument). The review
+ * and the narrative build read one source: the build's ICH E3 headings with
+ * their labels, content hashes and review state
+ * (GET /api/csr/jobs/:jobId/headings, server csr-headings.ts, the same tree the
+ * board publishes). Every path is under /api/csr/jobs, which eCTD Compile
+ * claims at launch.
  * A failed read is an alert, never an empty list. While a build is still
  * running (queued through cross_linking) the list is re-read every
  * BUILD_POLL_MS, so its status and progress are not left at the value first
@@ -19,8 +26,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { apiCall, apiErrorText } from '../apiCall';
 import { I } from '../icons';
-import { CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
+import { CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
 import { CsrAssemblyControl } from './CsrAssemblyControl';
+import { SourceImportDialog, openImportedDocument, type ImportSource } from '../editor/SourceImportDialog';
 
 const JOBS = '/api/csr/jobs';
 /** How often the list is re-read while a build of the run is still running. */
@@ -30,22 +38,20 @@ const ENDED = new Set(['complete', 'failed', 'cancelled']);
 
 /** One row of GET /api/csr/jobs?programId&runId (csr-jobs.ts). */
 interface RunBuild { jobId: number; studyId: string; status: string; progress: number; updatedAt: string }
-interface SectionRow { sectionNumber: string; review?: { state?: CsrBoardHeading['state']; staleApproval?: boolean } }
 
-const REVIEW_STATES: ReadonlyArray<CsrBoardHeading['state']> = ['draft', 'in_review', 'approved'];
+const HEADING_STATES: ReadonlyArray<CsrBoardHeading['state']> = ['not_drafted', 'draft', 'in_review', 'approved'];
 
 function isBuild(value: unknown): value is RunBuild {
   const row = value as Partial<RunBuild> | null;
   return !!row && Number.isSafeInteger(row.jobId) && Number(row.jobId) > 0 && typeof row.status === 'string';
 }
 
-/** The drafted headings with their review state, as CsrNarrativeBuild reads them. */
-function headingsOf(sections: SectionRow[]): CsrBoardHeading[] {
-  return sections.map(section => {
-    const state = section.review?.state && REVIEW_STATES.includes(section.review.state) ? section.review.state : 'draft';
-    return { num: section.sectionNumber, label: '', depth: section.sectionNumber.split('.').length, manual: false, state,
-      ...(section.review?.staleApproval ? { staleApproval: true } : {}) };
-  });
+/** One heading of GET /api/csr/jobs/:jobId/headings; a malformed row refuses the whole read. */
+function isHeading(value: unknown): value is CsrBoardHeading {
+  const row = value as Partial<CsrBoardHeading> | null;
+  return !!row && typeof row.num === 'string' && typeof row.label === 'string' && Number.isSafeInteger(row.depth)
+    && typeof row.manual === 'boolean' && HEADING_STATES.includes(row.state as CsrBoardHeading['state'])
+    && (row.contentHash === undefined || typeof row.contentHash === 'string');
 }
 
 /** The builds bound to the run, newest first; re-read when `focus` changes and while a build is running. */
@@ -70,7 +76,9 @@ function useRunBuilds(programId: string, runId: string, focus: number | null) {
 }
 
 /** The builds of the saved run, and the narrative and assembly controls for the selected one. */
-export function CsrRunBuilds({ programId, runId, focus }: { programId: string; runId: string; focus: number | null }) {
+export function CsrRunBuilds({ programId, runId, focus, onNav }: {
+  programId: string; runId: string; focus: number | null; onNav?: (surface: string) => void;
+}) {
   const { builds, error, retry } = useRunBuilds(programId, runId, focus);
   const [chosen, setChosen] = useState<number | null>(null);
   useEffect(() => { if (focus !== null) setChosen(focus); }, [focus]);
@@ -80,7 +88,7 @@ export function CsrRunBuilds({ programId, runId, focus }: { programId: string; r
     {error && <p role="alert">{error}</p>}
     {!error && builds === null && <p role="status">Loading the CSR builds of this run…</p>}
     {!error && builds?.length === 0 && <p>No CSR build has been started from this run.</p>}
-    {!error && selected && <BuildOnCard key={selected.jobId} build={selected} />}
+    {!error && selected && <BuildOnCard key={selected.jobId} build={selected} programId={programId} onNav={onNav} />}
   </section>;
 }
 
@@ -96,20 +104,33 @@ function BuildPicker({ builds, selected, onChoose, onReload }: {
   </div>;
 }
 
-function BuildOnCard({ build }: { build: RunBuild }) {
-  const [sections, setSections] = useState<{ headings: CsrBoardHeading[]; error: string | null }>({ headings: [], error: null });
-  const loadSections = useCallback(async () => {
-    const result = await apiCall<{ sections?: SectionRow[] }>('GET', `${JOBS}/${build.jobId}/sections`);
-    if (result.ok && Array.isArray(result.body?.sections)) setSections({ headings: headingsOf(result.body!.sections!), error: null });
-    else setSections({ headings: [], error: apiErrorText(result, 'The build’s sections could not be read.') });
-  }, [build.jobId]);
-  // Re-read the drafted sections each time the polled build moves.
-  useEffect(() => { void loadSections(); }, [loadSections, build.updatedAt]);
-  const changed = useCallback(() => { void loadSections(); }, [loadSections]);
+/** The build's ICH E3 headings, re-read when the polled build moves and after each review decision. `null` until read. */
+function useBuildHeadings(jobId: number, updatedAt: string) {
+  const [state, setState] = useState<{ headings: CsrBoardHeading[] | null; error: string | null }>({ headings: null, error: null });
+  const load = useCallback(async () => {
+    const result = await apiCall<{ headings?: unknown }>('GET', `${JOBS}/${jobId}/headings`);
+    const headings = result.body?.headings;
+    if (result.ok && Array.isArray(headings) && headings.every(isHeading)) setState({ headings, error: null });
+    else setState({ headings: null, error: apiErrorText(result, 'The build’s sections could not be read for review.') });
+  }, [jobId]);
+  useEffect(() => { void load(); }, [load, updatedAt]);
+  return { ...state, reload: useCallback(() => { void load(); }, [load]) };
+}
+
+function BuildOnCard({ build, programId, onNav }: { build: RunBuild; programId: string; onNav?: (surface: string) => void }) {
+  const { headings, error, reload } = useBuildHeadings(build.jobId, build.updatedAt);
+  const [importSource, setImportSource] = useState<ImportSource | null>(null);
   return <div style={{ display: 'grid', gap: 4 }}>
     <p role="status">CSR build {build.jobId} · {build.status} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
-    {sections.error && <p role="alert">{sections.error}</p>}
-    <CsrNarrativeBuild jobId={build.jobId} headings={sections.headings} onChanged={changed} />
+    {error && <p role="alert">{error}</p>}
+    {!error && headings === null && <p role="status">Reading the build’s sections…</p>}
+    {headings && <CsrHeadingReview jobId={build.jobId} headings={headings} onChanged={reload}
+      onImport={sectionNumbers => setImportSource({ kind: 'csr', jobId: build.jobId, sectionNumbers })} />}
+    <CsrNarrativeBuild jobId={build.jobId} headings={headings ?? []} onChanged={reload} />
     <CsrAssemblyControl jobId={build.jobId} />
+    {/* The card has no project name in hand; the dialog names the target project by its id. */}
+    {importSource && <SourceImportDialog programId={programId} source={importSource} title={`CSR build ${build.jobId} · ${build.studyId}`}
+      onClose={() => setImportSource(null)}
+      onOpenDocument={onNav ? (docId, code) => openImportedDocument(docId, programId, onNav, code) : undefined} />}
   </div>;
 }

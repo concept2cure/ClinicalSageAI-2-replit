@@ -9,6 +9,10 @@
  *                                            CSR card, 2026-10-30)
  *   GET    /api/csr/jobs/:jobId           — org-scoped status read
  *   GET    /api/csr/jobs/:jobId/sections  — org-scoped section listing
+ *   GET    /api/csr/jobs/:jobId/headings  — the canonical ICH E3 tree with each
+ *                                            heading's output and review state
+ *                                            (csr-headings.ts; the CSR card's section
+ *                                            review, D2/W1 2026-10-30)
  *   POST   /api/csr/jobs/:jobId/cancel    — terminal cancel transition
  *   POST   /api/csr/jobs/:jobId/sections/:sectionNumber/review
  *                                          — record one section review decision
@@ -45,6 +49,7 @@ import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { csrBuildJobs } from '@shared/schema';
 import {
+  getICHE3Structure,
   launchCSRBuildAsync,
   type CSRBuildRequest,
 } from '../services/csr-builder.js';
@@ -61,6 +66,7 @@ import {
   type CsrReviewDecision,
 } from '../services/csr/csr-section-review';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { buildHeadings } from '../services/csr/csr-headings';
 import { csrAssemblyRouter } from './csr-jobs-assembly';
 import { csrNarrativeRouter } from './csr-jobs-narratives';
 
@@ -381,6 +387,33 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
       jobId,
     });
     return res.status(500).json({ error: 'Failed to read job sections' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/csr/jobs/:jobId/headings — the ICH E3 tree with the job's review state
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The same headings the csr-workflow board publishes (csr-headings.ts), under
+ * this launch prefix: Submission Center's CSR card reviews, approves and
+ * imports a build's sections from them (D2/W1, 2026-10-30). Scoped exactly as
+ * /:jobId/sections; a missing or cross-org job is 404, never an empty tree.
+ */
+router.get('/:jobId/headings', async (req: Request, res: Response) => {
+  const jobId = parseJobIdParam(req.params.jobId);
+  if (jobId == null) return res.status(400).json({ error: 'Valid numeric job id required' });
+  const organizationId = resolveOrganizationId(req);
+  if (organizationId == null) return res.status(401).json({ error: 'Organization context required' });
+  try {
+    if (!await requireCsrJobAccess(requireDb(), organizationId, jobId, resolveUserId(req))) return res.status(404).json({ error: 'Job not found' });
+    if (await getCSRBuildJobStatus(jobId, organizationId) == null) return res.status(404).json({ error: 'Job not found' });
+    const outputs = await getCSRSectionOutputs(jobId, organizationId);
+    return res.json({ headings: buildHeadings(getICHE3Structure(), outputs) });
+  } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
+    log.error('Failed to read CSR headings', { err: err instanceof Error ? err.message : String(err), organizationId, jobId });
+    return res.status(500).json({ error: 'Failed to read the build’s headings' });
   }
 });
 

@@ -1,0 +1,58 @@
+# Mutation: deleted line 409 of server/routes/csr-jobs.ts (the requireCsrJobAccess check in GET /:jobId/headings)
+# sha256 before: 4dc3e23dcef27b480890b4d01c0d0f9290fcbcd00ba9330b172e9e51bb694437
+diff --git a/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/18f73405-4fbd-5074-ba66-7d0cbd687728/scratchpad/csr-jobs.ts.bak b/server/routes/csr-jobs.ts
+index 0ddec5f67a..0ebe671b89 100644
+--- a/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/18f73405-4fbd-5074-ba66-7d0cbd687728/scratchpad/csr-jobs.ts.bak
++++ b/server/routes/csr-jobs.ts
+@@ -406,7 +406,6 @@ router.get('/:jobId/headings', async (req: Request, res: Response) => {
+   const organizationId = resolveOrganizationId(req);
+   if (organizationId == null) return res.status(401).json({ error: 'Organization context required' });
+   try {
+-    if (!await requireCsrJobAccess(requireDb(), organizationId, jobId, resolveUserId(req))) return res.status(404).json({ error: 'Job not found' });
+     if (await getCSRBuildJobStatus(jobId, organizationId) == null) return res.status(404).json({ error: 'Job not found' });
+     const outputs = await getCSRSectionOutputs(jobId, organizationId);
+     return res.json({ headings: buildHeadings(getICHE3Structure(), outputs) });
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > serves an organization-visible project's headings to an ordinary member 52ms
+ × server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > refuses a same-organization member without access to a private project, with no headings 24ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > serves the private project to its member, so the refusal is the project policy and not the job 15ms
+ × server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > refuses a user who is not in the organization at all 16ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > gives 404 when the access check finds no job in this organization 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > refuses a same-organization member without access to a private project, with no headings
+AssertionError: expected 200 to be 403 // Object.is equality
+- Expected
++ Received
+- 403
++ 200
+ ❯ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts:71:24
+     69|   it('refuses a same-organization member without access to a private p…
+     70|     const res = await headings(2, 5);
+     71|     expect(res.status).toBe(403);
+       |                        ^
+     72|     expect(res.body.code).toBe('CSR_PROJECT_ACCESS_DENIED');
+     73|     expect(res.body).not.toHaveProperty('headings');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — project access, not only the organization > refuses a user who is not in the organization at all
+AssertionError: expected 200 to be 403 // Object.is equality
+- Expected
++ Received
+- 403
++ 200
+ ❯ server/routes/__tests__/csr-jobs-headings-project-access.pglite.test.ts:85:24
+     83|   it('refuses a user who is not in the organization at all', async () …
+     84|     const res = await headings(1, 8);
+     85|     expect(res.status).toBe(403);
+       |                        ^
+     86|     expect(res.body.code).toBe('CSR_PROJECT_ACCESS_DENIED');
+     87|     expect(res.body).not.toHaveProperty('headings');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  08:32:49
+   Duration  6.82s (transform 2.00s, setup 82ms, import 3.98s, tests 2.49s, environment 0ms)
+exit: 1
+# restored sha256: 4dc3e23dcef27b480890b4d01c0d0f9290fcbcd00ba9330b172e9e51bb694437

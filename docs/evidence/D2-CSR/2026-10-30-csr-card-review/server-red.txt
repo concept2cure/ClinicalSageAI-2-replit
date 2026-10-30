@@ -1,0 +1,13 @@
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > queues a build bound to the run once its tables read for this protocol 32ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses, by name and before any job, a run with no retained tables or tables for another protocol 14ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs bound to a retained run > refuses a run retained under another program than the build, before reading it 4ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > records each decision as the signed-in reviewer, never a body-supplied one 46ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > POST /api/csr/jobs/:jobId/sections/:sectionNumber/review > refuses a send-back without a reason and a malformed section number 9ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > lists only this organization's builds bound to the run, newest first 5ms
+ ✓ server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > refuses a missing or malformed run and a missing program, never an empty list 6ms
+ × server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — the build's ICH E3 tree for review on the CSR card (D2/W1, 2026-10-30) > returns every heading of the canonical tree with each output's state and content hash 10ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs/:jobId/headings — the build's ICH E3 tree for review on the CSR card (D2/W1, 2026-10-30) > refuses another organization's build as not found, never its headings 5ms
+   → expected 404 to be 400 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 7 passed (9)
