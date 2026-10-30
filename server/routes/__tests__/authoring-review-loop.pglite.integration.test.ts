@@ -86,6 +86,13 @@ async function seedTask(taskId: string, over: Partial<Record<string, unknown>> &
   );
 }
 
+/**
+ * The notices after the request: since RR5 the request itself tells each
+ * reviewer (task_assigned, on their route task), so what a verdict sends is
+ * read without those.
+ */
+const afterRequest = () => h.notified.filter((n) => (n as { category?: string }).category !== 'task_assigned');
+
 const taskOf = async (taskId: string) =>
   (await rows(`SELECT status, completed_at, last_modified_by, progress FROM unified_tasks WHERE task_id = $1`, [taskId]))[0];
 
@@ -103,10 +110,13 @@ const verdict = async (docId: string, body: Record<string, unknown>, as = review
   as(request(app).post(`/api/authoring/documents/${docId}/review`)).send({
     ...body, expected: body.expected ?? await expectedRead(docId, as),
   });
+/** RR5: a request names the route's review due date, and its reviewers hold signing authority (docs/design/REVIEW_ROUTING_2026-10-23.md). */
+const REVIEW_DUE = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
 const ask = (docId: string, people = [REVIEWER]) =>
   author(request(app).post(`/api/authoring/documents/${docId}/request-review`)).send({
     reviewers: people.map(p => ({ id: p.id, name: p.name })),
     reason: 'Ready for medical review before the pre-IND package.',
+    route: { reviewDueDate: REVIEW_DUE },
   });
 
 /** A structurally valid expected basis also reaches the old route, which ignores it. */
@@ -152,9 +162,13 @@ beforeAll(async () => {
       INSERT INTO users (id, name, email) VALUES
         (${REVIEWER.id}, '${REVIEWER.name}', '${REVIEWER.email}'),
         (${OTHER_REVIEWER.id}, '${OTHER_REVIEWER.name}', '${OTHER_REVIEWER.email}');
+      -- RR5: a reviewer named on the review route holds signing authority (the route's member validator), and reaches the program's project.
       INSERT INTO organization_users (organization_id, user_id, role) VALUES
-        (${ORG}, ${REVIEWER.id}, 'member'),
-        (${ORG}, ${OTHER_REVIEWER.id}, 'member');
+        (${ORG}, ${REVIEWER.id}, 'reviewer'),
+        (${ORG}, ${OTHER_REVIEWER.id}, 'reviewer');
+      INSERT INTO project_members (project_id, organization_id, user_id, role, status) VALUES
+        (42, ${ORG}, ${REVIEWER.id}, 'edit', 'active'), (42, ${ORG}, ${OTHER_REVIEWER.id}, 'edit', 'active');
+      CREATE TABLE IF NOT EXISTS notification_preferences (id serial PRIMARY KEY, user_id integer, timezone text);
     `,
   });
   h.db = jdb.db;
@@ -230,6 +244,7 @@ describe('bound human review — old native-route security regressions', () => {
     const res = await author(request(app).post(`/api/authoring/documents/${docId}/request-review`)).send({
       reviewers: [{ id: REVIEWER.id, name: 'Forged display label', email: OTHER_REVIEWER.email }],
       reason: 'Request the actual assigned reviewer.',
+      route: { reviewDueDate: REVIEW_DUE },
     });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.reviews[0]).toMatchObject({ reviewer_id: REVIEWER.id, reviewer_name: REVIEWER.name, reviewer_email: REVIEWER.email });
@@ -313,7 +328,7 @@ describe('E — the verdict completes the reviewer’s review task on the same t
     });
     expect(res.body.tasks).toEqual({ completed: ['TASK-E1'], leftOpen: [] });
     // The person who sent it is told, once the verdict has committed.
-    expect(h.notified).toEqual([expect.objectContaining({ recipientUserId: Number(AUTHOR.id), category: 'task_completed', resourceId: 'TASK-E1' })]);
+    expect(afterRequest()).toEqual([expect.objectContaining({ recipientUserId: Number(AUTHOR.id), category: 'task_completed', resourceId: 'TASK-E1' })]);
   }, T);
 
   it('a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each', async () => {
@@ -416,7 +431,7 @@ describe('E — dependency and atomic rollback guards', () => {
     expect((await taskOf('TASK-ATOMIC')).status).toBe('in-progress');
     expect(await rows(`SELECT review_status, reviewed_snapshot, reviewed_snapshot_hash FROM authoring_reviews WHERE doc_id = $1`, [docId])).toEqual([{ review_status: 'pending', reviewed_snapshot: null, reviewed_snapshot_hash: null }]);
     expect(await rows(`SELECT 1 FROM authoring_audit_trail WHERE doc_id = $1 AND operation_type = 'document_reviewed'`, [docId])).toEqual([]);
-    expect(h.notified).toEqual([]);
+    expect(afterRequest()).toEqual([]);
   }, T);
 });
 
@@ -494,7 +509,7 @@ describe('request connection and uncertain commit remain honest at the native bo
     expect((await rows('SELECT review_status,reviewed_snapshot_hash FROM authoring_reviews WHERE doc_id=$1', [docId]))[0])
       .toEqual({ review_status: 'pending', reviewed_snapshot_hash: null });
     expect(await rows("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='document_reviewed'", [docId])).toEqual([]);
-    expect(h.notified).toEqual([]);
+    expect(afterRequest()).toEqual([]);
   }, T);
 
   it('reports an uncertain COMMIT safely without notifying, even when that commit reached Postgres', async () => {
@@ -523,7 +538,7 @@ describe('request connection and uncertain commit remain honest at the native bo
     for (const privateFact of [privateMarker, internalCode, 'FixtureCommitTransportFailure']) {
       expect(JSON.stringify(res.body)).not.toContain(privateFact);
     }
-    expect(h.notified).toEqual([]);
+    expect(afterRequest()).toEqual([]);
     expect((await taskOf('TASK-UNCERTAIN-COMMIT')).status).toBe('completed');
     expect(await transitionsOf('TASK-UNCERTAIN-COMMIT')).toHaveLength(1);
     const recovered = await reviewer(request(app).get(`/api/authoring/documents/${docId}/reviews`));

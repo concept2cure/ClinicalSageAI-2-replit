@@ -37,7 +37,8 @@ export interface RouteRequest {
   reviewDueDate: string | null;
   /** A sequential route's date for each step, in step order; null on a parallel route (RR2). */
   reviewStepDueDates: string[] | null;
-  approvalDueDate: string;
+  /** Null only on a route that names no approver (an Authoring route at RR5, whose approvers are RR6). */
+  approvalDueDate: string | null;
 }
 
 /**
@@ -47,10 +48,17 @@ export interface RouteRequest {
  */
 export interface RouteRequestRules {
   reviewersOptional?: boolean;
+  /**
+   * RR5: an Authoring route names its reviewers only. Its approvers join the
+   * route in RR6, so until then it names none and has no approval due date.
+   * A route still names at least one person (a reviewer, then).
+   */
+  approversOptional?: boolean;
 }
 
 /** The ledger's domain and surface for a subject's naming history. */
 export function routeLedgerScope(type: RouteSubjectType): { domain: string; surface: string } {
+  if (type === 'authoring_document') return { domain: 'authoring', surface: 'authoring' };
   return type === 'qms_document' ? { domain: 'qms', surface: 'quality' } : { domain: 'regulatory', surface: 'document-lifecycle' };
 }
 
@@ -66,7 +74,8 @@ function namedPeople(r: Record<string, unknown>, rules: RouteRequestRules): { re
   const approvers = r.approvers ?? [];
   if (!positiveIds(reviewers) || !positiveIds(approvers)) throw refusal(400, 'ROUTE_INVALID', 'Reviewers and approvers are lists of account ids.');
   if (reviewers.length === 0 && !rules.reviewersOptional) throw refusal(400, 'ROUTE_REVIEWER_REQUIRED', 'Name at least one reviewer.');
-  if (approvers.length === 0) throw refusal(400, 'ROUTE_APPROVER_REQUIRED', 'Name at least one approver.');
+  if (approvers.length === 0 && !rules.approversOptional) throw refusal(400, 'ROUTE_APPROVER_REQUIRED', 'Name at least one approver.');
+  if (reviewers.length === 0 && approvers.length === 0) throw refusal(400, 'ROUTE_REVIEWER_REQUIRED', 'Name at least one reviewer.');
   return { reviewers, approvers };
 }
 
@@ -102,6 +111,7 @@ export function parseRouteRequest(raw: unknown, rules: RouteRequestRules = {}): 
   const { reviewers, approvers } = namedPeople(r, rules);
   const order = routeOrder(r, reviewers);
   const base = { reviewers, approvers, order };
+  if (approvers.length === 0) return reviewOnly(r, base);
   if (reviewers.length === 0) {
     if (!isDate(r.approvalDueDate)) throw refusal(400, 'ROUTE_DUE_DATES_REQUIRED', 'Give an approval due date.');
     return { ...base, reviewDueDate: null, reviewStepDueDates: null, approvalDueDate: r.approvalDueDate };
@@ -115,6 +125,16 @@ export function parseRouteRequest(raw: unknown, rules: RouteRequestRules = {}): 
     throw refusal(400, 'ROUTE_DUE_DATES_REQUIRED', 'Give a review due date and an approval due date.');
   }
   return { ...base, reviewDueDate: r.reviewDueDate, reviewStepDueDates: null, approvalDueDate: r.approvalDueDate };
+}
+
+/** A route that names reviewers and no approver (RR5, Authoring): the review's dates only. */
+function reviewOnly(r: Record<string, unknown>, base: Pick<RouteRequest, 'reviewers' | 'approvers' | 'order'>): RouteRequest {
+  if (base.order === 'sequential') {
+    const steps = stepDueDates(r, base.reviewers.length);
+    return { ...base, reviewDueDate: steps[steps.length - 1], reviewStepDueDates: steps, approvalDueDate: null };
+  }
+  if (!isDate(r.reviewDueDate)) throw refusal(400, 'ROUTE_DUE_DATES_REQUIRED', 'Give a review due date.');
+  return { ...base, reviewDueDate: r.reviewDueDate, reviewStepDueDates: null, approvalDueDate: null };
 }
 
 /** The sender's notification time zone, the one every due date is the end of a day in (UTC when unset or unknown). */
@@ -143,7 +163,8 @@ export interface RouteDue {
   review: Date | null;
   /** A sequential route's instant for each step; null on a parallel route. */
   steps: Date[] | null;
-  approval: Date;
+  /** Null on a route that names no approver (RR5). */
+  approval: Date | null;
   timeZone: string;
 }
 
@@ -151,15 +172,16 @@ export interface RouteDue {
 export async function dueInstants(q: RouteQueryable, senderId: number, req: RouteRequest): Promise<RouteDue> {
   const timeZone = await senderTimeZone(q, senderId);
   const reviewDates = req.reviewStepDueDates ?? (req.reviewDueDate ? [req.reviewDueDate] : []);
-  const { instants, now } = await endsOfDays(q, [...reviewDates, req.approvalDueDate], timeZone);
-  const approval = instants[instants.length - 1];
-  const reviewInstants = instants.slice(0, -1);
+  const dates = req.approvalDueDate ? [...reviewDates, req.approvalDueDate] : reviewDates;
+  const { instants, now } = await endsOfDays(q, dates, timeZone);
+  const approval = req.approvalDueDate ? instants[instants.length - 1] : null;
+  const reviewInstants = req.approvalDueDate ? instants.slice(0, -1) : instants;
   const review = reviewInstants.length ? reviewInstants[reviewInstants.length - 1] : null;
-  const first = reviewInstants[0] ?? approval;
+  const first = reviewInstants[0] ?? approval!;
   if (first.getTime() <= now.getTime()) {
     throw new ReviewRouteRefusal(400, 'ROUTE_DUE_IN_PAST', `The ${review ? 'review' : 'approval'} due date has passed. Nothing was sent.`);
   }
-  if (review && approval.getTime() < review.getTime()) {
+  if (review && approval && approval.getTime() < review.getTime()) {
     throw new ReviewRouteRefusal(400, 'ROUTE_DUE_ORDER', 'The approval is due on or after the review. Nothing was sent.');
   }
   return { review, steps: req.reviewStepDueDates ? reviewInstants : null, approval, timeZone };
@@ -220,13 +242,14 @@ export async function routeRemindRefusal(
 // ── RR2: a reviewer added to an open route (§2.10) ──────────────────────────
 
 /** Each member's step and due instant at a send: reviewers in the sender's order, then the approvers (§3). */
-export function placed<M extends { role: 'reviewer' | 'approver' }>(members: M[], request: RouteRequest, due: { review: Date | null; steps: Date[] | null; approval: Date }) {
+export function placed<M extends { role: 'reviewer' | 'approver' }>(members: M[], request: RouteRequest, due: { review: Date | null; steps: Date[] | null; approval: Date | null }) {
   const shape = { order: request.order, reviewers: request.reviewers.length };
   let index = 0;
   return members.map((m) => {
     const i = m.role === 'reviewer' ? index++ : 0;
     const step = stepOf(m.role, i, shape);
-    const dueDate = m.role === 'approver' ? due.approval : due.steps?.[i] ?? due.review ?? due.approval;
+    // A reviewer always has a review date; an approver always has the approval's (a route without one names no approver).
+    const dueDate = (m.role === 'approver' ? due.approval : due.steps?.[i] ?? due.review ?? due.approval) as Date;
     return { member: m, step, dueDate };
   });
 }
@@ -236,7 +259,7 @@ export async function addedReviewerDue(q: RouteQueryable, route: Pick<RouteHeade
   if (!isRouteDate(dueDate)) throw unchanged(400, 'ROUTE_DUE_DATES_REQUIRED', 'Give the new reviewer’s due date (YYYY-MM-DD).');
   const { instants: [due], now } = await endsOfDays(q, [dueDate], await senderTimeZone(q, route.senderId));
   if (due.getTime() <= now.getTime()) throw unchanged(400, 'ROUTE_DUE_IN_PAST', 'The new reviewer’s due date has passed.');
-  if (due.getTime() > new Date(route.approvalDueAt).getTime()) {
+  if (route.approvalDueAt && due.getTime() > new Date(route.approvalDueAt).getTime()) {
     throw unchanged(400, 'ROUTE_DUE_ORDER', 'The new reviewer is due on or before the approval.');
   }
   if (route.order === 'sequential' && route.reviewDueAt && due.getTime() < new Date(route.reviewDueAt).getTime()) {

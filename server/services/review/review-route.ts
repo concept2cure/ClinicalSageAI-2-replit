@@ -39,6 +39,7 @@
  * @module server/services/review/review-route
  */
 import type { Request } from 'express';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import { createTaskInTx, type TaskInsertRunner } from '../tasking/create-task';
 import { assignTaskInTx, TaskAssignmentError } from '../tasking/task-assignment';
 import type { RequestSqlClient } from '../../db/requestDb';
@@ -68,6 +69,9 @@ export {
 /** A Drizzle transaction: the member rows are inserted through createTaskInTx. */
 export type RouteTx = TaskInsertRunner;
 
+/** The route writers take a Drizzle transaction; an act that holds a pg client inside its BEGIN passes it through this. */
+export const routeTxOf = (client: RouteQueryable): RouteTx => drizzle(client as never) as unknown as RouteTx;
+
 /** The one place the route-writer setting is set: transaction-local. */
 export async function enterRouteWriter(q: RouteQueryable): Promise<void> {
   await q.query(`SELECT set_config('c2c.review_route_writer', 'on', true)`);
@@ -79,9 +83,14 @@ export interface RouteSubject {
   title: string;
   /** The regulatory program whose project anchors the subject (projects.regulatory_program_id). */
   programId: string | null;
-  /** The digest the route is about: the version's content hash. */
+  /** The digest the route is about: the version's content hash (an Authoring document's sections digest, RR5). */
   contentDigest: string;
+  /** What each member's task carries beyond the route (RR5: Authoring's instructions to the reviewers, and a priority). */
+  taskDetails?: { description?: string; priority?: string };
 }
+
+/** The Tasks module a subject's member rows are listed under. */
+const MODULE_OF: Record<RouteSubjectType, string> = { canonical_document: 'Vault', qms_document: 'QMS', authoring_document: 'Authoring' };
 
 /** Every person named, validated in order (reviewers, then approvers), before anything is written. */
 async function validateMembers(
@@ -117,11 +126,12 @@ async function writeMemberRow(
     actorUserId: p.senderId,
     taskId,
     values: {
-      moduleType: subject.type === 'qms_document' ? 'QMS' : 'Vault',
+      moduleType: MODULE_OF[subject.type],
       title: `${reviewer ? 'Review' : 'Approve'}: ${subject.title}`,
       taskType: reviewer ? 'review' : 'approval',
       category: reviewer ? 'review' : 'approval',
-      priority: 'medium',
+      priority: ('taskDetails' in subject && subject.taskDetails?.priority) || 'medium',
+      ...('taskDetails' in subject && subject.taskDetails?.description ? { description: subject.taskDetails.description } : {}),
       status: open ? 'pending' : 'blocked',
       assigneeId: m.userId,
       assigneeName: m.printedName,
@@ -196,7 +206,7 @@ export async function sendReviewRoute(
     reason: p.reason,
     payload: {
       routeId, order: p.request.order, contentDigest: p.subject.contentDigest,
-      reviewDueAt: due.review?.toISOString() ?? null, approvalDueAt: due.approval.toISOString(), timeZone: due.timeZone,
+      reviewDueAt: due.review?.toISOString() ?? null, approvalDueAt: due.approval?.toISOString() ?? null, timeZone: due.timeZone,
       reviewStepDueAt: due.steps?.map((d) => d.toISOString()) ?? null,
       senderName,
       members: steps.map(({ member: m, step, dueDate }) => ({ userId: m.userId, role: m.role, step, dueAt: dueDate.toISOString(), printedName: m.printedName })),
@@ -206,33 +216,39 @@ export async function sendReviewRoute(
   return { routeId, notices, timeZone: due.timeZone };
 }
 
+const STAMP_TAIL = `status = 'completed', progress = 100, completion_percentage = 100, completed_at = now(), last_modified_by = $2, updated_at = now()
+  WHERE organization_id = $3 AND task_id = $4 AND review_route_id = $5::uuid AND route_signature_id IS NULL AND route_authoring_signature_id IS NULL
+  RETURNING status`;
+const STAMP_SIGNATURE = `UPDATE unified_tasks SET route_signature_id = $1, ${STAMP_TAIL}`;
+const STAMP_AUTHORING_SIGNATURE = `UPDATE unified_tasks SET route_authoring_signature_id = $1::uuid, ${STAMP_TAIL}`;
+
 /**
  * A member's verified signature closes their inbox entry: the signature's id
  * is stamped on the member row, the task moves to completed, and its
- * `task.transition` row cites `esig:<id>`. Returns the sender's notice.
+ * `task.transition` row cites `esig:<id>`. An Authoring member's signature
+ * (RR5) is an authoring_signatures uuid: it is stamped as
+ * route_authoring_signature_id and cited as `authoring-sig:<id>`, the
+ * reference the FD5(c) carry-over uses. Returns the sender's notice.
  */
 export async function closeRouteTaskOnSignature(
   tx: RouteTx,
-  p: { organizationId: number; standing: RouteStanding; member: RouteMember; signatureId: number; actorUserId: number; reason: string; subjectTitle: string },
+  p: { organizationId: number; standing: RouteStanding; member: RouteMember; signatureId: number | string; actorUserId: number; reason: string; subjectTitle: string },
 ): Promise<TaskEventNotice[]> {
   const q = queryableFromDrizzle(tx);
+  const authoring = typeof p.signatureId === 'string';
   await enterRouteWriter(q);
-  const { rows } = await q.query(
-    `UPDATE unified_tasks SET route_signature_id = $1, status = 'completed', progress = 100, completion_percentage = 100,
-            completed_at = now(), last_modified_by = $2, updated_at = now()
-      WHERE organization_id = $3 AND task_id = $4 AND review_route_id = $5::uuid AND route_signature_id IS NULL
-      RETURNING status`,
-    [p.signatureId, p.actorUserId, p.organizationId, p.member.taskId, p.standing.route!.id],
-  );
+  const { rows } = await q.query(authoring ? STAMP_AUTHORING_SIGNATURE : STAMP_SIGNATURE,
+    [p.signatureId, p.actorUserId, p.organizationId, p.member.taskId, p.standing.route!.id]);
+  const ref = authoring ? `authoring-sig:${p.signatureId}` : `esig:${p.signatureId}`;
   if (rows.length !== 1) throw new Error(`Route member ${p.member.taskId} could not be closed on its signature`);
   await auditTaskActionInTx(q, {
     orgId: p.organizationId,
     userId: p.actorUserId,
     command: 'task.transition',
     taskId: p.member.taskId,
-    payload: { from: 'pending', to: 'completed', signatureRef: `esig:${p.signatureId}`, routeId: p.standing.route!.id },
+    payload: { from: 'pending', to: 'completed', signatureRef: ref, routeId: p.standing.route!.id },
     reason: p.reason,
-    summary: `Closed by the ${p.member.role === 'reviewer' ? 'review' : 'approval'} signature esig:${p.signatureId}`,
+    summary: `Closed by the ${p.member.role === 'reviewer' ? 'review' : 'approval'} signature ${ref}`,
   });
   const sender = p.standing.route!.senderId;
   return sender === p.actorUserId

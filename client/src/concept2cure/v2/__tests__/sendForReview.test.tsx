@@ -32,6 +32,16 @@
  * whose verdict is recorded can be asked again and is told the verdict stays in
  * the record; only a member whose review is pending cannot be chosen. A
  * reviewer's verdict now completes their review task, and the task says so.
+ *
+ * RR5 (2026-10-30, docs/design/REVIEW_ROUTING_2026-10-23.md): the request,
+ * its review route and each reviewer's route task are one server transaction.
+ * The dialog's second write (POST /api/tasks/tasks per reviewer, after the
+ * request) is removed, so the cases below that pinned it now pin that it is
+ * not made, and the receipt names the tasks the server's answer names
+ * (`route.tasks`). The cases that pinned a task refused or lost AFTER the
+ * request are replaced by the one failure left: an answer that names no task
+ * for a reviewer, which is reported unconfirmed and offers the task list. The
+ * request carries the route's review due date, so `fill` chooses one.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -74,24 +84,37 @@ const REASON = 'Ready for medical review before the pre-IND package.';
 const REQUEST_URL = `/api/authoring/documents/${DOC}/request-review`;
 const REVIEWS_URL = `/api/authoring/documents/${DOC}/reviews`;
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
+/** RR5: the review due date the request's route takes. */
+const DUE = '2026-11-20';
 
 let ledger: Array<Record<string, unknown>> = [];
 /** What the mock server answers to request-review; replaced per test. */
 let answerRequest: (body: { reviewers: Array<{ id: string; name?: string }>; reason?: string }) => Response | Promise<Response>;
-/** What the mock server answers to a task create; replaced per test. */
-let answerTask: (body: Record<string, unknown>) => Response | Promise<Response>;
 /** What the mock server answers to the document's existing review requests; replaced per test. */
 let answerReviews: () => Response | Promise<Response>;
 /** What the mock server answers to the roster; replaced per test. */
 let answerRoster: () => Response | Promise<Response>;
 const ROSTER = [{ id: '42', name: 'OQ Signer' }, { id: '7', name: 'Dana Chen' }, { id: '9', name: 'Ira Patel' }];
 
+/**
+ * RR5: the server writes each reviewer's route task with the request, names
+ * them in `route.tasks`, and they are on the document's task list (the ledger).
+ */
+function routeTasks(reviewers: Array<{ id: string; name?: string }>, docId = DOC) {
+  return reviewers.map(r => {
+    const taskId = `ROUTE-abcd1234-${r.id}`;
+    ledger.push({ id: ledger.length + 1, taskId, organizationId: 2, status: 'pending', assigneeId: Number(r.id), assigneeName: r.name ?? null,
+      title: 'Review: Module 2.5 Clinical Overview', taskType: 'review', sourceEntityType: 'authoring_document', sourceEntityId: docId, reviewRouteId: 'abcd1234' });
+    return { userId: Number(r.id), taskId, dueDate: '2026-11-21T04:59:59.999Z' };
+  });
+}
 const recorded = (body: { reviewers: Array<{ id: string; name?: string }> }, docId = DOC) => ok({
   success: true,
   reviews: body.reviewers.map((r, i) => ({
     id: `rev-${i + 1}`, doc_id: docId, reviewer_id: r.id, reviewer_name: r.name ?? null, reviewer_email: null,
     review_status: 'pending', requested_by: 'author@test.co',
   })),
+  route: { id: 'abcd1234', added: false, timeZone: 'UTC', tasks: routeTasks(body.reviewers, docId) },
   message: `Review requested from ${body.reviewers.length} reviewer(s)`,
 });
 
@@ -117,7 +140,6 @@ function mockApi() {
     if (url === '/api/task-management/assignees') return answerRoster();
     if (method === 'GET' && url === REVIEWS_URL) return answerReviews();
     if (method === 'POST' && url === REQUEST_URL) return answerRequest(body as never);
-    if (method === 'POST' && url === '/api/tasks/tasks') return answerTask(body ?? {});
     if (method === 'GET' && url === '/api/tasks/tasks/by-module/Authoring') return ok({ success: true, data: ledger, count: ledger.length });
     return ok({ success: true, sources: [], revisions: [], comments: [] });
   });
@@ -125,7 +147,6 @@ function mockApi() {
 
 const props = () => ({ surface: { id: 'document-authoring', label: 'Authoring' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biotech' });
 const calls = (method: string, url: string) => apiRequest.mock.calls.filter(c => c[0] === method && c[1] === url);
-const callIndex = (method: string, url: string) => apiRequest.mock.calls.findIndex(c => c[0] === method && c[1] === url);
 
 beforeEach(() => {
   (window as any).C2C_PROJECT = { id: PID, title: 'C2C-101' };
@@ -133,11 +154,6 @@ beforeEach(() => {
   answerRequest = body => recorded(body);
   answerReviews = () => ok({ success: true, reviews: [] });
   answerRoster = () => ok({ success: true, data: ROSTER, total: ROSTER.length });
-  answerTask = body => {
-    const row = { id: ledger.length + 1, taskId: `TASK-1758-${ledger.length + 1}`, organizationId: 2, status: 'pending', assigneeName: body.assigneeId === 42 ? 'OQ Signer' : 'Dana Chen', createdAt: '2026-10-08T10:00:00Z', ...body };
-    ledger.push(row);
-    return ok({ success: true, data: row });
-  };
   mockApi();
 });
 afterEach(() => {
@@ -159,6 +175,7 @@ async function openDialog(p = props()) {
 function fill(dlg: HTMLElement, reviewers: string[], reason = REASON) {
   for (const id of reviewers) fireEvent.click(within(dlg).getByTestId(`sfr-reviewer-${id}`));
   fireEvent.change(within(dlg).getByTestId('sfr-reason'), { target: { value: reason } });
+  fireEvent.change(within(dlg).getByTestId('sfr-due'), { target: { value: DUE } });
 }
 
 async function openPreparedReviewDialog() {
@@ -216,7 +233,9 @@ describe('a current partial canvas preserves a sent review request', () => {
     await within(dialog).findByTestId('sfr-result');
     expect(within(dialog).getByTestId('sfr-reviews').textContent).toContain('OQ Signer');
     expect(calls('POST',REQUEST_URL)).toHaveLength(1);
-    expect(calls('POST','/api/tasks/tasks')).toHaveLength(1);
+    // RR5: the task is the server's, written with the request; the dialog writes none.
+    expect(calls('POST','/api/tasks/tasks')).toHaveLength(0);
+    expect(within(dialog).getByTestId('sfr-tasks').textContent).toContain('Task ROUTE-abcd1234-42');
     expect(within(dialog).queryByTestId('sfr-submit')).toBeNull();
   });
 });
@@ -228,25 +247,25 @@ describe('Send for review — the workbench records a review request the Review 
     fireEvent.change(within(dlg).getByTestId('sfr-instructions'), { target: { value: 'Check the efficacy claims against the SAP.' } });
     fireEvent.click(within(dlg).getByTestId('sfr-submit'));
 
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', REQUEST_URL, {
+    await waitFor(() => expect(calls('POST', REQUEST_URL)).toHaveLength(1));
+    expect(calls('POST', REQUEST_URL)[0][2]).toMatchObject({
       reviewers: [{ id: '42', name: 'OQ Signer' }],
       reason: REASON,
-    }));
+      route: { reviewDueDate: DUE },
+    });
     // The server's own rows are what the dialog shows: who, the state, the request id.
     const result = await within(dlg).findByTestId('sfr-result');
     expect(within(result).getByTestId('sfr-reviews').textContent).toContain('OQ Signer · Pending');
     expect(within(result).getByTestId('sfr-reviews').textContent).toContain('request rev-1');
     expect(result.textContent).toContain('listed on the Review board');
 
-    // The reviewer's My work task: created after the request, linked to the
-    // document, and carrying the reason with the instructions.
-    await waitFor(() => expect(calls('POST', '/api/tasks/tasks')).toHaveLength(1));
-    expect(callIndex('POST', REQUEST_URL)).toBeLessThan(callIndex('POST', '/api/tasks/tasks'));
-    const task = calls('POST', '/api/tasks/tasks')[0][2] as Record<string, unknown>;
-    expect(task).toMatchObject({ assigneeId: 42, sourceEntityType: 'authoring_document', sourceEntityId: DOC, taskType: 'review' });
-    expect(String(task.description)).toContain('Check the efficacy claims against the SAP.');
-    expect(String(task.description)).toContain(`Reason for the review request: ${REASON}`);
-    expect((await within(result).findByTestId('sfr-tasks')).textContent).toContain('Task TASK-1758-1 in OQ Signer’s tasks');
+    // RR5: the reviewer's task is written by the server with the request (one
+    // transaction); the instructions and the reason travel in the request.
+    expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
+    const sent = calls('POST', REQUEST_URL)[0][2] as Record<string, unknown>;
+    expect(String(sent.instructions)).toContain('Check the efficacy claims against the SAP.');
+    expect(String(sent.instructions)).toContain(`Reason for the review request: ${REASON}`);
+    expect((await within(result).findByTestId('sfr-tasks')).textContent).toContain('Task ROUTE-abcd1234-42 in OQ Signer’s tasks');
 
     // Done closes the receipt; the document's Tasks rail lists the task.
     fireEvent.click(within(dlg).getByTestId('sfr-done'));
@@ -260,13 +279,17 @@ describe('Send for review — the workbench records a review request the Review 
     fill(dlg, ['42', '7']);
     fireEvent.click(within(dlg).getByTestId('sfr-submit'));
     await waitFor(() => expect(calls('POST', REQUEST_URL)).toHaveLength(1));
-    expect(calls('POST', REQUEST_URL)[0][2]).toEqual({
+    expect(calls('POST', REQUEST_URL)[0][2]).toMatchObject({
       reviewers: [{ id: '42', name: 'OQ Signer' }, { id: '7', name: 'Dana Chen' }],
       reason: REASON,
+      route: { reviewDueDate: DUE },
     });
     const tasks = await within(dlg).findByTestId('sfr-tasks');
     await waitFor(() => expect(tasks.querySelectorAll('li')).toHaveLength(2));
-    expect(calls('POST', '/api/tasks/tasks').map(c => (c[2] as { assigneeId: number }).assigneeId)).toEqual([42, 7]);
+    // RR5: each task is the server's, from the one request.
+    expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
+    expect(tasks.textContent).toContain('Task ROUTE-abcd1234-42');
+    expect(tasks.textContent).toContain('Task ROUTE-abcd1234-7');
   });
 
   it('requires a reviewer and a reason at the server’s floor before anything is sent', async () => {
@@ -277,11 +300,16 @@ describe('Send for review — the workbench records a review request the Review 
     fireEvent.click(within(dlg).getByTestId('sfr-reviewer-42'));
     fireEvent.change(within(dlg).getByTestId('sfr-reason'), { target: { value: 'short' } });
     expect(submit.disabled).toBe(true);
-    expect(within(dlg).getByTestId('sfr-send-note').textContent).toBe('A reason of at least 8 characters is required.');
+    // RR5: the note also names the route's review due date until it is chosen.
+    expect(within(dlg).getByTestId('sfr-send-note').textContent).toBe('Choose the review due date. A reason of at least 8 characters is required.');
     expect(submit.getAttribute('aria-describedby')).toBe('sfr-send-note');
     fireEvent.click(submit);
     expect(calls('POST', REQUEST_URL)).toHaveLength(0);
     fireEvent.change(within(dlg).getByTestId('sfr-reason'), { target: { value: REASON } });
+    // RR5: and the route's review due date.
+    expect(submit.disabled).toBe(true);
+    expect(within(dlg).getByTestId('sfr-send-note').textContent).toBe('Choose the review due date.');
+    fireEvent.change(within(dlg).getByTestId('sfr-due'), { target: { value: DUE } });
     expect(submit.disabled).toBe(false);
     expect(within(dlg).queryByTestId('sfr-send-note')).toBeNull();
   });
@@ -346,27 +374,18 @@ describe('Send for review — a refusal, an unknown outcome and a failed task ar
     expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
   });
 
-  it('a task that failed after the request is reported as not created; the request still stands', async () => {
-    answerTask = () => { throw new ApiRequestError('The audit write failed, so nothing was changed.', 500, {}, 'AUDIT_WRITE_FAILED'); };
+  /* RR5: a task refused or lost AFTER the request no longer exists as a case:
+     the dialog makes no second write. What is left is an answer that names no
+     task for a reviewer, which is unconfirmed and offers the task list. */
+  it('a reviewer the answer names no task for is unconfirmed, and the task list is offered, not a retry', async () => {
+    answerRequest = body => ok({ success: true, route: { id: 'abcd1234', tasks: [] },
+      reviews: body.reviewers.map((r, i) => ({ id: `rev-${i + 1}`, doc_id: DOC, reviewer_id: r.id, reviewer_name: r.name ?? null, review_status: 'pending' })) });
     const dlg = await openDialog();
     fill(dlg, ['42']);
     fireEvent.click(within(dlg).getByTestId('sfr-submit'));
     const result = await within(dlg).findByTestId('sfr-result');
-    expect(within(result).getByTestId('sfr-reviews').textContent).toContain('OQ Signer · Pending');
-    const tasks = within(result).getByTestId('sfr-tasks');
-    expect(tasks.textContent).toContain('OQ Signer: no task. The review task was refused');
-    expect(tasks.textContent).not.toMatch(/Task TASK-/);
-    // A refusal is known: nothing to reconcile.
-    expect(within(dlg).queryByRole('button', { name: 'Check existing review tasks' })).toBeNull();
-  });
-
-  it('a task whose creation could not be confirmed offers the task list, not a retry', async () => {
-    answerTask = () => { throw new ApiRequestError('Response lost after commit', 502); };
-    const dlg = await openDialog();
-    fill(dlg, ['42']);
-    fireEvent.click(within(dlg).getByTestId('sfr-submit'));
-    const result = await within(dlg).findByTestId('sfr-result');
-    expect(within(result).getByTestId('sfr-tasks').textContent).toMatch(/outcome is unknown/);
+    expect(within(result).getByTestId('sfr-tasks').textContent).toContain('did not name this reviewer’s task on the review route');
+    expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
     fireEvent.click(within(dlg).getByRole('button', { name: 'Check existing review tasks' }));
     await waitFor(() => expect(screen.queryByTestId('send-for-review-dialog')).toBeNull());
     expect(await screen.findByRole('complementary', { name: 'Review tasks' })).toBeTruthy();
@@ -404,29 +423,21 @@ async function openOwnDialog(overrides: Partial<React.ComponentProps<typeof Send
   return { dlg, fireToast, onCheckTasks };
 }
 
-describe('Send for review — a task whose answer was lost is unknown, not absent', () => {
-  it('says the outcome is unknown in the receipt and the toast, never "no task" and never "not created"', async () => {
-    answerTask = body => {
-      ledger.push({ taskId: 'TASK-LOST', ...body }); // the server committed it…
-      throw new ApiRequestError('Response lost after commit', 502); // …and the answer was lost
-    };
+describe('Send for review — a task is never written by the dialog (RR5)', () => {
+  /* Until RR5 this case pinned a task create whose answer was lost after the
+     request (the dialog's second write). The second write is removed: the
+     request and the tasks are one server transaction, so the toast counts the
+     tasks the server's answer names. */
+  it('the toast counts the server’s route tasks, and the dialog posts no task', async () => {
     const { dlg, fireToast } = await openOwnDialog();
     fill(dlg, ['42']);
     fireEvent.click(within(dlg).getByTestId('sfr-submit'));
     const tasks = await within(dlg).findByTestId('sfr-tasks');
-    expect(ledger).toHaveLength(1);
-    const line = tasks.querySelector('li') as HTMLElement;
-    // The task may exist: its line never says there is none…
-    expect(line.textContent).not.toMatch(/no task/i);
-    expect(line.textContent).toContain('OQ Signer: The review task outcome is unknown');
-    // …and the toast never counts it as not created.
+    expect((tasks.querySelector('li') as HTMLElement).getAttribute('data-outcome')).toBe('created');
     const toast = String(fireToast.mock.calls[0]?.[0]);
-    expect(toast).not.toMatch(/0 of 1|not created|were created/);
     expect(toast).toContain('Review requested from OQ Signer.');
-    expect(toast).toContain('Review tasks: 1 with an unknown outcome. Check the task list before sending again.');
-    expect(line.getAttribute('data-outcome')).toBe('unknown');
-    expect(line.className).not.toContain('de-err');
-    expect(within(dlg).getByRole('button', { name: 'Check existing review tasks' })).toBeTruthy();
+    expect(toast).toContain('Their review task is in Tasks.');
+    expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
   });
 });
 
@@ -451,15 +462,16 @@ describe('Send for review — a member who already has a review request', () => 
     // A click on the member already asked chooses nobody; the member with a verdict is chosen.
     fireEvent.click(asked);
     fireEvent.change(within(dlg).getByTestId('sfr-reason'), { target: { value: REASON } });
+    fireEvent.change(within(dlg).getByTestId('sfr-due'), { target: { value: DUE } });
     expect((within(dlg).getByTestId('sfr-submit') as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(decided);
     expect(decided.checked).toBe(true);
     fireEvent.click(within(dlg).getByTestId('sfr-submit'));
     await waitFor(() => expect(calls('POST', REQUEST_URL)).toHaveLength(1));
-    expect(calls('POST', REQUEST_URL)[0][2]).toEqual({ reviewers: [{ id: '42', name: 'OQ Signer' }], reason: REASON });
-    // The server reopened the review (the row comes back pending), so the reviewer gets a new task.
-    await waitFor(() => expect(calls('POST', '/api/tasks/tasks')).toHaveLength(1));
-    expect((calls('POST', '/api/tasks/tasks')[0][2] as { assigneeId: number }).assigneeId).toBe(42);
+    expect(calls('POST', REQUEST_URL)[0][2]).toMatchObject({ reviewers: [{ id: '42', name: 'OQ Signer' }], reason: REASON, route: { reviewDueDate: DUE } });
+    // The server reopened the review (the row comes back pending) and wrote the reviewer's new route task (RR5).
+    expect((await within(dlg).findByTestId('sfr-tasks')).textContent).toContain('Task ROUTE-abcd1234-42');
+    expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
     expect(within(await within(dlg).findByTestId('sfr-result')).getByTestId('sfr-reviews').textContent).toContain('OQ Signer · Pending');
   });
 
@@ -470,13 +482,16 @@ describe('Send for review — a member who already has a review request', () => 
     answerRequest = body => ok({
       success: true,
       reviews: body.reviewers.map(r => ({ ...standingRow(r.id, r.name ?? r.id, r.id === '42' ? 'changes_requested' : 'pending'), id: `rev-${r.id}` })),
+      route: { id: 'abcd1234', tasks: routeTasks(body.reviewers.filter(r => r.id !== '42')) },
     });
     const { dlg, fireToast } = await openOwnDialog();
     fill(dlg, ['42', '7']);
     fireEvent.click(within(dlg).getByTestId('sfr-submit'));
     const result = await within(dlg).findByTestId('sfr-result');
-    await waitFor(() => expect(calls('POST', '/api/tasks/tasks')).toHaveLength(1));
-    expect((calls('POST', '/api/tasks/tasks')[0][2] as { assigneeId: number }).assigneeId).toBe(7);
+    // RR5: the one task is the server's, for the reopened review only.
+    expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
+    expect(within(result).getByTestId('sfr-tasks').textContent).toContain('Task ROUTE-abcd1234-7');
+    expect(within(result).getByTestId('sfr-tasks').textContent).not.toContain('ROUTE-abcd1234-42');
     const reviews = within(result).getByTestId('sfr-reviews').textContent ?? '';
     expect(reviews).toContain('OQ Signer · Changes requested; saved-content binding unavailable. This request did not reopen their review, so no task was created');
     expect(reviews).toContain('Dana Chen · Pending');
@@ -531,14 +546,17 @@ describe('Send for review — reads that failed can be read again', () => {
   });
 });
 
-describe('Send for review — the task says where the verdict goes', () => {
-  it('each reviewer’s task says the verdict is recorded on the Review board and completes the task, not the other way round', async () => {
+describe('Send for review — the task says how it closes', () => {
+  /* RR5: the reviewer's review signature closes their route task; "changes
+     requested" on the Review board returns the route. Until RR5 the verdict
+     completed the task, and the task said so. */
+  it('each reviewer’s task says the review signature closes it, and where a change request goes', async () => {
     const { dlg } = await openOwnDialog();
     fill(dlg, ['42']);
     fireEvent.click(within(dlg).getByTestId('sfr-submit'));
-    await waitFor(() => expect(calls('POST', '/api/tasks/tasks')).toHaveLength(1));
-    expect(String((calls('POST', '/api/tasks/tasks')[0][2] as { description: string }).description))
-      .toContain('Record your verdict on the Review board; recording it completes this task. Completing the task does not record a verdict.');
+    await waitFor(() => expect(calls('POST', REQUEST_URL)).toHaveLength(1));
+    expect(String((calls('POST', REQUEST_URL)[0][2] as { instructions: string }).instructions))
+      .toContain('Sign the review on the document (E-sign, meaning Review) to close this task. To ask for changes, record “changes requested” on the Review board, which returns the route to its sender.');
   });
 });
 
@@ -551,6 +569,7 @@ const withGrant = (granted: boolean, reason?: string) => (body: { reviewers: Arr
   success: true,
   reviews: body.reviewers.map((r, i) => ({ id: `rev-${i + 1}`, doc_id: DOC, reviewer_id: r.id, reviewer_name: r.name ?? null, review_status: 'pending' })),
   grants: body.reviewers.map(r => (granted ? { reviewerId: r.id, granted: true, permissionId: 'p-1' } : { reviewerId: r.id, granted: false, reason })),
+  route: { id: 'abcd1234', tasks: routeTasks(body.reviewers) },
 });
 
 describe('Send for review — never from the author, and the reviewer’s access is stated', () => {

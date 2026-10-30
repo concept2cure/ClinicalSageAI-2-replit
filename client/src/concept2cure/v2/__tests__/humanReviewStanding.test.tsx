@@ -101,6 +101,8 @@ describe('Document task reads retire the previous target', () => {
     let taskReads = 0;
     apiRequest.mockImplementation(async (_method: string, url: string) => {
       if (url.includes('/reviews')) return ok({ success: true, reviews: [] });
+      // RR5: the panel also reads the document's review route; it is not a task read.
+      if (url.includes('/review-route')) return ok({ success: true, round: null });
       taskReads++;
       return taskReads === 1 ? oldRead : ok({ success: true, data: [task(OTHER_DOC)] });
     });

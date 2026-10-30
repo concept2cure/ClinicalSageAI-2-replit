@@ -31,6 +31,7 @@ import { SignJWT } from 'jose';
 import { createJourneyDb, assertNoSchemaGaps, extractTableDdl, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { AUTHORING_REVIEW_BINDING_BASIS } from '@shared/authoring/peer-review';
 import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, ORG, OTHER_ORG, JWT_SECRET, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from '../../services/ana-ri/__tests__/governed-action-ledger.fixture';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../db', () => ({
@@ -72,8 +73,11 @@ let reviewApp: express.Express;
 /** The author asks REVIEWER (granting the Reviewer role), and REVIEWER sends a
  *  verdict bound to the saved review context it read (404e94efc). */
 async function reviewByReviewer(docId: string, body: { review_status: string; review_comments?: string }) {
+  // RR5: the request writes its review route, so it states a reason and the route's review due date.
   const ask = await author(request(reviewApp).post(`/api/authoring/documents/${docId}/request-review`)).send({
     reviewers: [{ id: REVIEWER.id, name: REVIEWER.name }],
+    reason: 'Ready for an independent review of the saved draft.',
+    route: { reviewDueDate: new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10) },
   });
   expect(ask.status, JSON.stringify(ask.body)).toBe(200);
   const read = await reviewer(request(reviewApp).get(`/api/authoring/documents/${docId}/reviews`));
@@ -142,7 +146,8 @@ beforeAll(async () => {
     // and posture the bound peer-review service reads for every reviewer (404e94efc).
     prereqSql: `${PREREQ}\n${AUTHORING_ACCESS_DDL}
       ALTER TABLE organizations ADD COLUMN payment_status text NOT NULL DEFAULT 'active';
-      ${extractTableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks'])}`,
+      ${extractTableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks', 'task_dependencies', 'cross_module_task_links'])}
+      ${extractTableDdl('migrations/20260510_notifications_and_clinical.sql', ['mdx_notifications'])}`,
     migrations: [
       // The authoring subsystem unit, in the durable applier's order.
       'db/migrations/20260725_authoring_document_loop_tables.sql',
@@ -157,6 +162,9 @@ beforeAll(async () => {
       'migrations/20260921_audit_logs_chain_seq.sql',
       // The standalone path's logAction also writes the tamper-proof log.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
+      // RR5: the request writes each reviewer's route task, so unified_tasks as deployed.
+      'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
+      'db/migrations/20260807_task_graph_org_columns.sql',
       // unified_tasks.deleted_at, which the verdict's task lookup reads.
       'db/migrations/20260807_unified_tasks_soft_delete.sql',
       // The review route columns the Drizzle model names (RR1a).
@@ -167,10 +175,16 @@ beforeAll(async () => {
         (${COLLEAGUE.id}, '${COLLEAGUE.name}', '${COLLEAGUE.email}'),
         (${QA_ADMIN.id}, '${QA_ADMIN.name}', '${QA_ADMIN.email}'),
         (${REVIEWER.id}, '${REVIEWER.name}', '${REVIEWER.email}');
+      -- RR5: the reviewer named on the review route holds signing authority and reaches the program's project
+      -- (the route's member validator); the route writes its naming row on the governed ledger and reads the
+      -- sender's time zone.
       INSERT INTO organization_users (organization_id, user_id, role) VALUES
         (${ORG}, ${COLLEAGUE.id}, 'member'),
         (${ORG}, ${QA_ADMIN.id}, 'manager'),
-        (${ORG}, ${REVIEWER.id}, 'member');
+        (${ORG}, ${REVIEWER.id}, 'reviewer');
+      INSERT INTO project_members (project_id, organization_id, user_id, role, status) VALUES (42, ${ORG}, ${REVIEWER.id}, 'edit', 'active');
+      CREATE TABLE IF NOT EXISTS notification_preferences (id serial PRIMARY KEY, user_id integer, timezone text);
+      ${GOVERNED_ACTION_LEDGER_PGLITE_DDL}
     `,
   });
   h.db = jdb.db;

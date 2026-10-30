@@ -38,6 +38,25 @@
 -- the integer sweep policies it. The member key to the header is composite
 -- (organization_id, review_route_id), so a task can never name another
 -- organization's route.
+--
+-- AMENDED IN PLACE, 2026-10-29 (slice RR5 of the design: Authoring's
+-- request-review writes its route; evidence
+-- docs/evidence/D2-REVIEW-ROUTING/2026-10-30-RR5/). Additive only; nothing is
+-- removed:
+--   (a) unified_tasks.route_authoring_signature_id uuid: the authoring_signatures
+--       row (the existing REVIEWER e-sign, POST /api/authoring/docs/:id/e-sign)
+--       a member of an Authoring route signed with. route_signature_id is an
+--       electronic_signatures integer id; an Authoring signature is a uuid in
+--       its own table, and is never copied into electronic_signatures (§11.70,
+--       authoring-approval-carryover.ts). The trigger below guards it like
+--       every other route column.
+--   (b) review_routes.approval_due_at loses NOT NULL, by a conditional ALTER
+--       (below the CREATE, which is left as deployed). An Authoring route at
+--       RR5 names reviewers only (its approvers are RR6), so it has no
+--       approval to be due; a Vault or QMS route still always writes one
+--       (parseRouteRequest refuses a route there without an approver and its
+--       date). No other file in the migration set sets this column NOT NULL,
+--       so the replay cannot re-impose it.
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS public.review_routes (
@@ -60,6 +79,18 @@ CREATE TABLE IF NOT EXISTS public.review_routes (
   sender_overdue_notified_at timestamptz,
   created_at                 timestamptz NOT NULL DEFAULT now()
 );
+
+-- 2026-10-29 (RR5, note (b) above): an Authoring route at RR5 has no approval.
+DO $mig$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_attribute
+     WHERE attrelid = 'public.review_routes'::regclass AND attname = 'approval_due_at' AND attnotnull
+  ) THEN
+    ALTER TABLE public.review_routes ALTER COLUMN approval_due_at DROP NOT NULL;
+  END IF;
+END
+$mig$;
 
 -- The organization key, when the base schema is present (a test database
 -- built from a subset of tables may not hold organizations).
@@ -166,6 +197,8 @@ BEGIN
   ALTER TABLE public.unified_tasks ADD COLUMN IF NOT EXISTS review_step integer;
   ALTER TABLE public.unified_tasks ADD COLUMN IF NOT EXISTS route_signature_id integer;
   ALTER TABLE public.unified_tasks ADD COLUMN IF NOT EXISTS route_act_id text;
+  -- 2026-10-29 (RR5, note (a) above).
+  ALTER TABLE public.unified_tasks ADD COLUMN IF NOT EXISTS route_authoring_signature_id uuid;
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
@@ -263,7 +296,8 @@ BEGIN
 
   IF TG_OP = 'INSERT' THEN
     IF NEW.review_route_id IS NOT NULL OR NEW.review_role IS NOT NULL OR NEW.review_step IS NOT NULL
-       OR NEW.route_signature_id IS NOT NULL OR NEW.route_act_id IS NOT NULL THEN
+       OR NEW.route_signature_id IS NOT NULL OR NEW.route_act_id IS NOT NULL
+       OR NEW.route_authoring_signature_id IS NOT NULL THEN
       RAISE EXCEPTION
         'ROUTE_TASK_OWNED_BY_ROUTE: review route columns are written only by the review route.'
         USING ERRCODE = 'raise_exception';
@@ -285,7 +319,8 @@ BEGIN
      OR NEW.review_role IS DISTINCT FROM OLD.review_role
      OR NEW.review_step IS DISTINCT FROM OLD.review_step
      OR NEW.route_signature_id IS DISTINCT FROM OLD.route_signature_id
-     OR NEW.route_act_id IS DISTINCT FROM OLD.route_act_id THEN
+     OR NEW.route_act_id IS DISTINCT FROM OLD.route_act_id
+     OR NEW.route_authoring_signature_id IS DISTINCT FROM OLD.route_authoring_signature_id THEN
     RAISE EXCEPTION
       'ROUTE_TASK_OWNED_BY_ROUTE: review route columns of task % are written only by the review route.', OLD.task_id
       USING ERRCODE = 'raise_exception';
