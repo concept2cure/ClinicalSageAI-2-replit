@@ -1,0 +1,7 @@
+{
+  "expectedCommit": "542b23a13e616a8a693b726cac9f3583cb4e840b",
+  "clientMatches": false,
+  "serverMatches": false,
+  "status": "Superseded intermediate: root supplied an incorrect manual SHA override",
+  "correction": "Read BUILD_COMMIT directly from git rev-parse HEAD and verify both artifacts."
+}

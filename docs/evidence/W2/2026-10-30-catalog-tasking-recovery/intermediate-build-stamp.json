@@ -1,0 +1,7 @@
+{
+  "status": "Superseded; not a qualified artifact",
+  "cause": "Root committed the CSS successor while the intermediate build was running; client resolved previous Git HEAD and server resolved successor HEAD. Application inputs did not change during that build, but provenance stamps disagreed.",
+  "clientCommit": "f22a971f5",
+  "serverCommit": "80156568e",
+  "correction": "Rebuild after source commit is fixed, explicitly pinning both build stamps to80156568ef7e816de42bc87dd71960ea472baf39."
+}

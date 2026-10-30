@@ -22,12 +22,10 @@ import type { Program } from '../data/programs';
 import type { SurfaceViewProps } from '../../v2/surfaceViews';
 
 const H = vi.hoisted(() => ({ apiRequest: vi.fn() }));
-vi.mock('@/utils/authToken', () => ({ getAuthToken: () => 'test-token', getOrgId: () => '7' }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'E. Editor', permissions: ['governed:write'] }) }));
 const programs = vi.hoisted(() => ({ programs: [] as Program[], loading: false, error: null as string | null, refresh: () => {} }));
 vi.mock('../hooks/useMdxPrograms', () => ({ useMdxPrograms: () => programs }));
 
@@ -35,10 +33,11 @@ import { MdxSurfaceHost } from '../MdxSurfaceHost';
 import { clearShellProject, publishShellProject } from '../../v2/shellProject';
 import { toModuleContext, useActiveSurfaceContext } from '../../v2/surfaceContext';
 import { __resetSurfaceActionBus } from '../../v2/surfaceActions';
+import { endCompanySession, seedCompanySession } from '../../v2/__tests__/_company-session-fixture';
 
 const A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const hazard = (n: number) => ({
-  id: n, ref_code: `HZ-0${n}`, hazard: `Hazard ${n}`, hazardous_situation: `Situation ${n}`, harm: `Harm ${n}`,
+  id: n, program_id: A, ref_code: `HZ-0${n}`, hazard: `Hazard ${n}`, hazardous_situation: `Situation ${n}`, harm: `Harm ${n}`,
   sequence_of_events: '', severity: 3, probability: 3, detectability: 3, residual_probability: 1,
   control_strategy: 'design_reduce', source: 'fmea', status: 'open', acceptable: null,
 });
@@ -77,6 +76,7 @@ const traced = () => (wire?.facts as { designControlsTrace?: { totalInputs?: num
 
 let previousActEnv: unknown;
 beforeEach(() => {
+  seedCompanySession({ organizationId: '7', displayName: 'E. Editor', firstName: 'E.', lastName: 'Editor' }, 'engineering-context');
   const g = globalThis as { IS_REACT_ACT_ENVIRONMENT?: unknown };
   previousActEnv = g.IS_REACT_ACT_ENVIRONMENT;
   g.IS_REACT_ACT_ENVIRONMENT = false;
@@ -92,6 +92,7 @@ beforeEach(() => {
   (window as unknown as { C2C?: unknown }).C2C = { setContext: vi.fn() };
 });
 afterEach(() => {
+  endCompanySession();
   vi.unstubAllGlobals();
   clearShellProject();
   __resetSurfaceActionBus();

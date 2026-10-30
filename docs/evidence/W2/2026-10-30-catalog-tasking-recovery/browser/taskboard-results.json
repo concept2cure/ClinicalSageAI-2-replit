@@ -1,0 +1,566 @@
+{
+  "kind": "Chromium actual task-board component with real auth provider/query provider/hooks/transport/styles and synthetic loopback HTTP responses",
+  "date": "2026-10-30T16:45:59.919Z",
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "status": "passed",
+      "heading": "Tasks",
+      "syntheticViewerContext": true,
+      "initial": {
+        "modes": {
+          "catalog": "failure",
+          "license": "failure",
+          "projects": "failure",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/v1/auth/session",
+            "method": "GET",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/assignees",
+            "method": "GET"
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "loadingProjects": {
+        "modes": {
+          "catalog": "failure",
+          "license": "failure",
+          "projects": "held",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/v1/auth/session",
+            "method": "GET",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/assignees",
+            "method": "GET"
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 1,
+          "board": 0
+        }
+      },
+      "loadingBoard": {
+        "modes": {
+          "catalog": "failure",
+          "license": "failure",
+          "projects": "success",
+          "board": "held"
+        },
+        "reads": [
+          {
+            "path": "/api/v1/auth/session",
+            "method": "GET",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/assignees",
+            "method": "GET"
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 0,
+          "board": 1
+        }
+      },
+      "final": {
+        "modes": {
+          "catalog": "failure",
+          "license": "failure",
+          "projects": "success",
+          "board": "success"
+        },
+        "reads": [
+          {
+            "path": "/api/v1/auth/session",
+            "method": "GET",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/assignees",
+            "method": "GET"
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "retainedCardDuringProjectRetry": true,
+      "recoveredMissingTask": true,
+      "layouts": [
+        {
+          "stage": "partial-and-project-failure",
+          "viewport": 1440,
+          "documentWidth": 1440,
+          "contentWidth": 1160,
+          "alerts": [
+            {
+              "body": {
+                "width": 901.53125,
+                "bottom": 234.6875
+              },
+              "actions": {
+                "y": 193.1875,
+                "width": 121.46875
+              }
+            }
+          ],
+          "header": {
+            "introWidth": 626.234375,
+            "noteWidth": 449.765625,
+            "introBottom": 148.1875,
+            "noteTop": 34
+          },
+          "partial": "Not every task store could be read: the schedule and Communication. The columns and counts show only what was read.Retry task board"
+        },
+        {
+          "stage": "projects-loading",
+          "viewport": 1440,
+          "documentWidth": 1440,
+          "contentWidth": 1160,
+          "alerts": [
+            {
+              "body": {
+                "width": 935.96875,
+                "bottom": 234.6875
+              },
+              "actions": {
+                "y": 193.1875,
+                "width": 87.03125
+              }
+            }
+          ],
+          "header": {
+            "introWidth": 626.234375,
+            "noteWidth": 449.765625,
+            "introBottom": 148.1875,
+            "noteTop": 34
+          },
+          "partial": "Not every task store could be read: the schedule and Communication. The columns and counts show only what was read.Retry task board"
+        },
+        {
+          "stage": "board-loading",
+          "viewport": 1440,
+          "documentWidth": 1440,
+          "contentWidth": 1160,
+          "alerts": [],
+          "header": {
+            "introWidth": 626.234375,
+            "noteWidth": 449.765625,
+            "introBottom": 148.1875,
+            "noteTop": 34
+          },
+          "partial": null
+        },
+        {
+          "stage": "recovered",
+          "viewport": 1440,
+          "documentWidth": 1440,
+          "contentWidth": 1160,
+          "alerts": [],
+          "header": {
+            "introWidth": 626.234375,
+            "noteWidth": 449.765625,
+            "introBottom": 148.1875,
+            "noteTop": 34
+          },
+          "partial": null
+        }
+      ],
+      "screenshots": [
+        "taskboard-1440-partial-and-project-failure.png",
+        "taskboard-1440-projects-loading.png",
+        "taskboard-1440-board-loading.png",
+        "taskboard-1440-recovered.png"
+      ],
+      "uncaughtErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "note": "Actual TaskBoard/AuthProvider/QueryClientProvider with explicitly synthetic viewer session context and synthetic unverified HTTP responses; no production auth/DB/AnA claim."
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "passed",
+      "heading": "Tasks",
+      "syntheticViewerContext": true,
+      "initial": {
+        "modes": {
+          "catalog": "failure",
+          "license": "failure",
+          "projects": "failure",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/v1/auth/session",
+            "method": "GET",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/assignees",
+            "method": "GET"
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "loadingProjects": {
+        "modes": {
+          "catalog": "failure",
+          "license": "failure",
+          "projects": "held",
+          "board": "partial"
+        },
+        "reads": [
+          {
+            "path": "/api/v1/auth/session",
+            "method": "GET",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/assignees",
+            "method": "GET"
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 1,
+          "board": 0
+        }
+      },
+      "loadingBoard": {
+        "modes": {
+          "catalog": "failure",
+          "license": "failure",
+          "projects": "success",
+          "board": "held"
+        },
+        "reads": [
+          {
+            "path": "/api/v1/auth/session",
+            "method": "GET",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/assignees",
+            "method": "GET"
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 0,
+          "board": 1
+        }
+      },
+      "final": {
+        "modes": {
+          "catalog": "failure",
+          "license": "failure",
+          "projects": "success",
+          "board": "success"
+        },
+        "reads": [
+          {
+            "path": "/api/v1/auth/session",
+            "method": "GET",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/assignees",
+            "method": "GET"
+          },
+          {
+            "path": "/api/projects",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          },
+          {
+            "path": "/api/task-management/board",
+            "method": "GET",
+            "organization": "7",
+            "bearerPresent": true
+          }
+        ],
+        "held": {
+          "catalog": 0,
+          "license": 0,
+          "projects": 0,
+          "board": 0
+        }
+      },
+      "retainedCardDuringProjectRetry": true,
+      "recoveredMissingTask": true,
+      "layouts": [
+        {
+          "stage": "partial-and-project-failure",
+          "viewport": 390,
+          "documentWidth": 390,
+          "contentWidth": 390,
+          "alerts": [
+            {
+              "body": {
+                "width": 263,
+                "bottom": 361.6875
+              },
+              "actions": {
+                "y": 371.6875,
+                "width": 263
+              }
+            }
+          ],
+          "header": {
+            "introWidth": 326,
+            "noteWidth": 326,
+            "introBottom": 187.1875,
+            "noteTop": 205.1875
+          },
+          "partial": "Not every task store could be read: the schedule and Communication. The columns and counts show only what was read.Retry task board"
+        },
+        {
+          "stage": "projects-loading",
+          "viewport": 390,
+          "documentWidth": 390,
+          "contentWidth": 390,
+          "alerts": [
+            {
+              "body": {
+                "width": 263,
+                "bottom": 361.6875
+              },
+              "actions": {
+                "y": 371.6875,
+                "width": 263
+              }
+            }
+          ],
+          "header": {
+            "introWidth": 326,
+            "noteWidth": 326,
+            "introBottom": 187.1875,
+            "noteTop": 205.1875
+          },
+          "partial": "Not every task store could be read: the schedule and Communication. The columns and counts show only what was read.Retry task board"
+        },
+        {
+          "stage": "board-loading",
+          "viewport": 390,
+          "documentWidth": 390,
+          "contentWidth": 390,
+          "alerts": [],
+          "header": {
+            "introWidth": 326,
+            "noteWidth": 326,
+            "introBottom": 187.1875,
+            "noteTop": 205.1875
+          },
+          "partial": null
+        },
+        {
+          "stage": "recovered",
+          "viewport": 390,
+          "documentWidth": 390,
+          "contentWidth": 390,
+          "alerts": [],
+          "header": {
+            "introWidth": 326,
+            "noteWidth": 326,
+            "introBottom": 187.1875,
+            "noteTop": 205.1875
+          },
+          "partial": null
+        }
+      ],
+      "screenshots": [
+        "taskboard-390-partial-and-project-failure.png",
+        "taskboard-390-projects-loading.png",
+        "taskboard-390-board-loading.png",
+        "taskboard-390-recovered.png"
+      ],
+      "uncaughtErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "note": "Actual TaskBoard/AuthProvider/QueryClientProvider with explicitly synthetic viewer session context and synthetic unverified HTTP responses; no production auth/DB/AnA claim."
+    }
+  ]
+}

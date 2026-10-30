@@ -30,7 +30,8 @@ import { useRecordedPhaseLine } from '../PmaSurface';
 import { clearShellProject, publishShellProject } from '../../../v2/shellProject';
 import type { SurfaceViewProps } from '../../../v2/surfaceViews';
 
-vi.mock('@/utils/authToken', () => ({
+vi.mock('@/utils/authToken', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/utils/authToken')>(),
   getAuthToken: () => 'test-token',
   getOrgId: () => '7',
 }));
