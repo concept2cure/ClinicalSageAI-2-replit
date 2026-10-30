@@ -45,7 +45,7 @@ async function writeManifest() {
   await fs.writeFile(path.join(drop, 'checksums.txt'), lines.join('\n') + '\n');
 }
 
-async function provisionSyntheticSupport() {
+async function provisionSyntheticSupport(options: { includeStfStylesheet?: boolean } = {}) {
   const seed = await packageEctdSubmission(input);
   const zip = await JSZip.loadAsync(await fs.readFile(seed.path));
   for (const name of Object.keys(zip.files).filter(name => name === 'index.xml' || name.endsWith('-regional.xml') || /\/stf-[^/]+\.xml$/.test(name))) {
@@ -54,7 +54,9 @@ async function provisionSyntheticSupport() {
     expect(system).toBeTruthy();
     await fs.writeFile(path.join(drop, path.posix.basename(system!)), syntheticDtd(xml));
   }
-  for (const file of ['ectd-2-0.xsl', 'us-regional.xsl']) await fs.writeFile(path.join(drop, file), '<!-- SYNTHETIC QUALIFICATION STYLESHEET -->');
+  const stylesheets = ['ectd-2-0.xsl', 'us-regional.xsl',
+    ...(options.includeStfStylesheet === false ? [] : ['ich-stf-stylesheet-2-3.xsl'])];
+  for (const file of stylesheets) await fs.writeFile(path.join(drop, file), '<!-- SYNTHETIC QUALIFICATION STYLESHEET -->');
   await writeManifest();
 }
 
@@ -155,6 +157,52 @@ describe('normal package DTD execution evidence', () => {
   it('does not require an STF DTD when this sequence generates no STF', async () => {
     const bundle = await packageEctdSubmission({ ...input, leaves: input.leaves.filter(leaf => !leaf.studyId) });
     expect(bundle.dtdStatus?.required).not.toContain('ich-stf-v2-2.dtd');
+    expect(bundle.dtdStatus?.requiredStylesheets).not.toContain('ich-stf-stylesheet-2-3.xsl');
     expect(bundle.dtdStatus?.validation?.expectedFiles).toHaveLength(2);
+  }, 30_000);
+
+});
+
+describe('STF stylesheet in the captured package', () => {
+  it('resolves the actual STF processing instruction to the current captured stylesheet and pins its bytes (SYNTHETIC)', async () => {
+    await provisionSyntheticSupport();
+    const stylesheet = Buffer.from('<!-- SYNTHETIC STF STYLESHEET, NOT AN AGENCY ARTIFACT -->');
+    await fs.writeFile(path.join(drop, 'ich-stf-stylesheet-2-3.xsl'), stylesheet);
+    await writeManifest();
+    const bundle = await packageEctdSubmission(input);
+    const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+    const stfPath = Object.keys(zip.files).find(name => /\/stf-[^/]+\.xml$/.test(name))!;
+    expect(stfPath).toBeTruthy();
+    const stf = await zip.file(stfPath)!.async('string');
+    const processingInstruction = /<\?xml-stylesheet\s+type="text\/xsl"\s+href="([^"]+)"\s*\?>/.exec(stf);
+    expect(processingInstruction).not.toBeNull();
+    const stylesheetPath = path.posix.normalize(path.posix.join(path.posix.dirname(stfPath), processingInstruction![1]));
+    expect(stylesheetPath).toBe('util/style/ich-stf-stylesheet-2-3.xsl');
+    expect(await zip.file(stylesheetPath)!.async('nodebuffer')).toEqual(stylesheet);
+    expect(bundle.dtdStatus?.requiredStylesheets).toContain('ich-stf-stylesheet-2-3.xsl');
+    expect(bundle.dtdStatus?.validation?.integrity.verified).toContain('ich-stf-stylesheet-2-3.xsl');
+    expect(bundle.dtdStatus?.validation?.passed).toBe(true);
+    const md5 = createHash('md5').update(stylesheet).digest('hex');
+    expect(await zip.file('util/index-md5.txt')!.async('string')).toContain(`${md5}  ${stylesheetPath}`);
+  }, 30_000);
+
+  it('reports a missing STF stylesheet even while all XML validates against the synthetic DTDs', async () => {
+    await provisionSyntheticSupport({ includeStfStylesheet: false });
+    const bundle = await packageEctdSubmission(input);
+    expect(bundle.dtdStatus?.missing).toEqual([]);
+    expect(bundle.dtdStatus?.missingStylesheets).toEqual(['ich-stf-stylesheet-2-3.xsl']);
+    expect(bundle.dtdStatus?.selfContained).toBe(false);
+    expect(bundle.dtdStatus?.validation?.files.every(file => file.dtd.ran && file.dtd.valid)).toBe(true);
+    expect(bundle.dtdStatus?.validation?.passed).toBe(false);
+  }, 30_000);
+
+  it('refuses a required production STF package missing only the current STF stylesheet before writing output', async () => {
+    await provisionSyntheticSupport({ includeStfStylesheet: false });
+    vi.stubEnv('ECTD_REQUIRE_DTD', 'true');
+    const outputDir = path.join(work, 'missing-stf-style-output');
+    const failure = await packageEctdSubmission({ ...input, environment: 'production', outputDir }).catch(error => error);
+    expect(failure).toBeInstanceOf(Error);
+    expect(failure.message).toContain('ich-stf-stylesheet-2-3.xsl');
+    expect(await fs.readdir(outputDir).catch(() => [])).toEqual([]);
   }, 30_000);
 });
